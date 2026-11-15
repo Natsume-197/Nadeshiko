@@ -78,7 +78,7 @@ We really want to thank everybody who uses Nadeshiko. Seeing it being loved so m
 
 Nadeshiko will **always remain free and open-access, no exception**. We are covering server and maintenance costs from our own pockets because this is a tool we want to see live for a long time.
 
-If you feel the same way and want to help keep Nadeshiko running, consider supporting the project on [Patreon](https://www.patreon.com/c/BrigadaSOS).
+If you feel the same way and want to help keep Nadeshiko running, consider supporting the project on [Patreon](https://www.patreon.com/c/NadeshikoApp).
 
 In the following weeks, we will write more posts explaining the new features in more detail. If you wish to contact us to leave a comment, suggestion, bug report, or anything else, you can do so via:
 - **Email**: contact@nadeshiko.co

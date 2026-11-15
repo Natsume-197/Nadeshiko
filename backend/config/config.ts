@@ -80,7 +80,7 @@ const envSchema = z.object({
   PATREON_OAUTH_CLIENT_SECRET: z.string().default(''),
   PATREON_OAUTH_REDIRECT_URI: z.string().default(''),
   PATREON_CAMPAIGN_ID: z.string().default(''),
-  PATREON_CAMPAIGN_URL: z.string().url().default('https://www.patreon.com/c/BrigadaSOS'),
+  PATREON_CAMPAIGN_URL: z.string().url().default('https://www.patreon.com/c/NadeshikoApp'),
   PATREON_CONNECTION_SECRET: z
     .string()
     .default('')

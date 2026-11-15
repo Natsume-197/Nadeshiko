@@ -7,7 +7,7 @@ export const DISCORD_GUILD_ID = '1483540629676884031';
 
 export const DISCORD_INVITE_URL = `https://discord.gg/${DISCORD_INVITE_CODE}`;
 
-export const PATREON_URL = 'https://patreon.com/BrigadaSOS';
+export const PATREON_URL = 'https://patreon.com/NadeshikoApp';
 
 export const DISCORD_BOT_CLIENT_ID = '1064964424684806184';
 

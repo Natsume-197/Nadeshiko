@@ -40,7 +40,7 @@ const isLoading = ref(true);
 const isWorking = ref(false);
 const patreonConnection = ref<PatreonConnection | null>(null);
 const patreonWorking = ref(false);
-const patreonUrl = ref('https://www.patreon.com/c/BrigadaSOS');
+const patreonUrl = ref('https://www.patreon.com/c/NadeshikoApp');
 
 async function load() {
   try {

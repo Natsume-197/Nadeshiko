@@ -74,7 +74,7 @@ env:
     PORT: 80
     RUN_MIGRATIONS_ON_BOOT: "true"
     BASE_URL: https://stg.nadeshiko.co
-    PATREON_CAMPAIGN_URL: https://www.patreon.com/c/BrigadaSOS
+    PATREON_CAMPAIGN_URL: https://www.patreon.com/c/NadeshikoApp
 
     # Amazon SES is the only transport. Staging has its own configuration set and topic, so its bounces land in the
     # staging database, not production's (nadeshiko-infra/terraform/aws-ses.tf).
