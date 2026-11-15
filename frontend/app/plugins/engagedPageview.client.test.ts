@@ -210,6 +210,43 @@ describe('a tab nobody is looking at', () => {
   });
 });
 
+describe('a sentence permalink', () => {
+  // The page reports this moment itself as `shared_link_read`, with the same dwell and gate.
+  test.each(['/en/sentence/abc123', '/pt-BR/sentence/abc123', '/zh-hant/sentence/abc123', '/sentence/abc123'])(
+    '%s is not reported a second time as page_engaged',
+    async (path) => {
+      currentRoute.value = { path };
+      await install();
+
+      vi.advanceTimersByTime(ENGAGED_VIEW_DWELL_MS * 3);
+      setVisibility('hidden');
+      setVisibility('visible');
+      vi.advanceTimersByTime(ENGAGED_VIEW_DWELL_MS * 3);
+
+      expect(capture).not.toHaveBeenCalled();
+    },
+  );
+
+  test('and the page after it is counted as usual', async () => {
+    currentRoute.value = { path: '/en/sentence/abc123' };
+    await install();
+
+    navigateTo('/en/search/kanji');
+    vi.advanceTimersByTime(ENGAGED_VIEW_DWELL_MS);
+
+    expect(capture).toHaveBeenCalledWith('page_engaged');
+  });
+
+  test('a search FOR the word "sentence" is still an ordinary page', async () => {
+    currentRoute.value = { path: '/en/search/sentence' };
+    await install();
+
+    vi.advanceTimersByTime(ENGAGED_VIEW_DWELL_MS);
+
+    expect(capture).toHaveBeenCalledWith('page_engaged');
+  });
+});
+
 describe('a build with no analytics', () => {
   test('installs nothing at all', async () => {
     // Outside production the module is not installed, and everything below the

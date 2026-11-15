@@ -51,7 +51,11 @@ function pageProperties(): Record<string, string> {
  * and nothing else.
  */
 const stub = {
-  capture(event: string, properties?: Record<string, unknown> | null, options?: { timestamp?: Date }) {
+  capture(
+    event: string,
+    properties?: Record<string, unknown> | null,
+    options?: { timestamp?: Date; transport?: 'XHR' | 'fetch' | 'sendBeacon' },
+  ) {
     const at = new Date();
     const page = pageProperties();
     // The caller's own `timestamp` wins, so an event that already knew when it

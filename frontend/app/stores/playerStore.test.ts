@@ -299,15 +299,35 @@ describe('navigation', () => {
     expect(store.currentIndex).toBe(0);
   });
 
-  test('records which way the reader moved, and where in the list', async () => {
+  test('records which way the reader moved, and where in the list, on the play itself', async () => {
+    // `segment_navigated` used to say this as a second event; one per play keeps
+    // PostHog inside its free allowance.
     const store = queued(3);
 
     store.next();
+    await settle();
 
-    expect(posthog.capture).toHaveBeenCalledWith(
-      'segment_navigated',
-      expect.objectContaining({ direction: 'next', playlist_position: 1, playlist_size: 3 }),
-    );
+    expect(lastPlayed()).toMatchObject({ trigger: 'next', playlist_position: 1, playlist_size: 3 });
+    expect(posthog.capture.mock.calls.filter(([n]) => n === 'segment_navigated')).toHaveLength(0);
+  });
+
+  test('prev is recorded as prev', async () => {
+    const store = queued(3, 2);
+
+    store.prev();
+    await settle();
+
+    expect(lastPlayed()).toMatchObject({ trigger: 'prev', playlist_position: 1 });
+  });
+
+  test('a clip reached by autoplay says so', async () => {
+    const store = queued(3);
+    store.autoplay = true;
+
+    store.handleEnded();
+    await settle();
+
+    expect(lastPlayed()).toMatchObject({ trigger: 'autoplay', is_autoplay: true });
   });
 
   test('records nothing when there was nowhere to go', () => {
@@ -316,7 +336,7 @@ describe('navigation', () => {
 
     store.next();
 
-    expect(posthog.capture.mock.calls.filter(([n]) => n === 'segment_navigated')).toHaveLength(0);
+    expect(posthog.capture).not.toHaveBeenCalled();
   });
 });
 
@@ -776,15 +796,96 @@ describe('setPlaylist', () => {
     expect(store.isImmersive).toBe(false);
   });
 
-  test('records which result in the list was opened', () => {
+  test('records which result in the list was opened, on the play it starts', async () => {
     const store = usePlayerStore();
 
     store.setPlaylist([audioResult(1), audioResult(2)].map(asResult), 1);
+    await settle();
+
+    expect(lastPlayed()).toMatchObject({ trigger: 'click', media_id: 'media-2', playlist_position: 1 });
+    // One event per click: the play carries it.
+    expect(posthog.capture.mock.calls.filter(([n]) => n === 'search_result_clicked')).toHaveLength(0);
+  });
+
+  test('a YouTube click is reported by its play too', () => {
+    const store = usePlayerStore();
+
+    store.setPlaylist([youtubeResult(1)].map(asResult), 0);
+
+    expect(lastPlayed()).toMatchObject({ trigger: 'click', media_id: 'media-1' });
+    expect(posthog.capture.mock.calls.filter(([n]) => n === 'search_result_clicked')).toHaveLength(0);
+  });
+
+  test('a click whose clip will not play is still counted as a click', async () => {
+    // The setup double's `play` is an instance field, so swap the class for one that refuses.
+    const scope = globalThis as unknown as { Audio: new () => { play: () => Promise<void> } };
+    const RealAudio = scope.Audio;
+    scope.Audio = class extends RealAudio {
+      override play = () => Promise.reject(new DOMException('blocked', 'NotAllowedError'));
+    };
+    const store = usePlayerStore();
+
+    store.setPlaylist([audioResult(1), audioResult(2)].map(asResult), 1);
+    await settle();
 
     expect(posthog.capture).toHaveBeenCalledWith(
       'search_result_clicked',
       expect.objectContaining({ media_id: 'media-2', result_position: 1 }),
     );
+    expect(lastPlayed()).toBeUndefined();
+    scope.Audio = RealAudio;
+  });
+
+  test('a click superseded before its clip started is still counted as a click', () => {
+    const store = usePlayerStore();
+
+    store.setPlaylist([audioResult(1), audioResult(2)].map(asResult), 0);
+    // A second click before the first clip's play() settled.
+    store.setPlaylist([audioResult(1), audioResult(2)].map(asResult), 1);
+
+    expect(posthog.capture).toHaveBeenCalledWith(
+      'search_result_clicked',
+      expect.objectContaining({ media_id: 'media-1', result_position: 0 }),
+    );
+  });
+
+  test('closing the player before the clip started still counts the click', () => {
+    const store = usePlayerStore();
+
+    store.setPlaylist([asResult(audioResult(1))], 0);
+    store.hidePlayer();
+
+    expect(posthog.capture).toHaveBeenCalledWith(
+      'search_result_clicked',
+      expect.objectContaining({ result_position: 0 }),
+    );
+  });
+
+  test('leaving the page before the clip started still counts the click, by beacon', () => {
+    // The store hooks `pagehide` on the first click in a browser. Node has no window, so
+    // give it one just for this test (not `vi.stubGlobal`: unstubbing would drop the
+    // `usePostHog` stub every other test relies on).
+    const listeners: Record<string, () => void> = {};
+    const scope = globalThis as unknown as { window?: unknown };
+    scope.window = {
+      addEventListener: (type: string, fn: () => void) => {
+        listeners[type] = fn;
+      },
+    };
+    try {
+      const store = usePlayerStore();
+      store.setPlaylist([asResult(audioResult(1))], 0);
+
+      listeners.pagehide?.();
+
+      expect(posthog.capture).toHaveBeenCalledWith(
+        'search_result_clicked',
+        expect.objectContaining({ result_position: 0 }),
+        { transport: 'sendBeacon' },
+      );
+    } finally {
+      delete scope.window;
+    }
   });
 
   test('an out-of-range index opens the player without a result rather than throwing', () => {

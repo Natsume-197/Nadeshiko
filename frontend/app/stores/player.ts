@@ -100,6 +100,64 @@ export async function probeAudioSource(
 let playbackToken = 0;
 
 /**
+ * Why a clip started, on every `segment_played`. One event per play carries what used to take
+ * two (`search_result_clicked` before the play, `segment_navigated` after next/prev), which keeps
+ * PostHog under its free event allowance. See docs: plans/posthog-event-budget.md.
+ *
+ * - `click`    -- the reader picked this result in the search list (`setPlaylist`).
+ * - `next`, `prev` -- the player's own controls or keys.
+ * - `autoplay` -- the previous clip ended, or was unplayable, with autoplay on.
+ * - `repeat`   -- repeat mode looping, or a restart that had to rebuild the element.
+ * - `resume`   -- play pressed on a clip whose element was gone or stale.
+ */
+type PlayTrigger = 'click' | 'next' | 'prev' | 'autoplay' | 'repeat' | 'resume';
+
+/**
+ * A search-result click whose play has not been reported yet. A click normally reports itself
+ * as `segment_played` with `trigger: 'click'`. When its play never starts (the clip fails, or
+ * another play supersedes it while buffering) the click is sent as `search_result_clicked`
+ * instead, so click counts stay exactly what they were when every click sent that event.
+ *
+ * `token` is null until the click's own play takes a playback token; any later token means the
+ * click's play was superseded.
+ */
+let pendingClick: { properties: Record<string, unknown>; token: number | null } | null = null;
+
+function flushPendingClick(transport?: 'sendBeacon'): void {
+  if (!pendingClick) return;
+  const { properties } = pendingClick;
+  pendingClick = null;
+  const posthog = usePostHog();
+  if (transport) posthog?.capture('search_result_clicked', properties, { transport });
+  else posthog?.capture('search_result_clicked', properties);
+}
+
+let pagehideHooked = false;
+
+/**
+ * Send a still-pending click when the page goes away: a reader who clicks and leaves while the
+ * clip buffers made a click, and before this change that click was already on its way. Hooked on
+ * the first click, so SSR and pages without a player add no listener. By then posthog-js has
+ * flushed its own queue on `pagehide`, so the click goes by beacon, as posthog-js sends its own
+ * `$pageleave`.
+ */
+function flushPendingClickOnPagehide(): void {
+  if (pagehideHooked || typeof window === 'undefined') return;
+  pagehideHooked = true;
+  window.addEventListener('pagehide', () => flushPendingClick('sendBeacon'));
+}
+
+/** Take a new playback token, settling a pending click that this supersedes. */
+function bumpPlaybackToken(): number {
+  playbackToken++;
+  if (pendingClick) {
+    if (pendingClick.token === null) pendingClick.token = playbackToken;
+    else if (pendingClick.token !== playbackToken) flushPendingClick();
+  }
+  return playbackToken;
+}
+
+/**
  * Client-only DOM handle kept outside store state. Retaining it keeps the prefetch alive;
  * source identifies stale downloads.
  */
@@ -285,24 +343,29 @@ export const usePlayerStore = defineStore('player', {
       this.showPlayer = true;
       this.isImmersive = false;
 
+      // An earlier click whose play never started still counts as a click.
+      flushPendingClick();
       const result = results[startIndex];
       if (result && import.meta.client) {
-        const posthog = usePostHog();
-        posthog?.capture('search_result_clicked', {
-          media_id: result.media.publicId,
-          media_name: result.media.nameRomaji,
-          result_position: startIndex,
-        });
+        pendingClick = {
+          properties: {
+            media_id: result.media.publicId,
+            media_name: result.media.nameRomaji,
+            result_position: startIndex,
+          },
+          token: null,
+        };
+        flushPendingClickOnPagehide();
       }
 
-      this.playCurrent();
+      this.playCurrent({ trigger: 'click' });
     },
 
     handleEnded() {
       if (this.repeat) {
-        this.playCurrent({ repeat: true });
+        this.playCurrent({ repeat: true, trigger: 'repeat' });
       } else if (this.autoplay) {
-        this.next();
+        this.next('autoplay');
       } else {
         this.isPlaying = false;
       }
@@ -314,7 +377,7 @@ export const usePlayerStore = defineStore('player', {
      */
     handleClipUnplayable() {
       if (this.autoplay) {
-        this.next();
+        this.next('autoplay');
         return;
       }
       this.isPlaying = false;
@@ -323,16 +386,22 @@ export const usePlayerStore = defineStore('player', {
     /**
      * @param isRepeat Marks a loop or rebuilt restart as a re-listen, not a newly reached
      * sentence, while retaining engagement telemetry.
+     * @param trigger Why this clip started; see `PlayTrigger`.
      */
-    trackPlay(isRepeat = false) {
+    trackPlay(isRepeat = false, trigger: PlayTrigger = 'resume') {
+      // The click's play started, so `segment_played` reports it; nothing is left to flush.
+      if (trigger === 'click') pendingClick = null;
+
       const posthog = usePostHog();
       posthog?.capture('segment_played', {
         media_id: this.currentResult?.media.publicId,
         media_name: this.currentResult?.media.nameRomaji,
         segment_id: this.currentResult?.segment.publicId,
         playlist_position: this.currentIndex,
+        playlist_size: this.playlist.length,
         is_autoplay: this.autoplay,
         is_repeat: isRepeat,
+        trigger,
       });
 
       // Deliberate plays only, where deliberate means the reader chose this
@@ -374,18 +443,20 @@ export const usePlayerStore = defineStore('player', {
      * Start under a fresh token after buffering; discard superseded settlements. Track only the
      * successful start: new play, repeat, or unreported pause resume.
      */
-    startAudio(audio: HTMLAudioElement, track: TrackedPlay) {
-      const token = ++playbackToken;
+    startAudio(audio: HTMLAudioElement, track: TrackedPlay, trigger: PlayTrigger = 'resume') {
+      const token = bumpPlaybackToken();
 
       const started = () => {
         if (token !== playbackToken) return;
         this.isPlaying = true;
-        if (track !== 'none') this.trackPlay(track === 'repeat');
+        if (track !== 'none') this.trackPlay(track === 'repeat', trigger);
       };
 
       const failed = (error: unknown) => {
         if (token !== playbackToken) return;
         this.isPlaying = false;
+        // A click whose clip failed is still a click.
+        flushPendingClick();
 
         // Note this is not the teardown case: `releaseIfSource`, `hidePlayer`
         // and every `playCurrent` branch bump `playbackToken` before releasing,
@@ -468,7 +539,7 @@ export const usePlayerStore = defineStore('player', {
       if (prefetched?.source === source) dropPrefetch();
 
       if (this.currentSource !== source) return;
-      playbackToken++;
+      bumpPlaybackToken();
       this.releaseAudio();
       this.isPlaying = false;
     },
@@ -501,12 +572,12 @@ export const usePlayerStore = defineStore('player', {
      *               `trackPlay` runs there is nothing left to tell them apart:
      *               a loop rebuilds the element exactly as a fresh play does.
      */
-    playCurrent({ repeat = false }: { repeat?: boolean } = {}) {
+    playCurrent({ repeat = false, trigger = 'resume' }: { repeat?: boolean; trigger?: PlayTrigger } = {}) {
       this.releaseAudio();
 
       const result = this.currentResult;
       if (!result) {
-        playbackToken++;
+        bumpPlaybackToken();
         // Nothing to play, so nothing is playing. Without this the flag keeps
         // whatever the previous clip left on it and the transport sits showing
         // a pause button over silence -- `releaseAudio` above has already
@@ -519,7 +590,7 @@ export const usePlayerStore = defineStore('player', {
       const yt = useYoutubeSegmentPlayer();
 
       if (isYoutube(result)) {
-        playbackToken++;
+        bumpPlaybackToken();
         const seg = result.segment;
         const clip = resolveClipWindow(result);
         yt.play(seg.publicId, seg.externalVideoId ?? '', clip.startMs, clip.endMs, {
@@ -529,7 +600,7 @@ export const usePlayerStore = defineStore('player', {
         yt.setVolume(this.volume);
         yt.setPlaybackRate(this.playbackRate);
         this.isPlaying = true;
-        this.trackPlay(repeat);
+        this.trackPlay(repeat, trigger);
         this.prefetchNext();
         return;
       }
@@ -547,7 +618,7 @@ export const usePlayerStore = defineStore('player', {
       // Leave crossOrigin unset so ordinary playback does not depend on permissive CDN CORS.
       // Expansion's extra fetch keeps any CORS failure confined to expansion.
 
-      this.startAudio(audio, repeat ? 'repeat' : 'play');
+      this.startAudio(audio, repeat ? 'repeat' : 'play', trigger);
 
       audio.onended = () => this.handleEnded();
 
@@ -590,7 +661,7 @@ export const usePlayerStore = defineStore('player', {
       if (isYoutube(this.currentResult)) {
         const yt = useYoutubeSegmentPlayer();
         if (yt.activeSegmentId.value === this.currentResult?.segment.publicId) {
-          playbackToken++;
+          bumpPlaybackToken();
           yt.resume();
         } else {
           this.playCurrent();
@@ -606,11 +677,11 @@ export const usePlayerStore = defineStore('player', {
 
     pause() {
       if (isYoutube(this.currentResult)) {
-        playbackToken++;
+        bumpPlaybackToken();
         useYoutubeSegmentPlayer().pause();
         this.isPlaying = false;
       } else if (this.currentAudio) {
-        playbackToken++;
+        bumpPlaybackToken();
         this.currentAudio.pause();
         this.isPlaying = false;
       }
@@ -689,16 +760,11 @@ export const usePlayerStore = defineStore('player', {
       posthog?.capture('immersive_mode_toggled', { enabled: this.isImmersive });
     },
 
-    next() {
+    /** @param trigger `autoplay` when the previous clip ended on its own. */
+    next(trigger: 'next' | 'autoplay' = 'next') {
       if (this.currentIndex !== null && this.currentIndex < this.playlist.length - 1) {
         this.currentIndex++;
-        this.playCurrent();
-        const posthog = usePostHog();
-        posthog?.capture('segment_navigated', {
-          direction: 'next',
-          playlist_position: this.currentIndex,
-          playlist_size: this.playlist.length,
-        });
+        this.playCurrent({ trigger });
       } else {
         this.isPlaying = false;
       }
@@ -707,19 +773,13 @@ export const usePlayerStore = defineStore('player', {
     prev() {
       if (this.currentIndex !== null && this.currentIndex > 0) {
         this.currentIndex--;
-        this.playCurrent();
-        const posthog = usePostHog();
-        posthog?.capture('segment_navigated', {
-          direction: 'prev',
-          playlist_position: this.currentIndex,
-          playlist_size: this.playlist.length,
-        });
+        this.playCurrent({ trigger: 'prev' });
       }
     },
 
     restart() {
       if (isYoutube(this.currentResult)) {
-        playbackToken++;
+        bumpPlaybackToken();
         useYoutubeSegmentPlayer().restart();
         this.isPlaying = true;
       } else if (this.currentAudio && !this.isCurrentAudioStale) {
@@ -732,7 +792,7 @@ export const usePlayerStore = defineStore('player', {
         // reports as a repeat. Marked here and not in the branch above because
         // that one never reaches `trackPlay` at all: rewinding a live element
         // was never a play to take back out.
-        this.playCurrent({ repeat: true });
+        this.playCurrent({ repeat: true, trigger: 'repeat' });
       } else {
         return;
       }
@@ -744,7 +804,7 @@ export const usePlayerStore = defineStore('player', {
     },
 
     hidePlayer() {
-      playbackToken++;
+      bumpPlaybackToken();
       this.releaseAudio();
       dropPrefetch();
       useYoutubeSegmentPlayer().stop();

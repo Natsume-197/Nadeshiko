@@ -9,6 +9,14 @@
  */
 export const ENGAGED_VIEW_DWELL_MS = 2500;
 
+/** `/sentence/<id>` under any locale prefix (`/en/…`, `/pt-BR/…`, `/zh-hant/…`) or none. */
+const SENTENCE_PERMALINK = /^(?:\/[A-Za-z]{2}(?:-[A-Za-z]+)?)?\/sentence\/[^/]+\/?$/;
+
+/** Whether `path` is a sentence permalink, which reports its own engaged view (`shared_link_read`). */
+export function isSentencePermalink(path: string): boolean {
+  return SENTENCE_PERMALINK.test(path);
+}
+
 export interface EngagedViewGate {
   /**
    * Records a visibility transition. Safe to call with the same state twice; only

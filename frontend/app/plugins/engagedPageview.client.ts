@@ -1,5 +1,10 @@
 import { posthog, isAnalyticsEnabled } from '~/utils/posthogClient';
-import { ENGAGED_VIEW_DWELL_MS, createEngagedViewGate, type EngagedViewGate } from '~/utils/engagedView';
+import {
+  ENGAGED_VIEW_DWELL_MS,
+  createEngagedViewGate,
+  isSentencePermalink,
+  type EngagedViewGate,
+} from '~/utils/engagedView';
 
 /**
  * Emit one foreground-dwell engagement event per page, independently of raw `$pageview`. Their gap helps
@@ -60,6 +65,14 @@ export default defineNuxtPlugin({
       lastPath = path;
 
       clear();
+      // A sentence permalink already reports this exact moment -- same dwell, same gate -- as
+      // `shared_link_read` (pages/sentence/[id].vue), which the dashboards count. A second event
+      // for it only spent the PostHog event budget (docs: plans/posthog-event-budget.md). For
+      // engaged views across the whole site, count `page_engaged` plus `shared_link_read`.
+      if (isSentencePermalink(path)) {
+        gate = null;
+        return;
+      }
       const visible = document.visibilityState === 'visible';
       gate = createEngagedViewGate(ENGAGED_VIEW_DWELL_MS, visible, Date.now());
       // A page opened into a background tab schedules nothing until it is
