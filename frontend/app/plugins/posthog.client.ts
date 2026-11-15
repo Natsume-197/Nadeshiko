@@ -1,7 +1,10 @@
 import type { CaptureResult } from 'posthog-js';
 import { createExceptionDeduper, exceptionSignature } from '~/utils/exceptionDedupe';
 import { isCloudflareChallengeException, isUnactionableException } from '~/utils/exceptionNoise';
+import { BOT_SIGNAL_EVENTS, collectBotSignals, primeBotSignals } from '~/utils/botSignals';
+import { KNOWN_CRAWLER_FILTER_ACTIVE, isKnownCrawlerShape } from '~/utils/knownCrawlers';
 import { posthog, startPostHog } from '~/utils/posthogClient';
+import { shapeWebVitals } from '~/utils/webVitalsBudget';
 
 /**
  * Replace the module's static SDK import with an unawaited dynamic load, started during setup to minimize
@@ -27,6 +30,12 @@ export default defineNuxtPlugin({
     // Email scanners may execute the redirected page in fresh browser profiles. Let them reach the page, but
     // do not start analytics: withholding the SDK also disables engaged-view counting.
     if (analyticsSuppressed()) return;
+    // The same for a crawler identified by its exact screen-and-window shape (`utils/knownCrawlers.ts`),
+    // once the measurement week that looks for sturdier signals is over.
+    if (KNOWN_CRAWLER_FILTER_ACTIVE && isKnownCrawlerShape()) return;
+
+    // Temporary: read the browser signals that `before_send` attaches (`utils/botSignals.ts`).
+    primeBotSignals();
 
     // Install error coverage before requesting the SDK so hydration failures enter the deferred queue.
     const capturesExceptions = captureExceptionsEnabled(clientConfig);
@@ -81,7 +90,11 @@ function buildBeforeSend(appVersion?: string): (event: CaptureResult | null) => 
     if (event && appVersion) {
       event.properties = { ...event.properties, $app_version: appVersion };
     }
+    if (event && BOT_SIGNAL_EVENTS.has(event.event)) {
+      event.properties = { ...event.properties, ...collectBotSignals() };
+    }
 
+    if (event?.event === '$web_vitals') return shapeWebVitals(event);
     if (event?.event !== '$exception') return event;
 
     if (isCloudflareChallengeException(event.properties)) {

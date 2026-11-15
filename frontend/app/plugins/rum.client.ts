@@ -1,11 +1,15 @@
 import { onTTFB, type Metric } from 'web-vitals';
 import { getPagePath } from '~/utils/pagePath';
 import { isAnalyticsEnabled, posthog } from '~/utils/posthogClient';
+import { holdTtfb, isWebVitalsSampledLoad } from '~/utils/webVitalsBudget';
 
 /**
  * Report TTFB beside PostHog's autocaptured vitals using its property names. Use plain `web-vitals`:
  * attribution adds fields this reporter must not send. Browser OTLP reporting is retired;
  * page/browser/device/connection breakdowns remain, but edge-colo enrichment does not.
+ *
+ * The reading rides PostHog's next `$web_vitals` on the same load rather than an event of its own,
+ * and only sampled loads report it (`utils/webVitalsBudget.ts`).
  */
 
 /**
@@ -42,29 +46,34 @@ export default defineNuxtPlugin({
   setup() {
     // Gate on analytics startup, not SDK readiness; captures can queue while the chunk loads.
     if (!isAnalyticsEnabled()) return;
+    // An unsampled load sends no `$web_vitals` at all, so there is nothing to attach a reading to.
+    if (!isWebVitalsSampledLoad()) return;
 
     onTTFB((metric: Metric) => {
       if (automated()) return;
 
       const connection = (navigator as Navigator & { connection?: { effectiveType?: string } }).connection;
 
-      posthog.capture('$web_vitals', {
-        $web_vitals_TTFB_value: metric.value,
-        $web_vitals_TTFB_event: {
-          name: metric.name,
-          value: metric.value,
-          rating: metric.rating,
-          navigationType: metric.navigationType,
+      holdTtfb(
+        {
+          $web_vitals_TTFB_value: metric.value,
+          $web_vitals_TTFB_event: {
+            name: metric.name,
+            value: metric.value,
+            rating: metric.rating,
+            navigationType: metric.navigationType,
+          },
+          /**
+           * Keep bounded breakdowns only. Template page paths and omit attribution fields such as element, URL
+           * and largestShiftTarget.
+           */
+          page_path: getPagePath(),
+          client_browser_name: browserName(),
+          client_device_type: deviceType(),
+          client_connection_effective_type: connection?.effectiveType,
         },
-        /**
-         * Keep bounded breakdowns only. Template page paths and omit attribution fields such as element, URL
-         * and largestShiftTarget.
-         */
-        page_path: getPagePath(),
-        client_browser_name: browserName(),
-        client_device_type: deviceType(),
-        client_connection_effective_type: connection?.effectiveType,
-      });
+        (properties) => posthog.capture('$web_vitals', properties),
+      );
     });
   },
 });

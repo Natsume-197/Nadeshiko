@@ -1,9 +1,10 @@
 // @vitest-environment happy-dom
-import { describe, test, expect, beforeEach, vi } from 'vitest';
+import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
 
 /**
- * Cover the supplemental TTFB event and bot filtering that prevents crawler measurements from dominating
- * reader percentiles.
+ * Cover the supplemental TTFB reading and bot filtering that prevents crawler measurements from dominating
+ * reader percentiles. Readings here are sent standalone (no autocaptured `$web_vitals` arrives in the test);
+ * riding PostHog's own event is covered in `utils/webVitalsBudget.test.ts`.
  */
 const capture = vi.fn();
 const analyticsEnabled = { value: true };
@@ -50,22 +51,33 @@ function browser({
   });
 }
 
-/** Installs the plugin and delivers one TTFB reading. */
-async function report(metric: Record<string, unknown> = {}) {
+/**
+ * Installs the plugin on a load that is (or is not) sampled, delivers one TTFB reading, and lets the
+ * standalone fallback fire.
+ */
+async function report(metric: Record<string, unknown> = {}, { sampled = true } = {}) {
+  const budget = await import('~/utils/webVitalsBudget');
+  budget.isWebVitalsSampledLoad(() => (sampled ? 0 : 1));
   const plugin = ((await import('./rum.client')) as unknown as { default: { setup: () => void } }).default;
   plugin.setup();
   onTTFBCallback?.({ name: 'TTFB', value: 812.4, rating: 'needs-improvement', navigationType: 'navigate', ...metric });
+  vi.advanceTimersByTime(budget.TTFB_STANDALONE_AFTER_MS);
 }
 
 /** The properties of the one `$web_vitals` event, or undefined if none was sent. */
 const sent = () => capture.mock.calls[0]?.[1] as Record<string, unknown> | undefined;
 
 beforeEach(() => {
+  vi.useFakeTimers();
   vi.clearAllMocks();
   vi.resetModules();
   analyticsEnabled.value = true;
   onTTFBCallback = null;
   browser();
+});
+
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 describe('the reading itself', () => {
@@ -200,6 +212,15 @@ describe('traffic that is not a reader', () => {
 
     expect(capture).toHaveBeenCalled();
     expect(sent()?.client_browser_name).toBe(expected);
+  });
+});
+
+describe('a load outside the web-vitals sample', () => {
+  test('does not subscribe: it sends no `$web_vitals` to carry the reading', async () => {
+    await report({}, { sampled: false });
+
+    expect(onTTFBCallback).toBeNull();
+    expect(capture).not.toHaveBeenCalled();
   });
 });
 
