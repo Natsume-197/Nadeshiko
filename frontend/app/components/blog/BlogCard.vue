@@ -54,11 +54,11 @@ const contentPreview = computed(() => blogExcerpt(props.post.rawbody, props.post
 <template>
   <article data-testid="blog-post" class="mb-12 pb-10 border-b border-gray-800 last:border-0 hover:border-gray-700 transition-colors duration-200">
     <NuxtLink :to="blogPath" class="group block">
-      <h2 class="text-3xl sm:text-4xl font-bold text-white mb-3 underline decoration-[#ef5552] decoration-4 underline-offset-8">
+      <h2 class="text-3xl sm:text-4xl font-bold text-white mb-3 underline decoration-brand decoration-4 underline-offset-8">
         {{ post.title }}
       </h2>
 
-      <span v-if="formattedDate" class="inline-flex items-center gap-1.5 text-sm text-[#ef5552] mt-1">
+      <span v-if="formattedDate" class="inline-flex items-center gap-1.5 text-sm text-accent mt-1">
         <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
         </svg>
@@ -76,10 +76,10 @@ const contentPreview = computed(() => blogExcerpt(props.post.rawbody, props.post
 
       <div class="relative max-w-none" :class="{ 'mt-5': !post.image }">
         <p class="content-preview">{{ contentPreview }}</p>
-        <div class="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[#1d1d1d] to-transparent pointer-events-none" />
+        <div class="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent pointer-events-none" />
       </div>
 
-      <span class="inline-flex items-center gap-2 text-base font-semibold text-red-400 group-hover:text-red-300 transition-colors duration-200 mt-4">
+      <span class="inline-flex items-center gap-2 text-base font-semibold text-brand group-hover:text-brand-hover transition-colors duration-200 mt-4">
         <span>{{ $t('blog.readMore') }}</span>
         <svg aria-hidden="true" class="w-5 h-5 transform group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
@@ -95,7 +95,7 @@ const contentPreview = computed(() => blogExcerpt(props.post.rawbody, props.post
   max-height: 16rem;
   overflow: hidden;
   font-size: 1.125rem;
-  color: #d1d5db;
+  color: rgb(var(--c-gray-300));
   line-height: 1.8;
   letter-spacing: 0.01em;
   margin-bottom: 1rem;

@@ -231,7 +231,7 @@ const translationLanguages = computed(() => {
               class="px-4 py-2 rounded text-sm font-medium transition-colors"
               :class="updating
                 ? 'bg-white/10 text-white/40 cursor-not-allowed'
-                : 'bg-button-accent-main hover:bg-button-accent-hover text-white'"
+                : 'bg-button-accent-main hover:bg-button-accent-hover text-on-accent'"
               @click="triggerUpdate(false)"
             >
               {{ updating ? $t('statsPage.admin.updating') : $t('statsPage.admin.fullRescan') }}

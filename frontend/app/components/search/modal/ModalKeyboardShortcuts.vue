@@ -37,7 +37,7 @@ defineExpose({ open });
     data-testid="shortcuts-modal"
     :open="showModal"
     z-index-class="z-[70]"
-    overlay-class="items-center justify-center bg-black/50"
+    overlay-class="items-center justify-center bg-fixed-black/50"
     panel-class="bg-background border border-hairline rounded-xl shadow-xl w-full max-w-2xl mx-4 max-h-[80vh] overflow-y-auto"
     labelledby="nd-shortcuts-modal-title"
     @close="close"

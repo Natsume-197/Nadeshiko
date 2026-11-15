@@ -370,7 +370,7 @@ watch(playingVideoId, (id) => {
       data-testid="image-zoom-overlay"
       :open="!!zoomedImageUrl"
       z-index-class="z-[9999]"
-      overlay-class="items-center justify-center bg-black/80"
+      overlay-class="items-center justify-center bg-fixed-black/80"
       panel-class="flex items-center justify-center max-w-[90%] max-h-[90%]"
       :label="$t('searchpage.main.labels.zoomedImage')"
       @close="zoomedImageUrl = null"
@@ -440,7 +440,7 @@ watch(playingVideoId, (id) => {
         <button type="button"
           v-if="shouldBlur(result.segment.contentRating) && playingVideoId !== result.segment.publicId"
           @click="revealedContent.has(result.segment.publicId) ? revealedContent.delete(result.segment.publicId) : revealedContent.add(result.segment.publicId)"
-          class="absolute top-2 right-2 px-2 py-1 rounded-md bg-black/50 hover:bg-black/70 text-white transition-colors z-10 flex items-center gap-1.5 text-xs">
+          class="absolute top-2 right-2 px-2 py-1 rounded-md bg-fixed-black/50 hover:bg-fixed-black/70 text-fixed-white transition-colors z-10 flex items-center gap-1.5 text-xs">
           <UiBaseIcon
             :path="revealedContent.has(result.segment.publicId) ? mdiEye : mdiEyeOff"
             w="w-3.5" h="h-3.5" size="14" />
@@ -453,7 +453,7 @@ watch(playingVideoId, (id) => {
           v-if="confirmingRemoveId !== result.segment.publicId"
           data-testid="remove-from-collection"
           @click.stop="confirmRemove(result.segment.publicId)"
-          class="opacity-0 group-hover:opacity-100 transition-opacity p-2 aspect-square flex items-center justify-center rounded-md bg-surface hover:bg-button-accent-main text-white/70 hover:text-white"
+          class="opacity-0 group-hover:opacity-100 transition-opacity p-2 aspect-square flex items-center justify-center rounded-md bg-surface hover:bg-button-accent-main text-white/70 hover:text-on-accent"
           :title="$t('accountSettings.collections.removeFromCollection')"
         >
           <UiBaseIcon :path="mdiClose" w="w-5" h="h-5" size="20" />
@@ -463,7 +463,7 @@ watch(playingVideoId, (id) => {
           <button type="button"
             data-testid="remove-from-collection-confirm"
             @click.stop="executeRemove(result.segment.publicId)"
-            class="px-3 py-1.5 rounded text-sm bg-button-accent-main hover:bg-button-accent-hover text-white font-medium"
+            class="px-3 py-1.5 rounded text-sm bg-button-accent-main hover:bg-button-accent-hover text-on-accent font-medium"
           >{{ $t('accountSettings.collections.yes') }}</button>
           <button type="button"
             @click.stop="cancelRemove()"
@@ -694,7 +694,7 @@ watch(playingVideoId, (id) => {
             <p class="mt-4 text-gray-500 dark:text-gray-400">
               <i18n-t v-if="!failure || failure.kind === 'not-found'" keypath="segment.noResultsMessage" tag="span">
                 <template #link>
-                  <a href="https://www.immersionkit.com" target="_blank" rel="noopener noreferrer" class="text-red-400 hover:text-red-300 underline underline-offset-4">immersionkit.com</a>
+                  <a href="https://www.immersionkit.com" target="_blank" rel="noopener noreferrer" class="text-brand hover:text-brand-hover underline underline-offset-4">immersionkit.com</a>
                 </template>
               </i18n-t>
               <span v-else>{{ $t(SEARCH_FAILURE_MESSAGES[failure.kind].message) }}</span>
@@ -737,7 +737,7 @@ watch(playingVideoId, (id) => {
                        target.
                        -->
                   <template #link>
-                    <span class="text-red-400 underline underline-offset-4">Patreon</span>
+                    <span class="text-brand underline underline-offset-4">Patreon</span>
                   </template>
                 </i18n-t>
               </p>

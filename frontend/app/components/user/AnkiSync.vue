@@ -872,7 +872,7 @@ watch(canEditProfile, (editable) => {
     <CommonBaseModal
       :open="showNameModal"
       z-index-class="z-50"
-      overlay-class="items-center justify-center bg-black/60"
+      overlay-class="items-center justify-center bg-fixed-black/60"
       panel-class="bg-background border border-hairline rounded-lg p-6 w-full max-w-sm shadow-xl"
       labelledby="nd-anki-profile-name-title"
       @close="showNameModal = false"
@@ -896,7 +896,7 @@ watch(canEditProfile, (editable) => {
           {{ $t('accountSettings.anki.modal.cancel') }}
         </button>
         <button type="button"
-          class="nd-btn-accent bg-red-500 hover:bg-red-600"
+          class="nd-btn-accent"
           :disabled="!nameModalInput.trim()"
           @click="confirmNameModal"
         >

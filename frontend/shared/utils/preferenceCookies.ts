@@ -6,6 +6,8 @@ export const RENDER_FORKING_PREFERENCE_COOKIES = [
   'nd_dict_links',
   'nd-motion',
   'nd_media_sort',
+  'nd_theme',
+  'nd_custom_theme',
 ] as const;
 
 export type RenderForkingPreferenceCookie = (typeof RENDER_FORKING_PREFERENCE_COOKIES)[number];
@@ -20,6 +22,12 @@ export const MOTION_COOKIE = 'nd-motion' satisfies RenderForkingPreferenceCookie
 
 // SSR sorts the search media filter by it, so the list arrives in the reader's order.
 export const MEDIA_SORT_COOKIE = 'nd_media_sort' satisfies RenderForkingPreferenceCookie;
+
+// SSR stamps data-theme so the first paint is already in the reader's theme.
+export const THEME_COOKIE = 'nd_theme' satisfies RenderForkingPreferenceCookie;
+
+// A patron's custom theme colours (`light-d6457a-fdf2f6`), stamped as inline variables during SSR.
+export const CUSTOM_THEME_COOKIE = 'nd_custom_theme' satisfies RenderForkingPreferenceCookie;
 
 // Reserve retired names and clear their cookies. Remove entries only after the one-year max-age has elapsed
 // for all readers, or a reused name could parse values from an unrelated retired feature.

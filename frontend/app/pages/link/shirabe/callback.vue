@@ -79,7 +79,7 @@ onMounted(async () => {
         <h1 data-testid="shirabe-callback-message" class="text-2xl font-semibold text-white md:text-3xl">{{ message }}</h1>
         <NuxtLink
           :to="localePath('/user/settings')"
-          class="mt-4 text-lg text-red-400 hover:text-red-300 transition-colors"
+          class="mt-4 text-lg text-brand hover:text-brand-hover transition-colors"
         >
           {{ t('connections.callback.back') }}
         </NuxtLink>

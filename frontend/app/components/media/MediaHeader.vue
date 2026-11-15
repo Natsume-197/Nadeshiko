@@ -161,7 +161,7 @@ const detailsId = `media-header-details-${useId()}`;
   <header
     data-testid="media-header"
     :data-open="open"
-    class="mb-3 cursor-pointer overflow-hidden rounded-lg bg-[rgba(255,255,255,0.06)] transition-colors hover:bg-[rgba(255,255,255,0.09)]"
+    class="mb-3 cursor-pointer overflow-hidden rounded-lg bg-[rgb(var(--c-white) / 0.06)] transition-colors hover:bg-[rgb(var(--c-white) / 0.09)]"
     @click="onCardClick"
   >
     <div class="flex items-center gap-2.5 p-2.5 sm:gap-4 sm:px-4">
@@ -262,7 +262,7 @@ const detailsId = `media-header-details-${useId()}`;
                   <li
                     v-for="genre in genres"
                     :key="genre"
-                    class="rounded-full bg-[rgba(255,255,255,0.08)] px-2.5 py-0.5 text-xs dark:text-gray-300">
+                    class="rounded-full bg-[rgb(var(--c-white) / 0.08)] px-2.5 py-0.5 text-xs dark:text-gray-300">
                     {{ genre }}
                   </li>
                 </ul>

@@ -21,7 +21,7 @@ const props = withDefaults(
     zIndexClass?: string;
   }>(),
   {
-    overlayClass: 'items-center justify-center bg-neutral-900/60',
+    overlayClass: 'items-center justify-center bg-fixed-scrim/60',
     panelClass: '',
     panelStyle: undefined,
     transition: 'nd-modal',

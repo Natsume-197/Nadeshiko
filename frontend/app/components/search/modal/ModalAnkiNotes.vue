@@ -84,7 +84,7 @@ const handleSelectNote = (noteId: number) => {
     data-testid="anki-notes-modal"
     :open="!!sentence"
     labelledby="nd-anki-notes-modal-title"
-    overlay-class="items-center justify-center bg-neutral-900/40"
+    overlay-class="items-center justify-center bg-fixed-scrim/40"
     panel-class="max-h-[calc(100%-3.5rem)] flex flex-col bg-background border border-hairline shadow-sm rounded-xl lg:max-w-3xl m-3 sm:mx-auto"
     @close="emit('close')">
         <div class="nd-modal-header">

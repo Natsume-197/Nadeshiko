@@ -34,7 +34,7 @@ const handleError = () => clearError({ redirect: homePath.value });
           src="/assets/no-results.gif"
           :alt="t('errorPage.imageAlt')"
         >
-        <h2 data-testid="error-status-code" class="font-bold text-red-400 text-3xl">
+        <h2 data-testid="error-status-code" class="font-bold text-brand text-3xl">
           {{ error.statusCode }}
         </h2>
         <h1 class="mt-2 text-2xl font-semibold text-gray-800 dark:text-white md:text-3xl">
@@ -42,7 +42,7 @@ const handleError = () => clearError({ redirect: homePath.value });
         </h1>
         <a
           :href="homePath"
-          class="mt-4 text-lg text-red-400 hover:text-red-300 transition-colors"
+          class="mt-4 text-lg text-brand hover:text-brand-hover transition-colors"
           @click.prevent="handleError"
         >
           {{ t('errorPage.goHome') }}

@@ -175,7 +175,7 @@
   /* The primary call-to-action button. Same height as `nd-btn`, and `inline-flex`
      with a gap so the ones carrying an icon do not have to re-state it. */
   .nd-btn-accent {
-    @apply inline-flex h-9 items-center justify-center gap-1.5 py-2 px-4 text-sm font-semibold rounded-lg bg-button-accent-main text-white;
+    @apply inline-flex h-9 items-center justify-center gap-1.5 py-2 px-4 text-sm font-semibold rounded-lg bg-button-accent-main text-on-accent;
     @apply hover:bg-button-accent-hover disabled:opacity-50 disabled:pointer-events-none;
   }
 
@@ -605,18 +605,23 @@
 
 @layer base {
   /*
-   * Define dark-only tokens on both root and .dark for teleported content and Tailwind dark utilities.
+   * Dark is the default theme; the light theme overrides these from themePalette.js (`lightTokens`) on
+   * `:root[data-theme="light"]`, and on `system` when the OS asks for light.
+   * Define the tokens on both root and .dark for teleported content and Tailwind dark utilities.
    * Surface is the raised fill; dialogs use background. Keep brand accent separate from the softer on-dark
    * accent.
    */
   :root,
   .dark {
+    color-scheme: dark;
+    --on-accent: 255 255 255;
+    --scrollbar-thumb: #555;
     --background: #1d1d1d;
     --surface: #252526;
     --surface-hover: #2c2c2c;
     --surface-soft: var(--background);
-    --surface-lift: rgb(255 255 255 / 0.06);
-    --lift-strong: rgb(255 255 255 / 0.1);
+    --surface-lift: rgb(var(--c-white) / 0.06);
+    --lift-strong: rgb(var(--c-white) / 0.1);
     --ink: #e8e8e8;
     --line: #3c3c3c;
     --line-subtle: color-mix(in srgb, var(--ink) 12%, transparent);
@@ -693,7 +698,7 @@
   }
 
   .dark .scrollbar-dark {
-    scrollbar-color: #555 transparent;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
   }
 
   .dark .scrollbar-dark::-webkit-scrollbar {
@@ -705,7 +710,7 @@
   }
 
   .dark .scrollbar-dark::-webkit-scrollbar-thumb {
-    background-color: #555;
+    background-color: var(--scrollbar-thumb);
     border-radius: 4px;
   }
 
@@ -725,6 +730,28 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     background-color: var(--background);
+  }
+
+  /* Light theme: a white header needs a line to sit apart from the page, and white cards a hairline and a soft
+     shadow, where the dark theme separates them by tone alone. */
+  :root[data-theme="light"]:not([data-header="accent"]) .nd-site-header {
+    box-shadow: 0 1px 0 var(--line);
+  }
+
+  :root[data-theme="light"] .nd-settings-card {
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow-card);
+  }
+
+  @media (prefers-color-scheme: light) {
+    :root[data-theme="system"] .nd-site-header {
+      box-shadow: 0 1px 0 var(--line);
+    }
+
+    :root[data-theme="system"] .nd-settings-card {
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow-card);
+    }
   }
 }
 

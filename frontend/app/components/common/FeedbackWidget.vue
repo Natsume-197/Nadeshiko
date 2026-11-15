@@ -130,7 +130,7 @@ function analyticsIds(): { posthogSessionId?: string; posthogDistinctId?: string
       data-testid="feedback-modal"
       :open="isFeedbackOpen"
       labelledby="nd-feedback-title"
-      overlay-class="items-end justify-center sm:items-center bg-neutral-900/60"
+      overlay-class="items-end justify-center sm:items-center bg-fixed-scrim/60"
       panel-class="w-full max-w-md flex flex-col bg-background border border-hairline shadow-sm rounded-t-xl sm:rounded-xl"
       @close="onClose"
     >

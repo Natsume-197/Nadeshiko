@@ -471,8 +471,18 @@
       "adminTitle": "管理",
       "tabsAriaLabel": "账户设置导航"
     },
+    "themes": {
+      "title": "主题",
+      "description": "选择 Nadeshiko 的外观。赞助者还可以创建自己的主题。",
+      "appearance": "外观",
+      "patronThemes": "赞助者主题",
+      "yourTheme": "你的主题",
+      "createOwn": "自己创建",
+      "cancel": "取消"
+    },
     "tabs": {
       "settings": "设置",
+      "themes": "主题",
       "sync": "Anki",
       "collections": "例句集",
       "activity": "学习记录",
@@ -733,6 +743,37 @@
       },
       "defaultSearchCategory": "默认搜索分类",
       "defaultSearchCategoryDescription": "搜索时默认使用此分类。如果打开的链接已指定分类，则以链接为准。",
+      "themeOptions": {
+        "dark": "深色",
+        "light": "浅色",
+        "system": "跟随设备",
+        "custom": "自定义"
+      },
+      "customTheme": {
+        "patronBadge": "赞助者",
+        "description": "选择现成的主题或你自己的颜色。自定义主题是对在 Patreon 上支持 Nadeshiko 的感谢。",
+        "presetNames": {
+          "sepia": "复古",
+          "midnight": "午夜",
+          "matcha": "抹茶",
+          "indigo": "靛蓝",
+          "ocean": "海洋",
+          "sunset": "日落",
+          "lavender": "薰衣草"
+        },
+        "base": "基础",
+        "accent": "强调色",
+        "background": "背景",
+        "previewText": "女朋友？她是女朋友吗？",
+        "previewButton": "添加到 Anki",
+        "warning_text": "在这个背景上正文可能难以阅读。",
+        "warning_accent": "在这个强调色上白色文字可能难以阅读。",
+        "needsPatron": "赞助者主题仅限 Nadeshiko 的赞助者。请在 设置 → 连接 中关联你的 Patreon 账户；任何付费档位均可。",
+        "apply": "应用主题",
+        "remove": "移除自定义主题",
+        "saved": "已应用自定义主题",
+        "removed": "已移除自定义主题"
+      },
       "motion": "动画效果",
       "motionOptions": {
         "system": "跟随系统",

@@ -30,6 +30,7 @@ const STATIC_PAGES = new Set([
   '/user/hide-media',
   '/user/settings',
   '/user/sync',
+  '/user/themes',
   '/user/admin',
   '/user/admin/agent-activity',
   '/user/admin/announcement',

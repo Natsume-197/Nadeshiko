@@ -242,3 +242,26 @@ properties:
           Releases and new features, including any request for support that
           rides in one. Sent through Zoho Campaigns rather than from here, so
           this governs the audience export. Absent means follow `enabled`.
+  customTheme:
+    type: [object, "null"]
+    description: |
+      A patron's custom theme: a light or dark base plus an accent and a page
+      background. Writing a non-null value needs an active Patreon membership
+      (any paid tier) or an admin account; `null` clears it. Kept when a
+      membership lapses, but left out of the response until it is active again,
+      so the site falls back to the dark theme.
+    required: [base, accent, background]
+    properties:
+      preset:
+        type: string
+        enum: [sepia, indigo, midnight, matcha, ocean, sunset, lavender, custom]
+        description: The ready-made theme it started from, or `custom`.
+      base:
+        type: string
+        enum: [dark, light]
+      accent:
+        type: string
+        pattern: '^#[0-9a-fA-F]{6}$'
+      background:
+        type: string
+        pattern: '^#[0-9a-fA-F]{6}$'

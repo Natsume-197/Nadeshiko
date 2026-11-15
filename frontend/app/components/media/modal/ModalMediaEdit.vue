@@ -468,7 +468,7 @@ const submitDelete = async () => {
               <button
                 type="button"
                 :disabled="isDeleting"
-                class="py-1.5 px-3 text-sm font-semibold rounded-lg bg-red-600 text-white hover:bg-red-500 disabled:opacity-50 disabled:pointer-events-none"
+                class="py-1.5 px-3 text-sm font-semibold rounded-lg bg-red-600 text-on-accent hover:bg-red-500 disabled:opacity-50 disabled:pointer-events-none"
                 @click="submitDelete"
               >
                 <span

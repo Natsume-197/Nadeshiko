@@ -61,6 +61,15 @@ export interface UserPreferences {
   hiddenCategories?: CategoryType[];
   /** `ALL` (and unset) means every visible category; see `UserPreferences.yaml`. */
   defaultSearchCategory?: CategoryType | 'ALL';
+  /** A patron's custom theme. Writing it needs an active patron or an admin; see `customTheme.ts`. */
+  customTheme?: CustomTheme | null;
+}
+
+export interface CustomTheme {
+  preset?: 'sepia' | 'indigo' | 'midnight' | 'matcha' | 'ocean' | 'sunset' | 'lavender' | 'custom';
+  base: 'dark' | 'light';
+  accent: string;
+  background: string;
 }
 
 @Entity('User')

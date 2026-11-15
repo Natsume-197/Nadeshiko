@@ -111,7 +111,7 @@ const toggleAll = async () => {
         <div class="flex flex-col items-center text-center">
           <img data-testid="error-image" class="mb-6" src="/assets/no-results.gif" :alt="t('errorPage.imageAlt')">
           <h1 class="text-2xl font-semibold text-white md:text-3xl">{{ message }}</h1>
-          <NuxtLink :to="localePath('/user/settings')" class="mt-4 text-lg text-red-400 transition-colors hover:text-red-300">
+          <NuxtLink :to="localePath('/user/settings')" class="mt-4 text-lg text-brand transition-colors hover:text-brand-hover">
             {{ t('unsubscribe.goToSettings') }}
           </NuxtLink>
         </div>
@@ -136,7 +136,7 @@ const toggleAll = async () => {
                 :aria-label="t('accountSettings.emails.allTitle')"
                 :class="[
                   'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none',
-                  enabled ? 'bg-red-500' : 'bg-gray-600',
+                  enabled ? 'bg-brand-solid' : 'bg-gray-600',
                 ]"
                 @click="toggleAll"
               >
@@ -169,7 +169,7 @@ const toggleAll = async () => {
                   :class="[
                     'relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none',
                     enabled ? 'cursor-pointer' : 'cursor-not-allowed',
-                    enabled && categories[category] ? 'bg-red-500' : 'bg-gray-600',
+                    enabled && categories[category] ? 'bg-brand-solid' : 'bg-gray-600',
                   ]"
                   @click="toggle(category)"
                 >

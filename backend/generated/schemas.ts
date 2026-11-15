@@ -849,6 +849,15 @@ export const s_UserPreferences = z.object({
       updates: PermissiveBoolean.optional(),
     })
     .optional(),
+  customTheme: z
+    .object({
+      preset: z.enum(['sepia', 'indigo', 'midnight', 'matcha', 'ocean', 'sunset', 'lavender', 'custom']).optional(),
+      base: z.enum(['dark', 'light']),
+      accent: z.string().regex(new RegExp('^#[0-9a-fA-F]{6}$')),
+      background: z.string().regex(new RegExp('^#[0-9a-fA-F]{6}$')),
+    })
+    .nullable()
+    .optional(),
 });
 
 export const s_UserReportTarget = z.discriminatedUnion('type', [s_ReportTargetMedia, s_ReportTargetSegmentInput]);

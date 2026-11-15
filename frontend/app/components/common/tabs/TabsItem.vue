@@ -7,7 +7,7 @@
       :aria-current="isActive ? 'true' : undefined"
       class="py-3 px-3 sm:px-5 relative inline-flex items-center gap-2 cursor-pointer text-base sm:gap-2.5"
       :class="isActive
-        ? 'font-bold text-[rgb(251,120,120)] after:content-[\'\'] after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-[#d74e67] after:z-[1]'
+        ? 'font-bold text-brand after:content-[\'\'] after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-brand-solid after:z-[1]'
         : ''"
     >
       <span class="leading-tight">{{ categoryName }}</span>

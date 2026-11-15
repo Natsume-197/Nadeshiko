@@ -6,6 +6,7 @@ import { MAGIC_LINK_HOLD_BACKS } from '~/utils/magicLinkHoldBack';
 import { apiErrorStatus, handleApiError } from '~/utils/apiError';
 import { reportEvent } from '~/utils/reportError';
 import { splitLocalePrefix } from '~/utils/routes';
+import { isCustomTheme } from '~/utils/customTheme';
 import {
   ANALYTICS_DELIBERATE_SIGN_OUT_KEY,
   AUTH_CALLBACK_PATH,
@@ -393,6 +394,26 @@ export const userStore = defineStore('user', {
       useToastSuccess(msg ? msg : $i18n.t('modalauth.labels.logout'));
     },
 
+    /**
+     * The server is the judge of a custom theme: it returns one only while the reader may have it (an active patron,
+     * or an admin). Follow it, so a lapsed membership falls back to the default theme and a theme saved on another
+     * device shows up here. Only called after preferences really loaded, never on a failed fetch.
+     */
+    syncCustomTheme(): void {
+      try {
+        const theme = useThemePreference();
+        const saved = this.preferences.customTheme;
+        if (isCustomTheme(saved)) {
+          if (theme.preference.value === 'custom') theme.setCustomTheme(saved);
+        } else if (theme.preference.value === 'custom') {
+          theme.clearCustomTheme();
+        }
+      } catch (error) {
+        // A theme must never break signing in.
+        handleApiError('auth:custom-theme-sync-failed', error, { toastKey: false });
+      }
+    },
+
     async getBasicInfo(): Promise<void> {
       try {
         const response = await useNadeshikoSdk().getSession();
@@ -402,14 +423,17 @@ export const userStore = defineStore('user', {
         // already resolved by SSR.
         if (!this.applySession(response)) return;
 
+        let loaded = true;
         this.preferences = await useNadeshikoSdk()
           .getUserPreferences()
           .catch((error: unknown) => {
             // Preferences are additive: every reader falls back to a default, so the
             // session stays usable. Report it rather than toasting on every page load.
             handleApiError('auth:preferences-fetch-failed', error, { toastKey: false });
+            loaded = false;
             return {} as UserPreferences;
           });
+        if (loaded) this.syncCustomTheme();
       } catch (error: any) {
         // Only a 401 means the session is really gone. Backend 5xx, a network
         // blip or a rate limit must not silently log out a valid session.

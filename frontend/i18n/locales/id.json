@@ -471,8 +471,18 @@
       "adminTitle": "Admin",
       "tabsAriaLabel": "Bagian pengaturan akun"
     },
+    "themes": {
+      "title": "Tema",
+      "description": "Pilih tampilan Nadeshiko. Patron juga bisa membuat tema sendiri.",
+      "appearance": "Tampilan",
+      "patronThemes": "Tema patron",
+      "yourTheme": "Temamu",
+      "createOwn": "Buat sendiri",
+      "cancel": "Batal"
+    },
     "tabs": {
       "settings": "Pengaturan",
+      "themes": "Tema",
       "sync": "Anki",
       "collections": "Koleksi",
       "activity": "Aktivitas",
@@ -733,6 +743,37 @@
       },
       "defaultSearchCategory": "Kategori pencarian awal",
       "defaultSearchCategoryDescription": "Pencarian akan dibuka pada kategori ini, kecuali tautan yang Anda buka sudah menentukan kategori lain.",
+      "themeOptions": {
+        "dark": "Gelap",
+        "light": "Terang",
+        "system": "Ikuti perangkat",
+        "custom": "Kustom"
+      },
+      "customTheme": {
+        "patronBadge": "Patron",
+        "description": "Pilih tema siap pakai atau warnamu sendiri. Tema kustom adalah ucapan terima kasih karena mendukung Nadeshiko di Patreon.",
+        "presetNames": {
+          "sepia": "Sepia",
+          "midnight": "Tengah Malam",
+          "matcha": "Matcha",
+          "indigo": "Nila",
+          "ocean": "Samudra",
+          "sunset": "Senja",
+          "lavender": "Lavender"
+        },
+        "base": "Dasar",
+        "accent": "Aksen",
+        "background": "Latar",
+        "previewText": "Pacar? Dia pacarnya?",
+        "previewButton": "Tambah ke Anki",
+        "warning_text": "Teks mungkin sulit dibaca di latar ini.",
+        "warning_accent": "Teks putih mungkin sulit dibaca di aksen ini.",
+        "needsPatron": "Tema patron khusus untuk patron Nadeshiko. Tautkan akun Patreon-mu di Pengaturan → Koneksi; tingkat berbayar apa pun berlaku.",
+        "apply": "Terapkan tema",
+        "remove": "Hapus tema kustom",
+        "saved": "Tema kustom diterapkan",
+        "removed": "Tema kustom dihapus"
+      },
       "motion": "Animasi",
       "motionOptions": {
         "system": "Ikuti perangkat",

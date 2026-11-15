@@ -17,7 +17,7 @@ const { openFeedback } = useFeedbackWidget();
         <p class="text-sm text-gray-500 dark:text-gray-300 whitespace-nowrap">
           <NuxtLink
             :to="{ path: localePath('/roadmap'), hash: '#features' }"
-            class="transition-colors duration-300 hover:text-red-500 dark:hover:text-red-400"
+            class="transition-colors duration-300 hover:text-brand"
             :title="$t('navbar.buttons.changelog')"
           >
             Nadeshiko {{ $t('home.version', { version: config.public.appVersion }) }} | 2024 - {{ getCurrentYear() }}
@@ -74,7 +74,7 @@ const { openFeedback } = useFeedbackWidget();
           <!-- biome-ignore lint/a11y/useAnchorContent: aria-label names the link; Biome 2.6 misses it in Vue templates -->
           <a
             :href="DISCORD_INVITE_URL"
-            class="mx-2 text-gray-600 transition-colors duration-300 dark:text-gray-300 hover:text-red-500 dark:hover:text-red-400"
+            class="mx-2 text-gray-600 transition-colors duration-300 dark:text-gray-300 hover:text-brand"
             target="_blank"
             aria-label="Discord"
           >
@@ -96,7 +96,7 @@ const { openFeedback } = useFeedbackWidget();
           <!-- biome-ignore lint/a11y/useAnchorContent: aria-label names the link; Biome 2.6 misses it in Vue templates -->
           <a
             href="https://github.com/Natsume-197/Nadeshiko"
-            class="mx-2 text-gray-600 transition-colors duration-300 dark:text-gray-300 hover:text-red-500 dark:hover:text-red-400"
+            class="mx-2 text-gray-600 transition-colors duration-300 dark:text-gray-300 hover:text-brand"
             target="_blank"
             aria-label="Github"
           >

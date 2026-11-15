@@ -1006,6 +1006,12 @@ export type t_UserPreferences = {
   contentRatingPreferences?: {
     nsfw?: 'SHOW' | 'BLUR' | 'HIDE';
   };
+  customTheme?: {
+    accent: string;
+    background: string;
+    base: 'dark' | 'light';
+    preset?: 'sepia' | 'indigo' | 'midnight' | 'matcha' | 'ocean' | 'sunset' | 'lavender' | 'custom';
+  } | null;
   defaultSearchCategory?: 'ALL' | 'ANIME' | 'JDRAMA' | 'YOUTUBE' | 'AUDIOBOOK';
   familiarMedia?: {
     enabled?: boolean;

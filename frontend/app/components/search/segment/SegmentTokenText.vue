@@ -1379,7 +1379,7 @@ function reportDictionaryClick(dictionary: DictionaryId, surface: ShirabeLinkSur
 }
 
 .token:hover {
-  background-color: rgba(255, 255, 255, 0.15);
+  background-color: rgb(var(--c-white) / 0.15);
 }
 
 /* The keyboard's version of the hover above. Without it the arrow keys move a
@@ -1389,7 +1389,7 @@ function reportDictionaryClick(dictionary: DictionaryId, surface: ShirabeLinkSur
 .token:focus-visible {
   outline: 2px solid var(--input-focus-ring);
   outline-offset: 2px;
-  background-color: rgba(255, 255, 255, 0.15);
+  background-color: rgb(var(--c-white) / 0.15);
 }
 
 
@@ -1397,7 +1397,7 @@ function reportDictionaryClick(dictionary: DictionaryId, surface: ShirabeLinkSur
  * win.
  */
 .token--context {
-  color: #a5f3fc;
+  color: rgb(var(--c-cyan-200));
 }
 
 .token--match {
@@ -1515,7 +1515,7 @@ function reportDictionaryClick(dictionary: DictionaryId, surface: ShirabeLinkSur
   font-size: 22px;
   font-weight: 600;
   line-height: 1.25;
-  color: white;
+  color: rgb(var(--c-white));
   text-decoration: none;
   /* Shrinkable, so the Anki buttons that share this row keep their place: a
      flex item's default `min-width: auto` refuses to go below its content, and
@@ -1640,7 +1640,7 @@ a.token-tooltip__word:hover {
   overscroll-behavior: contain;
   padding-bottom: 4px;
   scrollbar-width: thin;
-  scrollbar-color: #555 transparent;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
 }
 
 /* A row, not a chip. Full width so the gloss has somewhere to go, and a rule
@@ -2019,7 +2019,7 @@ a.token-tooltip__word:hover {
   /* Thumb only. The default track is a filled gutter with a border, which
      reads as a second column on this card. */
   scrollbar-width: thin;
-  scrollbar-color: #555 transparent;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
 }
 
 .token-tooltip__body::-webkit-scrollbar {
@@ -2032,7 +2032,7 @@ a.token-tooltip__word:hover {
 }
 
 .token-tooltip__body::-webkit-scrollbar-thumb {
-  background-color: #555;
+  background-color: var(--scrollbar-thumb);
   border: none;
   border-radius: 4px;
 }
@@ -2253,11 +2253,11 @@ a.token-tooltip__word:hover {
 }
 
 .token-tooltip__chip--field {
-  color: #60a5fa;
+  color: rgb(var(--c-blue-400));
 }
 
 .token-tooltip__chip--dialect {
-  color: #a78bfa;
+  color: rgb(var(--c-violet-400));
 }
 
 .token-tooltip__pending {
@@ -2494,7 +2494,7 @@ a.token-tooltip__word:hover {
 
 ruby rt {
   font-size: 0.55em;
-  color: rgb(163 163 163);
+  color: rgb(var(--c-neutral-400));
   text-align: center;
   line-height: 1;
   user-select: none;

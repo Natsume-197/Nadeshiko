@@ -155,7 +155,7 @@ const previewTitle = computed(() => announcementTitle(t, form.type));
         <button type="button"
           :class="[
             'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none',
-            form.active ? 'bg-red-400' : 'bg-gray-600',
+            form.active ? 'bg-brand-solid' : 'bg-gray-600',
           ]"
           @click="form.active = !form.active"
         >
@@ -187,7 +187,7 @@ const previewTitle = computed(() => announcementTitle(t, form.type));
     <div class="mt-4 flex gap-3">
       <button type="button"
         :disabled="saving || !hasChanges || !form.message?.trim()"
-        class="px-4 py-2 text-sm rounded-lg bg-red-500 hover:bg-red-600 text-white font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+        class="px-4 py-2 text-sm rounded-lg bg-red-500 hover:bg-red-600 text-on-accent font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         @click="save"
       >
         {{ saving ? t('accountSettings.announcement.saving') : t('accountSettings.announcement.save') }}

@@ -471,8 +471,18 @@
       "adminTitle": "Administração",
       "tabsAriaLabel": "Seções das configurações da conta"
     },
+    "themes": {
+      "title": "Temas",
+      "description": "Escolha a aparência do Nadeshiko. Patronos também podem criar o próprio tema.",
+      "appearance": "Aparência",
+      "patronThemes": "Temas de patrono",
+      "yourTheme": "Seu tema",
+      "createOwn": "Criar o seu",
+      "cancel": "Cancelar"
+    },
     "tabs": {
       "settings": "Configurações",
+      "themes": "Temas",
       "sync": "Anki",
       "collections": "Coleções",
       "activity": "Atividade",
@@ -733,6 +743,37 @@
       },
       "defaultSearchCategory": "Categoria padrão da busca",
       "defaultSearchCategoryDescription": "As buscas começam nesta categoria. Se o link já indicar uma categoria, a categoria do link será usada.",
+      "themeOptions": {
+        "dark": "Escuro",
+        "light": "Claro",
+        "system": "Igual ao meu dispositivo",
+        "custom": "Personalizado"
+      },
+      "customTheme": {
+        "patronBadge": "Patronos",
+        "description": "Escolha um tema pronto ou suas próprias cores. Temas personalizados são um agradecimento por apoiar o Nadeshiko no Patreon.",
+        "presetNames": {
+          "sepia": "Sépia",
+          "midnight": "Meia-noite",
+          "matcha": "Matcha",
+          "indigo": "Índigo",
+          "ocean": "Oceano",
+          "sunset": "Pôr do sol",
+          "lavender": "Lavanda"
+        },
+        "base": "Base",
+        "accent": "Destaque",
+        "background": "Fundo",
+        "previewText": "Uma namorada? Ela é namorada dele?",
+        "previewButton": "Adicionar ao Anki",
+        "warning_text": "O texto pode ficar difícil de ler neste fundo.",
+        "warning_accent": "O texto branco pode ficar difícil de ler neste destaque.",
+        "needsPatron": "Os temas de patrono são para patronos do Nadeshiko. Vincule sua conta do Patreon em Configurações → Conexões; qualquer nível pago vale.",
+        "apply": "Aplicar tema",
+        "remove": "Remover tema personalizado",
+        "saved": "Tema personalizado aplicado",
+        "removed": "Tema personalizado removido"
+      },
       "motion": "Animações",
       "motionOptions": {
         "system": "Seguir o dispositivo",

@@ -387,7 +387,7 @@ watch([searchQuery, filterCategory], () => {
         class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 gap-3 md:gap-4 lg:gap-5 xl:gap-6"
       >
         <div v-if="loading && filteredMedia.length === 0" v-for="i in pageSize" :key="i" class="flex flex-col items-center animate-pulse">
-          <div class="relative w-full overflow-hidden rounded-lg bg-[rgba(255,255,255,0.06)] aspect-[2/3]"></div>
+          <div class="relative w-full overflow-hidden rounded-lg bg-[rgb(var(--c-white) / 0.06)] aspect-[2/3]"></div>
           <div class="mt-2 w-full h-4  rounded"></div>
         </div>
 
@@ -399,7 +399,7 @@ watch([searchQuery, filterCategory], () => {
           class="flex flex-col items-center"
         >
           <div
-            class="relative w-full overflow-hidden rounded-lg shadow-lg transition-all bg-[rgba(255,255,255,0.06)] aspect-[2/3]"
+            class="relative w-full overflow-hidden rounded-lg shadow-lg transition-all bg-[rgb(var(--c-white) / 0.06)] aspect-[2/3]"
           >
             <NuxtLink
               data-testid="media-card"
@@ -437,15 +437,15 @@ watch([searchQuery, filterCategory], () => {
       <div v-if="currentView === 'list'" class="tab-content">
         <div v-if="loading && filteredMedia.length === 0" v-for="i in pageSize" :key="i" class="w-full relative mb-4 animate-pulse">
           <div
-            class="relative flex flex-col z-20 items-center sm:items-start sm:flex-row rounded-lg bg-[rgba(255,255,255,0.06)] transition-all"
+            class="relative flex flex-col z-20 items-center sm:items-start sm:flex-row rounded-lg bg-[rgb(var(--c-white) / 0.06)] transition-all"
           >
-            <div class="relative flex-none w-[16em] h-[21em] bg-[rgba(255,255,255,0.06)] rounded-lg"></div>
+            <div class="relative flex-none w-[16em] h-[21em] bg-[rgb(var(--c-white) / 0.06)] rounded-lg"></div>
 
             <div class="relative flex-auto p-6 z-10">
-              <div class="h-6 bg-[rgba(255,255,255,0.06)] rounded mb-2"></div>
-              <div class="h-4 bg-[rgba(255,255,255,0.06)] rounded w-3/4 mb-2"></div>
-              <div class="h-4 bg-[rgba(255,255,255,0.06)] rounded w-1/2 mb-2"></div>
-              <div class="h-4 bg-[rgba(255,255,255,0.06)] rounded w-1/4"></div>
+              <div class="h-6 bg-[rgb(var(--c-white) / 0.06)] rounded mb-2"></div>
+              <div class="h-4 bg-[rgb(var(--c-white) / 0.06)] rounded w-3/4 mb-2"></div>
+              <div class="h-4 bg-[rgb(var(--c-white) / 0.06)] rounded w-1/2 mb-2"></div>
+              <div class="h-4 bg-[rgb(var(--c-white) / 0.06)] rounded w-1/4"></div>
             </div>
           </div>
         </div>
@@ -565,7 +565,7 @@ watch([searchQuery, filterCategory], () => {
 
                   <NuxtLink
                     :to="localePath(mediaBrowsePath(mediaInfo))"
-                    class="py-3.5 duration-300 px-4 h-12 inline-flex justify-center items-center gap-2 border font-medium shadow-sm align-middle transition-all text-sm hover:bg-red-500/10 text-red-600 border-red-500/70 rounded-lg focus:border-input-focus-ring dark:border-red-400 dark:placeholder-gray-400 dark:text-red-400"
+                    class="py-3.5 duration-300 px-4 h-12 inline-flex justify-center items-center gap-2 border font-medium shadow-sm align-middle transition-all text-sm hover:bg-brand/10 text-brand border-brand/70 rounded-lg focus:border-input-focus-ring dark:placeholder-gray-400"
                     @click="trackMediaSelected(mediaInfo, 'list')"
                   >
                     <div>{{ $t('animeList.vocabularyButton') }}</div>
@@ -585,7 +585,7 @@ watch([searchQuery, filterCategory], () => {
       </div>
 
       <div v-if="loadingMore" class="flex justify-center py-8">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500"></div>
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-solid"></div>
       </div>
 
       <CommonInfiniteScrollObserver v-if="hasMore && !loading" root-margin="200px" @intersect="onSentinelVisible" />

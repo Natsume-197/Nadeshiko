@@ -86,7 +86,7 @@ function reportBotInstallClick(): void {
                                         <!-- The version is not a heading: keep it out of the document outline and search title. -->
                                         <div class="inline-flex">
                                             <h1
-                                                class="text-3xl ml-2 mt-3 md:mt-0 underline underline-offset-8 decoration-4 decoration-header-background sm:mt-0 font-bold md:text-4xl md:leading-tight dark:text-white">
+                                                class="text-3xl ml-2 mt-3 md:mt-0 underline underline-offset-8 decoration-4 decoration-accent sm:mt-0 font-bold md:text-4xl md:leading-tight dark:text-white">
                                                 Nadeshiko
                                             </h1>
                                             <span
@@ -102,33 +102,33 @@ function reportBotInstallClick(): void {
                                                     href="https://unseen-japan.com/sentence-mining-japanese-how-to/"
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    class="underline underline-offset-4 text-red-400 hover:text-red-300 transition-colors"
+                                                    class="underline underline-offset-4 text-brand hover:text-brand-hover transition-colors"
                                                 >{{ $t('home.sentenceMiningLabel') }}</a>
                                             </template>
                                         </i18n-t>
                                         <ul class="list-disc ml-8 py-4 text-sm font-normal">
                                             <li class="mb-4">
                                                 {{ $t('home.nadeDbDescriptionJpSearch') }}:
-                                                <NuxtLink lang="ja" class="underline underline-offset-4 text-red-400 hover:text-red-300 transition-colors"
+                                                <NuxtLink lang="ja" class="underline underline-offset-4 text-brand hover:text-brand-hover transition-colors"
                                                     :to="localePath('/search/彼女')">彼女</NuxtLink>
                                             </li>
                                             <li class="mb-4">
                                                 {{ $t('home.nadeDbDescriptionOtherSearch') }}:
                                                 <template v-for="(example, index) in otherLanguageExamples" :key="example.query"
-                                                    ><NuxtLink class="underline underline-offset-4 text-red-400 hover:text-red-300 transition-colors"
+                                                    ><NuxtLink class="underline underline-offset-4 text-brand hover:text-brand-hover transition-colors"
                                                         :to="localePath(`/search/${example.query}`)">{{ example.label }}</NuxtLink
                                                     ><span v-if="index < otherLanguageExamples.length - 1">, </span></template
                                                 >
                                             </li>
                                             <li class="mb-4">
                                                 {{ $t('home.nadeDbDescriptionExclusiveSearch') }}:
-                                                <NuxtLink lang="ja" class="underline underline-offset-4 text-red-400 hover:text-red-300 transition-colors"
+                                                <NuxtLink lang="ja" class="underline underline-offset-4 text-brand hover:text-brand-hover transition-colors"
                                                     :to="localePath(`/search/${encodeURIComponent('卒業 -みんな')}`)">卒業 -みんな</NuxtLink>
                                             </li>
                                             <li class="">
                                                 {{ $t('home.nadeDbDescriptionExactSearch') }}:
                                                 <NuxtLink :to='localePath(`/search/${encodeURIComponent(`"食べられない"`)}`)'
-                                                    lang="ja" class="underline underline-offset-4 text-red-400 hover:text-red-300 transition-colors">"食べられない"
+                                                    lang="ja" class="underline underline-offset-4 text-brand hover:text-brand-hover transition-colors">"食べられない"
                                                 </NuxtLink>
                                             </li>
                                         </ul>
@@ -201,7 +201,7 @@ function reportBotInstallClick(): void {
                                                     :href="DISCORD_BOT_INSTALL_URL"
                                                     target="_blank" rel="noopener noreferrer"
                                                     @click="reportBotInstallClick"
-                                                    class="underline underline-offset-4 text-red-400 hover:text-red-300 transition-colors">{{
+                                                    class="underline underline-offset-4 text-brand hover:text-brand-hover transition-colors">{{
                                                         $t('home.keyFeatures.feature5.linkText') }}</a></span>
                                         </div>
                                     </div>
@@ -272,18 +272,18 @@ function reportBotInstallClick(): void {
                                                     <div role="status" v-for="i in 10" :key="i"
                                                         class="animate-pulse relative">
                                                         <div
-                                                            class="w-full pb-[145%] rounded-lg items-center overflow-hidden relative bg-[rgba(255,255,255,0.06)] block">
+                                                            class="w-full pb-[145%] rounded-lg items-center overflow-hidden relative bg-[rgb(var(--c-white) / 0.06)] block">
                                                         </div>
                                                         <div
                                                             class="mt-2 text-center justify-center flex flex-col items-center">
                                                             <div
-                                                                class="h-2.5 bg-gray-200 rounded-full dark:bg-[rgba(255,255,255,0.06)] w-36 mt-2 mb-4">
+                                                                class="h-2.5 bg-gray-200 rounded-full dark:bg-[rgb(var(--c-white) / 0.06)] w-36 mt-2 mb-4">
                                                             </div>
                                                         </div>
                                                         <div
                                                             class="text-center mt-1 mb-4 justify-center flex flex-col items-center">
                                                             <div
-                                                                class="h-2.5 bg-gray-200 rounded-full dark:bg-[rgba(255,255,255,0.06)] w-28 mb-4">
+                                                                class="h-2.5 bg-gray-200 rounded-full dark:bg-[rgb(var(--c-white) / 0.06)] w-28 mb-4">
                                                             </div>
                                                         </div>
                                                     </div>
@@ -335,7 +335,7 @@ function reportBotInstallClick(): void {
                                                         class="w-full relative">
                                                         <div class="w-full">
                                                             <div
-                                                                class="border-none pb-[145%] rounded-lg overflow-hidden relative bg-[rgba(255,255,255,0.06)] block">
+                                                                class="border-none pb-[145%] rounded-lg overflow-hidden relative bg-[rgb(var(--c-white) / 0.06)] block">
                                                                 <MediaCover
                                                                     :media="media_info"
                                                                     :alt="mediaName(media_info) || media_info.nameEn || media_info.nameRomaji || media_info.nameJa || 'Media cover image'" />

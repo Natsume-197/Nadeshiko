@@ -41,7 +41,7 @@ onMounted(async () => {
     </template>
     <template v-else>
       <h1 class="text-3xl font-bold">{{ message }}</h1>
-      <NuxtLink :to="localePath('/roadmap#propose')" class="mt-5 text-red-300 hover:text-red-200">{{ t('roadmap.backToRoadmap') }}</NuxtLink>
+      <NuxtLink :to="localePath('/roadmap#propose')" class="mt-5 text-brand hover:text-brand-hover">{{ t('roadmap.backToRoadmap') }}</NuxtLink>
     </template>
   </div>
 </template>

@@ -269,7 +269,7 @@ function featureDate(item: RoadmapItem) {
         </h1>
         <p class="mt-6 max-w-2xl text-base leading-relaxed text-white/65 md:text-lg">{{ t('roadmap.intro') }}</p>
         <div class="mt-6 flex flex-wrap gap-3">
-          <a :href="patreonUrl" target="_blank" rel="noopener" class="inline-flex h-11 items-center gap-2 rounded-lg bg-[#ff424d] px-5 font-semibold text-white hover:bg-[#ff5962]">
+          <a :href="patreonUrl" target="_blank" rel="noopener" class="inline-flex h-11 items-center gap-2 rounded-lg bg-[#ff424d] px-5 font-semibold text-on-accent hover:bg-[#ff5962]">
             <UiBaseIcon :path="mdiPatreon" size="19" /> {{ t('roadmap.support') }}
           </a>
           <a v-if="PATREON_PROPOSALS_ENABLED" href="#propose" class="nd-btn h-11 px-5" @click.prevent="scrollToProposal">{{ t('roadmap.proposeCta') }}</a>
@@ -291,7 +291,7 @@ function featureDate(item: RoadmapItem) {
             <span class="roadmap-timeline-dot absolute left-0 top-0 z-10 flex size-5 items-center justify-center overflow-hidden rounded-full border-[3px] md:left-[11.125rem] md:top-[calc(50%-1rem)] md:-translate-y-1/2" :class="item.status === 'RELEASED' ? 'border-transparent bg-[#8a8a8a] text-[var(--background)]' : 'border-[var(--accent)] bg-[var(--background)]'">
               <UiBaseIcon v-if="item.status === 'RELEASED'" :path="mdiCheck" w="w-3" h="h-3" size="12" />
             </span>
-            <div class="flex self-stretch flex-col justify-center gap-1 whitespace-nowrap text-sm font-semibold md:translate-y-2.5 md:text-right" :class="item.status === 'RELEASED' ? 'text-white/45' : 'text-red-300'">
+            <div class="flex self-stretch flex-col justify-center gap-1 whitespace-nowrap text-sm font-semibold md:translate-y-2.5 md:text-right" :class="item.status === 'RELEASED' ? 'text-white/45' : 'text-brand'">
               <time>{{ formatMonth(item.targetDate?.slice(0, 7) ?? 'unscheduled') }}</time>
               <span class="text-xs">{{ item.status === 'RELEASED' ? t('roadmap.titleDone') : t('roadmap.titleInProgress') }}</span>
             </div>
@@ -304,7 +304,7 @@ function featureDate(item: RoadmapItem) {
               <div class="flex min-h-full min-w-0 flex-col p-5">
                 <h2 class="text-xl font-bold leading-tight">{{ item.title }}</h2>
                 <p class="mt-3 flex items-center gap-1.5 text-sm text-white/50"><UiBaseIcon :path="mdiPatreon" size="15" />{{ t('roadmap.proposedBy', { name: t('roadmap.patronCommunity') }) }}</p>
-                <a v-if="httpUrl(item.sourceUrl)" :href="httpUrl(item.sourceUrl) ?? undefined" target="_blank" rel="noopener noreferrer" class="mt-auto inline-flex items-center gap-1 pt-4 text-xs font-semibold text-red-300 hover:text-red-200">
+                <a v-if="httpUrl(item.sourceUrl)" :href="httpUrl(item.sourceUrl) ?? undefined" target="_blank" rel="noopener noreferrer" class="mt-auto inline-flex items-center gap-1 pt-4 text-xs font-semibold text-brand hover:text-brand-hover">
                   {{ t('roadmap.viewSource') }} <UiBaseIcon :path="mdiArrowRight" size="14" />
                 </a>
               </div>
@@ -317,7 +317,7 @@ function featureDate(item: RoadmapItem) {
             <span class="roadmap-timeline-dot absolute left-0 top-0 z-10 flex size-5 items-center justify-center overflow-hidden rounded-full border-[3px] md:left-[11.125rem] md:top-[calc(50%-1rem)] md:-translate-y-1/2" :class="item.status === 'RELEASED' ? 'border-transparent bg-[#8a8a8a] text-[var(--background)]' : 'border-[var(--accent)] bg-[var(--background)]'">
               <UiBaseIcon v-if="item.status === 'RELEASED'" :path="mdiCheck" w="w-3" h="h-3" size="12" />
             </span>
-            <div class="flex self-stretch flex-col items-start justify-center text-sm font-semibold md:items-end md:text-right" :class="item.status === 'RELEASED' ? 'text-white/45' : 'text-red-300'">
+            <div class="flex self-stretch flex-col items-start justify-center text-sm font-semibold md:items-end md:text-right" :class="item.status === 'RELEASED' ? 'text-white/45' : 'text-brand'">
               <time>{{ featureDate(item) }}</time>
               <span v-if="item.introducedInVersion" class="text-xs text-white/35">v{{ item.introducedInVersion }}</span>
             </div>
@@ -325,7 +325,7 @@ function featureDate(item: RoadmapItem) {
             <article class="feature-roadmap-content relative">
               <h2 class="flex items-center gap-2 text-xl font-bold"><UiBaseIcon :path="featureIcon(item)" size="21" class="shrink-0 text-white/55" />{{ featureTitle(item) }}</h2>
               <p v-if="item.description" class="mt-2 max-w-2xl leading-relaxed text-white/55">{{ featureDescription(item) }}</p>
-              <a v-if="httpUrl(item.sourceUrl)" :href="httpUrl(item.sourceUrl) ?? undefined" target="_blank" rel="noopener noreferrer" class="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-red-300 hover:text-red-200">{{ t('roadmap.viewSource') }} <UiBaseIcon :path="mdiArrowRight" size="14" /></a>
+              <a v-if="httpUrl(item.sourceUrl)" :href="httpUrl(item.sourceUrl) ?? undefined" target="_blank" rel="noopener noreferrer" class="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-brand hover:text-brand-hover">{{ t('roadmap.viewSource') }} <UiBaseIcon :path="mdiArrowRight" size="14" /></a>
             </article>
           </li>
           <li v-if="!featureItems.length" class="rounded-lg border border-dashed border-white/10 p-8 text-center text-sm text-white/35">{{ t('roadmap.emptyFeatures') }}</li>
@@ -370,7 +370,7 @@ function featureDate(item: RoadmapItem) {
               <h3 class="text-lg font-bold">{{ t('roadmap.states.unlinkedTitle') }}</h3>
               <p class="mt-2 text-sm text-white/50">{{ t('roadmap.states.unlinkedBody') }}</p>
               <div class="mt-5 flex flex-wrap justify-center gap-3">
-                <button type="button" class="inline-flex items-center gap-2 rounded-lg bg-[#ff424d] px-4 py-2 font-semibold text-white hover:bg-[#ff5962]" :disabled="working" @click="connectPatreon"><UiBaseIcon :path="mdiPatreon" size="18" />{{ t('roadmap.linkPatreon') }}</button>
+                <button type="button" class="inline-flex items-center gap-2 rounded-lg bg-[#ff424d] px-4 py-2 font-semibold text-on-accent hover:bg-[#ff5962]" :disabled="working" @click="connectPatreon"><UiBaseIcon :path="mdiPatreon" size="18" />{{ t('roadmap.linkPatreon') }}</button>
                 <a :href="patreonUrl" target="_blank" rel="noopener" class="inline-flex items-center rounded-lg border border-white/15 bg-white/5 px-4 py-2 font-semibold text-white/75 hover:bg-white/10 hover:text-white">{{ t('roadmap.becomePatron') }}</a>
               </div>
             </div>
@@ -378,12 +378,12 @@ function featureDate(item: RoadmapItem) {
               <h3 class="text-lg font-bold">{{ t('roadmap.states.inactiveTitle') }}</h3>
               <p class="mt-2 text-sm text-white/50">{{ t('roadmap.states.inactiveBody') }}</p>
               <div class="mt-5 flex flex-wrap justify-center gap-2">
-                <a :href="patreonUrl" target="_blank" rel="noopener" class="inline-flex items-center gap-2 rounded-lg bg-[#ff424d] px-4 py-2 font-semibold text-white hover:bg-[#ff5962]"><UiBaseIcon :path="mdiPatreon" size="18" />{{ t('roadmap.becomePatron') }}</a>
+                <a :href="patreonUrl" target="_blank" rel="noopener" class="inline-flex items-center gap-2 rounded-lg bg-[#ff424d] px-4 py-2 font-semibold text-on-accent hover:bg-[#ff5962]"><UiBaseIcon :path="mdiPatreon" size="18" />{{ t('roadmap.becomePatron') }}</a>
                 <button type="button" class="nd-btn" :disabled="connectionLoading" @click="checkMembership">{{ t('roadmap.checkAgain') }}</button>
               </div>
             </div>
             <div v-else-if="proposalState === 'submitted'" data-testid="roadmap-submitted" class="py-5 text-center">
-              <div class="mx-auto flex size-11 items-center justify-center rounded-full bg-red-400/15 text-red-200"><UiBaseIcon :path="mdiCheck" /></div>
+              <div class="mx-auto flex size-11 items-center justify-center rounded-full bg-brand/15 text-brand-hover"><UiBaseIcon :path="mdiCheck" /></div>
               <h3 class="mt-4 text-lg font-bold">{{ t('roadmap.states.submittedTitle') }}</h3>
               <p class="mt-2 text-sm text-white/50">{{ t('roadmap.states.submittedBody') }}</p>
               <button type="button" class="nd-btn mt-5" @click="submitAnother">{{ t('roadmap.submitAnother') }}</button>
@@ -391,7 +391,7 @@ function featureDate(item: RoadmapItem) {
             <form v-else data-testid="roadmap-patron-form" class="space-y-4" @submit.prevent="submitProposal">
               <div class="mb-5 flex items-center justify-between gap-3">
                 <div><p class="font-bold">{{ t('roadmap.states.activeTitle') }}</p><p class="text-xs text-white/40">{{ connection?.fullName || t('roadmap.patreonMember') }}</p></div>
-                <span class="rounded-full bg-red-400/15 px-3 py-1 text-xs font-semibold text-red-200">{{ t('roadmap.activeBadge') }}</span>
+                <span class="rounded-full bg-brand/15 px-3 py-1 text-xs font-semibold text-brand-hover">{{ t('roadmap.activeBadge') }}</span>
               </div>
               <label class="block"><span class="mb-1.5 block text-sm text-white/65">{{ t('roadmap.form.url') }}</span><input v-model="sourceUrl" required type="url" class="nd-input w-full" :placeholder="t('roadmap.form.urlPlaceholder')"></label>
               <label class="block"><span class="mb-1.5 block text-sm text-white/65">{{ t('roadmap.form.title') }}</span><input v-model="proposalTitle" maxlength="180" class="nd-input w-full" :placeholder="t('roadmap.form.titlePlaceholder')"></label>
@@ -421,7 +421,7 @@ function featureDate(item: RoadmapItem) {
   position: absolute;
   left: .5625rem;
   width: 2px;
-  background: rgba(255, 255, 255, .16);
+  background: rgb(var(--c-white) / .16);
 }
 .roadmap-timeline-item::before,
 .feature-roadmap-item::before { top: 0; height: .625rem; }
@@ -448,7 +448,7 @@ function featureDate(item: RoadmapItem) {
   bottom: -1rem;
   left: 0;
   height: 1px;
-  background: rgba(255, 255, 255, .1);
+  background: rgb(var(--c-white) / .1);
 }
 .proposal-panel { background:var(--surface); }
 </style>

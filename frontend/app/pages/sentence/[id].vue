@@ -255,13 +255,13 @@ em {
     text-decoration: underline;
     text-underline-offset: 0.2em;
     font-style: normal;
-    color: #df848d;
+    color: var(--accent-soft);
 }
 
 .highlight-tail {
     text-decoration: underline dotted;
     text-underline-offset: 0.2em;
-    color: #df848d;
+    color: var(--accent-soft);
     opacity: 0.7;
 }
 </style>

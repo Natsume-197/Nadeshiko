@@ -63,7 +63,7 @@ const displayMediaName = (entry: FamiliarMediaEntry): string =>
           :aria-pressed="trackingEnabled"
           :class="[
             'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none',
-            trackingEnabled ? 'bg-red-500' : 'bg-gray-600',
+            trackingEnabled ? 'bg-brand-solid' : 'bg-gray-600',
           ]"
           @click="emit('toggle-tracking')"
         >
@@ -108,7 +108,7 @@ const displayMediaName = (entry: FamiliarMediaEntry): string =>
           :aria-pressed="familiarEnabled"
           :class="[
             'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none',
-            familiarEnabled ? 'bg-red-500' : 'bg-gray-600',
+            familiarEnabled ? 'bg-brand-solid' : 'bg-gray-600',
           ]"
           @click="emit('toggle-familiar')"
         >

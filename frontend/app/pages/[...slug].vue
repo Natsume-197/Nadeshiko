@@ -169,7 +169,7 @@ useHead(() => ({
           <div v-if="isBlogPost" class="mt-10 pt-6 border-t border-gray-800">
             <NuxtLink
               :to="localePath('/blog')"
-              class="inline-flex items-center gap-2 text-sm font-semibold text-red-400 hover:text-red-300 transition-colors duration-200 group"
+              class="inline-flex items-center gap-2 text-sm font-semibold text-brand hover:text-brand-hover transition-colors duration-200 group"
             >
               <svg aria-hidden="true" class="w-4 h-4 transform group-hover:-translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
@@ -193,14 +193,14 @@ useHead(() => ({
   border-left: 4px solid var(--button-color-accent);
   background-color: color-mix(in srgb, var(--button-color-accent) 8%, transparent);
   border-radius: 0 0.5rem 0.5rem 0;
-  color: #e5e7eb;
+  color: rgb(var(--c-gray-200));
   font-size: 0.9375rem;
 }
 
 .content-markdown :deep(ul) {
   margin-left: 1.5rem;
   margin-bottom: 1.5rem;
-  color: #e5e7eb;
+  color: rgb(var(--c-gray-200));
   list-style-type: disc;
 }
 
@@ -208,7 +208,7 @@ useHead(() => ({
   margin-bottom: 0.75rem;
   line-height: 1.8;
   padding-left: 0.5rem;
-  color: #d1d5db;
+  color: rgb(var(--c-gray-300));
 }
 
 .content-markdown :deep(li::marker) {
@@ -226,7 +226,7 @@ useHead(() => ({
   font-weight: 800;
   margin-top: 0;
   margin-bottom: 0.75rem;
-  color: #f3f4f6;
+  color: rgb(var(--c-gray-100));
   line-height: 1.2;
   position: relative;
   padding-left: 1rem;
@@ -256,7 +256,7 @@ useHead(() => ({
   font-weight: 800;
   margin-top: 0;
   margin-bottom: 0.5rem;
-  color: #f3f4f6;
+  color: rgb(var(--c-gray-100));
   line-height: 1.2;
   position: relative;
   padding-left: 1rem;
@@ -295,7 +295,7 @@ useHead(() => ({
   max-width: min(1100px, 100%);
   margin: 1.5rem auto 2rem;
   border-radius: 0.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgb(var(--c-white) / 0.1);
 }
 
 @media (min-width: 768px) {
@@ -309,7 +309,7 @@ useHead(() => ({
   font-weight: 700;
   margin-top: 0.5rem;
   margin-bottom: 1.25rem;
-  color: #d1d5db;
+  color: rgb(var(--c-gray-300));
   line-height: 1.3;
   text-decoration: underline;
   text-underline-offset: 0.5rem;
@@ -339,7 +339,7 @@ useHead(() => ({
 }
 
 .content-markdown.is-changelog :deep(p em:only-child) {
-  color: #9ca3af;
+  color: rgb(var(--c-gray-400));
   font-size: 1rem;
 }
 
@@ -386,7 +386,7 @@ useHead(() => ({
   max-height: 40rem;
   margin: 1rem 0 0.5rem;
   border-radius: 0.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgb(var(--c-white) / 0.1);
 }
 
 .content-markdown :deep(.image-pair) {
@@ -411,7 +411,7 @@ useHead(() => ({
   margin: 1.5rem auto 3rem;
   max-width: min(720px, 100%);
   background: #2B2D31;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid rgb(var(--c-white) / 0.06);
   border-radius: 0.75rem;
   text-decoration: none;
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
@@ -530,7 +530,7 @@ useHead(() => ({
 .content-markdown :deep(p:has(> img) + p > em:only-child) {
   display: block;
   text-align: center;
-  color: #9ca3af;
+  color: rgb(var(--c-gray-400));
   font-style: normal;
   font-size: 0.925rem;
   margin-bottom: 2rem;
@@ -538,7 +538,7 @@ useHead(() => ({
 
 .content-markdown :deep(p) {
   font-size: 1.125rem;
-  color: #d1d5db;
+  color: rgb(var(--c-gray-300));
   margin-bottom: 1.5rem;
   line-height: 1.8;
   letter-spacing: 0.01em;
@@ -553,13 +553,13 @@ useHead(() => ({
 }
 
 .content-markdown :deep(a:hover) {
-  color: #fca5a5;
+  color: rgb(var(--c-red-300));
   border-bottom-color: var(--button-color-accent);
 }
 
 .content-markdown :deep(h1 a),
 .content-markdown :deep(h2 a) {
-  color: #d1d5db;
+  color: rgb(var(--c-gray-300));
   border-bottom: 2px solid var(--button-color-accent);
 }
 
@@ -587,7 +587,7 @@ useHead(() => ({
 .content-markdown :deep(blockquote p) {
   margin-bottom: 0;
   font-size: 1rem;
-  color: #e5e7eb;
+  color: rgb(var(--c-gray-200));
 }
 
 .content-markdown :deep(blockquote strong) {
@@ -601,7 +601,7 @@ useHead(() => ({
   margin: 0.5rem 0 1.5rem;
   font-size: 0.875rem;
   line-height: 1.7;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgb(var(--c-white) / 0.1);
 }
 
 .content-markdown :deep(pre.shiki code) {
@@ -615,10 +615,10 @@ useHead(() => ({
 .content-markdown :deep(code) {
   font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
   font-size: 0.875em;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgb(var(--c-white) / 0.08);
   padding: 0.15em 0.4em;
   border-radius: 0.3em;
-  color: #e1e4e8;
+  color: rgb(var(--c-gray-200));
 }
 
 .content-markdown :deep(.about-contributor-card img) {

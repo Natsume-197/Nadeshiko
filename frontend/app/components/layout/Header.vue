@@ -65,7 +65,7 @@ watch(() => route.fullPath, closeNavSidebar);
 </script>
 <template>
     <header
-        class="relative flex flex-wrap md:justify-start md:flex-nowrap w-[100vw] bg-white py-3 lg:py-2 dark:bg-header-background yomitan-ignore">
+        class="nd-site-header relative flex flex-wrap md:justify-start md:flex-nowrap w-[100vw] bg-white py-3 lg:py-2 dark:bg-header-background yomitan-ignore">
         <nav class="nd-page px-4 md:px-0 md:flex md:items-center md:justify-between text-xs">
             <div class="flex items-center justify-between">
                 <div class="flex mr-7">

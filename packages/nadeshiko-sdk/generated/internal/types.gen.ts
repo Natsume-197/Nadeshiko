@@ -2241,6 +2241,23 @@ export type UserPreferences = {
          */
         updates?: boolean;
     };
+    /**
+     * A patron's custom theme: a light or dark base plus an accent and a page
+     * background. Writing a non-null value needs an active Patreon membership
+     * (any paid tier) or an admin account; `null` clears it. Kept when a
+     * membership lapses, but left out of the response until it is active again,
+     * so the site falls back to the dark theme.
+     *
+     */
+    customTheme?: {
+        /**
+         * The ready-made theme it started from, or `custom`.
+         */
+        preset?: 'sepia' | 'indigo' | 'midnight' | 'matcha' | 'ocean' | 'sunset' | 'lavender' | 'custom';
+        base: 'dark' | 'light';
+        accent: string;
+        background: string;
+    } | null;
 };
 
 /**

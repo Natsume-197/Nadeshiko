@@ -471,8 +471,18 @@
       "adminTitle": "管理者",
       "tabsAriaLabel": "アカウント設定のセクション"
     },
+    "themes": {
+      "title": "テーマ",
+      "description": "Nadeshiko の見た目を選べます。パトロンは自分だけのテーマも作れます。",
+      "appearance": "外観",
+      "patronThemes": "パトロン限定テーマ",
+      "yourTheme": "あなたのテーマ",
+      "createOwn": "自分で作る",
+      "cancel": "キャンセル"
+    },
     "tabs": {
       "settings": "設定",
+      "themes": "テーマ",
       "sync": "Anki連携",
       "collections": "コレクション",
       "activity": "利用履歴",
@@ -733,6 +743,37 @@
       },
       "defaultSearchCategory": "検索時の初期カテゴリ",
       "defaultSearchCategoryDescription": "検索時に最初に表示するカテゴリを選びます。リンクにカテゴリが指定されている場合は、そちらが優先されます。",
+      "themeOptions": {
+        "dark": "ダーク",
+        "light": "ライト",
+        "system": "端末の設定に合わせる",
+        "custom": "カスタム"
+      },
+      "customTheme": {
+        "patronBadge": "パトロン",
+        "description": "用意されたテーマか、好きな色を選べます。カスタムテーマは Patreon で Nadeshiko を支援してくださる方へのお礼です。",
+        "presetNames": {
+          "sepia": "セピア",
+          "midnight": "ミッドナイト",
+          "matcha": "抹茶",
+          "indigo": "藍",
+          "ocean": "オーシャン",
+          "sunset": "夕焼け",
+          "lavender": "ラベンダー"
+        },
+        "base": "ベース",
+        "accent": "アクセント",
+        "background": "背景",
+        "previewText": "彼女？彼女なの？",
+        "previewButton": "Anki に追加",
+        "warning_text": "この背景では本文が読みにくい可能性があります。",
+        "warning_accent": "このアクセントでは白い文字が読みにくい可能性があります。",
+        "needsPatron": "パトロン限定テーマは Nadeshiko のパトロン向けです。設定 → 連携 から Patreon アカウントをリンクしてください。有料プランならどれでも対象です。",
+        "apply": "テーマを適用",
+        "remove": "カスタムテーマを削除",
+        "saved": "カスタムテーマを適用しました",
+        "removed": "カスタムテーマを削除しました"
+      },
       "motion": "アニメーション",
       "motionOptions": {
         "system": "端末の設定に従う",

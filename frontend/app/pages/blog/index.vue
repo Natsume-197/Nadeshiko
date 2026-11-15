@@ -120,7 +120,7 @@ useHead({
   font-weight: 800;
   margin-top: 0;
   margin-bottom: 0.75rem;
-  color: white;
+  color: rgb(var(--c-white));
   line-height: 1.2;
   position: relative;
   padding-left: 1rem;
@@ -153,7 +153,7 @@ useHead({
   border-left: 4px solid var(--button-color-accent);
   background-color: color-mix(in srgb, var(--button-color-accent) 8%, transparent);
   border-radius: 0 0.5rem 0.5rem 0;
-  color: #e5e7eb;
+  color: rgb(var(--c-gray-200));
   font-size: 0.9375rem;
 }
 </style>

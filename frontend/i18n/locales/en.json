@@ -471,8 +471,18 @@
       "adminTitle": "Admin",
       "tabsAriaLabel": "Account settings sections"
     },
+    "themes": {
+      "title": "Themes",
+      "description": "Choose how Nadeshiko looks. Patrons can also make their own theme.",
+      "appearance": "Appearance",
+      "patronThemes": "Patron themes",
+      "yourTheme": "Your theme",
+      "createOwn": "Create your own",
+      "cancel": "Cancel"
+    },
     "tabs": {
       "settings": "Settings",
+      "themes": "Themes",
       "sync": "Anki",
       "collections": "Collections",
       "activity": "Activity",
@@ -733,6 +743,37 @@
       },
       "defaultSearchCategory": "Default Search Category",
       "defaultSearchCategoryDescription": "Searches open on this category. A link that names a category still wins.",
+      "themeOptions": {
+        "dark": "Dark",
+        "light": "Light",
+        "system": "Match my device",
+        "custom": "Custom"
+      },
+      "customTheme": {
+        "patronBadge": "Patrons",
+        "description": "Pick a ready-made theme or your own colours. Custom themes are a thank-you for supporting Nadeshiko on Patreon.",
+        "presetNames": {
+          "sepia": "Sepia",
+          "midnight": "Midnight",
+          "matcha": "Matcha",
+          "indigo": "Indigo",
+          "ocean": "Ocean",
+          "sunset": "Sunset",
+          "lavender": "Lavender"
+        },
+        "base": "Base",
+        "accent": "Accent",
+        "background": "Background",
+        "previewText": "A girlfriend? Is she a girlfriend?",
+        "previewButton": "Add to Anki",
+        "warning_text": "Body text may be hard to read on this background.",
+        "warning_accent": "White text may be hard to read on this accent.",
+        "needsPatron": "Patron themes are for Nadeshiko patrons. Link your Patreon account in Settings → Connections; any paid tier counts.",
+        "apply": "Apply theme",
+        "remove": "Remove custom theme",
+        "saved": "Custom theme applied",
+        "removed": "Custom theme removed"
+      },
       "motion": "Animations",
       "motionOptions": {
         "system": "Match my device",

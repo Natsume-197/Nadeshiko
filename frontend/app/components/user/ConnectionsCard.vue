@@ -205,7 +205,7 @@ async function disconnectPatreon() {
     <div class="mt-4">
       <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <div class="flex items-center gap-3">
-          <div class="flex size-10 shrink-0 items-center justify-center rounded bg-[#ff424d] text-white" aria-hidden="true"><UiBaseIcon :path="mdiPatreon" size="22" /></div>
+          <div class="flex size-10 shrink-0 items-center justify-center rounded bg-[#ff424d] text-on-accent" aria-hidden="true"><UiBaseIcon :path="mdiPatreon" size="22" /></div>
           <div>
             <p class="text-white">{{ t('connections.patreon.name') }}</p>
             <p class="text-sm text-gray-400" data-testid="patreon-connection-description">

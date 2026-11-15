@@ -13,6 +13,7 @@ import {
   mdiBullhornOutline,
   mdiRobotOutline,
   mdiTimelineClockOutline,
+  mdiPaletteOutline,
 } from '@mdi/js';
 import { useDragScroll } from '~/composables/useDragScroll';
 import { splitLocalePrefix } from '~/utils/routes';
@@ -25,6 +26,7 @@ const store = userStore();
 
 const tabsGeneral = computed(() => [
   { name: t('accountSettings.tabs.settings'), icon: mdiAccount, route: '/user/settings' },
+  { name: t('accountSettings.tabs.themes'), icon: mdiPaletteOutline, route: '/user/themes' },
   { name: t('accountSettings.tabs.sync'), icon: mdiSync, route: '/user/sync' },
   { name: t('accountSettings.tabs.collections'), icon: mdiFormatListBulletedSquare, route: '/user/collections' },
   { name: t('accountSettings.tabs.activity'), icon: mdiHistory, route: '/user/activity' },
@@ -160,7 +162,7 @@ watch(activeTabRoute, scrollActiveTabIntoView);
               :class="[
                 'mobile-settings-tab relative px-4 py-3 text-sm text-nowrap shrink-0 transition-colors border-b-2 cursor-pointer',
                 activeTabRoute === tab.route
-                  ? 'text-red-400 font-semibold border-red-500'
+                  ? 'text-brand font-semibold border-brand-solid'
                   : 'text-gray-400 hover:text-white border-white/10',
               ]"
             >
@@ -178,11 +180,11 @@ watch(activeTabRoute, scrollActiveTabIntoView);
 
 <style>
 .tab-title-settings:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgb(var(--c-white) / 0.1);
 }
 
 .tab-title-settings.active {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgb(var(--c-white) / 0.1);
   font-weight: 600;
 }
 

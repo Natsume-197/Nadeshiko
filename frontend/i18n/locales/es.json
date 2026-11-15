@@ -471,8 +471,18 @@
       "adminTitle": "Administración",
       "tabsAriaLabel": "Secciones de ajustes de la cuenta"
     },
+    "themes": {
+      "title": "Temas",
+      "description": "Elige cómo se ve Nadeshiko. Los patrons también pueden crear su propio tema.",
+      "appearance": "Apariencia",
+      "patronThemes": "Temas de patron",
+      "yourTheme": "Tu tema",
+      "createOwn": "Crear el tuyo",
+      "cancel": "Cancelar"
+    },
     "tabs": {
       "settings": "Ajustes",
+      "themes": "Temas",
       "sync": "Conexión con Anki",
       "collections": "Colecciones",
       "activity": "Actividad",
@@ -733,6 +743,37 @@
       },
       "defaultSearchCategory": "Categoría inicial de búsqueda",
       "defaultSearchCategoryDescription": "Elige la categoría que se abre al buscar. Si el enlace especifica una categoría, se usará esa.",
+      "themeOptions": {
+        "dark": "Oscuro",
+        "light": "Claro",
+        "system": "Como mi dispositivo",
+        "custom": "Personalizado"
+      },
+      "customTheme": {
+        "patronBadge": "Patrons",
+        "description": "Elige un tema ya hecho o tus propios colores. Los temas personalizados son un agradecimiento por apoyar a Nadeshiko en Patreon.",
+        "presetNames": {
+          "sepia": "Sepia",
+          "midnight": "Medianoche",
+          "matcha": "Matcha",
+          "indigo": "Índigo",
+          "ocean": "Océano",
+          "sunset": "Atardecer",
+          "lavender": "Lavanda"
+        },
+        "base": "Base",
+        "accent": "Acento",
+        "background": "Fondo",
+        "previewText": "¿Una novia? ¿Es su novia?",
+        "previewButton": "Añadir a Anki",
+        "warning_text": "El texto puede costar de leer sobre este fondo.",
+        "warning_accent": "El texto blanco puede costar de leer sobre este acento.",
+        "needsPatron": "Los temas de patron son para los patrons de Nadeshiko. Vincula tu cuenta de Patreon en Ajustes → Conexiones; vale cualquier nivel de pago.",
+        "apply": "Aplicar tema",
+        "remove": "Quitar tema personalizado",
+        "saved": "Tema personalizado aplicado",
+        "removed": "Tema personalizado quitado"
+      },
       "motion": "Animaciones",
       "motionOptions": {
         "system": "Usar los ajustes del dispositivo",

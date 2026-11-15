@@ -4,6 +4,7 @@ import { User, type FavoriteMediaItem, type HiddenMediaItem, type UserPreference
 import { ALL_CATEGORIES } from '@app/models/Media';
 import { ValidationFailedError } from '@app/errors';
 import { deepMerge } from '@lib/utils/deepMerge';
+import { assertMayWriteCustomTheme, withUnlockedCustomTheme } from '@app/services/themes/customTheme';
 
 /**
  * The date a favourite gets when the stored entry has none. Sorts last in the
@@ -78,21 +79,24 @@ export const getUserPreferences: GetUserPreferences = async (_params, respond, r
 
   // `req.user` is the row as it is stored, which for an account nobody has
   // written to since the slimming is still the old shape.
-  return respond.with200().body(normalizeMediaPreferences(user.preferences ?? {}));
+  return respond.with200().body(await withUnlockedCustomTheme(user, normalizeMediaPreferences(user.preferences ?? {})));
 };
 
 export const updateUserPreferences: UpdateUserPreferences = async ({ body }, respond, req) => {
   const user = assertUser(req);
+  await assertMayWriteCustomTheme(user, body as UserPreferences);
 
   const updated = await mutateUserPreferences(user.id, (current) => {
     const merged = deepMerge(current as Record<string, unknown>, body as Record<string, unknown>) as UserPreferences;
+    // A theme is one choice, not a set of fields: merging would keep fields of the old theme under the new one.
+    if ('customTheme' in (body as object)) merged.customTheme = (body as UserPreferences).customTheme ?? null;
     assertNotEveryCategoryHidden(merged);
     assertFavoriteMediaWithinCap(merged);
     return merged;
   });
   user.preferences = updated;
 
-  return respond.with200().body(updated);
+  return respond.with200().body(await withUnlockedCustomTheme(user, updated));
 };
 
 /** Read and merge current preferences under a row lock; never merge the cached `req.user` copy, or concurrent tabs

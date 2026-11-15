@@ -9,7 +9,7 @@ const props = withDefaults(
   }>(),
   {
     confirmLabel: undefined,
-    confirmClass: 'bg-red-600 text-white hover:bg-red-500',
+    confirmClass: 'bg-red-600 text-on-accent hover:bg-red-500',
   },
 );
 
@@ -29,7 +29,7 @@ const resolvedConfirmLabel = computed(() => props.confirmLabel ?? t('common.conf
   <CommonBaseModal
     :open="visible"
     z-index-class="z-50"
-    overlay-class="items-center justify-center bg-black/60"
+    overlay-class="items-center justify-center bg-fixed-black/60"
     panel-class="bg-background border border-hairline rounded-xl p-6 w-full max-w-sm"
     :label="title"
     @close="emit('cancel')"

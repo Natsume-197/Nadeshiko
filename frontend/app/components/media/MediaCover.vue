@@ -26,7 +26,7 @@ const isAudiobook = computed(() => props.media?.category === 'AUDIOBOOK');
       loading="lazy"
       class="absolute inset-0 w-full h-full object-cover scale-125 blur-2xl brightness-[0.85]"
     />
-    <div class="absolute inset-0 bg-black/20"></div>
+    <div class="absolute inset-0 bg-fixed-black/20"></div>
     <!-- object-fill in a square undoes legacy YouTube avatars stretched into 460x690 posters; new square covers
          are unchanged.
          -->
@@ -49,7 +49,7 @@ const isAudiobook = computed(() => props.media?.category === 'AUDIOBOOK');
       loading="lazy"
       class="absolute inset-0 w-full h-full object-cover scale-125 blur-2xl brightness-[0.85]"
     />
-    <div class="absolute inset-0 bg-black/20"></div>
+    <div class="absolute inset-0 bg-fixed-black/20"></div>
     <img
       :src="media.coverUrl"
       :alt="alt"

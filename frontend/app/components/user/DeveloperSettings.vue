@@ -263,7 +263,7 @@ const deactivateApiKey = async (item: ApiKeyListItem) => {
         </p>
         <p class="mt-2 text-gray-400 text-sm">
           {{ t('accountSettings.developer.usageLimitMessage.prefix') }}
-          <a href="mailto:contact@nadeshiko.co" class="text-red-400 hover:underline">contact@nadeshiko.co</a>.
+          <a href="mailto:contact@nadeshiko.co" class="text-brand hover:underline">contact@nadeshiko.co</a>.
         </p>
     </div>
 
@@ -455,7 +455,7 @@ const deactivateApiKey = async (item: ApiKeyListItem) => {
     <CommonBaseModal
         data-testid="create-apikey-modal"
         :open="showCreateModal"
-        overlay-class="items-center justify-center bg-neutral-900/40"
+        overlay-class="items-center justify-center bg-fixed-scrim/40"
         panel-class="max-h-[calc(100%-3.5rem)] flex flex-col bg-background border border-hairline shadow-sm rounded-xl w-full sm:max-w-lg m-3 sm:mx-auto"
         @close="closeCreateModal"
     >
@@ -567,7 +567,7 @@ const deactivateApiKey = async (item: ApiKeyListItem) => {
     <CommonBaseModal
         data-testid="rename-apikey-modal"
         :open="showRenameModal"
-        overlay-class="items-center justify-center bg-neutral-900/40"
+        overlay-class="items-center justify-center bg-fixed-scrim/40"
         panel-class="max-h-[calc(100%-3.5rem)] flex flex-col bg-background border border-hairline shadow-sm rounded-xl w-full sm:max-w-lg m-3 sm:mx-auto"
         @close="closeRenameModal"
     >

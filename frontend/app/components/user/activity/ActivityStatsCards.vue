@@ -28,7 +28,7 @@ const { formatNumber } = useFormat();
           :class="[
             'px-3 py-1 text-xs font-medium rounded-md transition-colors',
             range === option
-              ? 'bg-red-500/80 text-white'
+              ? 'bg-red-500/80 text-on-accent'
               : 'text-gray-400 hover:text-white hover:bg-white/10',
           ]"
           @click="emit('update:range', option)"

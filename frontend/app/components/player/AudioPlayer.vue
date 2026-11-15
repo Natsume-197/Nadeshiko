@@ -513,7 +513,7 @@ const selectPlaybackRate = (rate: number) => {
                         <div class="w-full flex items-center gap-3 mb-6 group cursor-pointer" @click="onProgressClick">
                             <div
                                 class="relative flex-grow h-1.5 bg-white/10 rounded-full overflow-hidden group-hover:h-2.5 transition-all">
-                                <div class="absolute top-0 left-0 h-full bg-red-500 rounded-full transition-all duration-100 ease-linear"
+                                <div class="absolute top-0 left-0 h-full bg-brand-solid rounded-full transition-all duration-100 ease-linear"
                                     :style="{ width: `${progress}%` }"></div>
                             </div>
                         </div>
@@ -552,7 +552,7 @@ const selectPlaybackRate = (rate: number) => {
                             <div ref="rateMenuImmersiveRef" class="relative">
                                 <button type="button" @click="rateMenuOpen = !rateMenuOpen"
                                     class="px-2 py-1 rounded-full hover:bg-white/10 transition-colors text-xs font-bold tabular-nums"
-                                    :class="playbackRate === 1 ? 'text-white/60' : 'text-red-400'"
+                                    :class="playbackRate === 1 ? 'text-white/60' : 'text-brand'"
                                     :aria-label="t('player.controls.speed', { rate: playbackRate })"
                                     aria-haspopup="menu" :aria-expanded="rateMenuOpen">
                                     {{ playbackRate }}×
@@ -565,7 +565,7 @@ const selectPlaybackRate = (rate: number) => {
                                     <button type="button" v-for="rate in PLAYBACK_RATES" :key="rate" role="menuitemradio" tabindex="-1"
                                         :aria-checked="playbackRate === rate" @click="selectPlaybackRate(rate)"
                                         class="w-full px-3 py-1.5 text-left text-xs font-bold tabular-nums hover:bg-white/10 transition-colors"
-                                        :class="playbackRate === rate ? 'text-red-400' : 'text-white/70'">
+                                        :class="playbackRate === rate ? 'text-brand' : 'text-white/70'">
                                         {{ rate }}×
                                     </button>
                                 </div>
@@ -580,13 +580,13 @@ const selectPlaybackRate = (rate: number) => {
                             </div>
                             <button type="button" @click="playerStore.toggleAutoplay()"
                                 class="p-2 rounded-full hover:bg-white/10 transition-colors"
-                                :class="{ 'text-red-400': autoplay, 'text-white/60': !autoplay }"
+                                :class="{ 'text-brand': autoplay, 'text-white/60': !autoplay }"
                                 :aria-label="t('player.controls.autoplay')" :aria-pressed="autoplay">
                                 <UiBaseIcon :path="autoplay ? mdiAnimationPlay : mdiMotionPauseOutline" :size="20" />
                             </button>
                             <button type="button" @click="playerStore.toggleRepeat()"
                                 class="p-2 rounded-full hover:bg-white/10 transition-colors"
-                                :class="{ 'text-red-400': repeat, 'text-white/60': !repeat }"
+                                :class="{ 'text-brand': repeat, 'text-white/60': !repeat }"
                                 :aria-label="t('player.controls.repeat')" :aria-pressed="repeat">
                                 <UiBaseIcon :path="mdiRepeat" :size="20" />
                             </button>
@@ -610,7 +610,7 @@ const selectPlaybackRate = (rate: number) => {
                 class="fixed bottom-0 left-0 right-0 bg-neutral-900/90 backdrop-blur-md text-white shadow-lg z-[70] safe-pb border-t border-white/5">
                 <!-- biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: preserve pointer-only seeking -->
                 <div class="w-full bg-neutral-700/30 group cursor-pointer h-1.5 hover:h-2.5 transition-all" @click="onProgressClick">
-                    <div class="bg-red-500 h-full transition-all ease-linear" :style="{ width: `${progress}%` }"></div>
+                    <div class="bg-brand-solid h-full transition-all ease-linear" :style="{ width: `${progress}%` }"></div>
                 </div>
                 <div class="flex flex-wrap items-center justify-between p-3 gap-3 md:px-6">
                     <div class="flex items-center gap-4 flex-grow min-w-0">
@@ -640,7 +640,7 @@ const selectPlaybackRate = (rate: number) => {
                             <UiBaseIcon :path="mdiSkipPrevious" :size="24" />
                         </button>
                         <button type="button" @click="playerStore.togglePlay()"
-                            class="p-2 text-white hover:text-red-400 transition-colors"
+                            class="p-2 text-white hover:text-brand transition-colors"
                             :aria-label="isPlaying ? t('player.controls.pause') : t('player.controls.play')">
                             <UiBaseIcon :path="isPlaying ? mdiPause : mdiPlay" :size="24" />
                         </button>
@@ -664,7 +664,7 @@ const selectPlaybackRate = (rate: number) => {
                         <div ref="rateMenuBarRef" class="relative">
                             <button type="button" @click="rateMenuOpen = !rateMenuOpen"
                                 class="px-2 py-1 rounded-full hover:bg-white/10 transition-colors text-xs font-bold tabular-nums"
-                                :class="playbackRate === 1 ? 'text-white/60' : 'text-red-400'"
+                                :class="playbackRate === 1 ? 'text-white/60' : 'text-brand'"
                                 :aria-label="t('player.controls.speed', { rate: playbackRate })"
                                 aria-haspopup="menu" :aria-expanded="rateMenuOpen">
                                 {{ playbackRate }}×
@@ -677,7 +677,7 @@ const selectPlaybackRate = (rate: number) => {
                                 <button type="button" v-for="rate in PLAYBACK_RATES" :key="rate" role="menuitemradio" tabindex="-1"
                                     :aria-checked="playbackRate === rate" @click="selectPlaybackRate(rate)"
                                     class="w-full px-3 py-1.5 text-left text-xs font-bold tabular-nums hover:bg-white/10 transition-colors"
-                                    :class="playbackRate === rate ? 'text-red-400' : 'text-white/70'">
+                                    :class="playbackRate === rate ? 'text-brand' : 'text-white/70'">
                                     {{ rate }}×
                                 </button>
                             </div>
@@ -692,13 +692,13 @@ const selectPlaybackRate = (rate: number) => {
                         </div>
                         <button type="button" @click="playerStore.toggleAutoplay()"
                             class="p-2 rounded-full hover:bg-white/10 transition-colors"
-                            :class="{ 'text-red-400': autoplay, 'text-white/50': !autoplay }"
+                            :class="{ 'text-brand': autoplay, 'text-white/50': !autoplay }"
                             :aria-label="t('player.controls.autoplay')" :aria-pressed="autoplay">
                             <UiBaseIcon :path="autoplay ? mdiAnimationPlay : mdiMotionPauseOutline" :size="20" />
                         </button>
                         <button type="button" @click="playerStore.toggleRepeat()"
                             class="p-2 rounded-full hover:bg-white/10 transition-colors"
-                            :class="{ 'text-red-400': repeat, 'text-white/60': !repeat }"
+                            :class="{ 'text-brand': repeat, 'text-white/60': !repeat }"
                             :aria-label="t('player.controls.repeat')" :aria-pressed="repeat">
                             <UiBaseIcon :path="mdiRepeat" :size="20" />
                         </button>
@@ -732,8 +732,8 @@ const selectPlaybackRate = (rate: number) => {
   border-radius: 9999px;
   background: linear-gradient(
     to right,
-    rgb(255 255 255 / 0.85) var(--volume-fill),
-    rgb(255 255 255 / 0.2) var(--volume-fill)
+    rgb(var(--c-white) / 0.85) var(--volume-fill),
+    rgb(var(--c-white) / 0.2) var(--volume-fill)
   );
 }
 
@@ -742,8 +742,8 @@ const selectPlaybackRate = (rate: number) => {
   border-radius: 9999px;
   background: linear-gradient(
     to right,
-    rgb(255 255 255 / 0.85) var(--volume-fill),
-    rgb(255 255 255 / 0.2) var(--volume-fill)
+    rgb(var(--c-white) / 0.85) var(--volume-fill),
+    rgb(var(--c-white) / 0.2) var(--volume-fill)
   );
 }
 
@@ -753,7 +753,7 @@ const selectPlaybackRate = (rate: number) => {
   width: 0.75rem;
   height: 0.75rem;
   border-radius: 9999px;
-  background: #fff;
+  background: rgb(var(--c-white));
   /* Centres a 0.75rem thumb on the 0.25rem track. */
   margin-top: -0.25rem;
 }
@@ -763,7 +763,7 @@ const selectPlaybackRate = (rate: number) => {
   height: 0.75rem;
   border: none;
   border-radius: 9999px;
-  background: #fff;
+  background: rgb(var(--c-white));
 }
 
 .player-volume:focus-visible {

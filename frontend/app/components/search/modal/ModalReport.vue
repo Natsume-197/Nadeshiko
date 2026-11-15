@@ -60,7 +60,7 @@ const reasonPillClasses = (reason: string) => {
     'px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-offset-neutral-900 cursor-pointer';
   if (form.reason !== reason)
     return `${base} border border-hairline text-ink-muted hover:border-line-hover hover:text-ink`;
-  return `${base} bg-button-accent-main text-white border border-transparent focus:ring-input-focus-ring`;
+  return `${base} bg-button-accent-main text-on-accent border border-transparent focus:ring-input-focus-ring`;
 };
 
 const contentRatingBadgeClasses: Record<string, string> = {

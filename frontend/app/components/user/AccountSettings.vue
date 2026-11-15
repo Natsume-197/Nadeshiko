@@ -861,7 +861,7 @@ const logoutCurrentUser = async () => {
           :aria-pressed="productEmailsEnabled"
           :class="[
             'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none',
-            productEmailsEnabled ? 'bg-red-500' : 'bg-gray-600',
+            productEmailsEnabled ? 'bg-brand-solid' : 'bg-gray-600',
           ]"
           @click="toggleProductEmails"
         >
@@ -895,7 +895,7 @@ const logoutCurrentUser = async () => {
             :class="[
               'relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none',
               productEmailsEnabled ? 'cursor-pointer' : 'cursor-not-allowed',
-              productEmailsEnabled && emailCategories[category] ? 'bg-red-500' : 'bg-gray-600',
+              productEmailsEnabled && emailCategories[category] ? 'bg-brand-solid' : 'bg-gray-600',
             ]"
             @click="toggleEmailCategory(category)"
           >
