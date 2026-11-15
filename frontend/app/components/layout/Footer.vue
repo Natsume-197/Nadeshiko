@@ -16,7 +16,7 @@ const { openFeedback } = useFeedbackWidget();
              target made the other half look inert. -->
         <p class="text-sm text-gray-500 dark:text-gray-300 whitespace-nowrap">
           <NuxtLink
-            :to="{ path: localePath('/roadmap'), hash: '#features' }"
+            :to="localePath('/changelog')"
             class="transition-colors duration-300 hover:text-brand"
             :title="$t('navbar.buttons.changelog')"
           >

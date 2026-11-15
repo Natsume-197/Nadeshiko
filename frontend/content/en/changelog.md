@@ -9,31 +9,51 @@ What's new in Nadeshiko, newest first. The version in the footer is the release 
 
 We only list what you can see. Work behind a lab or a feature flag stays off this page until it is on for everyone, and dependency bumps, refactors and CI never appear at all. For the commit-level history, see the [releases on GitHub](https://github.com/Natsume-197/Nadeshiko/releases).
 
-## 2.6.0 (2026-11-07)
+## 3.0.0 (2026-11-XX)
+
+Nadeshiko 3.0 is the first major version under new hands. It collects everything that has changed since late October, and from here on this page lists every release again.
 
 ### Highlights
 
-- **Audiobooks**: a new category next to anime, live action and YouTube. Every sentence comes from the book itself and plays in the narrator's voice, with English and Spanish translations, so you can mine Japanese from novels the same way you do from shows. The first title is *My Youth Romantic Comedy Is Wrong, As I Expected* volume 1.
-- **Audiobooks**: chapters are named the way the book's table of contents names them (`① …`, `あとがき`), the title page shows when the book came out, and a button takes you to the book on Audible.
-- **Search filters**: under "All", live-action, YouTube and audiobook titles carry a small tag, so an anime and the book it came from are easy to tell apart.
-- **API**: media can be of category `AUDIOBOOK` and carry an `asin` external id; segments return their chapter's title (`episodeTitle`) and search stats return each episode's `title`. The 2.6.0 SDKs know the new category; older SDKs reject `AUDIOBOOK` media when they read it.
+- **Audiobooks**: a new category next to anime, live action and YouTube. Every sentence comes from the book itself and plays in the narrator's voice, with English and Spanish translations, so you can mine Japanese from novels the same way you do from shows. Chapters are named the way the book's table of contents names them, the title page shows when the book came out, and a button takes you to the book on Audible. The first titles are *My Youth Romantic Comedy Is Wrong, As I Expected* volume 1 and *Ascendance of a Bookworm* part 1 volume 1.
+- **Sort by difficulty**: a new order for search results, easiest or hardest first. It looks at the rarest words in each sentence and at how much it is conjugated (食べさせられた is harder than 食べた), and puts complete sentences of ordinary length first, so one-word lines and fragments don't crowd the top.
+- **More varied search results**: a word that appears a lot in one show no longer fills the first page with that show alone. Results now come in rounds: the best line from every title, then the second best from every title, then the rest. Titles you have starred come first. For words like ひとり or レム, the first ten results now come from nine or ten different titles instead of three.
+- **Fewer opening and ending repeats**: lines that come back in every episode because they belong to an opening, ending or preview are shown once, while ordinary short lines like はい stay searchable.
+- **Themes**: choose Dark, Light or Match my device in the new Themes section of Settings. Patrons on any paid tier can also pick one of seven colour themes (Sepia, Indigo, Midnight, Matcha, Ocean, Sunset, Lavender) or make their own from an accent and a background colour, once their Patreon account is linked in Settings.
+- **Changelog**: this page is back, linked from the version in the footer, and rewritten to cover everything since 2.4.10.
+
+### Improvements
+
+- **Word cards**: mine the form the sentence actually uses (食べた, a kana もしかして) as well as the dictionary form. The card shows both as one choice when they differ, and two new Anki placeholders, `{word-surface}` and `{word-dictionary}`, always carry both.
+- **Search filters**: the title list can be sorted A–Z or by number of sentences, with your starred titles first. Your choice is remembered.
+- **Search filters**: under "All", live-action, YouTube and audiobook titles carry a small tag, so an anime and the book or drama it came from are easy to tell apart.
+- **YouTube**: videos are named by their title instead of "Episode N", in the filters, the search tabs, the sentence card and Anki's sentence info.
+- **New content**: *NANA* (anime).
+- **Support**: Patreon moved to patreon.com/NadeshikoApp, and the GitHub links are back now that the source is public again.
 
 ### Fixes
 
-- **Titles**: the sentence and chapter counts on a title catch up as soon as new sentences are searchable, instead of up to a day later.
-- **Titles**: a title that is replaced keeps its address, and its page loads the new version instead of failing every search.
-- **Search**: invalid requests, rate limits and temporary outages now show specific guidance instead of a generic connection error, including when viewing a collection. A short first page no longer stops scrolling when more results are available.
-- **Site**: when too many searches or page renders arrive at once, Nadeshiko now asks the excess to retry in a moment instead of letting every request wait until the whole site times out. The searches already under way get to finish, and other pages stay usable.
-- **Site**: the files from the build you already have open stay available while the next one takes over, including after a server worker restarts, so opening a menu or navigating a page does not turn into a missing-script error.
-- **Word cards**: a reply for a word you have already moved away from can no longer replace the card you are reading.
-- **Word cards**: Nadeshiko's default word cards now open the dictionary entry matching the reading in the sentence, rather than an encyclopedia or a different JMdict homograph.
-- **Anki**: the note list stays with what you have typed instead of arriving late from an earlier search, and an unavailable Anki no longer clears the field mapping you had saved.
+- **Sentence links**: a shared link to a sentence opens on that sentence again.
+- **Expand context**: translations no longer show raw HTML around the neighbouring lines.
+- **Search bar**: coming back to the tab no longer reopens your recent searches.
+- **Search**: invalid requests, rate limits and temporary outages show specific guidance instead of a generic connection error, including when viewing a collection. A short first page no longer stops scrolling when more results are available.
 - **Search**: a batch lookup that fails returns you to the words you pasted instead of showing stale rows or `NaN%`. An empty search address reaches the search page directly.
-- **Stats**: a malformed filter no longer spreads into every level link.
-- **Stats**: the coverage levels stay in the right order and keep their correct labels while a fresh or partial word-frequency list is loading.
-- **Blog**: dates on post cards show again when the page hands the component a real date.
-- **Discord bot**: an unexpected error now leaves a useful report before the bot restarts, rather than disappearing without an explanation.
-- **API**: a search service that is at capacity responds quickly with a documented `503` and `Retry-After`, so an integration can back off instead of waiting for a timeout.
+- **Titles**: sentence and chapter counts catch up as soon as new sentences are searchable, instead of up to a day later, and a title that is replaced keeps its address.
+- **Site**: under heavy load, extra requests are asked to retry in a moment instead of making the whole site time out, and an open tab keeps working while a new version is deployed.
+- **Word cards**: a late reply can no longer replace the card you are reading, and the default card opens the dictionary entry matching the sentence's reading.
+- **Anki**: the note list stays with what you have typed, and an unavailable Anki no longer clears your saved field mapping.
+- **Stats**: a malformed filter no longer spreads into every level link, and the coverage levels keep their order and labels while a word-frequency list loads.
+- **Blog**: dates on post cards show again.
+- **Discord bot**: an unexpected error leaves a useful report before the bot restarts.
+- **Email**: account mail now comes from Natsume, through a new provider.
+
+### API
+
+- Search can sort by `DIFFICULTY_ASC` / `DIFFICULTY_DESC`.
+- With a search word and `RELEVANCE` order, results come in rounds by title; `preferMedia` titles form a first block.
+- Media can be of category `AUDIOBOOK` and carry an `asin` external id; segments return their chapter's title (`episodeTitle`) and search stats return each episode's `title`.
+- A search service at capacity answers quickly with a documented `503` and `Retry-After`.
+- The SDKs are published as `@nadeshiko/nadeshiko-sdk` (npm) and `nadeshiko-sdk-py` (PyPI) 3.0.0. SDKs older than 2.6.0 reject `AUDIOBOOK` media when they read it.
 
 ## 2.4.10 (2026-08-25)
 
