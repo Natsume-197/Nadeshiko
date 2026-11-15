@@ -54,8 +54,8 @@ We've fully revamped the API spec to the point where we can 100% guarantee that 
 We've also exposed more endpoints so you can pull activity and collections data. If you need a source of Japanese example sentences for your next project, give Nadeshiko a try.
 
 And if you don't want to call the API directly, we now offer official SDKs for JavaScript and Python:
-- https://github.com/BrigadaSOS/nadeshiko-sdk-ts
-- https://github.com/BrigadaSOS/nadeshiko-sdk-python
+- https://github.com/Natsume-197/nadeshiko-sdk-ts
+- https://github.com/Natsume-197/nadeshiko-sdk-python
 
 No need to worry about authentication, pagination, retries, or error handling. Everything comes prepared in a clean package.
 

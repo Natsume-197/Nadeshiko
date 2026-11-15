@@ -168,7 +168,7 @@ What the prod workflow does, in order:
 4. Builds and deploys the **frontend** to prod (runs after the backend).
 5. Runs E2E against `https://nadeshiko.co`.
 6. Dispatches the **stable** TypeScript SDK release ->
-   https://github.com/BrigadaSOS/nadeshiko-sdk-ts regenerates from this
+   https://github.com/Natsume-197/nadeshiko-sdk-ts regenerates from this
    release's spec and publishes `X.Y.Z` to npm. Publishing lives there because
    npm's trusted publisher (OIDC, no token) is bound to that repository.
 7. Dispatches the **stable** Python SDK release -> public PyPI version.
@@ -636,7 +636,7 @@ the other reports production.
 ## Refreshing the contributor seed
 
 `bin/setup.ts` offers new contributors a seed database of real content, served
-from R2 by the Worker in `BrigadaSOS/nadeshiko-infra/seed-worker`. Refreshing
+from R2 by the Worker in `Natsume-197/nadeshiko-infra/seed-worker`. Refreshing
 the seed is a manual infrastructure operation documented in that directory's
 README. It is not run by GitHub Actions or the application deploy workflows.
 
