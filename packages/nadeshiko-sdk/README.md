@@ -14,7 +14,7 @@ npm run sdk:codegen          # from the repository root, after a spec change
 ## Relationship to the published package
 
 The npm package that external users install is built and published by
-[nadeshiko-sdk-ts](https://github.com/BrigadaSOS/nadeshiko-sdk-ts), which
+[nadeshiko-sdk-ts](https://github.com/Natsume-197/nadeshiko-sdk-ts), which
 regenerates from the same spec when a production release dispatches it. That
 repository carries its own copy of the generator and of the hand-written
 helpers in `src/`, so **a change intended for npm users has to be made there as

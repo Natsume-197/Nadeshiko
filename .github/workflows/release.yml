@@ -103,7 +103,7 @@ jobs:
           context: .
           file: backend/Dockerfile
           push: true
-          tags: ghcr.io/brigadasos/nadeshiko-backend-prod:${{ env.RELEASE_SHA }}
+          tags: ghcr.io/natsume-197/nadeshiko-backend-prod:${{ env.RELEASE_SHA }}
           labels: service=nadeshiko-backend-prod
           cache-from: type=gha,scope=backend
           cache-to: type=gha,mode=max,scope=backend
@@ -133,7 +133,7 @@ jobs:
           context: .
           file: frontend/Dockerfile
           push: true
-          tags: ghcr.io/brigadasos/nadeshiko-frontend-prod:${{ env.RELEASE_SHA }}
+          tags: ghcr.io/natsume-197/nadeshiko-frontend-prod:${{ env.RELEASE_SHA }}
           labels: service=nadeshiko-frontend-prod
           build-args: |
             NUXT_PUBLIC_ENVIRONMENT=production
@@ -540,11 +540,11 @@ jobs:
         run: |
           set -euo pipefail
           docker buildx imagetools create \
-            --tag ghcr.io/brigadasos/nadeshiko-backend-prod:latest \
-            "ghcr.io/brigadasos/nadeshiko-backend-prod:${RELEASE_SHA}"
+            --tag ghcr.io/natsume-197/nadeshiko-backend-prod:latest \
+            "ghcr.io/natsume-197/nadeshiko-backend-prod:${RELEASE_SHA}"
           docker buildx imagetools create \
-            --tag ghcr.io/brigadasos/nadeshiko-frontend-prod:latest \
-            "ghcr.io/brigadasos/nadeshiko-frontend-prod:${RELEASE_SHA}"
+            --tag ghcr.io/natsume-197/nadeshiko-frontend-prod:latest \
+            "ghcr.io/natsume-197/nadeshiko-frontend-prod:${RELEASE_SHA}"
 
   # Kamal retains old containers specifically for this path. A smoke failure
   # means the just-switched stack is not fit to serve; restore both components
@@ -646,7 +646,7 @@ jobs:
           GH_TOKEN: ${{ secrets.SDK_REPO_DISPATCH_TOKEN }}
         run: |
           set -euo pipefail
-          gh api repos/BrigadaSOS/nadeshiko-sdk-ts/dispatches \
+          gh api repos/Natsume-197/nadeshiko-sdk-ts/dispatches \
             -f event_type='backend_release' \
             -f 'client_payload[release_channel]=stable' \
             -f "client_payload[backend_sha]=${RELEASE_SHA}"
@@ -660,7 +660,7 @@ jobs:
           GH_TOKEN: ${{ secrets.SDK_REPO_DISPATCH_TOKEN }}
         run: |
           set -euo pipefail
-          gh api repos/BrigadaSOS/nadeshiko-sdk-python/dispatches \
+          gh api repos/Natsume-197/nadeshiko-sdk-python/dispatches \
             -f event_type='backend_release' \
             -f 'client_payload[release_channel]=stable' \
             -f "client_payload[backend_sha]=${RELEASE_SHA}"

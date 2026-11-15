@@ -136,7 +136,7 @@ watch(() => route.fullPath, closeNavSidebar);
                         </svg>
                     </a>
                     <!-- biome-ignore lint/a11y/useAnchorContent: aria-label names the link; Biome 2.6 misses it in Vue templates -->
-                    <a href="https://github.com/BrigadaSOS/Nadeshiko"
+                    <a href="https://github.com/Natsume-197/Nadeshiko"
                         class="hidden lg:flex mx-2 text-gray-600 transition-colors duration-300 dark:text-gray-300 hover:text-red-500 dark:hover:text-red-400"
                         target="_blank" aria-label="Github">
                         <svg aria-hidden="true" class="w-5 h-5 fill-white" viewBox="0 0 24 24" fill="none"
@@ -337,7 +337,7 @@ watch(() => route.fullPath, closeNavSidebar);
                             </svg>
                         </a>
                         <!-- biome-ignore lint/a11y/useAnchorContent: aria-label names the link; Biome 2.6 misses it in Vue templates -->
-                        <a href="https://github.com/BrigadaSOS/Nadeshiko"
+                        <a href="https://github.com/Natsume-197/Nadeshiko"
                             class="flex items-center justify-center size-9 rounded-lg text-gray-500 hover:bg-gray-100 dark:text-neutral-400 dark:hover:bg-neutral-700"
                             target="_blank" aria-label="Github">
                             <svg aria-hidden="true" class="w-5 h-5 fill-current" viewBox="0 0 24 24" fill="none"

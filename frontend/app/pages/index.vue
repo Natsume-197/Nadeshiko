@@ -379,7 +379,7 @@ function reportBotInstallClick(): void {
                                 </div>
                                 <div class="md:flex-1 mx-2 flex items-center justify-end space-x-4">
                                     <div class="mt-5 w-auto bg-white p-1 rounded-md">
-                                        <a href="https://github.com/BrigadaSOS/Nadeshiko">
+                                        <a href="https://github.com/Natsume-197/Nadeshiko">
                                             <img class="h-10 object-contain" src="/github-c80c5ec0.png" alt="GitHub" height="48" loading="lazy" />
                                         </a>
                                     </div>

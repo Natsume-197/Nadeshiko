@@ -11,7 +11,7 @@ Thanks for your interest in contributing to Nadeshiko! This guide will help you 
 
 ```bash
 # Clone the repository
-git clone https://github.com/BrigadaSOS/Nadeshiko.git
+git clone https://github.com/Natsume-197/Nadeshiko.git
 cd Nadeshiko
 
 # Install dependencies for every workspace with a single install at the root
@@ -247,7 +247,7 @@ they are stale, and never hand-edit generated files.
 
 `packages/nadeshiko-sdk` is what the frontend and the bot import. The npm
 package that external users install is built separately by
-[nadeshiko-sdk-ts](https://github.com/BrigadaSOS/nadeshiko-sdk-ts), which
+[nadeshiko-sdk-ts](https://github.com/Natsume-197/nadeshiko-sdk-ts), which
 regenerates from the released OpenAPI spec when a production release dispatches
 it.
 
@@ -287,7 +287,7 @@ short, which is fine.
 
 ## Reporting issues
 
-Open an issue on [GitHub](https://github.com/BrigadaSOS/Nadeshiko/issues). For questions, feature ideas, or general discussion, join the [Nadeshiko Discord](https://discord.gg/qRak9MprUS).
+Open an issue on [GitHub](https://github.com/Natsume-197/Nadeshiko/issues). For questions, feature ideas, or general discussion, join the [Nadeshiko Discord](https://discord.gg/qRak9MprUS).
 
 If you see a bug and want to provide a fix for it, you are free to just open a pull request directly. But for features or improvements, we encourage to first add an Issue or ask in the Discord server so we can align on the solution before working on any code changes.
 

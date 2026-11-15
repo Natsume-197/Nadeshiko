@@ -200,7 +200,7 @@ describe('the breadcrumb', () => {
 
 describe('the search container', () => {
   // Without a primed outcome the container runs its own empty search on mount and the shared
-  // sentence never shows (BrigadaSOS/Nadeshiko#585).
+  // sentence never shows (Natsume-197/Nadeshiko#585).
   test('is primed with the sentence the page loaded', async () => {
     const wrapper = await render();
 

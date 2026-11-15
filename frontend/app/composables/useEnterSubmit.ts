@@ -1,7 +1,7 @@
 /**
  * Do not submit the Enter press that confirms an IME conversion. v-model withholds composed
  * text until compositionend, so that press can submit stale or empty input. See
- * https://github.com/BrigadaSOS/Nadeshiko/issues/399.
+ * https://github.com/Natsume-197/Nadeshiko/issues/399.
  */
 
 // Keyed by element rather than held per caller, so one set of listeners is
