@@ -40,8 +40,12 @@ env:
     - SHIRABE_CONNECTION_SECRET
     # Confidential Shirabe client secret used for token exchange, renewal, and revocation; unset disables linking.
     - SHIRABE_OAUTH_CLIENT_SECRET
-    # Patreon linking is intentionally disabled until the feature is launched.
-    # Its configuration defaults to empty, which keeps the routes unavailable.
+    # Patreon linking (patron perks such as custom themes). The OAuth client belongs to the NadeshikoApp campaign;
+    # PATREON_CONNECTION_SECRET encrypts the stored Patreon tokens. All four must exist in SSM before a deploy.
+    - PATREON_OAUTH_CLIENT_ID
+    - PATREON_OAUTH_CLIENT_SECRET
+    - PATREON_CONNECTION_SECRET
+    - PATREON_CAMPAIGN_ID
 
     - EMAIL_API_NADEDB
     - USERNAME_API_NADEDB
@@ -76,6 +80,7 @@ env:
     PORT: 80
     RUN_MIGRATIONS_ON_BOOT: "true"
     BASE_URL: https://nadeshiko.co
+    PATREON_OAUTH_REDIRECT_URI: https://nadeshiko.co/link/patreon/callback
     PATREON_CAMPAIGN_URL: https://www.patreon.com/c/NadeshikoApp
 
     # Amazon SES is the only transport. The configuration set publishes this environment's bounces and complaints to
