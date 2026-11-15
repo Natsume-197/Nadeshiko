@@ -329,7 +329,7 @@ export default defineNuxtConfig({
       name: 'Nadeshiko',
       url: SITE_URL,
       logo: `${SITE_URL}${DEFAULT_OG_IMAGE_PATH}`,
-      sameAs: ['https://github.com/BrigadaSOS', 'https://www.patreon.com/BrigadaSOS', DISCORD_INVITE_URL],
+      sameAs: ['https://github.com/Natsume-197/Nadeshiko', 'https://www.patreon.com/NadeshikoApp', DISCORD_INVITE_URL],
     },
   },
   site: {

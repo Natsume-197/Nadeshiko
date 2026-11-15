@@ -19,7 +19,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     `Search over 1 million Japanese sentences with English and Spanish translations from a wide variety of anime and J-dramas.`,
     '',
     `Nadeshiko is built for and by the Japanese language learning community, and will always be provided **for free**. If you find our work useful, consider supporting us on **Patreon**:`,
-    `- <https://patreon.com/BrigadaSOS>`,
+    `- <https://patreon.com/NadeshikoApp>`,
     '',
     `Found a bug or have a suggestion? Join our **Discord server**:`,
     `- ${DISCORD_INVITE_URL}`,
@@ -44,7 +44,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     new ButtonBuilder()
       .setLabel('Patreon')
       .setStyle(ButtonStyle.Link)
-      .setURL('https://patreon.com/BrigadaSOS')
+      .setURL('https://patreon.com/NadeshikoApp')
       .setEmoji('💜'),
     new ButtonBuilder().setLabel('Add to Discord').setStyle(ButtonStyle.Link).setURL(installUrl).setEmoji('➕'),
   );

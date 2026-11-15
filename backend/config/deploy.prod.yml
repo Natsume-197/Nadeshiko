@@ -76,7 +76,7 @@ env:
     PORT: 80
     RUN_MIGRATIONS_ON_BOOT: "true"
     BASE_URL: https://nadeshiko.co
-    PATREON_CAMPAIGN_URL: https://www.patreon.com/c/BrigadaSOS
+    PATREON_CAMPAIGN_URL: https://www.patreon.com/c/NadeshikoApp
 
     # Amazon SES is the only transport. The configuration set publishes this environment's bounces and complaints to
     # the SNS topic below, which delivers them to /v1/webhooks/ses (nadeshiko-infra/terraform/aws-ses.tf).

@@ -60,7 +60,7 @@ const { data, error, refresh } = await useAsyncData('roadmap', () =>
   $fetch<{ items: RoadmapItem[]; patreonUrl: string }>('/v1/roadmap'),
 );
 const items = computed(() => data.value?.items ?? []);
-const patreonUrl = computed(() => data.value?.patreonUrl ?? 'https://www.patreon.com/c/BrigadaSOS');
+const patreonUrl = computed(() => data.value?.patreonUrl ?? 'https://www.patreon.com/c/NadeshikoApp');
 const connection = ref<PatreonConnection | null>(null);
 const connectionLoading = ref(false);
 const connectionLoaded = ref(false);
