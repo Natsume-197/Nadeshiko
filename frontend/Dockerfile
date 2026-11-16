@@ -2,7 +2,7 @@
 
 # Build from the repository root for workspace manifests, lockfile and SDK sources:
 #   docker build -f frontend/Dockerfile .
-FROM node:26.13.0-slim@sha256:5adad64f9a1fca2d51972caa65983634c8a774eb300d72b20f7f2a0f60368072 AS deps
+FROM node:26.13.1-slim@sha256:e6bedef217677b276c591795e169840edd9096dbf13f29df8ef8d1856b8820bc AS deps
 WORKDIR /build
 # ca-certificates: the PostHog CLI that uploads sourcemaps in production builds is a Rust binary that reads the system
 # trust store, and the slim image ships without one.
@@ -61,7 +61,7 @@ RUN if [ "$NUXT_PUBLIC_ENVIRONMENT" = "production" ]; then \
   fi
 
 # --import loads OpenTelemetry before Nitro's bundle, so ship its SDK separately.
-FROM node:26.13.0-slim@sha256:5adad64f9a1fca2d51972caa65983634c8a774eb300d72b20f7f2a0f60368072 AS otel-deps
+FROM node:26.13.1-slim@sha256:e6bedef217677b276c591795e169840edd9096dbf13f29df8ef8d1856b8820bc AS otel-deps
 WORKDIR /deps
 # Pinned to the lockfile's versions: unpinned, every build resolved whatever was newest, so an upstream release
 # could break the image (api 1.10.0 did, against sdk-trace-node's peer range) or ship code nobody reviewed.
@@ -79,7 +79,7 @@ RUN npm init -y >/dev/null \
     @opentelemetry/instrumentation-runtime-node@0.38.0 \
     @opentelemetry/instrumentation-pino@0.71.0
 
-FROM node:26.13.0-slim@sha256:5adad64f9a1fca2d51972caa65983634c8a774eb300d72b20f7f2a0f60368072
+FROM node:26.13.1-slim@sha256:e6bedef217677b276c591795e169840edd9096dbf13f29df8ef8d1856b8820bc
 WORKDIR /app
 COPY --from=build /build/frontend/.output ./.output
 RUN rm -rf .output/server/node_modules/@opentelemetry/api
