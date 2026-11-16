@@ -116,7 +116,7 @@ export async function importJlpt(
     // Usually written in that kana: the kana is the word's first kana form and marked common (which keeps homographs
     // such as パン "pan" or 謂 いい out), and the word either has no kanji form or its first English sense is marked
     // `uk`. JMdict words only; names have no JLPT level.
-    const [{ words, widened }]: Array<{ words: number; widened: number }> = await runner.query(
+    const [counts]: Array<{ words: number; widened: number }> = await runner.query(
       `WITH own AS (
          SELECT x.word_id, x.level FROM jsonb_to_recordset($1::jsonb) AS x(word_id int, level smallint)
            JOIN dict.word w ON w.id = x.word_id
@@ -152,6 +152,7 @@ export async function importJlpt(
          FROM inserted i LEFT JOIN own o ON o.word_id = i.word_id`,
       [payload, JSON.stringify(kanaRows)],
     );
+    const { words, widened } = counts ?? { words: 0, widened: 0 };
     report.words = words;
     report.widenedByKana = widened;
 

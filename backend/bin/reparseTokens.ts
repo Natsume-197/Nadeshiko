@@ -86,10 +86,11 @@ async function main(): Promise<void> {
   // With --stale, `$3` is the active version and rows already carrying it are left alone; without it `$3` is null and
   // `IS DISTINCT FROM NULL` matches every row, including rows never parsed.
   const skipVersion = stale ? version : null;
-  const [{ total }]: Array<{ total: number }> = await AppDataSource.query(
+  const [count]: Array<{ total: number }> = await AppDataSource.query(
     `SELECT count(*)::int AS total FROM "Segment" WHERE id > $1 AND ($2::text IS NULL OR parser_version IS DISTINCT FROM $2)`,
     [after, skipVersion],
   );
+  const total = count?.total ?? 0;
 
   logger.info({ after, total, stale, parser: version, pageSize: PAGE_SIZE }, 'reparse starting');
 

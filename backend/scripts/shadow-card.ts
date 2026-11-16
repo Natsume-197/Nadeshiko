@@ -180,11 +180,21 @@ async function main(): Promise<void> {
   }
 
   const tally = { tokens: 0, weight: 0 };
-  const outcome = { bothEmpty: [0, 0], onlyTheirs: [0, 0], onlyOurs: [0, 0], same: [0, 0], inOurTop3: [0, 0] };
+  type Pair = [number, number];
+  const outcome: Record<'bothEmpty' | 'onlyTheirs' | 'onlyOurs' | 'same' | 'inOurTop3', Pair> = {
+    bothEmpty: [0, 0],
+    onlyTheirs: [0, 0],
+    onlyOurs: [0, 0],
+    same: [0, 0],
+    inOurTop3: [0, 0],
+  };
   // The candidate row on the same word: how many of Shirabe's other candidates (up to four, as the row shows) we offer
   // too, and how many rows have none on one side and some on the other.
   const row = { theirs: 0, shared: 0, rowsBoth: 0, rowsOnlyTheirs: 0, rowsOnlyOurs: 0 };
-  const fieldSame = Object.fromEntries(Object.keys(FIELDS).map((f) => [f, [0, 0, 0, 0]])) as Record<Field, number[]>;
+  const fieldSame = Object.fromEntries(Object.keys(FIELDS).map((f) => [f, [0, 0, 0, 0]])) as Record<
+    Field,
+    [number, number, number, number]
+  >;
   const samples: string[] = [];
 
   for (const q of queries) {
@@ -198,7 +208,7 @@ async function main(): Promise<void> {
     })) as Card[];
     tally.tokens++;
     tally.weight += q.count;
-    const add = (slot: number[]) => {
+    const add = (slot: Pair) => {
       slot[0]++;
       slot[1] += q.count;
     };
