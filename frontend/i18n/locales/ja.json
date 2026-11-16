@@ -38,7 +38,7 @@
       "changelog": "更新履歴",
       "stats": "統計",
       "media": "作品一覧",
-      "roadmap": "Roadmap",
+      "supporters": "サポーター",
       "collections": "コレクション",
       "activity": "利用履歴",
       "language": "言語",
@@ -654,8 +654,12 @@
       "apiUsageTitle": "API使用量",
       "apiUsageRemaining": "使用済みリクエスト数：{used} / {limit}",
       "quotaResets": "{date} にリセットされます",
-      "quotaTier": "{tier} プラン",
+      "quotaTier": "{tier} ティア",
+      "quotaTierFree": "無料ティア",
       "burstLimit": "各APIキーには、別途1分あたり{max}件のリクエスト上限があります。",
+      "patreonHint": "Patreon のパトロンは月に最大 {max} 件までリクエストできます。",
+      "patreonHintSupport": "Nadeshiko を支援する",
+      "patreonHintLink": "Patreon アカウントを連携する",
       "usageLimitMessage": {
         "prefix": "APIの利用上限の引き上げをご希望の場合は、こちらまでご連絡ください："
       },
@@ -776,6 +780,7 @@
         "warning_text": "この背景では本文が読みにくい可能性があります。",
         "warning_accent": "このアクセントでは白い文字が読みにくい可能性があります。",
         "needsPatron": "パトロン限定テーマは Nadeshiko のパトロン向けです。設定 → 連携 から Patreon アカウントをリンクしてください。有料プランならどれでも対象です。",
+        "seeSupport": "ティアを見る",
         "apply": "テーマを適用",
         "remove": "カスタムテーマを削除",
         "saved": "カスタムテーマを適用しました",
@@ -1504,9 +1509,16 @@
       "goToSettings": "設定へ"
     }
   },
+  "supporters": {
+    "seoTitle": "サポーター | Nadeshiko",
+    "seoDescription": "PatreonでNadeshikoを支援。各ティアの特典と、これから追加される作品や機能を紹介します。",
+    "title": "サポーター",
+    "intro": "サポーターの皆さんがNadeshikoの運営を支え、次に何を作るかを一緒に決めています。下からティアを選んで、開発中のものもご覧ください。",
+    "tabs": {
+      "tiers": "ティア"
+    }
+  },
   "roadmap": {
-    "seoTitle": "ロードマップ | Nadeshiko",
-    "seoDescription": "今後Nadeshikoに追加されるアニメ、開発中の機能、リリース済みの内容をご覧いただけます。",
     "title": "ロードマップ",
     "intro": "Patreonに参加して、次にNadeshikoへ追加してほしい作品や機能をリクエストしよう！",
     "support": "Nadeshikoを支援する",
@@ -1525,7 +1537,8 @@
     "viewSource": "参照元を見る",
     "loadError": "現在ロードマップを読み込めません。",
     "proposalTitle": "お気に入りの作品をリクエスト！",
-    "proposalIntro": "NadeshikoのアクティブなPatreonメンバーは、毎月最大4作品を追加候補としてリクエストできます。以下で利用資格をご確認ください。",
+    "proposalIntro": "NadeshikoのアクティブなPatreonメンバーは、毎月作品を追加候補としてリクエストできます。リクエストできる数はティアによって異なります。以下で利用資格をご確認ください。",
+    "proposalTiersLink": "ティアを見る",
     "steps": {
       "signIn": "Nadeshikoにログイン",
       "patreon": "Patreonを連携または参加",
@@ -1688,6 +1701,62 @@
       "ANIME": "アニメ",
       "JDRAMA": "実写",
       "YOUTUBE": "YouTube"
+    }
+  },
+  "support": {
+    "title": "Nadeshiko を支援する",
+    "perMonth": "月額 {price}",
+    "whatsIncluded": "含まれる特典",
+    "discord": "Discordの特典つき",
+    "tierText": {
+      "seed": [
+        "Nadeshikoが日本語学習の役に立っていて、感謝の気持ちを伝えたい、サイトの存続を応援したいという方へ。ありがとうございます！",
+        "お礼として、Nadeshikoに追加してほしい作品をリクエストでき、APIの上限も引き上げられます。"
+      ],
+      "flower": [
+        "このプロジェクトを本当に信じてくださる方へ。ご支援に心から感謝します！",
+        "Seedの特典に加えて、新機能を提案し、Nadeshikoの開発に直接関わることができます。"
+      ],
+      "nadeshiko": [
+        "Nadeshikoを最も強く応援したい方のための最上位ティアです。このレベルのご支援が、ライブラリの拡充と新機能の開発を支えています。",
+        "Flowerの特典すべてに加え、作品リクエストが優先され、APIの上限も最大になります。"
+      ]
+    },
+    "tiersIntro": "自分に合ったティアを選んでください。Patreonでいつでも変更、解約できます。",
+    "everythingBadge": "すべて込み",
+    "chooseTier": "{tier}を選ぶ",
+    "tiers": {
+      "seed": "Seed",
+      "flower": "Flower",
+      "nadeshiko": "Nadeshiko"
+    },
+    "perks": {
+      "titleRequests": "毎月 {count} 作品までリクエストできる",
+      "talkToDevs": "開発者と直接話せる",
+      "everythingIn": "{tier} の特典すべて",
+      "priority": "作品リクエストの優先対応",
+      "apiRequests": "月 {count} 件の API リクエスト",
+      "customThemes": "カスタムテーマ"
+    },
+    "faq": {
+      "title": "よくある質問",
+      "cancel": {
+        "q": "支援をやめるとどうなりますか？",
+        "a": "特典はメンバーシップの終了とともに終わり、アカウントは月 {count} 件の無料の API 上限に戻ります。作成したカスタムテーマは保存され、再び支援すると戻ります。"
+      },
+      "personal": {
+        "q": "API の上限を他の人と共有できますか？",
+        "a": "いいえ。上限は個人ごとで、個人での利用に限られます。"
+      },
+      "apps": {
+        "q": "他の人が使うアプリを作っています。自分のティアで利用者もカバーされますか？",
+        "a": "いいえ。アプリの利用者はそれぞれ自分の API キーが必要です。{terms}の「第三者による連携」をご覧ください。",
+        "terms": "利用規約"
+      },
+      "oneAccount": {
+        "q": "1 つの Patreon アカウントで複数の Nadeshiko アカウントを有効にできますか？",
+        "a": "いいえ。1 つの Patreon アカウントは 1 つの Nadeshiko アカウントにのみ連携できます。"
+      }
     }
   }
 }

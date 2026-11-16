@@ -24,6 +24,7 @@ import ThemePreviewTile, { type ThemePreviewPalette } from '~/components/user/Th
  * is told how to become one instead of getting a theme the next page load would drop.
  */
 const { t } = useI18n();
+const localePath = useLocalePath();
 const userStoreInstance = userStore();
 const { preference, setPreference, customTheme, setCustomTheme, clearCustomTheme } = useThemePreference();
 
@@ -213,6 +214,9 @@ const editorStart = computed<CustomTheme>(() => ownTheme.value ?? saved.value ??
       data-testid="custom-theme-needs-patron"
     >
       {{ t('accountSettings.account.customTheme.needsPatron') }}
+      <NuxtLink :to="`${localePath('/supporters')}#support`" class="text-brand hover:underline" data-testid="custom-theme-support-link">{{
+        t('accountSettings.account.customTheme.seeSupport')
+      }}</NuxtLink>
     </p>
 
     <CustomThemeEditor

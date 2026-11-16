@@ -38,7 +38,7 @@
       "changelog": "更新日誌",
       "stats": "資料統計",
       "media": "作品目錄",
-      "roadmap": "Roadmap",
+      "supporters": "支持者",
       "collections": "例句集",
       "activity": "學習記錄",
       "language": "語言",
@@ -654,8 +654,12 @@
       "apiUsageTitle": "API 用量",
       "apiUsageRemaining": "已用請求數：{used} / {limit}",
       "quotaResets": "重設日期：{date}",
-      "quotaTier": "{tier} 方案",
+      "quotaTier": "{tier} 等級",
+      "quotaTierFree": "免費等級",
       "burstLimit": "此外，每個金鑰每分鐘最多可傳送 {max} 次請求。",
+      "patreonHint": "Patreon 贊助者每月最多可傳送 {max} 次請求。",
+      "patreonHintSupport": "支持 Nadeshiko",
+      "patreonHintLink": "連結你的 Patreon 帳戶",
       "usageLimitMessage": {
         "prefix": "如需提高 API 用量上限，請聯絡我們："
       },
@@ -776,6 +780,7 @@
         "warning_text": "在這個背景上內文可能難以閱讀。",
         "warning_accent": "在這個強調色上白色文字可能難以閱讀。",
         "needsPatron": "贊助者主題僅限 Nadeshiko 的贊助者。請在 設定 → 連結 中連結你的 Patreon 帳戶；任何付費方案皆可。",
+        "seeSupport": "查看贊助方案。",
         "apply": "套用主題",
         "remove": "移除自訂主題",
         "saved": "已套用自訂主題",
@@ -1504,9 +1509,16 @@
       "goToSettings": "前往設定"
     }
   },
+  "supporters": {
+    "seoTitle": "支持者 | Nadeshiko",
+    "seoDescription": "在 Patreon 上支持 Nadeshiko，了解每個等級的回饋，以及即將加入的作品和功能。",
+    "title": "支持者",
+    "intro": "支持者讓 Nadeshiko 持續運作，並一起決定接下來做什麼。在下方選擇等級，再看看我們正在開發的內容。",
+    "tabs": {
+      "tiers": "等級"
+    }
+  },
   "roadmap": {
-    "seoTitle": "路線圖 | Nadeshiko",
-    "seoDescription": "查看即將加入 Nadeshiko 的動畫、我們正在開發的功能，以及已經發布的內容。",
     "title": "路線圖",
     "intro": "加入我們的 Patreon，申請你希望接下來加入 Nadeshiko 的作品和功能！",
     "support": "支持 Nadeshiko",
@@ -1525,7 +1537,8 @@
     "viewSource": "查看來源",
     "loadError": "目前無法載入路線圖。",
     "proposalTitle": "申請你最喜歡的作品！",
-    "proposalIntro": "Nadeshiko 的活躍贊助會員每月最多可以申請新增四部作品。請在下方檢查你的資格！",
+    "proposalIntro": "Nadeshiko 的活躍贊助會員每月可以申請新增作品，可申請的數量取決於贊助方案。請在下方檢查你的資格！",
+    "proposalTiersLink": "查看贊助方案。",
     "steps": {
       "signIn": "登入 Nadeshiko",
       "patreon": "連結或加入 Patreon",
@@ -1682,6 +1695,62 @@
       "ANIME": "動畫",
       "JDRAMA": "真人影視",
       "YOUTUBE": "YouTube"
+    }
+  },
+  "support": {
+    "title": "支持 Nadeshiko",
+    "perMonth": "每月 {price}",
+    "whatsIncluded": "包含內容",
+    "discord": "包含 Discord 福利",
+    "tierText": {
+      "seed": [
+        "如果 Nadeshiko 在你學習日語的路上幫到了你，你也想表達感謝、幫助網站繼續運作，這個等級就是為你準備的。謝謝你！",
+        "作為回報，你可以申請把新作品加入 Nadeshiko，並獲得更高的 API 額度。"
+      ],
+      "flower": [
+        "獻給真正相信這個專案的人。非常感謝你的支持！",
+        "在 Seed 等級福利的基礎上，你可以提出新功能建議，直接影響 Nadeshiko 的開發。"
+      ],
+      "nadeshiko": [
+        "我們的最高等級，獻給想給予 Nadeshiko 最大支持的人。正是這一級的支持，讓我們能不斷擴充片庫、開發新功能。",
+        "你將獲得 Flower 等級的全部福利，作品申請優先處理，並享有我們最高的 API 額度。"
+      ]
+    },
+    "tiersIntro": "選擇適合你的等級。你可以隨時在 Patreon 上變更或取消。",
+    "everythingBadge": "全部包含",
+    "chooseTier": "選擇{tier}",
+    "tiers": {
+      "seed": "Seed",
+      "flower": "Flower",
+      "nadeshiko": "Nadeshiko"
+    },
+    "perks": {
+      "titleRequests": "每月最多申請 {count} 部作品",
+      "talkToDevs": "直接與開發者交流",
+      "everythingIn": "包含 {tier} 的全部福利",
+      "priority": "作品申請優先處理",
+      "apiRequests": "每月 {count} 次 API 請求",
+      "customThemes": "自訂主題"
+    },
+    "faq": {
+      "title": "常見問題",
+      "cancel": {
+        "q": "取消贊助後會怎樣？",
+        "a": "福利隨會員資格一同結束，帳戶恢復為每月 {count} 次 API 請求的免費上限。你建立的自訂主題會保留，再次贊助後即可恢復。"
+      },
+      "personal": {
+        "q": "我可以與他人共享 API 上限嗎？",
+        "a": "不可以。上限按人計算，僅供個人使用。"
+      },
+      "apps": {
+        "q": "我在為他人開發應用程式，我的方案能涵蓋他們嗎？",
+        "a": "不能。應用程式的每位使用者都需要自己的 API 金鑰。請參閱{terms}中的「第三方整合」。",
+        "terms": "使用條款"
+      },
+      "oneAccount": {
+        "q": "一個 Patreon 帳戶可以解鎖多個 Nadeshiko 帳戶嗎？",
+        "a": "不可以。一個 Patreon 帳戶只能連結一個 Nadeshiko 帳戶。"
+      }
     }
   }
 }

@@ -1,7 +1,9 @@
 import { randomBytes } from 'node:crypto';
 import { config } from '@config/config';
-import { PatreonConnection } from '@app/models';
+import { PatreonConnection, Tier, patreonQuotaTier, unmatchedPatreonTierIds } from '@app/models';
+import { logger } from '@config/log';
 import { InvalidRequestError, ValidationFailedError } from '@app/errors';
+import { invalidatePatreonQuotaCache } from '@app/services/quota/effectiveQuota';
 import { decryptSecret, encryptSecret } from '@lib/secretBox';
 
 const FLOW_TTL_MS = 10 * 60_000;
@@ -41,6 +43,16 @@ function secret(): string {
     throw new ValidationFailedError({ connection: 'Patreon linking is not configured on this server.' });
   }
   return config.PATREON_CONNECTION_SECRET;
+}
+
+export function isPatreonConfigured(): boolean {
+  return Boolean(
+    config.PATREON_OAUTH_CLIENT_ID &&
+      config.PATREON_OAUTH_CLIENT_SECRET &&
+      config.PATREON_OAUTH_REDIRECT_URI &&
+      config.PATREON_CAMPAIGN_ID &&
+      config.PATREON_CONNECTION_SECRET,
+  );
 }
 
 function assertConfigured() {
@@ -99,15 +111,20 @@ async function tokenRequest(parameters: Record<string, string>): Promise<TokenRe
 
 async function identity(accessToken: string): Promise<IdentityResponse> {
   const url = new URL('https://www.patreon.com/api/oauth2/v2/identity');
-  url.searchParams.set('include', 'memberships');
+  // The tiers ride on each membership as a nested include; the campaign is included explicitly too, so its
+  // relationship linkage is there to pick out our campaign's membership. `fields[tier]` keeps the tier objects to
+  // their title: only the ids are used.
+  url.searchParams.set('include', 'memberships,memberships.campaign,memberships.currently_entitled_tiers');
   url.searchParams.set('fields[user]', 'full_name');
   url.searchParams.set('fields[member]', 'patron_status,currently_entitled_amount_cents');
+  url.searchParams.set('fields[tier]', 'title');
   const response = await fetch(url, { headers: { authorization: `Bearer ${accessToken}` } });
   if (!response.ok) throw new InvalidRequestError('Patreon membership could not be verified. Please reconnect.');
   return (await response.json()) as IdentityResponse;
 }
 
-function membershipFrom(response: IdentityResponse) {
+/** The membership to our campaign, out of every campaign the reader belongs to (`identity.memberships` returns all). */
+export function membershipFrom(response: IdentityResponse) {
   const memberships = (response.included ?? []).filter((item) => item.type === 'member');
   const membership = memberships.find((item) => {
     const campaign = item.relationships?.campaign?.data;
@@ -115,13 +132,38 @@ function membershipFrom(response: IdentityResponse) {
   });
   const attrs = membership?.attributes ?? {};
   const campaign = membership?.relationships?.campaign?.data;
+  const tiers = membership?.relationships?.currently_entitled_tiers?.data;
   return {
     memberId: membership?.id ?? null,
     campaignId: !Array.isArray(campaign) ? (campaign?.id ?? null) : null,
     patronStatus: typeof attrs.patron_status === 'string' ? attrs.patron_status : null,
     entitledAmountCents:
       typeof attrs.currently_entitled_amount_cents === 'number' ? attrs.currently_entitled_amount_cents : 0,
+    entitledTierIds: Array.isArray(tiers) ? tiers.filter((tier) => tier.type === 'tier').map((tier) => tier.id) : [],
   };
+}
+
+/**
+ * Warn when an active patron's entitled tiers match no quota tier. Expected to be rare and always worth a look: it is
+ * how a tier renamed or re-created on Patreon (a new id) shows up, since such a patron silently earns nothing.
+ */
+async function warnOnUnmatchedTiers(connection: PatreonConnection): Promise<void> {
+  if (connection.patronStatus !== 'active_patron') return;
+  try {
+    const tiers = await Tier.find();
+    const now = connection.membershipCheckedAt.getTime();
+    if (patreonQuotaTier(tiers, connection, now)) return;
+    logger.warn(
+      {
+        userId: connection.userId,
+        entitledTierIds: connection.entitledTierIds,
+        unmatchedTierIds: unmatchedPatreonTierIds(tiers, connection.entitledTierIds),
+      },
+      'Active Patreon membership matches no quota tier',
+    );
+  } catch (err) {
+    logger.warn({ err, userId: connection.userId }, 'Could not check Patreon tiers against quota tiers');
+  }
 }
 
 export async function completePatreonLink(userId: number, code: string, state: string): Promise<PatreonConnection> {
@@ -152,7 +194,11 @@ export async function completePatreonLink(userId: number, code: string, state: s
   connection.fullName =
     typeof profile.data.attributes?.full_name === 'string' ? profile.data.attributes.full_name : null;
   Object.assign(connection, member, { membershipCheckedAt: new Date() });
-  return connection.save();
+  const saved = await connection.save();
+  // The API quota reads the membership through a cache; a new link should count on the next request.
+  invalidatePatreonQuotaCache(userId);
+  await warnOnUnmatchedTiers(saved);
+  return saved;
 }
 
 async function refreshAccess(connection: PatreonConnection): Promise<string> {
@@ -188,10 +234,14 @@ export async function getPatreonConnection(userId: number, force = false): Promi
   if (!force && Date.now() - connection.membershipCheckedAt.getTime() < MEMBERSHIP_FRESH_MS) return connection;
   const profile = await identity(await refreshAccess(connection));
   Object.assign(connection, membershipFrom(profile), { membershipCheckedAt: new Date() });
-  return connection.save();
+  const saved = await connection.save();
+  invalidatePatreonQuotaCache(userId);
+  await warnOnUnmatchedTiers(saved);
+  return saved;
 }
 
 export async function unlinkPatreon(userId: number): Promise<boolean> {
   const result = await PatreonConnection.delete({ userId });
+  invalidatePatreonQuotaCache(userId);
   return Boolean(result.affected);
 }

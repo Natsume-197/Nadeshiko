@@ -5,10 +5,12 @@ import { useTimeoutFn } from '@vueuse/core';
 import type { ApiKeyListItem, ApiKeyScope } from '@/stores/api';
 import { normalizeApiKey, API_KEY_SCOPES, READ_ONLY_API_KEY_SCOPES, FULL_ACCOUNT_API_KEY_SCOPES } from '@/stores/api';
 import { handleApiError } from '~/utils/apiError';
+import { HIGHEST_MONTHLY_API_REQUESTS } from '~/utils/supportTiers';
 
 const { t } = useI18n();
 const fieldId = useId();
-const { formatDate } = useFormat();
+const { formatDate, formatNumber } = useFormat();
+const localePath = useLocalePath();
 const api_store = apiStore();
 const sdk = useNadeshikoSdk();
 const isLoading = ref(false);
@@ -255,8 +257,19 @@ const deactivateApiKey = async (item: ApiKeyListItem) => {
         <p v-if="quotaResetsOn" class="mt-1 text-gray-400 text-sm">
           {{ $t('accountSettings.developer.quotaResets', { date: quotaResetsOn }) }}
           <span v-if="fieldOptions.quota?.tier">
-            &middot; {{ $t('accountSettings.developer.quotaTier', { tier: fieldOptions.quota.tier.displayName }) }}
+            <!-- "Free" is the site's own word and is translated; supporter tiers keep their Patreon names. -->
+            &middot; {{ fieldOptions.quota.tier.id === 'free'
+              ? $t('accountSettings.developer.quotaTierFree')
+              : $t('accountSettings.developer.quotaTier', { tier: fieldOptions.quota.tier.displayName }) }}
           </span>
+        </p>
+        <!-- Only on the free tier: an override or a Patreon tier already has its answer, and the placeholder shown
+             when /me fails has no tier at all. -->
+        <p v-if="fieldOptions.quota?.tier?.id === 'free'" class="mt-1 text-gray-400 text-sm" data-testid="quota-patreon-hint">
+          {{ $t('accountSettings.developer.patreonHint', { max: formatNumber(HIGHEST_MONTHLY_API_REQUESTS) }) }}
+          <NuxtLink :to="`${localePath('/supporters')}#support`" class="text-brand hover:underline">{{ $t('accountSettings.developer.patreonHintSupport') }}</NuxtLink>
+          &middot;
+          <NuxtLink :to="`${localePath('/user/settings')}#connections`" class="text-brand hover:underline">{{ $t('accountSettings.developer.patreonHintLink') }}</NuxtLink>
         </p>
         <p v-if="burstPerMinute" class="mt-1 text-gray-400 text-sm">
           {{ $t('accountSettings.developer.burstLimit', { max: burstPerMinute }) }}

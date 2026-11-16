@@ -10,6 +10,7 @@ export const TOKEN_SWEEP_QUEUE = 'segment-token-sweep';
 export const DICTIONARY_REFRESH_QUEUE = 'dictionary-refresh';
 export const RECURRING_RECOMPUTE_QUEUE = 'segment-recurring-recompute';
 export const RECURRING_SWEEP_QUEUE = 'segment-recurring-sweep';
+export const PATREON_MEMBERSHIP_REFRESH_QUEUE = 'patreon-membership-refresh';
 
 const ES_SYNC_QUEUES = [ES_SYNC_CREATE_QUEUE, ES_SYNC_UPDATE_QUEUE, ES_SYNC_DELETE_QUEUE] as const;
 
@@ -26,6 +27,7 @@ export const ALL_QUEUES = [
   DICTIONARY_REFRESH_QUEUE,
   RECURRING_RECOMPUTE_QUEUE,
   RECURRING_SWEEP_QUEUE,
+  PATREON_MEMBERSHIP_REFRESH_QUEUE,
 ] as const;
 
 export type EsSyncQueueName = (typeof ES_SYNC_QUEUES)[number];

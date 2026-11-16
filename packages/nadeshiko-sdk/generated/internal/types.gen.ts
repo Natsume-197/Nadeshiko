@@ -1869,9 +1869,10 @@ export type UserMe = {
          */
         periodEnd: string;
         /**
-         * The quota tier this account sits on. Null when the account is on none,
-         * or when an override is in force and the tier no longer describes the
-         * limit.
+         * The quota tier that sets this account's limit: the assigned tier, or
+         * the one a linked Patreon membership earns when that is higher. Null
+         * when the account is on none, or when an override is in force and no
+         * tier describes the limit.
          *
          */
         tier: {
@@ -2895,6 +2896,13 @@ export type Tier = {
      */
     rateLimitWindowMs?: number;
     /**
+     * The Patreon tier whose members earn this tier, matched against the
+     * member's entitled tiers. Null when Patreon never grants it and only an
+     * assignment reaches it.
+     *
+     */
+    patreonTierId?: string;
+    /**
      * Display order; the id is a slug, not a rank
      */
     sortOrder: number;
@@ -2903,9 +2911,16 @@ export type Tier = {
 export type AccountQuotaState = {
     userId: number;
     /**
-     * The tier this account sits on, or null if it has none
+     * The tier this account is assigned, or null if it has none
      */
     tierId: string;
+    /**
+     * The tier that produced `monthlyQuotaLimit`: the assigned tier, or the one
+     * a Patreon membership earns when that is higher. Null when an override or
+     * a fallback decided the limit.
+     *
+     */
+    effectiveTierId: string;
     /**
      * Per-account limit that wins over the tier when set
      */
@@ -2916,11 +2931,14 @@ export type AccountQuotaState = {
     monthlyQuotaLimit: number;
     /**
      * Which step of the resolution order produced `monthlyQuotaLimit`.
+     * `patreon` means a linked, active and recently checked Patreon membership
+     * earns a higher tier than the assigned one; it is computed, never stored,
+     * so it ends on its own when the membership does.
      * `legacy_column` and `default` mean the tier did not resolve, and are worth
      * investigating rather than displaying.
      *
      */
-    quotaSource: 'override' | 'tier' | 'legacy_column' | 'default';
+    quotaSource: 'override' | 'tier' | 'patreon' | 'legacy_column' | 'default';
     /**
      * Calls billed to this account in the current period
      */

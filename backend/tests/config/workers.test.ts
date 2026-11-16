@@ -40,6 +40,7 @@ vi.mock('@app/workers/affinityRetentionWorker', () => ({ registerAffinityRetenti
 vi.mock('@app/workers/tokenParseWorker', () => ({ registerTokenParseWorker: vi.fn() }));
 vi.mock('@app/workers/dictionaryRefreshWorker', () => ({ registerDictionaryRefreshWorker: vi.fn() }));
 vi.mock('@app/workers/recurringLinesWorker', () => ({ registerRecurringLinesWorker: vi.fn() }));
+vi.mock('@app/workers/patreonMembershipRefreshWorker', () => ({ registerPatreonMembershipRefreshWorker: vi.fn() }));
 vi.mock('@app/workers/recurringLinesQueue', () => ({ sendRecurringSweepJob: vi.fn() }));
 
 import { workersInitializer } from '@config/initializers/workers';

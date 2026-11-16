@@ -16,9 +16,10 @@ export const PermissiveBoolean = z.preprocess((value) => {
 export const s_AccountQuotaState = z.object({
   userId: z.coerce.number(),
   tierId: z.string().nullable(),
+  effectiveTierId: z.string().nullable(),
   quotaOverride: z.coerce.number().nullable(),
   monthlyQuotaLimit: z.coerce.number(),
-  quotaSource: z.enum(['override', 'tier', 'legacy_column', 'default']),
+  quotaSource: z.enum(['override', 'tier', 'patreon', 'legacy_column', 'default']),
   quotaUsed: z.coerce.number(),
   periodYyyymm: z.coerce.number(),
 });
@@ -465,6 +466,7 @@ export const s_Tier = z.object({
   monthlyQuotaLimit: z.coerce.number(),
   rateLimitMax: z.coerce.number().nullable().optional(),
   rateLimitWindowMs: z.coerce.number().nullable().optional(),
+  patreonTierId: z.string().nullable().optional(),
   sortOrder: z.coerce.number(),
 });
 

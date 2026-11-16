@@ -1,7 +1,7 @@
 import type { GetAdminUserQuota, ListTiers, UpdateAdminUserQuota } from 'generated/routes/admin';
 import type { t_AccountQuotaState, t_Tier } from 'generated/models';
-import { AccountQuotaUsage, Tier, User, resolveQuotaLimit } from '@app/models';
-import { invalidateTierCache } from '@app/middleware/apiLimiterQuota';
+import { AccountQuotaUsage, Tier, User } from '@app/models';
+import { invalidateTierCache, resolveEffectiveQuota } from '@app/services/quota/effectiveQuota';
 import { invalidateUserCache } from '@app/middleware/authCacheStore';
 import { InvalidRequestError, NotFoundError } from '@app/errors';
 import { assertUser } from '@app/middleware/authentication';
@@ -13,17 +13,18 @@ const toTierDTO = (tier: Tier): t_Tier => ({
   monthlyQuotaLimit: tier.monthlyQuotaLimit,
   rateLimitMax: tier.rateLimitMax,
   rateLimitWindowMs: tier.rateLimitWindowMs,
+  patreonTierId: tier.patreonTierId,
   sortOrder: tier.sortOrder,
 });
 
 async function quotaState(user: User): Promise<t_AccountQuotaState> {
-  const tier = user.tierId ? await Tier.findOne({ where: { id: user.tierId } }) : null;
-  const resolved = resolveQuotaLimit({ ...user, tier });
+  const resolved = await resolveEffectiveQuota(user);
   const usage = await AccountQuotaUsage.getForUser(user.id, resolved.limit);
 
   return {
     userId: user.id,
     tierId: user.tierId,
+    effectiveTierId: resolved.tier?.id ?? null,
     quotaOverride: user.quotaOverride,
     monthlyQuotaLimit: resolved.limit,
     quotaSource: resolved.source,
@@ -86,8 +87,18 @@ export const updateAdminUserQuota: UpdateAdminUserQuota = async ({ params, body 
       event: 'admin.quota.updated',
       'actor.id': actor.id,
       'target.id': user.id,
-      'quota.before': { tierId: before.tierId, override: before.quotaOverride, limit: before.monthlyQuotaLimit },
-      'quota.after': { tierId: after.tierId, override: after.quotaOverride, limit: after.monthlyQuotaLimit },
+      'quota.before': {
+        tierId: before.tierId,
+        override: before.quotaOverride,
+        limit: before.monthlyQuotaLimit,
+        source: before.quotaSource,
+      },
+      'quota.after': {
+        tierId: after.tierId,
+        override: after.quotaOverride,
+        limit: after.monthlyQuotaLimit,
+        source: after.quotaSource,
+      },
       reason: body.reason ?? null,
     },
     'Account quota updated',

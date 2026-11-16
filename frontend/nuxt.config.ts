@@ -61,6 +61,7 @@ const SITEMAP_STATIC_PATHS = [
   '/media',
   '/blog',
   '/changelog',
+  '/supporters',
   '/stats',
   '/stats/words',
   // Expose every tier so crawlers can reach word pages. COVERED excludes words whose empty search pages are

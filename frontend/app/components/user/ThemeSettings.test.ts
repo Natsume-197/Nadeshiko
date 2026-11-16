@@ -26,6 +26,7 @@ const setCustomTheme = vi.fn((value: unknown) => {
 const clearCustomTheme = vi.fn();
 
 vi.stubGlobal('userStore', () => store);
+vi.stubGlobal('useLocalePath', () => (p: string) => `/en${p}`);
 vi.stubGlobal('useNadeshikoSdk', () => ({ updateUserPreferences }));
 vi.stubGlobal('useThemePreference', () => ({
   preference,
@@ -37,7 +38,10 @@ vi.stubGlobal('useThemePreference', () => ({
 
 const { default: ThemeSettings } = await import('./ThemeSettings.vue');
 
-const mountIt = () => mount(ThemeSettings, { global: { stubs: { UiBaseIcon: true } } });
+const mountIt = () =>
+  mount(ThemeSettings, {
+    global: { stubs: { UiBaseIcon: true, NuxtLink: { props: ['to'], template: '<a :href="to"><slot /></a>' } } },
+  });
 const pressed = (w: ReturnType<typeof mountIt>, id: string) =>
   w.get(`[data-testid="${id}"]`).attributes('aria-pressed');
 
@@ -88,6 +92,7 @@ describe('patron themes', () => {
     await flushPromises();
 
     expect(wrapper.find('[data-testid="custom-theme-needs-patron"]').exists()).toBe(true);
+    expect(wrapper.get('[data-testid="custom-theme-support-link"]').attributes('href')).toBe('/en/supporters#support');
     expect(setCustomTheme).not.toHaveBeenCalled();
     expect(handleApiError).not.toHaveBeenCalled();
   });

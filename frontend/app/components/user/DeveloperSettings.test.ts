@@ -18,7 +18,9 @@ const deactivateApiKey = vi.fn();
 vi.stubGlobal('useI18n', () => ({ t: (k: string) => k }));
 vi.stubGlobal('useFormat', () => ({
   formatDate: (d: Date | string) => new Date(d).toISOString().slice(0, 10),
+  formatNumber: (n: number) => String(n),
 }));
+vi.stubGlobal('useLocalePath', () => (p: string) => `/en${p}`);
 vi.stubGlobal('useNadeshikoSdk', () => ({ authApiKeyList, getMe }));
 vi.stubGlobal('apiStore', () => ({ createApiKeyGeneral, renameApiKey, deactivateApiKey }));
 vi.stubGlobal('useToastError', vi.fn());
@@ -66,7 +68,7 @@ async function render(keys?: unknown, me: unknown = { quota: {} }) {
           template: '<button @click="$emit(\'click\')">{{ text }}</button>',
         },
         UiBaseIcon: true,
-        NuxtLink: { props: ['to'], template: '<a><slot /></a>' },
+        NuxtLink: { props: ['to'], template: '<a :href="to"><slot /></a>' },
       },
     },
   });
@@ -153,6 +155,38 @@ describe('the quota block', () => {
 
     expect(wrapper.find('[data-testid="api-keys-load-error"]').exists()).toBe(true);
     expect(wrapper.text()).not.toContain('NaN');
+  });
+});
+
+describe('the tier and the Patreon hint', () => {
+  const periodEnd = '2026-08-31T23:59:59.999Z';
+
+  test('names the tier the server says decided the limit, a Patreon-earned one included', async () => {
+    const wrapper = await render([], { quota: { periodEnd, tier: { id: 'pro', displayName: 'Flower' } } });
+
+    expect(wrapper.text()).toContain('"tier":"Flower"');
+    expect(wrapper.find('[data-testid="quota-patreon-hint"]').exists()).toBe(false);
+  });
+
+  test('on the free tier, points at the Support page and the Patreon link', async () => {
+    const wrapper = await render([], { quota: { periodEnd, tier: { id: 'free', displayName: 'Free' } } });
+
+    // "Free" is translated rather than shown as the tier's stored name.
+    expect(wrapper.text()).toContain('accountSettings.developer.quotaTierFree');
+    expect(wrapper.text()).not.toContain('"tier":"Free"');
+    const hint = wrapper.find('[data-testid="quota-patreon-hint"]');
+    expect(hint.exists()).toBe(true);
+    expect(hint.text()).toContain('"max":"60000"');
+    const links = hint.findAll('a').map((a) => a.attributes('href'));
+    expect(links).toEqual(['/en/supporters#support', '/en/user/settings#connections']);
+  });
+
+  test('says nothing about Patreon under an override or when `me` failed', async () => {
+    const overridden = await render([], { quota: { periodEnd, tier: null } });
+    expect(overridden.find('[data-testid="quota-patreon-hint"]').exists()).toBe(false);
+
+    const failed = await render([], null);
+    expect(failed.find('[data-testid="quota-patreon-hint"]').exists()).toBe(false);
   });
 });
 

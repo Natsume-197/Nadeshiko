@@ -22,7 +22,7 @@ info:
     ### Quota
     Each account has a monthly quota of **5,000 requests**. Once exceeded, further requests will be rejected until the next month.
     To request a quota increase, reach out via the [contact page](https://nadeshiko.co/about).
-  version: 2.6.0
+  version: 3.0.0
   contact:
     name: Nadeshiko Team
     url: https://nadeshiko.co
@@ -6965,9 +6965,10 @@ components:
               type: object
               nullable: true
               description: |
-                The quota tier this account sits on. Null when the account is on none,
-                or when an override is in force and the tier no longer describes the
-                limit.
+                The quota tier that sets this account's limit: the assigned tier, or
+                the one a linked Patreon membership earns when that is higher. Null
+                when the account is on none, or when an override is in force and no
+                tier describes the limit.
               required:
                 - id
                 - displayName
@@ -6977,7 +6978,7 @@ components:
                   example: plus
                 displayName:
                   type: string
-                  example: Plus
+                  example: Seed
             burst:
               type: object
               description: |
@@ -8482,11 +8483,11 @@ components:
           example: plus
         displayName:
           type: string
-          example: Plus
+          example: Seed
         monthlyQuotaLimit:
           type: integer
           description: API calls allowed per calendar month on this tier
-          example: 25000
+          example: 15000
         rateLimitMax:
           type: integer
           nullable: true
@@ -8499,6 +8500,14 @@ components:
           nullable: true
           description: Window for `rateLimitMax`, in milliseconds. Null inherits the default.
           example: null
+        patreonTierId:
+          type: string
+          nullable: true
+          description: |
+            The Patreon tier whose members earn this tier, matched against the
+            member's entitled tiers. Null when Patreon never grants it and only an
+            assignment reaches it.
+          example: '22710324'
         sortOrder:
           type: integer
           description: Display order; the id is a slug, not a rank
@@ -8508,6 +8517,7 @@ components:
       required:
         - userId
         - tierId
+        - effectiveTierId
         - quotaOverride
         - monthlyQuotaLimit
         - quotaSource
@@ -8520,8 +8530,16 @@ components:
         tierId:
           type: string
           nullable: true
-          description: The tier this account sits on, or null if it has none
+          description: The tier this account is assigned, or null if it has none
           example: plus
+        effectiveTierId:
+          type: string
+          nullable: true
+          description: |
+            The tier that produced `monthlyQuotaLimit`: the assigned tier, or the one
+            a Patreon membership earns when that is higher. Null when an override or
+            a fallback decided the limit.
+          example: pro
         quotaOverride:
           type: integer
           nullable: true
@@ -8530,19 +8548,23 @@ components:
         monthlyQuotaLimit:
           type: integer
           description: The limit actually in force, after applying the resolution order
-          example: 25000
+          example: 30000
         quotaSource:
           type: string
           enum:
             - override
             - tier
+            - patreon
             - legacy_column
             - default
           description: |
             Which step of the resolution order produced `monthlyQuotaLimit`.
+            `patreon` means a linked, active and recently checked Patreon membership
+            earns a higher tier than the assigned one; it is computed, never stored,
+            so it ends on its own when the membership does.
             `legacy_column` and `default` mean the tier did not resolve, and are worth
             investigating rather than displaying.
-          example: tier
+          example: patreon
         quotaUsed:
           type: integer
           description: Calls billed to this account in the current period

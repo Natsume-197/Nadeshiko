@@ -199,7 +199,8 @@ async function disconnectPatreon() {
 </script>
 
 <template>
-  <div class="nd-settings-card" data-testid="connections-card">
+  <!-- `id` is the target of "link your Patreon account" links from Developer settings and the Support page. -->
+  <div id="connections" class="nd-settings-card scroll-mt-24" data-testid="connections-card">
     <h3 class="nd-settings-title">{{ t('connections.title') }}</h3>
 
     <div class="mt-4">

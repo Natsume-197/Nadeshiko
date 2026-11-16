@@ -2,6 +2,7 @@ type: object
 required:
   - userId
   - tierId
+  - effectiveTierId
   - quotaOverride
   - monthlyQuotaLimit
   - quotaSource
@@ -14,8 +15,16 @@ properties:
   tierId:
     type: string
     nullable: true
-    description: The tier this account sits on, or null if it has none
+    description: The tier this account is assigned, or null if it has none
     example: plus
+  effectiveTierId:
+    type: string
+    nullable: true
+    description: |
+      The tier that produced `monthlyQuotaLimit`: the assigned tier, or the one
+      a Patreon membership earns when that is higher. Null when an override or
+      a fallback decided the limit.
+    example: pro
   quotaOverride:
     type: integer
     nullable: true
@@ -24,15 +33,18 @@ properties:
   monthlyQuotaLimit:
     type: integer
     description: The limit actually in force, after applying the resolution order
-    example: 25000
+    example: 30000
   quotaSource:
     type: string
-    enum: [override, tier, legacy_column, default]
+    enum: [override, tier, patreon, legacy_column, default]
     description: |
       Which step of the resolution order produced `monthlyQuotaLimit`.
+      `patreon` means a linked, active and recently checked Patreon membership
+      earns a higher tier than the assigned one; it is computed, never stored,
+      so it ends on its own when the membership does.
       `legacy_column` and `default` mean the tier did not resolve, and are worth
       investigating rather than displaying.
-    example: tier
+    example: patreon
   quotaUsed:
     type: integer
     description: Calls billed to this account in the current period

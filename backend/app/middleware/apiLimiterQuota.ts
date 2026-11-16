@@ -1,33 +1,10 @@
 import type { Request, Response, NextFunction } from 'express';
 import { AuthCredentialsInvalidError, QuotaExceededError } from '@app/errors';
-import { ApiKeyKind, AuthType, Tier } from '@app/models';
+import { ApiKeyKind, AuthType } from '@app/models';
 import { AccountQuotaUsage } from '@app/models/AccountQuotaUsage';
-import { resolveQuotaLimit } from '@app/models/quota';
 import { captureApiActiveDay } from '@app/services/analytics/posthog';
+import { resolveEffectiveQuota } from '@app/services/quota/effectiveQuota';
 import { logger } from '@config/log';
-
-/** Cache tiers per process with a TTL: invalidation reaches one worker, so expiry is the cross-worker freshness
- * bound. */
-const TIER_CACHE_TTL_MS = 5 * 60 * 1000;
-
-let tierCache: Map<string, Tier> | null = null;
-let tierCacheExpiresAt = 0;
-
-export function invalidateTierCache(): void {
-  tierCache = null;
-}
-
-async function loadTier(tierId: string | null): Promise<Tier | null | undefined> {
-  if (tierId === null) return null;
-  if (!tierCache || Date.now() >= tierCacheExpiresAt) {
-    const rows = await Tier.find();
-    tierCache = new Map(rows.map((row) => [row.id, row]));
-    tierCacheExpiresAt = Date.now() + TIER_CACHE_TTL_MS;
-  }
-  // `undefined` means not loaded; `null` means loaded with no row. A missing tier row is the latter and merits a
-  // warning.
-  return tierCache.get(tierId) ?? null;
-}
 
 /** Guard against registering two finish listeners; otherwise overlapping auth middleware can charge one request
  * twice. */
@@ -49,7 +26,8 @@ export const rateLimitApiQuota = async (req: Request, res: Response, next: NextF
     throw new AuthCredentialsInvalidError('Invalid API key owner.');
   }
 
-  const resolved = resolveQuotaLimit({ ...user, tier: await loadTier(user.tierId ?? null) });
+  // Cached reads: this runs on every API request, and both the tiers and the membership change far less often.
+  const resolved = await resolveEffectiveQuota(user, { cached: true });
   const quota = await AccountQuotaUsage.getForUser(user.id, resolved.limit);
   req.accountQuota = quota;
 

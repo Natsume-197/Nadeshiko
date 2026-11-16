@@ -3,10 +3,11 @@
 /* eslint-disable */
 
 export type t_AccountQuotaState = {
+  effectiveTierId: string | null;
   monthlyQuotaLimit: number;
   periodYyyymm: number;
   quotaOverride: number | null;
-  quotaSource: 'override' | 'tier' | 'legacy_column' | 'default';
+  quotaSource: 'override' | 'tier' | 'patreon' | 'legacy_column' | 'default';
   quotaUsed: number;
   tierId: string | null;
   userId: number;
@@ -898,6 +899,7 @@ export type t_Tier = {
   displayName: string;
   id: string;
   monthlyQuotaLimit: number;
+  patreonTierId?: string | null;
   rateLimitMax?: number | null;
   rateLimitWindowMs?: number | null;
   sortOrder: number;

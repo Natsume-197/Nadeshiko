@@ -9,7 +9,8 @@ import type {
 } from 'generated/routes/user';
 import type { t_MediaSummary } from 'generated/models';
 import { assertUser } from '@app/middleware/authentication';
-import { AccountQuotaUsage, Media, Tier, resolveQuotaLimit } from '@app/models';
+import { AccountQuotaUsage, Media } from '@app/models';
+import { resolveEffectiveQuota } from '@app/services/quota/effectiveQuota';
 import { config } from '@config/config';
 import { NotFoundError } from '@app/errors';
 import { toMediaSummaryDTO } from './mappers/sharedMapper';
@@ -22,19 +23,19 @@ import {
 
 export const getMe: GetMe = async (_params, respond, req) => {
   const user = assertUser(req);
-  const tier = user.tierId ? await Tier.findOne({ where: { id: user.tierId } }) : null;
-  const resolved = resolveQuotaLimit({ ...user, tier });
+  const resolved = await resolveEffectiveQuota(user);
   const quota = await AccountQuotaUsage.getForUser(user.id, resolved.limit);
   const window = AccountQuotaUsage.getQuotaWindow(quota.periodYyyymm);
+  const { assignedTier } = resolved;
 
-  // Name a tier only when it determined the limit; an account override must not masquerade as a Plus tier.
-  const namedTier = resolved.source === 'tier' ? tier : null;
-
+  // Name the tier that determined the limit, assigned or earned on Patreon; an override names none, so it cannot
+  // masquerade as a tier.
   return respond.with200().body(
-    toUserMeDTO(user, quota, window, namedTier, {
-      // Use the tier burst limit or deployment default, matching the fallback stamped onto newly created keys.
-      max: tier?.rateLimitMax ?? config.API_KEY_RATE_LIMIT_MAX,
-      windowMs: tier?.rateLimitWindowMs ?? config.API_KEY_RATE_LIMIT_WINDOW_MS,
+    toUserMeDTO(user, quota, window, resolved.tier, {
+      // The assigned tier's burst or the deployment default, because that is what new keys are stamped with: keys are
+      // never restamped, so a Patreon tier must not stamp a burst that would outlive the membership.
+      max: assignedTier?.rateLimitMax ?? config.API_KEY_RATE_LIMIT_MAX,
+      windowMs: assignedTier?.rateLimitWindowMs ?? config.API_KEY_RATE_LIMIT_WINDOW_MS,
     }),
   );
 };

@@ -5,7 +5,7 @@ import { buildApplication } from '@config/application';
 import { AdminRoutes } from '@config/routes';
 import { setupTestSuite } from '../helpers/setup';
 import { seedCoreFixtures, type CoreFixtures } from '../fixtures/core';
-import { AccountQuotaUsage, Tier, User } from '@app/models';
+import { AccountQuotaUsage, PatreonConnection, Tier, User } from '@app/models';
 import { AuthType, ApiKeyKind, ApiPermission } from '@app/models/ApiPermission';
 
 /** These endpoints pin the admin quota contract: override > tier > stored fallback, cache invalidation after
@@ -18,8 +18,8 @@ vi.mock('@app/middleware/authCacheStore', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@app/middleware/authCacheStore')>()),
   invalidateUserCache: (...a: unknown[]) => invalidateUserCache(...a),
 }));
-vi.mock('@app/middleware/apiLimiterQuota', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@app/middleware/apiLimiterQuota')>()),
+vi.mock('@app/services/quota/effectiveQuota', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@app/services/quota/effectiveQuota')>()),
   invalidateTierCache: (...a: unknown[]) => invalidateTierCache(...a),
 }));
 
@@ -116,6 +116,15 @@ describe('GET /v1/admin/tiers', () => {
     expect(res.body.tiers[0]).toMatchObject({ rateLimitMax: null, rateLimitWindowMs: null });
   });
 
+  it('names the Patreon tier each quota tier is earned by, or null when only an assignment reaches it', async () => {
+    await seedTier('free', { sortOrder: 1 });
+    await seedTier('plus', { sortOrder: 2, patreonTierId: '22710324' });
+
+    const res = await request(app).get('/v1/admin/tiers');
+
+    expect(res.body.tiers.map((t: { patreonTierId: string | null }) => t.patreonTierId)).toEqual([null, '22710324']);
+  });
+
   it('returns an empty list rather than an error when no tiers exist', async () => {
     const res = await request(app).get('/v1/admin/tiers');
 
@@ -147,6 +156,37 @@ describe('GET /v1/admin/users/:userId/quota', () => {
     const res = await request(app).get(`/v1/admin/users/${target.id}/quota`);
 
     expect(res.body).toMatchObject({ monthlyQuotaLimit: 999_999, quotaSource: 'override', tierId: 'pro' });
+  });
+
+  it('names Patreon as the source when the membership earns more than the assigned tier', async () => {
+    // Computed, never written: the assigned tier stays what it was, and the effective one says why the number moved.
+    await seedTier('free', { monthlyQuotaLimit: 5000 });
+    await seedTier('pro', { monthlyQuotaLimit: 30_000, patreonTierId: '28118736' });
+    const target = await resetTarget({ tierId: 'free' });
+    await PatreonConnection.save(
+      PatreonConnection.create({
+        userId: target.id,
+        patreonUserId: `patreon-${target.id}`,
+        accessTokenCiphertext: 'sealed',
+        refreshTokenCiphertext: 'sealed',
+        accessTokenExpiresAt: new Date(Date.now() + 86_400_000),
+        patronStatus: 'active_patron',
+        entitledAmountCents: 1000,
+        entitledTierIds: ['28118736'],
+        membershipCheckedAt: new Date(),
+      }),
+    );
+
+    const res = await request(app).get(`/v1/admin/users/${target.id}/quota`);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({
+      tierId: 'free',
+      effectiveTierId: 'pro',
+      monthlyQuotaLimit: 30_000,
+      quotaSource: 'patreon',
+    });
+    expect((await User.findOneByOrFail({ id: target.id })).tierId).toBe('free');
   });
 
   it('an account on no tier at all still resolves to a limit', async () => {

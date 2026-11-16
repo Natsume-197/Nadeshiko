@@ -11,11 +11,11 @@ properties:
     example: plus
   displayName:
     type: string
-    example: Plus
+    example: Seed
   monthlyQuotaLimit:
     type: integer
     description: API calls allowed per calendar month on this tier
-    example: 25000
+    example: 15000
   rateLimitMax:
     type: integer
     nullable: true
@@ -28,6 +28,14 @@ properties:
     nullable: true
     description: Window for `rateLimitMax`, in milliseconds. Null inherits the default.
     example: null
+  patreonTierId:
+    type: string
+    nullable: true
+    description: |
+      The Patreon tier whose members earn this tier, matched against the
+      member's entitled tiers. Null when Patreon never grants it and only an
+      assignment reaches it.
+    example: "22710324"
   sortOrder:
     type: integer
     description: Display order; the id is a slug, not a rank

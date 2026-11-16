@@ -9,8 +9,8 @@ export { ShirabeConnection } from './ShirabeConnection';
 export { PatreonConnection } from './PatreonConnection';
 export { RoadmapItem, RoadmapItemKind, RoadmapItemStatus } from './RoadmapItem';
 export { Tier } from './Tier';
-export { resolveQuotaLimit } from './quota';
-export type { QuotaSource, ResolvedQuota } from './quota';
+export { resolveQuotaLimit, patreonQuotaTier, unmatchedPatreonTierIds, PATREON_QUOTA_STALE_MS } from './quota';
+export type { QuotaSource, ResolvedQuota, PatreonMembership } from './quota';
 
 // Media domain
 export { Media, CategoryType, ALL_CATEGORIES } from './Media';

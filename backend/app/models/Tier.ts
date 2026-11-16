@@ -5,7 +5,7 @@ import { BaseEntity } from './base.entity';
  * wins over the tier. */
 @Entity('Tier')
 export class Tier extends BaseEntity {
-  /** Stable slug (`free`, `plus`, `pro`) -- referenced by `User.tierId`. */
+  /** Stable slug (`free`, `plus`, `pro`, `max`) -- referenced by `User.tierId`. */
   @PrimaryColumn({ type: 'text' })
   id!: string;
 
@@ -22,6 +22,10 @@ export class Tier extends BaseEntity {
 
   @Column({ name: 'rate_limit_window_ms', type: 'int', nullable: true })
   rateLimitWindowMs!: number | null;
+
+  /** The Patreon tier whose members earn this tier; null when only an assignment reaches it. */
+  @Column({ name: 'patreon_tier_id', type: 'text', nullable: true })
+  patreonTierId!: string | null;
 
   /** Display order for the admin picker; the id is a slug, not a rank. */
   @Column({ name: 'sort_order', type: 'int', default: 0 })

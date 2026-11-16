@@ -38,7 +38,7 @@
       "changelog": "Historial de cambios",
       "stats": "Estadísticas",
       "media": "Catálogo",
-      "roadmap": "Roadmap",
+      "supporters": "Mecenas",
       "collections": "Colecciones",
       "activity": "Actividad",
       "language": "Idioma",
@@ -654,8 +654,12 @@
       "apiUsageTitle": "Uso de la API",
       "apiUsageRemaining": "Solicitudes utilizadas: {used} / {limit}",
       "quotaResets": "Se reinicia el {date}",
-      "quotaTier": "Plan {tier}",
+      "quotaTier": "Nivel {tier}",
+      "quotaTierFree": "Nivel gratuito",
       "burstLimit": "Cada clave de API tiene además un límite de {max} solicitudes por minuto.",
+      "patreonHint": "Quienes apoyan en Patreon tienen hasta {max} solicitudes al mes.",
+      "patreonHintSupport": "Apoya a Nadeshiko",
+      "patreonHintLink": "Vincula tu cuenta de Patreon",
       "usageLimitMessage": {
         "prefix": "Si necesitas aumentar tu límite de uso de la API, contáctanos en"
       },
@@ -776,6 +780,7 @@
         "warning_text": "El texto puede costar de leer sobre este fondo.",
         "warning_accent": "El texto blanco puede costar de leer sobre este acento.",
         "needsPatron": "Los temas de patron son para los patrons de Nadeshiko. Vincula tu cuenta de Patreon en Ajustes → Conexiones; vale cualquier nivel de pago.",
+        "seeSupport": "Ver los niveles.",
         "apply": "Aplicar tema",
         "remove": "Quitar tema personalizado",
         "saved": "Tema personalizado aplicado",
@@ -1504,9 +1509,16 @@
       "goToSettings": "Ir a ajustes"
     }
   },
+  "supporters": {
+    "seoTitle": "Mecenas | Nadeshiko",
+    "seoDescription": "Apoya a Nadeshiko en Patreon, mira lo que da cada nivel y qué títulos y funciones llegan pronto.",
+    "title": "Mecenas",
+    "intro": "Los mecenas mantienen Nadeshiko en marcha y ayudan a decidir qué viene después. Elige un nivel aquí abajo y mira lo que estamos construyendo.",
+    "tabs": {
+      "tiers": "Niveles"
+    }
+  },
   "roadmap": {
-    "seoTitle": "Roadmap | Nadeshiko",
-    "seoDescription": "Descubre qué animes llegarán próximamente a Nadeshiko, qué estamos creando y qué hemos publicado.",
     "title": "Roadmap",
     "intro": "¡Únete a nuestro Patreon y solicita los próximos títulos y funciones de Nadeshiko!",
     "support": "Apoyar a Nadeshiko",
@@ -1525,7 +1537,8 @@
     "viewSource": "Ver fuente",
     "loadError": "No se ha podido cargar el roadmap.",
     "proposalTitle": "¡Solicita tu anime favorito!",
-    "proposalIntro": "Los mecenas activos de Nadeshiko pueden solicitar hasta cuatro títulos al mes. ¡Comprueba tu acceso a continuación!",
+    "proposalIntro": "Los mecenas activos de Nadeshiko pueden solicitar títulos cada mes; cuántos depende del nivel. ¡Comprueba tu acceso a continuación!",
+    "proposalTiersLink": "Ver los niveles.",
     "steps": {
       "signIn": "Inicia sesión en Nadeshiko",
       "patreon": "Vincula tu cuenta o únete a Patreon",
@@ -1688,6 +1701,62 @@
       "ANIME": "Anime",
       "JDRAMA": "Acción real",
       "YOUTUBE": "YouTube"
+    }
+  },
+  "support": {
+    "title": "Apoya a Nadeshiko",
+    "perMonth": "{price}/mes",
+    "whatsIncluded": "Qué incluye",
+    "discord": "Incluye beneficios en Discord",
+    "tierText": {
+      "seed": [
+        "Si Nadeshiko te ha sido útil en tu camino aprendiendo japonés y quieres mostrar tu aprecio y ayudar a mantener el sitio, este nivel es para ti. ¡Gracias!",
+        "A cambio, puedes pedir que se añadan nuevos títulos a Nadeshiko y tienes un límite de API más alto."
+      ],
+      "flower": [
+        "Para quienes creen de verdad en el proyecto. ¡Agradecemos mucho tu aporte!",
+        "Además de lo que incluye Seed, puedes proponer nuevas funciones e influir directamente en el desarrollo de Nadeshiko."
+      ],
+      "nadeshiko": [
+        "Nuestro nivel más alto, para quienes quieren darle a Nadeshiko el mayor apoyo. Los aportes de este nivel son los que nos permiten seguir ampliando la biblioteca y creando nuevas funciones.",
+        "Tienes todo lo de Flower, tus peticiones de títulos pasan al frente de la cola y tienes nuestro límite de API más alto."
+      ]
+    },
+    "tiersIntro": "Elige el que mejor te encaje. Puedes cambiarlo o cancelarlo en Patreon cuando quieras.",
+    "everythingBadge": "Todo incluido",
+    "chooseTier": "Elegir {tier}",
+    "tiers": {
+      "seed": "Seed",
+      "flower": "Flower",
+      "nadeshiko": "Nadeshiko"
+    },
+    "perks": {
+      "titleRequests": "Pide hasta {count} títulos al mes",
+      "talkToDevs": "Habla directamente con los desarrolladores",
+      "everythingIn": "Todo lo de {tier}",
+      "priority": "Prioridad en las peticiones de títulos",
+      "apiRequests": "{count} solicitudes a la API al mes",
+      "customThemes": "Temas personalizados"
+    },
+    "faq": {
+      "title": "Preguntas",
+      "cancel": {
+        "q": "¿Qué pasa si cancelo?",
+        "a": "Los extras terminan con la membresía y tu cuenta vuelve al límite gratuito de {count} solicitudes a la API al mes. Si creaste un tema personalizado, se conserva y vuelve si te unes de nuevo."
+      },
+      "personal": {
+        "q": "¿Puedo compartir mi límite de la API?",
+        "a": "No. El límite es por persona y para tu uso personal."
+      },
+      "apps": {
+        "q": "Estoy creando una app para otras personas. ¿Mi nivel las cubre?",
+        "a": "No. Cada persona que use tu app necesita su propia clave de API. Consulta Integraciones de Terceros en los {terms}.",
+        "terms": "Términos y condiciones"
+      },
+      "oneAccount": {
+        "q": "¿Una cuenta de Patreon puede desbloquear varias cuentas de Nadeshiko?",
+        "a": "No. Una cuenta de Patreon se vincula a una sola cuenta de Nadeshiko."
+      }
     }
   }
 }

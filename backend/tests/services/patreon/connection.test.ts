@@ -10,7 +10,15 @@ const CONFIG = {
 vi.mock('@config/config', () => ({ config: CONFIG }));
 
 const rows: Record<string, unknown>[] = [];
-vi.mock('@app/models', () => ({
+const quotaTiers = vi.hoisted(() => [
+  { id: 'plus', monthlyQuotaLimit: 15_000, patreonTierId: '22710324' },
+  { id: 'pro', monthlyQuotaLimit: 30_000, patreonTierId: '28118736' },
+]);
+const warn = vi.hoisted(() => vi.fn());
+vi.mock('@config/log', () => ({ logger: { warn, info: vi.fn(), debug: vi.fn(), error: vi.fn() } }));
+vi.mock('@app/models', async () => ({
+  ...(await vi.importActual<typeof import('@app/models/quota')>('@app/models/quota')),
+  Tier: { find: vi.fn(async () => quotaTiers) },
   PatreonConnection: {
     findOneBy: vi.fn(async () => null),
     create: vi.fn((attributes: Record<string, unknown>) => ({
@@ -26,7 +34,7 @@ vi.mock('@app/models', () => ({
   },
 }));
 
-const { completePatreonLink, startPatreonLink } = await import('@app/services/patreon/connection');
+const { completePatreonLink, membershipFrom, startPatreonLink } = await import('@app/services/patreon/connection');
 
 function response(body: unknown) {
   return new Response(JSON.stringify(body), { status: 200, headers: { 'content-type': 'application/json' } });
@@ -35,6 +43,83 @@ function response(body: unknown) {
 beforeEach(() => {
   rows.length = 0;
   vi.restoreAllMocks();
+  warn.mockReset();
+});
+
+/** One member to our campaign entitled to `tierIds`, next to a member of someone else's campaign. */
+function identityWith(tierIds: string[], status = 'active_patron') {
+  return {
+    data: { id: 'patreon-user', type: 'user', attributes: { full_name: 'Mika' } },
+    included: [
+      {
+        id: 'member-other',
+        type: 'member',
+        attributes: { patron_status: 'active_patron', currently_entitled_amount_cents: 9900 },
+        relationships: {
+          campaign: { data: { id: 'someone-else', type: 'campaign' } },
+          currently_entitled_tiers: { data: [{ id: '30077695', type: 'tier' }] },
+        },
+      },
+      {
+        id: 'member-1',
+        type: 'member',
+        attributes: { patron_status: status, currently_entitled_amount_cents: 1000 },
+        relationships: {
+          campaign: { data: { id: 'campaign-42', type: 'campaign' } },
+          currently_entitled_tiers: { data: tierIds.map((id) => ({ id, type: 'tier' })) },
+        },
+      },
+      { id: '28118736', type: 'tier', attributes: { title: 'Flower' } },
+      { id: 'campaign-42', type: 'campaign' },
+    ],
+  };
+}
+
+describe('membershipFrom', () => {
+  it('reads the entitled tier ids of the membership to our campaign only', () => {
+    expect(membershipFrom(identityWith(['28118736', '22710324']))).toEqual({
+      memberId: 'member-1',
+      campaignId: 'campaign-42',
+      patronStatus: 'active_patron',
+      entitledAmountCents: 1000,
+      entitledTierIds: ['28118736', '22710324'],
+    });
+  });
+
+  it('gives no tier ids when the relationship is missing, and nothing at all without our membership', () => {
+    const response = identityWith([]);
+    const ours = response.included[1] as { relationships: Record<string, unknown> };
+    delete ours.relationships.currently_entitled_tiers;
+    expect(membershipFrom(response).entitledTierIds).toEqual([]);
+
+    response.included.splice(1, 1);
+    expect(membershipFrom(response)).toMatchObject({ memberId: null, entitledTierIds: [] });
+  });
+});
+
+describe('unmatched Patreon tiers', () => {
+  function link(body: unknown) {
+    vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(response({ access_token: 'access', refresh_token: 'refresh', expires_in: 3600 }))
+      .mockResolvedValueOnce(response(body));
+    return completePatreonLink(7, 'code', startPatreonLink(7).state);
+  }
+
+  it('warns with the user and the unknown ids when an active patron matches no quota tier', async () => {
+    await link(identityWith(['99999999']));
+
+    expect(warn).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: 7, unmatchedTierIds: ['99999999'] }),
+      'Active Patreon membership matches no quota tier',
+    );
+  });
+
+  it('stays quiet when a tier matches, or when the membership is not active', async () => {
+    await link(identityWith(['28118736']));
+    await link(identityWith(['99999999'], 'former_patron'));
+
+    expect(warn).not.toHaveBeenCalled();
+  });
 });
 
 describe('Patreon OAuth linking', () => {
@@ -76,7 +161,10 @@ describe('Patreon OAuth linking', () => {
       patronStatus: 'active_patron',
       entitledAmountCents: 500,
     });
-    expect(fetchMock.mock.calls[1]?.[0].toString()).toContain('include=memberships');
+    const identityUrl = new URL(String(fetchMock.mock.calls[1]?.[0]));
+    expect(identityUrl.searchParams.get('include')?.split(',')).toEqual(
+      expect.arrayContaining(['memberships', 'memberships.campaign', 'memberships.currently_entitled_tiers']),
+    );
     expect(String(connection.accessTokenCiphertext)).not.toContain('access');
     expect(String(connection.refreshTokenCiphertext)).not.toContain('refresh');
   });

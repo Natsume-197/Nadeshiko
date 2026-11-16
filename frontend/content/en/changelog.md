@@ -20,6 +20,7 @@ Nadeshiko 3.0 is the first major version under new hands. It collects everything
 - **More varied search results**: a word that appears a lot in one show no longer fills the first page with that show alone. Results now come in rounds: the best line from every title, then the second best from every title, then the rest. Titles you have starred come first. For words like ひとり or レム, the first ten results now come from nine or ten different titles instead of three.
 - **Fewer opening and ending repeats**: lines that come back in every episode because they belong to an opening, ending or preview are shown once, while ordinary short lines like はい stay searchable.
 - **Themes**: choose Dark, Light or Match my device in the new Themes section of Settings. Patrons on any paid tier can also pick one of seven colour themes (Sepia, Indigo, Midnight, Matcha, Ocean, Sunset, Lavender) or make their own from an accent and a background colour, once their Patreon account is linked in Settings.
+- **Higher API limits for supporters**: patrons get more API requests a month than the free 5,000: 15,000 on Seed, 30,000 on Flower and 60,000 on Nadeshiko, as soon as their Patreon account is linked in Settings. Every tier is on the new [Supporters](/supporters) page, which now also holds the roadmap.
 - **Changelog**: this page is back, linked from the version in the footer, and rewritten to cover everything since 2.4.10.
 
 ### Improvements

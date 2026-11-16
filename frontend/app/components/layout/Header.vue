@@ -15,7 +15,7 @@ import {
   mdiLogin,
   mdiLogout,
   mdiMessageTextOutline,
-  mdiTimelineClockOutline,
+  mdiHandHeartOutline,
 } from '@mdi/js';
 
 const store = userStore();
@@ -111,9 +111,9 @@ watch(() => route.fullPath, closeNavSidebar);
                         class="text-sm font-semibold text-white transition-all duration-200 hover:text-opacity-80">
                         {{ $t("navbar.buttons.about") }}
                     </NuxtLink>
-                    <NuxtLink :to="localePath('/roadmap')" data-testid="nav-roadmap"
+                    <NuxtLink :to="localePath('/supporters')" data-testid="nav-supporters"
                         class="text-sm font-semibold text-white transition-all duration-200 hover:text-opacity-80">
-                        {{ $t("navbar.buttons.roadmap") }}
+                        {{ $t("navbar.buttons.supporters") }}
                     </NuxtLink>
                     <NuxtLink to="/docs/api/index.html" external
                         class="text-sm font-semibold text-white transition-all duration-200 hover:text-opacity-80">
@@ -250,10 +250,10 @@ watch(() => route.fullPath, closeNavSidebar);
                     <UiBaseIcon :path="mdiInformationOutline" :size="18" />
                     {{ $t("navbar.buttons.about") }}
                 </NuxtLink>
-                <NuxtLink :to="localePath('/roadmap')"
+                <NuxtLink :to="localePath('/supporters')"
                     class="nd-sidebar-link flex items-center gap-3 px-5 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-neutral-300 dark:hover:bg-neutral-700">
-                    <UiBaseIcon :path="mdiTimelineClockOutline" :size="18" />
-                    {{ $t("navbar.buttons.roadmap") }}
+                    <UiBaseIcon :path="mdiHandHeartOutline" :size="18" />
+                    {{ $t("navbar.buttons.supporters") }}
                 </NuxtLink>
                 <NuxtLink to="/docs/api/index.html" external
                     class="nd-sidebar-link flex items-center gap-3 px-5 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-neutral-300 dark:hover:bg-neutral-700">

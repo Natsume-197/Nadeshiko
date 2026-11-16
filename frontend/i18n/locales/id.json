@@ -38,7 +38,7 @@
       "changelog": "Catatan pembaruan",
       "stats": "Statistik",
       "media": "Katalog",
-      "roadmap": "Roadmap",
+      "supporters": "Pendukung",
       "collections": "Koleksi",
       "activity": "Aktivitas",
       "language": "Bahasa",
@@ -654,8 +654,12 @@
       "apiUsageTitle": "Penggunaan API",
       "apiUsageRemaining": "Permintaan terpakai: {used} / {limit}",
       "quotaResets": "Direset pada {date}",
-      "quotaTier": "Paket {tier}",
+      "quotaTier": "Tingkatan {tier}",
+      "quotaTierFree": "Tingkatan gratis",
       "burstLimit": "Selain batas ini, setiap kunci dibatasi hingga {max} permintaan per menit.",
+      "patreonHint": "Pendukung di Patreon mendapat hingga {max} permintaan per bulan.",
+      "patreonHintSupport": "Dukung Nadeshiko",
+      "patreonHintLink": "Tautkan akun Patreon-mu",
       "usageLimitMessage": {
         "prefix": "Untuk meningkatkan batas penggunaan API, hubungi kami di"
       },
@@ -776,6 +780,7 @@
         "warning_text": "Teks mungkin sulit dibaca di latar ini.",
         "warning_accent": "Teks putih mungkin sulit dibaca di aksen ini.",
         "needsPatron": "Tema patron khusus untuk patron Nadeshiko. Tautkan akun Patreon-mu di Pengaturan → Koneksi; tingkat berbayar apa pun berlaku.",
+        "seeSupport": "Lihat tingkatannya.",
         "apply": "Terapkan tema",
         "remove": "Hapus tema kustom",
         "saved": "Tema kustom diterapkan",
@@ -1504,9 +1509,16 @@
       "goToSettings": "Buka pengaturan"
     }
   },
+  "supporters": {
+    "seoTitle": "Pendukung | Nadeshiko",
+    "seoDescription": "Dukung Nadeshiko di Patreon, lihat apa yang diberikan setiap tingkatan, dan judul serta fitur apa yang akan datang.",
+    "title": "Pendukung",
+    "intro": "Para pendukung menjaga Nadeshiko tetap berjalan dan ikut menentukan apa yang berikutnya. Pilih tingkatan di bawah, lalu lihat apa yang sedang kami bangun.",
+    "tabs": {
+      "tiers": "Tingkatan"
+    }
+  },
   "roadmap": {
-    "seoTitle": "Peta Jalan | Nadeshiko",
-    "seoDescription": "Lihat judul anime yang akan hadir di Nadeshiko, fitur yang sedang kami buat, dan yang sudah kami rilis.",
     "title": "Peta Jalan",
     "intro": "Bergabunglah dengan Patreon kami untuk mengusulkan judul dan fitur yang akan hadir berikutnya di Nadeshiko!",
     "support": "Dukung Nadeshiko",
@@ -1525,7 +1537,8 @@
     "viewSource": "Lihat sumber",
     "loadError": "Peta jalan tidak dapat dimuat saat ini.",
     "proposalTitle": "Minta anime favorit Anda!",
-    "proposalIntro": "Patron aktif Nadeshiko dapat meminta hingga empat judul untuk ditambahkan setiap bulan. Periksa akses Anda di bawah ini!",
+    "proposalIntro": "Patron aktif Nadeshiko dapat meminta judul untuk ditambahkan setiap bulan; jumlahnya tergantung tingkatan. Periksa akses Anda di bawah ini!",
+    "proposalTiersLink": "Lihat tingkatannya.",
     "steps": {
       "signIn": "Masuk ke Nadeshiko",
       "patreon": "Hubungkan atau bergabung di Patreon",
@@ -1688,6 +1701,62 @@
       "ANIME": "Anime",
       "JDRAMA": "Live action",
       "YOUTUBE": "YouTube"
+    }
+  },
+  "support": {
+    "title": "Dukung Nadeshiko",
+    "perMonth": "{price}/bulan",
+    "whatsIncluded": "Yang termasuk",
+    "discord": "Termasuk manfaat Discord",
+    "tierText": {
+      "seed": [
+        "Jika Nadeshiko berguna dalam perjalananmu belajar bahasa Jepang dan kamu ingin menunjukkan apresiasi serta membantu menjaga situs ini tetap hidup, tingkatan ini untukmu. Terima kasih!",
+        "Sebagai gantinya, kamu bisa meminta media baru ditambahkan ke Nadeshiko dan mendapat batas API yang lebih tinggi."
+      ],
+      "flower": [
+        "Untuk mereka yang benar-benar percaya pada proyek ini. Kami sangat menghargai kontribusimu!",
+        "Selain manfaat tingkatan Seed, kamu bisa mengusulkan fitur baru dan memengaruhi langsung pengembangan Nadeshiko."
+      ],
+      "nadeshiko": [
+        "Tingkatan tertinggi kami, untuk mereka yang ingin memberi dukungan terkuat bagi Nadeshiko. Kontribusi di tingkat ini yang memungkinkan kami terus memperluas pustaka dan membangun fitur baru.",
+        "Kamu mendapat semua yang ada di tingkatan Flower, permintaan mediamu didahulukan, dan kamu mendapat batas API tertinggi kami."
+      ]
+    },
+    "tiersIntro": "Pilih yang paling cocok. Kamu bisa mengubah atau membatalkannya di Patreon kapan saja.",
+    "everythingBadge": "Semua termasuk",
+    "chooseTier": "Pilih {tier}",
+    "tiers": {
+      "seed": "Seed",
+      "flower": "Flower",
+      "nadeshiko": "Nadeshiko"
+    },
+    "perks": {
+      "titleRequests": "Ajukan hingga {count} judul per bulan",
+      "talkToDevs": "Bicara langsung dengan pengembang",
+      "everythingIn": "Semua yang ada di {tier}",
+      "priority": "Prioritas untuk permintaan judul",
+      "apiRequests": "{count} permintaan API per bulan",
+      "customThemes": "Tema kustom"
+    },
+    "faq": {
+      "title": "Pertanyaan",
+      "cancel": {
+        "q": "Apa yang terjadi jika aku berhenti?",
+        "a": "Bonus berakhir bersama keanggotaan, dan akunmu kembali ke batas gratis {count} permintaan API per bulan. Tema kustom yang kamu buat tetap disimpan dan kembali jika kamu bergabung lagi."
+      },
+      "personal": {
+        "q": "Bisakah aku membagikan batas API-ku?",
+        "a": "Tidak. Batasnya per orang dan untuk penggunaan pribadi."
+      },
+      "apps": {
+        "q": "Aku membuat aplikasi untuk orang lain. Apakah tingkatanku mencakup mereka?",
+        "a": "Tidak. Setiap pengguna aplikasimu memerlukan kunci API sendiri. Lihat Integrasi Pihak Ketiga di {terms}.",
+        "terms": "Syarat dan ketentuan"
+      },
+      "oneAccount": {
+        "q": "Bisakah satu akun Patreon membuka beberapa akun Nadeshiko?",
+        "a": "Tidak. Satu akun Patreon hanya bisa ditautkan ke satu akun Nadeshiko."
+      }
     }
   }
 }

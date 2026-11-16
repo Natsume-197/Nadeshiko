@@ -39,6 +39,10 @@ export class PatreonConnection extends BaseEntity {
   @Column({ name: 'entitled_amount_cents', type: 'int', default: 0 })
   entitledAmountCents!: number;
 
+  /** Patreon tier ids from the member's `currently_entitled_tiers` at the last check; what the API quota matches on. */
+  @Column({ name: 'entitled_tier_ids', type: 'text', array: true, default: () => "'{}'" })
+  entitledTierIds!: string[];
+
   @Column({ name: 'membership_checked_at', type: 'timestamptz' })
   membershipCheckedAt!: Date;
 

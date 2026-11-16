@@ -7,6 +7,7 @@ import { registerEsSyncWorkers } from '@app/workers/esSyncWorker';
 import { registerTokenParseWorker } from '@app/workers/tokenParseWorker';
 import { registerDictionaryRefreshWorker } from '@app/workers/dictionaryRefreshWorker';
 import { registerRecurringLinesWorker } from '@app/workers/recurringLinesWorker';
+import { registerPatreonMembershipRefreshWorker } from '@app/workers/patreonMembershipRefreshWorker';
 import { sendRecurringSweepJob } from '@app/workers/recurringLinesQueue';
 import { setBossInstance } from '@app/workers/pgBossClient';
 import { registerQueueMetrics } from '@app/workers/workerInstrumentation';
@@ -24,6 +25,7 @@ import {
   DICTIONARY_REFRESH_QUEUE,
   RECURRING_RECOMPUTE_QUEUE,
   RECURRING_SWEEP_QUEUE,
+  PATREON_MEMBERSHIP_REFRESH_QUEUE,
 } from '@app/workers/queueNames';
 import { getAppPostgresConfig } from '@config/postgresConfig';
 import { logger } from '@config/log';
@@ -186,6 +188,17 @@ export const workersInitializer: RuntimeInitializer = {
           retentionSeconds: 86400,
         },
       },
+      {
+        name: PATREON_MEMBERSHIP_REFRESH_QUEUE,
+        options: {
+          // Per-connection failures are absorbed inside the run, so a retry only covers the connection list failing to
+          // load; anything later waits for tomorrow, well inside the quota's seven-day staleness bound.
+          retryLimit: 1,
+          retryDelay: 300,
+          expireInSeconds: 1800,
+          retentionSeconds: 86400,
+        },
+      },
     ];
 
     // `createQueue` leaves existing queues unchanged, so update each one to keep the stored options in sync.
@@ -206,6 +219,9 @@ export const workersInitializer: RuntimeInitializer = {
     await boss.schedule(DICTIONARY_REFRESH_QUEUE, '0 7 * * 2', {});
     // Repairs recurring-line flags a lost recompute or an unhooked write path left stale.
     await boss.schedule(RECURRING_SWEEP_QUEUE, '30 6 * * *', { reason: 'nightly' });
+    // Re-checks linked Patreon memberships, so an API-only patron who cancels drops back to their own quota within a
+    // day. Clear of the database sweeps, since its time is spent waiting on Patreon.
+    await boss.schedule(PATREON_MEMBERSHIP_REFRESH_QUEUE, '15 2 * * *', {});
     logger.info('PgBoss initialized, queues created, cron scheduled');
 
     setBossInstance(boss);
@@ -219,6 +235,7 @@ export const workersInitializer: RuntimeInitializer = {
     await registerTokenParseWorker(boss);
     await registerDictionaryRefreshWorker(boss);
     await registerRecurringLinesWorker(boss);
+    await registerPatreonMembershipRefreshWorker(boss);
     // Also sweep at boot: the first deploy fills the flags with no manual step, and any later deploy converges them.
     // Collapsed to one sweep per ten minutes, so a burst of restarts does not queue several.
     await sendRecurringSweepJob('boot');

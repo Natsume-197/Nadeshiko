@@ -51,7 +51,8 @@ export const createUserApiKey: CreateUserApiKey = async ({ body }, respond, req)
   }
 
   // Stamp rate limits when creating a key; existing keys are deliberately not restamped when a tier changes, so
-  // integrations keep their issued limits.
+  // integrations keep their issued limits. The assigned tier, not a Patreon-earned one: a stamped burst would outlive
+  // the membership that earned it.
   const tier = user.tierId ? await Tier.findOne({ where: { id: user.tierId } }) : null;
 
   const created = await createApiKey({

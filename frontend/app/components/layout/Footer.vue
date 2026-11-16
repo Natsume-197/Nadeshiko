@@ -68,6 +68,14 @@ const { openFeedback } = useFeedbackWidget();
             {{ $t('navbar.buttons.sources') }}
           </NuxtLink>
 
+          <NuxtLink
+            :to="localePath('/supporters')"
+            data-testid="footer-supporters"
+            class="mx-4 text-sm text-gray-600 transition-colors duration-300 hover:text-red-500 dark:text-gray-300 dark:hover:text-red-400"
+          >
+            {{ $t('navbar.buttons.supporters') }}
+          </NuxtLink>
+
           <button
             type="button"
             data-testid="feedback-footer-link"

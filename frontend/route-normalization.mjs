@@ -12,6 +12,7 @@ const STATIC_PAGES = new Set([
   '/changelog',
   '/media',
   '/roadmap',
+  '/supporters',
   '/stats',
   '/stats/words',
   '/about',
