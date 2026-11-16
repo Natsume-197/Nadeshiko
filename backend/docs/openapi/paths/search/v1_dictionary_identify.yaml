@@ -1,0 +1,76 @@
+get:
+  tags:
+    - Search
+  x-internal: true
+  # Server-only: the frontend proxy blocks browsers and the controller re-checks the internal secret.
+  x-server-only: true
+  operationId: identifyDictionaryWord
+  summary: Rank Nadeshiko's own dictionary entries for one token, for our own server only
+  description: |
+    The word card's lookup when the reader's provider is Nadeshiko rather than
+    Shirabe. Takes what a stored token carries and returns ranked candidates in
+    the card's shape. Called by the frontend server, which owns caching and
+    provider choice; refused unless the request came through our own Nitro proxy.
+
+  security: []
+  parameters:
+    - name: lemma
+      in: query
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 100
+      description: The token's dictionary form.
+      example: 開く
+    - name: surface
+      in: query
+      schema:
+        type: string
+        maxLength: 100
+      description: The token as written in the sentence.
+      example: 開いた
+    - name: reading
+      in: query
+      schema:
+        type: string
+        maxLength: 200
+      description: The surface's reading, in katakana or hiragana.
+      example: ヒライタ
+    - name: pos
+      in: query
+      schema:
+        type: string
+        maxLength: 16
+      description: Shirabe's short part-of-speech tag (`SlimToken.pt`).
+      example: verb
+    - name: locale
+      in: query
+      schema:
+        type: string
+        enum: [en, es]
+        default: en
+      description: Language whose senses come first.
+  responses:
+    "200":
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - candidates
+            properties:
+              candidates:
+                type: array
+                description: Best first; empty when no entry matches.
+                items:
+                  $ref: "../../components/schemas/DictionaryCandidate.yaml"
+    "400":
+      $ref: "../../components/responses/BadRequest.yaml"
+    "403":
+      $ref: "../../components/responses/Forbidden.yaml"
+    "429":
+      $ref: "../../components/responses/TooManyRequests.yaml"
+    "500":
+      $ref: "../../components/responses/InternalServerError.yaml"

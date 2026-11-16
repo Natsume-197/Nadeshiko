@@ -31,6 +31,7 @@
       "profile": "個人資料",
       "privacy": "隱私權政策",
       "dmca": "著作權投訴",
+      "sources": "資料來源",
       "terms": "使用條款",
       "settings": "設定",
       "blog": "部落格",
@@ -734,6 +735,12 @@
         "SMALL": "小",
         "MEDIUM": "中",
         "LARGE": "大"
+      },
+      "dictionaryProvider": "單字卡辭典",
+      "dictionaryProviderDescription": "點按單字時使用的辭典。如果它無法使用，單字卡會改用另一個。",
+      "dictionaryProviderOptions": {
+        "SHIRABE": "Shirabe",
+        "NADESHIKO": "Nadeshiko 自有（JMdict）"
       },
       "translationLanguageOptions": {
         "EN": "僅英語",

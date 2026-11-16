@@ -54,6 +54,15 @@ const envSchema = z.object({
   // small. Validated here rather than read raw so a typo is a boot error instead
   // of a silent fallback to the default.
   SHIRABE_PARSE_CONCURRENCY: z.coerce.number().int().positive().default(3),
+  // Weekly refresh of our own dictionary (`dict` schema, ~1.9 GB with names) from jmdict-simplified and
+  // JmdictFurigana. Off until the operator decides the server has the disk for it.
+  DICTIONARY_REFRESH_ENABLED: booleanString,
+  // The Sudachi sidecar (backend/sudachi) our own parser analyses text with, e.g. http://sudachi:8090. Unset: our
+  // parser cannot run, and Shirabe keeps parsing.
+  SUDACHI_URL: optionalString,
+  // Which parser writes Segment.tokens: Shirabe until it fails, then ours (nadeshiko-docs: plans/shirabe-replacement.md,
+  // "Switch runbook"). Global, not per reader. `nadeshiko` needs SUDACHI_URL and the `dict` schema imported.
+  SEGMENT_PARSER: z.enum(['shirabe', 'nadeshiko']).default('shirabe'),
   // Shirabe linking is off unless client registration and the encrypted connection secret are configured; never replace
   // the secret with cleartext third-party credentials.
   SHIRABE_OAUTH_CLIENT_ID: z.string().default('nadeshiko'),
@@ -177,4 +186,9 @@ const envSchema = z.object({
 });
 
 export const config: Readonly<z.infer<typeof envSchema>> = Object.freeze(envSchema.parse(process.env));
+
+// A boot error rather than a first failed parse job: switching the parser without the sidecar would stall ingest.
+if (config.SEGMENT_PARSER === 'nadeshiko' && !config.SUDACHI_URL) {
+  throw new Error('SEGMENT_PARSER=nadeshiko needs SUDACHI_URL (the Sudachi sidecar)');
+}
 export type AppConfig = z.infer<typeof envSchema>;

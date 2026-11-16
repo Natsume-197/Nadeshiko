@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { __testing } from '~/utils/wordLookup';
+import { __testing, chosenProvider, setReaderProvider } from '~/utils/wordLookup';
 
 const { cacheKey } = __testing;
 
@@ -55,5 +55,26 @@ describe('cacheKey', () => {
 
     expect(cacheKey(ref, 'en', 'abc123')).not.toBe(cacheKey(ref, 'en', 'def456'));
     expect(cacheKey(ref, 'en', '')).not.toBe(cacheKey(ref, 'en', 'abc123'));
+  });
+});
+
+describe('the reader’s dictionary', () => {
+  const ref = { lemma: '本', surface: '本', reading: 'ホン', pos: 'noun' };
+
+  it('keeps answers from different dictionaries apart', () => {
+    setReaderProvider(null);
+    const byDefault = cacheKey(ref, 'en', '');
+    setReaderProvider('nadeshiko');
+    const ours = cacheKey(ref, 'en', '');
+    setReaderProvider(null);
+
+    expect(ours).not.toBe(byDefault);
+  });
+
+  it('is the reader’s choice, else Shirabe for a linked reader, else the site default', () => {
+    expect(chosenProvider('NADESHIKO', true)).toBe('nadeshiko');
+    expect(chosenProvider('SHIRABE', false)).toBe('shirabe');
+    expect(chosenProvider(undefined, true)).toBe('shirabe');
+    expect(chosenProvider(undefined, false)).toBeNull();
   });
 });

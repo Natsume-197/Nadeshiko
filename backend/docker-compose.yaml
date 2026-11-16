@@ -51,6 +51,18 @@ services:
       start_period: 180s
 
 
+  # Our own parser's sidecar (task 40). Only needed with SUDACHI_URL=http://localhost:8090, for SEGMENT_PARSER=nadeshiko
+  # or scripts/shadow-parse.ts.
+  sudachi:
+    build:
+      context: sudachi
+    container_name: nadeshiko-sudachi
+    ports:
+      - 127.0.0.1:8090:8090
+    restart: unless-stopped
+    profiles: [parser]
+
+
 volumes:
   nadeshiko_db:
   nadeshiko_elasticsearch_data:

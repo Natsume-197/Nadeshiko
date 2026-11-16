@@ -333,6 +333,7 @@ function clearTokensIfJapaneseChanged(segment: Segment, previousJa: string): boo
   if (segment.contentJa === previousJa) return false;
 
   segment.tokens = null;
+  segment.parserVersion = null;
   return true;
 }
 

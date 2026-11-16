@@ -38,6 +38,7 @@ vi.mock('@app/workers/emailLifecycleWorker', () => ({ registerEmailLifecycleWork
 vi.mock('@app/workers/activityRetentionWorker', () => ({ registerActivityRetentionWorker: vi.fn() }));
 vi.mock('@app/workers/affinityRetentionWorker', () => ({ registerAffinityRetentionWorker: vi.fn() }));
 vi.mock('@app/workers/tokenParseWorker', () => ({ registerTokenParseWorker: vi.fn() }));
+vi.mock('@app/workers/dictionaryRefreshWorker', () => ({ registerDictionaryRefreshWorker: vi.fn() }));
 vi.mock('@app/workers/recurringLinesWorker', () => ({ registerRecurringLinesWorker: vi.fn() }));
 vi.mock('@app/workers/recurringLinesQueue', () => ({ sendRecurringSweepJob: vi.fn() }));
 

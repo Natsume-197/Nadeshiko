@@ -25,6 +25,7 @@ import { loginCodeBinding } from '@app/middleware/loginCodeBinding';
 import { APP_ENVIRONMENT, getAppEnvironment } from '@config/environment';
 import { config } from '@config/config';
 import { search, getSearchStats, searchWords } from '@app/controllers/searchController';
+import { identifyDictionaryWord } from '@app/controllers/dictionaryController';
 import { getAdminUsersWithProviders } from '@app/controllers/adminDashboardController';
 import { handleSesWebhook, WEBHOOK_SES_PATH } from '@app/controllers/webhooks/sesController';
 import { listTiers, getAdminUserQuota, updateAdminUserQuota } from '@app/controllers/adminQuotaController';
@@ -238,6 +239,7 @@ const SearchRoutes = createSearchRouter({
   getSearchStats,
   searchWords,
   searchMedia,
+  identifyDictionaryWord,
 });
 
 const MediaRoutes = createMediaRouter({

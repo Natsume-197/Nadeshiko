@@ -31,6 +31,7 @@
       "profile": "Perfil",
       "privacy": "Política de privacidad",
       "dmca": "DMCA",
+      "sources": "Fuentes",
       "terms": "Términos y condiciones",
       "settings": "Ajustes",
       "blog": "Blog",
@@ -734,6 +735,12 @@
         "SMALL": "Pequeño",
         "MEDIUM": "Mediano",
         "LARGE": "Grande"
+      },
+      "dictionaryProvider": "Diccionario de la tarjeta",
+      "dictionaryProviderDescription": "Qué diccionario responde cuando tocas una palabra. Si no está disponible, la tarjeta responde con el otro.",
+      "dictionaryProviderOptions": {
+        "SHIRABE": "Shirabe",
+        "NADESHIKO": "El de Nadeshiko (JMdict)"
       },
       "translationLanguageOptions": {
         "EN": "Solo inglés",

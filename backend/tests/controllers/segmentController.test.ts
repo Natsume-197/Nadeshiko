@@ -473,6 +473,7 @@ describe('PATCH /v1/media/segments/:segmentPublicId', () => {
     const segment = await seedSegment(fixtures.media.testShow.id, episode.episodeNumber, {
       contentJa: '走る',
       tokens: [{ s: '走る', d: '走る', r: 'ハシル', b: 0, e: 2, p: '動詞' }],
+      parserVersion: 'shirabe',
     });
 
     const res = await request(app)
@@ -484,6 +485,7 @@ describe('PATCH /v1/media/segments/:segmentPublicId', () => {
     const updated = await Segment.findOneByOrFail({ id: segment.id });
     expect(updated.contentJa).toBe('歩く');
     expect(updated.tokens).toBeNull();
+    expect(updated.parserVersion).toBeNull();
     expect(enqueuedOn(TOKEN_PARSE_QUEUE)).toContain(segment.id);
   });
 

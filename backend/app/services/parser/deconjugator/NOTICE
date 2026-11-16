@@ -1,0 +1,26 @@
+Japanese deconjugator
+
+This directory contains third-party work licensed under the Apache License,
+Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0).
+
+Nazeka
+  Copyright wareya
+  https://github.com/wareya/nazeka
+  Original deconjugation rules and deconjugator design.
+
+JL
+  Copyright rampaa
+  https://github.com/rampaa/JL
+  Updated deconjugation rules (JL.Core/Resources/deconjugation_rules.json)
+  and the C# port of Nazeka's deconjugator.
+
+Further parts of this directory (rules.json, and index.ts as a TypeScript
+port) are derived from other third-party work licensed under the Apache
+License, Version 2.0. rules.json is unmodified except that a leading "//"
+comment line was removed so the file is valid JSON.
+
+Modifications (Apache License 2.0, section 4(b)): index.ts is a modified
+version of C# source, translated to TypeScript for Nadeshiko. The rule
+semantics, growth guards, result ordering and cache policy follow the
+original; thread-safety primitives and optional timing counters were
+dropped because the port runs single-threaded.

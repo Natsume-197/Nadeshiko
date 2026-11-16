@@ -62,6 +62,43 @@ const updateDefinitionSize = async (value: string) => {
     savingPreferences.value = false;
   }
 };
+/**
+ * Which dictionary answers the word card. Shows what the reader gets now: their choice, else Shirabe when they
+ * linked an account, else the site default.
+ */
+const DICTIONARY_PROVIDERS = ['SHIRABE', 'NADESHIKO'] as const;
+type ProviderOption = (typeof DICTIONARY_PROVIDERS)[number];
+const siteDefaultProvider = computed<ProviderOption>(() =>
+  useRuntimeConfig().public.dictionaryProvider === 'nadeshiko' ? 'NADESHIKO' : 'SHIRABE',
+);
+const dictionaryProvider = computed<ProviderOption>(
+  () =>
+    user_store.preferences?.wordPopup?.dictionaryProvider ??
+    (user_store.shirabeLinked ? 'SHIRABE' : siteDefaultProvider.value),
+);
+
+const updateDictionaryProvider = async (value: string) => {
+  const provider: ProviderOption = value === 'NADESHIKO' ? 'NADESHIKO' : 'SHIRABE';
+
+  savingPreferences.value = true;
+  try {
+    await sdk.updateUserPreferences({ wordPopup: { dictionaryProvider: provider } });
+    user_store.preferences = {
+      ...user_store.preferences,
+      wordPopup: { ...user_store.preferences?.wordPopup, dictionaryProvider: provider },
+    };
+    posthog?.capture('setting_changed', { setting_name: 'wordPopup.dictionaryProvider', value: provider });
+    useToastSuccess(t('accountSettings.account.preferenceSaved'));
+  } catch (error) {
+    handleApiError('account:dictionary-provider-update-failed', error, {
+      toastKey: 'accountSettings.account.preferenceError',
+      context: { 'preference.key': 'wordPopup.dictionaryProvider' },
+    });
+  } finally {
+    savingPreferences.value = false;
+  }
+};
+
 const sdk = useNadeshikoSdk();
 
 const sessionsActionLoading = ref(false);
@@ -805,6 +842,25 @@ const logoutCurrentUser = async () => {
         >
           <option v-for="size in DEFINITION_SIZES" :key="size" :value="size">
             {{ $t(`accountSettings.account.definitionSizeOptions.${size}`) }}
+          </option>
+        </select>
+      </div>
+
+      <div class="mt-4 nd-settings-row">
+        <div>
+          <p class="text-white">{{ $t('accountSettings.account.dictionaryProvider') }}</p>
+          <p class="text-gray-400 text-sm">{{ $t('accountSettings.account.dictionaryProviderDescription') }}</p>
+        </div>
+        <select
+          :aria-label="$t('accountSettings.account.dictionaryProvider')"
+          data-testid="dictionary-provider"
+          :value="dictionaryProvider"
+          :disabled="savingPreferences"
+          class="nd-select"
+          @change="updateDictionaryProvider(($event.target as HTMLSelectElement).value)"
+        >
+          <option v-for="provider in DICTIONARY_PROVIDERS" :key="provider" :value="provider">
+            {{ $t(`accountSettings.account.dictionaryProviderOptions.${provider}`) }}
           </option>
         </select>
       </div>

@@ -5,6 +5,7 @@ import { registerEmailWorkers } from '@app/workers/emailWorker';
 import { registerEmailLifecycleWorker } from '@app/workers/emailLifecycleWorker';
 import { registerEsSyncWorkers } from '@app/workers/esSyncWorker';
 import { registerTokenParseWorker } from '@app/workers/tokenParseWorker';
+import { registerDictionaryRefreshWorker } from '@app/workers/dictionaryRefreshWorker';
 import { registerRecurringLinesWorker } from '@app/workers/recurringLinesWorker';
 import { sendRecurringSweepJob } from '@app/workers/recurringLinesQueue';
 import { setBossInstance } from '@app/workers/pgBossClient';
@@ -20,6 +21,7 @@ import {
   ES_SYNC_UPDATE_QUEUE,
   TOKEN_PARSE_QUEUE,
   TOKEN_SWEEP_QUEUE,
+  DICTIONARY_REFRESH_QUEUE,
   RECURRING_RECOMPUTE_QUEUE,
   RECURRING_SWEEP_QUEUE,
 } from '@app/workers/queueNames';
@@ -153,6 +155,18 @@ export const workersInitializer: RuntimeInitializer = {
         },
       },
       {
+        name: DICTIONARY_REFRESH_QUEUE,
+        options: {
+          // One retry after five minutes for a network blip; a second failure waits for next week rather than
+          // retrying into the same upstream problem. The import is resumable (a rerun only applies what changed).
+          retryLimit: 1,
+          retryDelay: 300,
+          // A full import of JMdict and JMnedict took ~3 minutes on a desktop; leave room for a slower server.
+          expireInSeconds: 2 * 3600,
+          retentionSeconds: 7 * 86400,
+        },
+      },
+      {
         name: RECURRING_RECOMPUTE_QUEUE,
         options: {
           // A recompute is idempotent (it writes only changed rows), so retrying through a DB or queue blip is safe.
@@ -188,6 +202,8 @@ export const workersInitializer: RuntimeInitializer = {
     await boss.schedule(EMAIL_LIFECYCLE_QUEUE, '0 5 * * *', {});
     // Run this last so it cannot queue work for rows the retention sweep is about to delete.
     await boss.schedule(TOKEN_SWEEP_QUEUE, '0 6 * * *', {});
+    // Tuesdays: jmdict-simplified releases on Mondays. Does nothing unless DICTIONARY_REFRESH_ENABLED.
+    await boss.schedule(DICTIONARY_REFRESH_QUEUE, '0 7 * * 2', {});
     // Repairs recurring-line flags a lost recompute or an unhooked write path left stale.
     await boss.schedule(RECURRING_SWEEP_QUEUE, '30 6 * * *', { reason: 'nightly' });
     logger.info('PgBoss initialized, queues created, cron scheduled');
@@ -201,6 +217,7 @@ export const workersInitializer: RuntimeInitializer = {
     await registerActivityRetentionWorker(boss);
     await registerAffinityRetentionWorker(boss);
     await registerTokenParseWorker(boss);
+    await registerDictionaryRefreshWorker(boss);
     await registerRecurringLinesWorker(boss);
     // Also sweep at boot: the first deploy fills the flags with no manual step, and any later deploy converges them.
     // Collapsed to one sweep per ten minutes, so a burst of restarts does not queue several.

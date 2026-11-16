@@ -1,7 +1,7 @@
 import { PgBoss, Job } from 'pg-boss';
 import { In } from 'typeorm';
 import { Segment, SegmentStatus } from '@app/models';
-import { parseSegments } from '@app/services/shirabe/parseSegments';
+import { segmentParser } from '@app/services/parser';
 import { logger } from '@config/log';
 import { sendBulkEsSyncJobs } from './esSyncQueue';
 import { sendBulkTokenParseJobs, type TokenParseJobData } from './tokenParseQueue';
@@ -19,7 +19,7 @@ const SWEEP_LIMIT = 20_000;
 export async function registerTokenParseWorker(boss: PgBoss): Promise<void> {
   await boss.work(
     TOKEN_PARSE_QUEUE,
-    // Use one pg-boss worker team because `parseSegments` already controls internal parallelism and latency backoff.
+    // Use one pg-boss worker team because the parser already controls internal parallelism and latency backoff.
     { batchSize: PULL_SIZE, teamSize: 1 },
     instrumentedHandler(TOKEN_PARSE_QUEUE, handleTokenParse),
   );
@@ -51,7 +51,7 @@ async function handleTokenParse(jobs: Job<TokenParseJobData>[]): Promise<void> {
   if (segments.length === 0) return;
 
   const texts = segments.map((segment) => segment.contentJa ?? '');
-  const tokenLists = await parseSegments(texts);
+  const tokenLists = await segmentParser.parse(texts);
 
   // Guard the update by both id and current text so stale analysis cannot overwrite an edit; use a CTE/SELECT because
   // TypeORM raw UPDATE RETURNING has a different result shape.
@@ -62,14 +62,20 @@ async function handleTokenParse(jobs: Job<TokenParseJobData>[]): Promise<void> {
               unnest($3::text[]) AS payload
      ), updated AS (
        UPDATE "Segment" AS s
-          SET tokens = incoming.payload::jsonb
+          SET tokens = incoming.payload::jsonb,
+              parser_version = $4
          FROM incoming
         WHERE s.uuid = incoming.uuid
           AND s.content = incoming.text
         RETURNING s.id
      )
      SELECT id FROM updated`,
-    [segments.map((segment) => segment.uuid), texts, tokenLists.map((tokens) => JSON.stringify(tokens))],
+    [
+      segments.map((segment) => segment.uuid),
+      texts,
+      tokenLists.map((tokens) => JSON.stringify(tokens)),
+      segmentParser.version,
+    ],
   );
 
   const empty = tokenLists.filter((tokens) => tokens.length === 0).length;

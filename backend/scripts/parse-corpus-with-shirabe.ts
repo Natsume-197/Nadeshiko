@@ -5,9 +5,9 @@
 
 import { AppDataSource } from '@config/database';
 import { Media, Segment } from '@app/models';
-import { parseSegments } from '@app/services/shirabe/parseSegments';
+import { segmentParser } from '@app/services/parser';
 
-const PAGE = 500; // rows per database round trip; parseSegments batches its own HTTP
+const PAGE = 500; // rows per database round trip; the parser batches its own HTTP
 const REPORT_EVERY_MS = 5000;
 
 interface Options {
@@ -57,7 +57,7 @@ async function run({ dryRun, after, limit, media }: Options): Promise<void> {
       .getMany();
     if (rows.length === 0) break;
 
-    const tokenLists = await parseSegments(rows.map((row) => row.contentJa ?? ''));
+    const tokenLists = await segmentParser.parse(rows.map((row) => row.contentJa ?? ''));
 
     if (!dryRun) {
       const uuids = rows.map((row) => row.uuid);
@@ -65,10 +65,11 @@ async function run({ dryRun, after, limit, media }: Options): Promise<void> {
       // One statement per page. A row per UPDATE would be a million round trips.
       await repository.query(
         `UPDATE "Segment" AS s
-            SET tokens = incoming.payload::jsonb
+            SET tokens = incoming.payload::jsonb,
+                parser_version = $3
            FROM (SELECT unnest($1::text[]) AS uuid, unnest($2::text[]) AS payload) AS incoming
           WHERE s.uuid = incoming.uuid`,
-        [uuids, payloads],
+        [uuids, payloads, segmentParser.version],
       );
     }
 

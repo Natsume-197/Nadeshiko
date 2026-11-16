@@ -322,6 +322,83 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
+  /v1/dictionary/identify:
+    get:
+      tags:
+        - Search
+      x-internal: true
+      x-server-only: true
+      operationId: identifyDictionaryWord
+      summary: Rank Nadeshiko's own dictionary entries for one token, for our own server only
+      description: |
+        The word card's lookup when the reader's provider is Nadeshiko rather than
+        Shirabe. Takes what a stored token carries and returns ranked candidates in
+        the card's shape. Called by the frontend server, which owns caching and
+        provider choice; refused unless the request came through our own Nitro proxy.
+      security: []
+      parameters:
+        - name: lemma
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 100
+          description: The token's dictionary form.
+          example: 開く
+        - name: surface
+          in: query
+          schema:
+            type: string
+            maxLength: 100
+          description: The token as written in the sentence.
+          example: 開いた
+        - name: reading
+          in: query
+          schema:
+            type: string
+            maxLength: 200
+          description: The surface's reading, in katakana or hiragana.
+          example: ヒライタ
+        - name: pos
+          in: query
+          schema:
+            type: string
+            maxLength: 16
+          description: Shirabe's short part-of-speech tag (`SlimToken.pt`).
+          example: verb
+        - name: locale
+          in: query
+          schema:
+            type: string
+            enum:
+              - en
+              - es
+            default: en
+          description: Language whose senses come first.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - candidates
+                properties:
+                  candidates:
+                    type: array
+                    description: Best first; empty when no entry matches.
+                    items:
+                      $ref: '#/components/schemas/DictionaryCandidate'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /v1/stats/overview:
     get:
       tags:
@@ -5589,6 +5666,189 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/MediaSummary'
+    DictionaryCandidate:
+      type: object
+      description: |
+        One ranked answer from Nadeshiko's own dictionary, in the shape the word card
+        already reads from Shirabe's `words/identify`, so either provider renders the
+        same card. Pitch audio is not provided yet.
+      required:
+        - id
+        - headword
+        - reading
+        - common
+        - name
+        - sourceId
+        - dictionary
+        - jlpt
+        - frequency
+        - forms
+        - entries
+      properties:
+        id:
+          type: string
+          description: '`<dictionary>:<ent_seq>`.'
+          example: jmdict:1358280
+        headword:
+          type: string
+          example: 食べる
+        reading:
+          type: string
+          nullable: true
+          example: たべる
+        common:
+          type: boolean
+        name:
+          type: boolean
+          description: A proper name rather than a word.
+        sourceId:
+          type: string
+          description: The JMdict/JMnedict entry sequence number.
+          example: '1358280'
+        dictionary:
+          type: string
+          enum:
+            - jmdict
+            - jmnedict
+        jlpt:
+          type: string
+          nullable: true
+          description: Unofficial JLPT level estimate (N5-N1).
+          example: N5
+        frequency:
+          type: integer
+          nullable: true
+          description: Rank in Nadeshiko's own corpus (1 is the most frequent word); null when not counted.
+          example: 19
+        pitch:
+          type: array
+          description: UniDic accent, at most two patterns. No audio yet.
+          items:
+            type: object
+            required:
+              - downstep
+            properties:
+              downstep:
+                type: integer
+                minimum: 0
+                description: 0 is flat (heiban); n is the mora after which the pitch drops.
+        parts:
+          type: array
+          description: |
+            The words a compound or expression is made of (捜査本部: 捜査, 本部), content words only, each one
+            resolvable by the card. Absent for a word of one piece.
+          items:
+            type: object
+            required:
+              - text
+              - lemma
+              - reading
+              - id
+            properties:
+              text:
+                type: string
+                example: 捜査
+              lemma:
+                type: string
+                example: 捜査
+              reading:
+                type: string
+                example: ソウサ
+              id:
+                type: string
+                example: jmdict:1399010
+        furigana:
+          type: array
+          items:
+            type: object
+            required:
+              - text
+            properties:
+              text:
+                type: string
+              ruby:
+                type: string
+        forms:
+          type: array
+          items:
+            type: object
+            required:
+              - text
+              - script
+              - common
+            properties:
+              text:
+                type: string
+              script:
+                type: string
+                enum:
+                  - kanji
+                  - kana
+              common:
+                type: boolean
+        entries:
+          type: array
+          items:
+            type: object
+            required:
+              - dictionary
+              - dictionaryName
+              - senses
+            properties:
+              dictionary:
+                type: string
+              dictionaryName:
+                type: string
+              senses:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - position
+                    - definitions
+                    - tags
+                  properties:
+                    position:
+                      type: integer
+                    definitions:
+                      type: array
+                      items:
+                        type: object
+                        required:
+                          - lang
+                          - text
+                        properties:
+                          lang:
+                            type: string
+                            enum:
+                              - en
+                              - es
+                          text:
+                            type: string
+                    tags:
+                      type: array
+                      items:
+                        type: object
+                        required:
+                          - category
+                          - code
+                          - label
+                        properties:
+                          category:
+                            type: string
+                            enum:
+                              - partOfSpeech
+                              - misc
+                              - field
+                              - dialect
+                          code:
+                            type: string
+                          label:
+                            type: string
+                    notes:
+                      type: array
+                      items:
+                        type: string
     WordCoverageTier:
       type: object
       description: Coverage statistics for a frequency tier
@@ -7170,6 +7430,13 @@ components:
                 - LARGE
               description: |
                 How large the definitions themselves are printed. The card holds a reader's own monolingual dictionaries now, which is Japanese prose rather than a three-word English gloss, and a size that suited "to die; to pass away" is small for a paragraph of 大辞林. MEDIUM is the default; SMALL is what the card printed before this existed.
+            dictionaryProvider:
+              type: string
+              enum:
+                - SHIRABE
+                - NADESHIKO
+              description: |
+                Which dictionary answers the word card: Shirabe, or Nadeshiko's own (JMdict). Absent means the site default. If the chosen one is down, the card answers from the other rather than failing.
         searchHistory:
           type: object
           properties:

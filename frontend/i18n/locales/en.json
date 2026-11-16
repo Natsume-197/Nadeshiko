@@ -31,6 +31,7 @@
       "profile": "Profile",
       "privacy": "Privacy",
       "dmca": "DMCA",
+      "sources": "Sources",
       "terms": "Terms and Conditions",
       "settings": "Settings",
       "blog": "Blog",
@@ -734,6 +735,12 @@
         "SMALL": "Small",
         "MEDIUM": "Medium",
         "LARGE": "Large"
+      },
+      "dictionaryProvider": "Word card dictionary",
+      "dictionaryProviderDescription": "Which dictionary answers when you tap a word. If it is down, the card answers from the other one.",
+      "dictionaryProviderOptions": {
+        "SHIRABE": "Shirabe",
+        "NADESHIKO": "Nadeshiko's own (JMdict)"
       },
       "translationLanguageOptions": {
         "EN": "English only",

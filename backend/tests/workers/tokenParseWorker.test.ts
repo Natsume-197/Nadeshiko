@@ -84,6 +84,8 @@ describe('token parse worker', () => {
 
     const reloaded = await Segment.findOneByOrFail({ id: segment.id });
     expect(reloaded.tokens).toEqual(tokensFor('走る'));
+    // Rows from different parsers must stay distinguishable while Shirabe is being replaced.
+    expect(reloaded.parserVersion).toBe('shirabe');
 
     // The UPDATE is a raw statement, so no subscriber fires — the worker owning
     // the reindex is what keeps this path from needing a second command.

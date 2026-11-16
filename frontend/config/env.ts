@@ -23,6 +23,8 @@ const envSchema = z.object({
   NUXT_PUBLIC_SHIRABE_SITE: z.string().trim().default('https://shirabe.org'),
   // Optional direct endpoint tried before the public fallback; unset uses only the public API.
   NUXT_SHIRABE_API_DIRECT: z.string().trim().default(''),
+  // Word-card dictionary for the whole server until readers choose their own.
+  NUXT_DICTIONARY_PROVIDER: z.enum(['shirabe', 'nadeshiko']).default('shirabe'),
   // Exempts proxied backend requests from its per-IP limiter; match INTERNAL_PROXY_SECRET.
   NUXT_INTERNAL_PROXY_SECRET: z.string().trim().default(''),
   // E2E bypass for HTML and /v1 IP limits and SSR admission; prevents throttling

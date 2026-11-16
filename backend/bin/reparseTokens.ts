@@ -1,11 +1,15 @@
 import '@config/boot';
 import { logger } from '@config/log';
 import { AppDataSource } from '@config/database';
-import { Segment } from '@app/models';
-import { parseSegments } from '@app/services/shirabe/parseSegments';
+import { segmentParser } from '@app/services/parser';
 
-/** Re-tokenizes the corpus in ordered, durable pages. Await each page write before advancing `--after`; parsing may
- * parallelize inside a page but ordered results make the cursor resumable without gaps. */
+/** Re-tokenizes the corpus in ordered, durable pages with the parser SEGMENT_PARSER selects. Await each page write
+ * before advancing `--after`; parsing may parallelize inside a page but ordered results make the cursor resumable
+ * without gaps.
+ *
+ * `--stale` skips rows the active parser already wrote (same `parser_version`), so a switch of parser, or a revision
+ * of ours, reparses only what is left and can be stopped and rerun at will. Search serves the stored tokens, so follow
+ * a reparse with `npm run es:reindex`. */
 const PAGE_SIZE = Math.max(1, Number(process.env.REPARSE_PAGE_SIZE ?? 1000) || 1000);
 
 /** `PARSE_RATE` paces requests; concurrency alone allowed Shirabe heap growth, while sleeping only for the unused
@@ -30,20 +34,20 @@ function isTransient(error: unknown): boolean {
   );
 }
 
-async function parseWithRetry(texts: string[]): Promise<Awaited<ReturnType<typeof parseSegments>>> {
+async function parseWithRetry(texts: string[]): Promise<Awaited<ReturnType<typeof segmentParser.parse>>> {
   let lastError: unknown;
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     try {
-      return await parseSegments(texts);
+      return await segmentParser.parse(texts);
     } catch (error) {
       lastError = error;
       if (!isTransient(error)) throw error;
 
-      // Backs off so a Shirabe container swap (drain + boot, tens of seconds)
-      // is ridden out rather than burning all the attempts in a few seconds.
+      // Backs off so a parser restart (a Shirabe container swap, or the Sudachi sidecar rebooting) is ridden out
+      // rather than burning all the attempts in a few seconds.
       const delayMs = Math.min(30_000, 2_000 * 2 ** (attempt - 1));
-      logger.warn({ err: error, attempt, delayMs }, 'Shirabe parse failed, retrying');
+      logger.warn({ err: error, attempt, delayMs, parser: segmentParser.version }, 'Parse failed, retrying');
       await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
   }
@@ -51,9 +55,10 @@ async function parseWithRetry(texts: string[]): Promise<Awaited<ReturnType<typeo
   throw lastError;
 }
 
-function parseArgs(): { after: number } {
+function parseArgs(): { after: number; stale: boolean } {
   const args = process.argv.slice(2);
   let after = 0;
+  let stale = false;
 
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--after') {
@@ -62,21 +67,31 @@ function parseArgs(): { after: number } {
         throw new Error(`--after expects a number, got: ${args[i + 1]}`);
       }
       i++;
+    } else if (args[i] === '--stale') {
+      stale = true;
+    } else {
+      throw new Error(`Unknown argument: ${args[i]} (expected --after <id> or --stale)`);
     }
   }
 
-  return { after };
+  return { after, stale };
 }
 
 async function main(): Promise<void> {
-  const { after } = parseArgs();
+  const { after, stale } = parseArgs();
+  const version = segmentParser.version;
 
   await AppDataSource.initialize();
 
-  const repository = AppDataSource.getRepository(Segment);
-  const total = await repository.count();
+  // With --stale, `$3` is the active version and rows already carrying it are left alone; without it `$3` is null and
+  // `IS DISTINCT FROM NULL` matches every row, including rows never parsed.
+  const skipVersion = stale ? version : null;
+  const [{ total }]: Array<{ total: number }> = await AppDataSource.query(
+    `SELECT count(*)::int AS total FROM "Segment" WHERE id > $1 AND ($2::text IS NULL OR parser_version IS DISTINCT FROM $2)`,
+    [after, skipVersion],
+  );
 
-  logger.info({ after, total, pageSize: PAGE_SIZE }, 'reparse starting');
+  logger.info({ after, total, stale, parser: version, pageSize: PAGE_SIZE }, 'reparse starting');
 
   let cursor = after;
   let written = 0;
@@ -87,9 +102,10 @@ async function main(): Promise<void> {
       `SELECT id, uuid, content
          FROM "Segment"
         WHERE id > $1
+          AND ($3::text IS NULL OR parser_version IS DISTINCT FROM $3)
         ORDER BY id
         LIMIT $2`,
-      [cursor, PAGE_SIZE],
+      [cursor, PAGE_SIZE, skipVersion],
     );
 
     if (rows.length === 0) break;
@@ -99,10 +115,11 @@ async function main(): Promise<void> {
 
     await AppDataSource.query(
       `UPDATE "Segment" AS s
-          SET tokens = incoming.payload::jsonb
+          SET tokens = incoming.payload::jsonb,
+              parser_version = $3
          FROM (SELECT unnest($1::text[]) AS uuid, unnest($2::text[]) AS payload) AS incoming
         WHERE s.uuid = incoming.uuid`,
-      [rows.map((row) => row.uuid), tokens.map((token) => JSON.stringify(token))],
+      [rows.map((row) => row.uuid), tokens.map((token) => JSON.stringify(token)), version],
     );
 
     cursor = rows[rows.length - 1]!.id;

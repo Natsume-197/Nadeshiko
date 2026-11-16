@@ -23,6 +23,7 @@ export type CoveredWordsUpdateRequestOutput = z.output<typeof schemas.s_CoveredW
 export type CoveredWordsUpdateResponseOutput = z.output<typeof schemas.s_CoveredWordsUpdateResponse>;
 export type CreateFeedbackRequestOutput = z.output<typeof schemas.s_CreateFeedbackRequest>;
 export type CursorPaginationOutput = z.output<typeof schemas.s_CursorPagination>;
+export type DictionaryCandidateOutput = z.output<typeof schemas.s_DictionaryCandidate>;
 export type EpisodeOutput = z.output<typeof schemas.s_Episode>;
 export type EpisodeCreateRequestOutput = z.output<typeof schemas.s_EpisodeCreateRequest>;
 export type EpisodeUpdateRequestOutput = z.output<typeof schemas.s_EpisodeUpdateRequest>;
@@ -219,6 +220,15 @@ export const listSegmentsQuerySchema = z.object({
     cursor: z.string().optional(),
   });
 export type ListSegmentsQueryOutput = z.output<typeof listSegmentsQuerySchema>;
+
+export const identifyDictionaryWordQuerySchema = z.object({
+    lemma: z.string().min(1).max(100),
+    surface: z.string().max(100).optional(),
+    reading: z.string().max(200).optional(),
+    pos: z.string().max(16).optional(),
+    locale: z.enum(['en', 'es']).optional().default('en'),
+  });
+export type IdentifyDictionaryWordQueryOutput = z.output<typeof identifyDictionaryWordQuerySchema>;
 
 export const getCoveredWordsQuerySchema = z.object({
     tier: z.coerce.number().min(1),

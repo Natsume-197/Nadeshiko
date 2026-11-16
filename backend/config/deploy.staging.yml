@@ -103,6 +103,11 @@ env:
     ELASTICSEARCH_HOST: "http://nadeshiko-backend-prod-elasticsearch:9200"
     ELASTICSEARCH_INDEX: nadedb_dev
 
+    # Production's sidecar, shared like Postgres and Elasticsearch (see deploy.prod.yml). Staging can try our parser
+    # with SEGMENT_PARSER=nadeshiko before production does.
+    SUDACHI_URL: "http://nadeshiko-backend-prod-sudachi:8090"
+    SEGMENT_PARSER: shirabe
+
     R2_BASE_URL: https://cdn.nadeshiko.co
 
     OTEL_EXPORTER_OTLP_ENDPOINT: "http://host.docker.internal:4328"

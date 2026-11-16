@@ -24,7 +24,30 @@ const inFlight = new Map<string, Promise<WordLookup>>();
  * Shirabe, even when other chips use local translations.
  */
 function cacheKey(ref: WordRef, locale: string, stack: string): string {
-  return `${ref.lemma}\u0000${ref.surface}\u0000${ref.reading}\u0000${ref.pos}:${locale}:${stack}`;
+  return `${ref.lemma}\u0000${ref.surface}\u0000${ref.reading}\u0000${ref.pos}:${locale}:${stack}:${readerProvider}`;
+}
+
+export type DictionaryProvider = 'shirabe' | 'nadeshiko';
+
+/**
+ * Which dictionary the reader wants on the card, or '' for the site default. Sent as `provider` so it is part of
+ * the URL every cache (browser, Nitro, Cloudflare) keys on. Pushed from the auth store, like the stack below.
+ */
+let readerProvider: DictionaryProvider | '' = '';
+
+export function setReaderProvider(provider: DictionaryProvider | null | undefined): void {
+  readerProvider = provider ?? '';
+}
+
+/** The reader's provider: their explicit choice, else Shirabe for a reader who linked a Shirabe account (they
+ *  linked it to use it), else none, which means the site default. */
+export function chosenProvider(
+  preference: 'SHIRABE' | 'NADESHIKO' | null | undefined,
+  linkedShirabe: boolean,
+): DictionaryProvider | null {
+  if (preference === 'SHIRABE') return 'shirabe';
+  if (preference === 'NADESHIKO') return 'nadeshiko';
+  return linkedShirabe ? 'shirabe' : null;
 }
 
 /**
@@ -100,7 +123,14 @@ export function fetchWord(ref: WordRef, locale: string): Promise<WordLookup> {
       // `stack` is a cache key and nothing else: the route ignores it when
       // calling Shirabe, which resolves the stack from the reader's own key.
       // Sent only for a linked reader, so every other URL is unchanged.
-      query: { locale, surface: ref.surface, reading: ref.reading, pos: ref.pos, ...(stack ? { stack } : {}) },
+      query: {
+        locale,
+        surface: ref.surface,
+        reading: ref.reading,
+        pos: ref.pos,
+        ...(stack ? { stack } : {}),
+        ...(readerProvider ? { provider: readerProvider } : {}),
+      },
       // Bound the browser request beyond the server's shorter timeouts so a hung connection cannot leave the
       // card loading forever.
       timeout: 8000,

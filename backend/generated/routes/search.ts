@@ -14,13 +14,16 @@ import {
 } from '@nahkies/typescript-express-runtime/server';
 import { parseRequestInput, responseValidationFactory } from '@nahkies/typescript-express-runtime/zod-v4';
 import { type NextFunction, type Request, type RequestHandler, type Response, Router } from 'express';
+import { z } from 'zod/v4';
 import type {
+  t_DictionaryCandidate,
   t_Error400,
   t_Error401,
   t_Error403,
   t_Error429,
   t_Error500,
   t_Error503,
+  t_IdentifyDictionaryWordQuerySchema,
   t_MediaAutocompleteResponse,
   t_SearchMediaRequest,
   t_SearchMultipleRequest,
@@ -30,8 +33,9 @@ import type {
   t_SearchStatsRequest,
   t_SearchStatsResponse,
 } from '../models.ts';
-import type { SearchMediaRequestOutput, SearchMultipleRequestOutput, SearchRequestOutput, SearchStatsRequestOutput } from '../outputTypes.ts';
+import type { IdentifyDictionaryWordQueryOutput, SearchMediaRequestOutput, SearchMultipleRequestOutput, SearchRequestOutput, SearchStatsRequestOutput } from '../outputTypes.ts';
 import {
+  s_DictionaryCandidate,
   s_Error400,
   s_Error401,
   s_Error403,
@@ -118,11 +122,30 @@ export type SearchMedia = (
   next: NextFunction,
 ) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
 
+export type IdentifyDictionaryWordResponder = {
+  with200(): ExpressRuntimeResponse<{
+    candidates: t_DictionaryCandidate[];
+  }>;
+  with400(): ExpressRuntimeResponse<t_Error400>;
+  with403(): ExpressRuntimeResponse<t_Error403>;
+  with429(): ExpressRuntimeResponse<t_Error429>;
+  with500(): ExpressRuntimeResponse<t_Error500>;
+} & ExpressRuntimeResponder;
+
+export type IdentifyDictionaryWord = (
+  params: Params<void, IdentifyDictionaryWordQueryOutput, void, void>,
+  respond: IdentifyDictionaryWordResponder,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
+
 export type SearchImplementation = {
   search: Search;
   getSearchStats: GetSearchStats;
   searchWords: SearchWords;
   searchMedia: SearchMedia;
+  identifyDictionaryWord: IdentifyDictionaryWord;
 };
 
 export function createSearchRouter(
@@ -358,6 +381,67 @@ export function createSearchRouter(
         .searchMedia(input, responder, req, res, next)
         .catch(handleImplementationError)
         .then(handleResponse(res, searchMediaResponseBodyValidator));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  const identifyDictionaryWordQuerySchema = z.object({
+    lemma: z.string().min(1).max(100),
+    surface: z.string().max(100).optional(),
+    reading: z.string().max(200).optional(),
+    pos: z.string().max(16).optional(),
+    locale: z.enum(['en', 'es']).optional().default('en'),
+  });
+
+  const identifyDictionaryWordResponseBodyValidator = responseValidationFactory(
+    [
+      ['200', z.object({ candidates: z.array(s_DictionaryCandidate) })],
+      ['400', s_Error400],
+      ['403', s_Error403],
+      ['429', s_Error429],
+      ['500', s_Error500],
+    ],
+    undefined,
+  );
+
+  // identifyDictionaryWord
+  router.get(`/v1/dictionary/identify`, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const input = {
+        params: undefined,
+        query: parseRequestInput(identifyDictionaryWordQuerySchema, req.query, RequestInputType.QueryString),
+        body: undefined,
+        headers: undefined,
+      };
+
+      const responder = {
+        with200() {
+          return new ExpressRuntimeResponse<{
+            candidates: t_DictionaryCandidate[];
+          }>(200);
+        },
+        with400() {
+          return new ExpressRuntimeResponse<t_Error400>(400);
+        },
+        with403() {
+          return new ExpressRuntimeResponse<t_Error403>(403);
+        },
+        with429() {
+          return new ExpressRuntimeResponse<t_Error429>(429);
+        },
+        with500() {
+          return new ExpressRuntimeResponse<t_Error500>(500);
+        },
+        withStatus(status: StatusCode) {
+          return new ExpressRuntimeResponse(status);
+        },
+      };
+
+      await implementation
+        .identifyDictionaryWord(input, responder, req, res, next)
+        .catch(handleImplementationError)
+        .then(handleResponse(res, identifyDictionaryWordResponseBodyValidator));
     } catch (error) {
       next(error);
     }

@@ -117,6 +117,42 @@ export const s_CreateFeedbackRequest = z.object({
 
 export const s_CursorPagination = z.object({ hasMore: PermissiveBoolean, cursor: z.string().min(1).nullable() });
 
+export const s_DictionaryCandidate = z.object({
+  id: z.string(),
+  headword: z.string(),
+  reading: z.string().nullable(),
+  common: PermissiveBoolean,
+  name: PermissiveBoolean,
+  sourceId: z.string(),
+  dictionary: z.enum(['jmdict', 'jmnedict']),
+  jlpt: z.string().nullable(),
+  frequency: z.coerce.number().nullable(),
+  pitch: z.array(z.object({ downstep: z.coerce.number().min(0) })).optional(),
+  parts: z.array(z.object({ text: z.string(), lemma: z.string(), reading: z.string(), id: z.string() })).optional(),
+  furigana: z.array(z.object({ text: z.string(), ruby: z.string().optional() })).optional(),
+  forms: z.array(z.object({ text: z.string(), script: z.enum(['kanji', 'kana']), common: PermissiveBoolean })),
+  entries: z.array(
+    z.object({
+      dictionary: z.string(),
+      dictionaryName: z.string(),
+      senses: z.array(
+        z.object({
+          position: z.coerce.number(),
+          definitions: z.array(z.object({ lang: z.enum(['en', 'es']), text: z.string() })),
+          tags: z.array(
+            z.object({
+              category: z.enum(['partOfSpeech', 'misc', 'field', 'dialect']),
+              code: z.string(),
+              label: z.string(),
+            }),
+          ),
+          notes: z.array(z.string()).optional(),
+        }),
+      ),
+    }),
+  ),
+});
+
 export const s_Episode = z.object({
   mediaPublicId: z.string().regex(new RegExp('^[A-Za-z0-9_-]{12}$')),
   episodeNumber: z.coerce.number().min(0),
@@ -817,7 +853,12 @@ export const s_UserPreferences = z.object({
     .max(2)
     .refine((array) => new Set([...array]).size === array.length, { message: 'Array must contain unique element(s)' })
     .optional(),
-  wordPopup: z.object({ definitionSize: z.enum(['SMALL', 'MEDIUM', 'LARGE']).optional() }).optional(),
+  wordPopup: z
+    .object({
+      definitionSize: z.enum(['SMALL', 'MEDIUM', 'LARGE']).optional(),
+      dictionaryProvider: z.enum(['SHIRABE', 'NADESHIKO']).optional(),
+    })
+    .optional(),
   searchHistory: z.object({ enabled: PermissiveBoolean.optional() }).optional(),
   ankiProfiles: z
     .array(

@@ -2,6 +2,7 @@
 // Internal endpoints - organized by tag group (like Python SDK's internal modules)
 
 export * as roadmap from './internal/roadmap.gen';
+export * as search from './internal/search.gen';
 export * as stats from './internal/stats.gen';
 export * as media from './internal/media.gen';
 export * as user from './internal/user.gen';

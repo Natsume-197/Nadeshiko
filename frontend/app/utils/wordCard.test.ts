@@ -922,3 +922,40 @@ describe('pitchCategory', () => {
     expect(pitchCategory('はな', Number.NaN)).toBe('');
   });
 });
+
+describe('cardSenses for a word with no definition in the reader’s languages', () => {
+  // JMdict, which Nadeshiko's own dictionary serves, has Spanish for only part of its entries.
+  const englishOnly: ShirabeWord = {
+    id: 'jmdict:1',
+    headword: '箇所',
+    entries: [{ dictionary: 'jmdict', senses: [{ definitions: ENGLISH_ONLY }] }],
+  };
+  const spanishReader = glossPreference('es', { en: 'show', es: 'show' }, ['es']);
+
+  it('reads in English rather than as an empty card', () => {
+    expect(cardSenses(englishOnly, spanishReader).map((sense) => sense.glosses)).toEqual([
+      [{ lang: 'en', label: 'EN', text: 'to be jealous' }],
+    ]);
+  });
+
+  it('keeps to the reader’s languages when the word has any definition in them', () => {
+    const mixed: ShirabeWord = {
+      id: 'jmdict:2',
+      headword: '食べる',
+      entries: [
+        {
+          dictionary: 'jmdict',
+          senses: [{ definitions: [{ lang: 'es', text: 'comer' }] }, { definitions: ENGLISH_ONLY }],
+        },
+      ],
+    };
+
+    expect(cardSenses(mixed, spanishReader).map((sense) => sense.glosses[0]?.text)).toEqual(['comer']);
+  });
+
+  it('leaves a reader who hid every language without definitions', () => {
+    const hidAll = glossPreference('es', { en: 'hidden', es: 'hidden' }, ['es']);
+
+    expect(cardSenses(englishOnly, hidAll)).toEqual([]);
+  });
+});

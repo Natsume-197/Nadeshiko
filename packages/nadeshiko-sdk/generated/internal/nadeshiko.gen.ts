@@ -4,7 +4,7 @@ import { createClient as createApiClient, createConfig, type Client } from './cl
 import type { Auth } from './core/auth.gen';
 import type { ClientOptions } from './types.gen';
 import type * as Types from './types.gen';
-import { search, getSearchStats, searchWords, searchMedia, getStatsOverview, listMedia, getSegment, getSegmentContext, getMedia, listEpisodes, getEpisode, getMe, createUserApiKey, listExcludedMedia, addExcludedMedia, removeExcludedMedia, listFavoriteMedia, addFavoriteMedia, removeFavoriteMedia, listFamiliarMedia, listUserActivity, getUserActivityHeatmap, getUserActivityStats, listCollections, createCollection, getCollection, deleteCollection, addSegmentToCollection, searchCollectionSegments, removeSegmentFromCollection, listRoadmap, createRoadmapProposal, getCoveredWords, triggerCoveredWordsUpdate, createMedia, updateSegment, listSegmentRevisions, restoreSegmentRevision, updateMedia, deleteMedia, createEpisode, updateEpisode, deleteEpisode, listSegments, createSegment, createSegmentsBatch, moderateEpisodeSegments, getShirabeConnection, startShirabeLink, unlinkShirabe, completeShirabeLink, getShirabeCredential, resyncShirabeStack, reportShirabeRefusal, getPatreonConnection, startPatreonLink, unlinkPatreon, completePatreonLink, clearFamiliarMedia, forgetFamiliarMedia, createUserReport, getUserPreferences, updateUserPreferences, trackUserActivity, deleteUserActivity, deleteUserActivityByDate, deleteUserActivityById, exportUserData, createFeedback, getFeedbackFormToken, unsubscribeFromEmail, getEmailPreferencesByToken, updateEmailPreferencesByToken, updateCollection, updateCollectionSegment, getCollectionStats, listAdminReports, batchUpdateAdminReports, bulkUpdateAdminReports, bulkDeleteAdminReports, updateAdminReport, deleteAdminReport, listAgentActivity, getAnnouncement, updateAnnouncement, getAdminUsersWithProviders, listTiers, getAdminUserQuota, updateAdminUserQuota, listAdminRoadmap, createAdminRoadmapItem, updateAdminRoadmapItem, getSession, getSessionPost, signOut, socialSignIn, signInWithMagicLink, signInWithEmailOtp, listUserSessions, authRevokeSession, authRevokeSessions, authRevokeOtherSessions, deleteUser, changeEmail, authApiKeyCreate, authApiKeyList, authApiKeyUpdate, banUser, unbanUser, impersonateUser, authAdminStopImpersonating, type Options } from './sdk.gen';
+import { search, getSearchStats, searchWords, searchMedia, getStatsOverview, listMedia, getSegment, getSegmentContext, getMedia, listEpisodes, getEpisode, getMe, createUserApiKey, listExcludedMedia, addExcludedMedia, removeExcludedMedia, listFavoriteMedia, addFavoriteMedia, removeFavoriteMedia, listFamiliarMedia, listUserActivity, getUserActivityHeatmap, getUserActivityStats, listCollections, createCollection, getCollection, deleteCollection, addSegmentToCollection, searchCollectionSegments, removeSegmentFromCollection, listRoadmap, createRoadmapProposal, identifyDictionaryWord, getCoveredWords, triggerCoveredWordsUpdate, createMedia, updateSegment, listSegmentRevisions, restoreSegmentRevision, updateMedia, deleteMedia, createEpisode, updateEpisode, deleteEpisode, listSegments, createSegment, createSegmentsBatch, moderateEpisodeSegments, getShirabeConnection, startShirabeLink, unlinkShirabe, completeShirabeLink, getShirabeCredential, resyncShirabeStack, reportShirabeRefusal, getPatreonConnection, startPatreonLink, unlinkPatreon, completePatreonLink, clearFamiliarMedia, forgetFamiliarMedia, createUserReport, getUserPreferences, updateUserPreferences, trackUserActivity, deleteUserActivity, deleteUserActivityByDate, deleteUserActivityById, exportUserData, createFeedback, getFeedbackFormToken, unsubscribeFromEmail, getEmailPreferencesByToken, updateEmailPreferencesByToken, updateCollection, updateCollectionSegment, getCollectionStats, listAdminReports, batchUpdateAdminReports, bulkUpdateAdminReports, bulkDeleteAdminReports, updateAdminReport, deleteAdminReport, listAgentActivity, getAnnouncement, updateAnnouncement, getAdminUsersWithProviders, listTiers, getAdminUserQuota, updateAdminUserQuota, listAdminRoadmap, createAdminRoadmapItem, updateAdminRoadmapItem, getSession, getSessionPost, signOut, socialSignIn, signInWithMagicLink, signInWithEmailOtp, listUserSessions, authRevokeSession, authRevokeSessions, authRevokeOtherSessions, deleteUser, changeEmail, authApiKeyCreate, authApiKeyList, authApiKeyUpdate, banUser, unbanUser, impersonateUser, authAdminStopImpersonating, type Options } from './sdk.gen';
 import { withRetry, type RetryOptions } from './retry';
 import { NadeshikoError, buildNadeshikoError, isProblemDetails, type NadeshikoErrorCode, type RateLimitReason } from './errors';
 import { flatPaginate } from './paginate';
@@ -189,6 +189,10 @@ export type NadeshikoClient = {
     createRoadmapProposal: {
       (params: NonNullable<Types.CreateRoadmapProposalData['body']> & { throwOnError: false }): Promise<{ data: Types.CreateRoadmapProposalResponse; response: Response; request: Request } | { error: Types.CreateRoadmapProposalErrors; response: Response; request: Request }>;
       (params: NonNullable<Types.CreateRoadmapProposalData['body']>): Promise<Types.CreateRoadmapProposalResponse>;
+    };
+    identifyDictionaryWord: {
+      (params: NonNullable<Types.IdentifyDictionaryWordData['query']> & { throwOnError: false }): Promise<{ data: Types.IdentifyDictionaryWordResponse; response: Response; request: Request } | { error: Types.IdentifyDictionaryWordErrors; response: Response; request: Request }>;
+      (params?: NonNullable<Types.IdentifyDictionaryWordData['query']>): Promise<Types.IdentifyDictionaryWordResponse>;
     };
     getCoveredWords: {
       (params: NonNullable<Types.GetCoveredWordsData['query']> & { throwOnError: false }): Promise<{ data: Types.GetCoveredWordsResponse; response: Response; request: Request } | { error: Types.GetCoveredWordsErrors; response: Response; request: Request }>;
@@ -884,6 +888,12 @@ export function createNadeshikoClient(config: NadeshikoConfig): NadeshikoClient 
     return tOE === false ? p : p.then((r: any) => r.data);
   };
 
+  const _identifyDictionaryWord = (params?: any) => {
+    const { throwOnError: tOE, ...query } = params ?? {};
+    const p = identifyDictionaryWord({ ...(Object.keys(query).length > 0 ? { query } : {}), client: clientInstance, throwOnError: tOE === false ? false : true } as any);
+    return tOE === false ? p : p.then((r: any) => r.data);
+  };
+
   const _getCoveredWords = (params?: any) => {
     const { throwOnError: tOE, ...query } = params ?? {};
     const p = getCoveredWords({ ...(Object.keys(query).length > 0 ? { query } : {}), client: clientInstance, throwOnError: tOE === false ? false : true } as any);
@@ -1470,6 +1480,7 @@ export function createNadeshikoClient(config: NadeshikoConfig): NadeshikoClient 
     removeSegmentFromCollection: _removeSegmentFromCollection,
     listRoadmap: _listRoadmap,
     createRoadmapProposal: _createRoadmapProposal,
+    identifyDictionaryWord: _identifyDictionaryWord,
     getCoveredWords: _getCoveredWords,
     triggerCoveredWordsUpdate: _triggerCoveredWordsUpdate,
     createMedia: _createMedia,

@@ -127,6 +127,10 @@ export class Segment extends BaseEntity {
   @Column({ name: 'tokens', type: 'jsonb', nullable: true })
   tokens!: SlimToken[] | null;
 
+  /** The parser that produced `tokens` (`SegmentParser.version`); meaningless while `tokens` is null. */
+  @Column({ name: 'parser_version', type: 'varchar', length: 32, nullable: true })
+  parserVersion!: string | null;
+
   /**
    * A later copy of a line that recurs across this title's episodes as part of an opening, ending, recap or preview.
    * Maintained per title by the recurring-lines job (`app/services/search/recurringLines.ts`), never by hand, and

@@ -231,6 +231,53 @@ export type t_CursorPagination = {
   hasMore: boolean;
 };
 
+export type t_DictionaryCandidate = {
+  common: boolean;
+  dictionary: 'jmdict' | 'jmnedict';
+  entries: {
+    dictionary: string;
+    dictionaryName: string;
+    senses: {
+      definitions: {
+        lang: 'en' | 'es';
+        text: string;
+      }[];
+      notes?: string[];
+      position: number;
+      tags: {
+        category: 'partOfSpeech' | 'misc' | 'field' | 'dialect';
+        code: string;
+        label: string;
+      }[];
+    }[];
+  }[];
+  forms: {
+    common: boolean;
+    script: 'kanji' | 'kana';
+    text: string;
+  }[];
+  frequency: number | null;
+  furigana?: {
+    ruby?: string;
+    text: string;
+  }[];
+  headword: string;
+  id: string;
+  jlpt: string | null;
+  name: boolean;
+  parts?: {
+    id: string;
+    lemma: string;
+    reading: string;
+    text: string;
+  }[];
+  pitch?: {
+    downstep: number;
+  }[];
+  reading: string | null;
+  sourceId: string;
+};
+
 export type t_Episode = {
   airedAt: string | null;
   description: string | null;
@@ -1042,6 +1089,7 @@ export type t_UserPreferences = {
   };
   wordPopup?: {
     definitionSize?: 'SMALL' | 'MEDIUM' | 'LARGE';
+    dictionaryProvider?: 'SHIRABE' | 'NADESHIKO';
   };
 };
 
@@ -1207,6 +1255,14 @@ export type t_GetUserActivityHeatmapQuerySchema = {
 
 export type t_GetUserActivityStatsQuerySchema = {
   since?: string;
+};
+
+export type t_IdentifyDictionaryWordQuerySchema = {
+  lemma: string;
+  locale?: 'en' | 'es';
+  pos?: string;
+  reading?: string;
+  surface?: string;
 };
 
 export type t_ListAdminReportsQuerySchema = {

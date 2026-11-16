@@ -40,6 +40,7 @@ app.use(
     getSearchStats,
     searchWords,
     searchMedia: (() => undefined) as any,
+    identifyDictionaryWord: (() => undefined) as any,
   }),
 );
 app.use(handleErrors);

@@ -5,6 +5,7 @@ import { readFileSync, readdirSync } from 'fs';
 import { resolve, join } from 'path';
 import { listOperations, loadBundledSpec } from '../../bin/lib/spec';
 import { isServerOnly } from '../../bin/generateServerOnlyRoutes';
+import { INTENTIONALLY_PUBLIC_OPERATIONS } from '../../bin/generateRouteAuth';
 
 const DENYLIST_FILE = resolve(import.meta.dirname, '../../../frontend/server/utils/generated/serverOnlyRoutes.ts');
 const CONTROLLERS_DIR = resolve(import.meta.dirname, '../../app/controllers');
@@ -41,9 +42,15 @@ describe('server-only routes agree with the controllers and the proxy', () => {
 
   it('every marked route is internal and session-gated', () => {
     // A server-only route is not public and is reached with the reader cookie relayed by our server, so it requires a
-    // session.
+    // session, unless it is on the deliberate public allowlist because anonymous readers need it too (the word card's
+    // own-dictionary lookup); the internal secret still gates those.
     const offenders = serverOnlyOperations
-      .filter((op) => !op.isInternal || !op.security?.some((requirement) => 'SessionCookie' in requirement))
+      .filter(
+        (op) =>
+          !op.isInternal ||
+          (!INTENTIONALLY_PUBLIC_OPERATIONS.has(op.operationId ?? '') &&
+            !op.security?.some((requirement) => 'SessionCookie' in requirement)),
+      )
       .map(describeOperation);
 
     expect(offenders).toEqual([]);

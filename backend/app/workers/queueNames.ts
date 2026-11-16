@@ -7,6 +7,7 @@ export const ACTIVITY_RETENTION_QUEUE = 'activity-retention-cleanup';
 export const AFFINITY_RETENTION_QUEUE = 'affinity-retention-cleanup';
 export const TOKEN_PARSE_QUEUE = 'segment-token-parse';
 export const TOKEN_SWEEP_QUEUE = 'segment-token-sweep';
+export const DICTIONARY_REFRESH_QUEUE = 'dictionary-refresh';
 export const RECURRING_RECOMPUTE_QUEUE = 'segment-recurring-recompute';
 export const RECURRING_SWEEP_QUEUE = 'segment-recurring-sweep';
 
@@ -22,6 +23,7 @@ export const ALL_QUEUES = [
   AFFINITY_RETENTION_QUEUE,
   TOKEN_PARSE_QUEUE,
   TOKEN_SWEEP_QUEUE,
+  DICTIONARY_REFRESH_QUEUE,
   RECURRING_RECOMPUTE_QUEUE,
   RECURRING_SWEEP_QUEUE,
 ] as const;

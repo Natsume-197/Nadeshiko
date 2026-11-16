@@ -18,6 +18,7 @@ const STATIC_PAGES = new Set([
   '/privacy',
   '/terms-and-conditions',
   '/dmca',
+  '/sources',
   '/search',
   '/api/v1/docs',
   '/user',

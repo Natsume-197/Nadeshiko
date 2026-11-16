@@ -57,6 +57,7 @@ const SITEMAP_STATIC_PATHS = [
   '/privacy',
   '/terms-and-conditions',
   '/dmca',
+  '/sources',
   '/media',
   '/blog',
   '/changelog',
@@ -149,6 +150,9 @@ export default defineNuxtConfig({
     shirabeApiBase: env.NUXT_SHIRABE_API_BASE || 'https://shirabe.org',
     // Optional tailnet fast path; the lookup route falls back to the public host, changing latency only.
     shirabeApiDirect: env.NUXT_SHIRABE_API_DIRECT || '',
+    // Which dictionary answers the word card, server-wide: 'shirabe' (default) or 'nadeshiko'. Temporary until the
+    // per-reader choice exists.
+    dictionaryProvider: env.NUXT_DICTIONARY_PROVIDER,
     internalProxySecret: env.NUXT_INTERNAL_PROXY_SECRET,
     backendInternalUrl: env.NUXT_BACKEND_INTERNAL_URL,
     backendHostHeader: env.NUXT_BACKEND_HOST_HEADER,
@@ -166,7 +170,10 @@ export default defineNuxtConfig({
       shirabeSite: env.NUXT_PUBLIC_SHIRABE_SITE || 'https://shirabe.org',
       // Expose only whether lookups are configured, not the key, to avoid doomed hover requests.
       // Without lookups, cards still show token-provided word, reading and grammar.
-      shirabeLookups: Boolean(env.NUXT_SHIRABE_API_KEY),
+      // Our own dictionary needs no key, so it counts as configured.
+      shirabeLookups: Boolean(env.NUXT_SHIRABE_API_KEY) || env.NUXT_DICTIONARY_PROVIDER === 'nadeshiko',
+      // The site's default word-card dictionary, so Settings can show what a reader who never chose is getting.
+      dictionaryProvider: env.NUXT_DICTIONARY_PROVIDER,
     },
   },
   // Restrict scanning to Vue SFCs so colocated TypeScript helpers do not become phantom components.

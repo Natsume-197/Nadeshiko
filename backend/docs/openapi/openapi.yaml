@@ -111,6 +111,8 @@ paths:
     $ref: "./paths/search/v1_search_words.yaml"
   "/v1/search/media":
     $ref: "./paths/search/v1_search_media.yaml"
+  "/v1/dictionary/identify":
+    $ref: "./paths/search/v1_dictionary_identify.yaml"
   # Stats endpoints
   "/v1/stats/overview":
     $ref: "./paths/stats/v1_stats_overview.yaml"

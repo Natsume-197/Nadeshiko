@@ -372,6 +372,19 @@ function cardTags(tags: ShirabeTag[], lang: TagLanguage, keep: (tag: ShirabeTag)
   return chips;
 }
 
+/**
+ * A word with no definition at all in the reader's languages reads in English rather than as an empty card.
+ * JMdict, which Nadeshiko's own dictionary serves, has Spanish for only part of its entries; Shirabe has Spanish
+ * everywhere, so with it this never applies. A reader who hid every language (empty `order`) is left alone.
+ */
+function withEnglishFallback(word: ShirabeWord | null, preference: GlossPreference): GlossPreference {
+  if (preference.order.length === 0 || preference.order.includes('en')) return preference;
+  const printable = (word?.entries ?? []).some((entry) =>
+    (entry.senses ?? []).some((sense) => selectDefinitions(sense.definitions, preference).length > 0),
+  );
+  return printable ? preference : { ...preference, order: [...preference.order, 'en'] };
+}
+
 /** Cap senses per dictionary so a long entry cannot crowd out later dictionaries in the reader's stack. */
 const SENSE_LIMIT = 6;
 
@@ -386,7 +399,8 @@ function samePartsOfSpeech(a: CardTag[], b: CardTag[]): boolean {
  * Keep dictionary order and a separate allowance per dictionary; omit senses with no printable gloss.
  * Suppress repeated POS chips, but retain usage qualifiers and notes on every sense they qualify.
  */
-export function cardSenses(word: ShirabeWord | null, preference: GlossPreference, limit = SENSE_LIMIT): CardSense[] {
+export function cardSenses(word: ShirabeWord | null, wanted: GlossPreference, limit = SENSE_LIMIT): CardSense[] {
+  const preference = withEnglishFallback(word, wanted);
   // Entries arrive in the key owner's own dictionary order, so flattening keeps
   // it: a reader who put a monolingual dictionary above JMdict reads it first.
   const senses = (word?.entries ?? []).flatMap((entry) =>

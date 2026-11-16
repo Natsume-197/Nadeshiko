@@ -31,6 +31,7 @@
       "profile": "プロフィール",
       "privacy": "プライバシーポリシー",
       "dmca": "DMCA",
+      "sources": "出典",
       "terms": "利用規約",
       "settings": "設定",
       "blog": "ブログ",
@@ -734,6 +735,12 @@
         "SMALL": "小",
         "MEDIUM": "中",
         "LARGE": "大"
+      },
+      "dictionaryProvider": "単語カードの辞書",
+      "dictionaryProviderDescription": "単語をタップしたときに使う辞書です。使えないときはもう一方の辞書で表示します。",
+      "dictionaryProviderOptions": {
+        "SHIRABE": "Shirabe",
+        "NADESHIKO": "Nadeshiko（JMdict）"
       },
       "translationLanguageOptions": {
         "EN": "英語のみ",

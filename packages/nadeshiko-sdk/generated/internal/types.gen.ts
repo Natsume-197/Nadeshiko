@@ -984,6 +984,85 @@ export type MediaAutocompleteResponse = {
 };
 
 /**
+ * One ranked answer from Nadeshiko's own dictionary, in the shape the word card
+ * already reads from Shirabe's `words/identify`, so either provider renders the
+ * same card. Pitch audio is not provided yet.
+ *
+ */
+export type DictionaryCandidate = {
+    /**
+     * `<dictionary>:<ent_seq>`.
+     */
+    id: string;
+    headword: string;
+    reading: string;
+    common: boolean;
+    /**
+     * A proper name rather than a word.
+     */
+    name: boolean;
+    /**
+     * The JMdict/JMnedict entry sequence number.
+     */
+    sourceId: string;
+    dictionary: 'jmdict' | 'jmnedict';
+    /**
+     * Unofficial JLPT level estimate (N5-N1).
+     */
+    jlpt: string;
+    /**
+     * Rank in Nadeshiko's own corpus (1 is the most frequent word); null when not counted.
+     */
+    frequency: number;
+    /**
+     * UniDic accent, at most two patterns. No audio yet.
+     */
+    pitch?: Array<{
+        /**
+         * 0 is flat (heiban); n is the mora after which the pitch drops.
+         */
+        downstep: number;
+    }>;
+    /**
+     * The words a compound or expression is made of (捜査本部: 捜査, 本部), content words only, each one
+     * resolvable by the card. Absent for a word of one piece.
+     *
+     */
+    parts?: Array<{
+        text: string;
+        lemma: string;
+        reading: string;
+        id: string;
+    }>;
+    furigana?: Array<{
+        text: string;
+        ruby?: string;
+    }>;
+    forms: Array<{
+        text: string;
+        script: 'kanji' | 'kana';
+        common: boolean;
+    }>;
+    entries: Array<{
+        dictionary: string;
+        dictionaryName: string;
+        senses: Array<{
+            position: number;
+            definitions: Array<{
+                lang: 'en' | 'es';
+                text: string;
+            }>;
+            tags: Array<{
+                category: 'partOfSpeech' | 'misc' | 'field' | 'dialect';
+                code: string;
+                label: string;
+            }>;
+            notes?: Array<string>;
+        }>;
+    }>;
+};
+
+/**
  * Coverage statistics for a frequency tier
  */
 export type WordCoverageTier = {
@@ -2064,6 +2143,11 @@ export type UserPreferences = {
          *
          */
         definitionSize?: 'SMALL' | 'MEDIUM' | 'LARGE';
+        /**
+         * Which dictionary answers the word card: Shirabe, or Nadeshiko's own (JMdict). Absent means the site default. If the chosen one is down, the card answers from the other rather than failing.
+         *
+         */
+        dictionaryProvider?: 'SHIRABE' | 'NADESHIKO';
     };
     searchHistory?: {
         /**
@@ -3262,6 +3346,69 @@ export type SearchMediaResponses = {
 };
 
 export type SearchMediaResponse = SearchMediaResponses[keyof SearchMediaResponses];
+
+export type IdentifyDictionaryWordData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * The token's dictionary form.
+         */
+        lemma: string;
+        /**
+         * The token as written in the sentence.
+         */
+        surface?: string;
+        /**
+         * The surface's reading, in katakana or hiragana.
+         */
+        reading?: string;
+        /**
+         * Shirabe's short part-of-speech tag (`SlimToken.pt`).
+         */
+        pos?: string;
+        /**
+         * Language whose senses come first.
+         */
+        locale?: 'en' | 'es';
+    };
+    url: '/v1/dictionary/identify';
+};
+
+export type IdentifyDictionaryWordErrors = {
+    /**
+     * Bad Request
+     */
+    400: Error400;
+    /**
+     * Forbidden
+     */
+    403: Error403;
+    /**
+     * Too Many Requests. The response body indicates whether the request was rejected due to per-minute rate limiting or monthly quota exhaustion.
+     */
+    429: Error429;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type IdentifyDictionaryWordError = IdentifyDictionaryWordErrors[keyof IdentifyDictionaryWordErrors];
+
+export type IdentifyDictionaryWordResponses = {
+    /**
+     * OK
+     */
+    200: {
+        /**
+         * Best first; empty when no entry matches.
+         */
+        candidates: Array<DictionaryCandidate>;
+    };
+};
+
+export type IdentifyDictionaryWordResponse = IdentifyDictionaryWordResponses[keyof IdentifyDictionaryWordResponses];
 
 export type GetStatsOverviewData = {
     body?: never;

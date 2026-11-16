@@ -31,6 +31,7 @@
       "profile": "Profil",
       "privacy": "Privasi",
       "dmca": "DMCA",
+      "sources": "Sumber",
       "terms": "Syarat dan ketentuan",
       "settings": "Pengaturan",
       "blog": "Blog",
@@ -734,6 +735,12 @@
         "SMALL": "Kecil",
         "MEDIUM": "Sedang",
         "LARGE": "Besar"
+      },
+      "dictionaryProvider": "Kamus kartu kata",
+      "dictionaryProviderDescription": "Kamus yang menjawab saat kamu mengetuk sebuah kata. Jika tidak tersedia, kartu memakai kamus yang lain.",
+      "dictionaryProviderOptions": {
+        "SHIRABE": "Shirabe",
+        "NADESHIKO": "Milik Nadeshiko (JMdict)"
       },
       "translationLanguageOptions": {
         "EN": "Hanya Inggris",
