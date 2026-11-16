@@ -67,7 +67,12 @@ interface RuleIndexEntry {
   mode: RuleMode;
 }
 
-const DEFAULT_MAX_CACHE_ENTRIES = 50_000;
+/**
+ * Entries per generation (two generations are kept). An entry holds every form reached, ~12 KB on subtitle text, so
+ * 50,000 per generation could grow to ~1.2 GB: the frequency job was OOM-killed in a 768 MB container, and the word
+ * card shares this cache inside the web app. 4,000 keeps it under ~100 MB; a miss costs about a millisecond.
+ */
+const DEFAULT_MAX_CACHE_ENTRIES = 4_000;
 const MAX_CACHEABLE_INPUT_LENGTH = 40;
 const MAX_CACHED_FORMS_BASE = 64;
 const MAX_CACHED_FORMS_PER_CHAR = 12;

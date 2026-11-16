@@ -176,6 +176,10 @@ describe('deconjugate', () => {
       expect(stats.bfsCalls).toBe(1);
     });
 
+    it('keeps a small cache by default, so the web app and the frequency job stay within their memory', () => {
+      expect(new Deconjugator().getCacheStats().maxEntries).toBe(4_000);
+    });
+
     it('does not cache inputs longer than 40 characters', () => {
       const deconjugator = new Deconjugator();
       deconjugator.deconjugate('あ'.repeat(41));

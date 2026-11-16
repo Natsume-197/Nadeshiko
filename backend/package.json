@@ -46,7 +46,7 @@
     "create:service-key": "node --env-file-if-exists=.env --import tsx bin/createServiceKey.ts",
     "email:backfill-feedback": "node --env-file-if-exists=.env --import tsx bin/backfillFeedbackAsk.ts",
     "email:test": "node --env-file-if-exists=.env --import tsx scripts/test-email.ts",
-    "dictionary:frequency": "node --env-file-if-exists=.env --import tsx bin/computeFrequency.ts",
+    "dictionary:frequency": "node --max-old-space-size=700 --env-file-if-exists=.env --import tsx bin/computeFrequency.ts",
     "tokens:reparse": "node --env-file-if-exists=.env --import tsx bin/reparseTokens.ts",
     "es:reindex": "node --import tsx bin/es.ts reindex",
     "es:status": "node --import tsx bin/es.ts status",
