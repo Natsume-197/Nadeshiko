@@ -150,3 +150,36 @@ describe('a failed check after a successful one', () => {
     expect(wrapper.text()).not.toContain('100.00%');
   });
 });
+
+describe('the match mode', () => {
+  test('sends no mode for the default whole-word count', async () => {
+    const wrapper = await openWith(['憬']);
+    await search(wrapper);
+
+    expect(sdk.searchWords).toHaveBeenCalledWith({ query: { words: ['憬'] } });
+  });
+
+  test('counts inside longer words and links each match to that search', async () => {
+    sdk.searchWords.mockResolvedValue(reply(['憬'], 1));
+    const wrapper = await openWith(['*憬*']);
+    await wrapper.get('[data-testid="batch-contains-toggle"]').setValue(true);
+    await search(wrapper);
+
+    // The box already strips `*`, so Yaku's `*憬*` arrives as `憬`.
+    expect(sdk.searchWords).toHaveBeenCalledWith({ query: { words: ['憬'], matchMode: 'CONTAINS' } });
+    expect(wrapper.get('a').attributes('href')).toBe(`/en/search/${encodeURIComponent('憬')}?match=contains`);
+  });
+
+  test('keeps exact and inside-words exclusive', async () => {
+    const wrapper = await openWith(['憬']);
+    const exact = wrapper.get('[data-testid="batch-exact-toggle"]');
+    const contains = wrapper.get('[data-testid="batch-contains-toggle"]');
+
+    await exact.setValue(true);
+    await contains.setValue(true);
+    expect((exact.element as HTMLInputElement).checked).toBe(false);
+    await search(wrapper);
+
+    expect(sdk.searchWords).toHaveBeenCalledWith({ query: { words: ['憬'], matchMode: 'CONTAINS' } });
+  });
+});

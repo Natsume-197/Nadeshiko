@@ -274,6 +274,20 @@ describe('fetchSentences', () => {
     });
   });
 
+  it('sends the contains match mode to both the sentence and the stats request, and nothing for word search', async () => {
+    sdkMocks.search.mockResolvedValue({ data: searchPayload('a'), response: new Response() });
+    sdkMocks.getSearchStats.mockResolvedValue({ data: { categories: [], media: [] }, response: new Response() });
+
+    const fetcher = createSearchFetcher(fakeSdk);
+    await fetcher.fetchSentences(scope({ query: '糊', matchMode: 'CONTAINS' }));
+    await fetcher.fetchStats(scope({ query: '糊', matchMode: 'CONTAINS' }));
+    await fetcher.fetchSentences(scope({ query: '糊' }));
+
+    expect(sdkMocks.search.mock.calls[0]?.[0].body.query).toEqual({ search: '糊', matchMode: 'CONTAINS' });
+    expect(sdkMocks.getSearchStats.mock.calls[0]?.[0].body.query).toEqual({ search: '糊', matchMode: 'CONTAINS' });
+    expect(sdkMocks.search.mock.calls[1]?.[0].body.query).toEqual({ search: '糊' });
+  });
+
   it('requests collection pages with the collection page size and media includes', async () => {
     sdkMocks.searchCollectionSegments.mockResolvedValue({ data: searchPayload('a'), response: new Response() });
 

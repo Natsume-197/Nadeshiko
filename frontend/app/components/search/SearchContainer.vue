@@ -78,6 +78,7 @@ const media = ref<string | null>(null);
 const sort = ref<string | null>(null);
 const randomSeed = ref<number | null>(null);
 const uuid = ref<string | null>(null);
+const matchMode = ref<'CONTAINS' | null>(null);
 const episode = ref<number | null>(null);
 
 const categoryApiMapping = CATEGORY_API_MAPPING;
@@ -363,6 +364,7 @@ const applyRouteQuery = (r: RouteLocationNormalized) => {
   uuid.value = filters.segmentPublicId;
   randomSeed.value = filters.randomSeed;
   episode.value = filters.episode;
+  matchMode.value = filters.matchMode;
 };
 
 applyRouteQuery(route);
@@ -375,6 +377,7 @@ const searchScope = computed<SearchScope>(() => ({
   sort: sort.value,
   randomSeed: randomSeed.value,
   segmentPublicId: uuid.value,
+  matchMode: matchMode.value,
   collectionId: props.collectionId ?? null,
   contentRating: contentRating.value,
   languages: includedLanguages.value,
@@ -527,7 +530,7 @@ const trackSearch = (response: SearchResponse) => {
   // The separator is a NUL as an escape, never as a raw byte: written literally it
   // makes this file binary to `grep -r`, `rg` and `file`, which then skip it
   // silently -- the whole component drops out of every repo-wide search.
-  const trackedKey = `${query.value}\u0000${media.value ?? ''}`;
+  const trackedKey = `${query.value}\u0000${media.value ?? ''}\u0000${matchMode.value ?? ''}`;
   if (!import.meta.client || !query.value || trackedKey === lastTrackedQuery.value) {
     return;
   }
@@ -555,6 +558,7 @@ const trackSearch = (response: SearchResponse) => {
     media_name: mediaNameValue,
     episode_number: episode.value,
     results_count: resultsCount,
+    match_mode: matchMode.value === 'CONTAINS' ? 'contains' : 'word',
   };
 
   // Recording happens here, on arrival at results, rather than on submit: most
@@ -753,6 +757,28 @@ const categoryFilter = (categoryKey: string) => {
   setQuery({ category: clearsToAll ? null : categoryKey });
 };
 
+/**
+ * Offer the search inside words where word search is the likely reason for a short list: a plain Japanese query
+ * (no quotes, wildcards or operators, which mean something else) that returned less than a page.
+ */
+const CONTAINS_OFFER_BELOW = 30;
+const JAPANESE_TEXT = /[぀-ヿ㐀-鿿]/;
+const QUERY_SYNTAX = /["()*?]|(?:^|\s)-|(?:^|\s)(?:AND|OR|NOT)(?:\s|$)/;
+const containsNotice = computed<'active' | 'offer' | null>(() => {
+  if (props.collectionId || uuid.value || isSingleSentenceView.value || !hasSearchQuery.value) return null;
+  if (matchMode.value === 'CONTAINS') return 'active';
+  if (isLoading.value || sentenceFailure.value || !sentenceData.value) return null;
+  if (!JAPANESE_TEXT.test(query.value) || QUERY_SYNTAX.test(query.value)) return null;
+  const total = sentenceData.value.pagination?.estimatedTotalHits ?? 0;
+  return total < CONTAINS_OFFER_BELOW ? 'offer' : null;
+});
+
+const toggleContainsMatch = () => {
+  const enabled = matchMode.value !== 'CONTAINS';
+  posthog?.capture('search_contains_toggled', { query: query.value, enabled });
+  setQuery({ match: enabled ? 'contains' : null }, { scroll: true });
+};
+
 /** Remove the title refinement without discarding the word in the route. */
 const clearMediaFilter = () => {
   // With a non-All default, merely removing `?media=` would make the absent
@@ -907,7 +933,8 @@ onBeforeRouteUpdate(async (to, from) => {
     return;
   }
 
-  const statsScopeChanged = searchQueryChanged || to.query.category !== from.query.category;
+  const statsScopeChanged =
+    searchQueryChanged || to.query.category !== from.query.category || to.query.match !== from.query.match;
 
   if (statsScopeChanged) {
     loadStats();
@@ -1059,6 +1086,11 @@ onBeforeRouteUpdate(async (to, from) => {
                     @restore="setRevealHidden(false)"
                     @breakdown="loadHiddenBreakdown()"
                     @manage="posthog?.capture('hidden_results_manage_clicked', { hidden_count: hiddenResultCount, query })" />
+                <SearchContainsMatchNotice
+                    v-if="containsNotice"
+                    :query="query"
+                    :active="containsNotice === 'active'"
+                    @toggle="toggleContainsMatch()" />
                 <SearchSegmentContainer :searchData="searchData" :isLoading="isLoading" :collectionId="collectionId"
                     :failure="sentenceFailure" @remove-from-collection="handleRemoveFromCollection">
                     <template #empty-actions>

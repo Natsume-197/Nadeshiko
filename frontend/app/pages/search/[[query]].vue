@@ -70,6 +70,7 @@ const searchScope = computed<SearchScope>(() => ({
   // Apply shared random seeds during SSR too, avoiding a different shuffle at hydration.
   randomSeed: routeFilters.value.randomSeed,
   segmentPublicId: routeFilters.value.segmentPublicId,
+  matchMode: routeFilters.value.matchMode,
   collectionId: null,
   contentRating: contentRating.value,
   languages: includedLanguages.value,
@@ -103,6 +104,7 @@ const sentenceCacheKey = computed(() => {
     mediaQueryParam.value,
     episodeQueryParam.value,
     route.query.sort,
+    routeFilters.value.matchMode,
   ]
     .filter(Boolean)
     .join('-');
@@ -110,7 +112,13 @@ const sentenceCacheKey = computed(() => {
 });
 
 const statsCacheKey = computed(() => {
-  const params = [searchQuery.value, searchScope.value.category, mediaQueryParam.value, episodeQueryParam.value]
+  const params = [
+    searchQuery.value,
+    searchScope.value.category,
+    mediaQueryParam.value,
+    episodeQueryParam.value,
+    routeFilters.value.matchMode,
+  ]
     .filter(Boolean)
     .join('-');
   return `search-stats-outcomes-${params || 'default'}`;

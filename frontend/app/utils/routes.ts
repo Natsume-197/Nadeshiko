@@ -204,5 +204,11 @@ export function readSearchRouteFilters(query: Record<string, Parameters<typeof g
     sort: getStringQueryValue(query.sort),
     randomSeed: Number.isInteger(parsedSeed) && parsedSeed >= 0 ? parsedSeed : null,
     segmentPublicId: getStringQueryValue(query.uuid),
+    matchMode: readMatchMode(query.match),
   };
+}
+
+/** `?match=contains` finds the query inside longer words (`糊` in `血糊`); anything else is the normal word search. */
+export function readMatchMode(value: Parameters<typeof getStringQueryValue>[0]): 'CONTAINS' | null {
+  return getStringQueryValue(value) === 'contains' ? 'CONTAINS' : null;
 }

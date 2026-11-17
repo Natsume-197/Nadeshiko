@@ -218,9 +218,17 @@ export type SearchQuery = {
      */
     search?: string;
     /**
-     * Require exact phrase matching (disables fuzzy and partial matches)
+     * Require exact phrase matching (disables fuzzy and partial matches). Same as `matchMode` `EXACT`; ignored when `matchMode` is set.
      */
     exactMatch?: boolean;
+    /**
+     * How the Japanese text is matched. When omitted, `exactMatch` decides between `WORD` and `EXACT`.
+     * - `WORD` (default): whole words, in surface, dictionary and normalized form, plus EN/ES translations
+     * - `EXACT`: the exact phrase, surface form only
+     * - `CONTAINS`: Japanese words that contain the text anywhere, so `糊` finds `血糊` and `糊付け`. It matches inside one word only (`糊が` matches nothing, since `糊` and `が` are separate words), and space-separated terms must all match. A `*` at either end of a term is ignored; other wildcards and boolean operators are taken literally, and leading-`-` exclusions still work. In `WORD` mode, a query made only of Japanese terms with a leading `*` (`*憬*`, `*憬`) is searched this way. Translations are not searched, and results are not ranked by relevance within the mode
+     *
+     */
+    matchMode?: 'WORD' | 'EXACT' | 'CONTAINS';
 };
 
 /**
@@ -857,9 +865,17 @@ export type SearchMultipleQuery = {
      */
     words: Array<string>;
     /**
-     * Require exact phrase matching (disables fuzzy and partial matches)
+     * Require exact phrase matching (disables fuzzy and partial matches). Same as `matchMode` `EXACT`; ignored when `matchMode` is set.
      */
     exactMatch?: boolean;
+    /**
+     * How each word is matched, as in the main search's `matchMode`. When omitted, `exactMatch` decides between `WORD` and `EXACT`.
+     * - `WORD` (default): whole words, in surface, dictionary and normalized form, plus EN/ES translations
+     * - `EXACT`: the exact phrase, surface form only
+     * - `CONTAINS`: Japanese words that contain the text anywhere, so `憬` counts sentences with `憧憬`. A word written with a leading `*` (`*憬*`) is counted this way in `WORD` mode too
+     *
+     */
+    matchMode?: 'WORD' | 'EXACT' | 'CONTAINS';
 };
 
 export type SearchMultipleRequest = {

@@ -374,7 +374,19 @@ describe('readSearchRouteFilters', () => {
     sort: null,
     randomSeed: null,
     segmentPublicId: null,
+    matchMode: null,
   };
+
+  it.each([
+    { raw: 'contains', expected: 'CONTAINS' },
+    { raw: ['contains', 'word'], expected: 'CONTAINS' },
+    { raw: 'CONTAINS', expected: null },
+    { raw: 'exact', expected: null },
+    { raw: '', expected: null },
+    { raw: undefined, expected: null },
+  ])('reads ?match=$raw as match mode $expected', ({ raw, expected }) => {
+    expect(readSearchRouteFilters({ match: raw })).toEqual({ ...empty, matchMode: expected });
+  });
 
   it('reads legacy aliases and first array values without imposing a category policy', () => {
     expect(
@@ -393,6 +405,7 @@ describe('readSearchRouteFilters', () => {
       sort: 'random',
       randomSeed: 0,
       segmentPublicId: 'segment',
+      matchMode: null,
     });
   });
 

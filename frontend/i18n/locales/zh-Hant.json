@@ -238,6 +238,9 @@
     "searchTypeLabel": "搜尋方式：{type}",
     "searchTypeExact": "精確符合",
     "searchTypeNormal": "普通搜尋",
+    "searchTypeContains": "詞語內部",
+    "containsTitle": "詞語內部",
+    "containsDescription": "也統計出現在更長詞語內部的情況（如 憧憬 中的 憬）",
     "examplePlaceholder": "彼女\n彼氏\n走る\n戀人\n…\n…\n…"
   },
   "modalContext": {
@@ -1153,6 +1156,10 @@
     "hiddenResultsRevealed": "正在顯示你平時隱藏的作品",
     "hiddenResultsRestore": "重新隱藏",
     "hiddenResultsManage": "管理",
+    "containsOffer": "結果比預期少？{query} 可能是更長詞語的一部分。",
+    "containsActive": "正在顯示包含 {query} 的詞語。",
+    "containsSearch": "在詞語內部搜尋",
+    "containsBack": "返回整詞搜尋",
     "loading": "載入中…",
     "hiddenMediaImageAlt": "作品已隱藏的提示插圖",
     "noResultsImageAlt": "未找到結果的提示插圖"

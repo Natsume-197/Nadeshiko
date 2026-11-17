@@ -26,6 +26,27 @@ interface ScriptBoostConfig {
 
 export type QueryParserMode = 'strict' | 'safe';
 
+export type MatchMode = 'WORD' | 'EXACT' | 'CONTAINS';
+
+/** `matchMode` wins; without it the older `exactMatch` flag picks between word and exact search. */
+export function resolveMatchMode(query: { exactMatch?: boolean; matchMode?: MatchMode } | undefined): MatchMode {
+  if (query?.matchMode) return query.matchMode;
+  return query?.exactMatch ? 'EXACT' : 'WORD';
+}
+
+/** One Japanese term with a leading `*` (`*憬*`, `*憬`), the way readers spell "contains". */
+const LEADING_WILDCARD_TERM = /^\*+[^\s*?"]*[぀-ヿ㐀-鿿][^\s*?"]*\**$/;
+
+/**
+ * Leading wildcards stay disabled in word search, so a query made only of such terms would fail and show nothing.
+ * Read it as the contains search the reader meant instead.
+ */
+function isLeadingWildcardSearch(query: string): boolean {
+  // NFKC first: a Japanese keyboard types the full-width `＊`.
+  const terms = query.normalize('NFKC').trim().split(/\s+/).filter(Boolean);
+  return terms.length > 0 && terms.every((term) => LEADING_WILDCARD_TERM.test(term));
+}
+
 const TRANSLATION_FIELDS = [
   ['ES', 'textEs', 'textEs.exact', 'spanish'],
   ['EN', 'textEn', 'textEn.exact', 'english'],
@@ -68,7 +89,8 @@ export class SegmentQuery {
         must.push({ match_all: {} });
       }
     } else if (searchTerm) {
-      const exactMatch = Boolean(request.query?.exactMatch);
+      const matchMode = resolveMatchMode(request.query);
+      const exactMatch = matchMode === 'EXACT';
       const { positive, negatives } = splitNegatedTerms(searchTerm, exactMatch);
 
       // Exclusions go in first: buildSortAndRandomScore's caller pops the *last*
@@ -83,10 +105,31 @@ export class SegmentQuery {
         });
       }
 
-      must.push(SegmentQuery.buildTextSearch(positive, exactMatch, hasLengthConstraints, parserMode, excludeLanguages));
+      must.push(
+        SegmentQuery.searchesInsideWords(positive, matchMode)
+          ? SegmentQuery.withLengthScoring(SegmentQuery.buildContains(positive), hasLengthConstraints)
+          : SegmentQuery.buildTextSearch(positive, exactMatch, hasLengthConstraints, parserMode, excludeLanguages),
+      );
     }
 
     return { must, isMatchAll, hasQuery };
+  }
+
+  /** Contains mode, or a word search written the way readers spell "contains" (`*憬*`). */
+  static searchesInsideWords(query: string, matchMode: MatchMode): boolean {
+    return matchMode === 'CONTAINS' || (matchMode === 'WORD' && isLeadingWildcardSearch(query));
+  }
+
+  /** One unscored term for the batch word search (`/v1/search/words`), in the same three modes as the main search. */
+  static buildTermQuery(
+    term: string,
+    matchMode: MatchMode,
+    parserMode: QueryParserMode,
+    excludeLanguages?: readonly SearchLanguage[],
+  ): estypes.QueryDslQueryContainer {
+    return SegmentQuery.searchesInsideWords(term, matchMode)
+      ? SegmentQuery.buildContains(term)
+      : SegmentQuery.buildMultiLanguage(term, matchMode === 'EXACT', parserMode, excludeLanguages);
   }
 
   /** Wrap the assembled query once so every scoring branch gets title weights; group demotions by tier and leave
@@ -194,19 +237,45 @@ export class SegmentQuery {
     excludeLanguages?: readonly SearchLanguage[],
   ): estypes.QueryDslQueryContainer {
     const baseQuery = SegmentQuery.buildMultiLanguage(query, exactMatch, parserMode, excludeLanguages);
+    return SegmentQuery.withLengthScoring(baseQuery, hasLengthConstraints);
+  }
 
-    if (!hasLengthConstraints) {
-      return {
-        function_score: {
-          query: baseQuery,
-          functions: [{ gauss: { characterCount: { origin: 27, offset: 10, scale: 15, decay: 0.5 } } }],
-          score_mode: 'sum',
-          boost_mode: 'multiply',
-        },
-      };
-    }
+  /** Prefer sentences of ordinary length, unless the reader set a length range of their own. */
+  private static withLengthScoring(
+    query: estypes.QueryDslQueryContainer,
+    hasLengthConstraints: boolean,
+  ): estypes.QueryDslQueryContainer {
+    if (hasLengthConstraints) return query;
+    return {
+      function_score: {
+        query,
+        functions: [{ gauss: { characterCount: { origin: 27, offset: 10, scale: 15, decay: 0.5 } } }],
+        score_mode: 'sum',
+        boost_mode: 'multiply',
+      },
+    };
+  }
 
-    return baseQuery;
+  /**
+   * Words that contain each space-separated term anywhere (`糊` finds the single Sudachi token `血糊`). A `wildcard`
+   * query is not analyzed, so the term gets the NFKC normalization the index analyzer applies. `*` at either end of a
+   * term is how readers already spell "contains" (`*憬*`), so it is dropped; any other `*`, `?` or `\` is escaped and
+   * so taken literally. Japanese surface field only: translations are word-based.
+   */
+  static buildContains(query: string): estypes.QueryDslQueryContainer {
+    const terms = query
+      .normalize('NFKC')
+      .split(/\s+/)
+      .map((term) => term.replaceAll('"', '').replace(/^\*+|\*+$/g, ''))
+      .filter(Boolean);
+
+    const clauses: estypes.QueryDslQueryContainer[] = terms.map((term) => ({
+      wildcard: { textJa: { value: `*${term.replace(/[\\*?]/g, '\\$&')}*` } },
+    }));
+
+    if (clauses.length === 0) return { match_none: {} };
+    if (clauses.length === 1) return clauses[0];
+    return { bool: { must: clauses } };
   }
 
   static buildMultiLanguage(
@@ -302,14 +371,17 @@ export class SegmentQuery {
   }
 
   static buildSearchStatsCacheKey(
-    request: { query?: { search?: string; exactMatch?: boolean }; filters: SearchFiltersOutput },
+    request: {
+      query?: { search?: string; exactMatch?: boolean; matchMode?: MatchMode };
+      filters: SearchFiltersOutput;
+    },
     parserMode: QueryParserMode,
   ): string {
     const f = request.filters;
     return JSON.stringify({
       parserMode,
       search: request.query?.search ?? null,
-      exactMatch: Boolean(request.query?.exactMatch),
+      matchMode: resolveMatchMode(request.query),
       status: SegmentQuery.normalizeStringArray(f.status),
       category: SegmentQuery.normalizeStringArray(f.category),
       excludedLanguages: excludedSearchLanguages(f.languages),

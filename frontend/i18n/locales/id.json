@@ -238,6 +238,9 @@
     "searchTypeLabel": "Jenis pencarian: {type}",
     "searchTypeExact": "Persis",
     "searchTypeNormal": "Biasa",
+    "searchTypeContains": "Di dalam kata",
+    "containsTitle": "Di dalam kata",
+    "containsDescription": "Hitung juga setiap kata di dalam kata yang lebih panjang (憬 dalam 憧憬)",
     "examplePlaceholder": "彼女\n彼氏\n走る\n恋人\n…\n…\n…"
   },
   "modalContext": {
@@ -1153,6 +1156,10 @@
     "hiddenResultsRevealed": "Judul yang biasanya Anda sembunyikan sedang ditampilkan",
     "hiddenResultsRestore": "Sembunyikan kembali",
     "hiddenResultsManage": "Kelola",
+    "containsOffer": "Hasil lebih sedikit dari dugaan? {query} mungkin bagian dari kata yang lebih panjang.",
+    "containsActive": "Menampilkan kata yang mengandung {query}.",
+    "containsSearch": "Cari di dalam kata",
+    "containsBack": "Kembali ke kata utuh",
     "loading": "Memuat…",
     "hiddenMediaImageAlt": "Ilustrasi judul tersembunyi",
     "noResultsImageAlt": "Ilustrasi hasil pencarian kosong"

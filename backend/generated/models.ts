@@ -687,6 +687,7 @@ export type t_SearchMediaRequest = {
 
 export type t_SearchMultipleQuery = {
   exactMatch?: boolean;
+  matchMode?: 'WORD' | 'EXACT' | 'CONTAINS';
   words: string[];
 };
 
@@ -712,6 +713,7 @@ export type t_SearchPagination = {
 
 export type t_SearchQuery = {
   exactMatch?: boolean;
+  matchMode?: 'WORD' | 'EXACT' | 'CONTAINS';
   search?: string;
 };
 

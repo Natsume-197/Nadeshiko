@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { handleApiError } from '~/utils/apiError';
-import { mdiTagSearchOutline } from '@mdi/js';
+import { mdiTagSearchOutline, mdiTextSearchVariant } from '@mdi/js';
 import { useI18n } from 'vue-i18n';
 import { resolveWordsResponse } from '~/utils/resolvers';
 import { buildWordSearchPath } from '~/utils/routes';
@@ -25,7 +25,31 @@ const wordCount = ref<number | string>(0);
 const errorMessage = ref('');
 const wordsMatch = ref<MultiSearchResult[]>([]);
 const totalWordsSearched = ref(0);
-const checkExactSearch = ref(false);
+/** Whole words (the default), the exact phrase, or inside longer words (`憬` in `憧憬`); the two toggles exclude each other. */
+const searchMode = ref<'WORD' | 'EXACT' | 'CONTAINS'>('WORD');
+const checkExactSearch = computed({
+  get: () => searchMode.value === 'EXACT',
+  set: (on: boolean) => {
+    searchMode.value = on ? 'EXACT' : 'WORD';
+  },
+});
+const checkContainsSearch = computed({
+  get: () => searchMode.value === 'CONTAINS',
+  set: (on: boolean) => {
+    searchMode.value = on ? 'CONTAINS' : 'WORD';
+  },
+});
+/** The mode the shown results were searched with: the toggles stay live behind the results view. */
+const searchedMode = ref<'WORD' | 'EXACT' | 'CONTAINS'>('WORD');
+const SEARCH_TYPE_KEYS = {
+  WORD: 'modalBatch.searchTypeNormal',
+  EXACT: 'modalBatch.searchTypeExact',
+  CONTAINS: 'modalBatch.searchTypeContains',
+} as const;
+
+/** A matched word opens the main search in the same mode it was counted in. */
+const wordResultPath = (word: string) =>
+  searchedMode.value === 'CONTAINS' ? `${buildWordSearchPath(word)}?match=contains` : buildWordSearchPath(word);
 const isLoading = ref(false);
 const showResults = ref(false);
 const localePath = useLocalePath();
@@ -54,12 +78,14 @@ const getWordMatch = async () => {
   showResults.value = true;
 
   try {
+    const mode = searchMode.value;
     const data = await sdk.searchWords({
       query: {
         words: words.value,
-        exactMatch: checkExactSearch.value,
+        ...(mode === 'WORD' ? {} : { matchMode: mode }),
       },
     });
+    searchedMode.value = mode;
     const response = data ? resolveWordsResponse(data) : { results: [] };
     wordsMatch.value = response.results;
     totalWordsSearched.value = words.value.length;
@@ -170,7 +196,24 @@ watch(inputText, (newValue) => {
                         </span>
                       </span>
 
-                      <input type="checkbox" id="nd-account-activity" v-model="checkExactSearch"
+                      <input type="checkbox" id="nd-account-activity" data-testid="batch-exact-toggle" v-model="checkExactSearch"
+                        class="relative shrink-0 w-[3.25rem] ml-auto h-7 bg-gray-100 checked:bg-none checked:bg-button-accent-main rounded-full cursor-pointer transition-colors ease-in-out duration-200 border border-transparent ring-1 ring-transparent  ring-offset-white focus:outline-none appearance-none dark:bg-neutral-700 dark:checked:bg-button-accent-main dark:focus:ring-offset-gray-800
+              before:inline-block before:w-6 before:h-6 before:bg-white checked:before:bg-blue-200 before:translate-x-0 checked:before:translate-x-full before:shadow before:rounded-full before:transform before:ring-0 before:transition before:ease-in-out before:duration-200 dark:before:bg-gray-400 dark:checked:before:bg-blue-200">
+                    </label>
+                  </div>
+                  <div
+                    class="flex flex-col bg-white border shadow-sm rounded-xl dark:bg-modal-input dark:border-modal-border">
+                    <label for="nd-batch-contains" class="flex p-4 md:p-5">
+                      <span class="flex mr-5">
+                        <UiBaseIcon :path="mdiTextSearchVariant" w="w-5 md:w-5" h="h-5 md:h-5" size=25 class="mt-1" />
+                        <span class="ml-5">
+                          <span class="block font-medium text-gray-800 dark:text-gray-200">{{
+                            t("modalBatch.containsTitle") }}</span>
+                          <span class="block text-sm text-gray-500">{{ t("modalBatch.containsDescription") }}</span>
+                        </span>
+                      </span>
+
+                      <input type="checkbox" id="nd-batch-contains" data-testid="batch-contains-toggle" v-model="checkContainsSearch"
                         class="relative shrink-0 w-[3.25rem] ml-auto h-7 bg-gray-100 checked:bg-none checked:bg-button-accent-main rounded-full cursor-pointer transition-colors ease-in-out duration-200 border border-transparent ring-1 ring-transparent  ring-offset-white focus:outline-none appearance-none dark:bg-neutral-700 dark:checked:bg-button-accent-main dark:focus:ring-offset-gray-800
               before:inline-block before:w-6 before:h-6 before:bg-white checked:before:bg-blue-200 before:translate-x-0 checked:before:translate-x-full before:shadow before:rounded-full before:transform before:ring-0 before:transition before:ease-in-out before:duration-200 dark:before:bg-gray-400 dark:checked:before:bg-blue-200">
                     </label>
@@ -190,7 +233,7 @@ watch(inputText, (newValue) => {
             <div class="-m-1.5 overflow-x-auto">
               <div v-if="!isLoading" class="p-1.5 min-w-full inline-block align-middle">
                 <div class="mb-2 text-sm leading-relaxed text-gray-500 dark:text-gray-400 ml-auto">
-                  {{ t('modalBatch.searchTypeLabel', { type: t(checkExactSearch ? 'modalBatch.searchTypeExact' : 'modalBatch.searchTypeNormal') }) }}
+                  {{ t('modalBatch.searchTypeLabel', { type: t(SEARCH_TYPE_KEYS[searchedMode]) }) }}
                   <br />
                   {{ t("batchSearch.results.words") }}: {{ wordCount }}
                   <br />
@@ -217,7 +260,7 @@ watch(inputText, (newValue) => {
                       <tr v-for="(item, index) in sortedWordsMatch">
                         <td
                           class="y-4 whitespace-nowrap text-base text-center font-medium text-gray-800 dark:text-gray-200">
-                          <NuxtLink v-if="item.isMatch" :to="localePath(buildWordSearchPath(item.word))"
+                          <NuxtLink v-if="item.isMatch" :to="localePath(wordResultPath(item.word))"
                             class="text-blue-500 underline-offset-2 underline" target="_blank">
                             {{ item.word }}
                           </NuxtLink>

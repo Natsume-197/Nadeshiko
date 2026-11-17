@@ -179,9 +179,21 @@ describe('search controller', () => {
     assertMatchesSchema(schemas.s_SearchMultipleResponse, res.body, 'searchWords() 200');
     expect(mockWordsMatched).toHaveBeenCalledWith(
       ['猫'],
-      true,
+      'EXACT',
       expect.objectContaining({ status: ['ACTIVE'], category: ['ANIME'] }),
     );
+  });
+
+  it('search words passes matchMode, which wins over exactMatch', async () => {
+    mockWordsMatched.mockResolvedValue({ results: [], includes: { media: {} } } as any);
+
+    await invoke(
+      searchWords as any,
+      { body: { query: { words: ['憬'], exactMatch: true, matchMode: 'CONTAINS' }, include: [] } } as any,
+      { user: { id: 1001, preferences: {} } } as any,
+    );
+
+    expect(mockWordsMatched).toHaveBeenCalledWith(['憬'], 'CONTAINS', expect.anything());
   });
 });
 
@@ -236,6 +248,6 @@ describe('segment status clamping', () => {
       callers['a service key'],
     );
 
-    expect(mockWordsMatched).toHaveBeenCalledWith(['猫'], true, { status: ['ACTIVE'] });
+    expect(mockWordsMatched).toHaveBeenCalledWith(['猫'], 'EXACT', { status: ['ACTIVE'] });
   });
 });

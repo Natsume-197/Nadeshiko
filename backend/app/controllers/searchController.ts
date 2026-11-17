@@ -1,4 +1,5 @@
 import { SegmentDocument } from '@app/services/search/SegmentDocument';
+import { resolveMatchMode } from '@app/services/search/segmentDocument/SegmentQuery';
 import type { Search, GetSearchStats, SearchWords } from 'generated/routes/search';
 import { toSearchResponseDTO } from './mappers/searchMapper';
 import { clampSegmentStatus, resolveMediaFilterIds, resolvePreferredMediaIds } from './searchFilters';
@@ -18,6 +19,6 @@ export const getSearchStats: GetSearchStats = async ({ body }, respond, req) => 
 
 export const searchWords: SearchWords = async ({ body }, respond, req) => {
   const filters = await resolveMediaFilterIds(clampSegmentStatus(body.filters, req));
-  const searchResults = await SegmentDocument.wordsMatched(body.query.words, body.query.exactMatch, filters);
+  const searchResults = await SegmentDocument.wordsMatched(body.query.words, resolveMatchMode(body.query), filters);
   return respond.with200().body(toSearchResponseDTO(searchResults, body.include));
 };

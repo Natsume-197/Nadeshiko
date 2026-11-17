@@ -21,6 +21,7 @@ Nadeshiko 3.0 is the first major version under new hands. It collects everything
 - **Fewer opening and ending repeats**: lines that come back in every episode because they belong to an opening, ending or preview are shown once, while ordinary short lines like はい stay searchable.
 - **Themes**: choose Dark, Light or Match my device in the new Themes section of Settings. Patrons on any paid tier can also pick one of seven colour themes (Sepia, Indigo, Midnight, Matcha, Ocean, Sunset, Lavender) or make their own from an accent and a background colour, once their Patreon account is linked in Settings.
 - **Higher API limits for supporters**: patrons get more API requests a month than the free 5,000: 15,000 on Seed, 30,000 on Flower and 60,000 on Nadeshiko, as soon as their Patreon account is linked in Settings. Every tier is on the new [Supporters](/supporters) page, which now also holds the roadmap.
+- **Search inside words**: a kanji now finds the words it is part of. Search 憬 and you get 憧憬, search 糊 and you get 血糊: when a search comes back short, a link above the results searches inside words, and typing `*憬*` does the same. Simultaneous Search has the same option.
 - **Changelog**: this page is back, linked from the version in the footer, and rewritten to cover everything since 2.4.10.
 
 ### Improvements
@@ -51,6 +52,7 @@ Nadeshiko 3.0 is the first major version under new hands. It collects everything
 ### API
 
 - Search can sort by `DIFFICULTY_ASC` / `DIFFICULTY_DESC`.
+- Search, search stats and the batch word search take `query.matchMode` (`WORD`, `EXACT`, `CONTAINS`); `CONTAINS` matches Japanese words that contain the text. A Japanese term written with a leading `*` (`*憬*`) is searched that way too.
 - With a search word and `RELEVANCE` order, results come in rounds by title; `preferMedia` titles form a first block.
 - Media can be of category `AUDIOBOOK` and carry an `asin` external id; segments return their chapter's title (`episodeTitle`) and search stats return each episode's `title`.
 - A search service at capacity answers quickly with a documented `503` and `Retry-After`.
