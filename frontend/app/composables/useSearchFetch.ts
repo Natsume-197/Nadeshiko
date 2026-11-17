@@ -19,6 +19,12 @@ import { resolveSearchResponse, resolveStatsResponse } from '../utils/resolvers'
 import type { MediaFilterItem, SearchResponse, SearchStatsResponse } from '~/types/search';
 import type { InjectionKey, Ref } from 'vue';
 
+/** The request's `query`, carrying the match mode only when the reader picked one. */
+const buildQuery = (scope: SearchScope): { search: string; matchMode?: 'CONTAINS' } | undefined => {
+  if (!scope.query) return undefined;
+  return scope.matchMode ? { search: scope.query, matchMode: scope.matchMode } : { search: scope.query };
+};
+
 /** Page size for corpus searches (`/v1/search`). */
 export const SEARCH_PAGE_SIZE = 30;
 /** Page size for collection segment listings (`/v1/collections/:id/search`). */
@@ -28,6 +34,8 @@ export const COLLECTION_PAGE_SIZE = 20;
 export type SearchScope = {
   /** Free-text query; empty means "browse everything the filters allow". */
   query: string;
+  /** `CONTAINS` (`?match=contains`) matches the query inside longer words; unset is the normal word search. */
+  matchMode?: 'CONTAINS' | null;
   /** Category tab slug as it appears in the URL (`all`, `anime`, `liveaction`, `youtube`). */
   category: string;
   mediaPublicId: string | null;
@@ -358,7 +366,7 @@ export function createSearchFetcher(sdk: NadeshikoClient) {
       const result = await search({
         ...requestOptions(generation),
         body: {
-          query: scope.query ? { search: scope.query } : undefined,
+          query: buildQuery(scope),
           take: SEARCH_PAGE_SIZE,
           sort,
           cursor: options.cursor ?? undefined,
@@ -410,7 +418,7 @@ export function createSearchFetcher(sdk: NadeshikoClient) {
       const result = await getSearchStats({
         ...requestOptions(generation),
         body: {
-          query: scope.query ? { search: scope.query } : undefined,
+          query: buildQuery(scope),
           filters: options.scopeToSelectedMedia ? buildMediaStatsFilters(scope) : buildStatsFilters(scope),
           // No `include` on the drill-down: the only field read off that answer
           // is `episodeHits`, and the title's name, slug and format are already

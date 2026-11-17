@@ -376,6 +376,7 @@ export const s_RoadmapItemWrite = z.object({
 export const s_SearchMultipleQuery = z.object({
   words: z.array(z.string().min(1).max(100)).min(1).max(100),
   exactMatch: PermissiveBoolean.optional().default(false),
+  matchMode: z.enum(['WORD', 'EXACT', 'CONTAINS']).optional(),
 });
 
 export const s_SearchPagination = z.object({
@@ -388,6 +389,7 @@ export const s_SearchPagination = z.object({
 export const s_SearchQuery = z.object({
   search: z.string().max(500).optional(),
   exactMatch: PermissiveBoolean.optional().default(false),
+  matchMode: z.enum(['WORD', 'EXACT', 'CONTAINS']).optional(),
 });
 
 export const s_SearchSort = z.object({

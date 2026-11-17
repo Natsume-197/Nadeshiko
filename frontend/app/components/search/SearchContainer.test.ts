@@ -22,7 +22,8 @@ vi.stubGlobal('useRoute', () => route);
 vi.stubGlobal('navigateTo', navigateTo);
 vi.stubGlobal('useRouter', () => ({ push: vi.fn(), replace: vi.fn() }));
 vi.stubGlobal('useLocalePath', () => (p: unknown) => (typeof p === 'string' ? p : JSON.stringify(p)));
-vi.stubGlobal('useQuerySync', () => ({ setQuery: vi.fn() }));
+const setQuery = vi.fn();
+vi.stubGlobal('useQuerySync', () => ({ setQuery }));
 vi.stubGlobal('usePostHog', () => ({ capture: vi.fn() }));
 vi.stubGlobal('useNadeshikoSdk', () => ({}));
 vi.stubGlobal('useEventListener', vi.fn());
@@ -146,6 +147,12 @@ function render({
             <button data-act="reveal" @click="$emit('reveal')">r</button>
             <button data-act="restore" @click="$emit('restore')">x</button></div>`,
         },
+        SearchContainsMatchNotice: {
+          props: ['query', 'active'],
+          emits: ['toggle'],
+          template: `<div data-testid="contains-notice" :data-active="String(active)">{{ query }}
+            <button data-act="toggle" @click="$emit('toggle')">t</button></div>`,
+        },
         CommonInfiniteScrollObserver: true,
         CommonTabsContainer: { template: '<div><slot /></div>' },
         CommonTabsHeader: { template: '<div><slot /></div>' },
@@ -181,6 +188,61 @@ beforeEach(() => {
 
 afterEach(() => {
   for (const wrapper of mounted.splice(0)) wrapper.unmount();
+});
+
+describe('the search-inside-words notice', () => {
+  const searchFor = (word: string) => {
+    route.path = `/search/${word}`;
+    route.params = { query: word };
+  };
+  const results = (n: number) => ({
+    results: Array.from({ length: Math.min(n, 3) }, (_, i) => ({ segment: { publicId: `s${i}` } })),
+    pagination: { cursor: null, hasMore: n > 3, estimatedTotalHits: n },
+  });
+
+  test('offers the search inside words when a Japanese word search comes back short', async () => {
+    searchFor('糊');
+    const wrapper = render({ sentenceData: results(0) });
+    await flushPromises();
+
+    const notice = wrapper.get('[data-testid="contains-notice"]');
+    expect(notice.attributes('data-active')).toBe('false');
+    await notice.get('[data-act="toggle"]').trigger('click');
+    expect(setQuery).toHaveBeenCalledWith({ match: 'contains' }, { scroll: true });
+  });
+
+  test('stays quiet for a full page, a romaji query, or query syntax', async () => {
+    searchFor('糊');
+    expect(
+      render({ sentenceData: results(30) })
+        .find('[data-testid="contains-notice"]')
+        .exists(),
+    ).toBe(false);
+    searchFor('word');
+    expect(
+      render({ sentenceData: results(0) })
+        .find('[data-testid="contains-notice"]')
+        .exists(),
+    ).toBe(false);
+    searchFor('"糊"');
+    expect(
+      render({ sentenceData: results(0) })
+        .find('[data-testid="contains-notice"]')
+        .exists(),
+    ).toBe(false);
+  });
+
+  test('says the mode is on and leads back to whole words', async () => {
+    searchFor('糊');
+    route.query = { match: 'contains' };
+    const wrapper = render({ sentenceData: results(40) });
+    await flushPromises();
+
+    const notice = wrapper.get('[data-testid="contains-notice"]');
+    expect(notice.attributes('data-active')).toBe('true');
+    await notice.get('[data-act="toggle"]').trigger('click');
+    expect(setQuery).toHaveBeenCalledWith({ match: null }, { scroll: true });
+  });
 });
 
 describe('a malformed search route parameter', () => {
@@ -470,6 +532,7 @@ describe('route-update search ownership', () => {
         sort: null,
         randomSeed: null,
         segmentPublicId: null,
+        matchMode: null,
         collectionId: null,
         contentRating: ['SAFE'],
         languages: ['EN', 'ES'],
@@ -519,6 +582,7 @@ describe('route-update search ownership', () => {
         sort: 'random',
         randomSeed: 7,
         segmentPublicId: null,
+        matchMode: null,
         collectionId: null,
         contentRating: ['SAFE'],
         languages: ['EN', 'ES'],

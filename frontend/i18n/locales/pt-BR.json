@@ -237,6 +237,9 @@
     "searchTypeLabel": "Tipo de busca: {type}",
     "searchTypeExact": "Exata",
     "searchTypeNormal": "Normal",
+    "searchTypeContains": "Dentro das palavras",
+    "containsTitle": "Dentro das palavras",
+    "containsDescription": "Conta cada palavra também dentro de palavras mais longas (憬 em 憧憬)",
     "examplePlaceholder": "彼女\n彼氏\n走る\n恋人\n…\n…\n…"
   },
   "modalContext": {
@@ -1100,6 +1103,10 @@
     "hiddenResultsRevealed": "Exibindo títulos que você costuma ocultar",
     "hiddenResultsRestore": "Ocultar novamente",
     "hiddenResultsManage": "Gerenciar",
+    "containsOffer": "Menos resultados do que esperava? {query} pode fazer parte de palavras mais longas.",
+    "containsActive": "Mostrando palavras que contêm {query}.",
+    "containsSearch": "Buscar dentro das palavras",
+    "containsBack": "Voltar a palavras inteiras",
     "loading": "Carregando…",
     "hiddenMediaImageAlt": "Ilustração de conteúdo oculto",
     "noResultsImageAlt": "Ilustração de busca sem resultados"

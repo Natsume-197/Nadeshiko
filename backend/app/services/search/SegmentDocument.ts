@@ -14,7 +14,7 @@ import type {
 } from 'generated/outputTypes';
 
 import { getUnhandledReports } from '@app/services/reports/reportedContent';
-import { SegmentQuery, type QueryParserMode } from './segmentDocument/SegmentQuery';
+import { SegmentQuery, type MatchMode, type QueryParserMode } from './segmentDocument/SegmentQuery';
 import { SegmentResponse } from './segmentDocument/SegmentResponse';
 import { isQuerySyntaxError, withSafeQueryFallback } from './segmentDocument/errors';
 import {
@@ -307,7 +307,7 @@ export class SegmentDocument {
 
   static async wordsMatched(
     words: string[],
-    exactMatch: boolean,
+    matchMode: MatchMode,
     filters?: ResolvedFilters,
     parserMode: QueryParserMode = 'strict',
   ): Promise<SearchMultipleResponseOutput> {
@@ -318,9 +318,9 @@ export class SegmentDocument {
     const hasHiddenMediaExclusion = must_not.length > 0;
 
     const searches: estypes.MsearchRequestItem[] = words.flatMap((word) => {
-      const baseQuery = SegmentQuery.buildMultiLanguage(
+      const baseQuery = SegmentQuery.buildTermQuery(
         word,
-        exactMatch,
+        matchMode,
         parserMode,
         excludedSearchLanguages(filters?.languages),
       );
@@ -347,7 +347,7 @@ export class SegmentDocument {
         const mediaMapData = await Media.getMediaInfoMap();
         return SegmentResponse.buildWordsMatched(words, esResponse, mediaMapData, hasHiddenMediaExclusion);
       },
-      () => SegmentDocument.wordsMatched(words, exactMatch, filters, 'safe'),
+      () => SegmentDocument.wordsMatched(words, matchMode, filters, 'safe'),
       {
         parserMode,
         warnContext: { wordsCount: words.length },

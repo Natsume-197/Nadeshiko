@@ -237,6 +237,9 @@
     "searchTypeLabel": "検索方法：{type}",
     "searchTypeExact": "完全一致",
     "searchTypeNormal": "通常",
+    "searchTypeContains": "語の中も検索",
+    "containsTitle": "語の中も検索",
+    "containsDescription": "長い語の中に含まれる場合も数えます（憧憬の中の憬など）",
     "examplePlaceholder": "彼女\n彼氏\n走る\n恋人\n...\n...\n..."
   },
   "modalContext": {
@@ -1100,6 +1103,10 @@
     "hiddenResultsRevealed": "非表示にしている作品を表示しています",
     "hiddenResultsRestore": "再び非表示にする",
     "hiddenResultsManage": "管理",
+    "containsOffer": "結果が少ない場合、{query} は長い語の一部かもしれません。",
+    "containsActive": "{query} を含む語を表示しています。",
+    "containsSearch": "語の中も検索",
+    "containsBack": "語単位の検索に戻る",
     "loading": "読み込み中...",
     "hiddenMediaImageAlt": "非表示コンテンツのイラスト",
     "noResultsImageAlt": "検索結果なしのイラスト"

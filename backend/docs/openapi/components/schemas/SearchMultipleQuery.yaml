@@ -16,4 +16,13 @@ properties:
   exactMatch:
     type: boolean
     default: false
-    description: Require exact phrase matching (disables fuzzy and partial matches)
+    description: Require exact phrase matching (disables fuzzy and partial matches). Same as `matchMode` `EXACT`; ignored when `matchMode` is set.
+  matchMode:
+    type: string
+    description: |
+      How each word is matched, as in the main search's `matchMode`. When omitted, `exactMatch` decides between `WORD` and `EXACT`.
+      - `WORD` (default): whole words, in surface, dictionary and normalized form, plus EN/ES translations
+      - `EXACT`: the exact phrase, surface form only
+      - `CONTAINS`: Japanese words that contain the text anywhere, so `憬` counts sentences with `憧憬`. A word written with a leading `*` (`*憬*`) is counted this way in `WORD` mode too
+    enum: [WORD, EXACT, CONTAINS]
+    example: CONTAINS

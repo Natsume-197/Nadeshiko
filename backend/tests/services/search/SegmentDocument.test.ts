@@ -611,7 +611,7 @@ describe.skipIf(!esAvailable)('SegmentDocument (integration)', () => {
         { contentJa: '犬も好きです', position: 2 },
       ]);
 
-      const result = await SegmentDocument.wordsMatched(['猫', '犬', 'xyz不存在'], false);
+      const result = await SegmentDocument.wordsMatched(['猫', '犬', 'xyz不存在'], 'WORD');
 
       expect(result.results).toHaveLength(3);
 
@@ -642,7 +642,7 @@ describe.skipIf(!esAvailable)('SegmentDocument (integration)', () => {
         { contentJa: '猫ですね', position: 3 },
       ]);
 
-      const result = await SegmentDocument.wordsMatched(['猫'], false, {
+      const result = await SegmentDocument.wordsMatched(['猫'], 'WORD', {
         status: ['ACTIVE'],
         category: ['ANIME', 'JDRAMA'],
         media: {

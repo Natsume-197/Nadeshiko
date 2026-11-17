@@ -478,6 +478,7 @@ describe('route-to-scope priming', () => {
     sort: null,
     randomSeed: null,
     segmentPublicId: null,
+    matchMode: null,
     collectionId: null,
     contentRating: ['SAFE'],
     languages: ['EN'],

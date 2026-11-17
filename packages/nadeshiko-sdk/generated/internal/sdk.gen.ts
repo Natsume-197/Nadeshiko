@@ -55,7 +55,7 @@ export const createRoadmapProposal = <ThrowOnError extends boolean = false>(opti
  * - **Multi-language Support:** Search using Japanese (kanji/kana), Romaji, or English/Spanish
  * - **Boolean Operators:** `AND`, `OR`, `NOT` supported (e.g., `(cat OR dog) AND bird`)
  * - **Phrase Matching:** Use quotes for exact phrases (e.g., `"good morning"`), or pass `exactMatch: true` to the request body
- * - **Wildcards:** `te*t` format (leading wildcards not supported)
+ * - **Wildcards:** `te*t` format (a Japanese term with a leading `*`, such as `*憬*`, searches inside words like `matchMode: CONTAINS`; other leading wildcards are not supported)
  * - **Smart Field Selection:** Automatically chooses optimal search fields based on input type
  *
  * **Input Type Handling**
