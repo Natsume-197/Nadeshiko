@@ -140,3 +140,30 @@ export function splitKunReading(reading: string): { stem: string; okurigana: str
 }
 
 export const __kanjiLookupTesting = { CACHE_LIMIT, clear: () => resolved.clear() };
+
+export interface KanjiBadge {
+  id: string;
+  text: string;
+  /** Drawn in the accent colour: the one a learner looks for first. */
+  strong?: boolean;
+}
+
+/** The facts row of a kanji (N5, 漢検 9級, grade, strokes, newspaper rank), in the order a learner scans them. */
+export function kanjiBadges(
+  card: KanjiCardData,
+  t: (key: string, named?: Record<string, unknown>, plural?: number) => string,
+): KanjiBadge[] {
+  const list: KanjiBadge[] = [];
+  if (card.jlpt !== null) list.push({ id: 'jlpt', text: `N${card.jlpt}`, strong: true });
+  // The level as the exam writes it (漢検 9級), the same in every language.
+  if (card.kanken !== null) list.push({ id: 'kanken', text: `漢検 ${card.kanken}` });
+  if (card.grade !== null) {
+    if (card.grade <= 6) list.push({ id: 'grade', text: t('tokenTooltip.kanjiGrade', { grade: card.grade }) });
+    else if (card.grade === 8) list.push({ id: 'grade', text: t('tokenTooltip.kanjiJoyo') });
+    else list.push({ id: 'grade', text: t('tokenTooltip.kanjiJinmeiyo') });
+  }
+  list.push({ id: 'strokes', text: t('tokenTooltip.kanjiStrokes', { count: card.strokeCount }, card.strokeCount) });
+  if (card.frequency !== null)
+    list.push({ id: 'freq', text: t('tokenTooltip.kanjiNewspaper', { rank: card.frequency }) });
+  return list;
+}

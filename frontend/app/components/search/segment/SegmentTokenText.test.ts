@@ -441,7 +441,7 @@ describe('the kanji the headword is written with', () => {
     expect(head()).toBe('本');
     expect(cardEl()?.textContent).toContain('book, origin');
     expect(cardEl()?.textContent).toContain('日本');
-    expect(document.querySelectorAll('.kanji-view__ink path')).toHaveLength(5);
+    expect(document.querySelectorAll('.kanji-strokes__ink path')).toHaveLength(5);
     expect(peekKanji).toHaveBeenCalledWith('本', 'en');
 
     document.querySelector<HTMLButtonElement>('[data-testid="word-back"]')!.click();
@@ -546,7 +546,7 @@ describe('the kanji the headword is written with', () => {
   test('stroke numbers come with the strokes', async () => {
     await openHon();
 
-    expect(document.querySelectorAll('.kanji-view__numbers text')).toHaveLength(5);
+    expect(document.querySelectorAll('.kanji-strokes__numbers text')).toHaveLength(5);
   });
 
   test('its sentences link searches inside words for the kanji', async () => {

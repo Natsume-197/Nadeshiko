@@ -1,7 +1,13 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { mdiReplay } from '@mdi/js';
-import { type KanjiCardData, type KanjiCardExample, type KanjiCardWordRef, splitKunReading } from '~/utils/kanjiLookup';
+import {
+  type KanjiCardData,
+  type KanjiCardExample,
+  type KanjiCardWordRef,
+  kanjiBadges,
+  splitKunReading,
+} from '~/utils/kanjiLookup';
+import KanjiStrokes from './KanjiStrokes.vue';
 import type { KanjiViewState } from '~/composables/useKanjiView';
 
 /**
@@ -24,6 +30,8 @@ const props = defineProps<{
   /** The kanji's own page: every word and every related kanji (grouped), a larger stroke order. The word card shows
    *  the first few and links to the page for the rest. */
   full?: boolean;
+  /** Beside the kanji page's own header and word grid: leave out the hero and the word list. */
+  aside?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -40,19 +48,28 @@ const WORDS_SHOWN = 6;
 /** How many related kanji each row shows. */
 const RELATED_SHOWN = 12;
 
-/** Bumped by the replay button: a new key remounts the strokes and restarts the animation. */
-const drawing = ref(0);
+/** On the page, how many kanji a related group shows before its "+N". */
+const GROUP_SHOWN = 24;
+
 const allWords = ref(false);
-// Another kanji starts with its list short again.
+/** Related groups the reader opened in full, by `row-group` id. */
+const openGroups = ref(new Set<string>());
+// Another kanji starts with its lists short again.
 watch(
   () => props.card?.character,
   () => {
     allWords.value = false;
+    openGroups.value = new Set();
   },
 );
 
-/** Seconds between strokes: half a second each, but a 29-stroke kanji still finishes in about six. */
-const strokeStep = computed(() => Math.min(0.5, 6 / Math.max(props.card?.strokes.length ?? 1, 1)));
+const groupKey = (rowId: string, groupId: string) => `${rowId}-${groupId}`;
+const toggleGroup = (key: string) => {
+  const next = new Set(openGroups.value);
+  if (next.has(key)) next.delete(key);
+  else next.add(key);
+  openGroups.value = next;
+};
 
 interface ReadingRow {
   key: string;
@@ -77,24 +94,7 @@ const readingGroups = computed(() => {
 });
 
 /** The facts row: short, scannable badges. */
-const badges = computed(() => {
-  const card = props.card;
-  if (!card) return [];
-  const list: Array<{ id: string; text: string; strong?: boolean }> = [];
-  if (card.jlpt !== null) list.push({ id: 'jlpt', text: `N${card.jlpt}`, strong: true });
-  // The level as the exam writes it (漢検 9級), the same in every language.
-  if (card.kanken !== null) list.push({ id: 'kanken', text: `漢検 ${card.kanken}` });
-  if (card.grade !== null) {
-    if (card.grade <= 6) list.push({ id: 'grade', text: t('tokenTooltip.kanjiGrade', { grade: card.grade }) });
-    else if (card.grade === 8) list.push({ id: 'grade', text: t('tokenTooltip.kanjiJoyo') });
-    else list.push({ id: 'grade', text: t('tokenTooltip.kanjiJinmeiyo') });
-  }
-  list.push({ id: 'strokes', text: t('tokenTooltip.kanjiStrokes', { count: card.strokeCount }, card.strokeCount) });
-  if (card.frequency !== null) {
-    list.push({ id: 'freq', text: t('tokenTooltip.kanjiNewspaper', { rank: card.frequency }) });
-  }
-  return list;
-});
+const badges = computed(() => (props.card ? kanjiBadges(props.card, t) : []));
 
 const shownWords = computed(
   () => (allWords.value || props.full ? props.card?.words : props.card?.words.slice(0, WORDS_SHOWN)) ?? [],
@@ -159,30 +159,9 @@ const relatedTitle = (kanji: { reading: string | null; meaning: string | null })
 
     <template v-else-if="card">
       <!-- 1. The kanji: stroke order beside what it means. -->
-      <div class="kanji-view__hero">
+      <div v-if="!aside" class="kanji-view__hero">
         <div v-if="card.strokes.length > 0" class="kanji-view__strokes">
-          <svg :key="drawing" viewBox="0 0 109 109" role="img" :style="{ '--step': `${strokeStep}s` }">
-            <title>{{ $t('tokenTooltip.kanjiStrokeOrder', { kanji }) }}</title>
-            <g class="kanji-view__ghost">
-              <path v-for="(d, i) in card.strokes" :key="`g${i}`" :d="d" />
-            </g>
-            <g class="kanji-view__ink">
-              <path v-for="(d, i) in card.strokes" :key="`i${i}`" :d="d" pathLength="1" :style="{ '--i': i }" />
-            </g>
-            <g class="kanji-view__numbers" aria-hidden="true">
-              <text v-for="([x, y], i) in card.strokeNumbers" :key="`n${i}`" :x="x" :y="y" :style="{ '--i': i }">{{ i + 1 }}</text>
-            </g>
-          </svg>
-          <button
-            type="button"
-            class="kanji-view__replay"
-            data-testid="kanji-replay"
-            :aria-label="$t('tokenTooltip.kanjiReplay')"
-            :title="$t('tokenTooltip.kanjiReplay')"
-            @click="drawing += 1"
-          >
-            <UiBaseIcon :path="mdiReplay" :size="14" />
-          </button>
+          <KanjiStrokes :kanji="kanji" :strokes="card.strokes" :numbers="card.strokeNumbers" />
         </div>
 
         <div class="kanji-view__summary">
@@ -202,7 +181,7 @@ const relatedTitle = (kanji: { reading: string | null; meaning: string | null })
 
       <!-- 2. Readings, the label once per group, each with the words it is heard in. A reading none of our words
            uses is shown faint: it exists, but a reader of anime will rarely meet it. -->
-      <section v-if="readingGroups.length > 0" class="kanji-view__section">
+      <section v-if="readingGroups.length > 0" class="kanji-view__section" :class="{ 'is-first': aside }">
         <div class="kanji-view__readings">
           <template v-for="group in readingGroups" :key="group.kind">
             <template v-for="(row, ri) in group.rows" :key="`${group.kind}${row.key}`">
@@ -230,7 +209,7 @@ const relatedTitle = (kanji: { reading: string | null; meaning: string | null })
       </section>
 
       <!-- 3. Words, from our own subtitles. -->
-      <section v-if="card.words.length > 0" class="kanji-view__section">
+      <section v-if="!aside && card.words.length > 0" class="kanji-view__section">
         <h4 class="kanji-view__heading">{{ $t('tokenTooltip.kanjiWords') }}</h4>
         <div class="kanji-view__words">
           <button
@@ -322,7 +301,7 @@ const relatedTitle = (kanji: { reading: string | null; meaning: string | null })
                 <span class="kanji-view__note">{{ group.label }} ({{ group.list.length }})</span>
                 <span class="kanji-view__related">
                   <button
-                    v-for="other in group.list"
+                    v-for="other in openGroups.has(groupKey(row.id, group.id)) ? group.list : group.list.slice(0, GROUP_SHOWN)"
                     :key="other.character"
                     type="button"
                     class="kanji-view__related-kanji"
@@ -331,6 +310,14 @@ const relatedTitle = (kanji: { reading: string | null; meaning: string | null })
                     :aria-label="$t('tokenTooltip.kanjiOpen', { kanji: other.character })"
                     @click="emit('open-kanji', other.character)"
                   >{{ other.character }}</button>
+                  <button
+                    v-if="group.list.length > GROUP_SHOWN"
+                    type="button"
+                    class="kanji-view__more-kanji"
+                    data-testid="kanji-group-toggle"
+                    :aria-expanded="openGroups.has(groupKey(row.id, group.id))"
+                    @click="toggleGroup(groupKey(row.id, group.id))"
+                  >{{ openGroups.has(groupKey(row.id, group.id)) ? $t('tokenTooltip.showLess') : `+${group.list.length - GROUP_SHOWN}` }}</button>
                 </span>
               </span>
             </span>
@@ -407,84 +394,6 @@ const relatedTitle = (kanji: { reading: string | null; meaning: string | null })
   height: 88px;
   border: 1px solid var(--line);
   border-radius: 10px;
-}
-
-.kanji-view__strokes svg {
-  width: 100%;
-  height: 100%;
-}
-
-.kanji-view__strokes path {
-  fill: none;
-  stroke-width: 3.5;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.kanji-view__ghost path {
-  stroke: var(--line);
-}
-
-.kanji-view__ink path {
-  stroke: var(--ink);
-  stroke-dasharray: 1;
-  stroke-dashoffset: 1;
-  animation: kanji-view-draw calc(var(--step) * 0.9) ease-out forwards;
-  animation-delay: calc(var(--i) * var(--step));
-}
-
-@keyframes kanji-view-draw {
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-
-.kanji-view__numbers text {
-  font-size: 8px;
-  fill: var(--ink-faint);
-  opacity: 0;
-  animation: kanji-view-number 0.2s ease-out forwards;
-  animation-delay: calc(var(--i) * var(--step));
-}
-
-@keyframes kanji-view-number {
-  to {
-    opacity: 1;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .kanji-view__ink path {
-    animation: none;
-    stroke-dashoffset: 0;
-  }
-
-  .kanji-view__numbers text {
-    animation: none;
-    opacity: 1;
-  }
-}
-
-.kanji-view__replay {
-  position: absolute;
-  right: 3px;
-  bottom: 3px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 6px;
-  color: var(--ink-faint);
-  background: transparent;
-  transition:
-    background-color 0.12s ease,
-    color 0.12s ease;
-}
-
-.kanji-view__replay:hover {
-  background: var(--surface-lift);
-  color: var(--ink);
 }
 
 .kanji-view__summary {
@@ -790,12 +699,18 @@ button.kanji-view__part {
 
 .kanji-view__word:focus-visible,
 .kanji-view__part:focus-visible,
-.kanji-view__replay:focus-visible,
 .kanji-view__example:focus-visible,
 .kanji-view__more:focus-visible,
 .kanji-view__related-kanji:focus-visible,
 button.kanji-view__glyph:focus-visible {
   outline: 2px solid var(--input-focus-ring);
   outline-offset: 2px;
+}
+
+/* The first block of the kanji page's aside: nothing above it to rule off. */
+.kanji-view__section.is-first {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
 }
 </style>

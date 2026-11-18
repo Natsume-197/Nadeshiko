@@ -31,9 +31,9 @@ const CARD: KanjiCardData = {
     related('飯', 4),
     related('餅', 8),
     related('飴', 9),
-    ...Array.from({ length: 12 }, (_, i) => related(String.fromCodePoint(0x4e00 + i), null)),
+    ...Array.from({ length: 30 }, (_, i) => related(String.fromCodePoint(0x4e00 + i), null)),
   ],
-  sameRadicalCount: 16,
+  sameRadicalCount: 34,
   containedIn: [],
   containedInCount: 0,
 };
@@ -74,6 +74,29 @@ describe('the kanji view', () => {
       wrapper
         .findAll('[data-testid="kanji-same-radical"] .kanji-view__related-group > .kanji-view__note')
         .map((n) => n.text()),
-    ).toEqual(['tokenTooltip.kanjiJoyo (3)', 'tokenTooltip.kanjiJinmeiyo (1)', 'tokenTooltip.kanjiOther (12)']);
+    ).toEqual(['tokenTooltip.kanjiJoyo (3)', 'tokenTooltip.kanjiJinmeiyo (1)', 'tokenTooltip.kanjiOther (30)']);
+  });
+
+  test('on the page, a long group shows 24 and opens the rest', async () => {
+    const wrapper = render(true);
+    const others = () => wrapper.findAll('.kanji-view__related-group').at(2)!.findAll('.kanji-view__related-kanji');
+
+    expect(others()).toHaveLength(24);
+    const toggle = wrapper.find('[data-testid="kanji-group-toggle"]');
+    expect(toggle.text()).toBe('+6');
+
+    await toggle.trigger('click');
+    expect(others()).toHaveLength(30);
+  });
+
+  test("the hero and the word list are left out beside the page's own", () => {
+    const wrapper = mount(WordCardKanji, {
+      props: { kanji: '食', card: CARD, state: 'shown', locale: 'en', full: true, aside: true },
+      global: { mocks: { $t: (key: string) => key }, stubs: { UiBaseIcon: true } },
+    });
+
+    expect(wrapper.find('.kanji-view__hero').exists()).toBe(false);
+    expect(wrapper.find('[data-testid="kanji-word"]').exists()).toBe(false);
+    expect(wrapper.find('[data-testid="kanji-same-radical"]').exists()).toBe(true);
   });
 });
