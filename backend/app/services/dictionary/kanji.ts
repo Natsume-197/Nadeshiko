@@ -260,7 +260,7 @@ export async function kanjiCard(
     frequency: row.frequency,
     jlpt: row.jlpt,
     radical,
-    readings: readingsWithExamples(row, words),
+    readings: await readingsWithExamples(dataSource, row, words),
     meanings: meaningsLanguage === 'es' ? row.meanings_es : row.meanings_en,
     meaningsLanguage,
     components: (row.components ?? []).map((part) => ({
@@ -363,21 +363,80 @@ function relatedKanji(dataSource: DataSource, from: string, params: unknown[]): 
   );
 }
 
-/** The kanji's readings, on first, each with up to three of our most frequent words read that way. */
-function readingsWithExamples(row: KanjiRowResult, words: WordRowResult[]): KanjiReading[] {
+/** How many of the dictionary's words with the kanji are tried for readings our corpus left without examples. */
+const DICTIONARY_SAMPLE = 400;
+
+type ExampleRow = Pick<WordRowResult, 'word_id' | 'headword' | 'reading' | 'segments'>;
+
+/**
+ * Words written with the kanji straight from the dictionary, common spellings and short words first: examples for a
+ * reading our subtitles never use (食 read ジキ in 餌食 and 断食), or that a small corpus has not met yet.
+ */
+function dictionaryWordsWith(dataSource: DataSource, character: string): Promise<ExampleRow[]> {
+  return dataSource.query(
+    `WITH forms AS (
+       SELECT DISTINCT ON (f.word_id) f.word_id, f.text, f.common AS form_common, w.common AS word_common
+         FROM dict.form f
+         JOIN dict.word w ON w.id = f.word_id AND w.active AND w.source = 'jmdict'
+        WHERE NOT f.kana AND f.active AND string_to_array(f.text, NULL) @> ARRAY[$1]
+        ORDER BY f.word_id, f.common DESC, f.idx
+     ), top AS (
+       SELECT * FROM forms
+        ORDER BY form_common DESC, word_common DESC, char_length(text), word_id
+        LIMIT $2
+     ), read AS (
+       SELECT t.word_id, t.text, t.form_common, t.word_common,
+              (SELECT k.text FROM dict.form k
+                WHERE k.word_id = t.word_id AND k.kana AND k.active
+                  AND (k.applies_to_kanji = '{}' OR '*' = ANY (k.applies_to_kanji) OR t.text = ANY (k.applies_to_kanji))
+                ORDER BY k.idx LIMIT 1) AS reading
+         FROM top t
+     )
+     SELECT r.word_id, r.text AS headword, r.reading,
+            (SELECT fu.segments FROM dict.furigana fu
+              WHERE fu.text = r.text AND fu.reading = r.reading AND fu.source = 'jmdict-furigana') AS segments
+       FROM read r
+      ORDER BY r.form_common DESC, r.word_common DESC, char_length(r.text), r.word_id`,
+    [character, DICTIONARY_SAMPLE],
+  );
+}
+
+/**
+ * The kanji's readings, on first, each with up to three example words: our corpus's most frequent first, so the
+ * examples are the words a reader of anime meets; a reading the corpus gives none gets the dictionary's common words
+ * instead. A reading still empty after both is one learners will rarely meet.
+ */
+async function readingsWithExamples(
+  dataSource: DataSource,
+  row: KanjiRowResult,
+  words: WordRowResult[],
+): Promise<KanjiReading[]> {
   const all = [
     ...row.on_readings.map((reading) => ({ kind: 'on' as const, reading })),
     ...row.kun_readings.map((reading) => ({ kind: 'kun' as const, reading })),
   ];
   const keys = all.map((entry, index) => readingKey(entry.reading, index));
   const examples = all.map((): KanjiReading['examples'] => []);
-  for (const word of words) {
-    if (!word.segments) continue;
-    const index = readingInWord(word.segments, row.character, keys);
-    const list = index === null ? undefined : examples[index];
-    if (list && list.length < EXAMPLES_PER_READING) {
-      list.push({ id: `jmdict:${word.word_id}`, headword: word.headword, reading: word.reading });
+
+  const sortIn = (candidates: ExampleRow[], only?: Set<number>) => {
+    for (const word of candidates) {
+      if (!word.segments) continue;
+      const index = readingInWord(word.segments, row.character, keys);
+      if (index === null || (only && !only.has(index))) continue;
+      const list = examples[index];
+      if (
+        list &&
+        list.length < EXAMPLES_PER_READING &&
+        !list.some((example) => example.id === `jmdict:${word.word_id}`)
+      ) {
+        list.push({ id: `jmdict:${word.word_id}`, headword: word.headword, reading: word.reading });
+      }
     }
-  }
+  };
+
+  sortIn(words);
+  const empty = new Set(examples.flatMap((list, index) => (list.length === 0 ? [index] : [])));
+  if (empty.size > 0) sortIn(await dictionaryWordsWith(dataSource, row.character), empty);
+
   return all.map((entry, index) => ({ ...entry, examples: examples[index] ?? [] }));
 }

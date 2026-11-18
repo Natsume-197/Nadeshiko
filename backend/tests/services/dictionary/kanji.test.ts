@@ -231,6 +231,39 @@ describe('kanjiCard', () => {
     ]);
   });
 
+  it('takes examples from the dictionary for a reading our corpus never uses', async () => {
+    await seedWord({
+      id: 1,
+      forms: [{ text: '食事' }, { text: 'しょくじ', kana: true }],
+      rank: 1,
+      furigana: [
+        { text: '食', ruby: 'しょく' },
+        { text: '事', ruby: 'じ' },
+      ],
+    });
+    // Not in our corpus (no rank), but a common dictionary word read ジキ.
+    await seedWord({
+      id: 2,
+      forms: [
+        { text: '断食', common: true },
+        { text: 'だんじき', kana: true },
+      ],
+      furigana: [
+        { text: '断', ruby: 'だん' },
+        { text: '食', ruby: 'じき' },
+      ],
+    });
+
+    const readings = (await kanjiCard(TestDataSource, '食', 'en'))?.readings ?? [];
+
+    expect(readings.find((r) => r.reading === 'ショク')?.examples.map((e) => e.headword)).toEqual(['食事']);
+    expect(readings.find((r) => r.reading === 'ジキ')?.examples).toEqual([
+      { id: 'jmdict:2', headword: '断食', reading: 'だんじき' },
+    ]);
+    // Not listed among the corpus words: it was never counted.
+    expect((await kanjiCard(TestDataSource, '食', 'en'))?.words.map((w) => w.headword)).toEqual(['食事']);
+  });
+
   it(`lists at most ${KANJI_WORDS} words`, async () => {
     for (let i = 0; i < KANJI_WORDS + 2; i += 1) {
       await seedWord({ id: 2000000 + i, forms: [{ text: `食${i}` }], en: ['x'], rank: i + 1 });
