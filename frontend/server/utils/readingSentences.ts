@@ -8,12 +8,16 @@ const MAX_WORD_LENGTH = 20;
 export const PER_WORD = 4;
 export const SENTENCES = 8;
 
-/** The words to search, from `?words=食事,給食`: one to three, none empty or long. Null when the list is unusable. */
-export function wordsOf(event: H3Event): string[] | null {
+/** How many words the reading counts take at once: every example word of every reading of a kanji. */
+export const MAX_COUNTED_WORDS = 40;
+
+/** The words to search, from `?words=食事,給食`: one to `max` (three by default), none empty or long. Null when the
+ * list is unusable. */
+export function wordsOf(event: H3Event, max = MAX_WORDS): string[] | null {
   const raw = getQuery(event).words;
   if (typeof raw !== 'string') return null;
   const words = [...new Set(raw.split(',').map((word) => word.trim()))];
-  if (words.length === 0 || words.length > MAX_WORDS) return null;
+  if (words.length === 0 || words.length > max) return null;
   if (words.some((word) => word.length === 0 || [...word].length > MAX_WORD_LENGTH)) return null;
   return words;
 }

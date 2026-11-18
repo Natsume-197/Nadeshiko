@@ -1294,6 +1294,10 @@ export type t_GetDictionaryKanjiQuerySchema = {
   related?: 'short' | 'all';
 };
 
+export type t_GetDictionaryKanjiIndexQuerySchema = {
+  locale?: 'en' | 'es';
+};
+
 export type t_GetEmailPreferencesByTokenQuerySchema = {
   token: string;
 };

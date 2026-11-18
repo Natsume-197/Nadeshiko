@@ -4,6 +4,7 @@ import {
   isSingleCharacter,
   KANJI_WORDS,
   kanjiCard,
+  kanjiIndex,
   RELATED_KANJI,
   readingForms,
   readingInWord,
@@ -313,6 +314,30 @@ describe('kanjiCard', () => {
 
   it('answers null for a kanji it does not have', async () => {
     expect(await kanjiCard(TestDataSource, '鬱', 'en')).toBeNull();
+  });
+});
+
+describe('kanjiIndex', () => {
+  it('lists the jōyō kanji and any JLPT kanji, school kanji first, each with a reading and a meaning', async () => {
+    // 蝕 is neither jōyō nor JLPT; 飢 is JLPT only.
+    await TestDataSource.query(
+      `INSERT INTO dict.kanji (character, stroke_count, grade, frequency, on_readings, meanings_en, meanings_es)
+       VALUES ('飢', 10, NULL, NULL, '{キ}', '{hungry}', '{}')`,
+    );
+    await TestDataSource.query(`INSERT INTO dict.kanji_jlpt (character, level) VALUES ('飢', 1)`);
+
+    const list = await kanjiIndex(TestDataSource, 'es');
+
+    expect(list.map((k) => k.character)).toEqual(['食', '館', '良', '飯', '飢']);
+    expect(list[0]).toEqual({
+      character: '食',
+      grade: 2,
+      jlpt: 5,
+      frequency: 328,
+      reading: 'ショク',
+      meaning: 'comer',
+    });
+    expect(list.find((k) => k.character === '飢')).toMatchObject({ grade: null, jlpt: 1, meaning: 'hungry' });
   });
 });
 

@@ -15,6 +15,7 @@ export interface ServerOnlyRoute {
 
 export const serverOnlyRoutes: ServerOnlyRoute[] = [
   { method: 'GET', path: '/v1/dictionary/identify' },
+  { method: 'GET', path: '/v1/dictionary/kanji' },
   { method: 'GET', path: '/v1/dictionary/kanji/{character}' },
   { method: 'GET', path: '/v1/user/connections/shirabe/credential' },
   { method: 'POST', path: '/v1/user/connections/shirabe/resync' },

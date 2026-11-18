@@ -472,3 +472,29 @@ async function readingsWithExamples(
 
   return all.map((entry, index) => ({ ...entry, examples: examples[index] ?? [] }));
 }
+
+export interface KanjiIndexEntry {
+  character: string;
+  grade: number | null;
+  jlpt: number | null;
+  frequency: number | null;
+  reading: string | null;
+  meaning: string | null;
+}
+
+/**
+ * Every kanji a learner is likely to study, for the kanji index page: the 2,136 jōyō kanji (grades 1-6 and 8) and
+ * any other kanji on the JLPT lists, school kanji first by grade, then by newspaper frequency.
+ */
+export async function kanjiIndex(dataSource: DataSource, locale: 'en' | 'es'): Promise<KanjiIndexEntry[]> {
+  return dataSource.query(
+    `SELECT k.character, k.grade, j.level AS jlpt, k.frequency,
+            coalesce(k.on_readings[1], k.kun_readings[1]) AS reading,
+            coalesce(CASE WHEN $1 = 'es' THEN k.meanings_es[1] END, k.meanings_en[1]) AS meaning
+       FROM dict.kanji k
+       LEFT JOIN dict.kanji_jlpt j ON j.character = k.character
+      WHERE (k.grade BETWEEN 1 AND 8 AND k.grade <> 7) OR j.level IS NOT NULL
+      ORDER BY coalesce(k.grade, 99), coalesce(k.frequency, 9999), k.character`,
+    [locale],
+  );
+}

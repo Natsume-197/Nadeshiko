@@ -1098,6 +1098,15 @@
     "loading": "加载中",
     "noResultsSupport": "没有找到想要的内容？欢迎到我们的{link}建议下一批收录的作品。"
   },
+  "kanjiIndex": {
+    "title": "汉字",
+    "intro": "所有常用汉字和 JLPT 汉字，按等级排列。打开一个汉字，查看读音、笔顺以及使用它的动画例句。",
+    "groupBy": "汉字分组方式",
+    "byGrade": "学年",
+    "groups": "汉字分组",
+    "secondary": "中学及以上",
+    "noJlpt": "无 JLPT 等级"
+  },
   "tokenTooltip": {
     "lookupIn": "在词典中查询",
     "loading": "查询中…",
@@ -1367,6 +1376,10 @@
     "hint": "在搜索栏中输入时，快捷键不会生效。按 ? 可打开或关闭此面板。"
   },
   "seo": {
+    "kanjiIndex": {
+      "title": "{group}汉字：读音、意思和笔顺",
+      "description": "{group}的 {count} 个汉字，每个都有读音、意思、笔顺和真实的动画例句。"
+    },
     "kanji": {
       "title": "汉字「{kanji}」的意思、读音和笔顺",
       "description": "「{kanji}」的意思是 {meaning}。读音 {readings}，笔顺、部首、JLPT 和汉检等级，以及动画字幕中使用它的词语。"

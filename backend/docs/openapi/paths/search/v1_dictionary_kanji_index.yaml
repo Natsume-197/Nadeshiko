@@ -1,0 +1,67 @@
+get:
+  tags:
+    - Search
+  x-internal: true
+  # Server-only: the frontend proxy blocks browsers and the controller re-checks the internal secret.
+  x-server-only: true
+  operationId: getDictionaryKanjiIndex
+  summary: Every jōyō and JLPT kanji, for our own server only
+  description: |
+    The kanji index page's list: the 2,136 jōyō kanji and any other JLPT kanji,
+    each with its school grade, JLPT level, newspaper rank, one reading and one
+    meaning. Called by the frontend server, which caches it.
+
+  security: []
+  parameters:
+    - name: locale
+      in: query
+      schema:
+        type: string
+        enum: [en, es]
+        default: en
+      description: Language of the meanings; English where there is none in it.
+  responses:
+    "200":
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [kanji]
+            properties:
+              kanji:
+                type: array
+                description: School kanji first by grade, then by newspaper frequency.
+                items:
+                  type: object
+                  required: [character, grade, jlpt, frequency, reading, meaning]
+                  properties:
+                    character:
+                      type: string
+                      example: 日
+                    grade:
+                      type: integer
+                      nullable: true
+                      example: 1
+                    jlpt:
+                      type: integer
+                      nullable: true
+                      example: 5
+                    frequency:
+                      type: integer
+                      nullable: true
+                      example: 1
+                    reading:
+                      type: string
+                      nullable: true
+                      example: ニチ
+                    meaning:
+                      type: string
+                      nullable: true
+                      example: day
+    "403":
+      $ref: "../../components/responses/Forbidden.yaml"
+    "429":
+      $ref: "../../components/responses/TooManyRequests.yaml"
+    "500":
+      $ref: "../../components/responses/InternalServerError.yaml"

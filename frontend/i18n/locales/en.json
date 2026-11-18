@@ -1098,6 +1098,15 @@
     "loading": "Loading",
     "noResultsSupport": "Looking for something we don't have yet? Suggest what we add next on our {link}"
   },
+  "kanjiIndex": {
+    "title": "Kanji",
+    "intro": "Every jōyō and JLPT kanji, by level. Open one to see how it is read, how it is written, and the anime sentences that use it.",
+    "groupBy": "Group kanji by",
+    "byGrade": "School grade",
+    "groups": "Kanji groups",
+    "secondary": "Secondary school",
+    "noJlpt": "No JLPT level"
+  },
   "tokenTooltip": {
     "lookupIn": "Look up in",
     "loading": "Looking up…",
@@ -1367,6 +1376,10 @@
     "hint": "Shortcuts are disabled while typing in the search bar. Press ? to toggle this panel."
   },
   "seo": {
+    "kanjiIndex": {
+      "title": "{group} kanji: readings, meanings and stroke order",
+      "description": "The {count} kanji of {group}, each with its readings, meaning, stroke order and real anime sentences."
+    },
     "kanji": {
       "title": "{kanji}: kanji meaning, readings and stroke order",
       "description": "{kanji} means {meaning}. Readings {readings}, stroke order, radical, JLPT and Kanken level, and the words written with it in anime subtitles."

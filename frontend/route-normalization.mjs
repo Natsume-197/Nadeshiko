@@ -11,6 +11,7 @@ const STATIC_PAGES = new Set([
   '/blog',
   '/changelog',
   '/media',
+  '/kanji',
   '/roadmap',
   '/supporters',
   '/stats',
@@ -55,6 +56,7 @@ const ROUTE_PATTERNS = [
   [/^\/s\/[^/]+$/, '/s/:id'],
   [/^\/search\/[^/]+$/, '/search/:query'],
   [/^\/blog\/[^/]+$/, '/blog/:slug'],
+  [/^\/kanji\/[^/]+$/, '/kanji/:character'],
   // Media slugs need an explicit bounded label. Use :id to merge with the existing numeric-media series.
   [/^\/media\/[^/]+$/, '/media/:id'],
   [/^\/admin\//, '/admin/:slug'],

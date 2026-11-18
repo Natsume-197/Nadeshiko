@@ -37,6 +37,7 @@ export const INTENTIONALLY_PUBLIC_OPERATIONS = new Set<string>([
   'identifyDictionaryWord',
   // The word card's kanji view (task 44), same reasons as the word lookup above.
   'getDictionaryKanji',
+  'getDictionaryKanjiIndex',
 ]);
 
 /** A security scheme without scopes is malformed; refusing generation prevents a weaker guard from being emitted

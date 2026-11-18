@@ -67,6 +67,10 @@ const SITEMAP_STATIC_PATHS = [
   // Expose every tier so crawlers can reach word pages. COVERED excludes words whose empty search pages are
   // noindex; canonical.ts allowlists both query params.
   ...[1000, 2000, 5000, 10000, 20000, 50000, 100000].map((tier) => `/stats/words?tier=${tier}&filter=COVERED`),
+  // The kanji index and each of its groups (task 44); canonical.ts allowlists both query params.
+  '/kanji',
+  ...['n4', 'n3', 'n2', 'n1', 'none'].map((level) => `/kanji?by=jlpt&level=${level}`),
+  ...['g1', 'g2', 'g3', 'g4', 'g5', 'g6', 'secondary'].map((level) => `/kanji?by=grade&level=${level}`),
 ];
 const sitemapStaticUrls = (locale: string) => [
   `/${locale}`,

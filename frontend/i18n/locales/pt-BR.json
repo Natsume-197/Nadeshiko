@@ -1098,6 +1098,15 @@
     "loading": "Carregando",
     "noResultsSupport": "Não encontrou o que procurava? Sugira o próximo conteúdo no nosso {link}."
   },
+  "kanjiIndex": {
+    "title": "Kanji",
+    "intro": "Todos os kanji jōyō e do JLPT, por nível. Abra um para ver como se lê, como se escreve e as frases de anime que o usam.",
+    "groupBy": "Agrupar kanji por",
+    "byGrade": "Ano escolar",
+    "groups": "Grupos de kanji",
+    "secondary": "Ensino médio",
+    "noJlpt": "Sem nível JLPT"
+  },
   "tokenTooltip": {
     "lookupIn": "Consultar em",
     "loading": "Consultando…",
@@ -1367,6 +1376,10 @@
     "hint": "Os atalhos ficam desativados enquanto você digita na barra de busca. Pressione ? para abrir ou fechar este painel."
   },
   "seo": {
+    "kanjiIndex": {
+      "title": "Kanji de {group}: leituras, significados e ordem dos traços",
+      "description": "Os {count} kanji de {group}, cada um com leituras, significado, ordem dos traços e frases reais de anime."
+    },
     "kanji": {
       "title": "{kanji}: significado, leituras e ordem dos traços do kanji",
       "description": "{kanji} significa {meaning}. Leituras {readings}, ordem dos traços, radical, nível JLPT e Kanken, e as palavras que o usam em legendas de anime."

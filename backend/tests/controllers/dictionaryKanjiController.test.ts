@@ -9,10 +9,11 @@ vi.mock('@lib/internalProxy', async (importOriginal) => ({
   isInternalProxyRequest: () => fromInternalProxy,
 }));
 
-const { kanjiCard } = vi.hoisted(() => ({ kanjiCard: vi.fn() }));
+const { kanjiCard, kanjiIndex } = vi.hoisted(() => ({ kanjiCard: vi.fn(), kanjiIndex: vi.fn() }));
 vi.mock('@app/services/dictionary/kanji', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@app/services/dictionary/kanji')>()),
   kanjiCard,
+  kanjiIndex,
 }));
 
 setupTestSuite();
@@ -105,5 +106,31 @@ describe('GET /v1/dictionary/kanji/{character}', () => {
     const res = await request(app).get(path('鬱'));
 
     expect(res.status).toBe(404);
+  });
+});
+
+describe('GET /v1/dictionary/kanji', () => {
+  const ENTRY = { character: '日', grade: 1, jlpt: 5, frequency: 1, reading: 'ニチ', meaning: 'day' };
+
+  beforeEach(() => {
+    kanjiIndex.mockReset();
+    kanjiIndex.mockResolvedValue([ENTRY]);
+  });
+
+  it('refuses anything but our own frontend server', async () => {
+    const res = await request(app).get('/v1/dictionary/kanji');
+
+    expect(res.status).toBe(403);
+    expect(kanjiIndex).not.toHaveBeenCalled();
+  });
+
+  it('answers the index in the asked language', async () => {
+    fromInternalProxy = true;
+
+    const res = await request(app).get('/v1/dictionary/kanji').query({ locale: 'es' });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ kanji: [ENTRY] });
+    expect(kanjiIndex).toHaveBeenCalledWith(expect.anything(), 'es');
   });
 });

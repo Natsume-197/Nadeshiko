@@ -42,6 +42,7 @@ app.use(
     searchMedia: (() => undefined) as any,
     identifyDictionaryWord: (() => undefined) as any,
     getDictionaryKanji: (() => undefined) as any,
+    getDictionaryKanjiIndex: (() => undefined) as any,
   }),
 );
 app.use(handleErrors);

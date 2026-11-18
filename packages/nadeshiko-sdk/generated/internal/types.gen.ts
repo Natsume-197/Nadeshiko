@@ -3576,6 +3576,56 @@ export type IdentifyDictionaryWordResponses = {
 
 export type IdentifyDictionaryWordResponse = IdentifyDictionaryWordResponses[keyof IdentifyDictionaryWordResponses];
 
+export type GetDictionaryKanjiIndexData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Language of the meanings; English where there is none in it.
+         */
+        locale?: 'en' | 'es';
+    };
+    url: '/v1/dictionary/kanji';
+};
+
+export type GetDictionaryKanjiIndexErrors = {
+    /**
+     * Forbidden
+     */
+    403: Error403;
+    /**
+     * Too Many Requests. The response body indicates whether the request was rejected due to per-minute rate limiting or monthly quota exhaustion.
+     */
+    429: Error429;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type GetDictionaryKanjiIndexError = GetDictionaryKanjiIndexErrors[keyof GetDictionaryKanjiIndexErrors];
+
+export type GetDictionaryKanjiIndexResponses = {
+    /**
+     * OK
+     */
+    200: {
+        /**
+         * School kanji first by grade, then by newspaper frequency.
+         */
+        kanji: Array<{
+            character: string;
+            grade: number;
+            jlpt: number;
+            frequency: number;
+            reading: string;
+            meaning: string;
+        }>;
+    };
+};
+
+export type GetDictionaryKanjiIndexResponse = GetDictionaryKanjiIndexResponses[keyof GetDictionaryKanjiIndexResponses];
+
 export type GetDictionaryKanjiData = {
     body?: never;
     path: {

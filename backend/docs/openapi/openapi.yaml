@@ -113,6 +113,8 @@ paths:
     $ref: "./paths/search/v1_search_media.yaml"
   "/v1/dictionary/identify":
     $ref: "./paths/search/v1_dictionary_identify.yaml"
+  "/v1/dictionary/kanji":
+    $ref: "./paths/search/v1_dictionary_kanji_index.yaml"
   "/v1/dictionary/kanji/{character}":
     $ref: "./paths/search/v1_dictionary_kanji.yaml"
   # Stats endpoints

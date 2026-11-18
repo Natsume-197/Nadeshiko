@@ -77,6 +77,25 @@ if (error.value) {
 }
 if (!card.value) throw createError({ statusCode: 404, statusMessage: 'Kanji Not Found' });
 
+// How many sentences each reading's example words have, so each reading tab can say how common it is in the corpus.
+// One batch search for every word; the tabs work without it.
+const readingWords = [...new Set(card.value.readings.flatMap((entry) => entry.examples.map((example) => example.headword)))];
+const { data: wordCounts } = await useAsyncData(
+  () => `kanji-word-counts-${character.value}`,
+  async (): Promise<Record<string, number> | null> => {
+    if (readingWords.length === 0) return null;
+    try {
+      const answer = await $fetch<{ counts: Record<string, number> }>('/api/dictionary/word-counts', {
+        query: { words: readingWords.join(',') },
+      });
+      return answer.counts;
+    } catch {
+      return null;
+    }
+  },
+  { server: true, lazy: false },
+);
+
 const allSentences = computed(() => sentenceData.value?.sentences ?? null);
 const totals = computed(() => sentenceData.value?.totals ?? null);
 const formatCount = (count: number) => new Intl.NumberFormat(locale.value).format(count);
@@ -102,7 +121,13 @@ const readingTabs = computed(() =>
       key: `${entry.kind}:${entry.reading}`,
       ...(entry.kind === 'kun' ? splitKunReading(entry.reading) : { stem: entry.reading, okurigana: '' }),
       words: entry.examples.map((example) => example.headword),
-    })),
+      // Sentences with its words, added up (a sentence with two of them counts twice: close enough for a tab).
+      count: wordCounts.value
+        ? entry.examples.reduce((sum, example) => sum + (wordCounts.value?.[example.headword] ?? 0), 0)
+        : null,
+    }))
+    // A reading none of whose words appear in the corpus would open an empty tab.
+    .filter((tab) => tab.count !== 0),
 );
 const activeTab = ref<string | null>(null);
 /** Each tab's sentences once loaded; null when its search failed (retried on the next click). */
@@ -192,6 +217,9 @@ const sentencesPath = computed(() => ({
     <!-- The header: the kanji written stroke by stroke on a practice grid, beside what it means and how it is read. -->
     <section class="kanji-hero">
       <div class="nd-page kanji-hero__inner">
+        <NuxtLink :to="localePath('/kanji')" class="kanji-hero__back" data-testid="kanji-page-index">
+          ← {{ $t('kanjiIndex.title') }}
+        </NuxtLink>
         <div class="kanji-hero__tile">
           <KanjiStrokes
             v-if="card.strokes.length > 0"
@@ -303,7 +331,7 @@ const sentencesPath = computed(() => ({
             :aria-selected="activeTab === tab.key"
             :title="tab.words.join('、')"
             @click="selectTab(tab.key)"
-          >{{ tab.stem }}<span v-if="tab.okurigana" class="kanji-page__tab-okurigana">{{ tab.okurigana }}</span></button>
+          >{{ tab.stem }}<span v-if="tab.okurigana" class="kanji-page__tab-okurigana">{{ tab.okurigana }}</span><span v-if="tab.count !== null" class="kanji-page__tab-count">{{ formatCount(tab.count) }}</span></button>
         </div>
         <p v-if="tabLoading" class="kanji-page__empty">{{ $t('tokenTooltip.loading') }}</p>
         <template v-else-if="sentences && sentences.results.length > 0">
@@ -347,7 +375,20 @@ const sentencesPath = computed(() => ({
   flex-wrap: wrap;
   align-items: center;
   gap: 24px 36px;
-  padding: 36px 16px 32px;
+  padding: 20px 16px 32px;
+}
+
+/* Back to every kanji, on its own line above the header. */
+.kanji-hero__back {
+  flex: 0 0 100%;
+  margin-bottom: -10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-muted);
+}
+
+.kanji-hero__back:hover {
+  color: var(--accent-soft);
 }
 
 /* A practice-sheet square: frame here, dashed cross from KanjiStrokes. */
@@ -651,6 +692,14 @@ const sentencesPath = computed(() => ({
 
 .kanji-page__tab-okurigana {
   opacity: 0.6;
+}
+
+.kanji-page__tab-count {
+  margin-left: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0.75;
+  font-variant-numeric: tabular-nums;
 }
 
 .kanji-page__empty {

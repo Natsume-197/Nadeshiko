@@ -25,7 +25,11 @@ import { loginCodeBinding } from '@app/middleware/loginCodeBinding';
 import { APP_ENVIRONMENT, getAppEnvironment } from '@config/environment';
 import { config } from '@config/config';
 import { search, getSearchStats, searchWords } from '@app/controllers/searchController';
-import { getDictionaryKanji, identifyDictionaryWord } from '@app/controllers/dictionaryController';
+import {
+  getDictionaryKanji,
+  getDictionaryKanjiIndex,
+  identifyDictionaryWord,
+} from '@app/controllers/dictionaryController';
 import { getAdminUsersWithProviders } from '@app/controllers/adminDashboardController';
 import { handleSesWebhook, WEBHOOK_SES_PATH } from '@app/controllers/webhooks/sesController';
 import { listTiers, getAdminUserQuota, updateAdminUserQuota } from '@app/controllers/adminQuotaController';
@@ -241,6 +245,7 @@ const SearchRoutes = createSearchRouter({
   searchMedia,
   identifyDictionaryWord,
   getDictionaryKanji,
+  getDictionaryKanjiIndex,
 });
 
 const MediaRoutes = createMediaRouter({

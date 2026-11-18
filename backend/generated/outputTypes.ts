@@ -233,6 +233,9 @@ export const identifyDictionaryWordQuerySchema = z.object({
   });
 export type IdentifyDictionaryWordQueryOutput = z.output<typeof identifyDictionaryWordQuerySchema>;
 
+export const getDictionaryKanjiIndexQuerySchema = z.object({ locale: z.enum(['en', 'es']).optional().default('en') });
+export type GetDictionaryKanjiIndexQueryOutput = z.output<typeof getDictionaryKanjiIndexQuerySchema>;
+
 export const getDictionaryKanjiQuerySchema = z.object({
     locale: z.enum(['en', 'es']).optional().default('en'),
     related: z.enum(['short', 'all']).optional().default('short'),
