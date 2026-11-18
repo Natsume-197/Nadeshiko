@@ -383,6 +383,10 @@ const sentencesPath = computed(() => ({
     align-items: start;
   }
 
+  .kanji-page__entry {
+    order: 0;
+  }
+
   /* The entry stays in view while the sentences scroll past it. */
   .kanji-page__entry {
     position: sticky;
@@ -395,7 +399,9 @@ const sentencesPath = computed(() => ({
   }
 }
 
+/* On a phone the words and sentences come first (the header already gives the readings); the entry follows. */
 .kanji-page__entry {
+  order: 2;
   padding: 18px;
   border: 1px solid var(--line);
   border-radius: 14px;
@@ -403,6 +409,7 @@ const sentencesPath = computed(() => ({
 }
 
 .kanji-page__main {
+  order: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -419,7 +426,7 @@ const sentencesPath = computed(() => ({
 /* Words: a grid of small cards, each a search for that word. */
 .kanji-page__words {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 10px;
 }
 
@@ -495,6 +502,10 @@ const sentencesPath = computed(() => ({
 }
 
 @media (max-width: 640px) {
+  .kanji-page__words {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .kanji-hero__inner {
     padding: 24px 16px 22px;
   }

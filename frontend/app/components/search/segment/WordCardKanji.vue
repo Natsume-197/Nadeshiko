@@ -48,8 +48,11 @@ const WORDS_SHOWN = 6;
 /** How many related kanji each row shows. */
 const RELATED_SHOWN = 12;
 
-/** On the page, how many kanji a related group shows before its "+N". */
+/** On the page, how many kanji a related group shows before its "+N": school and name kanji get room, the rare
+ *  ones a single row's worth. */
 const GROUP_SHOWN = 24;
+const OTHER_GROUP_SHOWN = 12;
+const shownIn = (groupId: string) => (groupId === 'other' ? OTHER_GROUP_SHOWN : GROUP_SHOWN);
 
 const allWords = ref(false);
 /** Related groups the reader opened in full, by `row-group` id. */
@@ -301,7 +304,7 @@ const relatedTitle = (kanji: { reading: string | null; meaning: string | null })
                 <span class="kanji-view__note">{{ group.label }} ({{ group.list.length }})</span>
                 <span class="kanji-view__related">
                   <button
-                    v-for="other in openGroups.has(groupKey(row.id, group.id)) ? group.list : group.list.slice(0, GROUP_SHOWN)"
+                    v-for="other in openGroups.has(groupKey(row.id, group.id)) ? group.list : group.list.slice(0, shownIn(group.id))"
                     :key="other.character"
                     type="button"
                     class="kanji-view__related-kanji"
@@ -311,13 +314,13 @@ const relatedTitle = (kanji: { reading: string | null; meaning: string | null })
                     @click="emit('open-kanji', other.character)"
                   >{{ other.character }}</button>
                   <button
-                    v-if="group.list.length > GROUP_SHOWN"
+                    v-if="group.list.length > shownIn(group.id)"
                     type="button"
                     class="kanji-view__more-kanji"
                     data-testid="kanji-group-toggle"
                     :aria-expanded="openGroups.has(groupKey(row.id, group.id))"
                     @click="toggleGroup(groupKey(row.id, group.id))"
-                  >{{ openGroups.has(groupKey(row.id, group.id)) ? $t('tokenTooltip.showLess') : `+${group.list.length - GROUP_SHOWN}` }}</button>
+                  >{{ openGroups.has(groupKey(row.id, group.id)) ? $t('tokenTooltip.showLess') : `+${group.list.length - shownIn(group.id)}` }}</button>
                 </span>
               </span>
             </span>

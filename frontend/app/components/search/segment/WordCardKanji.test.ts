@@ -77,13 +77,13 @@ describe('the kanji view', () => {
     ).toEqual(['tokenTooltip.kanjiJoyo (3)', 'tokenTooltip.kanjiJinmeiyo (1)', 'tokenTooltip.kanjiOther (30)']);
   });
 
-  test('on the page, a long group shows 24 and opens the rest', async () => {
+  test('on the page, the rare kanji show one row and open the rest', async () => {
     const wrapper = render(true);
     const others = () => wrapper.findAll('.kanji-view__related-group').at(2)!.findAll('.kanji-view__related-kanji');
 
-    expect(others()).toHaveLength(24);
+    expect(others()).toHaveLength(12);
     const toggle = wrapper.find('[data-testid="kanji-group-toggle"]');
-    expect(toggle.text()).toBe('+6');
+    expect(toggle.text()).toBe('+18');
 
     await toggle.trigger('click');
     expect(others()).toHaveLength(30);
