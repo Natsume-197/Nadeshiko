@@ -1116,6 +1116,8 @@
     "kanjiReplay": "Putar ulang urutan goresan",
     "kanjiMissing": "Tidak ada entri untuk kanji ini.",
     "kanjiStrokeOrder": "Urutan goresan {kanji}",
+    "kanjiSentenceCount": "kalimat | kalimat",
+    "kanjiTitleCount": "judul | judul",
     "kanjiRelatedHeading": "Kanji terkait",
     "kanjiSentencesHeading": "Kalimat dengan {kanji}",
     "kanjiAllSentences": "Lihat semua kalimat dengan {kanji}",

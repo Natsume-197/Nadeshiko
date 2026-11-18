@@ -34,7 +34,13 @@ if ([...character.value].length !== 1) {
   throw createError({ statusCode: 404, statusMessage: 'Kanji Not Found' });
 }
 
-const [{ data: card, error }, { data: sentences }] = await Promise.all([
+/** How many sentences and titles have the kanji: the page's own figure, which no dictionary can give. */
+interface KanjiTotals {
+  sentences: number;
+  titles: number;
+}
+
+const [{ data: card, error }, { data: sentenceData }] = await Promise.all([
   useAsyncData(
     () => `kanji-${character.value}-${glossLocale.value}`,
     () =>
@@ -47,12 +53,12 @@ const [{ data: card, error }, { data: sentences }] = await Promise.all([
   // section saying so rather than failing the page.
   useAsyncData(
     () => `kanji-sentences-${character.value}`,
-    async (): Promise<SearchResponse | null> => {
+    async (): Promise<{ sentences: SearchResponse; totals: KanjiTotals | null } | null> => {
       try {
-        const raw = await $fetch<SdkSearchResponse>(
+        const raw = await $fetch<SdkSearchResponse & { totals: KanjiTotals | null }>(
           `/api/dictionary/kanji-sentences/${encodeURIComponent(character.value)}`,
         );
-        return stripUnreadTokenFields(resolveSearchResponse(raw));
+        return { sentences: stripUnreadTokenFields(resolveSearchResponse(raw)), totals: raw.totals ?? null };
       } catch {
         return null;
       }
@@ -70,6 +76,10 @@ if (error.value) {
   );
 }
 if (!card.value) throw createError({ statusCode: 404, statusMessage: 'Kanji Not Found' });
+
+const sentences = computed(() => sentenceData.value?.sentences ?? null);
+const totals = computed(() => sentenceData.value?.totals ?? null);
+const formatCount = (count: number) => new Intl.NumberFormat(locale.value).format(count);
 
 // Rare kanji stay reachable and followable, but out of the index.
 useRobotsRule(isJoyoKanji(character.value) ? undefined : 'noindex, follow');
@@ -178,9 +188,19 @@ const sentencesPath = computed(() => ({
             >{{ badge.text }}</span>
           </div>
 
-          <NuxtLink :to="sentencesPath" class="kanji-hero__cta" data-testid="kanji-page-sentences">
-            {{ $t('tokenTooltip.kanjiAllSentences', { kanji: character }) }}
-          </NuxtLink>
+          <div class="kanji-hero__actions">
+            <NuxtLink :to="sentencesPath" class="kanji-hero__cta" data-testid="kanji-page-sentences">
+              {{ $t('tokenTooltip.kanjiAllSentences', { kanji: character }) }}
+            </NuxtLink>
+            <!-- How much of the corpus uses it: the figure only Nadeshiko can give. -->
+            <p v-if="totals && totals.sentences > 0" class="kanji-hero__totals" data-testid="kanji-page-totals">
+              <strong>{{ formatCount(totals.sentences) }}</strong>
+              {{ $t('tokenTooltip.kanjiSentenceCount', totals.sentences) }}
+              <span class="kanji-hero__dot" aria-hidden="true">·</span>
+              <strong>{{ formatCount(totals.titles) }}</strong>
+              {{ $t('tokenTooltip.kanjiTitleCount', totals.titles) }}
+            </p>
+          </div>
         </div>
       </div>
     </section>
@@ -370,9 +390,32 @@ const sentencesPath = computed(() => ({
   color: var(--accent-soft);
 }
 
+.kanji-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 18px;
+  margin-top: 2px;
+}
+
+.kanji-hero__totals {
+  font-size: 14px;
+  color: var(--ink-muted);
+}
+
+.kanji-hero__totals .kanji-hero__dot {
+  margin: 0 6px;
+}
+
+.kanji-hero__totals strong {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
 .kanji-hero__cta {
   align-self: flex-start;
-  margin-top: 2px;
   padding: 9px 18px;
   border-radius: 999px;
   background: var(--accent);

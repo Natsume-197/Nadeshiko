@@ -1116,6 +1116,8 @@
     "kanjiReplay": "Repetir a ordem dos traços",
     "kanjiMissing": "Nenhuma entrada para este kanji.",
     "kanjiStrokeOrder": "Ordem dos traços de {kanji}",
+    "kanjiSentenceCount": "frase | frases",
+    "kanjiTitleCount": "título | títulos",
     "kanjiRelatedHeading": "Kanji relacionados",
     "kanjiSentencesHeading": "Frases com {kanji}",
     "kanjiAllSentences": "Ver todas as frases com {kanji}",

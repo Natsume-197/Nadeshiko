@@ -1116,6 +1116,8 @@
     "kanjiReplay": "Replay the stroke order",
     "kanjiMissing": "No entry for this kanji.",
     "kanjiStrokeOrder": "Stroke order of {kanji}",
+    "kanjiSentenceCount": "sentence | sentences",
+    "kanjiTitleCount": "title | titles",
     "kanjiRelatedHeading": "Related kanji",
     "kanjiSentencesHeading": "Sentences with {kanji}",
     "kanjiAllSentences": "See all sentences with {kanji}",

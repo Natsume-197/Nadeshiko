@@ -293,7 +293,7 @@ const relatedTitle = (kanji: { reading: string | null; meaning: string | null })
         class="kanji-view__section"
         :class="{ 'is-first': part === 'related' }"
       >
-        <div class="kanji-view__facts">
+        <div class="kanji-view__facts" :class="{ 'is-stacked': full }">
           <template v-for="row in related" :key="row.id">
             <span class="kanji-view__label">{{ row.label }}</span>
             <span v-if="!full" class="kanji-view__related" :data-testid="`kanji-${row.id}`">
@@ -319,21 +319,23 @@ const relatedTitle = (kanji: { reading: string | null; meaning: string | null })
             <span v-else class="kanji-view__related-groups" :data-testid="`kanji-${row.id}`">
               <span v-for="group in row.groups" :key="group.id" class="kanji-view__related-group">
                 <span class="kanji-view__note">{{ group.label }} ({{ group.list.length }})</span>
-                <span class="kanji-view__related">
+                <span class="kanji-view__tiles">
                   <button
                     v-for="other in openGroups.has(groupKey(row.id, group.id)) ? group.list : group.list.slice(0, shownIn(group.id))"
                     :key="other.character"
                     type="button"
-                    class="kanji-view__related-kanji"
-                    lang="ja"
-                    :title="relatedTitle(other)"
+                    class="kanji-view__tile kanji-view__related-kanji"
                     :aria-label="$t('tokenTooltip.kanjiOpen', { kanji: other.character })"
                     @click="emit('open-kanji', other.character)"
-                  >{{ other.character }}</button>
+                  >
+                    <span class="kanji-view__tile-kanji" lang="ja">{{ other.character }}</span>
+                    <span v-if="other.reading" class="kanji-view__tile-reading" lang="ja">{{ other.reading }}</span>
+                    <span v-if="other.meaning" class="kanji-view__tile-meaning">{{ other.meaning }}</span>
+                  </button>
                   <button
                     v-if="group.list.length > shownIn(group.id)"
                     type="button"
-                    class="kanji-view__more-kanji"
+                    class="kanji-view__tile is-more"
                     data-testid="kanji-group-toggle"
                     :aria-expanded="openGroups.has(groupKey(row.id, group.id))"
                     @click="toggleGroup(groupKey(row.id, group.id))"
@@ -732,5 +734,75 @@ button.kanji-view__glyph:focus-visible {
   margin-top: 0;
   padding-top: 0;
   border-top: 0;
+}
+
+/* The kanji page's related kanji: label above, then a grid of small tiles. */
+.kanji-view__facts.is-stacked {
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: 10px;
+}
+
+.kanji-view__facts.is-stacked > .kanji-view__label:not(:first-child) {
+  margin-top: 10px;
+}
+
+.kanji-view__tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 8px;
+}
+
+.kanji-view__tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  min-width: 0;
+  padding: 10px 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--background);
+  text-align: center;
+  cursor: pointer;
+  transition:
+    border-color 0.12s ease,
+    background-color 0.12s ease;
+}
+
+.kanji-view__tile:hover {
+  border-color: var(--accent-soft);
+  background: var(--surface-lift);
+}
+
+.kanji-view__tile:focus-visible {
+  outline: 2px solid var(--input-focus-ring);
+  outline-offset: 2px;
+}
+
+.kanji-view__tile-kanji {
+  font-size: 26px;
+  line-height: 1.2;
+  color: var(--ink);
+}
+
+.kanji-view__tile-reading {
+  font-size: 11px;
+  color: var(--ink-muted);
+}
+
+.kanji-view__tile-meaning {
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  color: var(--ink-faint);
+}
+
+.kanji-view__tile.is-more {
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent-soft);
 }
 </style>
