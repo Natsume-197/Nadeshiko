@@ -4,8 +4,8 @@ import { ref } from 'vue';
 import { DICT_LINKS_COOKIE } from '#shared/utils/preferenceCookies';
 
 /**
- * An empty cookie means deliberately disabled, not unchosen defaults. Shirabe remains required
- * even with stale cookies or callers.
+ * An empty cookie means deliberately disabled, not unchosen defaults. shirabe.org is on by default
+ * and, like every other preset, can be turned off.
  */
 const cookies = new Map<string, ReturnType<typeof ref<string | null>>>();
 
@@ -176,47 +176,29 @@ describe('changing the choice', () => {
   });
 });
 
-describe('the dictionary the card is built from', () => {
-  test('is always on, whatever the cookie says', async () => {
-    // "Turn it off" would mean "hide the link to the thing you are already
-    // reading".
-    setCookie('');
+describe('shirabe.org', () => {
+  test('is on for a reader who never chose', async () => {
     const { use } = await loadComposable();
 
     expect(use().isDictionaryEnabled('shirabe')).toBe(true);
   });
 
-  test('cannot be turned off by a stale cookie or a caller that does not know', async () => {
-    // Asserted on what gets STORED, not on `isDictionaryEnabled`: that answers
-    // true for a required preset whatever the cookie holds, so it would report
-    // success over a write that had just removed it.
+  test('can be turned off like any other dictionary', async () => {
+    // Optional since the card can be built from our own dictionary (task 44).
     setCookie('shirabe,jisho');
     const { use } = await loadComposable();
     const links = use();
 
     links.setDictionaryEnabled('shirabe', false);
 
-    expect(links.enabledDictionaries.value).toContain('shirabe');
-    expect(cookieValue()).toContain('shirabe');
+    expect(links.isDictionaryEnabled('shirabe')).toBe(false);
+    expect(cookieValue()).toBe('jisho');
   });
 
-  test('and the refused write changes nothing else either', async () => {
-    // Ignored rather than thrown, but it must not quietly rewrite the rest of
-    // the row on its way out.
-    setCookie('jisho,jpdb');
-    const { use } = await loadComposable();
-    const links = use();
-
-    links.setDictionaryEnabled('shirabe', false);
-
-    expect(links.enabledDictionaries.value).toEqual(['jisho', 'jpdb']);
-  });
-
-  test('leads the row, being the odd one out at any other position', async () => {
+  test('leads the row', async () => {
     const { presets } = await loadComposable();
 
     expect(presets[0]!.id).toBe('shirabe');
-    expect(presets[0]!.required).toBe(true);
   });
 });
 

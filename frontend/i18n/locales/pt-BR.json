@@ -1102,6 +1102,7 @@
     "lookupIn": "Consultar em",
     "loading": "Consultando…",
     "moreSentences": "Mais frases",
+    "searchKanji": "Frases com palavras escritas com {kanji}",
     "playAudio": "Ouvir pronúncia",
     "unavailable": "Não foi possível carregar as definições. Tente novamente em instantes.",
     "noEntry": "Nenhum verbete encontrado para esta palavra.",

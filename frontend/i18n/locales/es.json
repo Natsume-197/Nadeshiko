@@ -1102,6 +1102,7 @@
     "lookupIn": "Buscar en",
     "loading": "Buscando…",
     "moreSentences": "Buscar ejemplos de esta palabra",
+    "searchKanji": "Frases con palabras que llevan {kanji}",
     "playAudio": "Reproducir pronunciación",
     "unavailable": "No se pudieron cargar las definiciones. Espera un momento e inténtalo de nuevo.",
     "noEntry": "No hay ninguna entrada de diccionario para esta palabra.",

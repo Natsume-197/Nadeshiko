@@ -1102,6 +1102,7 @@
     "lookupIn": "在词典中查询",
     "loading": "查询中…",
     "moreSentences": "更多例句",
+    "searchKanji": "包含「{kanji}」的词语的例句",
     "playAudio": "播放发音",
     "unavailable": "无法加载释义，请稍后重试。",
     "noEntry": "词典中没有此词的条目。",

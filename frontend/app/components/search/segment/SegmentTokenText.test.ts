@@ -347,3 +347,21 @@ describe('mining the form the sentence uses', () => {
     expect(instances[1]!.mining.openMinedNote).toHaveBeenCalled();
   });
 });
+
+describe('the kanji the headword is written with', () => {
+  test('a kanji chip searches Nadeshiko for the words written with it, without leaving the site', async () => {
+    peekWord.mockReturnValue({ candidates: [candidate('本当')], reason: null, nameOnly: false });
+    const wrapper = render([token('本当')]);
+    await clickableTokens(wrapper)[0]!.trigger('click');
+    await nextTick();
+
+    const chips = [...document.querySelectorAll<HTMLButtonElement>('.token-tooltip__kanji-link')];
+    expect(chips.map((chip) => chip.textContent)).toEqual(['本', '当']);
+    expect(document.querySelector('.token-tooltip__kanji a')).toBeNull();
+
+    chips[0]!.click();
+    await nextTick();
+
+    expect(wrapper.emitted('token-click')).toEqual([['本', { contains: true }]]);
+  });
+});

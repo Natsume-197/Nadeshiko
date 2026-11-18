@@ -5,7 +5,6 @@ import {
   headwordFurigana,
   kanjiIn,
   pitchMorae,
-  shirabeKanjiUrl,
   type GlossLanguage,
   type GlossPreference,
 } from '~/utils/wordCard';
@@ -125,12 +124,7 @@ export function useWordCardContent(
     () => word() !== null && senses.value.length === 0 && hiddenDefinitionLanguages().length > 0,
   );
 
-  const kanjiChips = computed(() =>
-    kanjiIn(headword()).map((character) => ({
-      character,
-      href: shirabeKanjiUrl(character, glossLanguages().labels),
-    })),
-  );
+  const kanjiChips = computed(() => kanjiIn(headword()).map((character) => ({ character })));
 
   return {
     headReading,

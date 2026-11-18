@@ -9,7 +9,7 @@ import {
   candidateSummary,
   dictionaryKey,
   glossPreference,
-  // The same three names that ride out to Shirabe as `utm_content`, reused here
+  // The same names that ride out to Shirabe as `utm_content`, reused here
   // rather than restated: the click we record and the visit Shirabe records are
   // then labelled identically, so the two sides reconcile per surface instead of
   // only in total.
@@ -67,7 +67,8 @@ const isOn = (value: unknown): boolean => value === true || value === 'true';
 const config = useRuntimeConfig().public;
 const lookupsEnabled = isOn(config.shirabeLookups);
 const emit = defineEmits<{
-  'token-click': [dictionaryForm: string];
+  // `contains` asks for the "contains" search (task 43): the word inside longer words, which is what a kanji wants.
+  'token-click': [query: string, options?: { contains?: boolean }];
 }>();
 
 const enrichedTokens = computed<EnrichedToken[]>(() => {
@@ -661,6 +662,14 @@ const searchForWord = (query: string) => {
   emit('token-click', query);
 };
 
+// A kanji chip searches Nadeshiko for the words written with that kanji (本 finds 本当, 日本, 絵本) rather than
+// leaving for another site. Same exit as the headword, in the "contains" mode.
+const searchForKanji = (character: string, position: number) => {
+  posthog.capture('kanji_chip_clicked', { kanji: character, position, lemma: hoveredToken.value?.lookupRef?.lemma ?? null });
+  closeTooltip();
+  emit('token-click', character, { contains: true });
+};
+
 /**
  * Open the note this word is already on, in Anki.
  *
@@ -722,13 +731,8 @@ const dictionaryLinks = computed(() => {
   if (!token) return [];
   return (
     presets
+      // In preset order, which puts shirabe.org first when it is on.
       .filter((preset) => isDictionaryEnabled(preset.id))
-      // Shirabe first: it is the dictionary this card is already showing, so it is
-      // where "more than fits here" leads. The rest keep their configured order.
-      // `filter` has already made a fresh array, so the broadly-supported
-      // mutating sort cannot alter the presets held by the composable. `toSorted`
-      // is newer than browsers we still receive reader traffic from.
-      .sort((a, b) => Number(b.required ?? false) - Number(a.required ?? false))
       .map((preset) => ({
         id: preset.id,
         label: preset.label,
@@ -1219,15 +1223,16 @@ function reportDictionaryClick(dictionary: DictionaryId, surface: ShirabeLinkSur
             </div>
 
             <div v-if="kanjiChips.length > 0" class="token-tooltip__kanji">
-              <a
+              <button
                 v-for="(chip, index) in kanjiChips"
                 :key="chip.character"
-                :href="chip.href"
-                target="_blank"
-                rel="noopener noreferrer"
+                type="button"
+                lang="ja"
                 class="token-tooltip__kanji-link"
-                @click="reportDictionaryClick('shirabe', 'kanji-chip', index)"
-              >{{ chip.character }}</a>
+                :title="$t('tokenTooltip.searchKanji', { kanji: chip.character })"
+                :aria-label="$t('tokenTooltip.searchKanji', { kanji: chip.character })"
+                @click="searchForKanji(chip.character, index)"
+              >{{ chip.character }}</button>
             </div>
 
           </div>

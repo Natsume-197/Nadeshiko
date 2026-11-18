@@ -1102,6 +1102,7 @@
     "lookupIn": "Cari di",
     "loading": "Mencari…",
     "moreSentences": "Kalimat lainnya",
+    "searchKanji": "Kalimat dengan kata yang memakai {kanji}",
     "playAudio": "Putar pelafalan",
     "unavailable": "Gagal memuat definisi. Tunggu sebentar, lalu coba lagi.",
     "noEntry": "Tidak ada entri kamus untuk kata ini.",

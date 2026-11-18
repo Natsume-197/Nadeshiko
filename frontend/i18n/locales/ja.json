@@ -1102,6 +1102,7 @@
     "lookupIn": "辞書で調べる",
     "loading": "検索中…",
     "moreSentences": "この単語の例文を検索",
+    "searchKanji": "「{kanji}」を含む単語の例文",
     "playAudio": "発音を再生",
     "unavailable": "辞書を読み込めませんでした。少し経ってからもう一度お試しください。",
     "noEntry": "この単語は辞書に見つかりませんでした。",

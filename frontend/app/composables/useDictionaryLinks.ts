@@ -20,22 +20,15 @@ export type DictionaryPreset = {
    */
   buildUrl: (word: string, reading: string, slug: string | undefined, locale: GlossLanguage) => string;
   defaultEnabled: boolean;
-  /**
-   * Always on, and not offered as a toggle. shirabe.org is the dictionary the
-   * hover card itself is built from, so "turn it off" would mean "hide the link
-   * to the thing you are already reading".
-   */
-  required?: boolean;
 };
 
 // Order here is the order readers see, both in settings and in the link row on
-// the card. shirabe.org leads: it is the one preset that is always on, and the
-// dictionary the card is built from, so it is the odd one out at any other
-// position -- a permanently-enabled entry sitting third reads like an accident.
+// the card. shirabe.org leads and is the one on by default. Since 3.0.0 it is an
+// ordinary preset a reader can turn off (task 44): the card can be built from
+// our own dictionary, so Shirabe is no longer "the dictionary you are reading".
 export const DICTIONARY_PRESETS: DictionaryPreset[] = [
   {
-    // The dictionary behind the hover card itself, so it is where a reader who
-    // wants more than the card holds lands by default. A web page rather than
+    // Where a reader who wants more than the card holds lands by default. A web page rather than
     // the `shirabelookup://` app scheme this used to be: a scheme with no app
     // installed fails silently, and the card is already on the web.
     id: 'shirabe',
@@ -45,7 +38,6 @@ export const DICTIONARY_PRESETS: DictionaryPreset[] = [
     // locale, so a Spanish reader was redirected to the English page.
     buildUrl: (word, _reading, slug, locale) => shirabeWordUrl(slug ?? word, locale),
     defaultEnabled: true,
-    required: true,
   },
   {
     id: 'jisho',
@@ -89,7 +81,6 @@ export const DICTIONARY_PRESETS: DictionaryPreset[] = [
 // other, silently. Turning one off by default only affects readers who have
 // never set the preference at all, which is what `decodeEnabled` falls back to.
 const VALID_IDS = new Set<string>(DICTIONARY_PRESETS.map((d) => d.id));
-const REQUIRED_IDS = new Set<DictionaryId>(DICTIONARY_PRESETS.filter((d) => d.required).map((d) => d.id));
 // See `shared/utils/preferenceCookies.ts`: read during SSR, so it is a cache key.
 const COOKIE_NAME = DICT_LINKS_COOKIE;
 
@@ -117,18 +108,13 @@ export function useDictionaryLinks() {
   );
 
   const setDictionaryEnabled = (id: DictionaryId, enabled: boolean) => {
-    // Required presets ignore the write rather than throwing: the UI does not
-    // offer the toggle, so reaching here means a stale cookie or a caller that
-    // does not know, and neither should be able to switch it off.
-    if (REQUIRED_IDS.has(id)) return;
-
     const next = new Set(enabledDictionaries.value);
     if (enabled) next.add(id);
     else next.delete(id);
     set(DICTIONARY_PRESETS.filter((d) => next.has(d.id)).map((d) => d.id));
   };
 
-  const isDictionaryEnabled = (id: DictionaryId) => REQUIRED_IDS.has(id) || enabledDictionaries.value.includes(id);
+  const isDictionaryEnabled = (id: DictionaryId) => enabledDictionaries.value.includes(id);
 
   return {
     presets: DICTIONARY_PRESETS,

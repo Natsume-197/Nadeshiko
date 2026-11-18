@@ -807,19 +807,14 @@ const logoutCurrentUser = async () => {
           <label
             v-for="preset in dictionaryPresets"
             :key="preset.id"
-            class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-control border border-hairline text-sm text-ink-faint"
-            :class="preset.required ? 'opacity-70 cursor-default' : 'cursor-pointer hover:bg-control-hover hover:text-ink'"
+            class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-control border border-hairline text-sm text-ink-faint cursor-pointer hover:bg-control-hover hover:text-ink"
           >
             <input
               type="checkbox"
               :checked="isDictionaryEnabled(preset.id)"
-              :disabled="preset.required"
               class="accent-button-primary-main"
               @change="setDictionaryEnabled(preset.id, ($event.target as HTMLInputElement).checked)"
             />
-            <!-- A required dictionary is a checked, disabled box and nothing
-                 else: the control already says it cannot be turned off, and the
-                 label spelled out in words what the disabled state shows. -->
             <span>{{ preset.label }}</span>
           </label>
         </div>
