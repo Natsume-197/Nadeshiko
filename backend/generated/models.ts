@@ -291,6 +291,7 @@ export type t_DictionaryKanji = {
   frequency: number | null;
   grade: number | null;
   jlpt: number | null;
+  kanken: string | null;
   meanings: string[];
   meaningsLanguage: 'en' | 'es';
   radical: {
@@ -326,6 +327,7 @@ export type t_DictionaryKanji = {
 
 export type t_DictionaryKanjiRelated = {
   character: string;
+  grade: number | null;
   meaning: string | null;
   reading: string | null;
 };
@@ -1289,6 +1291,7 @@ export type t_GetDictionaryKanjiParamSchema = {
 
 export type t_GetDictionaryKanjiQuerySchema = {
   locale?: 'en' | 'es';
+  related?: 'short' | 'all';
 };
 
 export type t_GetEmailPreferencesByTokenQuerySchema = {

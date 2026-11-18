@@ -10,7 +10,8 @@ import type { DataSource } from 'typeorm';
  * - KRADFILE (`kradfile-*.json`) into `dict.kanji_component`;
  * - KanjiVG (the `kanji/` folder of `kanjivg-*-main.zip`) into `dict.kanji_strokes`;
  * - Waller's JLPT kanji lists (`kanji.json` of davidluzgouveia/kanji-data, field `jlpt_new`) into `dict.kanji_jlpt`;
- * - Kanji alive's radicals (`language-data/japanese-radicals.csv`) into `dict.radical`.
+ * - Kanji alive's radicals (`language-data/japanese-radicals.csv`) into `dict.radical`;
+ * - mimneko/kanji-data's Kanji Kentei levels (`漢検漢字辞典漢字.csv`) into `dict.kanji_kanken`.
  */
 
 export interface KanjiRow {
@@ -26,7 +27,7 @@ export interface KanjiRow {
 }
 
 export interface KanjiImportReport {
-  source: 'kanjidic2' | 'kradfile' | 'kanjivg' | 'kanji-jlpt' | 'radicals';
+  source: 'kanjidic2' | 'kradfile' | 'kanjivg' | 'kanji-jlpt' | 'radicals' | 'kanken';
   version: string;
   rows: number;
   dryRun: boolean;
@@ -97,7 +98,7 @@ export function kanjiVgCharacter(fileName: string): string | null {
 
 async function replaceTable(
   dataSource: DataSource,
-  table: 'kanji' | 'kanji_component' | 'kanji_strokes' | 'kanji_jlpt' | 'radical',
+  table: 'kanji' | 'kanji_component' | 'kanji_strokes' | 'kanji_jlpt' | 'radical' | 'kanji_kanken',
   insert: string,
   payload: unknown[],
   source: KanjiImportReport['source'],
@@ -325,7 +326,7 @@ const KANGXI_FIRST = 0x2f00;
  * own (の as a crown) is skipped; a glyph listed twice keeps its first row. */
 export function radicalRows(csv: string): RadicalRow[] {
   const lines = csv
-    .replace(/^﻿/, '')
+    .replace(/^\uFEFF/, '')
     .split(/\r?\n/)
     .filter((line) => line.trim() !== '');
   const header = csvFields(lines[0] ?? '');
@@ -381,4 +382,73 @@ export async function importRadicals(
     dryRun,
   );
   return { source: 'radicals', version, rows: inserted, dryRun };
+}
+
+/** Kanji Kentei levels, easiest first. */
+export const KANKEN_LEVELS = [
+  '10級',
+  '9級',
+  '8級',
+  '7級',
+  '6級',
+  '5級',
+  '4級',
+  '3級',
+  '準2級',
+  '2級',
+  '準1級',
+  '1級',
+] as const;
+
+/**
+ * The Kanji Kentei (漢検) level of each kanji in mimneko/kanji-data's `漢検漢字辞典漢字.csv`, after the official
+ * 漢検漢字辞典: a row per character form (the current form and old ones), whose `漢字テキスト` may be empty where the
+ * form exists only as an image. `1/準1級` (an old form tested at both top levels) counts as 準1級, `配当外` (not
+ * tested) is left out, and a character listed twice keeps its easiest level.
+ */
+export function kankenLevels(csv: string): Array<{ character: string; level: string }> {
+  const lines = csv
+    .replace(/^\uFEFF/, '')
+    .split(/\r?\n/)
+    .filter((line) => line.trim() !== '');
+  const header = csvFields(lines[0] ?? '');
+  const textAt = header.indexOf('漢字テキスト');
+  const levelAt = header.indexOf('漢検級');
+  if (textAt === -1 || levelAt === -1) throw new Error('漢検漢字辞典漢字.csv: missing 漢字テキスト or 漢検級 column');
+
+  const easiest = new Map<string, number>();
+  for (const line of lines.slice(1)) {
+    const fields = csvFields(line);
+    const character = fields[textAt]?.trim() ?? '';
+    const raw = fields[levelAt]?.trim() ?? '';
+    const level = raw === '1/準1級' ? '準1級' : raw;
+    const rank = (KANKEN_LEVELS as readonly string[]).indexOf(level);
+    if ([...character].length !== 1 || rank === -1) continue;
+    const known = easiest.get(character);
+    if (known === undefined || rank < known) easiest.set(character, rank);
+  }
+  return [...easiest].map(([character, rank]) => ({ character, level: KANKEN_LEVELS[rank] as string }));
+}
+
+/** Replace `dict.kanji_kanken`. The file has no version, so the commit it came from is passed in. */
+export async function importKanken(
+  dataSource: DataSource,
+  path: string,
+  version: string,
+  options: { dryRun?: boolean } = {},
+): Promise<KanjiImportReport> {
+  const rows = kankenLevels(await readFile(path, 'utf8'));
+  const dryRun = options.dryRun ?? false;
+  const inserted = await replaceTable(
+    dataSource,
+    'kanji_kanken',
+    `INSERT INTO dict.kanji_kanken (character, level)
+     SELECT x.character, x.level FROM jsonb_to_recordset($1::jsonb) AS x(character text, level text)`,
+    rows,
+    'kanken',
+    version,
+    null,
+    dryRun,
+  );
+  return { source: 'kanken', version, rows: inserted, dryRun };
 }

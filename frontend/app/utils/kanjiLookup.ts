@@ -41,6 +41,8 @@ export interface KanjiCardRelated {
   character: string;
   reading: string | null;
   meaning: string | null;
+  /** School grade: 1-6 and 8 jōyō, 9-10 jinmeiyō. */
+  grade: number | null;
 }
 
 export interface KanjiCardRadical {
@@ -59,6 +61,8 @@ export interface KanjiCardData {
   frequency: number | null;
   /** Current JLPT level, 5 for N5. */
   jlpt: number | null;
+  /** Kanji Kentei level, `10級` (easiest) to `1級`. */
+  kanken: string | null;
   radical: KanjiCardRadical | null;
   readings: KanjiCardReading[];
   meanings: string[];

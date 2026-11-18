@@ -7,6 +7,7 @@ required:
   - grade
   - frequency
   - jlpt
+  - kanken
   - radical
   - readings
   - meanings
@@ -41,6 +42,11 @@ properties:
     nullable: true
     description: Current JLPT level, 5 for N5 (Jonathan Waller's unofficial lists).
     example: 5
+  kanken:
+    type: string
+    nullable: true
+    description: Kanji Kentei (漢検) level it is tested at, `10級` (easiest) to `1級` (mimneko/kanji-data, CC0).
+    example: 9級
   radical:
     type: object
     nullable: true
@@ -167,7 +173,7 @@ properties:
           example: to eat
   sameRadical:
     type: array
-    description: Other kanji filed under the same radical, school kanji first (up to 12).
+    description: Other kanji filed under the same radical, school kanji first (12, or all with `related=all`).
     items:
       $ref: "./DictionaryKanjiRelated.yaml"
   sameRadicalCount:
@@ -175,7 +181,7 @@ properties:
     example: 92
   containedIn:
     type: array
-    description: Kanji with this one as a part and filed under another radical, school kanji first (up to 12).
+    description: Kanji with this one as a part and filed under another radical, school kanji first (12, or all with `related=all`).
     items:
       $ref: "./DictionaryKanjiRelated.yaml"
   containedInCount:

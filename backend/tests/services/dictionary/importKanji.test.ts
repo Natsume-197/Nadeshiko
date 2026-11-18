@@ -9,9 +9,11 @@ import {
   importKanjidic,
   importKanjiJlpt,
   importKanjiVg,
+  importKanken,
   importKradfile,
   importRadicals,
   kanjiJlptLevels,
+  kankenLevels,
   kanjiRow,
   radicalRows,
   kanjiVgCharacter,
@@ -197,6 +199,36 @@ describe('kanji JLPT levels', () => {
 
     expect(await TestDataSource.query(`SELECT character, level FROM dict.kanji_jlpt`)).toEqual([
       { character: '食', level: 5 },
+    ]);
+  });
+});
+
+describe('Kanken levels', () => {
+  const CSV = [
+    '漢検漢字辞典掲載ページ,字種ID,字項ID,漢字テキスト,漢字画像,字体,漢検級,漢字ペディア,新字体統合における例外,漢字ペディアでの表示の例外,編集に関する注記',
+    '1,CT-1,CE-1,亜,,親字,準2級,https://example,,,',
+    '1,CT-1,CE-2,亞,,旧字,1/準1級,https://example,,,',
+    '2,CT-2,CE-3,,img.png,親字,1級,https://example,,,',
+    '3,CT-3,CE-4,丂,,親字,配当外,https://example,,,',
+    '4,CT-4,CE-5,食,,親字,9級,https://example,,,',
+    '4,CT-4,CE-6,食,,その他,2級,https://example,,,',
+  ].join('\n');
+
+  it('reads each character once at its easiest level, 1/準1級 as 準1級, and skips untested or image-only forms', () => {
+    expect(kankenLevels(CSV)).toEqual([
+      { character: '亜', level: '準2級' },
+      { character: '亞', level: '準1級' },
+      { character: '食', level: '9級' },
+    ]);
+  });
+
+  it('replaces dict.kanji_kanken', async () => {
+    const path = join(dir, 'kanken.csv');
+    writeFileSync(path, CSV, 'utf8');
+
+    expect((await importKanken(TestDataSource, path, '0be3577')).rows).toBe(3);
+    expect(await TestDataSource.query(`SELECT level FROM dict.kanji_kanken WHERE character = '食'`)).toEqual([
+      { level: '9級' },
     ]);
   });
 });

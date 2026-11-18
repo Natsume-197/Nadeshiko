@@ -11,6 +11,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  * - `dict.kanji_jlpt` from Jonathan Waller's JLPT lists (CC BY), as converted by davidluzgouveia/kanji-data (MIT).
  * - `dict.radical` from Kanji alive (CC BY 4.0): the 214 Kangxi radicals and their variant shapes, with their Japanese
  *   names and English meanings.
+ * - `dict.kanji_kanken` from mimneko/kanji-data (CC0): the Kanji Kentei (漢検) level each kanji is tested at.
  */
 export class DictionaryKanji1790900000000 implements MigrationInterface {
   name = 'DictionaryKanji1790900000000';
@@ -48,6 +49,11 @@ export class DictionaryKanji1790900000000 implements MigrationInterface {
         level smallint NOT NULL CHECK (level BETWEEN 1 AND 5)
       )`);
     await queryRunner.query(`
+      CREATE TABLE dict.kanji_kanken (
+        character text PRIMARY KEY,
+        level text NOT NULL
+      )`);
+    await queryRunner.query(`
       CREATE TABLE dict.radical (
         glyph text PRIMARY KEY,
         number smallint NOT NULL CHECK (number BETWEEN 1 AND 214),
@@ -66,6 +72,7 @@ export class DictionaryKanji1790900000000 implements MigrationInterface {
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`DROP INDEX dict.form_chars_idx`);
     await queryRunner.query(`DROP TABLE dict.radical`);
+    await queryRunner.query(`DROP TABLE dict.kanji_kanken`);
     await queryRunner.query(`DROP TABLE dict.kanji_jlpt`);
     await queryRunner.query(`DROP TABLE dict.kanji_strokes`);
     await queryRunner.query(`DROP TABLE dict.kanji_component`);

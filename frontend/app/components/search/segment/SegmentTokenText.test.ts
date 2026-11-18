@@ -19,7 +19,8 @@ vi.mock('~/utils/kanjiLookup', async (importOriginal) => ({
 }));
 
 vi.stubGlobal('useI18n', () => ({ t: (k: string) => k, locale: ref('en') }));
-vi.stubGlobal('useRouter', () => ({ push: vi.fn() }));
+const routerPush = vi.fn();
+vi.stubGlobal('useRouter', () => ({ push: routerPush }));
 vi.stubGlobal('useLocalePath', () => (p: unknown) => (typeof p === 'string' ? p : JSON.stringify(p)));
 vi.stubGlobal('usePostHog', () => ({ capture: vi.fn() }));
 vi.stubGlobal('useNuxtApp', () => ({ $i18n: { t: (k: string) => k } }));
@@ -364,6 +365,7 @@ describe('the kanji the headword is written with', () => {
     grade: 1,
     frequency: 10,
     jlpt: 5,
+    kanken: '10級',
     radical: { glyph: '⽊', number: 75, reading: 'き', meaning: 'tree, wood', character: '木' },
     readings: [
       {
@@ -404,7 +406,7 @@ describe('the kanji the headword is written with', () => {
       frequency: 40 + i,
       gloss: i === 0 ? 'Japan' : null,
     })),
-    sameRadical: [{ character: '林', reading: 'リン', meaning: 'grove' }],
+    sameRadical: [{ character: '林', reading: 'リン', meaning: 'grove', grade: 1 }],
     sameRadicalCount: 647,
     containedIn: [],
     containedInCount: 0,
@@ -522,6 +524,23 @@ describe('the kanji the headword is written with', () => {
     document.querySelector<HTMLButtonElement>('[data-testid="kanji-more-words"]')!.click();
     await nextTick();
     expect(words()).toBe(10);
+  });
+
+  test('the kanji page opens from the footer, and from the "+N" at the end of a related list', async () => {
+    await openHon();
+    routerPush.mockClear();
+
+    document.querySelector<HTMLButtonElement>('[data-testid="kanji-page"]')!.click();
+    await nextTick();
+    expect(routerPush).toHaveBeenLastCalledWith(`/kanji/${encodeURIComponent('本')}`);
+    expect(cardEl()).toBeNull();
+
+    await openHon();
+    const more = document.querySelector<HTMLButtonElement>('[data-testid="kanji-related-more"]')!;
+    expect(more.textContent).toBe('+646');
+    more.click();
+    await nextTick();
+    expect(routerPush).toHaveBeenLastCalledWith(`/kanji/${encodeURIComponent('本')}`);
   });
 
   test('stroke numbers come with the strokes', async () => {

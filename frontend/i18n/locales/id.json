@@ -1116,6 +1116,8 @@
     "kanjiReplay": "Putar ulang urutan goresan",
     "kanjiMissing": "Tidak ada entri untuk kanji ini.",
     "kanjiStrokeOrder": "Urutan goresan {kanji}",
+    "kanjiPage": "Halaman kanji",
+    "kanjiOther": "Lainnya",
     "kanjiJlpt": "JLPT N{level}",
     "kanjiRadical": "Radikal",
     "kanjiAllWords": "Tampilkan semua {count}",
@@ -1357,6 +1359,10 @@
     "hint": "Pintasan tidak aktif saat Anda mengetik di kolom pencarian. Tekan ? untuk membuka atau menutup panel ini."
   },
   "seo": {
+    "kanji": {
+      "title": "{kanji}: arti, bacaan, dan urutan goresan kanji",
+      "description": "{kanji} berarti {meaning}. Bacaan {readings}, urutan goresan, radikal, level JLPT dan Kanken, serta kata yang memakainya di subtitle anime."
+    },
     "home": {
       "title": "Nadeshiko: Cari kalimat bahasa Jepang dari anime, drama Jepang, dan YouTube",
       "description": "Cari lebih dari satu juta kalimat bahasa Jepang dari anime, drama Jepang, dan YouTube, lengkap dengan audio dan cuplikan gambar. Terjemahan tersedia dalam bahasa Inggris dan Spanyol. Cocok untuk sentence mining."

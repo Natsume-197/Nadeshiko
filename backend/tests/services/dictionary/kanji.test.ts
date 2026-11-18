@@ -4,6 +4,7 @@ import {
   isSingleCharacter,
   KANJI_WORDS,
   kanjiCard,
+  RELATED_KANJI,
   readingForms,
   readingInWord,
   readingKey,
@@ -75,6 +76,7 @@ beforeEach(async () => {
     `INSERT INTO dict.kanji_strokes (character, paths, numbers) VALUES ('食', ARRAY['M1,1', 'M2,2'], '[[1,2],[3,4]]')`,
   );
   await TestDataSource.query(`INSERT INTO dict.kanji_jlpt (character, level) VALUES ('食', 5)`);
+  await TestDataSource.query(`INSERT INTO dict.kanji_kanken (character, level) VALUES ('食', '9級')`);
   await TestDataSource.query(
     `INSERT INTO dict.radical (glyph, number, variant_of, reading, meaning)
      VALUES ('⾷', 184, NULL, 'しょく', 'food, to eat'), ('⻟', 184, '⾷', 'しょくへん', 'food, to eat'),
@@ -92,6 +94,7 @@ describe('kanjiCard', () => {
       grade: 2,
       frequency: 328,
       jlpt: 5,
+      kanken: '9級',
       meanings: ['eat', 'food'],
       meaningsLanguage: 'en',
       strokes: ['M1,1', 'M2,2'],
@@ -132,12 +135,12 @@ describe('kanjiCard', () => {
 
     // School kanji by grade: 館 (3) before 飯 (4).
     expect(card?.sameRadical).toEqual([
-      { character: '館', reading: 'カン', meaning: 'building' },
-      { character: '飯', reading: 'ハン', meaning: 'meal' },
+      { character: '館', reading: 'カン', meaning: 'building', grade: 3 },
+      { character: '飯', reading: 'ハン', meaning: 'meal', grade: 4 },
     ]);
     expect(card?.sameRadicalCount).toBe(2);
     // 飯 contains 食 too, but is already listed under the radical.
-    expect(card?.containedIn).toEqual([{ character: '蝕', reading: 'ショク', meaning: 'eclipse' }]);
+    expect(card?.containedIn).toEqual([{ character: '蝕', reading: 'ショク', meaning: 'eclipse', grade: null }]);
     expect(card?.containedInCount).toBe(1);
   });
 
@@ -289,6 +292,23 @@ describe('kanjiCard', () => {
     }
 
     expect((await kanjiCard(TestDataSource, '食', 'en'))?.words).toHaveLength(KANJI_WORDS);
+  });
+
+  it(`lists ${RELATED_KANJI} related kanji for the word card, and all of them for the kanji's page`, async () => {
+    const extra = Array.from({ length: RELATED_KANJI + 3 }, (_, i) => String.fromCodePoint(0x4e00 + i));
+    for (const kanji of extra) {
+      await TestDataSource.query(
+        `INSERT INTO dict.kanji (character, stroke_count, radical, meanings_en) VALUES ($1, 1, 184, '{x}')`,
+        [kanji],
+      );
+    }
+
+    const short = await kanjiCard(TestDataSource, '食', 'en');
+    const all = await kanjiCard(TestDataSource, '食', 'en', { related: 'all' });
+
+    expect(short?.sameRadical).toHaveLength(RELATED_KANJI);
+    expect(short?.sameRadicalCount).toBe(RELATED_KANJI + 5);
+    expect(all?.sameRadical).toHaveLength(RELATED_KANJI + 5);
   });
 
   it('answers null for a kanji it does not have', async () => {

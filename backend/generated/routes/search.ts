@@ -473,7 +473,10 @@ export function createSearchRouter(
 
   const getDictionaryKanjiParamSchema = z.object({ character: z.string().min(1).max(2) });
 
-  const getDictionaryKanjiQuerySchema = z.object({ locale: z.enum(['en', 'es']).optional().default('en') });
+  const getDictionaryKanjiQuerySchema = z.object({
+    locale: z.enum(['en', 'es']).optional().default('en'),
+    related: z.enum(['short', 'all']).optional().default('short'),
+  });
 
   const getDictionaryKanjiResponseBodyValidator = responseValidationFactory(
     [

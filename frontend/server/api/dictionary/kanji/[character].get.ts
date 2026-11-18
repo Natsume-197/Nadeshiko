@@ -12,13 +12,17 @@ const RETRY_AFTER_SECONDS = 5;
 const TIMEOUT_MS = 3000;
 
 type Locale = 'en' | 'es';
+/** `all` for the kanji's own page, which lists every related kanji; the word card asks for the first few. */
+type Related = 'short' | 'all';
 
-function input(event: H3Event): { character: string; locale: Locale } | null {
+function input(event: H3Event): { character: string; locale: Locale; related: Related } | null {
   const character = getRouterParam(event, 'character');
   // One character: a kanji outside the BMP is two UTF-16 units, so count code points.
   if (!character || [...character].length !== 1) return null;
-  const locale: Locale = getQuery(event).locale === 'es' ? 'es' : 'en';
-  return { character, locale };
+  const params = getQuery(event);
+  const locale: Locale = params.locale === 'es' ? 'es' : 'en';
+  const related: Related = params.related === 'all' ? 'all' : 'short';
+  return { character, locale, related };
 }
 
 const handler = defineEventHandler(async (event) => {
@@ -29,7 +33,11 @@ const handler = defineEventHandler(async (event) => {
   try {
     const card = await $fetch(
       internalBackendUrl(config, `/v1/dictionary/kanji/${encodeURIComponent(query.character)}`),
-      { query: { locale: query.locale }, headers: buildInternalBackendHeaders(config), timeout: TIMEOUT_MS },
+      {
+        query: { locale: query.locale, related: query.related },
+        headers: buildInternalBackendHeaders(config),
+        timeout: TIMEOUT_MS,
+      },
     );
     setResponseHeader(event, 'cache-control', `public, max-age=${CACHE_SECONDS}`);
     return card;
@@ -50,6 +58,6 @@ export default defineCachedEventHandler(handler, {
   maxAge: CACHE_SECONDS,
   getKey: (event) => {
     const query = input(event);
-    return query ? stableCacheKey('kanji', query.locale, query.character) : 'invalid-kanji';
+    return query ? stableCacheKey('kanji', query.locale, query.character, query.related) : 'invalid-kanji';
   },
 });

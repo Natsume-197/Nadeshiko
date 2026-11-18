@@ -53,6 +53,8 @@ export interface RelatedKanji {
   character: string;
   reading: string | null;
   meaning: string | null;
+  /** School grade, as on the kanji's own card: 1-6 and 8 are jōyō, 9-10 jinmeiyō. */
+  grade: number | null;
 }
 
 export interface KanjiCard {
@@ -64,6 +66,8 @@ export interface KanjiCard {
   frequency: number | null;
   /** Current JLPT level (5 = N5), from Waller's unofficial lists. */
   jlpt: number | null;
+  /** Kanji Kentei level it is tested at (`10級` easiest to `1級`), from mimneko/kanji-data. */
+  kanken: string | null;
   radical: KanjiRadical | null;
   readings: KanjiReading[];
   /** In the requested language when KANJIDIC2 has it there; otherwise English. */
@@ -88,8 +92,9 @@ export const KANJI_WORDS = 40;
 /** How many of our most frequent words are sorted under the readings. */
 const READING_SAMPLE = 200;
 const EXAMPLES_PER_READING = 3;
-/** How many related kanji each list carries. */
+/** How many related kanji each list carries on the card, and on the kanji's own page (`related: 'all'`). */
 export const RELATED_KANJI = 12;
+export const RELATED_KANJI_ALL = 3000;
 /** How many glosses of a word's first sense make its one-line summary. */
 const GLOSSES_PER_WORD = 3;
 
@@ -187,6 +192,7 @@ interface KanjiRowResult {
   meanings_en: string[];
   meanings_es: string[];
   jlpt: number | null;
+  kanken: string | null;
   components: Array<{ character: string; has_card: boolean; meaning: string | null }> | null;
   strokes: string[] | null;
   stroke_numbers: Array<[number, number]> | null;
@@ -206,6 +212,7 @@ interface RelatedRowResult {
   character: string;
   reading: string | null;
   meaning: string | null;
+  grade: number | null;
   total: number;
 }
 
@@ -213,14 +220,20 @@ interface RelatedRowResult {
 const meaningSql = (alias: string) =>
   `coalesce(CASE WHEN $2 = 'es' THEN ${alias}.meanings_es[1] END, ${alias}.meanings_en[1])`;
 
+/**
+ * One kanji's card. `related: 'all'` lists every kanji under the same radical and every kanji built with it (for the
+ * kanji's own page); the word card asks for the first few only.
+ */
 export async function kanjiCard(
   dataSource: DataSource,
   character: string,
   locale: 'en' | 'es',
+  options: { related?: 'short' | 'all' } = {},
 ): Promise<KanjiCard | null> {
+  const relatedLimit = options.related === 'all' ? RELATED_KANJI_ALL : RELATED_KANJI;
   const [row]: KanjiRowResult[] = await dataSource.query(
     `SELECT k.character, k.stroke_count, k.grade, k.frequency, k.radical, k.on_readings, k.kun_readings, k.meanings_en,
-            k.meanings_es, j.level AS jlpt, s.paths AS strokes, s.numbers AS stroke_numbers,
+            k.meanings_es, j.level AS jlpt, kk.level AS kanken, s.paths AS strokes, s.numbers AS stroke_numbers,
             (SELECT jsonb_agg(jsonb_build_object(
                       'character', part,
                       'has_card', o.character IS NOT NULL,
@@ -234,6 +247,7 @@ export async function kanjiCard(
        LEFT JOIN dict.kanji_component c ON c.character = k.character
        LEFT JOIN dict.kanji_strokes s ON s.character = k.character
        LEFT JOIN dict.kanji_jlpt j ON j.character = k.character
+       LEFT JOIN dict.kanji_kanken kk ON kk.character = k.character
       WHERE k.character = $1`,
     [character, locale],
   );
@@ -242,11 +256,12 @@ export async function kanjiCard(
   const [words, radical, sameRadical, containedIn] = await Promise.all([
     wordsWith(dataSource, character, locale),
     radicalOf(dataSource, row.radical),
-    relatedKanji(dataSource, `FROM dict.kanji k WHERE k.radical = $3 AND k.character <> $1`, [
-      character,
-      locale,
-      row.radical ?? -1,
-    ]),
+    relatedKanji(
+      dataSource,
+      `FROM dict.kanji k WHERE k.radical = $3 AND k.character <> $1`,
+      [character, locale, row.radical ?? -1],
+      relatedLimit,
+    ),
     relatedKanji(
       dataSource,
       // Not the ones already listed under the same radical: for a kanji that is a radical itself (食), most kanji that
@@ -254,6 +269,7 @@ export async function kanjiCard(
       `FROM dict.kanji_component c JOIN dict.kanji k ON k.character = c.character
         WHERE c.components @> ARRAY[$1] AND c.character <> $1 AND k.radical IS DISTINCT FROM $3`,
       [character, locale, row.radical ?? -1],
+      relatedLimit,
     ),
   ]);
 
@@ -264,6 +280,7 @@ export async function kanjiCard(
     grade: row.grade,
     frequency: row.frequency,
     jlpt: row.jlpt,
+    kanken: row.kanken,
     radical,
     readings: await readingsWithExamples(dataSource, row, words),
     meanings: meaningsLanguage === 'es' ? row.meanings_es : row.meanings_en,
@@ -291,9 +308,9 @@ export async function kanjiCard(
             : null,
       };
     }),
-    sameRadical: sameRadical.map(({ character, reading, meaning }) => ({ character, reading, meaning })),
+    sameRadical: sameRadical.map(({ character, reading, meaning, grade }) => ({ character, reading, meaning, grade })),
     sameRadicalCount: sameRadical[0]?.total ?? 0,
-    containedIn: containedIn.map(({ character, reading, meaning }) => ({ character, reading, meaning })),
+    containedIn: containedIn.map(({ character, reading, meaning, grade }) => ({ character, reading, meaning, grade })),
     containedInCount: containedIn[0]?.total ?? 0,
   };
 }
@@ -357,13 +374,18 @@ async function radicalOf(dataSource: DataSource, number: number | null): Promise
 }
 
 /** School kanji first (by grade), then names, then the rest; within each, the more frequent first. */
-function relatedKanji(dataSource: DataSource, from: string, params: unknown[]): Promise<RelatedRowResult[]> {
+function relatedKanji(
+  dataSource: DataSource,
+  from: string,
+  params: unknown[],
+  limit: number,
+): Promise<RelatedRowResult[]> {
   return dataSource.query(
     `SELECT k.character, coalesce(k.on_readings[1], k.kun_readings[1]) AS reading, ${meaningSql('k')} AS meaning,
-            count(*) OVER ()::int AS total
+            k.grade, count(*) OVER ()::int AS total
        ${from}
       ORDER BY coalesce(k.grade, 99), coalesce(k.frequency, 9999), k.character
-      LIMIT ${RELATED_KANJI}`,
+      LIMIT ${Number(limit)}`,
     params,
   );
 }

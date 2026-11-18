@@ -78,12 +78,14 @@ const INDEXED_LOCALES = APP_INDEXED_LOCALES;
 
 const sitemapSources = (
   locale: (typeof INDEXED_LOCALES)[number],
-): [string, [string, { timeout: number }], [string, { timeout: number }], string] => [
+): [string, [string, { timeout: number }], [string, { timeout: number }], string, string] => [
   `/api/__sitemap__/media?locale=${locale}`,
   [`/api/__sitemap__/episodes?locale=${locale}`, { timeout: 60000 }],
   // Sentence sampling makes two lookups per title; allow more time than episode enumeration.
   [`/api/__sitemap__/sentences?locale=${locale}`, { timeout: 90000 }],
   `/api/__sitemap__/blog?locale=${locale}`,
+  // The jōyō kanji pages (task 44).
+  `/api/__sitemap__/kanji?locale=${locale}`,
 ];
 
 // Derive both slash variants from the same private-path list used by route rules.

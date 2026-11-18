@@ -1094,6 +1094,10 @@ export type DictionaryKanjiRelated = {
     character: string;
     reading: string;
     meaning: string;
+    /**
+     * School grade (1-6 and 8 jōyō, 9-10 jinmeiyō), to group the list.
+     */
+    grade: number;
 };
 
 /**
@@ -1115,6 +1119,10 @@ export type DictionaryKanji = {
      * Current JLPT level, 5 for N5 (Jonathan Waller's unofficial lists).
      */
     jlpt: number;
+    /**
+     * Kanji Kentei (漢検) level it is tested at, `10級` (easiest) to `1級` (mimneko/kanji-data, CC0).
+     */
+    kanken: string;
     /**
      * The classical (Kangxi) radical it is filed under, named by Kanji alive.
      */
@@ -1191,12 +1199,12 @@ export type DictionaryKanji = {
         gloss: string;
     }>;
     /**
-     * Other kanji filed under the same radical, school kanji first (up to 12).
+     * Other kanji filed under the same radical, school kanji first (12, or all with `related=all`).
      */
     sameRadical: Array<DictionaryKanjiRelated>;
     sameRadicalCount: number;
     /**
-     * Kanji with this one as a part and filed under another radical, school kanji first (up to 12).
+     * Kanji with this one as a part and filed under another radical, school kanji first (12, or all with `related=all`).
      */
     containedIn: Array<DictionaryKanjiRelated>;
     containedInCount: number;
@@ -3581,6 +3589,10 @@ export type GetDictionaryKanjiData = {
          * Language of the meanings and word glosses; English where there are none in it.
          */
         locale?: 'en' | 'es';
+        /**
+         * How many related kanji to list; `all` for the kanji's own page, `short` (the first 12) for the word card.
+         */
+        related?: 'short' | 'all';
     };
     url: '/v1/dictionary/kanji/{character}';
 };

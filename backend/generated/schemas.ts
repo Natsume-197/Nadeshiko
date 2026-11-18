@@ -158,6 +158,7 @@ export const s_DictionaryKanjiRelated = z.object({
   character: z.string(),
   reading: z.string().nullable(),
   meaning: z.string().nullable(),
+  grade: z.coerce.number().nullable(),
 });
 
 export const s_DictionaryKanjiWordRef = z.object({
@@ -640,6 +641,7 @@ export const s_DictionaryKanji = z.object({
   grade: z.coerce.number().nullable(),
   frequency: z.coerce.number().nullable(),
   jlpt: z.coerce.number().nullable(),
+  kanken: z.string().nullable(),
   radical: z
     .object({
       glyph: z.string(),

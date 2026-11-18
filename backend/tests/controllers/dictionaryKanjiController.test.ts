@@ -23,6 +23,7 @@ const CARD = {
   grade: 1,
   frequency: 10,
   jlpt: 5,
+  kanken: '10級',
   radical: { glyph: '⽊', number: 75, reading: 'き', meaning: 'tree, wood', character: '木' },
   readings: [
     {
@@ -37,7 +38,7 @@ const CARD = {
   strokes: ['M1,1'],
   strokeNumbers: [[1, 2]],
   words: [{ id: 'jmdict:1583070', headword: '日本', reading: 'にほん', frequency: 40, gloss: 'Japan' }],
-  sameRadical: [{ character: '木', reading: 'ボク', meaning: 'tree' }],
+  sameRadical: [{ character: '木', reading: 'ボク', meaning: 'tree', grade: 1 }],
   sameRadicalCount: 1,
   containedIn: [],
   containedInCount: 0,
@@ -69,7 +70,7 @@ describe('GET /v1/dictionary/kanji/{character}', () => {
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual(CARD);
-    expect(kanjiCard).toHaveBeenCalledWith(expect.anything(), '本', 'es');
+    expect(kanjiCard).toHaveBeenCalledWith(expect.anything(), '本', 'es', { related: 'short' });
   });
 
   it('defaults to English', async () => {
@@ -77,7 +78,15 @@ describe('GET /v1/dictionary/kanji/{character}', () => {
 
     await request(app).get(path('本'));
 
-    expect(kanjiCard).toHaveBeenCalledWith(expect.anything(), '本', 'en');
+    expect(kanjiCard).toHaveBeenCalledWith(expect.anything(), '本', 'en', { related: 'short' });
+  });
+
+  it('lists every related kanji for the kanji page', async () => {
+    fromInternalProxy = true;
+
+    await request(app).get(path('本')).query({ related: 'all' });
+
+    expect(kanjiCard).toHaveBeenCalledWith(expect.anything(), '本', 'en', { related: 'all' });
   });
 
   it('takes one character only', async () => {

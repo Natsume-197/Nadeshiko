@@ -15,6 +15,7 @@ import {
   importKanjiJlpt,
   importKanjiVg,
   importKradfile,
+  importKanken,
   importRadicals,
 } from '@app/services/dictionary/import/importKanji';
 
@@ -26,7 +27,7 @@ import {
  *     --jmdict-furigana JmdictFurigana.json --jmnedict-furigana JmnedictFurigana.json \
  *     --furigana-version 2.3.1+2026-10-25 \
  *     --jlpt-dir <folder with n1.csv..n5.csv> --jlpt-version <stephenmk/yomitan-jlpt-vocab commit> \
- *     --unidic <unidic-cwj sys.dic> --unidic-version 202512  *     --kanjium <kanjium data/source_files/raw/accents.txt> --kanjium-version <kanjium commit>  *     --kanjidic2 kanjidic2-all-3.6.2.json --kradfile kradfile-3.6.2.json  *     --kanjivg <kanjivg-*-main.zip extracted>/kanji --kanjivg-version r20260714 \n *     --kanji-jlpt <davidluzgouveia/kanji-data kanji.json> --kanji-jlpt-version <its commit> \n *     --radicals <kanjialive language-data/japanese-radicals.csv> --radicals-version <its commit> [--dry-run]
+ *     --unidic <unidic-cwj sys.dic> --unidic-version 202512  *     --kanjium <kanjium data/source_files/raw/accents.txt> --kanjium-version <kanjium commit>  *     --kanjidic2 kanjidic2-all-3.6.2.json --kradfile kradfile-3.6.2.json  *     --kanjivg <kanjivg-*-main.zip extracted>/kanji --kanjivg-version r20260714 \n *     --kanji-jlpt <davidluzgouveia/kanji-data kanji.json> --kanji-jlpt-version <its commit> \n *     --radicals <kanjialive language-data/japanese-radicals.csv> --radicals-version <its commit>  *     --kanken <mimneko/kanji-data 漢検漢字辞典漢字.csv> --kanken-version <its commit> [--dry-run]
  *
  * Any subset of the files can be given. Safe to rerun: forms keep their indexes, missing words are only flagged
  * inactive. `--dry-run` does all the work in one transaction, prints what would change, and rolls it back.
@@ -53,6 +54,8 @@ const { values: args } = parseArgs({
     'kanji-jlpt-version': { type: 'string' },
     radicals: { type: 'string' },
     'radicals-version': { type: 'string' },
+    kanken: { type: 'string' },
+    'kanken-version': { type: 'string' },
     'dry-run': { type: 'boolean', default: false },
   },
 });
@@ -87,6 +90,8 @@ async function main(): Promise<void> {
   const kanjiJlptVersion = args['kanji-jlpt-version'];
   const radicals = requireFile(args.radicals, 'radicals');
   const radicalsVersion = args['radicals-version'];
+  const kanken = requireFile(args.kanken, 'kanken');
+  const kankenVersion = args['kanken-version'];
   const jlptFiles = jlptDir
     ? [1, 2, 3, 4, 5].map((level) => ({ level, path: requireFile(join(jlptDir, `n${level}.csv`), 'jlpt-dir') ?? '' }))
     : [];
@@ -103,10 +108,11 @@ async function main(): Promise<void> {
     !kradfile &&
     !kanjivg &&
     !kanjiJlpt &&
-    !radicals
+    !radicals &&
+    !kanken
   ) {
     throw new Error(
-      'Nothing to import: pass --jmdict, --jmnedict, --jmdict-furigana, --jmnedict-furigana, --jlpt-dir, --unidic, --kanjium, --kanjidic2, --kradfile, --kanjivg, --kanji-jlpt and/or --radicals',
+      'Nothing to import: pass --jmdict, --jmnedict, --jmdict-furigana, --jmnedict-furigana, --jlpt-dir, --unidic, --kanjium, --kanjidic2, --kradfile, --kanjivg, --kanji-jlpt, --radicals and/or --kanken',
     );
   }
   if ((jmdictFurigana || jmnedictFurigana) && !furiganaVersion) {
@@ -122,6 +128,7 @@ async function main(): Promise<void> {
   if (kanjiJlpt && !kanjiJlptVersion)
     throw new Error('--kanji-jlpt-version is required with --kanji-jlpt (its commit)');
   if (radicals && !radicalsVersion) throw new Error('--radicals-version is required with --radicals (its commit)');
+  if (kanken && !kankenVersion) throw new Error('--kanken-version is required with --kanken (its commit)');
 
   await AppDataSource.initialize();
 
@@ -191,6 +198,10 @@ async function main(): Promise<void> {
   }
   if (radicals && radicalsVersion) {
     logger.info(await importRadicals(AppDataSource, radicals, radicalsVersion, { dryRun }), 'radicals');
+  }
+
+  if (kanken && kankenVersion) {
+    logger.info(await importKanken(AppDataSource, kanken, kankenVersion, { dryRun }), 'kanken');
   }
 
   logger.info({ seconds: Math.round((Date.now() - startedAt) / 1000) }, 'dictionary import finished');

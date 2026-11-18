@@ -21,11 +21,16 @@ const props = defineProps<{
   state: KanjiViewState;
   /** The reader's gloss language, to say when the meanings had to fall back to English. */
   locale: 'en' | 'es';
+  /** The kanji's own page: every word and every related kanji (grouped), a larger stroke order. The word card shows
+   *  the first few and links to the page for the rest. */
+  full?: boolean;
 }>();
 
 const emit = defineEmits<{
   'open-kanji': [character: string];
   'open-word': [word: KanjiCardWordRef];
+  /** The card's "+N": the rest of a list lives on the kanji's own page. */
+  'open-page': [];
 }>();
 
 const { t } = useI18n();
@@ -77,6 +82,8 @@ const badges = computed(() => {
   if (!card) return [];
   const list: Array<{ id: string; text: string; strong?: boolean }> = [];
   if (card.jlpt !== null) list.push({ id: 'jlpt', text: `N${card.jlpt}`, strong: true });
+  // The level as the exam writes it (漢検 9級), the same in every language.
+  if (card.kanken !== null) list.push({ id: 'kanken', text: `漢検 ${card.kanken}` });
   if (card.grade !== null) {
     if (card.grade <= 6) list.push({ id: 'grade', text: t('tokenTooltip.kanjiGrade', { grade: card.grade }) });
     else if (card.grade === 8) list.push({ id: 'grade', text: t('tokenTooltip.kanjiJoyo') });
@@ -89,9 +96,23 @@ const badges = computed(() => {
   return list;
 });
 
-const shownWords = computed(() => (allWords.value ? props.card?.words : props.card?.words.slice(0, WORDS_SHOWN)) ?? []);
+const shownWords = computed(
+  () => (allWords.value || props.full ? props.card?.words : props.card?.words.slice(0, WORDS_SHOWN)) ?? [],
+);
 
-/** Related kanji, each list cut to one short row. */
+type RelatedKanji = KanjiCardData['sameRadical'][number];
+
+/** On the page, a related list split the way a learner thinks of kanji: the jōyō list, names, and the rest. */
+function relatedGroups(list: RelatedKanji[]) {
+  const groups = [
+    { id: 'joyo', label: t('tokenTooltip.kanjiJoyo'), list: list.filter((k) => k.grade !== null && k.grade <= 8) },
+    { id: 'jinmeiyo', label: t('tokenTooltip.kanjiJinmeiyo'), list: list.filter((k) => k.grade !== null && k.grade > 8) },
+    { id: 'other', label: t('tokenTooltip.kanjiOther'), list: list.filter((k) => k.grade === null) },
+  ];
+  return groups.filter((group) => group.list.length > 0);
+}
+
+/** Related kanji: one short row each on the card, every one (grouped) on the page. */
 const related = computed(() => {
   const card = props.card;
   if (!card) return [];
@@ -110,7 +131,11 @@ const related = computed(() => {
     },
   ]
     .filter((row) => row.list.length > 0)
-    .map((row) => ({ ...row, list: row.list.slice(0, RELATED_SHOWN) }));
+    .map((row) => ({
+      ...row,
+      list: props.full ? row.list : row.list.slice(0, RELATED_SHOWN),
+      groups: props.full ? relatedGroups(row.list) : [],
+    }));
 });
 
 /** Meanings fell back to English for a reader who reads Spanish: say so with the same tag the senses use. */
@@ -124,7 +149,7 @@ const relatedTitle = (kanji: { reading: string | null; meaning: string | null })
 </script>
 
 <template>
-  <div class="kanji-view">
+  <div class="kanji-view" :class="{ 'kanji-view--full': full }">
     <p v-if="state === 'loading'" class="kanji-view__pending">
       <span class="kanji-view__spinner" aria-hidden="true" />
       <span>{{ $t('tokenTooltip.loading') }}</span>
@@ -222,7 +247,7 @@ const relatedTitle = (kanji: { reading: string | null; meaning: string | null })
           </button>
         </div>
         <button
-          v-if="card.words.length > WORDS_SHOWN"
+          v-if="!full && card.words.length > WORDS_SHOWN"
           type="button"
           class="kanji-view__more"
           data-testid="kanji-more-words"
@@ -266,12 +291,13 @@ const relatedTitle = (kanji: { reading: string | null; meaning: string | null })
         </div>
       </section>
 
-      <!-- 5. Related kanji, one short row each. -->
+      <!-- 5. Related kanji: one short row each on the card, ending in a link to the page for the rest; every one on
+           the page, split into jōyō, names and others. -->
       <section v-if="related.length > 0" class="kanji-view__section">
         <div class="kanji-view__facts">
           <template v-for="row in related" :key="row.id">
             <span class="kanji-view__label">{{ row.label }}</span>
-            <span class="kanji-view__related" :data-testid="`kanji-${row.id}`">
+            <span v-if="!full" class="kanji-view__related" :data-testid="`kanji-${row.id}`">
               <button
                 v-for="other in row.list"
                 :key="other.character"
@@ -282,7 +308,31 @@ const relatedTitle = (kanji: { reading: string | null; meaning: string | null })
                 :aria-label="$t('tokenTooltip.kanjiOpen', { kanji: other.character })"
                 @click="emit('open-kanji', other.character)"
               >{{ other.character }}</button>
-              <span v-if="row.total > row.list.length" class="kanji-view__note">+{{ row.total - row.list.length }}</span>
+              <button
+                v-if="row.total > row.list.length"
+                type="button"
+                class="kanji-view__more-kanji"
+                data-testid="kanji-related-more"
+                :title="$t('tokenTooltip.kanjiPage')"
+                @click="emit('open-page')"
+              >+{{ row.total - row.list.length }}</button>
+            </span>
+            <span v-else class="kanji-view__related-groups" :data-testid="`kanji-${row.id}`">
+              <span v-for="group in row.groups" :key="group.id" class="kanji-view__related-group">
+                <span class="kanji-view__note">{{ group.label }} ({{ group.list.length }})</span>
+                <span class="kanji-view__related">
+                  <button
+                    v-for="other in group.list"
+                    :key="other.character"
+                    type="button"
+                    class="kanji-view__related-kanji"
+                    lang="ja"
+                    :title="relatedTitle(other)"
+                    :aria-label="$t('tokenTooltip.kanjiOpen', { kanji: other.character })"
+                    @click="emit('open-kanji', other.character)"
+                  >{{ other.character }}</button>
+                </span>
+              </span>
             </span>
           </template>
         </div>
@@ -676,6 +726,61 @@ button.kanji-view__part {
   transition:
     background-color 0.12s ease,
     color 0.12s ease;
+}
+
+.kanji-view__more-kanji {
+  padding: 1px 6px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent-soft);
+  cursor: pointer;
+}
+
+.kanji-view__more-kanji:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.kanji-view__related-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.kanji-view__related-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* The kanji's own page: the same entry, given room. */
+.kanji-view--full .kanji-view__strokes {
+  width: 160px;
+  height: 160px;
+}
+
+.kanji-view--full .kanji-view__meanings {
+  font-size: 22px;
+}
+
+.kanji-view--full .kanji-view__reading-text,
+.kanji-view--full .kanji-view__word-text,
+.kanji-view--full .kanji-view__related-kanji {
+  font-size: 18px;
+}
+
+.kanji-view--full .kanji-view__examples,
+.kanji-view--full .kanji-view__word-gloss {
+  font-size: 14px;
+}
+
+.kanji-view--full .kanji-view__section {
+  margin-top: 20px;
+  padding-top: 16px;
 }
 
 .kanji-view__related-kanji:hover {

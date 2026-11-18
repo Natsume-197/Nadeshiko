@@ -674,6 +674,13 @@ const openKanji = (character: string, from: 'chip' | 'part', position: number) =
   void showKanji(character);
 };
 
+/** The kanji's own page (`/kanji/食`), for everything the card only starts. The card closes on the way out. */
+const openKanjiPage = (character: string) => {
+  posthog.capture('kanji_page_opened', { kanji: character, from: 'word-card' });
+  closeTooltip();
+  void router.push(localePath(`/kanji/${encodeURIComponent(character)}`));
+};
+
 /** A word from the kanji view's list, opened in the card the way a part is. */
 const openKanjiWord = (word: KanjiCardWordRef) => {
   void showPart({ lemma: word.headword, text: word.headword, reading: word.reading ?? '' });
@@ -1084,6 +1091,7 @@ function reportDictionaryClick(dictionary: DictionaryId, surface: ShirabeLinkSur
               :locale="glossLanguages.labels"
               @open-kanji="(character: string) => openKanji(character, 'part', 0)"
               @open-word="openKanjiWord"
+              @open-page="openKanjiPage(kanjiShown)"
             />
           </div>
           <div v-else class="token-tooltip__body" aria-live="polite">
@@ -1289,13 +1297,20 @@ function reportDictionaryClick(dictionary: DictionaryId, surface: ShirabeLinkSur
                from the chips beside it because it navigates in place while every
                one of them opens a tab. -->
           <div v-if="hoveredToken" class="token-tooltip__actions">
-            <button
-              v-if="kanjiShown"
-              type="button"
-              class="token-tooltip__action"
-              data-testid="kanji-sentences"
-              @click="searchForKanji(kanjiShown)"
-            >{{ $t('tokenTooltip.searchKanji', { kanji: kanjiShown }) }}</button>
+            <template v-if="kanjiShown">
+              <button
+                type="button"
+                class="token-tooltip__action"
+                data-testid="kanji-sentences"
+                @click="searchForKanji(kanjiShown)"
+              >{{ $t('tokenTooltip.searchKanji', { kanji: kanjiShown }) }}</button>
+              <button
+                type="button"
+                class="token-tooltip__action"
+                data-testid="kanji-page"
+                @click="openKanjiPage(kanjiShown)"
+              >{{ $t('tokenTooltip.kanjiPage') }}</button>
+            </template>
             <button
               v-else
               type="button"
@@ -2452,6 +2467,7 @@ a.token-tooltip__word:hover {
 .token-tooltip__actions {
   flex: 0 0 auto;
   display: flex;
+  gap: 16px;
   margin-top: 8px;
   padding: 0 14px;
 }

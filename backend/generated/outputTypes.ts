@@ -233,7 +233,10 @@ export const identifyDictionaryWordQuerySchema = z.object({
   });
 export type IdentifyDictionaryWordQueryOutput = z.output<typeof identifyDictionaryWordQuerySchema>;
 
-export const getDictionaryKanjiQuerySchema = z.object({ locale: z.enum(['en', 'es']).optional().default('en') });
+export const getDictionaryKanjiQuerySchema = z.object({
+    locale: z.enum(['en', 'es']).optional().default('en'),
+    related: z.enum(['short', 'all']).optional().default('short'),
+  });
 export type GetDictionaryKanjiQueryOutput = z.output<typeof getDictionaryKanjiQuerySchema>;
 
 export const getCoveredWordsQuerySchema = z.object({

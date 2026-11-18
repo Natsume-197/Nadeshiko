@@ -1116,6 +1116,8 @@
     "kanjiReplay": "書き順をもう一度再生",
     "kanjiMissing": "この漢字の項目はありません。",
     "kanjiStrokeOrder": "「{kanji}」の書き順",
+    "kanjiPage": "漢字のページ",
+    "kanjiOther": "その他",
     "kanjiJlpt": "JLPT N{level}",
     "kanjiRadical": "部首",
     "kanjiAllWords": "{count}語すべて表示",
@@ -1357,6 +1359,10 @@
     "hint": "検索バーへの入力中はショートカットを使えません。「?」キーでこの一覧を開いたり閉じたりできます。"
   },
   "seo": {
+    "kanji": {
+      "title": "漢字「{kanji}」の意味・読み方・書き順",
+      "description": "「{kanji}」の意味は{meaning}。読み方 {readings}、書き順、部首、JLPT・漢検の級、アニメの字幕でよく使われる言葉。"
+    },
     "home": {
       "title": "Nadeshiko：アニメ・ドラマ・YouTubeの日本語例文を検索",
       "description": "アニメ・ドラマ・YouTubeの日本語例文を100万件以上収録。音声や画像、翻訳で使い方を確認し、Ankiの学習カードに取り込めます。"

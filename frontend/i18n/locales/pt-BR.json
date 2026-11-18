@@ -1116,6 +1116,8 @@
     "kanjiReplay": "Repetir a ordem dos traços",
     "kanjiMissing": "Nenhuma entrada para este kanji.",
     "kanjiStrokeOrder": "Ordem dos traços de {kanji}",
+    "kanjiPage": "Página do kanji",
+    "kanjiOther": "Outros",
     "kanjiJlpt": "JLPT N{level}",
     "kanjiRadical": "Radical",
     "kanjiAllWords": "Ver todas as {count}",
@@ -1357,6 +1359,10 @@
     "hint": "Os atalhos ficam desativados enquanto você digita na barra de busca. Pressione ? para abrir ou fechar este painel."
   },
   "seo": {
+    "kanji": {
+      "title": "{kanji}: significado, leituras e ordem dos traços do kanji",
+      "description": "{kanji} significa {meaning}. Leituras {readings}, ordem dos traços, radical, nível JLPT e Kanken, e as palavras que o usam em legendas de anime."
+    },
     "home": {
       "title": "Nadeshiko: busque frases em japonês de animes, doramas e vídeos do YouTube",
       "description": "Busque mais de um milhão de frases em japonês de animes, doramas e vídeos do YouTube, com áudio, imagem e traduções em inglês e espanhol. Feito para mineração de frases."

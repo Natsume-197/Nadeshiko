@@ -1116,6 +1116,8 @@
     "kanjiReplay": "重新播放筆順",
     "kanjiMissing": "沒有這個漢字的條目。",
     "kanjiStrokeOrder": "「{kanji}」的筆順",
+    "kanjiPage": "漢字頁面",
+    "kanjiOther": "其他",
     "kanjiJlpt": "JLPT N{level}",
     "kanjiRadical": "部首",
     "kanjiAllWords": "顯示全部 {count} 個",
@@ -1357,6 +1359,10 @@
     "hint": "在搜尋欄中輸入時，快捷鍵不會生效。按 ? 可開啟或關閉此面板。"
   },
   "seo": {
+    "kanji": {
+      "title": "漢字「{kanji}」的意思、讀音和筆順",
+      "description": "「{kanji}」的意思是 {meaning}。讀音 {readings}，筆順、部首、JLPT 和漢檢等級，以及動畫字幕中使用它的詞語。"
+    },
     "home": {
       "title": "Nadeshiko：搜尋動畫、日劇和 YouTube 中的日語例句",
       "description": "搜尋動畫、日劇和 YouTube 中的百萬餘條日語例句，檢視原聲、截圖和上下文，輕鬆採集例句製作學習卡片。例句譯文目前提供英語和西班牙語，暫不提供中文。"

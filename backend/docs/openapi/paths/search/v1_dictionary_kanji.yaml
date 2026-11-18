@@ -31,6 +31,13 @@ get:
         enum: [en, es]
         default: en
       description: Language of the meanings and word glosses; English where there are none in it.
+    - name: related
+      in: query
+      schema:
+        type: string
+        enum: [short, all]
+        default: short
+      description: How many related kanji to list; `all` for the kanji's own page, `short` (the first 12) for the word card.
   responses:
     "200":
       description: OK

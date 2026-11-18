@@ -33,7 +33,9 @@ export const getDictionaryKanji: GetDictionaryKanji = async ({ params, query }, 
     throw new InvalidRequestError('character must be a single kanji');
   }
 
-  const card = await kanjiCard(AppDataSource, params.character, query.locale ?? 'en');
+  const card = await kanjiCard(AppDataSource, params.character, query.locale ?? 'en', {
+    related: query.related ?? 'short',
+  });
   if (!card) throw new NotFoundError(`No kanji card for ${params.character}`);
 
   return respond.with200().body(card);
