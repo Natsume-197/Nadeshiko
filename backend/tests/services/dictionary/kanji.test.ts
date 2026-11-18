@@ -79,6 +79,9 @@ beforeEach(async () => {
   await TestDataSource.query(`INSERT INTO dict.kanji_jlpt (character, level) VALUES ('食', 5)`);
   await TestDataSource.query(`INSERT INTO dict.kanji_kanken (character, level) VALUES ('食', '9級')`);
   await TestDataSource.query(
+    `INSERT INTO dict.kanji_frequency (character, count, sentences, rank) VALUES ('食', 900, 850, 77)`,
+  );
+  await TestDataSource.query(
     `INSERT INTO dict.radical (glyph, number, variant_of, reading, meaning)
      VALUES ('⾷', 184, NULL, 'しょく', 'food, to eat'), ('⻟', 184, '⾷', 'しょくへん', 'food, to eat'),
             ('𠆢', 9, '⼈', 'ひとやね', 'person')`,
@@ -94,6 +97,7 @@ describe('kanjiCard', () => {
       strokeCount: 9,
       grade: 2,
       frequency: 328,
+      corpusRank: 77,
       jlpt: 5,
       kanken: '9級',
       meanings: ['eat', 'food'],

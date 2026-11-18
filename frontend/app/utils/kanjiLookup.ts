@@ -59,6 +59,8 @@ export interface KanjiCardData {
   strokeCount: number;
   grade: number | null;
   frequency: number | null;
+  /** Rank by how often it is written in Nadeshiko's sentences; null before the first count. */
+  corpusRank: number | null;
   /** Current JLPT level, 5 for N5. */
   jlpt: number | null;
   /** Kanji Kentei level, `10級` (easiest) to `1級`. */
@@ -163,7 +165,10 @@ export function kanjiBadges(
     else list.push({ id: 'grade', text: t('tokenTooltip.kanjiJinmeiyo') });
   }
   list.push({ id: 'strokes', text: t('tokenTooltip.kanjiStrokes', { count: card.strokeCount }, card.strokeCount) });
-  if (card.frequency !== null)
+  // Our own corpus first: it is what a reader of these sentences meets. Newspapers until it has been counted.
+  if (card.corpusRank !== null && card.corpusRank !== undefined)
+    list.push({ id: 'freq', text: t('tokenTooltip.kanjiCorpusRank', { rank: card.corpusRank }) });
+  else if (card.frequency !== null)
     list.push({ id: 'freq', text: t('tokenTooltip.kanjiNewspaper', { rank: card.frequency }) });
   return list;
 }

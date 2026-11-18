@@ -1100,7 +1100,7 @@
   },
   "kanjiIndex": {
     "title": "汉字",
-    "intro": "所有常用汉字和 JLPT 汉字，按等级排列。打开一个汉字，查看读音、笔顺以及使用它的动画例句。",
+    "intro": "所有常用汉字和 JLPT 汉字，按等级排列。打开一个汉字，查看读音、笔顺以及使用它的动画、日剧、有声书和 YouTube 例句。",
     "groupBy": "汉字分组方式",
     "byGrade": "学年",
     "groups": "汉字分组",
@@ -1120,6 +1120,9 @@
     "kanjiJoyo": "常用汉字",
     "kanjiJinmeiyo": "人名用汉字",
     "kanjiNewspaper": "报纸频率第{rank}位",
+    "kanjiCorpusRank": "Nadeshiko 频率第{rank}位",
+    "kanjiReadingShare": "占 Nadeshiko 例句的 {percent}%",
+    "kanjiWordRank": "Nadeshiko 词频第{rank}位",
     "kanjiParts": "部件",
     "kanjiWords": "Nadeshiko 中的常用词",
     "kanjiReplay": "重新播放笔顺",
@@ -1378,11 +1381,11 @@
   "seo": {
     "kanjiIndex": {
       "title": "{group}汉字：读音、意思和笔顺",
-      "description": "{group}的 {count} 个汉字，每个都有读音、意思、笔顺和真实的动画例句。"
+      "description": "{group}的 {count} 个汉字，每个都有读音、意思、笔顺和来自动画、日剧、有声书和 YouTube 的真实例句。"
     },
     "kanji": {
       "title": "汉字「{kanji}」的意思、读音和笔顺",
-      "description": "「{kanji}」的意思是 {meaning}。读音 {readings}，笔顺、部首、JLPT 和汉检等级，以及动画字幕中使用它的词语。"
+      "description": "「{kanji}」的意思是 {meaning}。读音 {readings}，笔顺、部首、JLPT 和汉检等级，以及动画、日剧、有声书和 YouTube 中使用它的词语。"
     },
     "home": {
       "title": "Nadeshiko：搜索动画、日剧和 YouTube 中的日语例句",

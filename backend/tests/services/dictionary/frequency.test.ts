@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { attribute, tokenTripleOf } from '@app/services/dictionary/frequency';
+import { attribute, countKanji, type KanjiCount, kanjiRows, tokenTripleOf } from '@app/services/dictionary/frequency';
 import type { StoredWord } from '@app/services/dictionary/identify';
 
 const form = (idx: number, text: string, kana: boolean) => ({
@@ -95,5 +95,33 @@ describe('tokenTripleOf', () => {
       tokenTripleOf({ s: '食べられない', d: '食べる', kind: 'inflected', parts: [part, part] } as never),
     ).toBeNull();
     expect(tokenTripleOf({ s: '本', d: '本', kind: 'word' } as never)).toBeNull();
+  });
+});
+
+describe('kanji counts', () => {
+  it('counts every kanji written and each sentence once, skipping repeat marks and kana', () => {
+    const counts = new Map<string, KanjiCount>();
+    countKanji('食べ物を食べる', counts);
+    countKanji('時々、物を食う', counts);
+
+    expect(Object.fromEntries(counts)).toEqual({
+      食: { count: 3, sentences: 2 },
+      物: { count: 2, sentences: 2 },
+      時: { count: 1, sentences: 1 },
+    });
+  });
+
+  it('ranks the most written first', () => {
+    const counts = new Map<string, KanjiCount>([
+      ['物', { count: 2, sentences: 2 }],
+      ['食', { count: 3, sentences: 2 }],
+      ['時', { count: 1, sentences: 1 }],
+    ]);
+
+    expect(kanjiRows(counts)).toEqual([
+      { character: '食', count: 3, sentences: 2, rank: 1 },
+      { character: '物', count: 2, sentences: 2, rank: 2 },
+      { character: '時', count: 1, sentences: 1, rank: 3 },
+    ]);
   });
 });

@@ -23,6 +23,7 @@ const CARD = {
   strokeCount: 5,
   grade: 1,
   frequency: 10,
+  corpusRank: 11,
   jlpt: 5,
   kanken: '10級',
   radical: { glyph: '⽊', number: 75, reading: 'き', meaning: 'tree, wood', character: '木' },

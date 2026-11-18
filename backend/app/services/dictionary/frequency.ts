@@ -15,6 +15,8 @@ import { type IdentifyQuery, loadWords, scoreWord, type StoredWord } from './ide
  * Counts are whole morphemes (split mode B), plus once more for every expression, compound, counter or function word
  * our own parser groups out of several (のに, 心臓麻痺, 二人, じゃない): those are words of their own on the card, and
  * counting only their pieces left them without a rank. Their pieces keep their own counts too.
+ *
+ * The same pass counts every kanji written (`dict.kanji_frequency`), for the kanji card's rank in our corpus.
  */
 
 const PAGE = 2_000;
@@ -28,7 +30,44 @@ export interface FrequencyReport {
   /** Morphemes given to a JMdict word. */
   attributed: number;
   words: number;
+  /** Distinct kanji written in the corpus. */
+  kanji: number;
   dryRun: boolean;
+}
+
+/** How often one kanji is written: every occurrence, and the sentences it is in. */
+export interface KanjiCount {
+  count: number;
+  sentences: number;
+}
+
+const HAN = /\p{Script=Han}/gu;
+
+/** Add a sentence's kanji to the running counts. Exported for tests. */
+export function countKanji(text: string, counts: Map<string, KanjiCount>): void {
+  const seen = new Set<string>();
+  for (const [character] of text.matchAll(HAN)) {
+    // 々 is a repeat mark, not a kanji; it is Han by script.
+    if (character === '々' || character === '〆' || character === '〇') continue;
+    let entry = counts.get(character);
+    if (!entry) {
+      entry = { count: 0, sentences: 0 };
+      counts.set(character, entry);
+    }
+    entry.count += 1;
+    if (!seen.has(character)) {
+      seen.add(character);
+      entry.sentences += 1;
+    }
+  }
+}
+
+/** Kanji counts as table rows, most written first, ranked from 1. Exported for tests. */
+export function kanjiRows(counts: Map<string, KanjiCount>) {
+  return [...counts]
+    .map(([character, { count, sentences }]) => ({ character, count, sentences }))
+    .sort((a, b) => b.count - a.count || (a.character < b.character ? -1 : 1))
+    .map((row, index) => ({ ...row, rank: index + 1 }));
 }
 
 /**
@@ -72,8 +111,9 @@ const tripleKey = (t: Omit<Triple, 'count'>) => [t.n, t.kana ?? '', t.s ?? '', t
 export async function countMorphemes(
   dataSource: DataSource,
   onPage?: (done: number) => void,
-): Promise<{ triples: Map<string, Triple>; segments: number; morphemes: number }> {
+): Promise<{ triples: Map<string, Triple>; kanji: Map<string, KanjiCount>; segments: number; morphemes: number }> {
   const triples = new Map<string, Triple>();
+  const kanji = new Map<string, KanjiCount>();
   let cursor = 0;
   let segments = 0;
   let morphemes = 0;
@@ -87,6 +127,7 @@ export async function countMorphemes(
     );
     if (rows.length === 0) break;
     const texts = rows.map((row) => row.content);
+    for (const text of texts) countKanji(text, kanji);
     const add = (triple: Omit<Triple, 'count'>) => {
       const key = tripleKey(triple);
       const seen = triples.get(key);
@@ -112,7 +153,7 @@ export async function countMorphemes(
     cursor = rows[rows.length - 1]?.id ?? cursor;
     onPage?.(segments);
   }
-  return { triples, segments, morphemes };
+  return { triples, kanji, segments, morphemes };
 }
 
 /**
@@ -140,7 +181,7 @@ export async function computeFrequency(
   dataSource: DataSource,
   options: { dryRun?: boolean; onPage?: (done: number) => void } = {},
 ): Promise<FrequencyReport> {
-  const { triples, segments, morphemes } = await countMorphemes(dataSource, options.onPage);
+  const { triples, kanji, segments, morphemes } = await countMorphemes(dataSource, options.onPage);
 
   // One dictionary lookup per normalised form, shared by every triple that has it.
   const byForm = new Map<string, Triple[]>();
@@ -172,8 +213,10 @@ export async function computeFrequency(
     distinct: triples.size,
     attributed,
     words: rows.length,
+    kanji: kanji.size,
     dryRun: options.dryRun ?? false,
   };
+  const kanjiTable = kanjiRows(kanji);
   if (report.dryRun) return report;
 
   await dataSource.transaction(async (manager) => {
@@ -184,6 +227,15 @@ export async function computeFrequency(
          SELECT x.word_id, x.count, x.per_million, x.rank
            FROM jsonb_to_recordset($1::jsonb) AS x(word_id int, count int, per_million real, rank int)`,
         [JSON.stringify(rows.slice(i, i + 10_000))],
+      );
+    }
+    await manager.query(`DELETE FROM dict.kanji_frequency`);
+    for (let i = 0; i < kanjiTable.length; i += 10_000) {
+      await manager.query(
+        `INSERT INTO dict.kanji_frequency (character, count, sentences, rank)
+         SELECT x.character, x.count, x.sentences, x.rank
+           FROM jsonb_to_recordset($1::jsonb) AS x(character text, count int, sentences int, rank int)`,
+        [JSON.stringify(kanjiTable.slice(i, i + 10_000))],
       );
     }
     await manager.query(

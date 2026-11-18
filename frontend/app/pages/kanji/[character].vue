@@ -351,7 +351,15 @@ const sentencesPath = computed(() => ({
           <ul class="kanji-page__words">
             <li v-for="word in shownWords" :key="word.id">
               <NuxtLink :to="wordPath(word)" class="kanji-page__word" data-testid="kanji-page-word">
-                <span class="kanji-page__word-text" lang="ja">{{ word.headword }}</span>
+                <span class="kanji-page__word-head">
+                  <span class="kanji-page__word-text" lang="ja">{{ word.headword }}</span>
+                  <!-- Its rank among the words of our sentences. -->
+                  <span
+                    v-if="word.frequency"
+                    class="kanji-page__word-rank"
+                    :title="$t('tokenTooltip.kanjiWordRank', { rank: word.frequency })"
+                  >#{{ word.frequency }}</span>
+                </span>
                 <span v-if="word.reading && word.reading !== word.headword" class="kanji-page__word-reading" lang="ja">{{ word.reading }}</span>
                 <span v-if="word.gloss" class="kanji-page__word-gloss">{{ word.gloss }}</span>
               </NuxtLink>
@@ -681,6 +689,20 @@ const sentencesPath = computed(() => ({
 .kanji-page__word-reading {
   font-size: 13px;
   color: var(--ink-muted);
+}
+
+.kanji-page__word-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.kanji-page__word-rank {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
 }
 
 .kanji-page__word-gloss {

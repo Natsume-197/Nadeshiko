@@ -1100,7 +1100,7 @@
   },
   "kanjiIndex": {
     "title": "漢字",
-    "intro": "常用漢字とJLPTの漢字をレベル別に。漢字を開くと、読み方・書き順・その漢字を使うアニメの例文が見られます。",
+    "intro": "常用漢字とJLPTの漢字をレベル別に。漢字を開くと、読み方・書き順・その漢字を使うアニメ・ドラマ・オーディオブック・YouTubeの例文が見られます。",
     "groupBy": "漢字の分け方",
     "byGrade": "学年",
     "groups": "漢字のグループ",
@@ -1120,6 +1120,9 @@
     "kanjiJoyo": "常用漢字",
     "kanjiJinmeiyo": "人名用漢字",
     "kanjiNewspaper": "新聞での頻度 {rank}位",
+    "kanjiCorpusRank": "Nadeshikoでの頻度 {rank}位",
+    "kanjiReadingShare": "Nadeshikoの例文の{percent}%",
+    "kanjiWordRank": "Nadeshikoの単語で{rank}位",
     "kanjiParts": "部品",
     "kanjiWords": "Nadeshikoでよく使われる語",
     "kanjiReplay": "書き順をもう一度再生",
@@ -1378,11 +1381,11 @@
   "seo": {
     "kanjiIndex": {
       "title": "{group}の漢字：読み方・意味・書き順",
-      "description": "{group}の漢字{count}字。それぞれの読み方、意味、書き順、アニメの実例文。"
+      "description": "{group}の漢字{count}字。それぞれの読み方、意味、書き順、アニメ・ドラマ・オーディオブック・YouTubeの実例文。"
     },
     "kanji": {
       "title": "漢字「{kanji}」の意味・読み方・書き順",
-      "description": "「{kanji}」の意味は{meaning}。読み方 {readings}、書き順、部首、JLPT・漢検の級、アニメの字幕でよく使われる言葉。"
+      "description": "「{kanji}」の意味は{meaning}。読み方 {readings}、書き順、部首、JLPT・漢検の級、アニメ・ドラマ・オーディオブック・YouTubeでよく使われる言葉。"
     },
     "home": {
       "title": "Nadeshiko：アニメ・ドラマ・YouTubeの日本語例文を検索",

@@ -1100,7 +1100,7 @@
   },
   "kanjiIndex": {
     "title": "Kanji",
-    "intro": "Every jōyō and JLPT kanji, by level. Open one to see how it is read, how it is written, and the anime sentences that use it.",
+    "intro": "Every jōyō and JLPT kanji, by level. Open one to see how it is read, how it is written, and real sentences that use it from anime, drama, audiobooks and YouTube.",
     "groupBy": "Group kanji by",
     "byGrade": "School grade",
     "groups": "Kanji groups",
@@ -1120,6 +1120,9 @@
     "kanjiJoyo": "Jōyō",
     "kanjiJinmeiyo": "Jinmeiyō (names)",
     "kanjiNewspaper": "#{rank} in newspapers",
+    "kanjiCorpusRank": "#{rank} on Nadeshiko",
+    "kanjiReadingShare": "{percent}% of its sentences on Nadeshiko",
+    "kanjiWordRank": "#{rank} among the words on Nadeshiko",
     "kanjiParts": "Parts",
     "kanjiWords": "Common words in Nadeshiko",
     "kanjiReplay": "Replay the stroke order",
@@ -1378,11 +1381,11 @@
   "seo": {
     "kanjiIndex": {
       "title": "{group} kanji: readings, meanings and stroke order",
-      "description": "The {count} kanji of {group}, each with its readings, meaning, stroke order and real anime sentences."
+      "description": "The {count} kanji of {group}, each with its readings, meaning, stroke order and real sentences from anime, drama, audiobooks and YouTube."
     },
     "kanji": {
       "title": "{kanji}: kanji meaning, readings and stroke order",
-      "description": "{kanji} means {meaning}. Readings {readings}, stroke order, radical, JLPT and Kanken level, and the words written with it in anime subtitles."
+      "description": "{kanji} means {meaning}. Readings {readings}, stroke order, radical, JLPT and Kanken level, and the words written with it in anime, drama, audiobooks and YouTube."
     },
     "home": {
       "title": "Nadeshiko: Search Japanese sentences from anime, J-drama and YouTube",

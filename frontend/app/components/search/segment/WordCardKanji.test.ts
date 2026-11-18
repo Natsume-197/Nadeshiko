@@ -16,6 +16,7 @@ const CARD: KanjiCardData = {
   strokeCount: 9,
   grade: 2,
   frequency: 328,
+  corpusRank: null,
   jlpt: 5,
   kanken: '9級',
   radical: { glyph: '⾷', number: 184, reading: 'しょく', meaning: 'food, to eat', character: '食' },

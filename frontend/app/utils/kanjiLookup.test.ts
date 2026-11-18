@@ -64,6 +64,13 @@ describe('kanjiBadges', () => {
     ]);
   });
 
+  test('ranks by our own sentences once they are counted, instead of newspapers', () => {
+    expect(kanjiBadges(card({ frequency: 328, corpusRank: 82 }), t).at(-1)).toEqual({
+      id: 'freq',
+      text: 'tokenTooltip.kanjiCorpusRank{"rank":82}',
+    });
+  });
+
   test('names the jōyō and jinmeiyō grades, and leaves out what it does not know', () => {
     expect(kanjiBadges(card({ grade: 8 }), t).map((b) => b.text)).toEqual([
       'tokenTooltip.kanjiJoyo',

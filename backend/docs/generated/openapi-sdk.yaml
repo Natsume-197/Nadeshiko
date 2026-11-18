@@ -8985,6 +8985,7 @@ components:
         - strokeCount
         - grade
         - frequency
+        - corpusRank
         - jlpt
         - kanken
         - radical
@@ -9017,6 +9018,13 @@ components:
           nullable: true
           description: Rank among the 2,500 kanji most used in newspapers (KANJIDIC2).
           example: 328
+        corpusRank:
+          type: integer
+          nullable: true
+          description: Rank by how often it is written in Nadeshiko's sentences (anime,
+            drama, audiobooks and YouTube), 1 for the most written. Null until
+            the frequency job has counted it.
+          example: 77
         jlpt:
           type: integer
           nullable: true

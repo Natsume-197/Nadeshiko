@@ -640,6 +640,7 @@ export const s_DictionaryKanji = z.object({
   strokeCount: z.coerce.number(),
   grade: z.coerce.number().nullable(),
   frequency: z.coerce.number().nullable(),
+  corpusRank: z.coerce.number().nullable(),
   jlpt: z.coerce.number().nullable(),
   kanken: z.string().nullable(),
   radical: z

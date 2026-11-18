@@ -1100,7 +1100,7 @@
   },
   "kanjiIndex": {
     "title": "Kanji",
-    "intro": "Todos los kanji jōyō y del JLPT, por nivel. Abre uno para ver cómo se lee, cómo se escribe y las frases de anime que lo usan.",
+    "intro": "Todos los kanji jōyō y del JLPT, por nivel. Abre uno para ver cómo se lee, cómo se escribe y frases reales que lo usan de anime, dramas, audiolibros y YouTube.",
     "groupBy": "Agrupar kanji por",
     "byGrade": "Curso escolar",
     "groups": "Grupos de kanji",
@@ -1120,6 +1120,9 @@
     "kanjiJoyo": "Jōyō",
     "kanjiJinmeiyo": "Jinmeiyō (nombres)",
     "kanjiNewspaper": "n.º {rank} en prensa",
+    "kanjiCorpusRank": "n.º {rank} en Nadeshiko",
+    "kanjiReadingShare": "{percent} % de sus frases en Nadeshiko",
+    "kanjiWordRank": "n.º {rank} entre las palabras de Nadeshiko",
     "kanjiParts": "Partes",
     "kanjiWords": "Palabras frecuentes en Nadeshiko",
     "kanjiReplay": "Repetir el orden de trazos",
@@ -1378,11 +1381,11 @@
   "seo": {
     "kanjiIndex": {
       "title": "Kanji de {group}: lecturas, significados y orden de trazos",
-      "description": "Los {count} kanji de {group}, cada uno con sus lecturas, significado, orden de trazos y frases reales de anime."
+      "description": "Los {count} kanji de {group}, cada uno con sus lecturas, significado, orden de trazos y frases reales de anime, dramas, audiolibros y YouTube."
     },
     "kanji": {
       "title": "{kanji}: significado, lecturas y orden de trazos del kanji",
-      "description": "{kanji} significa {meaning}. Lecturas {readings}, orden de trazos, radical, nivel JLPT y Kanken, y las palabras que lo usan en subtítulos de anime."
+      "description": "{kanji} significa {meaning}. Lecturas {readings}, orden de trazos, radical, nivel JLPT y Kanken, y las palabras que lo usan en anime, dramas, audiolibros y YouTube."
     },
     "home": {
       "title": "Nadeshiko: Frases en japonés de anime, series y YouTube",

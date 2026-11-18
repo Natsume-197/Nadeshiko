@@ -64,6 +64,8 @@ export interface KanjiCard {
   grade: number | null;
   /** Rank among the 2,500 most used kanji in newspapers. */
   frequency: number | null;
+  /** Rank by how often it is written in our own sentences (`dict.kanji_frequency`); null before the first count. */
+  corpusRank: number | null;
   /** Current JLPT level (5 = N5), from Waller's unofficial lists. */
   jlpt: number | null;
   /** Kanji Kentei level it is tested at (`10級` easiest to `1級`), from mimneko/kanji-data. */
@@ -186,6 +188,7 @@ interface KanjiRowResult {
   stroke_count: number;
   grade: number | null;
   frequency: number | null;
+  corpus_rank: number | null;
   radical: number | null;
   on_readings: string[];
   kun_readings: string[];
@@ -233,7 +236,8 @@ export async function kanjiCard(
   const relatedLimit = options.related === 'all' ? RELATED_KANJI_ALL : RELATED_KANJI;
   const [row]: KanjiRowResult[] = await dataSource.query(
     `SELECT k.character, k.stroke_count, k.grade, k.frequency, k.radical, k.on_readings, k.kun_readings, k.meanings_en,
-            k.meanings_es, j.level AS jlpt, kk.level AS kanken, s.paths AS strokes, s.numbers AS stroke_numbers,
+            k.meanings_es, j.level AS jlpt, kk.level AS kanken, kf.rank AS corpus_rank, s.paths AS strokes,
+            s.numbers AS stroke_numbers,
             (SELECT jsonb_agg(jsonb_build_object(
                       'character', part,
                       'has_card', o.character IS NOT NULL,
@@ -248,6 +252,7 @@ export async function kanjiCard(
        LEFT JOIN dict.kanji_strokes s ON s.character = k.character
        LEFT JOIN dict.kanji_jlpt j ON j.character = k.character
        LEFT JOIN dict.kanji_kanken kk ON kk.character = k.character
+       LEFT JOIN dict.kanji_frequency kf ON kf.character = k.character
       WHERE k.character = $1`,
     [character, locale],
   );
@@ -279,6 +284,7 @@ export async function kanjiCard(
     strokeCount: row.stroke_count,
     grade: row.grade,
     frequency: row.frequency,
+    corpusRank: row.corpus_rank,
     jlpt: row.jlpt,
     kanken: row.kanken,
     radical,

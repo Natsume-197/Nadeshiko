@@ -1100,7 +1100,7 @@
   },
   "kanjiIndex": {
     "title": "Kanji",
-    "intro": "Semua kanji jōyō dan JLPT, per level. Buka salah satunya untuk melihat cara baca, cara tulis, dan kalimat anime yang memakainya.",
+    "intro": "Semua kanji jōyō dan JLPT, per level. Buka salah satunya untuk melihat cara baca, cara tulis, dan kalimat nyata yang memakainya dari anime, drama, buku audio, dan YouTube.",
     "groupBy": "Kelompokkan kanji menurut",
     "byGrade": "Kelas sekolah",
     "groups": "Kelompok kanji",
@@ -1120,6 +1120,9 @@
     "kanjiJoyo": "Jōyō",
     "kanjiJinmeiyo": "Jinmeiyō (nama)",
     "kanjiNewspaper": "#{rank} di surat kabar",
+    "kanjiCorpusRank": "#{rank} di Nadeshiko",
+    "kanjiReadingShare": "{percent}% kalimatnya di Nadeshiko",
+    "kanjiWordRank": "#{rank} di antara kata di Nadeshiko",
     "kanjiParts": "Bagian",
     "kanjiWords": "Kata umum di Nadeshiko",
     "kanjiReplay": "Putar ulang urutan goresan",
@@ -1378,11 +1381,11 @@
   "seo": {
     "kanjiIndex": {
       "title": "Kanji {group}: bacaan, arti, dan urutan goresan",
-      "description": "{count} kanji {group}, masing-masing dengan bacaan, arti, urutan goresan, dan kalimat anime nyata."
+      "description": "{count} kanji {group}, masing-masing dengan bacaan, arti, urutan goresan, dan kalimat nyata dari anime, drama, buku audio, dan YouTube."
     },
     "kanji": {
       "title": "{kanji}: arti, bacaan, dan urutan goresan kanji",
-      "description": "{kanji} berarti {meaning}. Bacaan {readings}, urutan goresan, radikal, level JLPT dan Kanken, serta kata yang memakainya di subtitle anime."
+      "description": "{kanji} berarti {meaning}. Bacaan {readings}, urutan goresan, radikal, level JLPT dan Kanken, serta kata yang memakainya di anime, drama, buku audio, dan YouTube."
     },
     "home": {
       "title": "Nadeshiko: Cari kalimat bahasa Jepang dari anime, drama Jepang, dan YouTube",

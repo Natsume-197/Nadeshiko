@@ -288,6 +288,7 @@ export type t_DictionaryKanji = {
   }[];
   containedIn: t_DictionaryKanjiRelated[];
   containedInCount: number;
+  corpusRank: number | null;
   frequency: number | null;
   grade: number | null;
   jlpt: number | null;

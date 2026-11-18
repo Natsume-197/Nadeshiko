@@ -1116,6 +1116,10 @@ export type DictionaryKanji = {
      */
     frequency: number;
     /**
+     * Rank by how often it is written in Nadeshiko's sentences (anime, drama, audiobooks and YouTube), 1 for the most written. Null until the frequency job has counted it.
+     */
+    corpusRank: number;
+    /**
      * Current JLPT level, 5 for N5 (Jonathan Waller's unofficial lists).
      */
     jlpt: number;
