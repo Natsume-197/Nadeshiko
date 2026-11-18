@@ -83,4 +83,15 @@ describe('applyCollocations', () => {
     const kanji = sentence(['ピアノ', NOUN], ['を', CASE], ['引いた', VERB, '引く']);
     expect(applyCollocations(kanji, ctx)).toBe(kanji);
   });
+
+  it('leaves the usual kana spelling of a common word alone (マッチを|する stays する)', () => {
+    const usual = new InMemoryLexicon([], { 'usual-kana': ['する'] });
+    usual.addWord(2, [
+      { text: '擦る', kana: false },
+      { text: 'する', kana: true },
+    ]);
+    usual.addCollocation('マッチ', 'を', 'する', '擦る');
+    const input = sentence(['マッチ', NOUN], ['を', CASE], ['した', VERB, 'する']);
+    expect(applyCollocations(input, { lexicon: usual, deconjugate })).toBe(input);
+  });
 });

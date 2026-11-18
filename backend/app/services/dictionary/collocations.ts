@@ -97,15 +97,137 @@ export function collocationRows(counts: CollocationCounts): CollocationRow[] {
   );
 }
 
-/** Replaces `dict.collocation` inside the frequency job's transaction. */
-export async function writeCollocations(manager: EntityManager | DataSource, rows: readonly CollocationRow[]) {
-  await manager.query(`DELETE FROM dict.collocation`);
+/** Where a `dict.collocation` row comes from: mined from our corpus, or converted from an external table. */
+export type CollocationSource = 'corpus' | 'imported';
+
+/** Replaces one source's rows of `dict.collocation` (the frequency job's `corpus` rows, inside its transaction, or
+ * the importer's `imported` ones). */
+export async function writeCollocations(
+  manager: EntityManager | DataSource,
+  rows: readonly CollocationRow[],
+  source: CollocationSource = 'corpus',
+) {
+  await manager.query(`DELETE FROM dict.collocation WHERE source = $1`, [source]);
   for (let i = 0; i < rows.length; i += 10_000) {
     await manager.query(
-      `INSERT INTO dict.collocation (noun, particle, verb_kana, verb, count, total)
-       SELECT x.noun, x.particle, x.verb_kana, x.verb, x.count, x.total
+      `INSERT INTO dict.collocation (noun, particle, verb_kana, verb, count, total, source)
+       SELECT x.noun, x.particle, x.verb_kana, x.verb, x.count, x.total, $2
          FROM jsonb_to_recordset($1::jsonb) AS x(noun text, particle text, verb_kana text, verb text, count int, total int)`,
-      [JSON.stringify(rows.slice(i, i + 10_000))],
+      [JSON.stringify(rows.slice(i, i + 10_000)), source],
     );
   }
+}
+
+/** One row of an external noun + particle + verb collocation table, by JMdict id: after the noun and particle, a pick
+ * of `rivalVerb` should be `targetVerb`. `count`/`total` are its evidence, when the note gives it. */
+export interface ExternalCollocation {
+  noun: number;
+  particle: string;
+  rivalVerb: number;
+  targetVerb: number;
+  count: number;
+  total: number;
+}
+
+/** Parses the external TSV: `noun id, particle, picked verb id, verb id to prefer, bonus, note "… (n/m)"`; `#` lines
+ * are comments. Exported for tests. */
+export function parseExternalCollocations(text: string): ExternalCollocation[] {
+  const rows: ExternalCollocation[] = [];
+  for (const line of text.split(/\r?\n/)) {
+    if (!line || line.startsWith('#')) continue;
+    const [noun, particle, rival, target, , note = ''] = line.split('\t');
+    const evidence = /\((\d+)\/(\d+)\)\s*$/.exec(note);
+    if (!noun || !particle || !rival || !target) continue;
+    rows.push({
+      noun: Number(noun),
+      particle,
+      rivalVerb: Number(rival),
+      targetVerb: Number(target),
+      count: evidence ? Number(evidence[1]) : 0,
+      total: evidence ? Number(evidence[2]) : 0,
+    });
+  }
+  return rows;
+}
+
+/** One JMdict word's active forms, in index order. */
+export interface WordForms {
+  forms: Array<{ text: string; kana: boolean }>;
+}
+
+/**
+ * External rows as our rows: by spelling, since our tokens carry no word id. A row is kept for every spelling of the
+ * noun and every reading the two verbs share (the homophone a kana sentence cannot tell apart), naming the target's
+ * first kanji spelling. A key that two rows give different verbs keeps the one with more evidence. Exported for tests.
+ */
+export function convertExternalCollocations(
+  rows: readonly ExternalCollocation[],
+  words: ReadonlyMap<number, WordForms>,
+): CollocationRow[] {
+  const kept = new Map<string, CollocationRow>();
+  for (const row of rows) {
+    const particle = collocationParticle(row.particle);
+    const noun = words.get(row.noun);
+    const rival = words.get(row.rivalVerb);
+    const target = words.get(row.targetVerb);
+    if (!particle || !noun || !rival || !target) continue;
+    const verb = target.forms.find((form) => !form.kana)?.text;
+    if (!verb) continue;
+    const rivalKana = new Set(rival.forms.filter((form) => form.kana).map((form) => toHiragana(form.text)));
+    const shared = [...new Set(target.forms.filter((form) => form.kana).map((form) => toHiragana(form.text)))].filter(
+      (kana) => rivalKana.has(kana),
+    );
+    for (const nounText of new Set(noun.forms.map((form) => form.text))) {
+      for (const verbKana of shared) {
+        const key = keyOf(nounText, particle, verbKana);
+        const seen = kept.get(key);
+        if (seen && (seen.verb === verb || seen.total >= row.total)) continue;
+        kept.set(key, { noun: nounText, particle, verb_kana: verbKana, verb, count: row.count, total: row.total });
+      }
+    }
+  }
+  return [...kept.values()];
+}
+
+export interface ImportCollocationsReport {
+  source: 'collocations';
+  version: string;
+  /** Rows in the file. */
+  read: number;
+  /** Rows written, by spelling. */
+  rows: number;
+  dryRun: boolean;
+}
+
+/** Replaces the `imported` rows of `dict.collocation` from an external table, and records its version. */
+export async function importCollocations(
+  dataSource: DataSource,
+  text: string,
+  version: string,
+  options: { dryRun?: boolean } = {},
+): Promise<ImportCollocationsReport> {
+  const external = parseExternalCollocations(text);
+  const ids = [...new Set(external.flatMap((row) => [row.noun, row.rivalVerb, row.targetVerb]))];
+  const found: Array<{ id: number; forms: WordForms['forms'] }> = await dataSource.query(
+    `SELECT w.id, json_agg(json_build_object('text', f.text, 'kana', f.kana) ORDER BY f.idx) AS forms
+       FROM dict.word w
+       JOIN dict.form f ON f.word_id = w.id AND f.active
+      WHERE w.source = 'jmdict' AND w.active AND w.id = ANY($1::int[])
+      GROUP BY w.id`,
+    [ids],
+  );
+  const words = new Map(found.map((word) => [word.id, { forms: word.forms }]));
+  const rows = convertExternalCollocations(external, words);
+  const dryRun = options.dryRun ?? false;
+  if (!dryRun) {
+    await dataSource.transaction(async (manager) => {
+      await writeCollocations(manager, rows, 'imported');
+      await manager.query(
+        `INSERT INTO dict.source (name, version, imported_at) VALUES ('collocations', $1, now())
+         ON CONFLICT (name) DO UPDATE SET version = EXCLUDED.version, imported_at = now()`,
+        [version],
+      );
+    });
+  }
+  return { source: 'collocations', version, read: external.length, rows: rows.length, dryRun };
 }

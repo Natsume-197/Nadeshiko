@@ -5,7 +5,7 @@ description: "Los diccionarios y datos lingüísticos que hay detrás de las tar
 
 # Fuentes
 
-**Última actualización: 17 de noviembre de 2026**
+**Última actualización: 18 de noviembre de 2026**
 
 Las tarjetas de palabras y el análisis de frases de Nadeshiko se basan en datos lingüísticos abiertos. Esta página los reconoce.
 
@@ -18,6 +18,8 @@ Los datos de diccionario que se muestran en este sitio, y cualquier dato derivad
 ## Análisis de frases
 
 Las frases se dividen en palabras con [Sudachi](https://github.com/WorksApplications/Sudachi) y su diccionario, de Works Applications, bajo la licencia Apache 2.0.
+
+Cuando una frase escribe un verbo en kana, la palabra que es tras un sustantivo y una partícula dados (ピアノをひいた es 弾く, no 引く) sale de los propios subtítulos de Nadeshiko y de la tabla de colocaciones sustantivo–verbo de [Jiten](https://jiten.moe), bajo la [licencia Creative Commons Atribución-CompartirIgual 4.0](https://creativecommons.org/licenses/by-sa/4.0/deed.es).
 
 ## Tarjetas de palabras
 

@@ -95,6 +95,9 @@ export function applyCollocations(groups: Group[], ctx: CombineContext): Group[]
     if (particle.cls !== 'Particle' || !COLLOCATION_HOSTS.has(noun.cls)) continue;
     const filed = collocationParticle(particle.s);
     if (!filed) continue;
+    // A kana spelling that is how a word is usually written (する, いる, できる) already names that word; a table row
+    // for it would only move the common verb to a rare homophone (する → 擦る) or to a kanji spelling nobody uses.
+    if (ctx.lexicon.hasClass(verb.d, 'usual-kana')) continue;
     const target = ctx.lexicon.collocation(noun.d, filed, toHiragana(verb.d));
     // The target must be a spelling of the same reading, or the table and the token disagree on the word.
     if (!target || !ctx.lexicon.readingsOf(target).some((word) => word.kana.includes(toHiragana(verb.d)))) continue;

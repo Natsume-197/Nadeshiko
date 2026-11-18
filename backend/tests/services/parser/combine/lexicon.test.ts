@@ -128,5 +128,6 @@ describe('loadLexicon', () => {
     expect(lexicon.hasClass('ウサギ', 'noun')).toBe(true);
     expect(lexicon.collocation('ピアノ', 'を', 'ひく')).toBe('弾く');
     expect(lexicon.collocation('ピアノ', 'が', 'ひく')).toBeUndefined();
+    expect(query.mock.calls.some(([sql]) => String(sql).includes("source = 'corpus' DESC"))).toBe(true);
   });
 });

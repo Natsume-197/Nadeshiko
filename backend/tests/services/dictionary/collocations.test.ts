@@ -3,9 +3,12 @@ import type { SlimToken } from '@app/models/Segment';
 import {
   type CollocationCounts,
   collocationRows,
+  convertExternalCollocations,
   countCollocations,
   MIN_TOTAL,
+  parseExternalCollocations,
   verbReading,
+  type WordForms,
 } from '@app/services/dictionary/collocations';
 import { InMemoryLexicon } from '@app/services/parser/combine';
 import { deconjugate } from '@app/services/parser/deconjugator';
@@ -60,5 +63,74 @@ describe('countCollocations and collocationRows', () => {
     countCollocations(piano(tok('弾いた', '弾く', 'ヒイタ', 'verb'), 'の'), counts, lexicon, deconjugate);
     expect(collocationRows(counts)).toEqual([]);
     expect(counts.size).toBe(2);
+  });
+});
+
+describe('external collocation table', () => {
+  const tsv = [
+    '# noun id, particle, picked verb id, verb id to prefer, bonus, note',
+    '1600900\tを\t1591100\t1591110\t150\t話を + 効く -> 聞く (7119/7144)',
+    '1600900\tは\t1591100\t1591110\t150\t話は + 効く -> 聞く (10/12)',
+    '1600900\tの\t1591100\t1591110\t150\tnot a collocation particle',
+    '9999999\tを\t1591100\t1591110\t150\tunknown noun (1/1)',
+    '',
+  ].join('\n');
+  const words = new Map<number, WordForms>([
+    [
+      1600900,
+      {
+        forms: [
+          { text: '話', kana: false },
+          { text: '話し', kana: false },
+          { text: 'はなし', kana: true },
+        ],
+      },
+    ],
+    [
+      1591100,
+      {
+        forms: [
+          { text: '効く', kana: false },
+          { text: 'きく', kana: true },
+        ],
+      },
+    ],
+    [
+      1591110,
+      {
+        forms: [
+          { text: '聞く', kana: false },
+          { text: '聴く', kana: false },
+          { text: 'きく', kana: true },
+        ],
+      },
+    ],
+  ]);
+
+  it('parses the rows and their evidence', () => {
+    const rows = parseExternalCollocations(tsv);
+    expect(rows).toHaveLength(4);
+    expect(rows[0]).toEqual({
+      noun: 1600900,
+      particle: 'を',
+      rivalVerb: 1591100,
+      targetVerb: 1591110,
+      count: 7119,
+      total: 7144,
+    });
+  });
+
+  it('turns ids into spellings: every noun spelling, the shared reading, the first kanji spelling', () => {
+    const rows = convertExternalCollocations(parseExternalCollocations(tsv), words);
+    expect(rows.map((row) => `${row.noun}${row.particle}${row.verb_kana}→${row.verb}`).sort()).toEqual(
+      [
+        'はなしはきく→聞く',
+        'はなしをきく→聞く',
+        '話しはきく→聞く',
+        '話しをきく→聞く',
+        '話はきく→聞く',
+        '話をきく→聞く',
+      ].sort(),
+    );
   });
 });

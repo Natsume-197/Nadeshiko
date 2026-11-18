@@ -8,7 +8,8 @@ import { toHiragana } from './kana';
  * Two are not parts of speech: `kana` marks a kana spelling of a word that has no kanji spelling or is usually written
  * in kana (`HasKanaAppropriateCompoundLookup`), `common` a spelling of a JMdict common word (our stand-in for the
  * priority-score lookup, `HasPrioritizedNonNameCompoundLookup`). `noun` is any noun sense, `suf` a suffix one (`suf`,
- * `n-suf`), which together tell a suffix-only spelling (`NounSuffix` in upstream's masks).
+ * `n-suf`), which together tell a suffix-only spelling (`NounSuffix` in upstream's masks). `usual-kana` marks the kana
+ * spelling of a common word usually written in kana (する of 為る, いる of 居る), which already names that word.
  */
 export type LexClass =
   | 'exp'
@@ -22,7 +23,8 @@ export type LexClass =
   | 'kana'
   | 'common'
   | 'noun'
-  | 'suf';
+  | 'suf'
+  | 'usual-kana';
 
 const CLASS_BITS: Record<LexClass, number> = {
   exp: 1,
@@ -37,6 +39,7 @@ const CLASS_BITS: Record<LexClass, number> = {
   common: 512,
   noun: 1024,
   suf: 2048,
+  'usual-kana': 4096,
 };
 
 /** Particles a collocation is filed under; は and も hide the case of the noun they mark, so both file under は. */
@@ -204,7 +207,12 @@ async function readLexicon(dataSource: DataSource): Promise<Lexicon> {
   ]);
   for (const row of collocations) lexicon.addCollocation(row.noun, row.particle, row.verb_kana, row.verb);
   for (const row of flagged)
-    lexicon.add(row.key, (row.kana ? CLASS_BITS.kana : 0) | (row.common ? CLASS_BITS.common : 0));
+    lexicon.add(
+      row.key,
+      (row.kana ? CLASS_BITS.kana : 0) |
+        (row.common ? CLASS_BITS.common : 0) |
+        (row.usual_kana ? CLASS_BITS['usual-kana'] : 0),
+    );
   for (const word of words) {
     lexicon.addWord(
       word.id,
@@ -232,13 +240,17 @@ async function readWords(
 
 /** Spellings of common words, and the kana spellings of words written in kana (no kanji spelling, or a `uk` sense).
  * Katakana spellings fold to the hiragana key when added. */
-async function readFlags(dataSource: DataSource): Promise<Array<{ key: string; kana: boolean; common: boolean }>> {
+async function readFlags(
+  dataSource: DataSource,
+): Promise<Array<{ key: string; kana: boolean; common: boolean; usual_kana: boolean }>> {
   return dataSource.query(
     `SELECT f.text AS key,
             bool_or(f.kana AND (
               NOT EXISTS (SELECT 1 FROM dict.form k WHERE k.word_id = w.id AND k.active AND NOT k.kana)
               OR EXISTS (SELECT 1 FROM dict.sense s WHERE s.word_id = w.id AND 'uk' = ANY(s.misc)))) AS kana,
-            bool_or(w.common) AS common
+            bool_or(w.common) AS common,
+            bool_or(f.kana AND w.common
+              AND EXISTS (SELECT 1 FROM dict.sense s WHERE s.word_id = w.id AND 'uk' = ANY(s.misc))) AS usual_kana
        FROM dict.form f
        JOIN dict.word w ON w.id = f.word_id AND w.source = 'jmdict' AND w.active
       WHERE f.active
@@ -249,11 +261,16 @@ async function readFlags(dataSource: DataSource): Promise<Array<{ key: string; k
   );
 }
 
-/** The mined collocations (`dict.collocation`); none until the frequency job has run once. */
+/** The collocations (`dict.collocation`), one per key: our corpus's row where it has one, else the imported one.
+ * None until the frequency job or the importer has run. */
 async function readCollocations(
   dataSource: DataSource,
 ): Promise<Array<{ noun: string; particle: string; verb_kana: string; verb: string }>> {
-  return dataSource.query(`SELECT noun, particle, verb_kana, verb FROM dict.collocation`);
+  return dataSource.query(
+    `SELECT DISTINCT ON (noun, particle, verb_kana) noun, particle, verb_kana, verb
+       FROM dict.collocation
+      ORDER BY noun, particle, verb_kana, source = 'corpus' DESC`,
+  );
 }
 
 async function readKeys(dataSource: DataSource): Promise<InMemoryLexicon> {

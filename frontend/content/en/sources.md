@@ -5,7 +5,7 @@ description: "The dictionaries and language data behind Nadeshiko's word cards a
 
 # Sources
 
-**Last updated: November 17, 2026**
+**Last updated: November 18, 2026**
 
 Nadeshiko's word cards and sentence analysis are built on open language data. This page credits it.
 
@@ -18,6 +18,8 @@ Dictionary data shown on this site, and any data derived from it that you export
 ## Sentence analysis
 
 Sentences are split into words with [Sudachi](https://github.com/WorksApplications/Sudachi) and its dictionary, by Works Applications, under the Apache License 2.0.
+
+When a sentence writes a verb in kana, the word it stands for after a given noun and particle (ピアノをひいた is 弾く, not 引く) comes from Nadeshiko's own subtitles and from the noun–verb collocation table of [Jiten](https://jiten.moe), under the [Creative Commons Attribution-ShareAlike 4.0 licence](https://creativecommons.org/licenses/by-sa/4.0/).
 
 ## Word cards
 

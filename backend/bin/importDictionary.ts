@@ -1,5 +1,5 @@
 import '@config/boot';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { parseArgs } from 'node:util';
 import type { JMdictDictionaryMetadata } from '@scriptin/jmdict-simplified-types';
@@ -9,6 +9,7 @@ import { fromJmdict, fromJmnedict, type ImportEntry } from '@app/services/dictio
 import { type FuriganaEntry, readDictionary, readJsonArray } from '@app/services/dictionary/import/readers';
 import { importDictionary, importFurigana } from '@app/services/dictionary/import/importDictionary';
 import { importJlpt } from '@app/services/dictionary/import/importJlpt';
+import { importCollocations } from '@app/services/dictionary/collocations';
 import { importKanjiumPitch, importPitch } from '@app/services/dictionary/import/importPitch';
 import {
   importKanjidic,
@@ -27,7 +28,7 @@ import {
  *     --jmdict-furigana JmdictFurigana.json --jmnedict-furigana JmnedictFurigana.json \
  *     --furigana-version 2.3.1+2026-10-25 \
  *     --jlpt-dir <folder with n1.csv..n5.csv> --jlpt-version <stephenmk/yomitan-jlpt-vocab commit> \
- *     --unidic <unidic-cwj sys.dic> --unidic-version 202512  *     --kanjium <kanjium data/source_files/raw/accents.txt> --kanjium-version <kanjium commit>  *     --kanjidic2 kanjidic2-all-3.6.2.json --kradfile kradfile-3.6.2.json  *     --kanjivg <kanjivg-*-main.zip extracted>/kanji --kanjivg-version r20260714 \n *     --kanji-jlpt <davidluzgouveia/kanji-data kanji.json> --kanji-jlpt-version <its commit> \n *     --radicals <kanjialive language-data/japanese-radicals.csv> --radicals-version <its commit>  *     --kanken <mimneko/kanji-data 漢検漢字辞典漢字.csv> --kanken-version <its commit> [--dry-run]
+ *     --unidic <unidic-cwj sys.dic> --unidic-version 202512  *     --kanjium <kanjium data/source_files/raw/accents.txt> --kanjium-version <kanjium commit>  *     --kanjidic2 kanjidic2-all-3.6.2.json --kradfile kradfile-3.6.2.json  *     --kanjivg <kanjivg-*-main.zip extracted>/kanji --kanjivg-version r20260714 \n *     --kanji-jlpt <davidluzgouveia/kanji-data kanji.json> --kanji-jlpt-version <its commit> \n *     --radicals <kanjialive language-data/japanese-radicals.csv> --radicals-version <its commit>  *     --kanken <mimneko/kanji-data 漢検漢字辞典漢字.csv> --kanken-version <its commit> \n *     --collocations <noun_verb_collocations.tsv> --collocations-version <its commit> [--dry-run]
  *
  * Any subset of the files can be given. Safe to rerun: forms keep their indexes, missing words are only flagged
  * inactive. `--dry-run` does all the work in one transaction, prints what would change, and rolls it back.
@@ -56,6 +57,8 @@ const { values: args } = parseArgs({
     'radicals-version': { type: 'string' },
     kanken: { type: 'string' },
     'kanken-version': { type: 'string' },
+    collocations: { type: 'string' },
+    'collocations-version': { type: 'string' },
     'dry-run': { type: 'boolean', default: false },
   },
 });
@@ -92,6 +95,8 @@ async function main(): Promise<void> {
   const radicalsVersion = args['radicals-version'];
   const kanken = requireFile(args.kanken, 'kanken');
   const kankenVersion = args['kanken-version'];
+  const collocations = requireFile(args.collocations, 'collocations');
+  const collocationsVersion = args['collocations-version'];
   const jlptFiles = jlptDir
     ? [1, 2, 3, 4, 5].map((level) => ({ level, path: requireFile(join(jlptDir, `n${level}.csv`), 'jlpt-dir') ?? '' }))
     : [];
@@ -109,10 +114,11 @@ async function main(): Promise<void> {
     !kanjivg &&
     !kanjiJlpt &&
     !radicals &&
-    !kanken
+    !kanken &&
+    !collocations
   ) {
     throw new Error(
-      'Nothing to import: pass --jmdict, --jmnedict, --jmdict-furigana, --jmnedict-furigana, --jlpt-dir, --unidic, --kanjium, --kanjidic2, --kradfile, --kanjivg, --kanji-jlpt, --radicals and/or --kanken',
+      'Nothing to import: pass --jmdict, --jmnedict, --jmdict-furigana, --jmnedict-furigana, --jlpt-dir, --unidic, --kanjium, --kanjidic2, --kradfile, --kanjivg, --kanji-jlpt, --radicals, --kanken and/or --collocations',
     );
   }
   if ((jmdictFurigana || jmnedictFurigana) && !furiganaVersion) {
@@ -129,6 +135,8 @@ async function main(): Promise<void> {
     throw new Error('--kanji-jlpt-version is required with --kanji-jlpt (its commit)');
   if (radicals && !radicalsVersion) throw new Error('--radicals-version is required with --radicals (its commit)');
   if (kanken && !kankenVersion) throw new Error('--kanken-version is required with --kanken (its commit)');
+  if (collocations && !collocationsVersion)
+    throw new Error('--collocations-version is required with --collocations (its commit)');
 
   await AppDataSource.initialize();
 
@@ -202,6 +210,12 @@ async function main(): Promise<void> {
 
   if (kanken && kankenVersion) {
     logger.info(await importKanken(AppDataSource, kanken, kankenVersion, { dryRun }), 'kanken');
+  }
+
+  // After JMdict: rows are converted from word ids to spellings through dict.form.
+  if (collocations && collocationsVersion) {
+    const text = readFileSync(collocations, 'utf8');
+    logger.info(await importCollocations(AppDataSource, text, collocationsVersion, { dryRun }), 'collocations');
   }
 
   logger.info({ seconds: Math.round((Date.now() - startedAt) / 1000) }, 'dictionary import finished');
