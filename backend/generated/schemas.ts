@@ -154,6 +154,28 @@ export const s_DictionaryCandidate = z.object({
   ),
 });
 
+export const s_DictionaryKanji = z.object({
+  character: z.string(),
+  strokeCount: z.coerce.number(),
+  grade: z.coerce.number().nullable(),
+  frequency: z.coerce.number().nullable(),
+  onReadings: z.array(z.string()),
+  kunReadings: z.array(z.string()),
+  meanings: z.array(z.string()),
+  meaningsLanguage: z.enum(['en', 'es']),
+  components: z.array(z.object({ character: z.string(), hasCard: PermissiveBoolean })),
+  strokes: z.array(z.string()),
+  words: z.array(
+    z.object({
+      id: z.string(),
+      headword: z.string(),
+      reading: z.string().nullable(),
+      frequency: z.coerce.number(),
+      gloss: z.string().nullable(),
+    }),
+  ),
+});
+
 export const s_Episode = z.object({
   mediaPublicId: z.string().regex(new RegExp('^[A-Za-z0-9_-]{12}$')),
   episodeNumber: z.coerce.number().min(0),

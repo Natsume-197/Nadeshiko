@@ -10,6 +10,7 @@ import { type FuriganaEntry, readDictionary, readJsonArray } from '@app/services
 import { importDictionary, importFurigana } from '@app/services/dictionary/import/importDictionary';
 import { importJlpt } from '@app/services/dictionary/import/importJlpt';
 import { importKanjiumPitch, importPitch } from '@app/services/dictionary/import/importPitch';
+import { importKanjidic, importKanjiVg, importKradfile } from '@app/services/dictionary/import/importKanji';
 
 /**
  * Load Nadeshiko's own dictionary (task 40) into `dict.*` from extracted upstream files:
@@ -19,7 +20,7 @@ import { importKanjiumPitch, importPitch } from '@app/services/dictionary/import
  *     --jmdict-furigana JmdictFurigana.json --jmnedict-furigana JmnedictFurigana.json \
  *     --furigana-version 2.3.1+2026-10-25 \
  *     --jlpt-dir <folder with n1.csv..n5.csv> --jlpt-version <stephenmk/yomitan-jlpt-vocab commit> \
- *     --unidic <unidic-cwj sys.dic> --unidic-version 202512  *     --kanjium <kanjium data/source_files/raw/accents.txt> --kanjium-version <kanjium commit> [--dry-run]
+ *     --unidic <unidic-cwj sys.dic> --unidic-version 202512  *     --kanjium <kanjium data/source_files/raw/accents.txt> --kanjium-version <kanjium commit>  *     --kanjidic2 kanjidic2-all-3.6.2.json --kradfile kradfile-3.6.2.json  *     --kanjivg <kanjivg-*-main.zip extracted>/kanji --kanjivg-version r20260714 [--dry-run]
  *
  * Any subset of the files can be given. Safe to rerun: forms keep their indexes, missing words are only flagged
  * inactive. `--dry-run` does all the work in one transaction, prints what would change, and rolls it back.
@@ -38,6 +39,10 @@ const { values: args } = parseArgs({
     'unidic-version': { type: 'string' },
     kanjium: { type: 'string' },
     'kanjium-version': { type: 'string' },
+    kanjidic2: { type: 'string' },
+    kradfile: { type: 'string' },
+    kanjivg: { type: 'string' },
+    'kanjivg-version': { type: 'string' },
     'dry-run': { type: 'boolean', default: false },
   },
 });
@@ -64,13 +69,28 @@ async function main(): Promise<void> {
   const unidicVersion = args['unidic-version'];
   const kanjium = requireFile(args.kanjium, 'kanjium');
   const kanjiumVersion = args['kanjium-version'];
+  const kanjidic2 = requireFile(args.kanjidic2, 'kanjidic2');
+  const kradfile = requireFile(args.kradfile, 'kradfile');
+  const kanjivg = requireFile(args.kanjivg, 'kanjivg');
+  const kanjivgVersion = args['kanjivg-version'];
   const jlptFiles = jlptDir
     ? [1, 2, 3, 4, 5].map((level) => ({ level, path: requireFile(join(jlptDir, `n${level}.csv`), 'jlpt-dir') ?? '' }))
     : [];
 
-  if (!jmdict && !jmnedict && !jmdictFurigana && !jmnedictFurigana && !jlptDir && !unidic && !kanjium) {
+  if (
+    !jmdict &&
+    !jmnedict &&
+    !jmdictFurigana &&
+    !jmnedictFurigana &&
+    !jlptDir &&
+    !unidic &&
+    !kanjium &&
+    !kanjidic2 &&
+    !kradfile &&
+    !kanjivg
+  ) {
     throw new Error(
-      'Nothing to import: pass --jmdict, --jmnedict, --jmdict-furigana, --jmnedict-furigana, --jlpt-dir, --unidic and/or --kanjium',
+      'Nothing to import: pass --jmdict, --jmnedict, --jmdict-furigana, --jmnedict-furigana, --jlpt-dir, --unidic, --kanjium, --kanjidic2, --kradfile and/or --kanjivg',
     );
   }
   if ((jmdictFurigana || jmnedictFurigana) && !furiganaVersion) {
@@ -82,6 +102,7 @@ async function main(): Promise<void> {
 
   if (unidic && !unidicVersion) throw new Error('--unidic-version is required with --unidic (e.g. 202512)');
   if (kanjium && !kanjiumVersion) throw new Error('--kanjium-version is required with --kanjium (the Kanjium commit)');
+  if (kanjivg && !kanjivgVersion) throw new Error('--kanjivg-version is required with --kanjivg (e.g. r20260714)');
 
   await AppDataSource.initialize();
 
@@ -138,6 +159,12 @@ async function main(): Promise<void> {
   if (kanjium && kanjiumVersion) {
     const report = await importKanjiumPitch(AppDataSource, kanjium, kanjiumVersion, { dryRun });
     logger.info(report, `kanjium pitch ${dryRun ? 'dry run' : 'imported'}`);
+  }
+
+  if (kanjidic2) logger.info(await importKanjidic(AppDataSource, kanjidic2, { dryRun }), 'kanjidic2');
+  if (kradfile) logger.info(await importKradfile(AppDataSource, kradfile, { dryRun }), 'kradfile');
+  if (kanjivg && kanjivgVersion) {
+    logger.info(await importKanjiVg(AppDataSource, kanjivg, kanjivgVersion, { dryRun }), 'kanjivg');
   }
 
   logger.info({ seconds: Math.round((Date.now() - startedAt) / 1000) }, 'dictionary import finished');

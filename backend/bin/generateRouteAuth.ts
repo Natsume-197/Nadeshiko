@@ -35,6 +35,8 @@ export const INTENTIONALLY_PUBLIC_OPERATIONS = new Set<string>([
   // Anonymous readers get word cards too, so no session is required; the route is server-only (the proxy refuses
   // browsers) and its controller refuses anything but our own frontend server's internal secret.
   'identifyDictionaryWord',
+  // The word card's kanji view (task 44), same reasons as the word lookup above.
+  'getDictionaryKanji',
 ]);
 
 /** A security scheme without scopes is malformed; refusing generation prevents a weaker guard from being emitted

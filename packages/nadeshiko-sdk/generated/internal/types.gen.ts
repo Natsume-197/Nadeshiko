@@ -1079,6 +1079,93 @@ export type DictionaryCandidate = {
 };
 
 /**
+ * One kanji as the word card's kanji view draws it (task 44).
+ *
+ */
+export type DictionaryKanji = {
+    character: string;
+    strokeCount: number;
+    /**
+     * KANJIDIC2 school grade. 1-6 elementary school, 8 the rest of the jōyō list, 9-10 jinmeiyō.
+     */
+    grade: number;
+    /**
+     * Rank among the 2,500 kanji most used in newspapers (KANJIDIC2).
+     */
+    frequency: number;
+    onReadings: Array<string>;
+    kunReadings: Array<string>;
+    meanings: Array<string>;
+    /**
+     * The language `meanings` are in; English when KANJIDIC2 has none in the requested one.
+     */
+    meaningsLanguage: 'en' | 'es';
+    /**
+     * The parts it is built from (KRADFILE).
+     */
+    components: Array<{
+        character: string;
+        /**
+         * The part is a kanji with a card of its own.
+         */
+        hasCard: boolean;
+    }>;
+    /**
+     * One SVG path per stroke in writing order, in KanjiVG's 109×109 view box. Empty when not drawn.
+     */
+    strokes: Array<string>;
+    /**
+     * Words written with this kanji, most frequent in Nadeshiko's corpus first.
+     */
+    words: Array<{
+        id: string;
+        headword: string;
+        reading: string;
+        /**
+         * Rank in Nadeshiko's corpus (1 is the most frequent word).
+         */
+        frequency: number;
+        gloss: string;
+    }>;
+};
+
+/**
+ * Not Found error response
+ */
+export type Error404 = {
+    /**
+     * Specific error code for programmatic handling
+     */
+    code: 'NOT_FOUND';
+    /**
+     * A short, human-readable summary of the problem
+     */
+    title: string;
+    /**
+     * A human-readable explanation specific to this occurrence
+     */
+    detail: string;
+    /**
+     * A URI reference that identifies the problem type (`about:blank` when the problem has no further semantics beyond the HTTP status, per RFC 9457)
+     */
+    type?: string;
+    /**
+     * A URI reference that identifies the specific occurrence (e.g., trace ID)
+     */
+    instance?: string;
+    /**
+     * The HTTP status code
+     */
+    status: 404;
+    /**
+     * Optional map of field names to their error messages (for validation errors)
+     */
+    errors?: {
+        [key: string]: string;
+    };
+};
+
+/**
  * Coverage statistics for a frequency tier
  */
 export type WordCoverageTier = {
@@ -1345,42 +1432,6 @@ export type Error409 = {
      * The HTTP status code
      */
     status: 409;
-    /**
-     * Optional map of field names to their error messages (for validation errors)
-     */
-    errors?: {
-        [key: string]: string;
-    };
-};
-
-/**
- * Not Found error response
- */
-export type Error404 = {
-    /**
-     * Specific error code for programmatic handling
-     */
-    code: 'NOT_FOUND';
-    /**
-     * A short, human-readable summary of the problem
-     */
-    title: string;
-    /**
-     * A human-readable explanation specific to this occurrence
-     */
-    detail: string;
-    /**
-     * A URI reference that identifies the problem type (`about:blank` when the problem has no further semantics beyond the HTTP status, per RFC 9457)
-     */
-    type?: string;
-    /**
-     * A URI reference that identifies the specific occurrence (e.g., trace ID)
-     */
-    instance?: string;
-    /**
-     * The HTTP status code
-     */
-    status: 404;
     /**
      * Optional map of field names to their error messages (for validation errors)
      */
@@ -3443,6 +3494,57 @@ export type IdentifyDictionaryWordResponses = {
 };
 
 export type IdentifyDictionaryWordResponse = IdentifyDictionaryWordResponses[keyof IdentifyDictionaryWordResponses];
+
+export type GetDictionaryKanjiData = {
+    body?: never;
+    path: {
+        /**
+         * The kanji, one character (two UTF-16 units outside the BMP).
+         */
+        character: string;
+    };
+    query?: {
+        /**
+         * Language of the meanings and word glosses; English where there are none in it.
+         */
+        locale?: 'en' | 'es';
+    };
+    url: '/v1/dictionary/kanji/{character}';
+};
+
+export type GetDictionaryKanjiErrors = {
+    /**
+     * Bad Request
+     */
+    400: Error400;
+    /**
+     * Forbidden
+     */
+    403: Error403;
+    /**
+     * Not Found
+     */
+    404: Error404;
+    /**
+     * Too Many Requests. The response body indicates whether the request was rejected due to per-minute rate limiting or monthly quota exhaustion.
+     */
+    429: Error429;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type GetDictionaryKanjiError = GetDictionaryKanjiErrors[keyof GetDictionaryKanjiErrors];
+
+export type GetDictionaryKanjiResponses = {
+    /**
+     * OK
+     */
+    200: DictionaryKanji;
+};
+
+export type GetDictionaryKanjiResponse = GetDictionaryKanjiResponses[keyof GetDictionaryKanjiResponses];
 
 export type GetStatsOverviewData = {
     body?: never;

@@ -1,0 +1,50 @@
+get:
+  tags:
+    - Search
+  x-internal: true
+  # Server-only: the frontend proxy blocks browsers and the controller re-checks the internal secret.
+  x-server-only: true
+  operationId: getDictionaryKanji
+  summary: One kanji's card from Nadeshiko's own dictionary, for our own server only
+  description: |
+    What the word card shows when a reader opens one of a word's kanji: readings
+    and meanings (KANJIDIC2), its parts (KRADFILE), its stroke order (KanjiVG) and
+    the words written with it that Nadeshiko's subtitles use most. Called by the
+    frontend server, which caches it; refused unless the request came through our
+    own Nitro proxy.
+
+  security: []
+  parameters:
+    - name: character
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 2
+      description: The kanji, one character (two UTF-16 units outside the BMP).
+      example: 本
+    - name: locale
+      in: query
+      schema:
+        type: string
+        enum: [en, es]
+        default: en
+      description: Language of the meanings and word glosses; English where there are none in it.
+  responses:
+    "200":
+      description: OK
+      content:
+        application/json:
+          schema:
+            $ref: "../../components/schemas/DictionaryKanji.yaml"
+    "400":
+      $ref: "../../components/responses/BadRequest.yaml"
+    "403":
+      $ref: "../../components/responses/Forbidden.yaml"
+    "404":
+      $ref: "../../components/responses/NotFound.yaml"
+    "429":
+      $ref: "../../components/responses/TooManyRequests.yaml"
+    "500":
+      $ref: "../../components/responses/InternalServerError.yaml"

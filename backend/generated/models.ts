@@ -279,6 +279,29 @@ export type t_DictionaryCandidate = {
   sourceId: string;
 };
 
+export type t_DictionaryKanji = {
+  character: string;
+  components: {
+    character: string;
+    hasCard: boolean;
+  }[];
+  frequency: number | null;
+  grade: number | null;
+  kunReadings: string[];
+  meanings: string[];
+  meaningsLanguage: 'en' | 'es';
+  onReadings: string[];
+  strokeCount: number;
+  strokes: string[];
+  words: {
+    frequency: number;
+    gloss: string | null;
+    headword: string;
+    id: string;
+    reading: string | null;
+  }[];
+};
+
 export type t_Episode = {
   airedAt: string | null;
   description: string | null;
@@ -1224,6 +1247,14 @@ export type t_GetCoveredWordsQuerySchema = {
   minRank?: number;
   take?: number;
   tier: number;
+};
+
+export type t_GetDictionaryKanjiParamSchema = {
+  character: string;
+};
+
+export type t_GetDictionaryKanjiQuerySchema = {
+  locale?: 'en' | 'es';
 };
 
 export type t_GetEmailPreferencesByTokenQuerySchema = {

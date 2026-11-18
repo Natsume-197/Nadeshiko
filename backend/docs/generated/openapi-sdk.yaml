@@ -479,6 +479,66 @@ paths:
           $ref: "#/components/responses/TooManyRequests"
         "500":
           $ref: "#/components/responses/InternalServerError"
+  /v1/dictionary/kanji/{character}:
+    get:
+      tags:
+        - Search
+      x-internal: true
+      x-server-only: true
+      operationId: getDictionaryKanji
+      summary: One kanji's card from Nadeshiko's own dictionary, for our own server only
+      description: >
+        What the word card shows when a reader opens one of a word's kanji:
+        readings
+
+        and meanings (KANJIDIC2), its parts (KRADFILE), its stroke order
+        (KanjiVG) and
+
+        the words written with it that Nadeshiko's subtitles use most. Called by
+        the
+
+        frontend server, which caches it; refused unless the request came
+        through our
+
+        own Nitro proxy.
+      security: []
+      parameters:
+        - name: character
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 2
+          description: The kanji, one character (two UTF-16 units outside the BMP).
+          example: 本
+        - name: locale
+          in: query
+          schema:
+            type: string
+            enum:
+              - en
+              - es
+            default: en
+          description: Language of the meanings and word glosses; English where there are
+            none in it.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DictionaryKanji"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   /v1/stats/overview:
     get:
       tags:
@@ -8784,6 +8844,165 @@ components:
                       type: array
                       items:
                         type: string
+    DictionaryKanji:
+      type: object
+      description: |
+        One kanji as the word card's kanji view draws it (task 44).
+      required:
+        - character
+        - strokeCount
+        - grade
+        - frequency
+        - onReadings
+        - kunReadings
+        - meanings
+        - meaningsLanguage
+        - components
+        - strokes
+        - words
+      properties:
+        character:
+          type: string
+          example: 本
+        strokeCount:
+          type: integer
+          example: 5
+        grade:
+          type: integer
+          nullable: true
+          description: KANJIDIC2 school grade. 1-6 elementary school, 8 the rest of the
+            jōyō list, 9-10 jinmeiyō.
+          example: 1
+        frequency:
+          type: integer
+          nullable: true
+          description: Rank among the 2,500 kanji most used in newspapers (KANJIDIC2).
+          example: 10
+        onReadings:
+          type: array
+          items:
+            type: string
+          example:
+            - ホン
+        kunReadings:
+          type: array
+          items:
+            type: string
+          example:
+            - もと
+        meanings:
+          type: array
+          items:
+            type: string
+          example:
+            - book
+            - present
+            - main
+            - origin
+        meaningsLanguage:
+          type: string
+          enum:
+            - en
+            - es
+          description: The language `meanings` are in; English when KANJIDIC2 has none in
+            the requested one.
+        components:
+          type: array
+          description: The parts it is built from (KRADFILE).
+          items:
+            type: object
+            required:
+              - character
+              - hasCard
+            properties:
+              character:
+                type: string
+                example: 木
+              hasCard:
+                type: boolean
+                description: The part is a kanji with a card of its own.
+        strokes:
+          type: array
+          description: One SVG path per stroke in writing order, in KanjiVG's 109×109 view
+            box. Empty when not drawn.
+          items:
+            type: string
+        words:
+          type: array
+          description: Words written with this kanji, most frequent in Nadeshiko's corpus
+            first.
+          items:
+            type: object
+            required:
+              - id
+              - headword
+              - reading
+              - frequency
+              - gloss
+            properties:
+              id:
+                type: string
+                example: jmdict:1522150
+              headword:
+                type: string
+                example: 本当
+              reading:
+                type: string
+                nullable: true
+                example: ほんとう
+              frequency:
+                type: integer
+                description: Rank in Nadeshiko's corpus (1 is the most frequent word).
+                example: 120
+              gloss:
+                type: string
+                nullable: true
+                example: truth; reality; actuality
+    Error404:
+      type: object
+      description: Not Found error response
+      required:
+        - code
+        - title
+        - detail
+        - status
+      properties:
+        code:
+          type: string
+          description: Specific error code for programmatic handling
+          enum:
+            - NOT_FOUND
+        title:
+          type: string
+          minLength: 1
+          description: A short, human-readable summary of the problem
+        detail:
+          type: string
+          minLength: 1
+          description: A human-readable explanation specific to this occurrence
+        type:
+          type: string
+          format: uri
+          minLength: 1
+          description: A URI reference that identifies the problem type (`about:blank`
+            when the problem has no further semantics beyond the HTTP status,
+            per RFC 9457)
+        instance:
+          type: string
+          minLength: 1
+          description: A URI reference that identifies the specific occurrence (e.g.,
+            trace ID)
+        status:
+          type: integer
+          description: The HTTP status code
+          enum:
+            - 404
+        errors:
+          type: object
+          additionalProperties:
+            type: string
+          description: Optional map of field names to their error messages (for validation
+            errors)
     WordCoverageTier:
       type: object
       description: Coverage statistics for a frequency tier
@@ -9190,51 +9409,6 @@ components:
           description: The HTTP status code
           enum:
             - 409
-        errors:
-          type: object
-          additionalProperties:
-            type: string
-          description: Optional map of field names to their error messages (for validation
-            errors)
-    Error404:
-      type: object
-      description: Not Found error response
-      required:
-        - code
-        - title
-        - detail
-        - status
-      properties:
-        code:
-          type: string
-          description: Specific error code for programmatic handling
-          enum:
-            - NOT_FOUND
-        title:
-          type: string
-          minLength: 1
-          description: A short, human-readable summary of the problem
-        detail:
-          type: string
-          minLength: 1
-          description: A human-readable explanation specific to this occurrence
-        type:
-          type: string
-          format: uri
-          minLength: 1
-          description: A URI reference that identifies the problem type (`about:blank`
-            when the problem has no further semantics beyond the HTTP status,
-            per RFC 9457)
-        instance:
-          type: string
-          minLength: 1
-          description: A URI reference that identifies the specific occurrence (e.g.,
-            trace ID)
-        status:
-          type: integer
-          description: The HTTP status code
-          enum:
-            - 404
         errors:
           type: object
           additionalProperties:
@@ -12230,6 +12404,16 @@ components:
         type: about:blank
         instance: trace-id-placeholder
         status: 503
+    NotFound:
+      summary: Not Found
+      value:
+        code: NOT_FOUND
+        title: Not Found
+        detail: The requested resource could not be found. Please check the URL and try
+          again.
+        type: about:blank
+        instance: trace-id-placeholder
+        status: 404
     AccountConflict:
       summary: Account Conflict
       value:
@@ -12249,16 +12433,6 @@ components:
         type: about:blank
         instance: trace-id-placeholder
         status: 409
-    NotFound:
-      summary: Not Found
-      value:
-        code: NOT_FOUND
-        title: Not Found
-        detail: The requested resource could not be found. Please check the URL and try
-          again.
-        type: about:blank
-        instance: trace-id-placeholder
-        status: 404
   responses:
     TooManyRequests:
       description: Too Many Requests. The response body indicates whether the request
@@ -12334,6 +12508,15 @@ components:
           examples:
             ServiceOverloaded:
               $ref: "#/components/examples/ServiceOverloaded"
+    NotFound:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error404"
+          examples:
+            NotFound:
+              $ref: "#/components/examples/NotFound"
     Conflict:
       description: Conflict
       content:
@@ -12345,15 +12528,6 @@ components:
               $ref: "#/components/examples/AccountConflict"
             DuplicateKey:
               $ref: "#/components/examples/DuplicateKey"
-    NotFound:
-      description: Not Found
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/Error404"
-          examples:
-            NotFound:
-              $ref: "#/components/examples/NotFound"
     SegmentRevisionListResponse:
       description: OK
       content:
