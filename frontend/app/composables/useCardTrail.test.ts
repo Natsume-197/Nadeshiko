@@ -95,3 +95,27 @@ describe('clearing', () => {
     expect(t.currentLocation()).toEqual(origin);
   });
 });
+
+describe('kanji', () => {
+  test('a kanji opened from the word is a step of the trail, and back returns to the word', async () => {
+    const t = trail();
+
+    await t.showKanji('知');
+    expect(t.currentLocation()).toMatchObject({ kanji: '知' });
+    expect(t.canGoBack.value).toBe(true);
+
+    await t.goBack();
+    expect(t.currentLocation()).toEqual(origin);
+    expect(t.load).toHaveBeenLastCalledWith(origin);
+  });
+
+  test('a word opened from a kanji is a further step', async () => {
+    const t = trail();
+
+    await t.showKanji('知');
+    await t.showPart(part('知識'));
+    await t.goBack();
+
+    expect(t.currentLocation()).toMatchObject({ kanji: '知' });
+  });
+});

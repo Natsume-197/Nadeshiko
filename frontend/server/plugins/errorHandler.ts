@@ -114,6 +114,7 @@ export default defineNitroPlugin((nitroApp) => {
     if (statusCode < 500) return false;
     // Word-card 503s recover as optional enrichment; keep logs/metrics but avoid manufacturing a PostHog issue.
     if (statusCode === 503 && url.startsWith('/api/shirabe/words/candidates/')) return false;
+    if (statusCode === 503 && url.startsWith('/api/dictionary/kanji/')) return false;
     return resolveEventTraffic(event).traffic === 'reader';
   };
 
