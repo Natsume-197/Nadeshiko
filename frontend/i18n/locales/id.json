@@ -1098,10 +1098,48 @@
     "loading": "Memuat",
     "noResultsSupport": "Belum menemukan yang Anda cari? Usulkan konten untuk ditambahkan melalui {link} kami."
   },
+  "kanjiIndex": {
+    "title": "Kanji",
+    "intro": "Semua kanji jōyō dan JLPT, per level. Buka salah satunya untuk melihat cara baca, cara tulis, dan kalimat anime yang memakainya.",
+    "groupBy": "Kelompokkan kanji menurut",
+    "byGrade": "Kelas sekolah",
+    "groups": "Kelompok kanji",
+    "secondary": "Sekolah menengah",
+    "noJlpt": "Tanpa level JLPT"
+  },
   "tokenTooltip": {
     "lookupIn": "Cari di",
     "loading": "Mencari…",
     "moreSentences": "Kalimat lainnya",
+    "searchKanji": "Kalimat dengan kata yang memakai {kanji}",
+    "kanjiOpen": "Buka kanji {kanji}",
+    "kanjiOn": "On",
+    "kanjiKun": "Kun",
+    "kanjiStrokes": "{count} goresan",
+    "kanjiGrade": "Kelas {grade}",
+    "kanjiJoyo": "Jōyō",
+    "kanjiJinmeiyo": "Jinmeiyō (nama)",
+    "kanjiNewspaper": "#{rank} di surat kabar",
+    "kanjiParts": "Bagian",
+    "kanjiWords": "Kata umum di Nadeshiko",
+    "kanjiReplay": "Putar ulang urutan goresan",
+    "kanjiMissing": "Tidak ada entri untuk kanji ini.",
+    "kanjiStrokeOrder": "Urutan goresan {kanji}",
+    "kanjiAllReadings": "Semua",
+    "kanjiSentenceCount": "kalimat | kalimat",
+    "kanjiTitleCount": "judul | judul",
+    "kanjiRelatedHeading": "Kanji terkait",
+    "kanjiSentencesHeading": "Kalimat dengan {kanji}",
+    "kanjiAllSentences": "Lihat semua kalimat dengan {kanji}",
+    "kanjiNoSentences": "Belum ada kalimat dengan {kanji}.",
+    "kanjiSentencesFailed": "Kalimat tidak dapat dimuat. Coba lagi sebentar lagi.",
+    "kanjiPage": "Halaman kanji",
+    "kanjiOther": "Lainnya",
+    "kanjiJlpt": "JLPT N{level}",
+    "kanjiRadical": "Radikal",
+    "kanjiAllWords": "Tampilkan semua {count}",
+    "kanjiSameRadical": "Radikal sama ({count})",
+    "kanjiContainedIn": "Memuatnya ({count})",
     "playAudio": "Putar pelafalan",
     "unavailable": "Gagal memuat definisi. Tunggu sebentar, lalu coba lagi.",
     "noEntry": "Tidak ada entri kamus untuk kata ini.",
@@ -1338,6 +1376,14 @@
     "hint": "Pintasan tidak aktif saat Anda mengetik di kolom pencarian. Tekan ? untuk membuka atau menutup panel ini."
   },
   "seo": {
+    "kanjiIndex": {
+      "title": "Kanji {group}: bacaan, arti, dan urutan goresan",
+      "description": "{count} kanji {group}, masing-masing dengan bacaan, arti, urutan goresan, dan kalimat anime nyata."
+    },
+    "kanji": {
+      "title": "{kanji}: arti, bacaan, dan urutan goresan kanji",
+      "description": "{kanji} berarti {meaning}. Bacaan {readings}, urutan goresan, radikal, level JLPT dan Kanken, serta kata yang memakainya di subtitle anime."
+    },
     "home": {
       "title": "Nadeshiko: Cari kalimat bahasa Jepang dari anime, drama Jepang, dan YouTube",
       "description": "Cari lebih dari satu juta kalimat bahasa Jepang dari anime, drama Jepang, dan YouTube, lengkap dengan audio dan cuplikan gambar. Terjemahan tersedia dalam bahasa Inggris dan Spanyol. Cocok untuk sentence mining."

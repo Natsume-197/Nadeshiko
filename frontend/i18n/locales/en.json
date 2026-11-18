@@ -1098,10 +1098,48 @@
     "loading": "Loading",
     "noResultsSupport": "Looking for something we don't have yet? Suggest what we add next on our {link}"
   },
+  "kanjiIndex": {
+    "title": "Kanji",
+    "intro": "Every jōyō and JLPT kanji, by level. Open one to see how it is read, how it is written, and the anime sentences that use it.",
+    "groupBy": "Group kanji by",
+    "byGrade": "School grade",
+    "groups": "Kanji groups",
+    "secondary": "Secondary school",
+    "noJlpt": "No JLPT level"
+  },
   "tokenTooltip": {
     "lookupIn": "Look up in",
     "loading": "Looking up…",
     "moreSentences": "More sentences",
+    "searchKanji": "Sentences with words written with {kanji}",
+    "kanjiOpen": "Open the kanji {kanji}",
+    "kanjiOn": "On",
+    "kanjiKun": "Kun",
+    "kanjiStrokes": "{count} stroke | {count} strokes",
+    "kanjiGrade": "Grade {grade}",
+    "kanjiJoyo": "Jōyō",
+    "kanjiJinmeiyo": "Jinmeiyō (names)",
+    "kanjiNewspaper": "#{rank} in newspapers",
+    "kanjiParts": "Parts",
+    "kanjiWords": "Common words in Nadeshiko",
+    "kanjiReplay": "Replay the stroke order",
+    "kanjiMissing": "No entry for this kanji.",
+    "kanjiStrokeOrder": "Stroke order of {kanji}",
+    "kanjiAllReadings": "All",
+    "kanjiSentenceCount": "sentence | sentences",
+    "kanjiTitleCount": "title | titles",
+    "kanjiRelatedHeading": "Related kanji",
+    "kanjiSentencesHeading": "Sentences with {kanji}",
+    "kanjiAllSentences": "See all sentences with {kanji}",
+    "kanjiNoSentences": "No sentences with {kanji} yet.",
+    "kanjiSentencesFailed": "The sentences could not be loaded. Try again in a moment.",
+    "kanjiPage": "Kanji page",
+    "kanjiOther": "Other",
+    "kanjiJlpt": "JLPT N{level}",
+    "kanjiRadical": "Radical",
+    "kanjiAllWords": "Show all {count}",
+    "kanjiSameRadical": "Same radical ({count})",
+    "kanjiContainedIn": "Built with it ({count})",
     "playAudio": "Play pronunciation",
     "unavailable": "Definitions couldn't be loaded. Try again in a moment.",
     "noEntry": "No dictionary entry for this word.",
@@ -1338,6 +1376,14 @@
     "hint": "Shortcuts are disabled while typing in the search bar. Press ? to toggle this panel."
   },
   "seo": {
+    "kanjiIndex": {
+      "title": "{group} kanji: readings, meanings and stroke order",
+      "description": "The {count} kanji of {group}, each with its readings, meaning, stroke order and real anime sentences."
+    },
+    "kanji": {
+      "title": "{kanji}: kanji meaning, readings and stroke order",
+      "description": "{kanji} means {meaning}. Readings {readings}, stroke order, radical, JLPT and Kanken level, and the words written with it in anime subtitles."
+    },
     "home": {
       "title": "Nadeshiko: Search Japanese sentences from anime, J-drama and YouTube",
       "description": "Search over a million Japanese sentences from anime, J-drama and YouTube, each with audio, screenshot and translations in context. Built for sentence mining."

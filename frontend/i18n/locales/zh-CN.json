@@ -1098,10 +1098,48 @@
     "loading": "加载中",
     "noResultsSupport": "没有找到想要的内容？欢迎到我们的{link}建议下一批收录的作品。"
   },
+  "kanjiIndex": {
+    "title": "汉字",
+    "intro": "所有常用汉字和 JLPT 汉字，按等级排列。打开一个汉字，查看读音、笔顺以及使用它的动画例句。",
+    "groupBy": "汉字分组方式",
+    "byGrade": "学年",
+    "groups": "汉字分组",
+    "secondary": "中学及以上",
+    "noJlpt": "无 JLPT 等级"
+  },
   "tokenTooltip": {
     "lookupIn": "在词典中查询",
     "loading": "查询中…",
     "moreSentences": "更多例句",
+    "searchKanji": "包含「{kanji}」的词语的例句",
+    "kanjiOpen": "打开汉字「{kanji}」",
+    "kanjiOn": "音",
+    "kanjiKun": "训",
+    "kanjiStrokes": "{count}画",
+    "kanjiGrade": "小学{grade}年级",
+    "kanjiJoyo": "常用汉字",
+    "kanjiJinmeiyo": "人名用汉字",
+    "kanjiNewspaper": "报纸频率第{rank}位",
+    "kanjiParts": "部件",
+    "kanjiWords": "Nadeshiko 中的常用词",
+    "kanjiReplay": "重新播放笔顺",
+    "kanjiMissing": "没有这个汉字的条目。",
+    "kanjiStrokeOrder": "「{kanji}」的笔顺",
+    "kanjiAllReadings": "全部",
+    "kanjiSentenceCount": "个例句 | 个例句",
+    "kanjiTitleCount": "部作品 | 部作品",
+    "kanjiRelatedHeading": "相关汉字",
+    "kanjiSentencesHeading": "包含「{kanji}」的例句",
+    "kanjiAllSentences": "查看所有包含「{kanji}」的例句",
+    "kanjiNoSentences": "还没有包含「{kanji}」的例句。",
+    "kanjiSentencesFailed": "无法加载例句，请稍后再试。",
+    "kanjiPage": "汉字页面",
+    "kanjiOther": "其他",
+    "kanjiJlpt": "JLPT N{level}",
+    "kanjiRadical": "部首",
+    "kanjiAllWords": "显示全部 {count} 个",
+    "kanjiSameRadical": "同部首 ({count})",
+    "kanjiContainedIn": "包含它的汉字 ({count})",
     "playAudio": "播放发音",
     "unavailable": "无法加载释义，请稍后重试。",
     "noEntry": "词典中没有此词的条目。",
@@ -1338,6 +1376,14 @@
     "hint": "在搜索栏中输入时，快捷键不会生效。按 ? 可打开或关闭此面板。"
   },
   "seo": {
+    "kanjiIndex": {
+      "title": "{group}汉字：读音、意思和笔顺",
+      "description": "{group}的 {count} 个汉字，每个都有读音、意思、笔顺和真实的动画例句。"
+    },
+    "kanji": {
+      "title": "汉字「{kanji}」的意思、读音和笔顺",
+      "description": "「{kanji}」的意思是 {meaning}。读音 {readings}，笔顺、部首、JLPT 和汉检等级，以及动画字幕中使用它的词语。"
+    },
     "home": {
       "title": "Nadeshiko：搜索动画、日剧和 YouTube 中的日语例句",
       "description": "搜索动画、日剧和 YouTube 中的百万余条日语例句，查看原声、截图和上下文，轻松采集例句制作学习卡片。例句译文目前提供英语和西班牙语，暂不提供中文。"

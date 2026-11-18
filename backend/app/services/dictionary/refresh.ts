@@ -9,12 +9,14 @@ import type { DataSource } from 'typeorm';
 import { logger } from '@config/log';
 import { type DictionarySource, fromJmdict, fromJmnedict, type ImportEntry } from './import/entries';
 import { importDictionary, importFurigana } from './import/importDictionary';
+import { importKanjidic, importKradfile } from './import/importKanji';
 import { type FuriganaEntry, readDictionary, readJsonArray } from './import/readers';
 import { extractTgz } from './import/untar';
 
 /**
- * The weekly refresh of `dict.*` from the latest upstream releases (task 40): jmdict-simplified (JMdict, JMnedict)
- * and JmdictFurigana. A source whose release tag is already in `dict.source` is skipped, so a week with no release
+ * The weekly refresh of `dict.*` from the latest upstream releases (task 40): jmdict-simplified (JMdict, JMnedict,
+ * and for the kanji card of task 44 KANJIDIC2 and KRADFILE) and JmdictFurigana. KanjiVG is imported by hand
+ * (`bin/importDictionary.ts --kanjivg`): it releases a few times a year, as a zip. A source whose release tag is already in `dict.source` is skipped, so a week with no release
  * costs two GitHub API calls. Files go to a temporary folder, are streamed in, and are deleted afterwards.
  */
 
@@ -29,6 +31,8 @@ const SOURCES = [
   { name: 'jmnedict', repo: 'scriptin/jmdict-simplified', asset: /^jmnedict-all-.*\.json\.tgz$/ },
   { name: 'jmdict-furigana', repo: 'Doublevil/JmdictFurigana', asset: /^JmdictFurigana\.json\.tar\.gz$/ },
   { name: 'jmnedict-furigana', repo: 'Doublevil/JmdictFurigana', asset: /^JmnedictFurigana\.json\.tar\.gz$/ },
+  { name: 'kanjidic2', repo: 'scriptin/jmdict-simplified', asset: /^kanjidic2-all-.*\.json\.tgz$/ },
+  { name: 'kradfile', repo: 'scriptin/jmdict-simplified', asset: /^kradfile-.*\.json\.tgz$/ },
 ] as const;
 
 type SourceName = (typeof SOURCES)[number]['name'];
@@ -76,6 +80,8 @@ async function importFile(dataSource: DataSource, source: SourceName, path: stri
   if (source === 'jmdict-furigana' || source === 'jmnedict-furigana') {
     return importFurigana(dataSource, source, tag, readJsonArray<FuriganaEntry>(path));
   }
+  if (source === 'kanjidic2') return importKanjidic(dataSource, path, { versionLabel: tag });
+  if (source === 'kradfile') return importKradfile(dataSource, path, { versionLabel: tag });
   let metadata: JMdictDictionaryMetadata | null = null;
   const raw = readDictionary(source, path, (m) => {
     metadata = m;

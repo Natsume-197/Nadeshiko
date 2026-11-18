@@ -97,6 +97,20 @@ describe('refreshDictionary', () => {
     ],
   });
   const jmnedict = JSON.stringify({ ...JSON.parse(jmdict), words: [] });
+  const kanjidic2 = JSON.stringify({
+    version: '3.6.2',
+    dictDate: '2026-11-09',
+    characters: [
+      {
+        literal: '青',
+        misc: { grade: 1, strokeCounts: [8], frequency: 589 },
+        readingMeaning: {
+          groups: [{ readings: [{ type: 'ja_on', value: 'セイ' }], meanings: [{ lang: 'en', value: 'blue' }] }],
+        },
+      },
+    ],
+  });
+  const kradfile = JSON.stringify({ version: '3.6.2', kanji: { 青: ['月', '土', '二'] } });
   const furigana = JSON.stringify([{ text: '青', reading: 'あお', furigana: [{ ruby: '青', rt: 'あお' }] }]);
 
   const files: Record<string, Buffer> = {
@@ -104,6 +118,8 @@ describe('refreshDictionary', () => {
     'jmnedict-all-3.6.2+20261109.json.tgz': tar([{ name: 'jmnedict-all-3.6.2.json', body: jmnedict }]),
     'JmdictFurigana.json.tar.gz': tar([{ name: 'JmdictFurigana.json', body: `﻿${furigana}` }]),
     'JmnedictFurigana.json.tar.gz': tar([{ name: 'JmnedictFurigana.json', body: '[]' }]),
+    'kanjidic2-all-3.6.2+20261109.json.tgz': tar([{ name: 'kanjidic2-all-3.6.2.json', body: kanjidic2 }]),
+    'kradfile-3.6.2+20261109.json.tgz': tar([{ name: 'kradfile-3.6.2.json', body: kradfile }]),
   };
   const release = (tag: string, names: string[]) => ({
     tag_name: tag,
@@ -114,7 +130,12 @@ describe('refreshDictionary', () => {
     const fetchMock = vi.fn(async (url: string) => {
       if (url.includes('scriptin/jmdict-simplified/releases/latest')) {
         return Response.json(
-          release('3.6.2+20261109', ['jmdict-all-3.6.2+20261109.json.tgz', 'jmnedict-all-3.6.2+20261109.json.tgz']),
+          release('3.6.2+20261109', [
+            'jmdict-all-3.6.2+20261109.json.tgz',
+            'jmnedict-all-3.6.2+20261109.json.tgz',
+            'kanjidic2-all-3.6.2+20261109.json.tgz',
+            'kradfile-3.6.2+20261109.json.tgz',
+          ]),
         );
       }
       if (url.includes('Doublevil/JmdictFurigana/releases/latest')) {
@@ -140,12 +161,22 @@ describe('refreshDictionary', () => {
       ['jmnedict', 'imported'],
       ['jmdict-furigana', 'imported'],
       ['jmnedict-furigana', 'imported'],
+      ['kanjidic2', 'imported'],
+      ['kradfile', 'imported'],
     ]);
     expect(await TestDataSource.query(`SELECT name, version FROM dict.source ORDER BY name`)).toEqual([
       { name: 'jmdict', version: '3.6.2+20261109' },
       { name: 'jmdict-furigana', version: '2.3.2+2026-11-25' },
       { name: 'jmnedict', version: '3.6.2+20261109' },
       { name: 'jmnedict-furigana', version: '2.3.2+2026-11-25' },
+      { name: 'kanjidic2', version: '3.6.2+20261109' },
+      { name: 'kradfile', version: '3.6.2+20261109' },
+    ]);
+    expect(await TestDataSource.query(`SELECT character, meanings_en FROM dict.kanji`)).toEqual([
+      { character: '青', meanings_en: ['blue'] },
+    ]);
+    expect(await TestDataSource.query(`SELECT components FROM dict.kanji_component`)).toEqual([
+      { components: ['月', '土', '二'] },
     ]);
     expect(await TestDataSource.query(`SELECT text FROM dict.form WHERE word_id = 1381380 ORDER BY idx`)).toEqual([
       { text: '青' },

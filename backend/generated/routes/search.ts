@@ -17,12 +17,17 @@ import { type NextFunction, type Request, type RequestHandler, type Response, Ro
 import { z } from 'zod/v4';
 import type {
   t_DictionaryCandidate,
+  t_DictionaryKanji,
   t_Error400,
   t_Error401,
   t_Error403,
+  t_Error404,
   t_Error429,
   t_Error500,
   t_Error503,
+  t_GetDictionaryKanjiIndexQuerySchema,
+  t_GetDictionaryKanjiParamSchema,
+  t_GetDictionaryKanjiQuerySchema,
   t_IdentifyDictionaryWordQuerySchema,
   t_MediaAutocompleteResponse,
   t_SearchMediaRequest,
@@ -33,12 +38,14 @@ import type {
   t_SearchStatsRequest,
   t_SearchStatsResponse,
 } from '../models.ts';
-import type { IdentifyDictionaryWordQueryOutput, SearchMediaRequestOutput, SearchMultipleRequestOutput, SearchRequestOutput, SearchStatsRequestOutput } from '../outputTypes.ts';
+import type { GetDictionaryKanjiIndexQueryOutput, GetDictionaryKanjiQueryOutput, IdentifyDictionaryWordQueryOutput, SearchMediaRequestOutput, SearchMultipleRequestOutput, SearchRequestOutput, SearchStatsRequestOutput } from '../outputTypes.ts';
 import {
   s_DictionaryCandidate,
+  s_DictionaryKanji,
   s_Error400,
   s_Error401,
   s_Error403,
+  s_Error404,
   s_Error429,
   s_Error500,
   s_Error503,
@@ -140,12 +147,55 @@ export type IdentifyDictionaryWord = (
   next: NextFunction,
 ) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
 
+export type GetDictionaryKanjiIndexResponder = {
+  with200(): ExpressRuntimeResponse<{
+    kanji: {
+      character: string;
+      frequency: number | null;
+      grade: number | null;
+      jlpt: number | null;
+      meaning: string | null;
+      reading: string | null;
+    }[];
+  }>;
+  with403(): ExpressRuntimeResponse<t_Error403>;
+  with429(): ExpressRuntimeResponse<t_Error429>;
+  with500(): ExpressRuntimeResponse<t_Error500>;
+} & ExpressRuntimeResponder;
+
+export type GetDictionaryKanjiIndex = (
+  params: Params<void, GetDictionaryKanjiIndexQueryOutput, void, void>,
+  respond: GetDictionaryKanjiIndexResponder,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
+
+export type GetDictionaryKanjiResponder = {
+  with200(): ExpressRuntimeResponse<t_DictionaryKanji>;
+  with400(): ExpressRuntimeResponse<t_Error400>;
+  with403(): ExpressRuntimeResponse<t_Error403>;
+  with404(): ExpressRuntimeResponse<t_Error404>;
+  with429(): ExpressRuntimeResponse<t_Error429>;
+  with500(): ExpressRuntimeResponse<t_Error500>;
+} & ExpressRuntimeResponder;
+
+export type GetDictionaryKanji = (
+  params: Params<t_GetDictionaryKanjiParamSchema, GetDictionaryKanjiQueryOutput, void, void>,
+  respond: GetDictionaryKanjiResponder,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
+
 export type SearchImplementation = {
   search: Search;
   getSearchStats: GetSearchStats;
   searchWords: SearchWords;
   searchMedia: SearchMedia;
   identifyDictionaryWord: IdentifyDictionaryWord;
+  getDictionaryKanjiIndex: GetDictionaryKanjiIndex;
+  getDictionaryKanji: GetDictionaryKanji;
 };
 
 export function createSearchRouter(
@@ -442,6 +492,140 @@ export function createSearchRouter(
         .identifyDictionaryWord(input, responder, req, res, next)
         .catch(handleImplementationError)
         .then(handleResponse(res, identifyDictionaryWordResponseBodyValidator));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  const getDictionaryKanjiIndexQuerySchema = z.object({ locale: z.enum(['en', 'es']).optional().default('en') });
+
+  const getDictionaryKanjiIndexResponseBodyValidator = responseValidationFactory(
+    [
+      [
+        '200',
+        z.object({
+          kanji: z.array(
+            z.object({
+              character: z.string(),
+              grade: z.coerce.number().nullable(),
+              jlpt: z.coerce.number().nullable(),
+              frequency: z.coerce.number().nullable(),
+              reading: z.string().nullable(),
+              meaning: z.string().nullable(),
+            }),
+          ),
+        }),
+      ],
+      ['403', s_Error403],
+      ['429', s_Error429],
+      ['500', s_Error500],
+    ],
+    undefined,
+  );
+
+  // getDictionaryKanjiIndex
+  router.get(`/v1/dictionary/kanji`, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const input = {
+        params: undefined,
+        query: parseRequestInput(getDictionaryKanjiIndexQuerySchema, req.query, RequestInputType.QueryString),
+        body: undefined,
+        headers: undefined,
+      };
+
+      const responder = {
+        with200() {
+          return new ExpressRuntimeResponse<{
+            kanji: {
+              character: string;
+              frequency: number | null;
+              grade: number | null;
+              jlpt: number | null;
+              meaning: string | null;
+              reading: string | null;
+            }[];
+          }>(200);
+        },
+        with403() {
+          return new ExpressRuntimeResponse<t_Error403>(403);
+        },
+        with429() {
+          return new ExpressRuntimeResponse<t_Error429>(429);
+        },
+        with500() {
+          return new ExpressRuntimeResponse<t_Error500>(500);
+        },
+        withStatus(status: StatusCode) {
+          return new ExpressRuntimeResponse(status);
+        },
+      };
+
+      await implementation
+        .getDictionaryKanjiIndex(input, responder, req, res, next)
+        .catch(handleImplementationError)
+        .then(handleResponse(res, getDictionaryKanjiIndexResponseBodyValidator));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  const getDictionaryKanjiParamSchema = z.object({ character: z.string().min(1).max(2) });
+
+  const getDictionaryKanjiQuerySchema = z.object({
+    locale: z.enum(['en', 'es']).optional().default('en'),
+    related: z.enum(['short', 'all']).optional().default('short'),
+  });
+
+  const getDictionaryKanjiResponseBodyValidator = responseValidationFactory(
+    [
+      ['200', s_DictionaryKanji],
+      ['400', s_Error400],
+      ['403', s_Error403],
+      ['404', s_Error404],
+      ['429', s_Error429],
+      ['500', s_Error500],
+    ],
+    undefined,
+  );
+
+  // getDictionaryKanji
+  router.get(`/v1/dictionary/kanji/:character`, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const input = {
+        params: parseRequestInput(getDictionaryKanjiParamSchema, req.params, RequestInputType.RouteParam),
+        query: parseRequestInput(getDictionaryKanjiQuerySchema, req.query, RequestInputType.QueryString),
+        body: undefined,
+        headers: undefined,
+      };
+
+      const responder = {
+        with200() {
+          return new ExpressRuntimeResponse<t_DictionaryKanji>(200);
+        },
+        with400() {
+          return new ExpressRuntimeResponse<t_Error400>(400);
+        },
+        with403() {
+          return new ExpressRuntimeResponse<t_Error403>(403);
+        },
+        with404() {
+          return new ExpressRuntimeResponse<t_Error404>(404);
+        },
+        with429() {
+          return new ExpressRuntimeResponse<t_Error429>(429);
+        },
+        with500() {
+          return new ExpressRuntimeResponse<t_Error500>(500);
+        },
+        withStatus(status: StatusCode) {
+          return new ExpressRuntimeResponse(status);
+        },
+      };
+
+      await implementation
+        .getDictionaryKanji(input, responder, req, res, next)
+        .catch(handleImplementationError)
+        .then(handleResponse(res, getDictionaryKanjiResponseBodyValidator));
     } catch (error) {
       next(error);
     }

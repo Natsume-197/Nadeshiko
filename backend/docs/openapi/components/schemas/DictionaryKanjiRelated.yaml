@@ -1,0 +1,20 @@
+type: object
+description: Another kanji the kanji view lists, with one reading and one meaning.
+required: [character, reading, meaning, grade]
+properties:
+  character:
+    type: string
+    example: 飯
+  reading:
+    type: string
+    nullable: true
+    example: ハン
+  meaning:
+    type: string
+    nullable: true
+    example: meal
+  grade:
+    type: integer
+    nullable: true
+    description: School grade (1-6 and 8 jōyō, 9-10 jinmeiyō), to group the list.
+    example: 4

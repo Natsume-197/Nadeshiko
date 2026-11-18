@@ -13,6 +13,8 @@ const CANONICAL_PARAMS: Record<string, string[]> = {
   // Tier and filter define distinct word sets. Preserve the sitemap's COVERED filter rather than
   // canonicalizing it to noindexed word results.
   '/stats/words': ['tier', 'filter'],
+  // The kanji index: each grouping and level is a different set of kanji (task 44).
+  '/kanji': ['by', 'level'],
 };
 
 /**

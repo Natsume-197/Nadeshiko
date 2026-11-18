@@ -1098,10 +1098,48 @@
     "loading": "Carregando",
     "noResultsSupport": "Não encontrou o que procurava? Sugira o próximo conteúdo no nosso {link}."
   },
+  "kanjiIndex": {
+    "title": "Kanji",
+    "intro": "Todos os kanji jōyō e do JLPT, por nível. Abra um para ver como se lê, como se escreve e as frases de anime que o usam.",
+    "groupBy": "Agrupar kanji por",
+    "byGrade": "Ano escolar",
+    "groups": "Grupos de kanji",
+    "secondary": "Ensino médio",
+    "noJlpt": "Sem nível JLPT"
+  },
   "tokenTooltip": {
     "lookupIn": "Consultar em",
     "loading": "Consultando…",
     "moreSentences": "Mais frases",
+    "searchKanji": "Frases com palavras escritas com {kanji}",
+    "kanjiOpen": "Abrir o kanji {kanji}",
+    "kanjiOn": "On",
+    "kanjiKun": "Kun",
+    "kanjiStrokes": "{count} traço | {count} traços",
+    "kanjiGrade": "{grade}º ano",
+    "kanjiJoyo": "Jōyō",
+    "kanjiJinmeiyo": "Jinmeiyō (nomes)",
+    "kanjiNewspaper": "nº {rank} em jornais",
+    "kanjiParts": "Partes",
+    "kanjiWords": "Palavras comuns no Nadeshiko",
+    "kanjiReplay": "Repetir a ordem dos traços",
+    "kanjiMissing": "Nenhuma entrada para este kanji.",
+    "kanjiStrokeOrder": "Ordem dos traços de {kanji}",
+    "kanjiAllReadings": "Todas",
+    "kanjiSentenceCount": "frase | frases",
+    "kanjiTitleCount": "título | títulos",
+    "kanjiRelatedHeading": "Kanji relacionados",
+    "kanjiSentencesHeading": "Frases com {kanji}",
+    "kanjiAllSentences": "Ver todas as frases com {kanji}",
+    "kanjiNoSentences": "Ainda não há frases com {kanji}.",
+    "kanjiSentencesFailed": "Não foi possível carregar as frases. Tente novamente em instantes.",
+    "kanjiPage": "Página do kanji",
+    "kanjiOther": "Outros",
+    "kanjiJlpt": "JLPT N{level}",
+    "kanjiRadical": "Radical",
+    "kanjiAllWords": "Ver todas as {count}",
+    "kanjiSameRadical": "Mesmo radical ({count})",
+    "kanjiContainedIn": "Que o contêm ({count})",
     "playAudio": "Ouvir pronúncia",
     "unavailable": "Não foi possível carregar as definições. Tente novamente em instantes.",
     "noEntry": "Nenhum verbete encontrado para esta palavra.",
@@ -1338,6 +1376,14 @@
     "hint": "Os atalhos ficam desativados enquanto você digita na barra de busca. Pressione ? para abrir ou fechar este painel."
   },
   "seo": {
+    "kanjiIndex": {
+      "title": "Kanji de {group}: leituras, significados e ordem dos traços",
+      "description": "Os {count} kanji de {group}, cada um com leituras, significado, ordem dos traços e frases reais de anime."
+    },
+    "kanji": {
+      "title": "{kanji}: significado, leituras e ordem dos traços do kanji",
+      "description": "{kanji} significa {meaning}. Leituras {readings}, ordem dos traços, radical, nível JLPT e Kanken, e as palavras que o usam em legendas de anime."
+    },
     "home": {
       "title": "Nadeshiko: busque frases em japonês de animes, doramas e vídeos do YouTube",
       "description": "Busque mais de um milhão de frases em japonês de animes, doramas e vídeos do YouTube, com áudio, imagem e traduções em inglês e espanhol. Feito para mineração de frases."

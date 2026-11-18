@@ -279,6 +279,65 @@ export type t_DictionaryCandidate = {
   sourceId: string;
 };
 
+export type t_DictionaryKanji = {
+  character: string;
+  components: {
+    character: string;
+    hasCard: boolean;
+    meaning: string | null;
+  }[];
+  containedIn: t_DictionaryKanjiRelated[];
+  containedInCount: number;
+  frequency: number | null;
+  grade: number | null;
+  jlpt: number | null;
+  kanken: string | null;
+  meanings: string[];
+  meaningsLanguage: 'en' | 'es';
+  radical: {
+    character: string | null;
+    glyph: string;
+    meaning: string;
+    number: number;
+    reading: string;
+  } | null;
+  readings: {
+    examples: (t_DictionaryKanjiWordRef & {
+      furigana: {
+        ruby?: string;
+        text: string;
+      }[];
+    })[];
+    kind: 'on' | 'kun';
+    reading: string;
+  }[];
+  sameRadical: t_DictionaryKanjiRelated[];
+  sameRadicalCount: number;
+  strokeCount: number;
+  strokeNumbers: number[][];
+  strokes: string[];
+  words: {
+    frequency: number;
+    gloss: string | null;
+    headword: string;
+    id: string;
+    reading: string | null;
+  }[];
+};
+
+export type t_DictionaryKanjiRelated = {
+  character: string;
+  grade: number | null;
+  meaning: string | null;
+  reading: string | null;
+};
+
+export type t_DictionaryKanjiWordRef = {
+  headword: string;
+  id: string;
+  reading: string | null;
+};
+
 export type t_Episode = {
   airedAt: string | null;
   description: string | null;
@@ -1224,6 +1283,19 @@ export type t_GetCoveredWordsQuerySchema = {
   minRank?: number;
   take?: number;
   tier: number;
+};
+
+export type t_GetDictionaryKanjiParamSchema = {
+  character: string;
+};
+
+export type t_GetDictionaryKanjiQuerySchema = {
+  locale?: 'en' | 'es';
+  related?: 'short' | 'all';
+};
+
+export type t_GetDictionaryKanjiIndexQuerySchema = {
+  locale?: 'en' | 'es';
 };
 
 export type t_GetEmailPreferencesByTokenQuerySchema = {

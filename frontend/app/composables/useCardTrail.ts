@@ -1,12 +1,14 @@
 import { computed, ref } from 'vue';
 
 /** A word the card can stand on: the token it opened on, or a part walked into
- *  from it. The same shape `peekWord`/`fetchWord` are keyed by. */
+ *  from it. The same shape `peekWord`/`fetchWord` are keyed by. With `kanji`
+ *  set it is that kanji's view instead (task 44), and the word fields are unused. */
 export interface CardLocation {
   lemma: string;
   surface: string;
   reading: string;
   pos: string;
+  kanji?: string;
 }
 
 /**
@@ -24,10 +26,19 @@ export function useCardTrail(load: (location: CardLocation) => Promise<void>, or
   }
 
   async function showPart(part: { lemma: string; text: string; reading?: string }): Promise<void> {
-    const location = { lemma: part.lemma, surface: part.text, reading: part.reading ?? '', pos: '' };
+    await push({ lemma: part.lemma, surface: part.text, reading: part.reading ?? '', pos: '' });
+  }
+
+  async function push(location: CardLocation): Promise<void> {
     trail.value = [...trail.value, location];
     forward.value = [];
     await load(location);
+  }
+
+  /** One of the word's kanji, opened inside the card. A step of the same trail, so
+   *  back returns to the word it was opened from. */
+  async function showKanji(character: string): Promise<void> {
+    await push({ lemma: '', surface: character, reading: '', pos: '', kanji: character });
   }
 
   async function goBack(): Promise<void> {
@@ -54,5 +65,5 @@ export function useCardTrail(load: (location: CardLocation) => Promise<void>, or
     forward.value = [];
   }
 
-  return { canGoBack, canGoForward, currentLocation, showPart, goBack, goForward, clearTrail };
+  return { canGoBack, canGoForward, currentLocation, showPart, showKanji, goBack, goForward, clearTrail };
 }

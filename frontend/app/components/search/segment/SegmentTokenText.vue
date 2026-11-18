@@ -9,7 +9,7 @@ import {
   candidateSummary,
   dictionaryKey,
   glossPreference,
-  // The same three names that ride out to Shirabe as `utm_content`, reused here
+  // The same names that ride out to Shirabe as `utm_content`, reused here
   // rather than restated: the click we record and the visit Shirabe records are
   // then labelled identically, so the two sides reconcile per surface instead of
   // only in total.
@@ -19,6 +19,9 @@ import type { DictionaryId } from '~/composables/useDictionaryLinks';
 import { distinctSurface, minedWord } from '~/utils/ankiWord';
 import { createSegmentTaps } from '~/utils/segmentTaps';
 import { fetchWord, peekWord, type WordLookup } from '~/utils/wordLookup';
+import { useKanjiView } from '~/composables/useKanjiView';
+import type { KanjiCardWordRef } from '~/utils/kanjiLookup';
+import WordCardKanji from './WordCardKanji.vue';
 // Two different verbs, so two different shapes. These sit side by side at 16px,
 // where `mdiStarCheckOutline` and `mdiStarPlusOutline` -- the pair that was here
 // -- were one star with a smudge in the corner: the reader could not tell "show
@@ -67,7 +70,8 @@ const isOn = (value: unknown): boolean => value === true || value === 'true';
 const config = useRuntimeConfig().public;
 const lookupsEnabled = isOn(config.shirabeLookups);
 const emit = defineEmits<{
-  'token-click': [dictionaryForm: string];
+  // `contains` asks for the "contains" search (task 43): the word inside longer words, which is what a kanji wants.
+  'token-click': [query: string, options?: { contains?: boolean }];
 }>();
 
 const enrichedTokens = computed<EnrichedToken[]>(() => {
@@ -259,6 +263,8 @@ function isAskable(token: EnrichedToken): boolean {
 }
 
 async function loadWord(token: EnrichedToken): Promise<void> {
+  // A new word, so the card is not on one of the last word's kanji any more.
+  kanjiView.clear();
   // Not configured: no key on the server, so there is nothing to ask. Leaving
   // the request out entirely beats firing one that 503s on every hover and
   // caching the failure, and the card still answers from the token alone.
@@ -414,6 +420,7 @@ const closeTooltip = () => {
   // happened to reset it.
   clearLookup();
   clearTrail();
+  kanjiView.clear();
   clearPicked();
   revealDefinitions.value = false;
   cancelPending();
@@ -628,6 +635,13 @@ async function loadLocation(location: CardLocation): Promise<void> {
   // the new word's definition to the old word's sense numbers.
   clearPicked();
 
+  // One of the word's kanji (task 44): the card shows that kanji's view instead of a word.
+  if (location.kanji) {
+    await kanjiView.show(location.kanji);
+    return;
+  }
+  kanjiView.clear();
+
   // Guarded like the hover path, and by the same guard: a slow answer for a word
   // the reader has since navigated away from must not paint over whatever they
   // are looking at now.
@@ -640,10 +654,37 @@ function openedOn(): CardLocation | null {
   return ref ? { lemma: ref.lemma, surface: ref.surface, reading: ref.reading, pos: ref.pos } : null;
 }
 
-const { canGoBack, canGoForward, showPart, goBack, goForward, clearTrail } = useCardTrail(
+const { canGoBack, canGoForward, showPart, showKanji, goBack, goForward, clearTrail } = useCardTrail(
   loadLocation,
   openedOn,
 );
+
+/** The kanji the card is showing instead of a word, when the reader opened one (task 44). */
+const kanjiView = useKanjiView(() => glossLanguages.value.labels);
+const kanjiShown = computed(() => kanjiView.kanji.value);
+
+/** A kanji chip under the headword, or a part of the kanji being shown: open it inside the card. */
+const openKanji = (character: string, from: 'chip' | 'part', position: number) => {
+  posthog.capture('kanji_card_opened', {
+    kanji: character,
+    from,
+    position,
+    lemma: hoveredToken.value?.lookupRef?.lemma ?? null,
+  });
+  void showKanji(character);
+};
+
+/** The kanji's own page (`/kanji/食`), for everything the card only starts. The card closes on the way out. */
+const openKanjiPage = (character: string) => {
+  posthog.capture('kanji_page_opened', { kanji: character, from: 'word-card' });
+  closeTooltip();
+  void router.push(localePath(`/kanji/${encodeURIComponent(character)}`));
+};
+
+/** A word from the kanji view's list, opened in the card the way a part is. */
+const openKanjiWord = (word: KanjiCardWordRef) => {
+  void showPart({ lemma: word.headword, text: word.headword, reading: word.reading ?? '' });
+};
 
 const revealHiddenDefinitions = () => {
   revealDefinitions.value = true;
@@ -659,6 +700,14 @@ const revealHiddenDefinitions = () => {
 const searchForWord = (query: string) => {
   closeTooltip();
   emit('token-click', query);
+};
+
+// The kanji view's "sentences" link searches Nadeshiko for the words written with that kanji (本 finds 本当, 日本,
+// 絵本). Same exit as the headword, in the "contains" mode.
+const searchForKanji = (character: string) => {
+  posthog.capture('kanji_sentences_searched', { kanji: character, lemma: hoveredToken.value?.lookupRef?.lemma ?? null });
+  closeTooltip();
+  emit('token-click', character, { contains: true });
 };
 
 /**
@@ -722,13 +771,8 @@ const dictionaryLinks = computed(() => {
   if (!token) return [];
   return (
     presets
+      // In preset order, which puts shirabe.org first when it is on.
       .filter((preset) => isDictionaryEnabled(preset.id))
-      // Shirabe first: it is the dictionary this card is already showing, so it is
-      // where "more than fits here" leads. The rest keep their configured order.
-      // `filter` has already made a fresh array, so the broadly-supported
-      // mutating sort cannot alter the presets held by the composable. `toSorted`
-      // is newer than browsers we still receive reader traffic from.
-      .sort((a, b) => Number(b.required ?? false) - Number(a.required ?? false))
       .map((preset) => ({
         id: preset.id,
         label: preset.label,
@@ -848,7 +892,7 @@ function reportDictionaryClick(dictionary: DictionaryId, surface: ShirabeLinkSur
           :style="[tooltipStyle, { '--definition-size': definitionFont }]"
           role="dialog"
           aria-modal="false"
-          :aria-label="headword"
+          :aria-label="kanjiShown ?? headword"
           tabindex="-1"
           @click.stop
         >
@@ -857,16 +901,19 @@ function reportDictionaryClick(dictionary: DictionaryId, surface: ShirabeLinkSur
                  is here for sentences, and this is the biggest thing on the card.
                  The dictionaries live in the chips at the foot, which leave the
                  site, so the two kinds of destination never share an appearance. -->
-            <button
-              type="button"
-              class="token-tooltip__word token-tooltip__word--action"
-              lang="ja"
-              @click="searchForWord(headword)"
-            >
-              <template v-if="headFurigana.length > 0"><template v-for="(seg, si) in headFurigana" :key="si"><ruby v-if="seg.reading">{{ seg.text }}<rt>{{ seg.reading }}</rt></ruby><template v-else>{{ seg.text }}</template></template></template>
-              <template v-else>{{ headword }}</template>
-            </button>
-            <span v-if="headReading && headFurigana.length === 0" class="token-tooltip__reading">{{ headReading }}</span>
+            <span v-if="kanjiShown" class="token-tooltip__word token-tooltip__word--kanji" lang="ja">{{ kanjiShown }}</span>
+            <template v-else>
+              <button
+                type="button"
+                class="token-tooltip__word token-tooltip__word--action"
+                lang="ja"
+                @click="searchForWord(headword)"
+              >
+                <template v-if="headFurigana.length > 0"><template v-for="(seg, si) in headFurigana" :key="si"><ruby v-if="seg.reading">{{ seg.text }}<rt>{{ seg.reading }}</rt></ruby><template v-else>{{ seg.text }}</template></template></template>
+                <template v-else>{{ headword }}</template>
+              </button>
+              <span v-if="headReading && headFurigana.length === 0" class="token-tooltip__reading">{{ headReading }}</span>
+            </template>
 
             <!-- Anki, in the corner. Inside the head's flex row and pushed over
                  rather than absolutely positioned, so a long headword can never
@@ -908,7 +955,7 @@ function reportDictionaryClick(dictionary: DictionaryId, surface: ShirabeLinkSur
                 <UiBaseIcon :path="mdiChevronRight" :size="18" />
               </button>
             </span>
-            <span v-if="canConfigureMine && result" class="token-tooltip__tools">
+            <span v-if="canConfigureMine && result && !kanjiShown" class="token-tooltip__tools">
               <!--
                 One control, whose shape says which situation the reader is in.
 
@@ -1036,7 +1083,18 @@ function reportDictionaryClick(dictionary: DictionaryId, surface: ShirabeLinkSur
                otherwise sit on "Looking up…" in silence and never be told the
                definition had landed. It changes once per card, so polite
                announcement is not chatty. -->
-          <div class="token-tooltip__body" aria-live="polite">
+          <div v-if="kanjiShown" class="token-tooltip__body" aria-live="polite">
+            <WordCardKanji
+              :kanji="kanjiShown"
+              :card="kanjiView.card.value"
+              :state="kanjiView.state.value"
+              :locale="glossLanguages.labels"
+              @open-kanji="(character: string) => openKanji(character, 'part', 0)"
+              @open-word="openKanjiWord"
+              @open-page="openKanjiPage(kanjiShown)"
+            />
+          </div>
+          <div v-else class="token-tooltip__body" aria-live="polite">
             <p v-if="inflectionLine" class="token-tooltip__inflection">{{ inflectionLine }}</p>
 
             <div v-if="badges.length > 0" class="token-tooltip__badges">
@@ -1219,15 +1277,16 @@ function reportDictionaryClick(dictionary: DictionaryId, surface: ShirabeLinkSur
             </div>
 
             <div v-if="kanjiChips.length > 0" class="token-tooltip__kanji">
-              <a
+              <button
                 v-for="(chip, index) in kanjiChips"
                 :key="chip.character"
-                :href="chip.href"
-                target="_blank"
-                rel="noopener noreferrer"
+                type="button"
+                lang="ja"
                 class="token-tooltip__kanji-link"
-                @click="reportDictionaryClick('shirabe', 'kanji-chip', index)"
-              >{{ chip.character }}</a>
+                :title="$t('tokenTooltip.kanjiOpen', { kanji: chip.character })"
+                :aria-label="$t('tokenTooltip.kanjiOpen', { kanji: chip.character })"
+                @click="openKanji(chip.character, 'chip', index)"
+              >{{ chip.character }}</button>
             </div>
 
           </div>
@@ -1238,7 +1297,22 @@ function reportDictionaryClick(dictionary: DictionaryId, surface: ShirabeLinkSur
                from the chips beside it because it navigates in place while every
                one of them opens a tab. -->
           <div v-if="hoveredToken" class="token-tooltip__actions">
+            <template v-if="kanjiShown">
+              <button
+                type="button"
+                class="token-tooltip__action"
+                data-testid="kanji-sentences"
+                @click="searchForKanji(kanjiShown)"
+              >{{ $t('tokenTooltip.searchKanji', { kanji: kanjiShown }) }}</button>
+              <button
+                type="button"
+                class="token-tooltip__action"
+                data-testid="kanji-page"
+                @click="openKanjiPage(kanjiShown)"
+              >{{ $t('tokenTooltip.kanjiPage') }}</button>
+            </template>
             <button
+              v-else
               type="button"
               class="token-tooltip__action"
               @click="searchForWord(headword)"
@@ -1249,7 +1323,7 @@ function reportDictionaryClick(dictionary: DictionaryId, surface: ShirabeLinkSur
                glance; expanding replaces them with gloss-bearing rows rather than duplicating the same
                candidates.
                -->
-          <div v-if="showCandidateRows" class="token-tooltip__others">
+          <div v-if="showCandidateRows && !kanjiShown" class="token-tooltip__others">
             <!-- Chips. `pickerChips` keeps the picked one in the row however far
                  down the ranking it is, so collapsing the list never leaves the
                  card showing a word with no chip. -->
@@ -1329,7 +1403,7 @@ function reportDictionaryClick(dictionary: DictionaryId, surface: ShirabeLinkSur
                v-else-if chain.
                -->
           <div
-            v-if="canPickDictionaries && pickedDictionaries.size > 0"
+            v-if="canPickDictionaries && pickedDictionaries.size > 0 && !kanjiShown"
             class="token-tooltip__pick"
             data-testid="word-pick-summary"
           >
@@ -1349,7 +1423,7 @@ function reportDictionaryClick(dictionary: DictionaryId, surface: ShirabeLinkSur
             >{{ $t('tokenTooltip.pickDeselectAll') }}</button>
           </div>
 
-          <div v-if="dictionaryLinks.length > 0" class="token-tooltip__links">
+          <div v-if="dictionaryLinks.length > 0 && !kanjiShown" class="token-tooltip__links">
             <span class="token-tooltip__links-label">{{ $t('tokenTooltip.lookupIn') }}</span>
             <a
               v-for="(link, index) in dictionaryLinks"
@@ -1509,6 +1583,11 @@ function reportDictionaryClick(dictionary: DictionaryId, surface: ShirabeLinkSur
 .token-tooltip__nav-button:disabled {
   opacity: 0.35;
   cursor: default;
+}
+
+.token-tooltip__word--kanji {
+  font-size: 30px;
+  line-height: 1.1;
 }
 
 .token-tooltip__word {
@@ -2388,6 +2467,7 @@ a.token-tooltip__word:hover {
 .token-tooltip__actions {
   flex: 0 0 auto;
   display: flex;
+  gap: 16px;
   margin-top: 8px;
   padding: 0 14px;
 }

@@ -299,10 +299,10 @@ const route = useRoute();
  * already in -- see `searchScopeQuery`; typing the same word in the box has
  * always kept it, and the two have to agree.
  */
-const handleTokenSearch = (dictionaryForm: string) => {
+const handleTokenSearch = (query: string, options?: { contains?: boolean }) => {
   router.push({
-    path: localePath(`/search/${encodeURIComponent(dictionaryForm)}`),
-    query: searchScopeQuery(route.query),
+    path: localePath(`/search/${encodeURIComponent(query)}`),
+    query: { ...searchScopeQuery(route.query), ...(options?.contains ? { match: 'contains' } : {}) },
   });
 };
 

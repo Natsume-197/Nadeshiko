@@ -1,3 +1,4 @@
+import { createRequire } from 'node:module';
 import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { env } from './config/env';
@@ -67,6 +68,10 @@ const SITEMAP_STATIC_PATHS = [
   // Expose every tier so crawlers can reach word pages. COVERED excludes words whose empty search pages are
   // noindex; canonical.ts allowlists both query params.
   ...[1000, 2000, 5000, 10000, 20000, 50000, 100000].map((tier) => `/stats/words?tier=${tier}&filter=COVERED`),
+  // The kanji index and each of its groups (task 44); canonical.ts allowlists both query params.
+  '/kanji',
+  ...['n4', 'n3', 'n2', 'n1', 'none'].map((level) => `/kanji?by=jlpt&level=${level}`),
+  ...['g1', 'g2', 'g3', 'g4', 'g5', 'g6', 'secondary'].map((level) => `/kanji?by=grade&level=${level}`),
 ];
 const sitemapStaticUrls = (locale: string) => [
   `/${locale}`,
@@ -78,12 +83,14 @@ const INDEXED_LOCALES = APP_INDEXED_LOCALES;
 
 const sitemapSources = (
   locale: (typeof INDEXED_LOCALES)[number],
-): [string, [string, { timeout: number }], [string, { timeout: number }], string] => [
+): [string, [string, { timeout: number }], [string, { timeout: number }], string, string] => [
   `/api/__sitemap__/media?locale=${locale}`,
   [`/api/__sitemap__/episodes?locale=${locale}`, { timeout: 60000 }],
   // Sentence sampling makes two lookups per title; allow more time than episode enumeration.
   [`/api/__sitemap__/sentences?locale=${locale}`, { timeout: 90000 }],
   `/api/__sitemap__/blog?locale=${locale}`,
+  // The jōyō kanji pages (task 44).
+  `/api/__sitemap__/kanji?locale=${locale}`,
 ];
 
 // Derive both slash variants from the same private-path list used by route rules.
@@ -566,6 +573,8 @@ export default defineNuxtConfig({
     preset: ['node_cluster', 'node-cluster'].includes(process.env.NITRO_PRESET ?? '') ? 'node-cluster' : 'node-server',
     externals: {
       external: ['@opentelemetry/api'],
+      // The kanji share images (server/utils/kanjiOgImage.ts) read resvg's wasm from disk; the tracer cannot see it.
+      traceInclude: [createRequire(import.meta.url).resolve('@resvg/resvg-wasm/index_bg.wasm')],
     },
     serverAssets: [
       {

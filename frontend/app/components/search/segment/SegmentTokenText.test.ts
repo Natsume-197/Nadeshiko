@@ -10,9 +10,17 @@ vi.mock('~/utils/wordLookup', () => ({
   peekWord: (...a: unknown[]) => peekWord(...a),
   fetchWord: (...a: unknown[]) => fetchWord(...a),
 }));
+const peekKanji = vi.fn();
+const fetchKanji = vi.fn();
+vi.mock('~/utils/kanjiLookup', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('~/utils/kanjiLookup')>()),
+  peekKanji: (...a: unknown[]) => peekKanji(...a),
+  fetchKanji: (...a: unknown[]) => fetchKanji(...a),
+}));
 
 vi.stubGlobal('useI18n', () => ({ t: (k: string) => k, locale: ref('en') }));
-vi.stubGlobal('useRouter', () => ({ push: vi.fn() }));
+const routerPush = vi.fn();
+vi.stubGlobal('useRouter', () => ({ push: routerPush }));
 vi.stubGlobal('useLocalePath', () => (p: unknown) => (typeof p === 'string' ? p : JSON.stringify(p)));
 vi.stubGlobal('usePostHog', () => ({ capture: vi.fn() }));
 vi.stubGlobal('useNuxtApp', () => ({ $i18n: { t: (k: string) => k } }));
@@ -150,6 +158,8 @@ beforeEach(() => {
   offset = 0;
   peekWord.mockReturnValue(undefined);
   fetchWord.mockResolvedValue({ candidates: [], reason: null, nameOnly: false });
+  peekKanji.mockReturnValue(undefined);
+  fetchKanji.mockResolvedValue({ card: null, reason: 'missing' });
 });
 
 afterEach(() => {
@@ -345,5 +355,224 @@ describe('mining the form the sentence uses', () => {
     expect(mined).toBeTruthy();
     mined!.click();
     expect(instances[1]!.mining.openMinedNote).toHaveBeenCalled();
+  });
+});
+
+describe('the kanji the headword is written with', () => {
+  const HON = {
+    character: '本',
+    strokeCount: 5,
+    grade: 1,
+    frequency: 10,
+    jlpt: 5,
+    kanken: '10級',
+    radical: { glyph: '⽊', number: 75, reading: 'き', meaning: 'tree, wood', character: '木' },
+    readings: [
+      {
+        kind: 'on',
+        reading: 'ホン',
+        examples: [
+          {
+            id: 'jmdict:1522150',
+            headword: '本当',
+            reading: 'ほんとう',
+            furigana: [
+              { text: '本', ruby: 'ほん' },
+              { text: '当', ruby: 'とう' },
+            ],
+          },
+        ],
+      },
+      { kind: 'kun', reading: 'もと', examples: [] },
+    ],
+    meanings: ['book', 'origin'],
+    meaningsLanguage: 'en',
+    components: [
+      { character: '木', hasCard: true, meaning: 'tree' },
+      { character: 'ノ', hasCard: false, meaning: null },
+    ],
+    strokes: ['M1,1', 'M2,2', 'M3,3', 'M4,4', 'M5,5'],
+    strokeNumbers: [
+      [1, 1],
+      [2, 2],
+      [3, 3],
+      [4, 4],
+      [5, 5],
+    ],
+    words: Array.from({ length: 10 }, (_, i) => ({
+      id: `jmdict:${i}`,
+      headword: i === 0 ? '日本' : `本${i}`,
+      reading: i === 0 ? 'にほん' : null,
+      frequency: 40 + i,
+      gloss: i === 0 ? 'Japan' : null,
+    })),
+    sameRadical: [{ character: '林', reading: 'リン', meaning: 'grove', grade: 1 }],
+    sameRadicalCount: 647,
+    containedIn: [],
+    containedInCount: 0,
+  };
+
+  async function openOnHonto() {
+    peekWord.mockReturnValue({ candidates: [candidate('本当')], reason: null, nameOnly: false });
+    peekKanji.mockReturnValue({ card: HON });
+    const wrapper = render([token('本当')]);
+    await clickableTokens(wrapper)[0]!.trigger('click');
+    await nextTick();
+    return wrapper;
+  }
+
+  const chips = () => [...document.querySelectorAll<HTMLButtonElement>('.token-tooltip__kanji-link')];
+  const head = () => document.querySelector('.token-tooltip__word')?.textContent?.trim();
+
+  test('each kanji gets a chip, and none of them leaves the site', async () => {
+    await openOnHonto();
+
+    expect(chips().map((chip) => chip.textContent)).toEqual(['本', '当']);
+    expect(document.querySelector('.token-tooltip__kanji a')).toBeNull();
+  });
+
+  test('a chip opens that kanji inside the card, and back returns to the word', async () => {
+    await openOnHonto();
+
+    chips()[0]!.click();
+    await nextTick();
+    await nextTick();
+
+    expect(head()).toBe('本');
+    expect(cardEl()?.textContent).toContain('book, origin');
+    expect(cardEl()?.textContent).toContain('日本');
+    expect(document.querySelectorAll('.kanji-strokes__ink path')).toHaveLength(5);
+    expect(peekKanji).toHaveBeenCalledWith('本', 'en');
+
+    document.querySelector<HTMLButtonElement>('[data-testid="word-back"]')!.click();
+    await nextTick();
+    await nextTick();
+
+    expect(head()).toBe('本当');
+    expect(document.querySelector('.kanji-view')).toBeNull();
+  });
+
+  test('a part with a card of its own opens too; a stroke shape does not', async () => {
+    await openOnHonto();
+    chips()[0]!.click();
+    await nextTick();
+    await nextTick();
+
+    const parts = [...document.querySelectorAll('.kanji-view__part')];
+    expect(parts.map((part) => [part.textContent, part.tagName])).toEqual([
+      ['木tree', 'BUTTON'],
+      ['ノ', 'SPAN'],
+    ]);
+
+    (parts[0] as HTMLButtonElement).click();
+    await nextTick();
+    await nextTick();
+    expect(peekKanji).toHaveBeenLastCalledWith('木', 'en');
+  });
+
+  async function openHon() {
+    const wrapper = await openOnHonto();
+    chips()[0]!.click();
+    await nextTick();
+    await nextTick();
+    return wrapper;
+  }
+
+  test('each reading lists the words it is heard in, and one with none is marked rare', async () => {
+    await openHon();
+
+    const readings = [...document.querySelectorAll('[data-testid="kanji-reading"]')];
+    expect(readings.map((reading) => reading.textContent)).toEqual(['ホン', 'もと']);
+    expect(readings[1]!.classList.contains('is-rare')).toBe(true);
+    // The on/kun label is written once per group.
+    expect(
+      [...document.querySelectorAll('.kanji-view__readings .kanji-view__label')].map((l) => l.textContent),
+    ).toEqual(['tokenTooltip.kanjiOn', 'tokenTooltip.kanjiKun']);
+
+    peekWord.mockReturnValue({ candidates: [candidate('本当')], reason: null, nameOnly: false });
+    const example = document.querySelector<HTMLButtonElement>('.kanji-view__example')!;
+    // With ruby over each kanji, like the headword of a word card.
+    expect([...example.querySelectorAll('rt')].map((rt) => rt.textContent)).toEqual(['ほん', 'とう']);
+    expect(example.getAttribute('aria-label')).toBe('本当 (ほんとう)');
+    example.click();
+    await nextTick();
+    await nextTick();
+    expect(head()).toBe('本当');
+  });
+
+  test('the radical and the kanji filed under it open in the card', async () => {
+    await openHon();
+
+    expect(document.querySelector('[data-testid="kanji-radical"]')?.textContent).toContain('tree, wood');
+    document.querySelector<HTMLButtonElement>('[data-testid="kanji-radical"] button')!.click();
+    await nextTick();
+    expect(peekKanji).toHaveBeenLastCalledWith('木', 'en');
+
+    document.querySelector<HTMLButtonElement>('[data-testid="word-back"]')!.click();
+    await nextTick();
+    await nextTick();
+    document.querySelector<HTMLButtonElement>('[data-testid="kanji-same-radical"] button')!.click();
+    await nextTick();
+    expect(peekKanji).toHaveBeenLastCalledWith('林', 'en');
+  });
+
+  test('the word list shows six and expands to all', async () => {
+    await openHon();
+    const words = () => document.querySelectorAll('[data-testid="kanji-word"]').length;
+
+    expect(words()).toBe(6);
+    document.querySelector<HTMLButtonElement>('[data-testid="kanji-more-words"]')!.click();
+    await nextTick();
+    expect(words()).toBe(10);
+  });
+
+  test('the kanji page opens from the footer, and from the "+N" at the end of a related list', async () => {
+    await openHon();
+    routerPush.mockClear();
+
+    document.querySelector<HTMLButtonElement>('[data-testid="kanji-page"]')!.click();
+    await nextTick();
+    expect(routerPush).toHaveBeenLastCalledWith(`/kanji/${encodeURIComponent('本')}`);
+    expect(cardEl()).toBeNull();
+
+    await openHon();
+    const more = document.querySelector<HTMLButtonElement>('[data-testid="kanji-related-more"]')!;
+    expect(more.textContent).toBe('+646');
+    more.click();
+    await nextTick();
+    expect(routerPush).toHaveBeenLastCalledWith(`/kanji/${encodeURIComponent('本')}`);
+  });
+
+  test('stroke numbers come with the strokes', async () => {
+    await openHon();
+
+    expect(document.querySelectorAll('.kanji-strokes__numbers text')).toHaveLength(5);
+  });
+
+  test('its sentences link searches inside words for the kanji', async () => {
+    const wrapper = await openOnHonto();
+    chips()[0]!.click();
+    await nextTick();
+    await nextTick();
+
+    document.querySelector<HTMLButtonElement>('[data-testid="kanji-sentences"]')!.click();
+    await nextTick();
+
+    expect(wrapper.emitted('token-click')).toEqual([['本', { contains: true }]]);
+  });
+
+  test('a word from its list opens in the card', async () => {
+    await openOnHonto();
+    chips()[0]!.click();
+    await nextTick();
+    await nextTick();
+    peekWord.mockReturnValue({ candidates: [candidate('日本')], reason: null, nameOnly: false });
+
+    document.querySelector<HTMLButtonElement>('[data-testid="kanji-word"]')!.click();
+    await nextTick();
+    await nextTick();
+
+    expect(head()).toBe('日本');
+    expect(document.querySelector('.kanji-view')).toBeNull();
   });
 });

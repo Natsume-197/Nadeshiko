@@ -1079,6 +1079,174 @@ export type DictionaryCandidate = {
 };
 
 /**
+ * A word from Nadeshiko's own dictionary, as the kanji view links it.
+ */
+export type DictionaryKanjiWordRef = {
+    id: string;
+    headword: string;
+    reading: string;
+};
+
+/**
+ * Another kanji the kanji view lists, with one reading and one meaning.
+ */
+export type DictionaryKanjiRelated = {
+    character: string;
+    reading: string;
+    meaning: string;
+    /**
+     * School grade (1-6 and 8 jōyō, 9-10 jinmeiyō), to group the list.
+     */
+    grade: number;
+};
+
+/**
+ * One kanji as the word card's kanji view draws it (task 44).
+ *
+ */
+export type DictionaryKanji = {
+    character: string;
+    strokeCount: number;
+    /**
+     * KANJIDIC2 school grade. 1-6 elementary school, 8 the rest of the jōyō list, 9-10 jinmeiyō.
+     */
+    grade: number;
+    /**
+     * Rank among the 2,500 kanji most used in newspapers (KANJIDIC2).
+     */
+    frequency: number;
+    /**
+     * Current JLPT level, 5 for N5 (Jonathan Waller's unofficial lists).
+     */
+    jlpt: number;
+    /**
+     * Kanji Kentei (漢検) level it is tested at, `10級` (easiest) to `1級` (mimneko/kanji-data, CC0).
+     */
+    kanken: string;
+    /**
+     * The classical (Kangxi) radical it is filed under, named by Kanji alive.
+     */
+    radical: {
+        glyph: string;
+        number: number;
+        reading: string;
+        meaning: string;
+        /**
+         * The kanji the radical is written as, when it has a card.
+         */
+        character: string;
+    };
+    /**
+     * On readings first, then kun, each with up to three of the corpus's most frequent words read that way.
+     */
+    readings: Array<{
+        kind: 'on' | 'kun';
+        /**
+         * Katakana for on; hiragana with `.` before the okurigana for kun.
+         */
+        reading: string;
+        examples: Array<DictionaryKanjiWordRef & {
+            /**
+             * The headword split into runs, with ruby over each kanji run (JmdictFurigana).
+             */
+            furigana: Array<{
+                text: string;
+                ruby?: string;
+            }>;
+        }>;
+    }>;
+    meanings: Array<string>;
+    /**
+     * The language `meanings` are in; English when KANJIDIC2 has none in the requested one.
+     */
+    meaningsLanguage: 'en' | 'es';
+    /**
+     * The parts it is built from (KRADFILE).
+     */
+    components: Array<{
+        character: string;
+        /**
+         * The part is a kanji with a card of its own.
+         */
+        hasCard: boolean;
+        /**
+         * The kanji's first meaning, or the radical's (English) for a shape with no card.
+         */
+        meaning: string;
+    }>;
+    /**
+     * One SVG path per stroke in writing order, in KanjiVG's 109×109 view box. Empty when not drawn.
+     */
+    strokes: Array<string>;
+    /**
+     * Where KanjiVG places each stroke's number, as `[x, y]`. Empty when it has none.
+     */
+    strokeNumbers: Array<[
+        number,
+        number
+    ]>;
+    /**
+     * Words written with this kanji, most frequent in Nadeshiko's corpus first (up to 40).
+     */
+    words: Array<{
+        id: string;
+        headword: string;
+        reading: string;
+        /**
+         * Rank in Nadeshiko's corpus (1 is the most frequent word).
+         */
+        frequency: number;
+        gloss: string;
+    }>;
+    /**
+     * Other kanji filed under the same radical, school kanji first (12, or all with `related=all`).
+     */
+    sameRadical: Array<DictionaryKanjiRelated>;
+    sameRadicalCount: number;
+    /**
+     * Kanji with this one as a part and filed under another radical, school kanji first (12, or all with `related=all`).
+     */
+    containedIn: Array<DictionaryKanjiRelated>;
+    containedInCount: number;
+};
+
+/**
+ * Not Found error response
+ */
+export type Error404 = {
+    /**
+     * Specific error code for programmatic handling
+     */
+    code: 'NOT_FOUND';
+    /**
+     * A short, human-readable summary of the problem
+     */
+    title: string;
+    /**
+     * A human-readable explanation specific to this occurrence
+     */
+    detail: string;
+    /**
+     * A URI reference that identifies the problem type (`about:blank` when the problem has no further semantics beyond the HTTP status, per RFC 9457)
+     */
+    type?: string;
+    /**
+     * A URI reference that identifies the specific occurrence (e.g., trace ID)
+     */
+    instance?: string;
+    /**
+     * The HTTP status code
+     */
+    status: 404;
+    /**
+     * Optional map of field names to their error messages (for validation errors)
+     */
+    errors?: {
+        [key: string]: string;
+    };
+};
+
+/**
  * Coverage statistics for a frequency tier
  */
 export type WordCoverageTier = {
@@ -1345,42 +1513,6 @@ export type Error409 = {
      * The HTTP status code
      */
     status: 409;
-    /**
-     * Optional map of field names to their error messages (for validation errors)
-     */
-    errors?: {
-        [key: string]: string;
-    };
-};
-
-/**
- * Not Found error response
- */
-export type Error404 = {
-    /**
-     * Specific error code for programmatic handling
-     */
-    code: 'NOT_FOUND';
-    /**
-     * A short, human-readable summary of the problem
-     */
-    title: string;
-    /**
-     * A human-readable explanation specific to this occurrence
-     */
-    detail: string;
-    /**
-     * A URI reference that identifies the problem type (`about:blank` when the problem has no further semantics beyond the HTTP status, per RFC 9457)
-     */
-    type?: string;
-    /**
-     * A URI reference that identifies the specific occurrence (e.g., trace ID)
-     */
-    instance?: string;
-    /**
-     * The HTTP status code
-     */
-    status: 404;
     /**
      * Optional map of field names to their error messages (for validation errors)
      */
@@ -3443,6 +3575,111 @@ export type IdentifyDictionaryWordResponses = {
 };
 
 export type IdentifyDictionaryWordResponse = IdentifyDictionaryWordResponses[keyof IdentifyDictionaryWordResponses];
+
+export type GetDictionaryKanjiIndexData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Language of the meanings; English where there is none in it.
+         */
+        locale?: 'en' | 'es';
+    };
+    url: '/v1/dictionary/kanji';
+};
+
+export type GetDictionaryKanjiIndexErrors = {
+    /**
+     * Forbidden
+     */
+    403: Error403;
+    /**
+     * Too Many Requests. The response body indicates whether the request was rejected due to per-minute rate limiting or monthly quota exhaustion.
+     */
+    429: Error429;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type GetDictionaryKanjiIndexError = GetDictionaryKanjiIndexErrors[keyof GetDictionaryKanjiIndexErrors];
+
+export type GetDictionaryKanjiIndexResponses = {
+    /**
+     * OK
+     */
+    200: {
+        /**
+         * School kanji first by grade, then by newspaper frequency.
+         */
+        kanji: Array<{
+            character: string;
+            grade: number;
+            jlpt: number;
+            frequency: number;
+            reading: string;
+            meaning: string;
+        }>;
+    };
+};
+
+export type GetDictionaryKanjiIndexResponse = GetDictionaryKanjiIndexResponses[keyof GetDictionaryKanjiIndexResponses];
+
+export type GetDictionaryKanjiData = {
+    body?: never;
+    path: {
+        /**
+         * The kanji, one character (two UTF-16 units outside the BMP).
+         */
+        character: string;
+    };
+    query?: {
+        /**
+         * Language of the meanings and word glosses; English where there are none in it.
+         */
+        locale?: 'en' | 'es';
+        /**
+         * How many related kanji to list; `all` for the kanji's own page, `short` (the first 12) for the word card.
+         */
+        related?: 'short' | 'all';
+    };
+    url: '/v1/dictionary/kanji/{character}';
+};
+
+export type GetDictionaryKanjiErrors = {
+    /**
+     * Bad Request
+     */
+    400: Error400;
+    /**
+     * Forbidden
+     */
+    403: Error403;
+    /**
+     * Not Found
+     */
+    404: Error404;
+    /**
+     * Too Many Requests. The response body indicates whether the request was rejected due to per-minute rate limiting or monthly quota exhaustion.
+     */
+    429: Error429;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type GetDictionaryKanjiError = GetDictionaryKanjiErrors[keyof GetDictionaryKanjiErrors];
+
+export type GetDictionaryKanjiResponses = {
+    /**
+     * OK
+     */
+    200: DictionaryKanji;
+};
+
+export type GetDictionaryKanjiResponse = GetDictionaryKanjiResponses[keyof GetDictionaryKanjiResponses];
 
 export type GetStatsOverviewData = {
     body?: never;

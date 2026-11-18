@@ -50,7 +50,8 @@ vi.stubGlobal('useYoutubeSegmentPlayer', () => ({
 }));
 vi.stubGlobal('useLocalePath', () => (p: unknown) => (typeof p === 'string' ? p : JSON.stringify(p)));
 vi.stubGlobal('useRoute', () => ({ params: {}, query: {} }));
-vi.stubGlobal('useRouter', () => ({ push: vi.fn() }));
+const routerPush = vi.fn();
+vi.stubGlobal('useRouter', () => ({ push: routerPush }));
 vi.stubGlobal('usePostHog', () => ({ capture: vi.fn() }));
 vi.stubGlobal('useNadeshikoSdk', () => ({}));
 
@@ -99,7 +100,11 @@ function render(results: unknown[], props: Record<string, unknown> = {}) {
         UiBaseIcon: true,
         NuxtLink: { props: ['to'], template: '<a><slot /></a>' },
         NuxtImg: true,
-        SearchSegmentTokenText: { props: ['result'], template: '<span>{{ result?.segment?.textJa?.content }}</span>' },
+        SearchSegmentTokenText: {
+          props: ['result'],
+          emits: ['token-click'],
+          template: `<span>{{ result?.segment?.textJa?.content }}<i data-testid="word" @click="$emit('token-click', '本当')" /><i data-testid="kanji" @click="$emit('token-click', '本', { contains: true })" /></span>`,
+        },
         SearchSegmentActionsContainer: true,
         SearchModalSegmentEdit: true,
         SearchModalReport: true,
@@ -195,6 +200,25 @@ describe('the card list', () => {
     expect(japanese.find('em').exists()).toBe(false);
     expect(translation.html()).toContain('&lt;img src=x onerror=alert(1)&gt;raw English');
     expect(translation.find('img').exists()).toBe(false);
+  });
+});
+
+describe('searching from the word card', () => {
+  test('a word searches for itself, and a kanji searches inside words', async () => {
+    routerPush.mockClear();
+    // Only a sentence with stored tokens gets the clickable text.
+    const tokens = [{ s: '本当', d: '本当', r: 'ホントウ', b: 0, e: 2, p: '名詞' }];
+    const result = segment('a');
+    result.segment.textJa = { content: '本当', highlight: null, tokens } as never;
+    const wrapper = render([result]);
+
+    await wrapper.find('[data-testid="word"]').trigger('click');
+    await wrapper.find('[data-testid="kanji"]').trigger('click');
+
+    expect(routerPush.mock.calls.map(([to]) => to)).toEqual([
+      { path: `/search/${encodeURIComponent('本当')}`, query: {} },
+      { path: `/search/${encodeURIComponent('本')}`, query: { match: 'contains' } },
+    ]);
   });
 });
 

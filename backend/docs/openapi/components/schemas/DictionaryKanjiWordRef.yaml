@@ -1,0 +1,14 @@
+type: object
+description: A word from Nadeshiko's own dictionary, as the kanji view links it.
+required: [id, headword, reading]
+properties:
+  id:
+    type: string
+    example: "jmdict:1358280"
+  headword:
+    type: string
+    example: 食べる
+  reading:
+    type: string
+    nullable: true
+    example: たべる

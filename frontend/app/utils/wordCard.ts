@@ -615,7 +615,7 @@ const SHIRABE_SITE = 'https://shirabe.org';
  * Outbound surface recorded as `utm_content`; word-card and Anki-definition links share a destination but
  * represent different entry points.
  */
-export type ShirabeLinkSurface = 'word-card' | 'kanji-chip' | 'anki-definition';
+export type ShirabeLinkSurface = 'word-card' | 'anki-definition';
 
 /**
  * Use standard UTM parameters for Shirabe attribution because `noreferrer` strips the referrer. Keep that
@@ -642,8 +642,4 @@ export function shirabeWordUrl(
   surface: Extract<ShirabeLinkSurface, 'word-card' | 'anki-definition'> = 'word-card',
 ): string {
   return withAttribution(`${SHIRABE_SITE}/${locale}/word/${encodeURIComponent(id)}`, surface);
-}
-
-export function shirabeKanjiUrl(character: string, locale: GlossLanguage): string {
-  return withAttribution(`${SHIRABE_SITE}/${locale}/kanji/${encodeURIComponent(character)}`, 'kanji-chip');
 }

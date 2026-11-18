@@ -399,6 +399,141 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
+  /v1/dictionary/kanji:
+    get:
+      tags:
+        - Search
+      x-internal: true
+      x-server-only: true
+      operationId: getDictionaryKanjiIndex
+      summary: Every jōyō and JLPT kanji, for our own server only
+      description: |
+        The kanji index page's list: the 2,136 jōyō kanji and any other JLPT kanji,
+        each with its school grade, JLPT level, newspaper rank, one reading and one
+        meaning. Called by the frontend server, which caches it.
+      security: []
+      parameters:
+        - name: locale
+          in: query
+          schema:
+            type: string
+            enum:
+              - en
+              - es
+            default: en
+          description: Language of the meanings; English where there is none in it.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - kanji
+                properties:
+                  kanji:
+                    type: array
+                    description: School kanji first by grade, then by newspaper frequency.
+                    items:
+                      type: object
+                      required:
+                        - character
+                        - grade
+                        - jlpt
+                        - frequency
+                        - reading
+                        - meaning
+                      properties:
+                        character:
+                          type: string
+                          example: 日
+                        grade:
+                          type: integer
+                          nullable: true
+                          example: 1
+                        jlpt:
+                          type: integer
+                          nullable: true
+                          example: 5
+                        frequency:
+                          type: integer
+                          nullable: true
+                          example: 1
+                        reading:
+                          type: string
+                          nullable: true
+                          example: ニチ
+                        meaning:
+                          type: string
+                          nullable: true
+                          example: day
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/dictionary/kanji/{character}:
+    get:
+      tags:
+        - Search
+      x-internal: true
+      x-server-only: true
+      operationId: getDictionaryKanji
+      summary: One kanji's card from Nadeshiko's own dictionary, for our own server only
+      description: |
+        What the word card shows when a reader opens one of a word's kanji: readings
+        and meanings (KANJIDIC2), its parts (KRADFILE), its stroke order (KanjiVG) and
+        the words written with it that Nadeshiko's subtitles use most. Called by the
+        frontend server, which caches it; refused unless the request came through our
+        own Nitro proxy.
+      security: []
+      parameters:
+        - name: character
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 2
+          description: The kanji, one character (two UTF-16 units outside the BMP).
+          example: 本
+        - name: locale
+          in: query
+          schema:
+            type: string
+            enum:
+              - en
+              - es
+            default: en
+          description: Language of the meanings and word glosses; English where there are none in it.
+        - name: related
+          in: query
+          schema:
+            type: string
+            enum:
+              - short
+              - all
+            default: short
+          description: How many related kanji to list; `all` for the kanji's own page, `short` (the first 12) for the word card.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DictionaryKanji'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /v1/stats/overview:
     get:
       tags:
@@ -5873,6 +6008,304 @@ components:
                       type: array
                       items:
                         type: string
+    DictionaryKanjiWordRef:
+      type: object
+      description: A word from Nadeshiko's own dictionary, as the kanji view links it.
+      required:
+        - id
+        - headword
+        - reading
+      properties:
+        id:
+          type: string
+          example: jmdict:1358280
+        headword:
+          type: string
+          example: 食べる
+        reading:
+          type: string
+          nullable: true
+          example: たべる
+    DictionaryKanjiRelated:
+      type: object
+      description: Another kanji the kanji view lists, with one reading and one meaning.
+      required:
+        - character
+        - reading
+        - meaning
+        - grade
+      properties:
+        character:
+          type: string
+          example: 飯
+        reading:
+          type: string
+          nullable: true
+          example: ハン
+        meaning:
+          type: string
+          nullable: true
+          example: meal
+        grade:
+          type: integer
+          nullable: true
+          description: School grade (1-6 and 8 jōyō, 9-10 jinmeiyō), to group the list.
+          example: 4
+    DictionaryKanji:
+      type: object
+      description: |
+        One kanji as the word card's kanji view draws it (task 44).
+      required:
+        - character
+        - strokeCount
+        - grade
+        - frequency
+        - jlpt
+        - kanken
+        - radical
+        - readings
+        - meanings
+        - meaningsLanguage
+        - components
+        - strokes
+        - strokeNumbers
+        - words
+        - sameRadical
+        - sameRadicalCount
+        - containedIn
+        - containedInCount
+      properties:
+        character:
+          type: string
+          example: 食
+        strokeCount:
+          type: integer
+          example: 9
+        grade:
+          type: integer
+          nullable: true
+          description: KANJIDIC2 school grade. 1-6 elementary school, 8 the rest of the jōyō list, 9-10 jinmeiyō.
+          example: 2
+        frequency:
+          type: integer
+          nullable: true
+          description: Rank among the 2,500 kanji most used in newspapers (KANJIDIC2).
+          example: 328
+        jlpt:
+          type: integer
+          nullable: true
+          description: Current JLPT level, 5 for N5 (Jonathan Waller's unofficial lists).
+          example: 5
+        kanken:
+          type: string
+          nullable: true
+          description: Kanji Kentei (漢検) level it is tested at, `10級` (easiest) to `1級` (mimneko/kanji-data, CC0).
+          example: 9級
+        radical:
+          type: object
+          nullable: true
+          description: The classical (Kangxi) radical it is filed under, named by Kanji alive.
+          required:
+            - glyph
+            - number
+            - reading
+            - meaning
+            - character
+          properties:
+            glyph:
+              type: string
+              example: ⾷
+            number:
+              type: integer
+              example: 184
+            reading:
+              type: string
+              example: しょく
+            meaning:
+              type: string
+              example: food, to eat
+            character:
+              type: string
+              nullable: true
+              description: The kanji the radical is written as, when it has a card.
+              example: 食
+        readings:
+          type: array
+          description: On readings first, then kun, each with up to three of the corpus's most frequent words read that way.
+          items:
+            type: object
+            required:
+              - kind
+              - reading
+              - examples
+            properties:
+              kind:
+                type: string
+                enum:
+                  - 'on'
+                  - kun
+              reading:
+                type: string
+                description: Katakana for on; hiragana with `.` before the okurigana for kun.
+                example: た.べる
+              examples:
+                type: array
+                items:
+                  allOf:
+                    - $ref: '#/components/schemas/DictionaryKanjiWordRef'
+                    - type: object
+                      required:
+                        - furigana
+                      properties:
+                        furigana:
+                          type: array
+                          description: The headword split into runs, with ruby over each kanji run (JmdictFurigana).
+                          items:
+                            type: object
+                            required:
+                              - text
+                            properties:
+                              text:
+                                type: string
+                                example: 食
+                              ruby:
+                                type: string
+                                example: しょく
+        meanings:
+          type: array
+          items:
+            type: string
+          example:
+            - eat
+            - food
+        meaningsLanguage:
+          type: string
+          enum:
+            - en
+            - es
+          description: The language `meanings` are in; English when KANJIDIC2 has none in the requested one.
+        components:
+          type: array
+          description: The parts it is built from (KRADFILE).
+          items:
+            type: object
+            required:
+              - character
+              - hasCard
+              - meaning
+            properties:
+              character:
+                type: string
+                example: 良
+              hasCard:
+                type: boolean
+                description: The part is a kanji with a card of its own.
+              meaning:
+                type: string
+                nullable: true
+                description: The kanji's first meaning, or the radical's (English) for a shape with no card.
+                example: good
+        strokes:
+          type: array
+          description: One SVG path per stroke in writing order, in KanjiVG's 109×109 view box. Empty when not drawn.
+          items:
+            type: string
+        strokeNumbers:
+          type: array
+          description: Where KanjiVG places each stroke's number, as `[x, y]`. Empty when it has none.
+          items:
+            type: array
+            minItems: 2
+            maxItems: 2
+            items:
+              type: number
+        words:
+          type: array
+          description: Words written with this kanji, most frequent in Nadeshiko's corpus first (up to 40).
+          items:
+            type: object
+            required:
+              - id
+              - headword
+              - reading
+              - frequency
+              - gloss
+            properties:
+              id:
+                type: string
+                example: jmdict:1358280
+              headword:
+                type: string
+                example: 食べる
+              reading:
+                type: string
+                nullable: true
+                example: たべる
+              frequency:
+                type: integer
+                description: Rank in Nadeshiko's corpus (1 is the most frequent word).
+                example: 195
+              gloss:
+                type: string
+                nullable: true
+                example: to eat
+        sameRadical:
+          type: array
+          description: Other kanji filed under the same radical, school kanji first (12, or all with `related=all`).
+          items:
+            $ref: '#/components/schemas/DictionaryKanjiRelated'
+        sameRadicalCount:
+          type: integer
+          example: 92
+        containedIn:
+          type: array
+          description: Kanji with this one as a part and filed under another radical, school kanji first (12, or all with `related=all`).
+          items:
+            $ref: '#/components/schemas/DictionaryKanjiRelated'
+        containedInCount:
+          type: integer
+          example: 5
+    Error404:
+      type: object
+      description: Not Found error response
+      required:
+        - code
+        - title
+        - detail
+        - status
+      properties:
+        code:
+          type: string
+          description: Specific error code for programmatic handling
+          enum:
+            - NOT_FOUND
+        title:
+          type: string
+          minLength: 1
+          description: A short, human-readable summary of the problem
+        detail:
+          type: string
+          minLength: 1
+          description: A human-readable explanation specific to this occurrence
+        type:
+          type: string
+          format: uri
+          minLength: 1
+          description: A URI reference that identifies the problem type (`about:blank` when the problem has no further semantics beyond the HTTP status, per RFC 9457)
+        instance:
+          type: string
+          minLength: 1
+          description: A URI reference that identifies the specific occurrence (e.g., trace ID)
+        status:
+          type: integer
+          description: The HTTP status code
+          enum:
+            - 404
+        errors:
+          type: object
+          additionalProperties:
+            type: string
+          description: Optional map of field names to their error messages (for validation errors)
     WordCoverageTier:
       type: object
       description: Coverage statistics for a frequency tier
@@ -6274,47 +6707,6 @@ components:
           description: The HTTP status code
           enum:
             - 409
-        errors:
-          type: object
-          additionalProperties:
-            type: string
-          description: Optional map of field names to their error messages (for validation errors)
-    Error404:
-      type: object
-      description: Not Found error response
-      required:
-        - code
-        - title
-        - detail
-        - status
-      properties:
-        code:
-          type: string
-          description: Specific error code for programmatic handling
-          enum:
-            - NOT_FOUND
-        title:
-          type: string
-          minLength: 1
-          description: A short, human-readable summary of the problem
-        detail:
-          type: string
-          minLength: 1
-          description: A human-readable explanation specific to this occurrence
-        type:
-          type: string
-          format: uri
-          minLength: 1
-          description: A URI reference that identifies the problem type (`about:blank` when the problem has no further semantics beyond the HTTP status, per RFC 9457)
-        instance:
-          type: string
-          minLength: 1
-          description: A URI reference that identifies the specific occurrence (e.g., trace ID)
-        status:
-          type: integer
-          description: The HTTP status code
-          enum:
-            - 404
         errors:
           type: object
           additionalProperties:
@@ -8774,6 +9166,15 @@ components:
         type: about:blank
         instance: trace-id-placeholder
         status: 503
+    NotFound:
+      summary: Not Found
+      value:
+        code: NOT_FOUND
+        title: Not Found
+        detail: The requested resource could not be found. Please check the URL and try again.
+        type: about:blank
+        instance: trace-id-placeholder
+        status: 404
     AccountConflict:
       summary: Account Conflict
       value:
@@ -8792,15 +9193,6 @@ components:
         type: about:blank
         instance: trace-id-placeholder
         status: 409
-    NotFound:
-      summary: Not Found
-      value:
-        code: NOT_FOUND
-        title: Not Found
-        detail: The requested resource could not be found. Please check the URL and try again.
-        type: about:blank
-        instance: trace-id-placeholder
-        status: 404
   responses:
     TooManyRequests:
       description: Too Many Requests. The response body indicates whether the request was rejected due to per-minute rate limiting or monthly quota exhaustion.
@@ -8870,6 +9262,15 @@ components:
           examples:
             ServiceOverloaded:
               $ref: '#/components/examples/ServiceOverloaded'
+    NotFound:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error404'
+          examples:
+            NotFound:
+              $ref: '#/components/examples/NotFound'
     Conflict:
       description: Conflict
       content:
@@ -8881,15 +9282,6 @@ components:
               $ref: '#/components/examples/AccountConflict'
             DuplicateKey:
               $ref: '#/components/examples/DuplicateKey'
-    NotFound:
-      description: Not Found
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error404'
-          examples:
-            NotFound:
-              $ref: '#/components/examples/NotFound'
     SegmentRevisionListResponse:
       description: OK
       content:
