@@ -1,0 +1,15 @@
+type: object
+description: Another kanji the kanji view lists, with one reading and one meaning.
+required: [character, reading, meaning]
+properties:
+  character:
+    type: string
+    example: 飯
+  reading:
+    type: string
+    nullable: true
+    example: ハン
+  meaning:
+    type: string
+    nullable: true
+    example: meal

@@ -1,6 +1,13 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { setupTestSuite, TestDataSource } from '../../helpers/setup';
-import { isSingleCharacter, KANJI_WORDS, kanjiCard } from '@app/services/dictionary/kanji';
+import {
+  isSingleCharacter,
+  KANJI_WORDS,
+  kanjiCard,
+  readingForms,
+  readingInWord,
+  readingKey,
+} from '@app/services/dictionary/kanji';
 
 setupTestSuite();
 
@@ -10,9 +17,11 @@ interface SeedWord {
   en?: string[];
   es?: string[];
   rank?: number;
+  /** Furigana for the first written form and the first kana form, as JmdictFurigana splits them. */
+  furigana?: Array<{ text: string; ruby?: string }>;
 }
 
-async function seedWord({ id, forms, en = [], es = [], rank }: SeedWord) {
+async function seedWord({ id, forms, en = [], es = [], rank, furigana }: SeedWord) {
   await TestDataSource.query(`INSERT INTO dict.word (id, source) VALUES ($1, 'jmdict')`, [id]);
   for (const [idx, form] of forms.entries()) {
     await TestDataSource.query(
@@ -38,110 +47,228 @@ async function seedWord({ id, forms, en = [], es = [], rank }: SeedWord) {
       rank,
     ]);
   }
+  const written = forms.find((form) => !form.kana)?.text;
+  const reading = forms.find((form) => form.kana)?.text;
+  if (furigana && written && reading) {
+    await TestDataSource.query(
+      `INSERT INTO dict.furigana (text, reading, source, segments) VALUES ($1, $2, 'jmdict-furigana', $3)`,
+      [written, reading, JSON.stringify(furigana)],
+    );
+  }
 }
 
 beforeEach(async () => {
   await TestDataSource.query(
-    `INSERT INTO dict.kanji (character, stroke_count, grade, frequency, on_readings, kun_readings, meanings_en, meanings_es)
-     VALUES ('本', 5, 1, 10, '{ホン}', '{もと}', '{book,origin}', '{libro}'),
-            ('木', 4, 1, 317, '{ボク,モク}', '{き}', '{tree,wood}', '{}')`,
+    `INSERT INTO dict.kanji (character, stroke_count, grade, frequency, radical, on_readings, kun_readings, meanings_en,
+                             meanings_es)
+     VALUES ('食', 9, 2, 328, 184, '{ショク,ジキ}', '{く.う,た.べる}', '{eat,food}', '{comer}'),
+            ('良', 7, 4, 501, 138, '{リョウ}', '{よ.い}', '{good}', '{bueno}'),
+            ('飯', 12, 4, 1046, 184, '{ハン}', '{めし}', '{meal}', '{}'),
+            ('館', 16, 3, 613, 184, '{カン}', '{}', '{building}', '{}'),
+            ('蝕', 15, NULL, NULL, 142, '{ショク}', '{むしば.む}', '{eclipse}', '{}')`,
   );
-  await TestDataSource.query(`INSERT INTO dict.kanji_component (character, components) VALUES ('本', '{一,木,本}')`);
-  await TestDataSource.query(`INSERT INTO dict.kanji_strokes (character, paths) VALUES ('本', ARRAY['M1,1', 'M2,2'])`);
+  await TestDataSource.query(
+    `INSERT INTO dict.kanji_component (character, components)
+     VALUES ('食', '{𠆢,良,食}'), ('飯', '{食,又,厂}'), ('蝕', '{食,虫}')`,
+  );
+  await TestDataSource.query(
+    `INSERT INTO dict.kanji_strokes (character, paths, numbers) VALUES ('食', ARRAY['M1,1', 'M2,2'], '[[1,2],[3,4]]')`,
+  );
+  await TestDataSource.query(`INSERT INTO dict.kanji_jlpt (character, level) VALUES ('食', 5)`);
+  await TestDataSource.query(
+    `INSERT INTO dict.radical (glyph, number, variant_of, reading, meaning)
+     VALUES ('⾷', 184, NULL, 'しょく', 'food, to eat'), ('⻟', 184, '⾷', 'しょくへん', 'food, to eat'),
+            ('𠆢', 9, '⼈', 'ひとやね', 'person')`,
+  );
 });
 
 describe('kanjiCard', () => {
-  it('answers readings, meanings, parts and strokes', async () => {
-    const card = await kanjiCard(TestDataSource, '本', 'en');
+  it('answers meanings, strokes, JLPT, radical and parts with what they mean', async () => {
+    const card = await kanjiCard(TestDataSource, '食', 'en');
 
     expect(card).toMatchObject({
-      character: '本',
-      strokeCount: 5,
-      grade: 1,
-      frequency: 10,
-      onReadings: ['ホン'],
-      kunReadings: ['もと'],
-      meanings: ['book', 'origin'],
+      character: '食',
+      strokeCount: 9,
+      grade: 2,
+      frequency: 328,
+      jlpt: 5,
+      meanings: ['eat', 'food'],
       meaningsLanguage: 'en',
-      // 一 has no card of its own here; the kanji itself is never listed as its own part.
-      components: [
-        { character: '一', hasCard: false },
-        { character: '木', hasCard: true },
-      ],
       strokes: ['M1,1', 'M2,2'],
+      strokeNumbers: [
+        [1, 2],
+        [3, 4],
+      ],
+      // The radical code point decomposes to 食, which has a card.
+      radical: { glyph: '⾷', number: 184, reading: 'しょく', meaning: 'food, to eat', character: '食' },
+      // A shape with no card takes the radical's meaning; the kanji itself is never one of its parts.
+      components: [
+        { character: '𠆢', hasCard: false, meaning: 'person' },
+        { character: '良', hasCard: true, meaning: 'good' },
+      ],
     });
   });
 
   it('gives the Spanish meanings when there are some, and English otherwise', async () => {
-    expect(await kanjiCard(TestDataSource, '本', 'es')).toMatchObject({ meanings: ['libro'], meaningsLanguage: 'es' });
-    expect(await kanjiCard(TestDataSource, '木', 'es')).toMatchObject({
-      meanings: ['tree', 'wood'],
+    expect(await kanjiCard(TestDataSource, '食', 'es')).toMatchObject({
+      meanings: ['comer'],
+      meaningsLanguage: 'es',
+      components: [
+        { character: '𠆢', meaning: 'person' },
+        { character: '良', meaning: 'bueno' },
+      ],
+    });
+    expect(await kanjiCard(TestDataSource, '飯', 'es')).toMatchObject({
+      meanings: ['meal'],
       meaningsLanguage: 'en',
       strokes: [],
-      components: [],
+      strokeNumbers: [],
+      jlpt: null,
     });
+  });
+
+  it('lists the kanji under the same radical, and those that contain it under another', async () => {
+    const card = await kanjiCard(TestDataSource, '食', 'en');
+
+    // School kanji by grade: 館 (3) before 飯 (4).
+    expect(card?.sameRadical).toEqual([
+      { character: '館', reading: 'カン', meaning: 'building' },
+      { character: '飯', reading: 'ハン', meaning: 'meal' },
+    ]);
+    expect(card?.sameRadicalCount).toBe(2);
+    // 飯 contains 食 too, but is already listed under the radical.
+    expect(card?.containedIn).toEqual([{ character: '蝕', reading: 'ショク', meaning: 'eclipse' }]);
+    expect(card?.containedInCount).toBe(1);
   });
 
   it('lists the words written with it that our corpus uses most, with a reading and a gloss', async () => {
     await seedWord({
-      id: 1522150,
+      id: 1358280,
       forms: [
-        { text: '本当', common: true },
-        { text: 'ほんとう', kana: true },
+        { text: '食べる', common: true },
+        { text: 'たべる', kana: true },
       ],
-      en: ['truth', 'reality', 'actuality', 'fact'],
-      es: ['verdad'],
-      rank: 120,
+      en: ['to eat'],
+      es: ['comer'],
+      rank: 195,
     });
-    await seedWord({ id: 1583070, forms: [{ text: '日本' }, { text: 'にほん', kana: true }], en: ['Japan'], rank: 40 });
+    await seedWord({
+      id: 1356690,
+      forms: [{ text: '食事' }, { text: 'しょくじ', kana: true }],
+      en: ['meal'],
+      rank: 900,
+    });
     // Not counted in our corpus: not listed.
-    await seedWord({ id: 1000001, forms: [{ text: '本棚' }, { text: 'ほんだな', kana: true }], en: ['bookshelf'] });
-    // Counted, but not written with 本.
-    await seedWord({ id: 1000002, forms: [{ text: '木' }, { text: 'き', kana: true }], en: ['tree'], rank: 5 });
+    await seedWord({
+      id: 1000001,
+      forms: [{ text: '食卓' }, { text: 'しょくたく', kana: true }],
+      en: ['dining table'],
+    });
+    // Counted, but not written with 食.
+    await seedWord({ id: 1000002, forms: [{ text: '飯' }, { text: 'めし', kana: true }], en: ['meal'], rank: 5 });
 
-    const card = await kanjiCard(TestDataSource, '本', 'es');
+    const card = await kanjiCard(TestDataSource, '食', 'es');
 
     expect(card?.words).toEqual([
-      { id: 'jmdict:1583070', headword: '日本', reading: 'にほん', frequency: 40, gloss: 'Japan' },
-      { id: 'jmdict:1522150', headword: '本当', reading: 'ほんとう', frequency: 120, gloss: 'verdad' },
+      { id: 'jmdict:1358280', headword: '食べる', reading: 'たべる', frequency: 195, gloss: 'comer' },
+      { id: 'jmdict:1356690', headword: '食事', reading: 'しょくじ', frequency: 900, gloss: 'meal' },
     ]);
   });
 
-  it('reads a spelling with the kana form that applies to it', async () => {
+  it('reads a spelling with the kana form that applies to it, and joins the first glosses', async () => {
     await seedWord({
       id: 1000003,
       forms: [
-        { text: '本気' },
-        { text: 'ほんぎ', kana: true, appliesToKanji: ['本儀'] },
-        { text: 'ほんき', kana: true, appliesToKanji: ['本気'] },
+        { text: '食物' },
+        { text: 'くいもの', kana: true, appliesToKanji: ['食い物'] },
+        { text: 'しょくもつ', kana: true, appliesToKanji: ['食物'] },
       ],
-      en: ['seriousness', 'earnestness', 'truth', 'sanctity'],
+      en: ['food', 'foodstuff', 'eatables', 'victuals'],
       rank: 300,
     });
 
-    const card = await kanjiCard(TestDataSource, '本', 'en');
-
-    expect(card?.words).toEqual([
+    expect((await kanjiCard(TestDataSource, '食', 'en'))?.words).toEqual([
       {
         id: 'jmdict:1000003',
-        headword: '本気',
-        reading: 'ほんき',
+        headword: '食物',
+        reading: 'しょくもつ',
         frequency: 300,
-        gloss: 'seriousness; earnestness; truth',
+        gloss: 'food; foodstuff; eatables',
       },
+    ]);
+  });
+
+  it('sorts its most frequent words under the reading the kanji has in each', async () => {
+    await seedWord({
+      id: 1,
+      forms: [{ text: '食べる' }, { text: 'たべる', kana: true }],
+      rank: 1,
+      furigana: [{ text: '食', ruby: 'た' }, { text: 'べる' }],
+    });
+    await seedWord({
+      id: 2,
+      forms: [{ text: '食器' }, { text: 'しょっき', kana: true }],
+      rank: 2,
+      furigana: [
+        { text: '食', ruby: 'しょっ' },
+        { text: '器', ruby: 'き' },
+      ],
+    });
+    await seedWord({
+      id: 3,
+      forms: [{ text: '食う' }, { text: 'くう', kana: true }],
+      rank: 3,
+      furigana: [{ text: '食', ruby: 'く' }, { text: 'う' }],
+    });
+
+    const card = await kanjiCard(TestDataSource, '食', 'en');
+
+    expect(card?.readings).toEqual([
+      { kind: 'on', reading: 'ショク', examples: [{ id: 'jmdict:2', headword: '食器', reading: 'しょっき' }] },
+      { kind: 'on', reading: 'ジキ', examples: [] },
+      { kind: 'kun', reading: 'く.う', examples: [{ id: 'jmdict:3', headword: '食う', reading: 'くう' }] },
+      { kind: 'kun', reading: 'た.べる', examples: [{ id: 'jmdict:1', headword: '食べる', reading: 'たべる' }] },
     ]);
   });
 
   it(`lists at most ${KANJI_WORDS} words`, async () => {
     for (let i = 0; i < KANJI_WORDS + 2; i += 1) {
-      await seedWord({ id: 2000000 + i, forms: [{ text: `本${i}` }], en: ['x'], rank: i + 1 });
+      await seedWord({ id: 2000000 + i, forms: [{ text: `食${i}` }], en: ['x'], rank: i + 1 });
     }
 
-    expect((await kanjiCard(TestDataSource, '本', 'en'))?.words).toHaveLength(KANJI_WORDS);
+    expect((await kanjiCard(TestDataSource, '食', 'en'))?.words).toHaveLength(KANJI_WORDS);
   });
 
   it('answers null for a kanji it does not have', async () => {
     expect(await kanjiCard(TestDataSource, '鬱', 'en')).toBeNull();
+  });
+});
+
+describe('which reading a word uses', () => {
+  const keys = ['ショク', 'ジキ', 'く.う', 'く.らう', 'た.べる'].map(readingKey);
+
+  it('finds rendaku and a doubled consonant', () => {
+    expect([...readingForms('しょく')]).toEqual(['しょく', 'じょく', 'しょっ', 'じょっ']);
+    expect(
+      readingInWord(
+        [
+          { text: '餌', ruby: 'え' },
+          { text: '食', ruby: 'じき' },
+        ],
+        '食',
+        keys,
+      ),
+    ).toBe(1);
+  });
+
+  it('tells kun readings with the same stem apart by their okurigana', () => {
+    expect(readingInWord([{ text: '食', ruby: 'く' }, { text: 'らう' }], '食', keys)).toBe(3);
+    expect(readingInWord([{ text: '食', ruby: 'く' }, { text: 'う' }], '食', keys)).toBe(2);
+  });
+
+  it('gives up on a reading none of them explains', () => {
+    expect(readingInWord([{ text: '今日', ruby: 'きょう' }], '今', keys)).toBeNull();
+    expect(readingInWord([{ text: '食', ruby: 'めし' }], '食', keys)).toBeNull();
   });
 });
 

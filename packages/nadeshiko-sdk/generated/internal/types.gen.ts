@@ -1079,6 +1079,24 @@ export type DictionaryCandidate = {
 };
 
 /**
+ * A word from Nadeshiko's own dictionary, as the kanji view links it.
+ */
+export type DictionaryKanjiWordRef = {
+    id: string;
+    headword: string;
+    reading: string;
+};
+
+/**
+ * Another kanji the kanji view lists, with one reading and one meaning.
+ */
+export type DictionaryKanjiRelated = {
+    character: string;
+    reading: string;
+    meaning: string;
+};
+
+/**
  * One kanji as the word card's kanji view draws it (task 44).
  *
  */
@@ -1093,8 +1111,34 @@ export type DictionaryKanji = {
      * Rank among the 2,500 kanji most used in newspapers (KANJIDIC2).
      */
     frequency: number;
-    onReadings: Array<string>;
-    kunReadings: Array<string>;
+    /**
+     * Current JLPT level, 5 for N5 (Jonathan Waller's unofficial lists).
+     */
+    jlpt: number;
+    /**
+     * The classical (Kangxi) radical it is filed under, named by Kanji alive.
+     */
+    radical: {
+        glyph: string;
+        number: number;
+        reading: string;
+        meaning: string;
+        /**
+         * The kanji the radical is written as, when it has a card.
+         */
+        character: string;
+    };
+    /**
+     * On readings first, then kun, each with up to three of the corpus's most frequent words read that way.
+     */
+    readings: Array<{
+        kind: 'on' | 'kun';
+        /**
+         * Katakana for on; hiragana with `.` before the okurigana for kun.
+         */
+        reading: string;
+        examples: Array<DictionaryKanjiWordRef>;
+    }>;
     meanings: Array<string>;
     /**
      * The language `meanings` are in; English when KANJIDIC2 has none in the requested one.
@@ -1109,13 +1153,24 @@ export type DictionaryKanji = {
          * The part is a kanji with a card of its own.
          */
         hasCard: boolean;
+        /**
+         * The kanji's first meaning, or the radical's (English) for a shape with no card.
+         */
+        meaning: string;
     }>;
     /**
      * One SVG path per stroke in writing order, in KanjiVG's 109×109 view box. Empty when not drawn.
      */
     strokes: Array<string>;
     /**
-     * Words written with this kanji, most frequent in Nadeshiko's corpus first.
+     * Where KanjiVG places each stroke's number, as `[x, y]`. Empty when it has none.
+     */
+    strokeNumbers: Array<[
+        number,
+        number
+    ]>;
+    /**
+     * Words written with this kanji, most frequent in Nadeshiko's corpus first (up to 40).
      */
     words: Array<{
         id: string;
@@ -1127,6 +1182,16 @@ export type DictionaryKanji = {
         frequency: number;
         gloss: string;
     }>;
+    /**
+     * Other kanji filed under the same radical, school kanji first (up to 24).
+     */
+    sameRadical: Array<DictionaryKanjiRelated>;
+    sameRadicalCount: number;
+    /**
+     * Kanji with this one as a part and filed under another radical, school kanji first (up to 24).
+     */
+    containedIn: Array<DictionaryKanjiRelated>;
+    containedInCount: number;
 };
 
 /**

@@ -20,7 +20,7 @@ import { distinctSurface, minedWord } from '~/utils/ankiWord';
 import { createSegmentTaps } from '~/utils/segmentTaps';
 import { fetchWord, peekWord, type WordLookup } from '~/utils/wordLookup';
 import { useKanjiView } from '~/composables/useKanjiView';
-import type { KanjiCardWord } from '~/utils/kanjiLookup';
+import type { KanjiCardWordRef } from '~/utils/kanjiLookup';
 import WordCardKanji from './WordCardKanji.vue';
 // Two different verbs, so two different shapes. These sit side by side at 16px,
 // where `mdiStarCheckOutline` and `mdiStarPlusOutline` -- the pair that was here
@@ -675,7 +675,7 @@ const openKanji = (character: string, from: 'chip' | 'part', position: number) =
 };
 
 /** A word from the kanji view's list, opened in the card the way a part is. */
-const openKanjiWord = (word: KanjiCardWord) => {
+const openKanjiWord = (word: KanjiCardWordRef) => {
   void showPart({ lemma: word.headword, text: word.headword, reading: word.reading ?? '' });
 };
 

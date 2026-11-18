@@ -22,13 +22,19 @@ const CARD = {
   strokeCount: 5,
   grade: 1,
   frequency: 10,
-  onReadings: ['ホン'],
-  kunReadings: ['もと'],
+  jlpt: 5,
+  radical: { glyph: '⽊', number: 75, reading: 'き', meaning: 'tree, wood', character: '木' },
+  readings: [{ kind: 'on', reading: 'ホン', examples: [{ id: 'jmdict:1522150', headword: '本', reading: 'ほん' }] }],
   meanings: ['book'],
   meaningsLanguage: 'en',
-  components: [{ character: '木', hasCard: true }],
+  components: [{ character: '木', hasCard: true, meaning: 'tree' }],
   strokes: ['M1,1'],
+  strokeNumbers: [[1, 2]],
   words: [{ id: 'jmdict:1583070', headword: '日本', reading: 'にほん', frequency: 40, gloss: 'Japan' }],
+  sameRadical: [{ character: '木', reading: 'ボク', meaning: 'tree' }],
+  sameRadicalCount: 1,
+  containedIn: [],
+  containedInCount: 0,
 };
 
 let app: TestServer;

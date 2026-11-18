@@ -363,16 +363,37 @@ describe('the kanji the headword is written with', () => {
     strokeCount: 5,
     grade: 1,
     frequency: 10,
-    onReadings: ['ホン'],
-    kunReadings: ['もと'],
+    jlpt: 5,
+    radical: { glyph: '⽊', number: 75, reading: 'き', meaning: 'tree, wood', character: '木' },
+    readings: [
+      { kind: 'on', reading: 'ホン', examples: [{ id: 'jmdict:1522150', headword: '本当', reading: 'ほんとう' }] },
+      { kind: 'kun', reading: 'もと', examples: [] },
+    ],
     meanings: ['book', 'origin'],
     meaningsLanguage: 'en',
     components: [
-      { character: '木', hasCard: true },
-      { character: 'ノ', hasCard: false },
+      { character: '木', hasCard: true, meaning: 'tree' },
+      { character: 'ノ', hasCard: false, meaning: null },
     ],
     strokes: ['M1,1', 'M2,2', 'M3,3', 'M4,4', 'M5,5'],
-    words: [{ id: 'jmdict:1583070', headword: '日本', reading: 'にほん', frequency: 40, gloss: 'Japan' }],
+    strokeNumbers: [
+      [1, 1],
+      [2, 2],
+      [3, 3],
+      [4, 4],
+      [5, 5],
+    ],
+    words: Array.from({ length: 10 }, (_, i) => ({
+      id: `jmdict:${i}`,
+      headword: i === 0 ? '日本' : `本${i}`,
+      reading: i === 0 ? 'にほん' : null,
+      frequency: 40 + i,
+      gloss: i === 0 ? 'Japan' : null,
+    })),
+    sameRadical: [{ character: '林', reading: 'リン', meaning: 'grove' }],
+    sameRadicalCount: 647,
+    containedIn: [],
+    containedInCount: 0,
   };
 
   async function openOnHonto() {
@@ -423,7 +444,7 @@ describe('the kanji the headword is written with', () => {
 
     const parts = [...document.querySelectorAll('.kanji-view__part')];
     expect(parts.map((part) => [part.textContent, part.tagName])).toEqual([
-      ['木', 'BUTTON'],
+      ['木tree', 'BUTTON'],
       ['ノ', 'SPAN'],
     ]);
 
@@ -431,6 +452,63 @@ describe('the kanji the headword is written with', () => {
     await nextTick();
     await nextTick();
     expect(peekKanji).toHaveBeenLastCalledWith('木', 'en');
+  });
+
+  async function openHon() {
+    const wrapper = await openOnHonto();
+    chips()[0]!.click();
+    await nextTick();
+    await nextTick();
+    return wrapper;
+  }
+
+  test('each reading lists the words it is heard in, and one with none is marked rare', async () => {
+    await openHon();
+
+    const rows = [...document.querySelectorAll('[data-testid="kanji-reading"]')];
+    expect(rows.map((row) => row.textContent?.replace(/\s+/g, ''))).toEqual([
+      'tokenTooltip.kanjiOnホン本当',
+      'tokenTooltip.kanjiKunもと',
+    ]);
+    expect(rows[1]!.classList.contains('is-rare')).toBe(true);
+
+    peekWord.mockReturnValue({ candidates: [candidate('本当')], reason: null, nameOnly: false });
+    rows[0]!.querySelector<HTMLButtonElement>('.kanji-view__example')!.click();
+    await nextTick();
+    await nextTick();
+    expect(head()).toBe('本当');
+  });
+
+  test('the radical and the kanji filed under it open in the card', async () => {
+    await openHon();
+
+    expect(document.querySelector('[data-testid="kanji-radical"]')?.textContent).toContain('tree, wood');
+    document.querySelector<HTMLButtonElement>('[data-testid="kanji-radical"] button')!.click();
+    await nextTick();
+    expect(peekKanji).toHaveBeenLastCalledWith('木', 'en');
+
+    document.querySelector<HTMLButtonElement>('[data-testid="word-back"]')!.click();
+    await nextTick();
+    await nextTick();
+    document.querySelector<HTMLButtonElement>('[data-testid="kanji-same-radical"] button')!.click();
+    await nextTick();
+    expect(peekKanji).toHaveBeenLastCalledWith('林', 'en');
+  });
+
+  test('the word list shows eight and expands to all', async () => {
+    await openHon();
+    const words = () => document.querySelectorAll('[data-testid="kanji-word"]').length;
+
+    expect(words()).toBe(8);
+    document.querySelector<HTMLButtonElement>('[data-testid="kanji-more-words"]')!.click();
+    await nextTick();
+    expect(words()).toBe(10);
+  });
+
+  test('stroke numbers come with the strokes', async () => {
+    await openHon();
+
+    expect(document.querySelectorAll('.kanji-view__numbers text')).toHaveLength(5);
   });
 
   test('its sentences link searches inside words for the kanji', async () => {

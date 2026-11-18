@@ -8,14 +8,43 @@ export interface KanjiCardComponent {
   character: string;
   /** Has a card of its own, so the view can open it. */
   hasCard: boolean;
+  /** The kanji's first meaning, or the radical's (English) for a shape with no card. */
+  meaning: string | null;
 }
 
-export interface KanjiCardWord {
+/** A word the view links to: enough to open it in the card. */
+export interface KanjiCardWordRef {
   id: string;
   headword: string;
   reading: string | null;
+}
+
+export interface KanjiCardWord extends KanjiCardWordRef {
   frequency: number;
   gloss: string | null;
+}
+
+export interface KanjiCardReading {
+  kind: 'on' | 'kun';
+  /** Katakana for on; hiragana with `.` before the okurigana for kun. */
+  reading: string;
+  /** Up to three of the corpus's most frequent words read this way; none for a reading rare in it. */
+  examples: KanjiCardWordRef[];
+}
+
+export interface KanjiCardRelated {
+  character: string;
+  reading: string | null;
+  meaning: string | null;
+}
+
+export interface KanjiCardRadical {
+  glyph: string;
+  number: number;
+  reading: string;
+  meaning: string;
+  /** The kanji the radical is written as, when it has a card (⾷ is 食). */
+  character: string | null;
 }
 
 export interface KanjiCardData {
@@ -23,14 +52,23 @@ export interface KanjiCardData {
   strokeCount: number;
   grade: number | null;
   frequency: number | null;
-  onReadings: string[];
-  kunReadings: string[];
+  /** Current JLPT level, 5 for N5. */
+  jlpt: number | null;
+  radical: KanjiCardRadical | null;
+  readings: KanjiCardReading[];
   meanings: string[];
   meaningsLanguage: 'en' | 'es';
   components: KanjiCardComponent[];
   /** One SVG path per stroke, in KanjiVG's 109×109 view box, in writing order. */
   strokes: string[];
+  /** Where each stroke's number goes, `[x, y]` in the same view box; empty when there are none. */
+  strokeNumbers: Array<[number, number]>;
+  /** Up to 40, most frequent in our corpus first. */
   words: KanjiCardWord[];
+  sameRadical: KanjiCardRelated[];
+  sameRadicalCount: number;
+  containedIn: KanjiCardRelated[];
+  containedInCount: number;
 }
 
 export type KanjiLookup = { card: KanjiCardData; reason?: undefined } | { card: null; reason: 'missing' | 'failed' };

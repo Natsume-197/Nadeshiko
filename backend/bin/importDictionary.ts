@@ -10,7 +10,13 @@ import { type FuriganaEntry, readDictionary, readJsonArray } from '@app/services
 import { importDictionary, importFurigana } from '@app/services/dictionary/import/importDictionary';
 import { importJlpt } from '@app/services/dictionary/import/importJlpt';
 import { importKanjiumPitch, importPitch } from '@app/services/dictionary/import/importPitch';
-import { importKanjidic, importKanjiVg, importKradfile } from '@app/services/dictionary/import/importKanji';
+import {
+  importKanjidic,
+  importKanjiJlpt,
+  importKanjiVg,
+  importKradfile,
+  importRadicals,
+} from '@app/services/dictionary/import/importKanji';
 
 /**
  * Load Nadeshiko's own dictionary (task 40) into `dict.*` from extracted upstream files:
@@ -20,7 +26,7 @@ import { importKanjidic, importKanjiVg, importKradfile } from '@app/services/dic
  *     --jmdict-furigana JmdictFurigana.json --jmnedict-furigana JmnedictFurigana.json \
  *     --furigana-version 2.3.1+2026-10-25 \
  *     --jlpt-dir <folder with n1.csv..n5.csv> --jlpt-version <stephenmk/yomitan-jlpt-vocab commit> \
- *     --unidic <unidic-cwj sys.dic> --unidic-version 202512  *     --kanjium <kanjium data/source_files/raw/accents.txt> --kanjium-version <kanjium commit>  *     --kanjidic2 kanjidic2-all-3.6.2.json --kradfile kradfile-3.6.2.json  *     --kanjivg <kanjivg-*-main.zip extracted>/kanji --kanjivg-version r20260714 [--dry-run]
+ *     --unidic <unidic-cwj sys.dic> --unidic-version 202512  *     --kanjium <kanjium data/source_files/raw/accents.txt> --kanjium-version <kanjium commit>  *     --kanjidic2 kanjidic2-all-3.6.2.json --kradfile kradfile-3.6.2.json  *     --kanjivg <kanjivg-*-main.zip extracted>/kanji --kanjivg-version r20260714 \n *     --kanji-jlpt <davidluzgouveia/kanji-data kanji.json> --kanji-jlpt-version <its commit> \n *     --radicals <kanjialive language-data/japanese-radicals.csv> --radicals-version <its commit> [--dry-run]
  *
  * Any subset of the files can be given. Safe to rerun: forms keep their indexes, missing words are only flagged
  * inactive. `--dry-run` does all the work in one transaction, prints what would change, and rolls it back.
@@ -43,6 +49,10 @@ const { values: args } = parseArgs({
     kradfile: { type: 'string' },
     kanjivg: { type: 'string' },
     'kanjivg-version': { type: 'string' },
+    'kanji-jlpt': { type: 'string' },
+    'kanji-jlpt-version': { type: 'string' },
+    radicals: { type: 'string' },
+    'radicals-version': { type: 'string' },
     'dry-run': { type: 'boolean', default: false },
   },
 });
@@ -73,6 +83,10 @@ async function main(): Promise<void> {
   const kradfile = requireFile(args.kradfile, 'kradfile');
   const kanjivg = requireFile(args.kanjivg, 'kanjivg');
   const kanjivgVersion = args['kanjivg-version'];
+  const kanjiJlpt = requireFile(args['kanji-jlpt'], 'kanji-jlpt');
+  const kanjiJlptVersion = args['kanji-jlpt-version'];
+  const radicals = requireFile(args.radicals, 'radicals');
+  const radicalsVersion = args['radicals-version'];
   const jlptFiles = jlptDir
     ? [1, 2, 3, 4, 5].map((level) => ({ level, path: requireFile(join(jlptDir, `n${level}.csv`), 'jlpt-dir') ?? '' }))
     : [];
@@ -87,10 +101,12 @@ async function main(): Promise<void> {
     !kanjium &&
     !kanjidic2 &&
     !kradfile &&
-    !kanjivg
+    !kanjivg &&
+    !kanjiJlpt &&
+    !radicals
   ) {
     throw new Error(
-      'Nothing to import: pass --jmdict, --jmnedict, --jmdict-furigana, --jmnedict-furigana, --jlpt-dir, --unidic, --kanjium, --kanjidic2, --kradfile and/or --kanjivg',
+      'Nothing to import: pass --jmdict, --jmnedict, --jmdict-furigana, --jmnedict-furigana, --jlpt-dir, --unidic, --kanjium, --kanjidic2, --kradfile, --kanjivg, --kanji-jlpt and/or --radicals',
     );
   }
   if ((jmdictFurigana || jmnedictFurigana) && !furiganaVersion) {
@@ -103,6 +119,9 @@ async function main(): Promise<void> {
   if (unidic && !unidicVersion) throw new Error('--unidic-version is required with --unidic (e.g. 202512)');
   if (kanjium && !kanjiumVersion) throw new Error('--kanjium-version is required with --kanjium (the Kanjium commit)');
   if (kanjivg && !kanjivgVersion) throw new Error('--kanjivg-version is required with --kanjivg (e.g. r20260714)');
+  if (kanjiJlpt && !kanjiJlptVersion)
+    throw new Error('--kanji-jlpt-version is required with --kanji-jlpt (its commit)');
+  if (radicals && !radicalsVersion) throw new Error('--radicals-version is required with --radicals (its commit)');
 
   await AppDataSource.initialize();
 
@@ -165,6 +184,13 @@ async function main(): Promise<void> {
   if (kradfile) logger.info(await importKradfile(AppDataSource, kradfile, { dryRun }), 'kradfile');
   if (kanjivg && kanjivgVersion) {
     logger.info(await importKanjiVg(AppDataSource, kanjivg, kanjivgVersion, { dryRun }), 'kanjivg');
+  }
+
+  if (kanjiJlpt && kanjiJlptVersion) {
+    logger.info(await importKanjiJlpt(AppDataSource, kanjiJlpt, kanjiJlptVersion, { dryRun }), 'kanji jlpt');
+  }
+  if (radicals && radicalsVersion) {
+    logger.info(await importRadicals(AppDataSource, radicals, radicalsVersion, { dryRun }), 'radicals');
   }
 
   logger.info({ seconds: Math.round((Date.now() - startedAt) / 1000) }, 'dictionary import finished');

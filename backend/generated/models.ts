@@ -284,14 +284,31 @@ export type t_DictionaryKanji = {
   components: {
     character: string;
     hasCard: boolean;
+    meaning: string | null;
   }[];
+  containedIn: t_DictionaryKanjiRelated[];
+  containedInCount: number;
   frequency: number | null;
   grade: number | null;
-  kunReadings: string[];
+  jlpt: number | null;
   meanings: string[];
   meaningsLanguage: 'en' | 'es';
-  onReadings: string[];
+  radical: {
+    character: string | null;
+    glyph: string;
+    meaning: string;
+    number: number;
+    reading: string;
+  } | null;
+  readings: {
+    examples: t_DictionaryKanjiWordRef[];
+    kind: 'on' | 'kun';
+    reading: string;
+  }[];
+  sameRadical: t_DictionaryKanjiRelated[];
+  sameRadicalCount: number;
   strokeCount: number;
+  strokeNumbers: number[][];
   strokes: string[];
   words: {
     frequency: number;
@@ -300,6 +317,18 @@ export type t_DictionaryKanji = {
     id: string;
     reading: string | null;
   }[];
+};
+
+export type t_DictionaryKanjiRelated = {
+  character: string;
+  meaning: string | null;
+  reading: string | null;
+};
+
+export type t_DictionaryKanjiWordRef = {
+  headword: string;
+  id: string;
+  reading: string | null;
 };
 
 export type t_Episode = {

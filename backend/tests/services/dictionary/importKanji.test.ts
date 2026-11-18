@@ -5,10 +5,15 @@ import { join } from 'node:path';
 import type { Kanjidic2Character } from '@scriptin/jmdict-simplified-types';
 import { setupTestSuite, TestDataSource } from '../../helpers/setup';
 import {
+  csvFields,
   importKanjidic,
+  importKanjiJlpt,
   importKanjiVg,
   importKradfile,
+  importRadicals,
+  kanjiJlptLevels,
   kanjiRow,
+  radicalRows,
   kanjiVgCharacter,
   realComponents,
   strokePaths,
@@ -36,7 +41,10 @@ function character(
   return {
     literal,
     codepoints: [],
-    radicals: [],
+    radicals: [
+      { type: 'classical', value: 75 },
+      { type: 'nelson_c', value: 2 },
+    ],
     misc: { grade: null, strokeCounts: [5], variants: [], frequency: null, radicalNames: [], jlptLevel: null, ...misc },
     dictionaryReferences: [],
     queryCodes: [],
@@ -75,6 +83,7 @@ describe('kanjiRow', () => {
       stroke_count: 5,
       grade: 1,
       frequency: 10,
+      radical: 75,
       on_readings: ['ホン'],
       kun_readings: ['もと'],
       meanings_en: ['book', 'origin'],
@@ -88,13 +97,28 @@ describe('kanjiRow', () => {
 });
 
 describe('strokePaths', () => {
-  it('reads one path per stroke, in the order KanjiVG numbers them', () => {
-    const svg = `<svg><g id="kvg:StrokePaths_04e00">
-      <path id="kvg:04e00-s2" kvg:type="㇐" d="M2,2"/>
-      <path id="kvg:04e00-s1" kvg:type="㇐" d="M1,1"/>
-    </g><g id="kvg:StrokeNumbers_04e00"><text>1</text></g></svg>`;
+  it('reads one path per stroke and where its number goes, in the order KanjiVG numbers them', () => {
+    const svg = `<svg><g id="kvg:StrokePaths_04e8c">
+      <path id="kvg:04e8c-s2" kvg:type="㇐" d="M2,2"/>
+      <path id="kvg:04e8c-s1" kvg:type="㇐" d="M1,1"/>
+    </g><g id="kvg:StrokeNumbers_04e8c" style="font-size:8;fill:#808080">
+      <text transform="matrix(1 0 0 1 20.50 70.25)">2</text>
+      <text transform="matrix(1 0 0 1 13.50 34.50)">1</text>
+    </g></svg>`;
 
-    expect(strokePaths(svg)).toEqual(['M1,1', 'M2,2']);
+    expect(strokePaths(svg)).toEqual({
+      paths: ['M1,1', 'M2,2'],
+      numbers: [
+        [13.5, 34.5],
+        [20.5, 70.25],
+      ],
+    });
+  });
+
+  it('keeps no numbers when they do not match the strokes', () => {
+    const svg = `<path id="kvg:04e00-s1" d="M1,1"/>`;
+
+    expect(strokePaths(svg)).toEqual({ paths: ['M1,1'], numbers: [] });
   });
 });
 
@@ -110,6 +134,69 @@ describe('realComponents', () => {
       '亠',
       '冂',
       '啇',
+    ]);
+  });
+});
+
+describe('radicals', () => {
+  const CSV = [
+    'Stroke#,Radical,Meaning,Reading,Reading-R,Position-J,Position-R,Importance,Origin,Variant-of,Variant-of-Reading',
+    '1,⼀,"one, horizontal stroke",いち,ichi,,,,Kangxi,,',
+    '1,,diagonal sweeping stroke,のかんむり,nokanmuri,かんむり,kanmuri,,,⼃,の',
+    '9,⾷,"food, to eat",しょく,shoku,,,,Kangxi,,',
+    '8,⻟,"food, to eat",しょくへん,shokuhen,へん,hen,,,⾷,しょく',
+  ].join('\n');
+
+  it('splits quoted fields', () => {
+    expect(csvFields('1,⼀,"one, horizontal stroke",いち')).toEqual(['1', '⼀', 'one, horizontal stroke', 'いち']);
+  });
+
+  it('numbers each Kangxi radical and gives a variant its radical number; a variant with no glyph is skipped', () => {
+    expect(radicalRows(CSV)).toEqual([
+      { glyph: '⼀', number: 1, variant_of: null, reading: 'いち', meaning: 'one, horizontal stroke' },
+      { glyph: '⾷', number: 184, variant_of: null, reading: 'しょく', meaning: 'food, to eat' },
+      { glyph: '⻟', number: 184, variant_of: '⾷', reading: 'しょくへん', meaning: 'food, to eat' },
+    ]);
+  });
+
+  it('replaces dict.radical', async () => {
+    const path = join(dir, 'japanese-radicals.csv');
+    writeFileSync(path, CSV, 'utf8');
+
+    expect((await importRadicals(TestDataSource, path, 'e1e24d3')).rows).toBe(3);
+    expect(
+      await TestDataSource.query(
+        `SELECT glyph, variant_of FROM dict.radical WHERE number = 184 ORDER BY variant_of NULLS FIRST`,
+      ),
+    ).toEqual([
+      { glyph: '⾷', variant_of: null },
+      { glyph: '⻟', variant_of: '⾷' },
+    ]);
+  });
+});
+
+describe('kanji JLPT levels', () => {
+  it('reads only the current level, and only where there is one', () => {
+    expect(
+      kanjiJlptLevels({
+        食: { jlpt_new: 5, wk_level: 3 } as never,
+        飢: { jlpt_new: 1 },
+        丂: { jlpt_new: null },
+      }),
+    ).toEqual([
+      { character: '食', level: 5 },
+      { character: '飢', level: 1 },
+    ]);
+  });
+
+  it('replaces dict.kanji_jlpt', async () => {
+    const path = join(dir, 'kanji.json');
+    writeFileSync(path, JSON.stringify({ 食: { jlpt_new: 5 } }), 'utf8');
+
+    await importKanjiJlpt(TestDataSource, path, '00fd707');
+
+    expect(await TestDataSource.query(`SELECT character, level FROM dict.kanji_jlpt`)).toEqual([
+      { character: '食', level: 5 },
     ]);
   });
 });
@@ -162,14 +249,18 @@ describe('importing', () => {
   it('replaces dict.kanji_strokes from a KanjiVG folder', async () => {
     const folder = join(dir, 'kanji');
     mkdirSync(folder);
-    writeFileSync(join(folder, '04e00.svg'), '<path id="kvg:04e00-s1" d="M11,54"/>', 'utf8');
+    writeFileSync(
+      join(folder, '04e00.svg'),
+      '<path id="kvg:04e00-s1" d="M11,54"/><text transform="matrix(1 0 0 1 5.00 50.00)">1</text>',
+      'utf8',
+    );
     writeFileSync(join(folder, '04e00-Kaisho.svg'), '<path id="kvg:04e00-Kaisho-s1" d="M0,0"/>', 'utf8');
 
     const report = await importKanjiVg(TestDataSource, folder, 'r20260714');
 
     expect(report.rows).toBe(1);
-    expect(await TestDataSource.query(`SELECT character, paths FROM dict.kanji_strokes`)).toEqual([
-      { character: '一', paths: ['M11,54'] },
+    expect(await TestDataSource.query(`SELECT character, paths, numbers FROM dict.kanji_strokes`)).toEqual([
+      { character: '一', paths: ['M11,54'], numbers: [[5, 50]] },
     ]);
     expect(await TestDataSource.query(`SELECT version FROM dict.source WHERE name = 'kanjivg'`)).toEqual([
       { version: 'r20260714' },

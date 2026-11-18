@@ -154,26 +154,16 @@ export const s_DictionaryCandidate = z.object({
   ),
 });
 
-export const s_DictionaryKanji = z.object({
+export const s_DictionaryKanjiRelated = z.object({
   character: z.string(),
-  strokeCount: z.coerce.number(),
-  grade: z.coerce.number().nullable(),
-  frequency: z.coerce.number().nullable(),
-  onReadings: z.array(z.string()),
-  kunReadings: z.array(z.string()),
-  meanings: z.array(z.string()),
-  meaningsLanguage: z.enum(['en', 'es']),
-  components: z.array(z.object({ character: z.string(), hasCard: PermissiveBoolean })),
-  strokes: z.array(z.string()),
-  words: z.array(
-    z.object({
-      id: z.string(),
-      headword: z.string(),
-      reading: z.string().nullable(),
-      frequency: z.coerce.number(),
-      gloss: z.string().nullable(),
-    }),
-  ),
+  reading: z.string().nullable(),
+  meaning: z.string().nullable(),
+});
+
+export const s_DictionaryKanjiWordRef = z.object({
+  id: z.string(),
+  headword: z.string(),
+  reading: z.string().nullable(),
 });
 
 export const s_Episode = z.object({
@@ -642,6 +632,44 @@ export const s_CoveredWordsResponse = z.object({
   words: z.array(s_CoveredWord),
   pagination: s_CursorPagination,
   tierStats: z.object({ total: z.coerce.number(), covered: z.coerce.number(), uncovered: z.coerce.number() }),
+});
+
+export const s_DictionaryKanji = z.object({
+  character: z.string(),
+  strokeCount: z.coerce.number(),
+  grade: z.coerce.number().nullable(),
+  frequency: z.coerce.number().nullable(),
+  jlpt: z.coerce.number().nullable(),
+  radical: z
+    .object({
+      glyph: z.string(),
+      number: z.coerce.number(),
+      reading: z.string(),
+      meaning: z.string(),
+      character: z.string().nullable(),
+    })
+    .nullable(),
+  readings: z.array(
+    z.object({ kind: z.enum(['on', 'kun']), reading: z.string(), examples: z.array(s_DictionaryKanjiWordRef) }),
+  ),
+  meanings: z.array(z.string()),
+  meaningsLanguage: z.enum(['en', 'es']),
+  components: z.array(z.object({ character: z.string(), hasCard: PermissiveBoolean, meaning: z.string().nullable() })),
+  strokes: z.array(z.string()),
+  strokeNumbers: z.array(z.array(z.coerce.number()).min(2).max(2)),
+  words: z.array(
+    z.object({
+      id: z.string(),
+      headword: z.string(),
+      reading: z.string().nullable(),
+      frequency: z.coerce.number(),
+      gloss: z.string().nullable(),
+    }),
+  ),
+  sameRadical: z.array(s_DictionaryKanjiRelated),
+  sameRadicalCount: z.coerce.number(),
+  containedIn: z.array(s_DictionaryKanjiRelated),
+  containedInCount: z.coerce.number(),
 });
 
 export const s_EpisodeListResponse = z.object({ episodes: z.array(s_Episode), pagination: s_CursorPagination });
