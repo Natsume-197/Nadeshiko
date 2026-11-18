@@ -1135,7 +1135,6 @@
     "kanjiSentencesFailed": "例文を読み込めませんでした。しばらくしてからもう一度お試しください。",
     "kanjiPage": "漢字のページ",
     "kanjiOther": "その他",
-    "kanjiJlpt": "JLPT N{level}",
     "kanjiRadical": "部首",
     "kanjiAllWords": "{count}語すべて表示",
     "kanjiSameRadical": "同じ部首 ({count})",

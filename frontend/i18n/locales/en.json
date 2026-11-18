@@ -1135,7 +1135,6 @@
     "kanjiSentencesFailed": "The sentences could not be loaded. Try again in a moment.",
     "kanjiPage": "Kanji page",
     "kanjiOther": "Other",
-    "kanjiJlpt": "JLPT N{level}",
     "kanjiRadical": "Radical",
     "kanjiAllWords": "Show all {count}",
     "kanjiSameRadical": "Same radical ({count})",

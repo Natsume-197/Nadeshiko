@@ -1135,7 +1135,6 @@
     "kanjiSentencesFailed": "Não foi possível carregar as frases. Tente novamente em instantes.",
     "kanjiPage": "Página do kanji",
     "kanjiOther": "Outros",
-    "kanjiJlpt": "JLPT N{level}",
     "kanjiRadical": "Radical",
     "kanjiAllWords": "Ver todas as {count}",
     "kanjiSameRadical": "Mesmo radical ({count})",

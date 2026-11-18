@@ -1135,7 +1135,6 @@
     "kanjiSentencesFailed": "无法加载例句，请稍后再试。",
     "kanjiPage": "汉字页面",
     "kanjiOther": "其他",
-    "kanjiJlpt": "JLPT N{level}",
     "kanjiRadical": "部首",
     "kanjiAllWords": "显示全部 {count} 个",
     "kanjiSameRadical": "同部首 ({count})",
