@@ -747,8 +747,9 @@
       "dictionaryProviderDescription": "Kamus yang menjawab saat kamu mengetuk sebuah kata. Jika tidak tersedia, kartu memakai kamus yang lain.",
       "dictionaryProviderOptions": {
         "SHIRABE": "Shirabe",
-        "NADESHIKO": "Milik Nadeshiko (JMdict)"
+        "NADESHIKO": "Nadeshiko"
       },
+      "dictionaryProviderDefault": "{name} (bawaan)",
       "translationLanguageOptions": {
         "EN": "Hanya Inggris",
         "ES": "Hanya Spanyol",

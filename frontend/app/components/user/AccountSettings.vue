@@ -66,7 +66,7 @@ const updateDefinitionSize = async (value: string) => {
  * Which dictionary answers the word card. Shows what the reader gets now: their choice, else Shirabe when they
  * linked an account, else the site default.
  */
-const DICTIONARY_PROVIDERS = ['SHIRABE', 'NADESHIKO'] as const;
+const DICTIONARY_PROVIDERS = ['NADESHIKO', 'SHIRABE'] as const;
 type ProviderOption = (typeof DICTIONARY_PROVIDERS)[number];
 const siteDefaultProvider = computed<ProviderOption>(() =>
   useRuntimeConfig().public.dictionaryProvider === 'nadeshiko' ? 'NADESHIKO' : 'SHIRABE',
@@ -855,7 +855,13 @@ const logoutCurrentUser = async () => {
           @change="updateDictionaryProvider(($event.target as HTMLSelectElement).value)"
         >
           <option v-for="provider in DICTIONARY_PROVIDERS" :key="provider" :value="provider">
-            {{ $t(`accountSettings.account.dictionaryProviderOptions.${provider}`) }}
+            {{
+              provider === siteDefaultProvider
+                ? $t('accountSettings.account.dictionaryProviderDefault', {
+                    name: $t(`accountSettings.account.dictionaryProviderOptions.${provider}`),
+                  })
+                : $t(`accountSettings.account.dictionaryProviderOptions.${provider}`)
+            }}
           </option>
         </select>
       </div>

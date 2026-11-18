@@ -103,10 +103,10 @@ env:
     ELASTICSEARCH_HOST: "http://nadeshiko-backend-prod-elasticsearch:9200"
     ELASTICSEARCH_INDEX: nadedb_dev
 
-    # Production's sidecar, shared like Postgres and Elasticsearch (see deploy.prod.yml). Staging can try our parser
-    # with SEGMENT_PARSER=nadeshiko before production does.
+    # Production's sidecar, shared like Postgres and Elasticsearch (see deploy.prod.yml). Staging runs our parser
+    # (task 46) before production does; its corpus is reparsed with `tokens:reparse -- --stale`.
     SUDACHI_URL: "http://nadeshiko-backend-prod-sudachi:8090"
-    SEGMENT_PARSER: shirabe
+    SEGMENT_PARSER: nadeshiko
 
     R2_BASE_URL: https://cdn.nadeshiko.co
 

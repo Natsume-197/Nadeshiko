@@ -747,8 +747,9 @@
       "dictionaryProviderDescription": "Qué diccionario responde cuando tocas una palabra. Si no está disponible, la tarjeta responde con el otro.",
       "dictionaryProviderOptions": {
         "SHIRABE": "Shirabe",
-        "NADESHIKO": "El de Nadeshiko (JMdict)"
+        "NADESHIKO": "Nadeshiko"
       },
+      "dictionaryProviderDefault": "{name} (predeterminado)",
       "translationLanguageOptions": {
         "EN": "Solo inglés",
         "ES": "Solo español",

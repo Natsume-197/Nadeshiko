@@ -747,8 +747,9 @@
       "dictionaryProviderDescription": "点按单词时使用的词典。如果它不可用，单词卡会改用另一个。",
       "dictionaryProviderOptions": {
         "SHIRABE": "Shirabe",
-        "NADESHIKO": "Nadeshiko 自有（JMdict）"
+        "NADESHIKO": "Nadeshiko"
       },
+      "dictionaryProviderDefault": "{name}（默认）",
       "translationLanguageOptions": {
         "EN": "仅英语",
         "ES": "仅西班牙语",

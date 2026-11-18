@@ -747,8 +747,9 @@
       "dictionaryProviderDescription": "単語をタップしたときに使う辞書です。使えないときはもう一方の辞書で表示します。",
       "dictionaryProviderOptions": {
         "SHIRABE": "Shirabe",
-        "NADESHIKO": "Nadeshiko（JMdict）"
+        "NADESHIKO": "Nadeshiko"
       },
+      "dictionaryProviderDefault": "{name}（標準）",
       "translationLanguageOptions": {
         "EN": "英語のみ",
         "ES": "スペイン語のみ",

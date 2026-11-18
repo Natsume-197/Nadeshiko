@@ -747,8 +747,9 @@
       "dictionaryProviderDescription": "Which dictionary answers when you tap a word. If it is down, the card answers from the other one.",
       "dictionaryProviderOptions": {
         "SHIRABE": "Shirabe",
-        "NADESHIKO": "Nadeshiko's own (JMdict)"
+        "NADESHIKO": "Nadeshiko"
       },
+      "dictionaryProviderDefault": "{name} (default)",
       "translationLanguageOptions": {
         "EN": "English only",
         "ES": "Spanish only",

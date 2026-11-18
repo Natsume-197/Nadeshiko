@@ -76,6 +76,10 @@ env:
     # Use the public apex, not www: cross-origin redirects strip Authorization.
     # Measured in Node: www -> 401 after redirect, apex -> 200. No tailnet mapping.
     NUXT_SHIRABE_API_BASE: https://shirabe.org
+    # Our own word card for readers who never chose one (task 46); Shirabe stays a choice in Settings, and
+    # readers who linked a Shirabe account keep it. Changing it: purge /api/shirabe/words/candidates/* at
+    # Cloudflare in the same release (answers are cached a day).
+    NUXT_DICTIONARY_PROVIDER: nadeshiko
 
     NUXT_BACKEND_INTERNAL_URL: https://api.nadeshiko.co
     PORT: 3000

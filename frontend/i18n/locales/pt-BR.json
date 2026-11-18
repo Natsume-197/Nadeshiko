@@ -747,8 +747,9 @@
       "dictionaryProviderDescription": "Qual dicionário responde quando você toca numa palavra. Se ele estiver fora do ar, o cartão responde com o outro.",
       "dictionaryProviderOptions": {
         "SHIRABE": "Shirabe",
-        "NADESHIKO": "O do Nadeshiko (JMdict)"
+        "NADESHIKO": "Nadeshiko"
       },
+      "dictionaryProviderDefault": "{name} (padrão)",
       "translationLanguageOptions": {
         "EN": "Somente inglês",
         "ES": "Somente espanhol",
