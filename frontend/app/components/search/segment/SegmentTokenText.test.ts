@@ -465,15 +465,18 @@ describe('the kanji the headword is written with', () => {
   test('each reading lists the words it is heard in, and one with none is marked rare', async () => {
     await openHon();
 
-    const rows = [...document.querySelectorAll('[data-testid="kanji-reading"]')];
-    expect(rows.map((row) => row.textContent?.replace(/\s+/g, ''))).toEqual([
-      'tokenTooltip.kanjiOnホン本当',
-      'tokenTooltip.kanjiKunもと',
-    ]);
-    expect(rows[1]!.classList.contains('is-rare')).toBe(true);
+    const readings = [...document.querySelectorAll('[data-testid="kanji-reading"]')];
+    expect(readings.map((reading) => reading.textContent)).toEqual(['ホン', 'もと']);
+    expect(readings[1]!.classList.contains('is-rare')).toBe(true);
+    // The on/kun label is written once per group.
+    expect(
+      [...document.querySelectorAll('.kanji-view__readings .kanji-view__label')].map((l) => l.textContent),
+    ).toEqual(['tokenTooltip.kanjiOn', 'tokenTooltip.kanjiKun']);
 
     peekWord.mockReturnValue({ candidates: [candidate('本当')], reason: null, nameOnly: false });
-    rows[0]!.querySelector<HTMLButtonElement>('.kanji-view__example')!.click();
+    const example = document.querySelector<HTMLButtonElement>('.kanji-view__example')!;
+    expect(example.textContent).toBe('本当');
+    example.click();
     await nextTick();
     await nextTick();
     expect(head()).toBe('本当');
@@ -495,11 +498,11 @@ describe('the kanji the headword is written with', () => {
     expect(peekKanji).toHaveBeenLastCalledWith('林', 'en');
   });
 
-  test('the word list shows eight and expands to all', async () => {
+  test('the word list shows six and expands to all', async () => {
     await openHon();
     const words = () => document.querySelectorAll('[data-testid="kanji-word"]').length;
 
-    expect(words()).toBe(8);
+    expect(words()).toBe(6);
     document.querySelector<HTMLButtonElement>('[data-testid="kanji-more-words"]')!.click();
     await nextTick();
     expect(words()).toBe(10);

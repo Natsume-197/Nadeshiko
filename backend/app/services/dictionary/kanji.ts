@@ -84,7 +84,7 @@ export const KANJI_WORDS = 40;
 const READING_SAMPLE = 200;
 const EXAMPLES_PER_READING = 3;
 /** How many related kanji each list carries. */
-export const RELATED_KANJI = 24;
+export const RELATED_KANJI = 12;
 /** How many glosses of a word's first sense make its one-line summary. */
 const GLOSSES_PER_WORD = 3;
 

@@ -150,7 +150,7 @@ properties:
           example: to eat
   sameRadical:
     type: array
-    description: Other kanji filed under the same radical, school kanji first (up to 24).
+    description: Other kanji filed under the same radical, school kanji first (up to 12).
     items:
       $ref: "./DictionaryKanjiRelated.yaml"
   sameRadicalCount:
@@ -158,7 +158,7 @@ properties:
     example: 92
   containedIn:
     type: array
-    description: Kanji with this one as a part and filed under another radical, school kanji first (up to 24).
+    description: Kanji with this one as a part and filed under another radical, school kanji first (up to 12).
     items:
       $ref: "./DictionaryKanjiRelated.yaml"
   containedInCount:

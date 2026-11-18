@@ -1183,12 +1183,12 @@ export type DictionaryKanji = {
         gloss: string;
     }>;
     /**
-     * Other kanji filed under the same radical, school kanji first (up to 24).
+     * Other kanji filed under the same radical, school kanji first (up to 12).
      */
     sameRadical: Array<DictionaryKanjiRelated>;
     sameRadicalCount: number;
     /**
-     * Kanji with this one as a part and filed under another radical, school kanji first (up to 24).
+     * Kanji with this one as a part and filed under another radical, school kanji first (up to 12).
      */
     containedIn: Array<DictionaryKanjiRelated>;
     containedInCount: number;

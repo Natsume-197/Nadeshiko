@@ -9065,7 +9065,7 @@ components:
         sameRadical:
           type: array
           description: Other kanji filed under the same radical, school kanji first (up to
-            24).
+            12).
           items:
             $ref: "#/components/schemas/DictionaryKanjiRelated"
         sameRadicalCount:
@@ -9074,7 +9074,7 @@ components:
         containedIn:
           type: array
           description: Kanji with this one as a part and filed under another radical,
-            school kanji first (up to 24).
+            school kanji first (up to 12).
           items:
             $ref: "#/components/schemas/DictionaryKanjiRelated"
         containedInCount:

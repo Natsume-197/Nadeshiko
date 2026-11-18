@@ -5,11 +5,15 @@ import { type KanjiCardData, type KanjiCardWordRef, splitKunReading } from '~/ut
 import type { KanjiViewState } from '~/composables/useKanjiView';
 
 /**
- * The word card's kanji view (task 44): what the card shows when a reader opens one of a word's kanji. Meanings,
- * readings and radical from KANJIDIC2, JLPT from Waller's lists, radical names from Kanji alive, parts from KRADFILE,
- * the stroke order from KanjiVG, and, from Nadeshiko's own subtitles, the words written with it that come up most,
- * also under the reading each one uses. Words, parts and related kanji open inside the same card; the sentences link
- * (in the card's footer, not here) searches for them.
+ * The word card's kanji view (task 44): what the card shows when a reader opens one of a word's kanji.
+ *
+ * Laid out as a dictionary entry, most useful first, each block under its own rule:
+ *   1. the kanji itself: stroke order, meaning, and a row of facts (JLPT, grade, strokes);
+ *   2. readings, on then kun, each with the words it is heard in;
+ *   3. the words written with it that Nadeshiko's subtitles use most;
+ *   4. what it is made of: radical and parts;
+ *   5. related kanji, kept short.
+ * Accent colour is kept for what responds to the pointer; at rest everything is ink.
  */
 const props = defineProps<{
   kanji: string;
@@ -27,7 +31,9 @@ const emit = defineEmits<{
 const { t } = useI18n();
 
 /** How many words show before "Show all". */
-const WORDS_SHOWN = 8;
+const WORDS_SHOWN = 6;
+/** How many related kanji each row shows. */
+const RELATED_SHOWN = 12;
 
 /** Bumped by the replay button: a new key remounts the strokes and restarts the animation. */
 const drawing = ref(0);
@@ -43,28 +49,69 @@ watch(
 /** Seconds between strokes: half a second each, but a 29-stroke kanji still finishes in about six. */
 const strokeStep = computed(() => Math.min(0.5, 6 / Math.max(props.card?.strokes.length ?? 1, 1)));
 
-const readings = computed(() =>
-  (props.card?.readings ?? []).map((entry) => ({
-    ...entry,
-    ...(entry.kind === 'kun' ? splitKunReading(entry.reading) : { stem: entry.reading, okurigana: '' }),
-  })),
-);
+interface ReadingRow {
+  key: string;
+  stem: string;
+  okurigana: string;
+  examples: KanjiCardWordRef[];
+}
 
-const details = computed(() => {
+/** Readings grouped by kind, so the on/kun label is written once per group. */
+const readingGroups = computed(() => {
+  const groups: Array<{ kind: 'on' | 'kun'; rows: ReadingRow[] }> = [];
+  for (const entry of props.card?.readings ?? []) {
+    const split = entry.kind === 'kun' ? splitKunReading(entry.reading) : { stem: entry.reading, okurigana: '' };
+    let group = groups.find((candidate) => candidate.kind === entry.kind);
+    if (!group) {
+      group = { kind: entry.kind, rows: [] };
+      groups.push(group);
+    }
+    group.rows.push({ key: entry.reading, ...split, examples: entry.examples });
+  }
+  return groups;
+});
+
+/** The facts row: short, scannable badges. */
+const badges = computed(() => {
   const card = props.card;
   if (!card) return [];
-  const parts = [t('tokenTooltip.kanjiStrokes', { count: card.strokeCount }, card.strokeCount)];
-  if (card.jlpt !== null) parts.push(t('tokenTooltip.kanjiJlpt', { level: card.jlpt }));
+  const list: Array<{ id: string; text: string; strong?: boolean }> = [];
+  if (card.jlpt !== null) list.push({ id: 'jlpt', text: `N${card.jlpt}`, strong: true });
   if (card.grade !== null) {
-    if (card.grade <= 6) parts.push(t('tokenTooltip.kanjiGrade', { grade: card.grade }));
-    else if (card.grade === 8) parts.push(t('tokenTooltip.kanjiJoyo'));
-    else parts.push(t('tokenTooltip.kanjiJinmeiyo'));
+    if (card.grade <= 6) list.push({ id: 'grade', text: t('tokenTooltip.kanjiGrade', { grade: card.grade }) });
+    else if (card.grade === 8) list.push({ id: 'grade', text: t('tokenTooltip.kanjiJoyo') });
+    else list.push({ id: 'grade', text: t('tokenTooltip.kanjiJinmeiyo') });
   }
-  if (card.frequency !== null) parts.push(t('tokenTooltip.kanjiNewspaper', { rank: card.frequency }));
-  return parts;
+  list.push({ id: 'strokes', text: t('tokenTooltip.kanjiStrokes', { count: card.strokeCount }, card.strokeCount) });
+  if (card.frequency !== null) {
+    list.push({ id: 'freq', text: t('tokenTooltip.kanjiNewspaper', { rank: card.frequency }) });
+  }
+  return list;
 });
 
 const shownWords = computed(() => (allWords.value ? props.card?.words : props.card?.words.slice(0, WORDS_SHOWN)) ?? []);
+
+/** Related kanji, each list cut to one short row. */
+const related = computed(() => {
+  const card = props.card;
+  if (!card) return [];
+  return [
+    {
+      id: 'same-radical',
+      label: t('tokenTooltip.kanjiSameRadical', { count: card.sameRadicalCount }),
+      list: card.sameRadical,
+      total: card.sameRadicalCount,
+    },
+    {
+      id: 'contained-in',
+      label: t('tokenTooltip.kanjiContainedIn', { count: card.containedInCount }),
+      list: card.containedIn,
+      total: card.containedInCount,
+    },
+  ]
+    .filter((row) => row.list.length > 0)
+    .map((row) => ({ ...row, list: row.list.slice(0, RELATED_SHOWN) }));
+});
 
 /** Meanings fell back to English for a reader who reads Spanish: say so with the same tag the senses use. */
 const meaningsTag = computed(() =>
@@ -86,15 +133,10 @@ const relatedTitle = (kanji: { reading: string | null; meaning: string | null })
     <p v-else-if="state === 'unavailable'" class="kanji-view__pending">{{ $t('tokenTooltip.unavailable') }}</p>
 
     <template v-else-if="card">
-      <div class="kanji-view__top">
-        <!-- Stroke order: every stroke drawn faintly, then inked one at a time in writing order, with its number. -->
+      <!-- 1. The kanji: stroke order beside what it means. -->
+      <div class="kanji-view__hero">
         <div v-if="card.strokes.length > 0" class="kanji-view__strokes">
-          <svg
-            :key="drawing"
-            viewBox="0 0 109 109"
-            role="img"
-            :style="{ '--step': `${strokeStep}s` }"
-          >
+          <svg :key="drawing" viewBox="0 0 109 109" role="img" :style="{ '--step': `${strokeStep}s` }">
             <title>{{ $t('tokenTooltip.kanjiStrokeOrder', { kanji }) }}</title>
             <g class="kanji-view__ghost">
               <path v-for="(d, i) in card.strokes" :key="`g${i}`" :d="d" />
@@ -103,13 +145,7 @@ const relatedTitle = (kanji: { reading: string | null; meaning: string | null })
               <path v-for="(d, i) in card.strokes" :key="`i${i}`" :d="d" pathLength="1" :style="{ '--i': i }" />
             </g>
             <g class="kanji-view__numbers" aria-hidden="true">
-              <text
-                v-for="([x, y], i) in card.strokeNumbers"
-                :key="`n${i}`"
-                :x="x"
-                :y="y"
-                :style="{ '--i': i }"
-              >{{ i + 1 }}</text>
+              <text v-for="([x, y], i) in card.strokeNumbers" :key="`n${i}`" :x="x" :y="y" :style="{ '--i': i }">{{ i + 1 }}</text>
             </g>
           </svg>
           <button
@@ -124,82 +160,67 @@ const relatedTitle = (kanji: { reading: string | null; meaning: string | null })
           </button>
         </div>
 
-        <div class="kanji-view__facts">
+        <div class="kanji-view__summary">
           <p v-if="card.meanings.length > 0" class="kanji-view__meanings">
             <span v-if="meaningsTag" class="kanji-view__lang">{{ meaningsTag }}</span>{{ card.meanings.join(', ') }}
           </p>
-          <p class="kanji-view__details">{{ details.join(' · ') }}</p>
-          <p v-if="card.radical" class="kanji-view__radical" data-testid="kanji-radical">
-            <span class="kanji-view__label">{{ $t('tokenTooltip.kanjiRadical') }}</span>
-            <button
-              v-if="card.radical.character && card.radical.character !== card.character"
-              type="button"
-              class="kanji-view__radical-glyph is-link"
-              lang="ja"
-              :aria-label="$t('tokenTooltip.kanjiOpen', { kanji: card.radical.character })"
-              @click="emit('open-kanji', card.radical.character)"
-            >{{ card.radical.glyph }}</button>
-            <span v-else class="kanji-view__radical-glyph" lang="ja">{{ card.radical.glyph }}</span>
-            <span lang="ja">{{ card.radical.reading }}</span>
-            <span class="kanji-view__radical-meaning">{{ card.radical.meaning }}</span>
-          </p>
+          <div class="kanji-view__badges">
+            <span
+              v-for="badge in badges"
+              :key="badge.id"
+              class="kanji-view__badge"
+              :class="{ 'is-strong': badge.strong }"
+            >{{ badge.text }}</span>
+          </div>
         </div>
       </div>
 
-      <!-- Each reading with the words it is heard in, from our own subtitles. A reading none of them uses is shown
-           faint: it exists, but a reader of anime will rarely meet it. -->
-      <div v-if="readings.length > 0" class="kanji-view__readings">
-        <div
-          v-for="entry in readings"
-          :key="`${entry.kind}${entry.reading}`"
-          class="kanji-view__reading"
-          :class="{ 'is-rare': entry.examples.length === 0 }"
-          data-testid="kanji-reading"
-        >
-          <span class="kanji-view__label">{{ $t(entry.kind === 'on' ? 'tokenTooltip.kanjiOn' : 'tokenTooltip.kanjiKun') }}</span>
-          <span class="kanji-view__reading-text" lang="ja">{{ entry.stem }}<span v-if="entry.okurigana" class="kanji-view__okurigana">{{ entry.okurigana }}</span></span>
-          <span class="kanji-view__examples">
-            <button
-              v-for="example in entry.examples"
-              :key="example.id"
-              type="button"
-              class="kanji-view__example"
-              lang="ja"
-              :title="example.reading ?? undefined"
-              @click="emit('open-word', example)"
-            >{{ example.headword }}</button>
-          </span>
+      <!-- 2. Readings, the label once per group, each with the words it is heard in. A reading none of our words
+           uses is shown faint: it exists, but a reader of anime will rarely meet it. -->
+      <section v-if="readingGroups.length > 0" class="kanji-view__section">
+        <div class="kanji-view__readings">
+          <template v-for="group in readingGroups" :key="group.kind">
+            <template v-for="(row, ri) in group.rows" :key="`${group.kind}${row.key}`">
+              <span class="kanji-view__label">{{ ri === 0 ? $t(group.kind === 'on' ? 'tokenTooltip.kanjiOn' : 'tokenTooltip.kanjiKun') : '' }}</span>
+              <span
+                class="kanji-view__reading-text"
+                :class="{ 'is-rare': row.examples.length === 0 }"
+                lang="ja"
+                data-testid="kanji-reading"
+              >{{ row.stem }}<span v-if="row.okurigana" class="kanji-view__okurigana">{{ row.okurigana }}</span></span>
+              <span class="kanji-view__examples" lang="ja">
+                <template v-for="(example, ei) in row.examples" :key="example.id">
+                  <span v-if="ei > 0" class="kanji-view__sep" aria-hidden="true">、</span>
+                  <button
+                    type="button"
+                    class="kanji-view__example"
+                    :title="example.reading ?? undefined"
+                    @click="emit('open-word', example)"
+                  >{{ example.headword }}</button>
+                </template>
+              </span>
+            </template>
+          </template>
         </div>
-      </div>
+      </section>
 
-      <div v-if="card.components.length > 0" class="kanji-view__row">
-        <span class="kanji-view__label">{{ $t('tokenTooltip.kanjiParts') }}</span>
-        <template v-for="part in card.components" :key="part.character">
+      <!-- 3. Words, from our own subtitles. -->
+      <section v-if="card.words.length > 0" class="kanji-view__section">
+        <h4 class="kanji-view__heading">{{ $t('tokenTooltip.kanjiWords') }}</h4>
+        <div class="kanji-view__words">
           <button
-            v-if="part.hasCard"
+            v-for="word in shownWords"
+            :key="word.id"
             type="button"
-            class="kanji-view__part"
-            :aria-label="$t('tokenTooltip.kanjiOpen', { kanji: part.character })"
-            @click="emit('open-kanji', part.character)"
-          ><span lang="ja">{{ part.character }}</span><span v-if="part.meaning" class="kanji-view__part-meaning">{{ part.meaning }}</span></button>
-          <span v-else class="kanji-view__part is-static"><span lang="ja">{{ part.character }}</span><span v-if="part.meaning" class="kanji-view__part-meaning">{{ part.meaning }}</span></span>
-        </template>
-      </div>
-
-      <div v-if="card.words.length > 0" class="kanji-view__words">
-        <span class="kanji-view__label">{{ $t('tokenTooltip.kanjiWords') }}</span>
-        <button
-          v-for="word in shownWords"
-          :key="word.id"
-          type="button"
-          class="kanji-view__word"
-          data-testid="kanji-word"
-          @click="emit('open-word', word)"
-        >
-          <span class="kanji-view__word-text" lang="ja">{{ word.headword }}</span>
-          <span v-if="word.reading && word.reading !== word.headword" class="kanji-view__word-reading" lang="ja">{{ word.reading }}</span>
-          <span v-if="word.gloss" class="kanji-view__word-gloss">{{ word.gloss }}</span>
-        </button>
+            class="kanji-view__word"
+            data-testid="kanji-word"
+            @click="emit('open-word', word)"
+          >
+            <span class="kanji-view__word-text" lang="ja">{{ word.headword }}</span>
+            <span v-if="word.reading && word.reading !== word.headword" class="kanji-view__word-reading" lang="ja">{{ word.reading }}</span>
+            <span v-if="word.gloss" class="kanji-view__word-gloss">{{ word.gloss }}</span>
+          </button>
+        </div>
         <button
           v-if="card.words.length > WORDS_SHOWN"
           type="button"
@@ -207,39 +228,65 @@ const relatedTitle = (kanji: { reading: string | null; meaning: string | null })
           data-testid="kanji-more-words"
           @click="allWords = !allWords"
         >{{ allWords ? $t('tokenTooltip.showLess') : $t('tokenTooltip.kanjiAllWords', { count: card.words.length }) }}</button>
-      </div>
+      </section>
 
-      <div v-if="card.sameRadical.length > 0" class="kanji-view__related" data-testid="kanji-same-radical">
-        <span class="kanji-view__label">{{ $t('tokenTooltip.kanjiSameRadical', { count: card.sameRadicalCount }) }}</span>
-        <span class="kanji-view__related-list">
-          <button
-            v-for="other in card.sameRadical"
-            :key="other.character"
-            type="button"
-            class="kanji-view__related-kanji"
-            lang="ja"
-            :title="relatedTitle(other)"
-            :aria-label="$t('tokenTooltip.kanjiOpen', { kanji: other.character })"
-            @click="emit('open-kanji', other.character)"
-          >{{ other.character }}</button>
-        </span>
-      </div>
+      <!-- 4. What it is made of. -->
+      <section v-if="card.radical || card.components.length > 0" class="kanji-view__section">
+        <div class="kanji-view__facts">
+          <template v-if="card.radical">
+            <span class="kanji-view__label">{{ $t('tokenTooltip.kanjiRadical') }}</span>
+            <span class="kanji-view__fact" data-testid="kanji-radical">
+              <button
+                v-if="card.radical.character && card.radical.character !== card.character"
+                type="button"
+                class="kanji-view__glyph is-link"
+                lang="ja"
+                :aria-label="$t('tokenTooltip.kanjiOpen', { kanji: card.radical.character })"
+                @click="emit('open-kanji', card.radical.character)"
+              >{{ card.radical.glyph }}</button>
+              <span v-else class="kanji-view__glyph" lang="ja">{{ card.radical.glyph }}</span>
+              <span class="kanji-view__note"><span lang="ja">{{ card.radical.reading }}</span> · {{ card.radical.meaning }}</span>
+            </span>
+          </template>
+          <template v-if="card.components.length > 0">
+            <span class="kanji-view__label">{{ $t('tokenTooltip.kanjiParts') }}</span>
+            <span class="kanji-view__fact kanji-view__parts">
+              <template v-for="part in card.components" :key="part.character">
+                <button
+                  v-if="part.hasCard"
+                  type="button"
+                  class="kanji-view__part"
+                  :aria-label="$t('tokenTooltip.kanjiOpen', { kanji: part.character })"
+                  @click="emit('open-kanji', part.character)"
+                ><span class="kanji-view__glyph" lang="ja">{{ part.character }}</span><span v-if="part.meaning" class="kanji-view__note">{{ part.meaning }}</span></button>
+                <span v-else class="kanji-view__part is-static"><span class="kanji-view__glyph" lang="ja">{{ part.character }}</span><span v-if="part.meaning" class="kanji-view__note">{{ part.meaning }}</span></span>
+              </template>
+            </span>
+          </template>
+        </div>
+      </section>
 
-      <div v-if="card.containedIn.length > 0" class="kanji-view__related" data-testid="kanji-contained-in">
-        <span class="kanji-view__label">{{ $t('tokenTooltip.kanjiContainedIn', { count: card.containedInCount }) }}</span>
-        <span class="kanji-view__related-list">
-          <button
-            v-for="other in card.containedIn"
-            :key="other.character"
-            type="button"
-            class="kanji-view__related-kanji"
-            lang="ja"
-            :title="relatedTitle(other)"
-            :aria-label="$t('tokenTooltip.kanjiOpen', { kanji: other.character })"
-            @click="emit('open-kanji', other.character)"
-          >{{ other.character }}</button>
-        </span>
-      </div>
+      <!-- 5. Related kanji, one short row each. -->
+      <section v-if="related.length > 0" class="kanji-view__section">
+        <div class="kanji-view__facts">
+          <template v-for="row in related" :key="row.id">
+            <span class="kanji-view__label">{{ row.label }}</span>
+            <span class="kanji-view__related" :data-testid="`kanji-${row.id}`">
+              <button
+                v-for="other in row.list"
+                :key="other.character"
+                type="button"
+                class="kanji-view__related-kanji"
+                lang="ja"
+                :title="relatedTitle(other)"
+                :aria-label="$t('tokenTooltip.kanjiOpen', { kanji: other.character })"
+                @click="emit('open-kanji', other.character)"
+              >{{ other.character }}</button>
+              <span v-if="row.total > row.list.length" class="kanji-view__note">+{{ row.total - row.list.length }}</span>
+            </span>
+          </template>
+        </div>
+      </section>
     </template>
   </div>
 </template>
@@ -269,18 +316,45 @@ const relatedTitle = (kanji: { reading: string | null; meaning: string | null })
   }
 }
 
-.kanji-view__top {
+/* Blocks: one rhythm for all of them and a hairline between, so the eye can find each. */
+.kanji-view__section {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.kanji-view__heading,
+.kanji-view__label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  color: var(--ink-faint);
+}
+
+.kanji-view__heading {
+  margin-bottom: 4px;
+}
+
+.kanji-view__note {
+  font-size: 12px;
+  color: var(--ink-muted);
+}
+
+/* 1. The kanji. */
+.kanji-view__hero {
   display: flex;
   gap: 14px;
-  align-items: flex-start;
+  align-items: center;
   margin-top: 6px;
 }
 
 .kanji-view__strokes {
   position: relative;
   flex: 0 0 auto;
-  width: 92px;
-  height: 92px;
+  width: 88px;
+  height: 88px;
   border: 1px solid var(--line);
   border-radius: 10px;
 }
@@ -315,10 +389,29 @@ const relatedTitle = (kanji: { reading: string | null; meaning: string | null })
   }
 }
 
+.kanji-view__numbers text {
+  font-size: 8px;
+  fill: var(--ink-faint);
+  opacity: 0;
+  animation: kanji-view-number 0.2s ease-out forwards;
+  animation-delay: calc(var(--i) * var(--step));
+}
+
+@keyframes kanji-view-number {
+  to {
+    opacity: 1;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .kanji-view__ink path {
     animation: none;
     stroke-dashoffset: 0;
+  }
+
+  .kanji-view__numbers text {
+    animation: none;
+    opacity: 1;
   }
 }
 
@@ -344,17 +437,18 @@ const relatedTitle = (kanji: { reading: string | null; meaning: string | null })
   color: var(--ink);
 }
 
-.kanji-view__facts {
+.kanji-view__summary {
   flex: 1 1 auto;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
 }
 
 .kanji-view__meanings {
-  font-size: var(--definition-size, 14px);
-  line-height: 1.4;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.35;
   color: var(--ink);
 }
 
@@ -368,14 +462,48 @@ const relatedTitle = (kanji: { reading: string | null; meaning: string | null })
   font-weight: 600;
   line-height: 1.4;
   color: var(--ink-muted);
-  vertical-align: 1px;
+  vertical-align: 2px;
 }
 
-.kanji-view__label {
-  flex: 0 0 auto;
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+.kanji-view__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.kanji-view__badge {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--surface-lift);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.5;
+  white-space: nowrap;
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.kanji-view__badge.is-strong {
+  background: color-mix(in srgb, var(--accent-soft) 16%, transparent);
+  color: var(--accent-soft);
+}
+
+/* 2. Readings: label | reading | words, in one grid so the columns line up. */
+.kanji-view__readings {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  column-gap: 12px;
+  row-gap: 4px;
+  align-items: baseline;
+}
+
+.kanji-view__reading-text {
+  font-size: 15px;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.kanji-view__reading-text.is-rare {
   color: var(--ink-faint);
 }
 
@@ -383,61 +511,34 @@ const relatedTitle = (kanji: { reading: string | null; meaning: string | null })
   color: var(--ink-faint);
 }
 
-.kanji-view__details {
-  font-size: 11px;
+.kanji-view__examples {
+  min-width: 0;
+  font-size: 13px;
   color: var(--ink-muted);
 }
 
-.kanji-view__row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 6px;
-  margin-top: 10px;
+.kanji-view__sep {
+  color: var(--ink-faint);
 }
 
-.kanji-view__part {
-  min-width: 28px;
-  padding: 2px 7px;
-  border: 1px solid var(--line);
-  border-radius: 7px;
+.kanji-view__example {
+  padding: 0;
+  border: 0;
   background: transparent;
-  color: var(--ink);
-  font-size: 15px;
-  text-align: center;
+  color: var(--ink-muted);
   cursor: pointer;
-  transition:
-    background-color 0.12s ease,
-    border-color 0.12s ease,
-    color 0.12s ease;
 }
 
-.kanji-view__part:hover {
-  background: color-mix(in srgb, var(--accent-soft) 14%, transparent);
-  border-color: var(--accent-soft);
+.kanji-view__example:hover {
   color: var(--accent-soft);
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
-.kanji-view__part.is-static {
-  border-style: dashed;
-  color: var(--ink-muted);
-  cursor: default;
-}
-
-.kanji-view__part.is-static:hover {
-  background: transparent;
-  border-color: var(--line);
-  color: var(--ink-muted);
-}
-
+/* 3. Words. */
 .kanji-view__words {
   display: flex;
   flex-direction: column;
-  margin-top: 10px;
-}
-
-.kanji-view__words > .kanji-view__label {
-  margin-bottom: 2px;
 }
 
 .kanji-view__word {
@@ -458,13 +559,6 @@ const relatedTitle = (kanji: { reading: string | null; meaning: string | null })
   background: var(--surface-lift);
 }
 
-.kanji-view__word:focus-visible,
-.kanji-view__part:focus-visible,
-.kanji-view__replay:focus-visible {
-  outline: 2px solid var(--input-focus-ring);
-  outline-offset: 2px;
-}
-
 .kanji-view__word-text {
   flex: 0 0 auto;
   font-size: 15px;
@@ -474,7 +568,7 @@ const relatedTitle = (kanji: { reading: string | null; meaning: string | null })
 .kanji-view__word-reading {
   flex: 0 0 auto;
   font-size: 12px;
-  color: var(--accent-soft);
+  color: var(--ink-muted);
 }
 
 .kanji-view__word-gloss {
@@ -483,125 +577,11 @@ const relatedTitle = (kanji: { reading: string | null; meaning: string | null })
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 12px;
-  color: var(--ink-muted);
-}
-.kanji-view__numbers text {
-  font-size: 8px;
-  fill: var(--ink-faint);
-  opacity: 0;
-  animation: kanji-view-number 0.2s ease-out forwards;
-  animation-delay: calc(var(--i) * var(--step));
-}
-
-@keyframes kanji-view-number {
-  to {
-    opacity: 1;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .kanji-view__numbers text {
-    animation: none;
-    opacity: 1;
-  }
-}
-
-.kanji-view__radical {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 6px;
-  font-size: 13px;
-  color: var(--ink);
-}
-
-.kanji-view__radical-glyph {
-  font-size: 16px;
-  color: var(--ink);
-}
-
-.kanji-view__radical-glyph.is-link {
-  padding: 0 4px;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  background: transparent;
-  cursor: pointer;
-}
-
-.kanji-view__radical-glyph.is-link:hover {
-  border-color: var(--accent-soft);
-  color: var(--accent-soft);
-}
-
-.kanji-view__radical-meaning {
-  font-size: 12px;
-  color: var(--ink-muted);
-}
-
-.kanji-view__readings {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  margin-top: 10px;
-}
-
-.kanji-view__reading {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  min-width: 0;
-}
-
-.kanji-view__reading > .kanji-view__label {
-  width: 2.2em;
-}
-
-.kanji-view__reading-text {
-  flex: 0 0 auto;
-  min-width: 4.5em;
-  font-size: 14px;
-  color: var(--ink);
-}
-
-.kanji-view__reading.is-rare .kanji-view__reading-text {
   color: var(--ink-faint);
 }
 
-.kanji-view__examples {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2px 10px;
-  min-width: 0;
-}
-
-.kanji-view__example {
-  padding: 0;
-  border: 0;
-  background: transparent;
-  font-size: 13px;
-  color: var(--accent-soft);
-  cursor: pointer;
-}
-
-.kanji-view__example:hover {
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
-.kanji-view__part {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 5px;
-}
-
-.kanji-view__part-meaning {
-  font-size: 11px;
-  color: var(--ink-muted);
-}
-
 .kanji-view__more {
-  align-self: flex-start;
-  margin-top: 2px;
+  margin-top: 4px;
   padding: 0;
   border: 0;
   background: none;
@@ -616,44 +596,91 @@ const relatedTitle = (kanji: { reading: string | null; meaning: string | null })
   text-underline-offset: 2px;
 }
 
-.kanji-view__related {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-top: 10px;
+/* 4 and 5. Label | content rows, aligned like the readings. */
+.kanji-view__facts {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 12px;
+  row-gap: 8px;
+  align-items: baseline;
 }
 
-.kanji-view__related-list {
+.kanji-view__fact {
   display: flex;
   flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+
+.kanji-view__parts {
+  gap: 4px 14px;
+}
+
+.kanji-view__glyph {
+  font-size: 16px;
+  color: var(--ink);
+}
+
+button.kanji-view__glyph {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+button.kanji-view__glyph:hover,
+button.kanji-view__part:hover .kanji-view__glyph {
+  color: var(--accent-soft);
+}
+
+.kanji-view__part {
+  display: inline-flex;
+  align-items: baseline;
   gap: 4px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+}
+
+button.kanji-view__part {
+  cursor: pointer;
+}
+
+.kanji-view__related {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px;
+  min-width: 0;
 }
 
 .kanji-view__related-kanji {
-  min-width: 28px;
-  padding: 2px 5px;
-  border: 1px solid var(--line);
-  border-radius: 7px;
+  padding: 1px 4px;
+  border: 0;
+  border-radius: 5px;
   background: transparent;
   color: var(--ink);
   font-size: 15px;
   cursor: pointer;
   transition:
     background-color 0.12s ease,
-    border-color 0.12s ease,
     color 0.12s ease;
 }
 
 .kanji-view__related-kanji:hover {
   background: color-mix(in srgb, var(--accent-soft) 14%, transparent);
-  border-color: var(--accent-soft);
   color: var(--accent-soft);
 }
 
+.kanji-view__word:focus-visible,
+.kanji-view__part:focus-visible,
+.kanji-view__replay:focus-visible,
 .kanji-view__example:focus-visible,
 .kanji-view__more:focus-visible,
 .kanji-view__related-kanji:focus-visible,
-.kanji-view__radical-glyph.is-link:focus-visible {
+button.kanji-view__glyph:focus-visible {
   outline: 2px solid var(--input-focus-ring);
   outline-offset: 2px;
 }
