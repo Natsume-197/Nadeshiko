@@ -259,7 +259,6 @@ const sentencesPath = computed(() => ({
 /* The header. */
 .kanji-hero {
   border-bottom: 1px solid var(--line);
-  background: linear-gradient(180deg, var(--surface), var(--background));
 }
 
 .kanji-hero__inner {
