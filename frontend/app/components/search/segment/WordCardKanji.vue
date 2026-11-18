@@ -33,9 +33,6 @@ const props = defineProps<{
   /** On the kanji page, which part of the entry to draw beside the page's own header, words and sentences:
    *  `entry` (readings and composition) or `related` (the related kanji). Unset draws all of it. */
   part?: 'entry' | 'related';
-  /** On the kanji page: how many sentences each reading's words have, by reading. A reading with none is faded and
-   *  says so, since its tab is hidden. */
-  readingCounts?: Record<string, number>;
 }>();
 
 const shows = computed(() => ({
@@ -92,18 +89,6 @@ interface ReadingRow {
   okurigana: string;
   examples: KanjiCardExample[];
 }
-
-/** Whether the page found no sentences for a reading (the card itself never knows). */
-const noSentences = (row: ReadingRow) => props.readingCounts?.[row.key] === 0;
-
-/** On the page, each reading's share of the kanji's sentences, as a whole percent; null on the card. */
-const readingShare = (row: ReadingRow): number | null => {
-  const counts = props.readingCounts;
-  if (!counts) return null;
-  const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
-  if (total === 0) return null;
-  return Math.round(((counts[row.key] ?? 0) / total) * 100);
-};
 
 /** Readings grouped by kind, so the on/kun label is written once per group. */
 const readingGroups = computed(() => {
@@ -217,27 +202,13 @@ const relatedTitle = (kanji: { reading: string | null; meaning: string | null })
           <template v-for="group in readingGroups" :key="group.kind">
             <template v-for="(row, ri) in group.rows" :key="`${group.kind}${row.key}`">
               <span class="kanji-view__label">{{ ri === 0 ? $t(group.kind === 'on' ? 'tokenTooltip.kanjiOn' : 'tokenTooltip.kanjiKun') : '' }}</span>
-              <span class="kanji-view__reading">
-                <span
-                  class="kanji-view__reading-text"
-                  :class="{ 'is-rare': row.examples.length === 0 || noSentences(row) }"
-                  lang="ja"
-                  data-testid="kanji-reading"
-                >{{ row.stem }}<span v-if="row.okurigana" class="kanji-view__okurigana">{{ row.okurigana }}</span></span>
-                <!-- On the page: how much of the kanji's sentences use this reading. -->
-                <span
-                  v-if="readingCounts && !noSentences(row)"
-                  class="kanji-view__share"
-                  :title="$t('tokenTooltip.kanjiReadingShare', { percent: readingShare(row) ?? 0 })"
-                  data-testid="kanji-reading-share"
-                >
-                  <span class="kanji-view__share-bar" aria-hidden="true">
-                    <span :style="{ width: `${Math.max(readingShare(row) ?? 0, 4)}%` }" />
-                  </span>
-                  <span class="kanji-view__share-text">{{ readingShare(row) ?? 0 }}%</span>
-                </span>
-              </span>
-              <span class="kanji-view__examples" :class="{ 'is-rare': noSentences(row) }" lang="ja">
+              <span
+                class="kanji-view__reading-text"
+                :class="{ 'is-rare': row.examples.length === 0 }"
+                lang="ja"
+                data-testid="kanji-reading"
+              >{{ row.stem }}<span v-if="row.okurigana" class="kanji-view__okurigana">{{ row.okurigana }}</span></span>
+              <span class="kanji-view__examples" lang="ja">
                 <template v-for="(example, ei) in row.examples" :key="example.id">
                   <span v-if="ei > 0" class="kanji-view__sep" aria-hidden="true">、</span>
                   <button
@@ -247,9 +218,6 @@ const relatedTitle = (kanji: { reading: string | null; meaning: string | null })
                     @click="emit('open-word', example)"
                   ><template v-if="example.furigana.length > 0"><template v-for="(seg, si) in example.furigana" :key="si"><ruby v-if="seg.ruby">{{ seg.text }}<rt>{{ seg.ruby }}</rt></ruby><template v-else>{{ seg.text }}</template></template></template><template v-else>{{ example.headword }}</template></button>
                 </template>
-                <span v-if="noSentences(row)" class="kanji-view__no-sentences">{{
-                  $t('tokenTooltip.kanjiReadingNoSentences')
-                }}</span>
               </span>
             </template>
           </template>
@@ -519,52 +487,6 @@ const relatedTitle = (kanji: { reading: string | null; meaning: string | null })
 
 .kanji-view__reading-text.is-rare {
   color: var(--ink-faint);
-}
-
-.kanji-view__reading {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.kanji-view__share {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.kanji-view__share-bar {
-  position: relative;
-  width: 32px;
-  height: 3px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--ink) 12%, transparent);
-}
-
-.kanji-view__share-bar > span {
-  position: absolute;
-  inset: 0 auto 0 0;
-  border-radius: 999px;
-  background: var(--accent-soft);
-}
-
-.kanji-view__share-text {
-  font-size: 10px;
-  line-height: 1;
-  color: var(--ink-faint);
-  font-variant-numeric: tabular-nums;
-}
-
-.kanji-view__examples.is-rare {
-  opacity: 0.6;
-}
-
-.kanji-view__no-sentences {
-  margin-left: 8px;
-  font-size: 11px;
-  color: var(--ink-faint);
-  white-space: nowrap;
 }
 
 .kanji-view__okurigana {
