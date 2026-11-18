@@ -3,31 +3,20 @@ import { isJoyoKanji } from '#shared/data/joyoKanji';
 import KanjiStrokes from '~/components/search/segment/KanjiStrokes.vue';
 import WordCardKanji from '~/components/search/segment/WordCardKanji.vue';
 import { stripUnreadTokenFields } from '~/composables/useSearchFetch';
-import {
-  type KanjiCardData,
-  type KanjiCardExample,
-  type KanjiCardWordRef,
-  kanjiBadges,
-  splitKunReading,
-} from '~/utils/kanjiLookup';
+import { type KanjiCardData, type KanjiCardWordRef, kanjiBadges, markKanji, splitKunReading } from '~/utils/kanjiLookup';
 import { DEFAULT_OG_IMAGE_PATH } from '~/utils/metaTags';
 import { resolveSearchResponse } from '~/utils/resolvers';
 import type { SdkSearchResponse, SearchResponse } from '~/types/search';
 
 /**
- * A kanji's own page (task 44). What no dictionary site has: the kanji in real sentences from anime, drama,
- * audiobooks and YouTube, with screenshot, audio and translation.
+ * A kanji's own page (task 44). What no dictionary site has: the kanji in real sentences from anime, drama and
+ * YouTube, with screenshot, audio and translation, beside everything the word card knows about it.
  *
- * One column, in the order a learner asks, each fact said once:
- *   1. What is it: the kanji, its meaning, its levels, and one line of facts (strokes, rank, how many sentences).
- *   2. How is it read: one row per reading, most used first, with its share of the sentences and its words. A row
- *      is also the filter for the sentences below.
- *   3. Where do I meet it: the sentences, all of them or one reading's.
- *   4. More words: the frequent words not already shown under a reading.
- *   5. How is it written: stroke order, the parts it is built from, the radical.
- *   6. Related kanji.
- * Server-rendered so search engines read it; only the 2,136 jōyō kanji are indexed (and in the sitemap), the rest
- * are `noindex, follow` so thousands of rare kanji do not flood the crawl.
+ * Header: the kanji drawn stroke by stroke on a practice-sheet grid, its meaning as the headline, its on and kun
+ * readings, its badges, and the way to all its sentences. Below, two columns on wide screens: the entry (readings,
+ * composition, related kanji) on the left, the words written with it and its sentences on the right; one column on
+ * a phone. Server-rendered so search engines read it; only the 2,136 jōyō kanji are indexed (and in the sitemap), the
+ * rest are `noindex, follow` so thousands of rare kanji do not flood the crawl.
  */
 const { t, locale } = useI18n();
 const route = useRoute();
@@ -37,7 +26,7 @@ const localePath = useLocalePath();
 const character = computed(() => String(route.params.character ?? ''));
 const glossLocale = computed<'en' | 'es'>(() => (locale.value === 'es' ? 'es' : 'en'));
 
-/** How many of the other words show before "Show all". */
+/** How many words show before "Show all". */
 const WORDS_SHOWN = 12;
 
 // One character only (a kanji outside the BMP is two UTF-16 units).
@@ -88,8 +77,8 @@ if (error.value) {
 }
 if (!card.value) throw createError({ statusCode: 404, statusMessage: 'Kanji Not Found' });
 
-// How many sentences each reading's example words have: the readings' order and share. One batch search for every
-// word; the readings show without it.
+// How many sentences each reading's example words have, so each reading tab can say how common it is in the corpus.
+// One batch search for every word; the tabs work without it.
 const readingWords = [...new Set(card.value.readings.flatMap((entry) => entry.examples.map((example) => example.headword)))];
 const { data: wordCounts } = await useAsyncData(
   () => `kanji-word-counts-${character.value}`,
@@ -114,122 +103,79 @@ const formatCount = (count: number) => new Intl.NumberFormat(locale.value).forma
 // Rare kanji stay reachable and followable, but out of the index.
 useRobotsRule(isJoyoKanji(character.value) ? undefined : 'noindex, follow');
 
+const badges = computed(() => (card.value ? kanjiBadges(card.value, t) : []));
 const meaningsTag = computed(() =>
   card.value && card.value.meaningsLanguage !== glossLocale.value ? card.value.meaningsLanguage.toUpperCase() : null,
 );
-/** A still from the first sentence, for link previews of kanji without their own image. */
+/** A still from the first sentence, for link previews only. */
 const shareImage = computed(() => allSentences.value?.results[0]?.segment.urls.imageUrl ?? null);
 
-// 1. What is it: the levels a learner studies by as badges, the rest as one plain line.
-const LEVELS = ['jlpt', 'kanken', 'grade'];
-const badges = computed(() => (card.value ? kanjiBadges(card.value, t) : []));
-const levelBadges = computed(() => badges.value.filter((badge) => LEVELS.includes(badge.id)));
-const facts = computed(() => {
-  const list = badges.value.filter((badge) => !LEVELS.includes(badge.id)).map((badge) => badge.text);
-  if (totals.value && totals.value.sentences > 0) {
-    list.push(
-      `${formatCount(totals.value.sentences)} ${t('tokenTooltip.kanjiSentenceCount', totals.value.sentences)} · ${formatCount(totals.value.titles)} ${t('tokenTooltip.kanjiTitleCount', totals.value.titles)}`,
-    );
-  }
-  return list;
-});
-
-// 2. How is it read.
-interface ReadingRow {
-  /** `on:ショク`, `kun:た.べる`: also the key of its sentences. */
-  key: string;
-  kind: 'on' | 'kun';
-  stem: string;
-  okurigana: string;
-  examples: KanjiCardExample[];
-  /** Sentences with its words, added up (a sentence with two of them counts twice: close enough); null until the
-   *  counts are in. A reading without example words has none we can find. */
-  count: number | null;
-  /** Its part of all the readings' sentences, as a whole percent; null without counts. */
-  share: number | null;
-}
-
-const readingRows = computed<ReadingRow[]>(() => {
-  const rows = (card.value?.readings ?? []).map((entry) => {
-    let count: number | null = 0;
-    if (entry.examples.length > 0) {
-      count = wordCounts.value
-        ? entry.examples.reduce((sum, example) => sum + (wordCounts.value?.[example.headword] ?? 0), 0)
-        : null;
-    }
-    return {
-      key: `${entry.kind}:${entry.reading}`,
-      kind: entry.kind,
-      ...(entry.kind === 'kun' ? splitKunReading(entry.reading) : { stem: entry.reading, okurigana: '' }),
-      examples: entry.examples,
-      count,
-      share: null as number | null,
-    };
-  });
-  const total = rows.reduce((sum, row) => sum + (row.count ?? 0), 0);
-  for (const row of rows) row.share = total > 0 && row.count !== null ? Math.round((row.count / total) * 100) : null;
-  // Most used first once the counts are in; the dictionary's order (on, then kun) until then.
-  return wordCounts.value ? [...rows].sort((a, b) => (b.count ?? 0) - (a.count ?? 0)) : rows;
-});
-
-/** The readings as the block draws them: on, then kun, most used first inside each. */
-const readingGroups = computed(() =>
-  (['on', 'kun'] as const)
-    .map((kind) => ({ kind, rows: readingRows.value.filter((row) => row.kind === kind) }))
-    .filter((group) => group.rows.length > 0),
+/**
+ * Sentences by reading: a tab per reading that has example words, each loading (once, on first click) the sentences
+ * of those words, so a reader hears 食 as ショク in 食事 and as た.べる in 食べる. "All" is the server-rendered list.
+ */
+/** Sentences with a reading's words, added up (a sentence with two of them counts twice: close enough); null until
+ *  the counts are in. A reading without example words has none we can find. */
+const readingCount = (entry: { examples: Array<{ headword: string }> }) => {
+  if (entry.examples.length === 0) return 0;
+  if (!wordCounts.value) return null;
+  return entry.examples.reduce((sum, example) => sum + (wordCounts.value?.[example.headword] ?? 0), 0);
+};
+/** For the entry's readings list, which fades a reading with no sentences. */
+const readingCounts = computed(() =>
+  wordCounts.value
+    ? Object.fromEntries((card.value?.readings ?? []).map((entry) => [entry.reading, readingCount(entry) ?? 0]))
+    : undefined,
 );
 
-/** A reading the sentences can be narrowed to: it has words, and they have sentences (or we do not know yet). */
-const canPick = (row: ReadingRow) => row.examples.length > 0 && row.count !== 0;
+const readingTabs = computed(() =>
+  (card.value?.readings ?? [])
+    .filter((entry) => entry.examples.length > 0)
+    .map((entry) => ({
+      key: `${entry.kind}:${entry.reading}`,
+      ...(entry.kind === 'kun' ? splitKunReading(entry.reading) : { stem: entry.reading, okurigana: '' }),
+      words: entry.examples.map((example) => example.headword),
+      count: readingCount(entry),
+    }))
+    // A reading none of whose words appear in the corpus would open an empty tab.
+    .filter((tab) => tab.count !== 0),
+);
+const activeTab = ref<string | null>(null);
+/** Each tab's sentences once loaded; null when its search failed (retried on the next click). */
+const tabSentences = reactive<Record<string, SearchResponse | null>>({});
+const tabLoading = ref(false);
 
-// 3. Where do I meet it: every sentence, or one reading's, loaded once on first pick.
-const activeReading = ref<string | null>(null);
-/** Each reading's sentences once loaded; null when its search failed (retried on the next pick). */
-const readingSentences = reactive<Record<string, SearchResponse | null>>({});
-const readingLoading = ref(false);
-const activeRow = computed(() => readingRows.value.find((row) => row.key === activeReading.value) ?? null);
-
-async function pickReading(key: string | null): Promise<void> {
-  activeReading.value = activeReading.value === key ? null : key;
-  const picked = activeReading.value;
-  if (picked === null || readingSentences[picked]) return;
-  const row = readingRows.value.find((candidate) => candidate.key === picked);
-  if (!row) return;
-  readingLoading.value = true;
+async function selectTab(key: string | null): Promise<void> {
+  activeTab.value = key;
+  if (key === null || tabSentences[key]) return;
+  const tab = readingTabs.value.find((candidate) => candidate.key === key);
+  if (!tab) return;
+  tabLoading.value = true;
   try {
     const raw = await $fetch<SdkSearchResponse>('/api/dictionary/word-sentences', {
-      query: { words: row.examples.map((example) => example.headword).join(',') },
+      query: { words: tab.words.join(',') },
     });
-    readingSentences[picked] = stripUnreadTokenFields(resolveSearchResponse(raw));
+    tabSentences[key] = stripUnreadTokenFields(resolveSearchResponse(raw));
   } catch {
-    readingSentences[picked] = null;
+    tabSentences[key] = null;
   } finally {
-    // A later pick owns the spinner.
-    if (activeReading.value === picked) readingLoading.value = false;
+    // A later click owns the spinner.
+    if (activeTab.value === key) tabLoading.value = false;
   }
 }
 
-const sentences = computed(() =>
-  activeReading.value === null ? allSentences.value : (readingSentences[activeReading.value] ?? null),
-);
+const sentences = computed(() => (activeTab.value === null ? allSentences.value : (tabSentences[activeTab.value] ?? null)));
 
-// 4. More words: the frequent ones not already under a reading.
 const allWords = ref(false);
-const moreWords = computed(() => {
+/** The frequent words, less those the readings list already shows as examples. */
+const otherWords = computed(() => {
   const shown = new Set((card.value?.readings ?? []).flatMap((entry) => entry.examples.map((example) => example.headword)));
   return (card.value?.words ?? []).filter((word) => !shown.has(word.headword));
 });
-const listedWords = computed(() => (allWords.value ? moreWords.value : moreWords.value.slice(0, WORDS_SHOWN)));
+const shownWords = computed(() => (allWords.value ? otherWords.value : otherWords.value.slice(0, WORDS_SHOWN)));
 
-// 5. How is it written.
-/** Whether a part is the radical the kanji is filed under, as KRADFILE or the radical table writes it. */
-const isRadicalPart = (part: string) =>
-  !!card.value?.radical && (part === card.value.radical.character || part === card.value.radical.glyph);
-const hasRelated = computed(() => !!card.value && (card.value.sameRadical.length > 0 || card.value.containedIn.length > 0));
-
-// Search and link previews.
 const meaning = computed(() => card.value?.meanings.slice(0, 3).join(', ') ?? '');
-const readingsText = computed(() =>
+const readings = computed(() =>
   (card.value?.readings ?? [])
     .slice(0, 4)
     .map((reading) => reading.reading)
@@ -237,7 +183,7 @@ const readingsText = computed(() =>
 );
 const title = computed(() => t('seo.kanji.title', { kanji: character.value, meaning: meaning.value }));
 const description = computed(() =>
-  t('seo.kanji.description', { kanji: character.value, meaning: meaning.value, readings: readingsText.value }),
+  t('seo.kanji.description', { kanji: character.value, meaning: meaning.value, readings: readings.value }),
 );
 
 // A jōyō kanji shares an image of itself (server/routes/og/kanji); any other kanji, a frame of one of its sentences.
@@ -315,195 +261,138 @@ const sentencesPath = computed(() => ({
 
 <template>
   <div v-if="card" class="kanji-page">
-    <!-- 1. What is it. -->
-    <header class="nd-page kanji-head">
-      <NuxtLink :to="localePath('/kanji')" class="kanji-head__back" data-testid="kanji-page-index">
-        ← {{ $t('kanjiIndex.title') }}
-      </NuxtLink>
-      <div class="kanji-head__main">
-        <span class="kanji-head__glyph" lang="ja" aria-hidden="true">{{ character }}</span>
-        <div class="kanji-head__text">
-          <h1 class="kanji-head__title">
+    <!-- The header: the kanji written stroke by stroke on a practice grid, beside what it means and how it is read. -->
+    <section class="kanji-hero">
+      <div class="nd-page kanji-hero__inner">
+        <NuxtLink :to="localePath('/kanji')" class="kanji-hero__back" data-testid="kanji-page-index">
+          ← {{ $t('kanjiIndex.title') }}
+        </NuxtLink>
+        <div class="kanji-hero__tile">
+          <KanjiStrokes
+            v-if="card.strokes.length > 0"
+            :kanji="character"
+            :strokes="card.strokes"
+            :numbers="card.strokeNumbers"
+            grid
+          />
+          <span v-else class="kanji-hero__glyph" lang="ja">{{ character }}</span>
+        </div>
+
+        <div class="kanji-hero__text">
+          <h1 class="kanji-hero__title">
             <span class="sr-only" lang="ja">{{ character }}: </span>
-            <span v-if="meaningsTag" class="kanji-head__lang">{{ meaningsTag }}</span>
-            <span>{{ card.meanings[0] }}</span>
-            <span v-if="card.meanings.length > 1" class="kanji-head__meaning-rest">{{ card.meanings.slice(1).join(', ') }}</span>
+            <span v-if="meaningsTag" class="kanji-hero__lang">{{ meaningsTag }}</span>{{ card.meanings.join(', ') }}
           </h1>
-          <div v-if="levelBadges.length > 0" class="kanji-head__badges">
+
+
+          <div class="kanji-hero__badges">
             <span
-              v-for="badge in levelBadges"
+              v-for="badge in badges"
               :key="badge.id"
-              class="kanji-head__badge"
+              class="kanji-hero__badge"
               :class="{ 'is-strong': badge.strong }"
             >{{ badge.text }}</span>
           </div>
-          <p v-if="facts.length > 0" class="kanji-head__facts" data-testid="kanji-page-totals">
-            <template v-for="(fact, fi) in facts" :key="fi"><span v-if="fi > 0" class="kanji-head__dot" aria-hidden="true">·</span>{{ fact }}</template>
-          </p>
-        </div>
-      </div>
-    </header>
 
-    <div class="nd-page kanji-page__body">
-      <!-- 2. How is it read: on, then kun, the label once per group, each reading beside its words. A reading with
-           sentences filters the sentences below. -->
-      <section v-if="readingRows.length > 0" class="kanji-section" data-testid="kanji-readings">
-        <div class="kanji-section__head">
-          <h2 class="kanji-section__title">{{ $t('tokenTooltip.kanjiReadingsHeading') }}</h2>
-          <p class="kanji-section__hint">{{ $t('tokenTooltip.kanjiReadingHint') }}</p>
-        </div>
-        <div class="kanji-readings">
-          <template v-for="group in readingGroups" :key="group.kind">
-            <template v-for="(row, ri) in group.rows" :key="row.key">
-              <span class="kanji-readings__kind" :class="`is-${row.kind}`">{{
-                ri === 0 ? $t(row.kind === 'on' ? 'tokenTooltip.kanjiOn' : 'tokenTooltip.kanjiKun') : ''
-              }}</span>
-              <button
-                v-if="canPick(row)"
-                type="button"
-                class="kanji-readings__reading"
-                :class="[`is-${row.kind}`, { 'is-active': activeReading === row.key }]"
-                :aria-pressed="activeReading === row.key"
-                :aria-label="$t('tokenTooltip.kanjiReadingOpen', { reading: row.stem + row.okurigana })"
-                data-testid="kanji-reading"
-                @click="pickReading(row.key)"
-              >
-                <span lang="ja">{{ row.stem }}<span v-if="row.okurigana" class="kanji-readings__okurigana">{{ row.okurigana }}</span></span>
-                <span
-                  v-if="row.share !== null"
-                  class="kanji-readings__share"
-                  :title="$t('tokenTooltip.kanjiReadingShare', { percent: row.share })"
-                >{{ row.share === 0 ? '<1' : row.share }}%</span>
-              </button>
-              <span v-else class="kanji-readings__reading is-quiet" data-testid="kanji-reading">
-                <span lang="ja">{{ row.stem }}<span v-if="row.okurigana" class="kanji-readings__okurigana">{{ row.okurigana }}</span></span>
-              </span>
-              <span class="kanji-readings__words" :class="{ 'is-quiet': !canPick(row) }" lang="ja">
-                <template v-for="(example, ei) in row.examples" :key="example.id">
-                  <span v-if="ei > 0" class="kanji-readings__sep" aria-hidden="true">、</span>
-                  <NuxtLink
-                    :to="wordPath(example)"
-                    class="kanji-readings__word"
-                    :aria-label="example.reading ? `${example.headword} (${example.reading})` : example.headword"
-                  ><template v-if="example.furigana.length > 0"><template v-for="(seg, si) in example.furigana" :key="si"><ruby v-if="seg.ruby">{{ seg.text }}<rt>{{ seg.ruby }}</rt></ruby><template v-else>{{ seg.text }}</template></template></template><template v-else>{{ example.headword }}</template></NuxtLink>
-                </template>
-                <span v-if="!canPick(row)" class="kanji-readings__none" :lang="locale">{{ $t('tokenTooltip.kanjiReadingNoSentences') }}</span>
-              </span>
-            </template>
-          </template>
-        </div>
-      </section>
-
-      <!-- 3. Where do I meet it. -->
-      <section class="kanji-section" data-testid="kanji-page-sentences-section">
-        <div class="kanji-section__head">
-          <h2 class="kanji-section__title">{{ $t('tokenTooltip.kanjiSentencesHeading', { kanji: character }) }}</h2>
-          <button
-            v-if="activeRow"
-            type="button"
-            class="kanji-section__filter"
-            :class="`is-${activeRow.kind}`"
-            :aria-label="$t('tokenTooltip.kanjiClearReading')"
-            data-testid="kanji-reading-filter"
-            @click="pickReading(null)"
-          ><span lang="ja">{{ activeRow.stem }}{{ activeRow.okurigana }}</span><span aria-hidden="true">×</span></button>
-        </div>
-        <p v-if="readingLoading" class="kanji-section__empty">{{ $t('tokenTooltip.loading') }}</p>
-        <template v-else-if="sentences && sentences.results.length > 0">
-          <SearchSegmentContainer :searchData="sentences" :isLoading="false" />
-          <NuxtLink :to="sentencesPath" class="kanji-section__more" data-testid="kanji-page-sentences">
-            {{ $t('tokenTooltip.kanjiAllSentences', { kanji: character }) }} →
-          </NuxtLink>
-        </template>
-        <p v-else-if="sentences" class="kanji-section__empty">{{ $t('tokenTooltip.kanjiNoSentences', { kanji: character }) }}</p>
-        <p v-else class="kanji-section__empty">{{ $t('tokenTooltip.kanjiSentencesFailed') }}</p>
-      </section>
-
-      <!-- 4. More words. -->
-      <section v-if="moreWords.length > 0" class="kanji-section">
-        <div class="kanji-section__head">
-          <h2 class="kanji-section__title">{{ $t('tokenTooltip.kanjiMoreWords') }}</h2>
-        </div>
-        <ul class="kanji-words">
-          <li v-for="word in listedWords" :key="word.id">
-            <NuxtLink :to="wordPath(word)" class="kanji-words__row" data-testid="kanji-page-word">
-              <span class="kanji-words__text" lang="ja">{{ word.headword }}</span>
-              <span v-if="word.reading && word.reading !== word.headword" class="kanji-words__reading" lang="ja">{{ word.reading }}</span>
-              <span v-if="word.gloss" class="kanji-words__gloss">{{ word.gloss }}</span>
-              <span
-                v-if="word.frequency"
-                class="kanji-words__rank"
-                :title="$t('tokenTooltip.kanjiWordRank', { rank: word.frequency })"
-              >#{{ word.frequency }}</span>
+          <div class="kanji-hero__actions">
+            <NuxtLink :to="sentencesPath" class="kanji-hero__cta" data-testid="kanji-page-sentences">
+              {{ $t('tokenTooltip.kanjiAllSentences', { kanji: character }) }}
             </NuxtLink>
-          </li>
-        </ul>
-        <button
-          v-if="moreWords.length > WORDS_SHOWN"
-          type="button"
-          class="kanji-section__more"
-          data-testid="kanji-page-more-words"
-          @click="allWords = !allWords"
-        >{{ allWords ? $t('tokenTooltip.showLess') : $t('tokenTooltip.kanjiAllWords', { count: moreWords.length }) }}</button>
-      </section>
-
-      <!-- 5. How is it written. -->
-      <section class="kanji-section">
-        <div class="kanji-section__head">
-          <h2 class="kanji-section__title">{{ $t('tokenTooltip.kanjiWritingHeading') }}</h2>
-        </div>
-        <div class="kanji-writing">
-          <div v-if="card.strokes.length > 0" class="kanji-writing__strokes">
-            <KanjiStrokes :kanji="character" :strokes="card.strokes" :numbers="card.strokeNumbers" grid />
-          </div>
-          <div class="kanji-writing__parts">
-            <div v-if="card.components.length > 0" class="kanji-build" data-testid="kanji-build">
-              <span class="kanji-build__tile is-self" lang="ja">{{ card.character }}</span>
-              <span class="kanji-build__op" aria-hidden="true">=</span>
-              <template v-for="(part, pi) in card.components" :key="part.character">
-                <span v-if="pi > 0" class="kanji-build__op" aria-hidden="true">+</span>
-                <button
-                  v-if="part.hasCard"
-                  type="button"
-                  class="kanji-build__tile"
-                  :class="{ 'is-radical': isRadicalPart(part.character) }"
-                  :aria-label="$t('tokenTooltip.kanjiOpen', { kanji: part.character })"
-                  @click="openKanji(part.character)"
-                >
-                  <span class="kanji-build__glyph" lang="ja">{{ part.character }}</span>
-                  <span v-if="part.meaning" class="kanji-build__note">{{ part.meaning }}</span>
-                </button>
-                <span v-else class="kanji-build__tile" :class="{ 'is-radical': isRadicalPart(part.character) }">
-                  <span class="kanji-build__glyph" lang="ja">{{ part.character }}</span>
-                  <span v-if="part.meaning" class="kanji-build__note">{{ part.meaning }}</span>
-                </span>
-              </template>
-            </div>
-            <p v-if="card.radical" class="kanji-writing__radical" data-testid="kanji-radical">
-              <span class="kanji-writing__label">{{ $t('tokenTooltip.kanjiRadical') }}</span>
-              <button
-                v-if="card.radical.character && card.radical.character !== card.character"
-                type="button"
-                class="kanji-writing__radical-glyph is-link"
-                lang="ja"
-                :aria-label="$t('tokenTooltip.kanjiOpen', { kanji: card.radical.character })"
-                @click="openKanji(card.radical.character)"
-              >{{ card.radical.glyph }}</button>
-              <span v-else class="kanji-writing__radical-glyph" lang="ja">{{ card.radical.glyph }}</span>
-              <span lang="ja">{{ card.radical.reading }}</span>
-              <span class="kanji-head__dot" aria-hidden="true">·</span>
-              <span>{{ card.radical.meaning }}</span>
+            <!-- How much of the corpus uses it: the figure only Nadeshiko can give. -->
+            <p v-if="totals && totals.sentences > 0" class="kanji-hero__totals" data-testid="kanji-page-totals">
+              <strong>{{ formatCount(totals.sentences) }}</strong>
+              {{ $t('tokenTooltip.kanjiSentenceCount', totals.sentences) }}
+              <span class="kanji-hero__dot" aria-hidden="true">·</span>
+              <strong>{{ formatCount(totals.titles) }}</strong>
+              {{ $t('tokenTooltip.kanjiTitleCount', totals.titles) }}
             </p>
           </div>
         </div>
+      </div>
+    </section>
+
+    <div class="nd-page kanji-page__body">
+      <!-- The entry beside the words written with the kanji. -->
+      <div class="kanji-page__top">
+        <aside class="kanji-page__entry">
+          <WordCardKanji
+            :kanji="character"
+            :card="card"
+            state="shown"
+            :locale="glossLocale"
+            full
+            part="entry"
+            :reading-counts="readingCounts"
+            @open-kanji="openKanji"
+            @open-word="openWord"
+          />
+        </aside>
+
+        <section v-if="otherWords.length > 0" class="kanji-page__words-section">
+          <h2 class="kanji-page__heading">{{ $t('tokenTooltip.kanjiWords') }}</h2>
+          <ul class="kanji-page__words">
+            <li v-for="word in shownWords" :key="word.id">
+              <NuxtLink :to="wordPath(word)" class="kanji-page__word" data-testid="kanji-page-word">
+                <span class="kanji-page__word-head">
+                  <span class="kanji-page__word-text" lang="ja"><template v-for="(part, pi) in markKanji(word.headword, character)" :key="pi"><span v-if="part.hit" class="kanji-page__mark">{{ part.text }}</span><template v-else>{{ part.text }}</template></template></span>
+                  <!-- Its rank among the words of our sentences. -->
+                  <span
+                    v-if="word.frequency"
+                    class="kanji-page__word-rank"
+                    :title="$t('tokenTooltip.kanjiWordRank', { rank: word.frequency })"
+                  >#{{ word.frequency }}</span>
+                </span>
+                <span v-if="word.reading && word.reading !== word.headword" class="kanji-page__word-reading" lang="ja">{{ word.reading }}</span>
+                <span v-if="word.gloss" class="kanji-page__word-gloss">{{ word.gloss }}</span>
+              </NuxtLink>
+            </li>
+          </ul>
+          <button
+            v-if="otherWords.length > WORDS_SHOWN"
+            type="button"
+            class="kanji-page__more"
+            data-testid="kanji-page-more-words"
+            @click="allWords = !allWords"
+          >{{ allWords ? $t('tokenTooltip.showLess') : $t('tokenTooltip.kanjiAllWords', { count: otherWords.length }) }}</button>
+        </section>
+      </div>
+
+      <!-- The sentences, the page's reason to exist, at the full width the search page gives them. -->
+      <section class="kanji-page__section" data-testid="kanji-page-sentences-section">
+        <h2 class="kanji-page__heading">{{ $t('tokenTooltip.kanjiSentencesHeading', { kanji: character }) }}</h2>
+        <!-- One tab per reading, to hear each one in context. -->
+        <div v-if="readingTabs.length > 1" class="kanji-page__tabs" role="tablist" data-testid="kanji-reading-tabs">
+          <button
+            type="button"
+            role="tab"
+            class="kanji-page__tab"
+            :aria-selected="activeTab === null"
+            @click="selectTab(null)"
+          >{{ $t('tokenTooltip.kanjiAllReadings') }}</button>
+          <button
+            v-for="tab in readingTabs"
+            :key="tab.key"
+            type="button"
+            role="tab"
+            class="kanji-page__tab"
+            lang="ja"
+            :aria-selected="activeTab === tab.key"
+            :title="tab.words.join('、')"
+            @click="selectTab(tab.key)"
+          >{{ tab.stem }}<span v-if="tab.okurigana" class="kanji-page__tab-okurigana">{{ tab.okurigana }}</span><span v-if="tab.count !== null" class="kanji-page__tab-count">{{ formatCount(tab.count) }}</span></button>
+        </div>
+        <p v-if="tabLoading" class="kanji-page__empty">{{ $t('tokenTooltip.loading') }}</p>
+        <template v-else-if="sentences && sentences.results.length > 0">
+          <SearchSegmentContainer :searchData="sentences" :isLoading="false" />
+        </template>
+        <p v-else-if="sentences" class="kanji-page__empty">{{ $t('tokenTooltip.kanjiNoSentences', { kanji: character }) }}</p>
+        <p v-else class="kanji-page__empty">{{ $t('tokenTooltip.kanjiSentencesFailed') }}</p>
       </section>
 
-      <!-- 6. Somewhere to go next. -->
-      <section v-if="hasRelated" class="kanji-section">
-        <div class="kanji-section__head">
-          <h2 class="kanji-section__title">{{ $t('tokenTooltip.kanjiRelatedHeading') }}</h2>
-        </div>
-        <div class="kanji-related">
+      <!-- The kanji around it, last: somewhere to go next. -->
+      <section v-if="card.sameRadical.length > 0 || card.containedIn.length > 0" class="kanji-page__section">
+        <h2 class="kanji-page__heading">{{ $t('tokenTooltip.kanjiRelatedHeading') }}</h2>
+        <div class="kanji-page__related">
           <WordCardKanji
             :kanji="character"
             :card="card"
@@ -521,84 +410,69 @@ const sentencesPath = computed(() => ({
 </template>
 
 <style scoped>
-/* On/kun tones: two hues pulled toward the ink, so they read in either theme without shouting. */
-.kanji-page {
-  --tone-on: color-mix(in srgb, #3d9be0 62%, var(--ink));
-  --tone-kun: color-mix(in srgb, #c06bd6 62%, var(--ink));
-  padding-bottom: 64px;
+/* The header. */
+.kanji-hero {
+  border-bottom: 1px solid var(--line);
 }
 
-/* 1. What is it. */
-.kanji-head {
+.kanji-hero__inner {
   display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding: 20px 16px 28px;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 24px 36px;
+  padding: 20px 16px 32px;
 }
 
-.kanji-head__back {
-  align-self: flex-start;
+/* Back to every kanji, on its own line above the header. */
+.kanji-hero__back {
+  flex: 0 0 100%;
+  margin-bottom: -10px;
   font-size: 13px;
   font-weight: 600;
   color: var(--ink-muted);
 }
 
-.kanji-head__back:hover {
+.kanji-hero__back:hover {
   color: var(--accent-soft);
 }
 
-.kanji-head__main {
-  display: flex;
-  align-items: center;
-  gap: 28px;
-}
-
-/* The kanji on a practice-sheet square: a frame and a faint cross. */
-.kanji-head__glyph {
+/* A practice-sheet square: frame here, dashed cross from KanjiStrokes. */
+.kanji-hero__tile {
   flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 168px;
-  height: 168px;
+  width: 196px;
+  height: 196px;
+  padding: 6px;
   border: 1.5px solid var(--line);
   border-radius: 16px;
-  background:
-    linear-gradient(color-mix(in srgb, var(--ink) 10%, transparent), color-mix(in srgb, var(--ink) 10%, transparent))
-      center / 1px 100% no-repeat,
-    linear-gradient(color-mix(in srgb, var(--ink) 10%, transparent), color-mix(in srgb, var(--ink) 10%, transparent))
-      center / 100% 1px no-repeat,
-    var(--background);
-  font-size: 120px;
+  background: var(--background);
+}
+
+.kanji-hero__glyph {
+  font-size: 140px;
   line-height: 1;
   color: var(--ink);
 }
 
-.kanji-head__text {
+.kanji-hero__text {
+  flex: 1 1 320px;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  min-width: 0;
+  gap: 14px;
 }
 
-.kanji-head__title {
-  font-size: 34px;
+.kanji-hero__title {
+  font-size: 32px;
   font-weight: 800;
   line-height: 1.15;
   letter-spacing: -0.01em;
   color: var(--ink);
 }
 
-.kanji-head__meaning-rest {
-  display: block;
-  margin-top: 4px;
-  font-size: 17px;
-  font-weight: 500;
-  letter-spacing: 0;
-  color: var(--ink-muted);
-}
-
-.kanji-head__lang {
+.kanji-hero__lang {
   display: inline-flex;
   margin-right: 10px;
   padding: 1px 6px;
@@ -611,482 +485,281 @@ const sentencesPath = computed(() => ({
   vertical-align: 7px;
 }
 
-.kanji-head__badges {
+.kanji-hero__dot {
+  color: var(--ink-faint);
+}
+
+.kanji-hero__badges {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
 }
 
-.kanji-head__badge {
+.kanji-hero__badge {
   padding: 3px 11px;
   border: 1px solid var(--line);
   border-radius: 999px;
   font-size: 13px;
   font-weight: 600;
   color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
 }
 
-.kanji-head__badge.is-strong {
+.kanji-hero__badge.is-strong {
   border-color: color-mix(in srgb, var(--accent-soft) 45%, transparent);
   background: color-mix(in srgb, var(--accent-soft) 14%, transparent);
   color: var(--accent-soft);
 }
 
-.kanji-head__facts {
+.kanji-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 18px;
+  margin-top: 2px;
+}
+
+.kanji-hero__totals {
   font-size: 14px;
   color: var(--ink-muted);
+}
+
+.kanji-hero__totals .kanji-hero__dot {
+  margin: 0 6px;
+}
+
+.kanji-hero__totals strong {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
   font-variant-numeric: tabular-nums;
 }
 
-.kanji-head__dot {
-  margin: 0 8px;
-  color: var(--ink-faint);
+.kanji-hero__cta {
+  align-self: flex-start;
+  padding: 9px 18px;
+  border-radius: 999px;
+  background: var(--accent);
+  font-size: 14px;
+  font-weight: 700;
+  color: rgb(var(--c-white));
+  transition: filter 0.12s ease;
 }
 
-/* The sections: one rhythm, a title and an optional hint or control on its line. */
+.kanji-hero__cta:hover {
+  filter: brightness(1.1);
+}
+
+/* The body: entry and words side by side, then sentences and related kanji at full width. */
 .kanji-page__body {
   display: flex;
   flex-direction: column;
-  gap: 40px;
-  padding: 8px 16px 0;
+  gap: 56px;
+  padding: 36px 16px 72px;
 }
 
-.kanji-section__head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 4px 14px;
-  margin-bottom: 14px;
-}
-
-.kanji-section__title {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--ink);
-}
-
-.kanji-section__hint {
-  font-size: 13px;
-  color: var(--ink-faint);
-}
-
-.kanji-section__empty {
-  padding: 16px 0;
-  font-size: 14px;
-  color: var(--ink-muted);
-}
-
-.kanji-section__more {
-  display: inline-block;
-  margin-top: 12px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--accent-soft);
-  cursor: pointer;
-}
-
-.kanji-section__more:hover {
-  text-decoration: underline;
-}
-
-.kanji-section__filter {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 3px 12px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  font-size: 14px;
-  font-weight: 600;
-  background: transparent;
-  cursor: pointer;
-}
-
-.kanji-section__filter.is-on {
-  border-color: color-mix(in srgb, var(--tone-on) 50%, transparent);
-  background: color-mix(in srgb, var(--tone-on) 12%, transparent);
-  color: var(--tone-on);
-}
-
-.kanji-section__filter.is-kun {
-  border-color: color-mix(in srgb, var(--tone-kun) 50%, transparent);
-  background: color-mix(in srgb, var(--tone-kun) 12%, transparent);
-  color: var(--tone-kun);
-}
-
-/* 2. How is it read: a label | reading | words grid, the label once per group. */
-.kanji-readings {
+.kanji-page__top {
   display: grid;
-  grid-template-columns: auto auto minmax(0, 1fr);
-  align-items: baseline;
-  column-gap: 18px;
-  row-gap: 4px;
-  padding: 14px 20px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 40px;
+}
+
+/* The readings (and what the kanji is made of) first: the header no longer lists them. */
+.kanji-page__entry {
+  padding: 22px 24px;
   border: 1px solid var(--line);
   border-radius: 14px;
   background: var(--surface);
 }
 
-.kanji-readings__kind {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+.kanji-page__words-section {
+  min-width: 0;
 }
 
-.kanji-readings__kind.is-on {
-  color: var(--tone-on);
+@media (min-width: 1024px) {
+  .kanji-page__top {
+    grid-template-columns: 400px minmax(0, 1fr);
+    align-items: start;
+  }
 }
 
-.kanji-readings__kind.is-kun {
-  color: var(--tone-kun);
+.kanji-page__section {
+  min-width: 0;
 }
 
-/* A kun group starts a little apart from the on group above it. */
-.kanji-readings__kind.is-kun:not(:empty) {
-  padding-top: 8px;
+.kanji-page__related {
+  padding: 22px 24px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
 }
 
-.kanji-readings__kind.is-kun:not(:empty) + .kanji-readings__reading,
-.kanji-readings__kind.is-kun:not(:empty) + .kanji-readings__reading + .kanji-readings__words {
-  margin-top: 8px;
-}
-
-.kanji-readings__reading {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 8px;
-  justify-self: start;
-  margin-left: -8px;
-  padding: 0 8px;
-  border: 0;
-  border-radius: 8px;
-  background: transparent;
+.kanji-page__heading {
+  margin-bottom: 16px;
   font-size: 20px;
-  font-weight: 600;
-  white-space: nowrap;
-  color: var(--ink);
-  transition:
-    background-color 0.12s ease,
-    color 0.12s ease;
-}
-
-button.kanji-readings__reading {
-  cursor: pointer;
-}
-
-button.kanji-readings__reading.is-on:hover,
-button.kanji-readings__reading.is-on.is-active {
-  background: color-mix(in srgb, var(--tone-on) 14%, transparent);
-  color: var(--tone-on);
-}
-
-button.kanji-readings__reading.is-kun:hover,
-button.kanji-readings__reading.is-kun.is-active {
-  background: color-mix(in srgb, var(--tone-kun) 14%, transparent);
-  color: var(--tone-kun);
-}
-
-button.kanji-readings__reading:focus-visible {
-  outline: 2px solid var(--input-focus-ring);
-  outline-offset: 2px;
-}
-
-.kanji-readings__reading.is-quiet,
-.kanji-readings__words.is-quiet {
-  color: var(--ink-faint);
-}
-
-.kanji-readings__okurigana {
-  opacity: 0.55;
-}
-
-.kanji-readings__share {
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--ink-faint);
-  font-variant-numeric: tabular-nums;
-}
-
-.kanji-readings__words {
-  font-size: 16px;
-  line-height: 2.3;
-  color: var(--ink);
-}
-
-.kanji-readings__word:hover {
-  color: var(--accent-soft);
-}
-
-/* Furigana that never pushes the kanji apart: the reading sits over its base and may overhang it, instead of
-   widening the base to the reading's width (which left gaps like 老 若 男女). */
-.kanji-readings__word ruby {
-  position: relative;
-  display: inline-block;
-  ruby-position: over;
-}
-
-.kanji-readings__word rt {
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  margin-bottom: -2px;
-  font-size: 9px;
-  line-height: 1;
-  white-space: nowrap;
-  color: var(--ink-faint);
-}
-
-.kanji-readings__sep {
-  color: var(--ink-faint);
-}
-
-.kanji-readings__none {
-  margin-left: 8px;
-  font-size: 11px;
-  color: var(--ink-faint);
-}
-
-/* 4. More words: a two-column list, each row a search for that word. */
-.kanji-words {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  column-gap: 24px;
-}
-
-.kanji-words__row {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  min-width: 0;
-  padding: 8px 6px;
-  border-bottom: 1px solid var(--line);
-  transition: background-color 0.12s ease;
-}
-
-.kanji-words__row:hover {
-  background: var(--surface-lift);
-}
-
-.kanji-words__row:focus-visible {
-  outline: 2px solid var(--input-focus-ring);
-  outline-offset: 2px;
-}
-
-.kanji-words__text {
-  flex-shrink: 0;
-  font-size: 17px;
-  font-weight: 600;
-  color: var(--ink);
-}
-
-.kanji-words__reading {
-  flex-shrink: 0;
-  font-size: 12px;
-  color: var(--ink-muted);
-}
-
-.kanji-words__gloss {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 13px;
-  color: var(--ink-faint);
-}
-
-.kanji-words__rank {
-  flex-shrink: 0;
-  margin-left: auto;
-  font-size: 11px;
-  color: var(--ink-faint);
-  font-variant-numeric: tabular-nums;
-}
-
-/* 5. How is it written: the stroke order beside the parts and the radical. */
-.kanji-writing {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 24px 36px;
-}
-
-.kanji-writing__strokes {
-  flex: 0 0 auto;
-  width: 200px;
-  height: 200px;
-  padding: 6px;
-  border: 1.5px solid var(--line);
-  border-radius: 16px;
-  background: var(--background);
-}
-
-.kanji-writing__parts {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  min-width: 0;
-}
-
-.kanji-writing__label {
-  margin-right: 4px;
-  font-size: 10px;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--ink-faint);
-}
-
-.kanji-writing__radical {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 6px;
-  font-size: 14px;
-  color: var(--ink-muted);
-}
-
-.kanji-writing__radical-glyph {
-  padding: 0;
-  border: 0;
-  background: transparent;
-  font-size: 22px;
   color: var(--ink);
 }
 
-.kanji-writing__radical-glyph.is-link {
-  cursor: pointer;
-}
-
-.kanji-writing__radical-glyph.is-link:hover {
-  color: var(--accent-soft);
-}
-
-.kanji-build {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+/* Words: a grid of small cards, each a search for that word. */
+.kanji-page__words {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 10px;
 }
 
-.kanji-build__tile {
-  display: inline-flex;
+.kanji-page__word {
+  display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
   gap: 2px;
-  min-width: 68px;
-  max-width: 110px;
-  padding: 10px 10px 8px;
+  height: 100%;
+  padding: 12px 14px;
   border: 1px solid var(--line);
   border-radius: 12px;
   background: var(--surface);
-  color: var(--ink);
-}
-
-button.kanji-build__tile {
-  cursor: pointer;
   transition:
     border-color 0.12s ease,
     background-color 0.12s ease;
 }
 
-button.kanji-build__tile:hover {
+.kanji-page__word:hover {
   border-color: var(--accent-soft);
   background: var(--surface-lift);
 }
 
-button.kanji-build__tile:focus-visible,
-.kanji-section__filter:focus-visible,
-.kanji-section__more:focus-visible {
+.kanji-page__word-text {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.kanji-page__word-reading {
+  font-size: 13px;
+  color: var(--ink-muted);
+}
+
+.kanji-page__word-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.kanji-page__word-rank {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.kanji-page__word-gloss {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  font-size: 13px;
+  color: var(--ink-muted);
+}
+
+.kanji-page__more {
+  display: inline-block;
+  margin-top: 14px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent-soft);
+  cursor: pointer;
+}
+
+.kanji-page__more:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.kanji-page__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.kanji-page__tab {
+  padding: 5px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  font-size: 15px;
+  color: var(--ink-muted);
+  cursor: pointer;
+  transition:
+    background-color 0.12s ease,
+    border-color 0.12s ease,
+    color 0.12s ease;
+}
+
+.kanji-page__tab:hover {
+  border-color: var(--accent-soft);
+  color: var(--ink);
+}
+
+.kanji-page__tab[aria-selected='true'] {
+  border-color: color-mix(in srgb, var(--accent-soft) 45%, transparent);
+  background: color-mix(in srgb, var(--accent-soft) 14%, transparent);
+  color: var(--accent-soft);
+}
+
+.kanji-page__tab:focus-visible {
   outline: 2px solid var(--input-focus-ring);
   outline-offset: 2px;
 }
 
-.kanji-build__tile.is-self {
-  border-style: dashed;
-  background: transparent;
-  font-size: 36px;
-  line-height: 1.2;
+.kanji-page__tab-okurigana {
+  opacity: 0.6;
 }
 
-.kanji-build__tile.is-radical {
-  border-color: color-mix(in srgb, var(--accent-soft) 45%, transparent);
+.kanji-page__tab-count {
+  margin-left: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0.75;
+  font-variant-numeric: tabular-nums;
 }
 
-.kanji-build__glyph {
-  font-size: 28px;
-  line-height: 1.2;
+/* The kanji itself, inside the words that use it. */
+.kanji-page__mark {
+  color: var(--accent-soft);
 }
 
-.kanji-build__note {
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 11px;
+.kanji-page__empty {
+  font-size: 14px;
   color: var(--ink-muted);
 }
 
-.kanji-build__op {
-  font-size: 18px;
-  color: var(--ink-faint);
-}
-
-/* 6. Related kanji. */
-.kanji-related {
-  padding: 18px 20px;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  background: var(--surface);
+.kanji-page__word:focus-visible,
+.kanji-page__more:focus-visible,
+.kanji-hero__cta:focus-visible {
+  outline: 2px solid var(--input-focus-ring);
+  outline-offset: 2px;
 }
 
 @media (max-width: 640px) {
-  .kanji-head__main {
-    gap: 18px;
+  .kanji-page__words {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .kanji-head__glyph {
-    width: 108px;
-    height: 108px;
-    font-size: 76px;
+  .kanji-hero__inner {
+    padding: 24px 16px 22px;
   }
 
-  .kanji-head__title {
-    font-size: 26px;
+  .kanji-hero__tile {
+    width: 156px;
+    height: 156px;
   }
 
-  .kanji-readings {
-    grid-template-columns: auto minmax(0, 1fr);
-    column-gap: 12px;
-    padding: 12px 14px;
-  }
-
-  .kanji-readings__kind {
-    grid-column: 1 / -1;
-  }
-
-  .kanji-readings__kind:empty {
-    display: none;
-  }
-
-  .kanji-readings__kind.is-kun:not(:empty) + .kanji-readings__reading,
-  .kanji-readings__kind.is-kun:not(:empty) + .kanji-readings__reading + .kanji-readings__words {
-    margin-top: 0;
-  }
-
-  .kanji-words {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .kanji-writing__strokes {
-    width: 160px;
-    height: 160px;
+  .kanji-hero__title {
+    font-size: 24px;
   }
 }
 </style>

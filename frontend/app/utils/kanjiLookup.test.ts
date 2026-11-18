@@ -1,5 +1,5 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
-import { __kanjiLookupTesting, fetchKanji, kanjiBadges, peekKanji, splitKunReading } from './kanjiLookup';
+import { __kanjiLookupTesting, fetchKanji, kanjiBadges, markKanji, peekKanji, splitKunReading } from './kanjiLookup';
 
 const $fetch = vi.fn();
 vi.stubGlobal('$fetch', $fetch);
@@ -77,5 +77,20 @@ describe('kanjiBadges', () => {
       'tokenTooltip.kanjiStrokes{"count":9}',
     ]);
     expect(kanjiBadges(card({ grade: 9 }), t)[0]?.text).toBe('tokenTooltip.kanjiJinmeiyo');
+  });
+});
+
+describe('markKanji', () => {
+  test('marks the kanji wherever it is in a word, the rest in runs', () => {
+    expect(markKanji('給食', '食')).toEqual([
+      { text: '給', hit: false },
+      { text: '食', hit: true },
+    ]);
+    expect(markKanji('食べ物', '食')).toEqual([
+      { text: '食', hit: true },
+      { text: 'べ物', hit: false },
+    ]);
+    expect(markKanji('女の子と女', '女').filter((run) => run.hit)).toHaveLength(2);
+    expect(markKanji('ひと', '人')).toEqual([{ text: 'ひと', hit: false }]);
   });
 });

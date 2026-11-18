@@ -151,6 +151,19 @@ export interface KanjiBadge {
 }
 
 /** The facts row of a kanji (N5, 漢検 9級, grade, strokes, newspaper rank), in the order a learner scans them. */
+/** A word cut into runs, the given kanji marked, so a kanji's page and card can colour it inside its words (食 in
+ *  食べる, 給食). */
+export function markKanji(text: string, kanji: string): Array<{ text: string; hit: boolean }> {
+  const runs: Array<{ text: string; hit: boolean }> = [];
+  for (const character of text) {
+    const hit = character === kanji;
+    const last = runs[runs.length - 1];
+    if (last && last.hit === hit && !hit) last.text += character;
+    else runs.push({ text: character, hit });
+  }
+  return runs;
+}
+
 export function kanjiBadges(
   card: KanjiCardData,
   t: (key: string, named?: Record<string, unknown>, plural?: number) => string,
