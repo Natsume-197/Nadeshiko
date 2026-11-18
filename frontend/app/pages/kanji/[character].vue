@@ -172,6 +172,13 @@ const readingRows = computed<ReadingRow[]>(() => {
   return wordCounts.value ? [...rows].sort((a, b) => (b.count ?? 0) - (a.count ?? 0)) : rows;
 });
 
+/** The readings as the block draws them: on, then kun, most used first inside each. */
+const readingGroups = computed(() =>
+  (['on', 'kun'] as const)
+    .map((kind) => ({ kind, rows: readingRows.value.filter((row) => row.kind === kind) }))
+    .filter((group) => group.rows.length > 0),
+);
+
 /** A reading the sentences can be narrowed to: it has words, and they have sentences (or we do not know yet). */
 const canPick = (row: ReadingRow) => row.examples.length > 0 && row.count !== 0;
 
@@ -338,56 +345,53 @@ const sentencesPath = computed(() => ({
     </header>
 
     <div class="nd-page kanji-page__body">
-      <!-- 2. How is it read. Each row is also the filter for the sentences below. -->
+      <!-- 2. How is it read: on, then kun, the label once per group, each reading beside its words. A reading with
+           sentences filters the sentences below. -->
       <section v-if="readingRows.length > 0" class="kanji-section" data-testid="kanji-readings">
         <div class="kanji-section__head">
           <h2 class="kanji-section__title">{{ $t('tokenTooltip.kanjiReadingsHeading') }}</h2>
           <p class="kanji-section__hint">{{ $t('tokenTooltip.kanjiReadingHint') }}</p>
         </div>
-        <ul class="kanji-readings">
-          <li
-            v-for="row in readingRows"
-            :key="row.key"
-            class="kanji-reading"
-            :class="[`is-${row.kind}`, { 'is-active': activeReading === row.key, 'is-quiet': !canPick(row) }]"
-          >
-            <button
-              v-if="canPick(row)"
-              type="button"
-              class="kanji-reading__pick"
-              :aria-pressed="activeReading === row.key"
-              :aria-label="$t('tokenTooltip.kanjiReadingOpen', { reading: row.stem + row.okurigana })"
-              data-testid="kanji-reading"
-              @click="pickReading(row.key)"
-            >
-              <span class="kanji-reading__kind">{{ $t(row.kind === 'on' ? 'tokenTooltip.kanjiOn' : 'tokenTooltip.kanjiKun') }}</span>
-              <span class="kanji-reading__text" lang="ja">{{ row.stem }}<span v-if="row.okurigana" class="kanji-reading__okurigana">{{ row.okurigana }}</span></span>
-              <span
-                v-if="row.share !== null"
-                class="kanji-reading__share"
-                :title="$t('tokenTooltip.kanjiReadingShare', { percent: row.share })"
+        <div class="kanji-readings">
+          <template v-for="group in readingGroups" :key="group.kind">
+            <template v-for="(row, ri) in group.rows" :key="row.key">
+              <span class="kanji-readings__kind" :class="`is-${row.kind}`">{{
+                ri === 0 ? $t(row.kind === 'on' ? 'tokenTooltip.kanjiOn' : 'tokenTooltip.kanjiKun') : ''
+              }}</span>
+              <button
+                v-if="canPick(row)"
+                type="button"
+                class="kanji-readings__reading"
+                :class="[`is-${row.kind}`, { 'is-active': activeReading === row.key }]"
+                :aria-pressed="activeReading === row.key"
+                :aria-label="$t('tokenTooltip.kanjiReadingOpen', { reading: row.stem + row.okurigana })"
+                data-testid="kanji-reading"
+                @click="pickReading(row.key)"
               >
-                <span class="kanji-reading__bar" aria-hidden="true"><span :style="{ width: `${Math.max(row.share, 3)}%` }" /></span>
-                <span class="kanji-reading__percent">{{ row.share }}%</span>
+                <span lang="ja">{{ row.stem }}<span v-if="row.okurigana" class="kanji-readings__okurigana">{{ row.okurigana }}</span></span>
+                <span
+                  v-if="row.share !== null"
+                  class="kanji-readings__share"
+                  :title="$t('tokenTooltip.kanjiReadingShare', { percent: row.share })"
+                >{{ row.share === 0 ? '<1' : row.share }}%</span>
+              </button>
+              <span v-else class="kanji-readings__reading is-quiet" data-testid="kanji-reading">
+                <span lang="ja">{{ row.stem }}<span v-if="row.okurigana" class="kanji-readings__okurigana">{{ row.okurigana }}</span></span>
               </span>
-            </button>
-            <div v-else class="kanji-reading__pick" data-testid="kanji-reading">
-              <span class="kanji-reading__kind">{{ $t(row.kind === 'on' ? 'tokenTooltip.kanjiOn' : 'tokenTooltip.kanjiKun') }}</span>
-              <span class="kanji-reading__text" lang="ja">{{ row.stem }}<span v-if="row.okurigana" class="kanji-reading__okurigana">{{ row.okurigana }}</span></span>
-              <span class="kanji-reading__none">{{ $t('tokenTooltip.kanjiReadingNoSentences') }}</span>
-            </div>
-            <span v-if="row.examples.length > 0" class="kanji-reading__words" lang="ja">
-              <template v-for="(example, ei) in row.examples" :key="example.id">
-                <span v-if="ei > 0" class="kanji-reading__sep" aria-hidden="true">、</span>
-                <NuxtLink
-                  :to="wordPath(example)"
-                  class="kanji-reading__word"
-                  :aria-label="example.reading ? `${example.headword} (${example.reading})` : example.headword"
-                ><template v-if="example.furigana.length > 0"><template v-for="(seg, si) in example.furigana" :key="si"><ruby v-if="seg.ruby">{{ seg.text }}<rt>{{ seg.ruby }}</rt></ruby><template v-else>{{ seg.text }}</template></template></template><template v-else>{{ example.headword }}</template></NuxtLink>
-              </template>
-            </span>
-          </li>
-        </ul>
+              <span class="kanji-readings__words" :class="{ 'is-quiet': !canPick(row) }" lang="ja">
+                <template v-for="(example, ei) in row.examples" :key="example.id">
+                  <span v-if="ei > 0" class="kanji-readings__sep" aria-hidden="true">、</span>
+                  <NuxtLink
+                    :to="wordPath(example)"
+                    class="kanji-readings__word"
+                    :aria-label="example.reading ? `${example.headword} (${example.reading})` : example.headword"
+                  ><template v-if="example.furigana.length > 0"><template v-for="(seg, si) in example.furigana" :key="si"><ruby v-if="seg.ruby">{{ seg.text }}<rt>{{ seg.ruby }}</rt></ruby><template v-else>{{ seg.text }}</template></template></template><template v-else>{{ example.headword }}</template></NuxtLink>
+                </template>
+                <span v-if="!canPick(row)" class="kanji-readings__none" :lang="locale">{{ $t('tokenTooltip.kanjiReadingNoSentences') }}</span>
+              </span>
+            </template>
+          </template>
+        </div>
       </section>
 
       <!-- 3. Where do I meet it. -->
@@ -713,157 +717,137 @@ const sentencesPath = computed(() => ({
   color: var(--tone-kun);
 }
 
-/* 2. How is it read: one row per reading. */
+/* 2. How is it read: a label | reading | words grid, the label once per group. */
 .kanji-readings {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  align-items: baseline;
+  column-gap: 18px;
+  row-gap: 4px;
+  padding: 14px 20px;
   border: 1px solid var(--line);
   border-radius: 14px;
   background: var(--surface);
-  overflow: hidden;
 }
 
-.kanji-reading {
-  display: grid;
-  grid-template-columns: minmax(250px, 320px) minmax(0, 1fr);
-  align-items: center;
-  gap: 4px 20px;
-  padding: 10px 16px;
-  border-top: 1px solid var(--line);
-  transition: background-color 0.12s ease;
-}
-
-.kanji-reading:first-child {
-  border-top: 0;
-}
-
-.kanji-reading.is-active.is-on {
-  background: color-mix(in srgb, var(--tone-on) 10%, transparent);
-}
-
-.kanji-reading.is-active.is-kun {
-  background: color-mix(in srgb, var(--tone-kun) 10%, transparent);
-}
-
-.kanji-reading__pick {
-  display: grid;
-  grid-template-columns: 36px minmax(90px, auto) 1fr;
-  align-items: center;
-  gap: 12px;
-  padding: 4px 0;
-  border: 0;
-  background: transparent;
-  text-align: left;
-  color: inherit;
-}
-
-button.kanji-reading__pick {
-  cursor: pointer;
-  border-radius: 8px;
-}
-
-button.kanji-reading__pick:focus-visible {
-  outline: 2px solid var(--input-focus-ring);
-  outline-offset: 2px;
-}
-
-.kanji-reading__kind {
+.kanji-readings__kind {
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
 
-.kanji-reading.is-on .kanji-reading__kind,
-.kanji-reading.is-on .kanji-reading__text {
+.kanji-readings__kind.is-on {
   color: var(--tone-on);
 }
 
-.kanji-reading.is-kun .kanji-reading__kind,
-.kanji-reading.is-kun .kanji-reading__text {
+.kanji-readings__kind.is-kun {
   color: var(--tone-kun);
 }
 
-.kanji-reading__text {
-  font-size: 22px;
-  font-weight: 600;
-  white-space: nowrap;
+/* A kun group starts a little apart from the on group above it. */
+.kanji-readings__kind.is-kun:not(:empty) {
+  padding-top: 8px;
 }
 
-.kanji-reading__okurigana {
+.kanji-readings__kind.is-kun:not(:empty) + .kanji-readings__reading,
+.kanji-readings__kind.is-kun:not(:empty) + .kanji-readings__reading + .kanji-readings__words {
+  margin-top: 8px;
+}
+
+.kanji-readings__reading {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  justify-self: start;
+  margin-left: -8px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  font-size: 20px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--ink);
+  transition:
+    background-color 0.12s ease,
+    color 0.12s ease;
+}
+
+button.kanji-readings__reading {
+  cursor: pointer;
+}
+
+button.kanji-readings__reading.is-on:hover,
+button.kanji-readings__reading.is-on.is-active {
+  background: color-mix(in srgb, var(--tone-on) 14%, transparent);
+  color: var(--tone-on);
+}
+
+button.kanji-readings__reading.is-kun:hover,
+button.kanji-readings__reading.is-kun.is-active {
+  background: color-mix(in srgb, var(--tone-kun) 14%, transparent);
+  color: var(--tone-kun);
+}
+
+button.kanji-readings__reading:focus-visible {
+  outline: 2px solid var(--input-focus-ring);
+  outline-offset: 2px;
+}
+
+.kanji-readings__reading.is-quiet,
+.kanji-readings__words.is-quiet {
+  color: var(--ink-faint);
+}
+
+.kanji-readings__okurigana {
   opacity: 0.55;
 }
 
-button.kanji-reading__pick:hover .kanji-reading__text {
-  text-decoration: underline;
-  text-underline-offset: 4px;
-}
-
-.kanji-reading__share {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.kanji-reading__bar {
-  position: relative;
-  flex: 1;
-  max-width: 120px;
-  height: 6px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--ink) 10%, transparent);
-}
-
-.kanji-reading__bar > span {
-  position: absolute;
-  inset: 0 auto 0 0;
-  border-radius: 999px;
-  background: currentColor;
-}
-
-.kanji-reading.is-on .kanji-reading__bar {
-  color: var(--tone-on);
-}
-
-.kanji-reading.is-kun .kanji-reading__bar {
-  color: var(--tone-kun);
-}
-
-.kanji-reading__percent {
-  min-width: 36px;
-  font-size: 13px;
-  color: var(--ink-muted);
+.kanji-readings__share {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink-faint);
   font-variant-numeric: tabular-nums;
 }
 
-.kanji-reading__none {
-  font-size: 12px;
-  color: var(--ink-faint);
-}
-
-.kanji-reading.is-quiet .kanji-reading__kind,
-.kanji-reading.is-quiet .kanji-reading__text,
-.kanji-reading.is-quiet .kanji-reading__words {
-  color: var(--ink-faint);
-}
-
-.kanji-reading__words {
+.kanji-readings__words {
   font-size: 16px;
-  line-height: 2;
+  line-height: 2.3;
   color: var(--ink);
 }
 
-.kanji-reading__word:hover {
+.kanji-readings__word:hover {
   color: var(--accent-soft);
 }
 
-.kanji-reading__word rt {
+/* Furigana that never pushes the kanji apart: the reading sits over its base and may overhang it, instead of
+   widening the base to the reading's width (which left gaps like 老 若 男女). */
+.kanji-readings__word ruby {
+  position: relative;
+  display: inline-block;
+  ruby-position: over;
+}
+
+.kanji-readings__word rt {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: -2px;
   font-size: 9px;
+  line-height: 1;
+  white-space: nowrap;
   color: var(--ink-faint);
 }
 
-.kanji-reading__sep {
+.kanji-readings__sep {
+  color: var(--ink-faint);
+}
+
+.kanji-readings__none {
+  margin-left: 8px;
+  font-size: 11px;
   color: var(--ink-faint);
 }
 
@@ -1077,8 +1061,23 @@ button.kanji-build__tile:focus-visible,
     font-size: 26px;
   }
 
-  .kanji-reading {
-    grid-template-columns: minmax(0, 1fr);
+  .kanji-readings {
+    grid-template-columns: auto minmax(0, 1fr);
+    column-gap: 12px;
+    padding: 12px 14px;
+  }
+
+  .kanji-readings__kind {
+    grid-column: 1 / -1;
+  }
+
+  .kanji-readings__kind:empty {
+    display: none;
+  }
+
+  .kanji-readings__kind.is-kun:not(:empty) + .kanji-readings__reading,
+  .kanji-readings__kind.is-kun:not(:empty) + .kanji-readings__reading + .kanji-readings__words {
+    margin-top: 0;
   }
 
   .kanji-words {
