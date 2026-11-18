@@ -141,6 +141,41 @@ export async function importKanjidic(
   return { source: 'kanjidic2', version, rows: inserted, dryRun };
 }
 
+/**
+ * KRADFILE writes a radical that JIS X 0208 has no character for as a kanji that contains it: 込 stands for ⻌ in
+ * 運, 化 for 亻 in 伊, 滴 for 啇 in 適. Shown as is, the card would list 込 as a part of 運. Each is replaced by the
+ * radical it stands for. Checked against the data (2026-11-17): every one appears in kanji that do not contain it.
+ */
+export const KRADFILE_SUBSTITUTES: Readonly<Record<string, string>> = {
+  化: '亻',
+  个: '𠆢',
+  并: '丷',
+  刈: '刂',
+  込: '⻌',
+  尚: '⺌',
+  忙: '忄',
+  扎: '扌',
+  汁: '氵',
+  犯: '犭',
+  艾: '艹',
+  邦: '⻏',
+  阡: '⻖',
+  老: '耂',
+  杰: '灬',
+  礼: '礻',
+  疔: '疒',
+  禹: '禸',
+  初: '衤',
+  買: '罒',
+  滴: '啇',
+  乞: '𠂉',
+};
+
+/** A KRADFILE component list with every substitute replaced by its radical, without duplicates. */
+export function realComponents(components: string[]): string[] {
+  return [...new Set(components.map((part) => KRADFILE_SUBSTITUTES[part] ?? part))];
+}
+
 /** Replace `dict.kanji_component` from a KRADFILE file. */
 export async function importKradfile(
   dataSource: DataSource,
@@ -148,7 +183,10 @@ export async function importKradfile(
   options: { dryRun?: boolean; versionLabel?: string } = {},
 ): Promise<KanjiImportReport> {
   const file = JSON.parse(await readFile(path, 'utf8')) as Kradfile;
-  const rows = Object.entries(file.kanji).map(([character, components]) => ({ character, components }));
+  const rows = Object.entries(file.kanji).map(([character, components]) => ({
+    character,
+    components: realComponents(components),
+  }));
   const version = options.versionLabel ?? file.version;
   const dryRun = options.dryRun ?? false;
   const inserted = await replaceTable(

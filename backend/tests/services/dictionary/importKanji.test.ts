@@ -10,6 +10,7 @@ import {
   importKradfile,
   kanjiRow,
   kanjiVgCharacter,
+  realComponents,
   strokePaths,
 } from '@app/services/dictionary/import/importKanji';
 
@@ -94,6 +95,22 @@ describe('strokePaths', () => {
     </g><g id="kvg:StrokeNumbers_04e00"><text>1</text></g></svg>`;
 
     expect(strokePaths(svg)).toEqual(['M1,1', 'M2,2']);
+  });
+});
+
+describe('realComponents', () => {
+  it('replaces the kanji KRADFILE writes for radicals it has no character for', () => {
+    // 適 is listed as 口 込 十 并 立 亠 冂 滴.
+    expect(realComponents(['口', '込', '十', '并', '立', '亠', '冂', '滴'])).toEqual([
+      '口',
+      '⻌',
+      '十',
+      '丷',
+      '立',
+      '亠',
+      '冂',
+      '啇',
+    ]);
   });
 });
 
