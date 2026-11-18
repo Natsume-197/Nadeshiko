@@ -1116,6 +1116,7 @@
     "kanjiReplay": "書き順をもう一度再生",
     "kanjiMissing": "この漢字の項目はありません。",
     "kanjiStrokeOrder": "「{kanji}」の書き順",
+    "kanjiAllReadings": "すべて",
     "kanjiSentenceCount": "文 | 文",
     "kanjiTitleCount": "作品 | 作品",
     "kanjiRelatedHeading": "関連する漢字",

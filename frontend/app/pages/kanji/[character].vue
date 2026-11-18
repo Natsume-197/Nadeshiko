@@ -77,7 +77,7 @@ if (error.value) {
 }
 if (!card.value) throw createError({ statusCode: 404, statusMessage: 'Kanji Not Found' });
 
-const sentences = computed(() => sentenceData.value?.sentences ?? null);
+const allSentences = computed(() => sentenceData.value?.sentences ?? null);
 const totals = computed(() => sentenceData.value?.totals ?? null);
 const formatCount = (count: number) => new Intl.NumberFormat(locale.value).format(count);
 
@@ -89,7 +89,46 @@ const meaningsTag = computed(() =>
   card.value && card.value.meaningsLanguage !== glossLocale.value ? card.value.meaningsLanguage.toUpperCase() : null,
 );
 /** A still from the first sentence, for link previews only. */
-const shareImage = computed(() => sentences.value?.results[0]?.segment.urls.imageUrl ?? null);
+const shareImage = computed(() => allSentences.value?.results[0]?.segment.urls.imageUrl ?? null);
+
+/**
+ * Sentences by reading: a tab per reading that has example words, each loading (once, on first click) the sentences
+ * of those words, so a reader hears 食 as ショク in 食事 and as た.べる in 食べる. "All" is the server-rendered list.
+ */
+const readingTabs = computed(() =>
+  (card.value?.readings ?? [])
+    .filter((entry) => entry.examples.length > 0)
+    .map((entry) => ({
+      key: `${entry.kind}:${entry.reading}`,
+      ...(entry.kind === 'kun' ? splitKunReading(entry.reading) : { stem: entry.reading, okurigana: '' }),
+      words: entry.examples.map((example) => example.headword),
+    })),
+);
+const activeTab = ref<string | null>(null);
+/** Each tab's sentences once loaded; null when its search failed (retried on the next click). */
+const tabSentences = reactive<Record<string, SearchResponse | null>>({});
+const tabLoading = ref(false);
+
+async function selectTab(key: string | null): Promise<void> {
+  activeTab.value = key;
+  if (key === null || tabSentences[key]) return;
+  const tab = readingTabs.value.find((candidate) => candidate.key === key);
+  if (!tab) return;
+  tabLoading.value = true;
+  try {
+    const raw = await $fetch<SdkSearchResponse>('/api/dictionary/word-sentences', {
+      query: { words: tab.words.join(',') },
+    });
+    tabSentences[key] = stripUnreadTokenFields(resolveSearchResponse(raw));
+  } catch {
+    tabSentences[key] = null;
+  } finally {
+    // A later click owns the spinner.
+    if (activeTab.value === key) tabLoading.value = false;
+  }
+}
+
+const sentences = computed(() => (activeTab.value === null ? allSentences.value : (tabSentences[activeTab.value] ?? null)));
 
 /** The readings in the header, on then kun, okurigana set apart. */
 const headerReadings = computed(() => {
@@ -245,7 +284,29 @@ const sentencesPath = computed(() => ({
       <!-- The sentences, the page's reason to exist, at the full width the search page gives them. -->
       <section class="kanji-page__section" data-testid="kanji-page-sentences-section">
         <h2 class="kanji-page__heading">{{ $t('tokenTooltip.kanjiSentencesHeading', { kanji: character }) }}</h2>
-        <template v-if="sentences && sentences.results.length > 0">
+        <!-- One tab per reading, to hear each one in context. -->
+        <div v-if="readingTabs.length > 1" class="kanji-page__tabs" role="tablist" data-testid="kanji-reading-tabs">
+          <button
+            type="button"
+            role="tab"
+            class="kanji-page__tab"
+            :aria-selected="activeTab === null"
+            @click="selectTab(null)"
+          >{{ $t('tokenTooltip.kanjiAllReadings') }}</button>
+          <button
+            v-for="tab in readingTabs"
+            :key="tab.key"
+            type="button"
+            role="tab"
+            class="kanji-page__tab"
+            lang="ja"
+            :aria-selected="activeTab === tab.key"
+            :title="tab.words.join('、')"
+            @click="selectTab(tab.key)"
+          >{{ tab.stem }}<span v-if="tab.okurigana" class="kanji-page__tab-okurigana">{{ tab.okurigana }}</span></button>
+        </div>
+        <p v-if="tabLoading" class="kanji-page__empty">{{ $t('tokenTooltip.loading') }}</p>
+        <template v-else-if="sentences && sentences.results.length > 0">
           <SearchSegmentContainer :searchData="sentences" :isLoading="false" />
           <NuxtLink :to="sentencesPath" class="kanji-page__all-sentences">
             {{ $t('tokenTooltip.kanjiAllSentences', { kanji: character }) }} →
@@ -549,6 +610,47 @@ const sentencesPath = computed(() => ({
 .kanji-page__all-sentences:hover {
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+
+.kanji-page__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.kanji-page__tab {
+  padding: 5px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  font-size: 15px;
+  color: var(--ink-muted);
+  cursor: pointer;
+  transition:
+    background-color 0.12s ease,
+    border-color 0.12s ease,
+    color 0.12s ease;
+}
+
+.kanji-page__tab:hover {
+  border-color: var(--accent-soft);
+  color: var(--ink);
+}
+
+.kanji-page__tab[aria-selected='true'] {
+  border-color: color-mix(in srgb, var(--accent-soft) 45%, transparent);
+  background: color-mix(in srgb, var(--accent-soft) 14%, transparent);
+  color: var(--accent-soft);
+}
+
+.kanji-page__tab:focus-visible {
+  outline: 2px solid var(--input-focus-ring);
+  outline-offset: 2px;
+}
+
+.kanji-page__tab-okurigana {
+  opacity: 0.6;
 }
 
 .kanji-page__empty {
