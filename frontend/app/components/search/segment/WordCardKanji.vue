@@ -30,9 +30,18 @@ const props = defineProps<{
   /** The kanji's own page: every word and every related kanji (grouped), a larger stroke order. The word card shows
    *  the first few and links to the page for the rest. */
   full?: boolean;
-  /** Beside the kanji page's own header and word grid: leave out the hero and the word list. */
-  aside?: boolean;
+  /** On the kanji page, which part of the entry to draw beside the page's own header, words and sentences:
+   *  `entry` (readings and composition) or `related` (the related kanji). Unset draws all of it. */
+  part?: 'entry' | 'related';
 }>();
+
+const shows = computed(() => ({
+  hero: !props.part,
+  readings: !props.part || props.part === 'entry',
+  words: !props.part,
+  composition: !props.part || props.part === 'entry',
+  related: !props.part || props.part === 'related',
+}));
 
 const emit = defineEmits<{
   'open-kanji': [character: string];
@@ -162,7 +171,7 @@ const relatedTitle = (kanji: { reading: string | null; meaning: string | null })
 
     <template v-else-if="card">
       <!-- 1. The kanji: stroke order beside what it means. -->
-      <div v-if="!aside" class="kanji-view__hero">
+      <div v-if="shows.hero" class="kanji-view__hero">
         <div v-if="card.strokes.length > 0" class="kanji-view__strokes">
           <KanjiStrokes :kanji="kanji" :strokes="card.strokes" :numbers="card.strokeNumbers" />
         </div>
@@ -184,7 +193,11 @@ const relatedTitle = (kanji: { reading: string | null; meaning: string | null })
 
       <!-- 2. Readings, the label once per group, each with the words it is heard in. A reading none of our words
            uses is shown faint: it exists, but a reader of anime will rarely meet it. -->
-      <section v-if="readingGroups.length > 0" class="kanji-view__section" :class="{ 'is-first': aside }">
+      <section
+        v-if="shows.readings && readingGroups.length > 0"
+        class="kanji-view__section"
+        :class="{ 'is-first': part === 'entry' }"
+      >
         <div class="kanji-view__readings">
           <template v-for="group in readingGroups" :key="group.kind">
             <template v-for="(row, ri) in group.rows" :key="`${group.kind}${row.key}`">
@@ -212,7 +225,7 @@ const relatedTitle = (kanji: { reading: string | null; meaning: string | null })
       </section>
 
       <!-- 3. Words, from our own subtitles. -->
-      <section v-if="!aside && card.words.length > 0" class="kanji-view__section">
+      <section v-if="shows.words && card.words.length > 0" class="kanji-view__section">
         <h4 class="kanji-view__heading">{{ $t('tokenTooltip.kanjiWords') }}</h4>
         <div class="kanji-view__words">
           <button
@@ -238,7 +251,7 @@ const relatedTitle = (kanji: { reading: string | null; meaning: string | null })
       </section>
 
       <!-- 4. What it is made of. -->
-      <section v-if="card.radical || card.components.length > 0" class="kanji-view__section">
+      <section v-if="shows.composition && (card.radical || card.components.length > 0)" class="kanji-view__section">
         <div class="kanji-view__facts">
           <template v-if="card.radical">
             <span class="kanji-view__label">{{ $t('tokenTooltip.kanjiRadical') }}</span>
@@ -275,7 +288,11 @@ const relatedTitle = (kanji: { reading: string | null; meaning: string | null })
 
       <!-- 5. Related kanji: one short row each on the card, ending in a link to the page for the rest; every one on
            the page, split into jōyō, names and others. -->
-      <section v-if="related.length > 0" class="kanji-view__section">
+      <section
+        v-if="shows.related && related.length > 0"
+        class="kanji-view__section"
+        :class="{ 'is-first': part === 'related' }"
+      >
         <div class="kanji-view__facts">
           <template v-for="row in related" :key="row.id">
             <span class="kanji-view__label">{{ row.label }}</span>
@@ -497,7 +514,7 @@ const relatedTitle = (kanji: { reading: string | null; meaning: string | null })
 }
 
 .kanji-view__example rt {
-  font-size: 0.6em;
+  font-size: 0.5em;
   color: var(--ink-faint);
 }
 

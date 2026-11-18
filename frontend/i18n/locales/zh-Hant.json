@@ -1116,6 +1116,7 @@
     "kanjiReplay": "重新播放筆順",
     "kanjiMissing": "沒有這個漢字的條目。",
     "kanjiStrokeOrder": "「{kanji}」的筆順",
+    "kanjiRelatedHeading": "相關漢字",
     "kanjiSentencesHeading": "包含「{kanji}」的例句",
     "kanjiAllSentences": "查看所有包含「{kanji}」的例句",
     "kanjiNoSentences": "還沒有包含「{kanji}」的例句。",

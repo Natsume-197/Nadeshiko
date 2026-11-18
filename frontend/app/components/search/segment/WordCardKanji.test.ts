@@ -89,14 +89,21 @@ describe('the kanji view', () => {
     expect(others()).toHaveLength(30);
   });
 
-  test("the hero and the word list are left out beside the page's own", () => {
-    const wrapper = mount(WordCardKanji, {
-      props: { kanji: '食', card: CARD, state: 'shown', locale: 'en', full: true, aside: true },
-      global: { mocks: { $t: (key: string) => key }, stubs: { UiBaseIcon: true } },
-    });
+  test('the page draws the entry and the related kanji apart, around its own header and words', () => {
+    const part = (which: 'entry' | 'related') =>
+      mount(WordCardKanji, {
+        props: { kanji: '食', card: CARD, state: 'shown', locale: 'en', full: true, part: which },
+        global: { mocks: { $t: (key: string) => key }, stubs: { UiBaseIcon: true } },
+      });
 
-    expect(wrapper.find('.kanji-view__hero').exists()).toBe(false);
-    expect(wrapper.find('[data-testid="kanji-word"]').exists()).toBe(false);
-    expect(wrapper.find('[data-testid="kanji-same-radical"]').exists()).toBe(true);
+    const entry = part('entry');
+    expect(entry.find('.kanji-view__hero').exists()).toBe(false);
+    expect(entry.find('[data-testid="kanji-word"]').exists()).toBe(false);
+    expect(entry.find('[data-testid="kanji-radical"]').exists()).toBe(true);
+    expect(entry.find('[data-testid="kanji-same-radical"]').exists()).toBe(false);
+
+    const related = part('related');
+    expect(related.find('[data-testid="kanji-radical"]').exists()).toBe(false);
+    expect(related.find('[data-testid="kanji-same-radical"]').exists()).toBe(true);
   });
 });

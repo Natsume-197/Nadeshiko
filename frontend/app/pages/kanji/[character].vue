@@ -186,22 +186,22 @@ const sentencesPath = computed(() => ({
     </section>
 
     <div class="nd-page kanji-page__body">
-      <!-- The entry: readings with their words, what it is made of, the kanji around it. -->
-      <aside class="kanji-page__entry">
-        <WordCardKanji
-          :kanji="character"
-          :card="card"
-          state="shown"
-          :locale="glossLocale"
-          full
-          aside
-          @open-kanji="openKanji"
-          @open-word="openWord"
-        />
-      </aside>
+      <!-- The entry beside the words written with the kanji. -->
+      <div class="kanji-page__top">
+        <aside class="kanji-page__entry">
+          <WordCardKanji
+            :kanji="character"
+            :card="card"
+            state="shown"
+            :locale="glossLocale"
+            full
+            part="entry"
+            @open-kanji="openKanji"
+            @open-word="openWord"
+          />
+        </aside>
 
-      <div class="kanji-page__main">
-        <section v-if="card.words.length > 0" class="kanji-page__section">
+        <section v-if="card.words.length > 0" class="kanji-page__words-section">
           <h2 class="kanji-page__heading">{{ $t('tokenTooltip.kanjiWords') }}</h2>
           <ul class="kanji-page__words">
             <li v-for="word in shownWords" :key="word.id">
@@ -220,19 +220,37 @@ const sentencesPath = computed(() => ({
             @click="allWords = !allWords"
           >{{ allWords ? $t('tokenTooltip.showLess') : $t('tokenTooltip.kanjiAllWords', { count: card.words.length }) }}</button>
         </section>
-
-        <section class="kanji-page__section" data-testid="kanji-page-sentences-section">
-          <h2 class="kanji-page__heading">{{ $t('tokenTooltip.kanjiSentencesHeading', { kanji: character }) }}</h2>
-          <template v-if="sentences && sentences.results.length > 0">
-            <SearchSegmentContainer :searchData="sentences" :isLoading="false" />
-            <NuxtLink :to="sentencesPath" class="kanji-page__all-sentences">
-              {{ $t('tokenTooltip.kanjiAllSentences', { kanji: character }) }} →
-            </NuxtLink>
-          </template>
-          <p v-else-if="sentences" class="kanji-page__empty">{{ $t('tokenTooltip.kanjiNoSentences', { kanji: character }) }}</p>
-          <p v-else class="kanji-page__empty">{{ $t('tokenTooltip.kanjiSentencesFailed') }}</p>
-        </section>
       </div>
+
+      <!-- The sentences, the page's reason to exist, at the full width the search page gives them. -->
+      <section class="kanji-page__section" data-testid="kanji-page-sentences-section">
+        <h2 class="kanji-page__heading">{{ $t('tokenTooltip.kanjiSentencesHeading', { kanji: character }) }}</h2>
+        <template v-if="sentences && sentences.results.length > 0">
+          <SearchSegmentContainer :searchData="sentences" :isLoading="false" />
+          <NuxtLink :to="sentencesPath" class="kanji-page__all-sentences">
+            {{ $t('tokenTooltip.kanjiAllSentences', { kanji: character }) }} →
+          </NuxtLink>
+        </template>
+        <p v-else-if="sentences" class="kanji-page__empty">{{ $t('tokenTooltip.kanjiNoSentences', { kanji: character }) }}</p>
+        <p v-else class="kanji-page__empty">{{ $t('tokenTooltip.kanjiSentencesFailed') }}</p>
+      </section>
+
+      <!-- The kanji around it, last: somewhere to go next. -->
+      <section v-if="card.sameRadical.length > 0 || card.containedIn.length > 0" class="kanji-page__section">
+        <h2 class="kanji-page__heading">{{ $t('tokenTooltip.kanjiRelatedHeading') }}</h2>
+        <div class="kanji-page__related">
+          <WordCardKanji
+            :kanji="character"
+            :card="card"
+            state="shown"
+            :locale="glossLocale"
+            full
+            part="related"
+            @open-kanji="openKanji"
+            @open-word="openWord"
+          />
+        </div>
+      </section>
     </div>
   </div>
 </template>
@@ -369,52 +387,54 @@ const sentencesPath = computed(() => ({
   filter: brightness(1.1);
 }
 
-/* The body: the entry beside the words and sentences. */
+/* The body: entry and words side by side, then sentences and related kanji at full width. */
 .kanji-page__body {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 44px;
   padding: 28px 16px 64px;
 }
 
-@media (min-width: 1024px) {
-  .kanji-page__body {
-    grid-template-columns: 340px minmax(0, 1fr);
-    align-items: start;
-  }
-
-  /* Beats the phone order below whatever their order in this file. */
-  .kanji-page__body > .kanji-page__entry {
-    order: 0;
-  }
-
-  /* The entry stays in view while the sentences scroll past it. */
-  .kanji-page__entry {
-    position: sticky;
-    top: 88px;
-    max-height: calc(100vh - 104px);
-    overflow-y: auto;
-    padding-right: 6px;
-    scrollbar-width: thin;
-    scrollbar-color: var(--scrollbar-thumb) transparent;
-  }
+.kanji-page__top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 32px;
 }
 
-/* On a phone the words and sentences come first (the header already gives the readings); the entry follows. */
+/* On a phone the words come before the entry (the header already gives the readings). */
 .kanji-page__entry {
   order: 2;
-  padding: 18px;
+  padding: 18px 20px;
   border: 1px solid var(--line);
   border-radius: 14px;
   background: var(--surface);
 }
 
-.kanji-page__main {
+.kanji-page__words-section {
   order: 1;
   min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 36px;
+}
+
+@media (min-width: 1024px) {
+  .kanji-page__top {
+    grid-template-columns: 360px minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .kanji-page__top > .kanji-page__entry {
+    order: 0;
+  }
+}
+
+.kanji-page__section {
+  min-width: 0;
+}
+
+.kanji-page__related {
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
 }
 
 .kanji-page__heading {
@@ -458,7 +478,7 @@ const sentencesPath = computed(() => ({
 
 .kanji-page__word-reading {
   font-size: 13px;
-  color: var(--accent-soft);
+  color: var(--ink-muted);
 }
 
 .kanji-page__word-gloss {
