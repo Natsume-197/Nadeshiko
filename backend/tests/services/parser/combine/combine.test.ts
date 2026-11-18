@@ -189,6 +189,8 @@ describe('stage list', () => {
       'CombineCompounds',
       'CombineExpressions',
       'CombineLexicalAdverbs',
+      'ResolveOrphanDeverbalNoun',
+      'ApplyCollocations',
       'ReadAmounts',
       'LinkReadings',
       'AssignKinds',

@@ -18,6 +18,7 @@ import { combineFinal, combineParticles, combineQuotativeToIu } from './stages/p
 import { combinePrefixes } from './stages/prefixes';
 import { combineCompounds, combineExpressions, combineLexicalAdverbs, combineNounCompounds } from './stages/sentence';
 import { linkReadings, readAmounts } from './stages/readings';
+import { applyCollocations, resolveOrphanDeverbalNoun } from './stages/forms';
 import { repairEmphaticKanaSpelling, repairSplitMimeticAdverb, repairTeOkuRequest } from './stages/repairEmphatic';
 import { repairNdaPastTense } from './stages/repairNda';
 import {
@@ -141,6 +142,8 @@ export const STAGES: readonly Stage[] = [
   { name: 'CombineCompounds', origin: PREPROCESS, run: combineCompounds },
   { name: 'CombineExpressions', origin: PREPROCESS, run: combineExpressions },
   { name: 'CombineLexicalAdverbs', origin: PREPROCESS, run: combineLexicalAdverbs },
+  { name: 'ResolveOrphanDeverbalNoun', origin: 'form choice, deverbal-suffix rule', run: resolveOrphanDeverbalNoun },
+  { name: 'ApplyCollocations', origin: '(ours)', run: applyCollocations },
   { name: 'ReadAmounts', origin: '(ours)', run: readAmounts },
   {
     name: 'LinkReadings',

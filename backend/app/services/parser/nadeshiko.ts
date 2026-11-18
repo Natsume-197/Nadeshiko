@@ -16,7 +16,7 @@ import { analyse } from './sudachi';
  */
 
 /** `<revision>`: bump when output changes in a way stored rows should be reparsed for. */
-export const NADESHIKO_PARSER_REVISION = 2;
+export const NADESHIKO_PARSER_REVISION = 3;
 
 const hasKanji = (text: string) => /\p{Script=Han}/u.test(text);
 

@@ -2,9 +2,12 @@ import type { DataSource } from 'typeorm';
 import { analyse, type Morpheme } from '@app/services/parser/sudachi';
 import { tokenPos } from '@app/services/parser/pos';
 import { parseWithNadeshiko } from '@app/services/parser/nadeshiko';
+import { loadLexicon } from '@app/services/parser/combine/lexicon';
+import { deconjugate } from '@app/services/parser/deconjugator';
 import type { SlimToken } from '@app/models/Segment';
 import { lookupKeys, toHiragana } from './import/entries';
 import { type IdentifyQuery, loadWords, scoreWord, type StoredWord } from './identify';
+import { type CollocationCounts, collocationRows, countCollocations, writeCollocations } from './collocations';
 
 /**
  * Word frequency from our own corpus (task 40), per JMdict word. Every served sentence is analysed by the Sudachi
@@ -16,7 +19,9 @@ import { type IdentifyQuery, loadWords, scoreWord, type StoredWord } from './ide
  * our own parser groups out of several (のに, 心臓麻痺, 二人, じゃない): those are words of their own on the card, and
  * counting only their pieces left them without a rank. Their pieces keep their own counts too.
  *
- * The same pass counts every kanji written (`dict.kanji_frequency`), for the kanji card's rank in our corpus.
+ * The same pass counts every kanji written (`dict.kanji_frequency`), for the kanji card's rank in our corpus, and mines
+ * the noun + particle + verb collocations the parser uses to name a verb written in kana (`dict.collocation`, see
+ * ./collocations.ts).
  */
 
 const PAGE = 2_000;
@@ -32,6 +37,8 @@ export interface FrequencyReport {
   words: number;
   /** Distinct kanji written in the corpus. */
   kanji: number;
+  /** Collocation rows kept for `dict.collocation`. */
+  collocations: number;
   dryRun: boolean;
 }
 
@@ -111,9 +118,17 @@ const tripleKey = (t: Omit<Triple, 'count'>) => [t.n, t.kana ?? '', t.s ?? '', t
 export async function countMorphemes(
   dataSource: DataSource,
   onPage?: (done: number) => void,
-): Promise<{ triples: Map<string, Triple>; kanji: Map<string, KanjiCount>; segments: number; morphemes: number }> {
+): Promise<{
+  triples: Map<string, Triple>;
+  kanji: Map<string, KanjiCount>;
+  collocations: CollocationCounts;
+  segments: number;
+  morphemes: number;
+}> {
   const triples = new Map<string, Triple>();
   const kanji = new Map<string, KanjiCount>();
+  const collocations: CollocationCounts = new Map();
+  const lexicon = await loadLexicon(dataSource);
   let cursor = 0;
   let segments = 0;
   let morphemes = 0;
@@ -143,6 +158,7 @@ export async function countMorphemes(
       }
     }
     for (const [index, sentence] of parsed.entries()) {
+      countCollocations(sentence, collocations, lexicon, deconjugate);
       const lemmas = new Set((analysed[index] ?? []).flatMap((m) => [m.n, m.d]));
       for (const token of sentence) {
         const triple = tokenTripleOf(token);
@@ -153,7 +169,7 @@ export async function countMorphemes(
     cursor = rows[rows.length - 1]?.id ?? cursor;
     onPage?.(segments);
   }
-  return { triples, kanji, segments, morphemes };
+  return { triples, kanji, collocations, segments, morphemes };
 }
 
 /**
@@ -181,7 +197,8 @@ export async function computeFrequency(
   dataSource: DataSource,
   options: { dryRun?: boolean; onPage?: (done: number) => void } = {},
 ): Promise<FrequencyReport> {
-  const { triples, kanji, segments, morphemes } = await countMorphemes(dataSource, options.onPage);
+  const { triples, kanji, collocations, segments, morphemes } = await countMorphemes(dataSource, options.onPage);
+  const collocationTable = collocationRows(collocations);
 
   // One dictionary lookup per normalised form, shared by every triple that has it.
   const byForm = new Map<string, Triple[]>();
@@ -214,6 +231,7 @@ export async function computeFrequency(
     attributed,
     words: rows.length,
     kanji: kanji.size,
+    collocations: collocationTable.length,
     dryRun: options.dryRun ?? false,
   };
   const kanjiTable = kanjiRows(kanji);
@@ -238,6 +256,7 @@ export async function computeFrequency(
         [JSON.stringify(kanjiTable.slice(i, i + 10_000))],
       );
     }
+    await writeCollocations(manager, collocationTable);
     await manager.query(
       `INSERT INTO dict.source (name, version, imported_at) VALUES ('corpus-frequency', $1, now())
        ON CONFLICT (name) DO UPDATE SET version = EXCLUDED.version, imported_at = now()`,

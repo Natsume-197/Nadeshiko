@@ -87,30 +87,32 @@ describe('readingsOf and formReading', () => {
 describe('loadLexicon', () => {
   it('reads every active JMdict key with its classes and flags and every kanji-spelled word, once per data source', async () => {
     const query = vi.fn(async (sql: string) =>
-      sql.includes("'uk'")
-        ? [{ key: 'うさぎ', kana: true, common: true }]
-        : sql.includes('json_agg')
-          ? [
-              {
-                id: 1307230,
-                common: true,
-                forms: [
-                  ['４時', false, []],
-                  ['四時', false, []],
-                  ['よじ', true, ['*']],
-                ],
-              },
-            ]
-          : [
-              { key: '手に入る', pos: ['exp', 'v5r'] },
-              { key: 'ウサギ', pos: ['n'] },
-              { key: '何', pos: null },
-            ],
+      sql.includes('dict.collocation')
+        ? [{ noun: 'ピアノ', particle: 'を', verb_kana: 'ひく', verb: '弾く' }]
+        : sql.includes("'uk'")
+          ? [{ key: 'うさぎ', kana: true, common: true }]
+          : sql.includes('json_agg')
+            ? [
+                {
+                  id: 1307230,
+                  common: true,
+                  forms: [
+                    ['４時', false, []],
+                    ['四時', false, []],
+                    ['よじ', true, ['*']],
+                  ],
+                },
+              ]
+            : [
+                { key: '手に入る', pos: ['exp', 'v5r'] },
+                { key: 'ウサギ', pos: ['n'] },
+                { key: '何', pos: null },
+              ],
     );
     const dataSource = { query } as unknown as DataSource;
     const lexicon = await loadLexicon(dataSource);
     expect(await loadLexicon(dataSource)).toBe(lexicon);
-    expect(query).toHaveBeenCalledTimes(3);
+    expect(query).toHaveBeenCalledTimes(4);
     expect(query.mock.calls[0]?.[0]).toContain("w.source = 'jmdict' AND w.active");
     expect(lexicon.hasClass('手に入る', 'exp')).toBe(true);
     expect(lexicon.has('うさぎ')).toBe(true);
@@ -122,5 +124,9 @@ describe('loadLexicon', () => {
     expect(lexicon.readingsOf('四時')[0]?.kana).toEqual(['よじ']);
     // A pinned word (四時 is an hour pin) keeps its forms.
     expect(lexicon.formReading(1307230, 1)).toBe('よじ');
+    // Nouns and mined collocations.
+    expect(lexicon.hasClass('ウサギ', 'noun')).toBe(true);
+    expect(lexicon.collocation('ピアノ', 'を', 'ひく')).toBe('弾く');
+    expect(lexicon.collocation('ピアノ', 'が', 'ひく')).toBeUndefined();
   });
 });

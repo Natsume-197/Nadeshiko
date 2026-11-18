@@ -7,9 +7,22 @@ import { toHiragana } from './kana';
  * `HasVerbOrAdjectiveLookup`, `IsFunctionClusterMatch`…), which test the `PartOfSpeech` of the entries under a key.
  * Two are not parts of speech: `kana` marks a kana spelling of a word that has no kanji spelling or is usually written
  * in kana (`HasKanaAppropriateCompoundLookup`), `common` a spelling of a JMdict common word (our stand-in for the
- * priority-score lookup, `HasPrioritizedNonNameCompoundLookup`).
+ * priority-score lookup, `HasPrioritizedNonNameCompoundLookup`). `noun` is any noun sense, `suf` a suffix one (`suf`,
+ * `n-suf`), which together tell a suffix-only spelling (`NounSuffix` in upstream's masks).
  */
-export type LexClass = 'exp' | 'verb' | 'adj-i' | 'adj-na' | 'adv' | 'prt' | 'conj' | 'aux' | 'kana' | 'common';
+export type LexClass =
+  | 'exp'
+  | 'verb'
+  | 'adj-i'
+  | 'adj-na'
+  | 'adv'
+  | 'prt'
+  | 'conj'
+  | 'aux'
+  | 'kana'
+  | 'common'
+  | 'noun'
+  | 'suf';
 
 const CLASS_BITS: Record<LexClass, number> = {
   exp: 1,
@@ -22,7 +35,18 @@ const CLASS_BITS: Record<LexClass, number> = {
   aux: 128,
   kana: 256,
   common: 512,
+  noun: 1024,
+  suf: 2048,
 };
+
+/** Particles a collocation is filed under; は and も hide the case of the noun they mark, so both file under は. */
+export function collocationParticle(text: string): string | undefined {
+  if (text === 'は' || text === 'も') return 'は';
+  return ['を', 'に', 'が', 'で', 'から', 'と', 'へ', 'まで'].includes(text) ? text : undefined;
+}
+
+const collocationKey = (noun: string, particle: string, verbKana: string) =>
+  `${noun}\u0000${particle}\u0000${verbKana}`;
 
 /** One JMdict word under a kanji spelling: the kana readings that apply to that spelling, in JMdict order. The
  * first is the one shown for the spelling (`RubyTextHelper.FormReading`). */
@@ -53,6 +77,9 @@ export interface Lexicon {
    * `PreMatchedReadingIndex`: a kana form reads as itself, a kanji form as its first applicable kana form, no index
    * as the word's first kana form. Undefined for a word the lexicon was not given. */
   formReading(wordId: number, formIdx?: number): string | undefined;
+  /** The verb our corpus writes after this noun and particle when the verb is read `verbKana` (ピアノ, を, ひく → 弾く):
+   * `dict.collocation`, mined by the frequency job. Undefined when there is no clear winner. */
+  collocation(noun: string, particle: string, verbKana: string): string | undefined;
 }
 
 /** {@link Lexicon.formReading} over one word's forms. */
@@ -69,6 +96,7 @@ export class InMemoryLexicon implements Lexicon {
   private readonly masks = new Map<string, number>();
   private readonly readings = new Map<string, WordReadings[]>();
   private readonly words = new Map<number, readonly WordForm[]>();
+  private readonly collocations = new Map<string, string>();
 
   /** `classes` tags some keys with their classes; a key there need not also be in `keys`. */
   constructor(keys: Iterable<string>, classes: Partial<Record<LexClass, Iterable<string>>> = {}) {
@@ -119,6 +147,14 @@ export class InMemoryLexicon implements Lexicon {
     return this.readings.get(key) ?? [];
   }
 
+  addCollocation(noun: string, particle: string, verbKana: string, verb: string): void {
+    this.collocations.set(collocationKey(noun, particle, verbKana), verb);
+  }
+
+  collocation(noun: string, particle: string, verbKana: string): string | undefined {
+    return this.collocations.get(collocationKey(noun, particle, verbKana));
+  }
+
   formReading(wordId: number, formIdx?: number): string | undefined {
     const forms = this.words.get(wordId);
     return forms ? readingOfForm(forms, formIdx) : undefined;
@@ -137,6 +173,8 @@ export function classMask(tags: readonly string[]): number {
     else if (tag === 'prt') mask |= CLASS_BITS.prt;
     else if (tag === 'conj') mask |= CLASS_BITS.conj;
     else if (tag === 'aux' || tag === 'aux-v' || tag === 'aux-adj') mask |= CLASS_BITS.aux;
+    else if (tag === 'suf' || tag === 'n-suf') mask |= CLASS_BITS.suf;
+    else if (tag === 'n' || tag === 'pn' || tag === 'num' || tag.startsWith('n-')) mask |= CLASS_BITS.noun;
   }
   return mask;
 }
@@ -158,11 +196,13 @@ export function loadLexicon(dataSource: DataSource): Promise<Lexicon> {
 }
 
 async function readLexicon(dataSource: DataSource): Promise<Lexicon> {
-  const [lexicon, words, flagged] = await Promise.all([
+  const [lexicon, words, flagged, collocations] = await Promise.all([
     readKeys(dataSource),
     readWords(dataSource),
     readFlags(dataSource),
+    readCollocations(dataSource),
   ]);
+  for (const row of collocations) lexicon.addCollocation(row.noun, row.particle, row.verb_kana, row.verb);
   for (const row of flagged)
     lexicon.add(row.key, (row.kana ? CLASS_BITS.kana : 0) | (row.common ? CLASS_BITS.common : 0));
   for (const word of words) {
@@ -207,6 +247,13 @@ async function readFlags(dataSource: DataSource): Promise<Array<{ key: string; k
               NOT EXISTS (SELECT 1 FROM dict.form k WHERE k.word_id = w.id AND k.active AND NOT k.kana)
               OR EXISTS (SELECT 1 FROM dict.sense s WHERE s.word_id = w.id AND 'uk' = ANY(s.misc))))`,
   );
+}
+
+/** The mined collocations (`dict.collocation`); none until the frequency job has run once. */
+async function readCollocations(
+  dataSource: DataSource,
+): Promise<Array<{ noun: string; particle: string; verb_kana: string; verb: string }>> {
+  return dataSource.query(`SELECT noun, particle, verb_kana, verb FROM dict.collocation`);
 }
 
 async function readKeys(dataSource: DataSource): Promise<InMemoryLexicon> {
