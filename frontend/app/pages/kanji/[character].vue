@@ -383,7 +383,8 @@ const sentencesPath = computed(() => ({
     align-items: start;
   }
 
-  .kanji-page__entry {
+  /* Beats the phone order below whatever their order in this file. */
+  .kanji-page__body > .kanji-page__entry {
     order: 0;
   }
 
