@@ -12,6 +12,10 @@ describe('isReservedLocalePath', () => {
     expect(isReservedLocalePath('/__nuxt_error')).toBe(true);
   });
 
+  it('serves share images as they are, not as a page to send to a locale', () => {
+    expect(isReservedLocalePath('/og/kanji/es/%E9%A3%9F.png')).toBe(true);
+  });
+
   it('does not reserve user-facing content paths', () => {
     expect(isReservedLocalePath('/about')).toBe(false);
     expect(isReservedLocalePath('/blog/example')).toBe(false);

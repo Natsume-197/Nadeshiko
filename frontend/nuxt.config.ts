@@ -1,3 +1,4 @@
+import { createRequire } from 'node:module';
 import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { env } from './config/env';
@@ -572,6 +573,8 @@ export default defineNuxtConfig({
     preset: ['node_cluster', 'node-cluster'].includes(process.env.NITRO_PRESET ?? '') ? 'node-cluster' : 'node-server',
     externals: {
       external: ['@opentelemetry/api'],
+      // The kanji share images (server/utils/kanjiOgImage.ts) read resvg's wasm from disk; the tracer cannot see it.
+      traceInclude: [createRequire(import.meta.url).resolve('@resvg/resvg-wasm/index_bg.wasm')],
     },
     serverAssets: [
       {

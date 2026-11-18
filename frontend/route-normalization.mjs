@@ -57,6 +57,7 @@ const ROUTE_PATTERNS = [
   [/^\/search\/[^/]+$/, '/search/:query'],
   [/^\/blog\/[^/]+$/, '/blog/:slug'],
   [/^\/kanji\/[^/]+$/, '/kanji/:character'],
+  [/^\/og\/kanji\/[^/]+\/[^/]+$/, '/og/kanji/:locale/:file'],
   // Media slugs need an explicit bounded label. Use :id to merge with the existing numeric-media series.
   [/^\/media\/[^/]+$/, '/media/:id'],
   [/^\/admin\//, '/admin/:slug'],

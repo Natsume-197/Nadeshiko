@@ -11,6 +11,8 @@ export const RESERVED_PREFIXES = [
   '/docs/',
   '/.well-known/',
   '/media/',
+  // Share images (`/og/kanji/es/食.png`): files, not pages, and outside /api/ so preview bots may fetch them.
+  '/og/',
 ];
 
 export const RESERVED_EXACT = new Set(['/__nuxt_error', '/up', '/robots.txt', '/opensearch.xml', '/favicon.ico']);

@@ -185,12 +185,26 @@ const description = computed(() =>
   t('seo.kanji.description', { kanji: character.value, meaning: meaning.value, readings: readings.value }),
 );
 
+// A jōyō kanji shares an image of itself (server/routes/og/kanji); any other kanji, a frame of one of its sentences.
+const requestOrigin = useRequestURL().origin;
+const ogImage = computed(() =>
+  isJoyoKanji(character.value)
+    ? {
+        url: `${requestOrigin}/og/kanji/${glossLocale.value}/${encodeURIComponent(character.value)}.png`,
+        width: 1200,
+        height: 630,
+      }
+    : { url: shareImage.value ?? `${requestOrigin}${DEFAULT_OG_IMAGE_PATH}`, width: undefined, height: undefined },
+);
+
 useSeoMeta({
   title: () => title.value,
   description: () => description.value,
   ogTitle: () => title.value,
   ogDescription: () => description.value,
-  ogImage: () => shareImage.value ?? `${useRequestURL().origin}${DEFAULT_OG_IMAGE_PATH}`,
+  ogImage: () => ogImage.value.url,
+  ogImageWidth: () => ogImage.value.width,
+  ogImageHeight: () => ogImage.value.height,
   twitterCard: 'summary_large_image',
   twitterTitle: () => title.value,
   twitterDescription: () => description.value,
