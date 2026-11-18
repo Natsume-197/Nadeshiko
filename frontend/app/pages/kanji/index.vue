@@ -55,12 +55,20 @@ const description = computed(() =>
   t('seo.kanjiIndex.description', { group: currentLabel.value, count: data.value?.kanji.length ?? 0 }),
 );
 
+const requestOrigin = useRequestURL().origin;
+
 useSeoMeta({
   title: () => title.value,
   description: () => description.value,
   ogTitle: () => title.value,
   ogDescription: () => description.value,
-  ogImage: `${useRequestURL().origin}${DEFAULT_OG_IMAGE_PATH}`,
+  // Each group shares its own image (server/routes/og/kanji-index); the default one until the group is known.
+  ogImage: () =>
+    data.value
+      ? `${requestOrigin}/og/kanji-index/${data.value.by}-${data.value.level}.png`
+      : `${requestOrigin}${DEFAULT_OG_IMAGE_PATH}`,
+  ogImageWidth: () => (data.value ? 1200 : undefined),
+  ogImageHeight: () => (data.value ? 630 : undefined),
   twitterCard: 'summary_large_image',
   twitterTitle: () => title.value,
   twitterDescription: () => description.value,

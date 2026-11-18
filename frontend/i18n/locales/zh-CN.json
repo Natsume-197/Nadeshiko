@@ -1132,6 +1132,7 @@
     "kanjiSentencesHeading": "包含「{kanji}」的例句",
     "kanjiAllSentences": "查看所有包含「{kanji}」的例句",
     "kanjiNoSentences": "还没有包含「{kanji}」的例句。",
+    "kanjiReadingNoSentences": "暂无例句",
     "kanjiSentencesFailed": "无法加载例句，请稍后再试。",
     "kanjiPage": "汉字页面",
     "kanjiOther": "其他",

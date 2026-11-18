@@ -1132,6 +1132,7 @@
     "kanjiSentencesHeading": "「{kanji}」を含む例文",
     "kanjiAllSentences": "「{kanji}」を含む例文をすべて見る",
     "kanjiNoSentences": "「{kanji}」を含む例文はまだありません。",
+    "kanjiReadingNoSentences": "例文なし",
     "kanjiSentencesFailed": "例文を読み込めませんでした。しばらくしてからもう一度お試しください。",
     "kanjiPage": "漢字のページ",
     "kanjiOther": "その他",

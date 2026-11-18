@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { type KanjiOgCard, type OgNode, kanjiOgRequest, kanjiOgTree, readingsOf } from './kanjiOgImage';
+import {
+  type KanjiOgCard,
+  type OgNode,
+  kanjiIndexGroupLabel,
+  kanjiIndexOgRequest,
+  kanjiIndexOgTree,
+  kanjiOgRequest,
+  kanjiOgTree,
+  readingsOf,
+} from './kanjiOgImage';
 
 const SHOKU: KanjiOgCard = {
   character: '食',
@@ -86,5 +95,39 @@ describe('kanjiOgTree', () => {
     expect(drawn).not.toContain('KUN');
     expect(drawn.filter((text) => text.startsWith('JLPT') || text.startsWith('漢検'))).toEqual([]);
     expect(drawn).toContain('9画');
+  });
+});
+
+describe('kanjiIndexOgRequest', () => {
+  it('reads the grouping and the group from the file name', () => {
+    expect(kanjiIndexOgRequest('jlpt-n3.png')).toEqual({ by: 'jlpt', level: 'n3' });
+    expect(kanjiIndexOgRequest('jlpt-none.png')).toEqual({ by: 'jlpt', level: 'none' });
+    expect(kanjiIndexOgRequest('grade-g6.png')).toEqual({ by: 'grade', level: 'g6' });
+    expect(kanjiIndexOgRequest('grade-secondary.png')).toEqual({ by: 'grade', level: 'secondary' });
+  });
+
+  it('has no image for a group of the other grouping, an unknown group or another file', () => {
+    expect(kanjiIndexOgRequest('jlpt-g3.png')).toBeNull();
+    expect(kanjiIndexOgRequest('grade-n5.png')).toBeNull();
+    expect(kanjiIndexOgRequest('jlpt-n6.png')).toBeNull();
+    expect(kanjiIndexOgRequest('jlpt-n3.jpg')).toBeNull();
+    expect(kanjiIndexOgRequest(undefined)).toBeNull();
+  });
+});
+
+describe('kanjiIndexOgTree', () => {
+  it('names the group in Japanese, counts it and shows its first ten kanji', () => {
+    expect(kanjiIndexGroupLabel('n5')).toBe('JLPT N5');
+    expect(kanjiIndexGroupLabel('g3')).toBe('小学3年');
+    expect(kanjiIndexGroupLabel('secondary')).toBe('中学以降');
+
+    const kanji = [...'日一人年大十二本中出三'];
+    expect(texts(kanjiIndexOgTree({ id: 'n5', kanji }))).toEqual([
+      '漢字',
+      'JLPT N5',
+      '11 字',
+      ...kanji.slice(0, 10),
+      'Nadeshiko',
+    ]);
   });
 });

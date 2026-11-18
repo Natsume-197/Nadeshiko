@@ -249,14 +249,118 @@ function loadWasm() {
   return wasm;
 }
 
-/** The share image as PNG bytes. */
-export async function renderKanjiOgImage(card: KanjiOgCard): Promise<Uint8Array> {
+/** An image tree as PNG bytes. */
+export async function renderOgTree(tree: OgNode): Promise<Uint8Array> {
   const [loadedFonts] = await Promise.all([loadFonts(), loadWasm()]);
   // satori's types want a React element; the tree is the same shape.
-  const svg = await satori(kanjiOgTree(card) as unknown as Parameters<typeof satori>[0], {
+  const svg = await satori(tree as unknown as Parameters<typeof satori>[0], {
     width: OG_WIDTH,
     height: OG_HEIGHT,
     fonts: loadedFonts,
   });
   return new Resvg(svg, { fitTo: { mode: 'width', value: OG_WIDTH } }).render().asPng();
+}
+
+/** A kanji page's share image as PNG bytes. */
+export function renderKanjiOgImage(card: KanjiOgCard): Promise<Uint8Array> {
+  return renderOgTree(kanjiOgTree(card));
+}
+
+// The kanji index's share images: one per group (`/og/kanji-index/jlpt-n3.png`). Labels are Japanese so one image
+// serves every language, and every character they use is in the font.
+
+/** A group's name on its image. */
+export function kanjiIndexGroupLabel(id: string): string | null {
+  if (/^n[1-5]$/.test(id)) return `JLPT ${id.toUpperCase()}`;
+  if (/^g[1-6]$/.test(id)) return `小学${id.slice(1)}年`;
+  if (id === 'none') return 'JLPTなし';
+  if (id === 'secondary') return '中学以降';
+  if (id === 'other') return 'その他';
+  return null;
+}
+
+/** The group of `/og/kanji-index/<by>-<group>.png`, or null when there is no such image. */
+export function kanjiIndexOgRequest(file: string | undefined): { by: 'jlpt' | 'grade'; level: string } | null {
+  const match = /^(jlpt|grade)-([a-z0-9]+)\.png$/.exec(file ?? '');
+  if (!match) return null;
+  const by = match[1] as 'jlpt' | 'grade';
+  const level = match[2] ?? '';
+  const fits = by === 'jlpt' ? /^(n[1-5]|none)$/.test(level) : /^(g[1-6]|secondary|other)$/.test(level);
+  return fits ? { by, level } : null;
+}
+
+const SAMPLE_SIZE = 10;
+
+/** The index image: the group's name and size, and its first kanji as tiles. */
+export function kanjiIndexOgTree(group: { id: string; kanji: string[] }): OgNode {
+  const tile = (character: string) =>
+    el(
+      'div',
+      {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: 92,
+        height: 92,
+        borderRadius: 16,
+        border: `2px solid ${COLORS.grid}`,
+        backgroundColor: COLORS.card,
+        fontSize: 56,
+        fontWeight: 700,
+        color: COLORS.ink,
+      },
+      character,
+    );
+
+  // Positioned, not padded: satori adds padding to the given width, which pushed the site name off the image.
+  const content = el(
+    'div',
+    {
+      position: 'absolute',
+      left: SIDE_PADDING,
+      top: 0,
+      bottom: 0,
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+    },
+    [
+      el('div', { display: 'flex', fontSize: 34, fontWeight: 700, color: COLORS.faint }, '漢字'),
+      el(
+        'div',
+        { display: 'flex', fontSize: 104, fontWeight: 700, lineHeight: 1.1, color: COLORS.ink },
+        kanjiIndexGroupLabel(group.id) ?? group.id,
+      ),
+      el('div', { display: 'flex', marginTop: 8, fontSize: 40, color: COLORS.muted }, `${group.kanji.length} 字`),
+      el('div', { display: 'flex', gap: 12, marginTop: 48 }, group.kanji.slice(0, SAMPLE_SIZE).map(tile)),
+    ],
+  );
+
+  return el(
+    'div',
+    {
+      position: 'relative',
+      display: 'flex',
+      width: OG_WIDTH,
+      height: OG_HEIGHT,
+      backgroundColor: COLORS.page,
+      fontFamily: 'Noto Sans JP',
+    },
+    [
+      content,
+      el(
+        'div',
+        {
+          position: 'absolute',
+          right: SIDE_PADDING,
+          bottom: 44,
+          display: 'flex',
+          fontSize: 28,
+          fontWeight: 700,
+          color: COLORS.accent,
+        },
+        'Nadeshiko',
+      ),
+    ],
+  );
 }

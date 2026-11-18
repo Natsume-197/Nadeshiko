@@ -74,13 +74,15 @@ const strokeStep = computed(() => Math.min(0.5, 6 / Math.max(props.strokes.lengt
 }
 
 .kanji-strokes__grid line {
-  stroke: var(--line);
+  /* Mixed from the ink, not --line: the light theme's --line is near white and the guides vanished. */
+  stroke: color-mix(in srgb, var(--ink) 16%, transparent);
   stroke-width: 0.6;
   stroke-dasharray: 2 2.5;
 }
 
 .kanji-strokes__ghost path {
-  stroke: var(--line);
+  /* The strokes still to be written: visible in both themes while the animation runs. */
+  stroke: color-mix(in srgb, var(--ink) 20%, transparent);
 }
 
 .kanji-strokes__ink path {

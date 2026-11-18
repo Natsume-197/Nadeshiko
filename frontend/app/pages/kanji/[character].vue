@@ -114,6 +114,20 @@ const shareImage = computed(() => allSentences.value?.results[0]?.segment.urls.i
  * Sentences by reading: a tab per reading that has example words, each loading (once, on first click) the sentences
  * of those words, so a reader hears 食 as ショク in 食事 and as た.べる in 食べる. "All" is the server-rendered list.
  */
+/** Sentences with a reading's words, added up (a sentence with two of them counts twice: close enough); null until
+ *  the counts are in. A reading without example words has none we can find. */
+const readingCount = (entry: { examples: Array<{ headword: string }> }) => {
+  if (entry.examples.length === 0) return 0;
+  if (!wordCounts.value) return null;
+  return entry.examples.reduce((sum, example) => sum + (wordCounts.value?.[example.headword] ?? 0), 0);
+};
+/** For the entry's readings list, which fades a reading with no sentences. */
+const readingCounts = computed(() =>
+  wordCounts.value
+    ? Object.fromEntries((card.value?.readings ?? []).map((entry) => [entry.reading, readingCount(entry) ?? 0]))
+    : undefined,
+);
+
 const readingTabs = computed(() =>
   (card.value?.readings ?? [])
     .filter((entry) => entry.examples.length > 0)
@@ -121,10 +135,7 @@ const readingTabs = computed(() =>
       key: `${entry.kind}:${entry.reading}`,
       ...(entry.kind === 'kun' ? splitKunReading(entry.reading) : { stem: entry.reading, okurigana: '' }),
       words: entry.examples.map((example) => example.headword),
-      // Sentences with its words, added up (a sentence with two of them counts twice: close enough for a tab).
-      count: wordCounts.value
-        ? entry.examples.reduce((sum, example) => sum + (wordCounts.value?.[example.headword] ?? 0), 0)
-        : null,
+      count: readingCount(entry),
     }))
     // A reading none of whose words appear in the corpus would open an empty tab.
     .filter((tab) => tab.count !== 0),
@@ -209,6 +220,38 @@ useSeoMeta({
   twitterTitle: () => title.value,
   twitterDescription: () => description.value,
 });
+
+// Structured data: the page is a kanji's entry (a DefinedTerm in the set of kanji the index lists), under Home → Kanji.
+useSchemaOrg(
+  computed(() => [
+    defineWebPage(),
+    defineBreadcrumb({
+      itemListElement: [
+        { name: t('navbar.buttons.home'), item: localePath('/') },
+        { name: t('kanjiIndex.title'), item: localePath('/kanji') },
+        { name: character.value, item: route.path },
+      ],
+    }),
+    ...(card.value
+      ? [
+          {
+            '@type': 'DefinedTerm',
+            name: character.value,
+            inLanguage: 'ja',
+            ...(card.value.meanings.length ? { description: card.value.meanings.slice(0, 5).join(', ') } : {}),
+            ...(card.value.readings.length
+              ? { alternateName: card.value.readings.map((reading) => reading.reading.replace('.', '')) }
+              : {}),
+            inDefinedTermSet: {
+              '@type': 'DefinedTermSet',
+              name: t('kanjiIndex.title'),
+              url: `${requestOrigin}${localePath('/kanji')}`,
+            },
+          },
+        ]
+      : []),
+  ]),
+);
 
 const openKanji = (other: string) => {
   void router.push(localePath(`/kanji/${encodeURIComponent(other)}`));
@@ -297,6 +340,7 @@ const sentencesPath = computed(() => ({
             :locale="glossLocale"
             full
             part="entry"
+            :reading-counts="readingCounts"
             @open-kanji="openKanji"
             @open-word="openWord"
           />

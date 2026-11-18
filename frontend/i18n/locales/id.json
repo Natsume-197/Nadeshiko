@@ -1132,6 +1132,7 @@
     "kanjiSentencesHeading": "Kalimat dengan {kanji}",
     "kanjiAllSentences": "Lihat semua kalimat dengan {kanji}",
     "kanjiNoSentences": "Belum ada kalimat dengan {kanji}.",
+    "kanjiReadingNoSentences": "belum ada kalimat",
     "kanjiSentencesFailed": "Kalimat tidak dapat dimuat. Coba lagi sebentar lagi.",
     "kanjiPage": "Halaman kanji",
     "kanjiOther": "Lainnya",

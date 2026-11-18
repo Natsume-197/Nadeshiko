@@ -1132,6 +1132,7 @@
     "kanjiSentencesHeading": "Frases con {kanji}",
     "kanjiAllSentences": "Ver todas las frases con {kanji}",
     "kanjiNoSentences": "Todavía no hay frases con {kanji}.",
+    "kanjiReadingNoSentences": "sin frases aún",
     "kanjiSentencesFailed": "No se pudieron cargar las frases. Inténtalo de nuevo en un momento.",
     "kanjiPage": "Página del kanji",
     "kanjiOther": "Otros",
