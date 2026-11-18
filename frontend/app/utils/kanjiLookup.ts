@@ -24,12 +24,17 @@ export interface KanjiCardWord extends KanjiCardWordRef {
   gloss: string | null;
 }
 
+export interface KanjiCardExample extends KanjiCardWordRef {
+  /** The headword in runs, with ruby over each kanji run. */
+  furigana: Array<{ text: string; ruby?: string }>;
+}
+
 export interface KanjiCardReading {
   kind: 'on' | 'kun';
   /** Katakana for on; hiragana with `.` before the okurigana for kun. */
   reading: string;
-  /** Up to three of the corpus's most frequent words read this way; none for a reading rare in it. */
-  examples: KanjiCardWordRef[];
+  /** Up to three words read this way: the corpus's most frequent, else common dictionary words. */
+  examples: KanjiCardExample[];
 }
 
 export interface KanjiCardRelated {

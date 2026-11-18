@@ -27,12 +27,17 @@ export interface KanjiWord {
   gloss: string | null;
 }
 
+export interface KanjiExample extends Pick<KanjiWord, 'id' | 'headword' | 'reading'> {
+  /** The headword as JmdictFurigana splits it, ruby over each kanji run (`[{text: '食', ruby: 'しょく'}, …]`). */
+  furigana: Array<{ text: string; ruby?: string }>;
+}
+
 export interface KanjiReading {
   kind: 'on' | 'kun';
   /** As KANJIDIC2 writes it: katakana for on, hiragana with `.` before the okurigana for kun. */
   reading: string;
   /** Up to three of our most frequent words where the kanji is read this way. */
-  examples: Array<Pick<KanjiWord, 'id' | 'headword' | 'reading'>>;
+  examples: KanjiExample[];
 }
 
 export interface KanjiRadical {
@@ -429,7 +434,12 @@ async function readingsWithExamples(
         list.length < EXAMPLES_PER_READING &&
         !list.some((example) => example.id === `jmdict:${word.word_id}`)
       ) {
-        list.push({ id: `jmdict:${word.word_id}`, headword: word.headword, reading: word.reading });
+        list.push({
+          id: `jmdict:${word.word_id}`,
+          headword: word.headword,
+          reading: word.reading,
+          furigana: word.segments,
+        });
       }
     }
   };

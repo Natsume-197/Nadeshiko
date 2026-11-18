@@ -650,7 +650,15 @@ export const s_DictionaryKanji = z.object({
     })
     .nullable(),
   readings: z.array(
-    z.object({ kind: z.enum(['on', 'kun']), reading: z.string(), examples: z.array(s_DictionaryKanjiWordRef) }),
+    z.object({
+      kind: z.enum(['on', 'kun']),
+      reading: z.string(),
+      examples: z.array(
+        s_DictionaryKanjiWordRef.extend({
+          furigana: z.array(z.object({ text: z.string(), ruby: z.string().optional() })),
+        }),
+      ),
+    }),
   ),
   meanings: z.array(z.string()),
   meaningsLanguage: z.enum(['en', 'es']),

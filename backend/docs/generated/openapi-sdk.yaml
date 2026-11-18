@@ -8978,7 +8978,27 @@ components:
               examples:
                 type: array
                 items:
-                  $ref: "#/components/schemas/DictionaryKanjiWordRef"
+                  allOf:
+                    - $ref: "#/components/schemas/DictionaryKanjiWordRef"
+                    - type: object
+                      required:
+                        - furigana
+                      properties:
+                        furigana:
+                          type: array
+                          description: The headword split into runs, with ruby over each kanji run
+                            (JmdictFurigana).
+                          items:
+                            type: object
+                            required:
+                              - text
+                            properties:
+                              text:
+                                type: string
+                                example: 食
+                              ruby:
+                                type: string
+                                example: しょく
         meanings:
           type: array
           items:

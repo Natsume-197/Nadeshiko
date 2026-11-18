@@ -24,7 +24,13 @@ const CARD = {
   frequency: 10,
   jlpt: 5,
   radical: { glyph: '⽊', number: 75, reading: 'き', meaning: 'tree, wood', character: '木' },
-  readings: [{ kind: 'on', reading: 'ホン', examples: [{ id: 'jmdict:1522150', headword: '本', reading: 'ほん' }] }],
+  readings: [
+    {
+      kind: 'on',
+      reading: 'ホン',
+      examples: [{ id: 'jmdict:1522150', headword: '本', reading: 'ほん', furigana: [{ text: '本', ruby: 'ほん' }] }],
+    },
+  ],
   meanings: ['book'],
   meaningsLanguage: 'en',
   components: [{ character: '木', hasCard: true, meaning: 'tree' }],

@@ -223,12 +223,23 @@ describe('kanjiCard', () => {
 
     const card = await kanjiCard(TestDataSource, '食', 'en');
 
-    expect(card?.readings).toEqual([
-      { kind: 'on', reading: 'ショク', examples: [{ id: 'jmdict:2', headword: '食器', reading: 'しょっき' }] },
-      { kind: 'on', reading: 'ジキ', examples: [] },
-      { kind: 'kun', reading: 'く.う', examples: [{ id: 'jmdict:3', headword: '食う', reading: 'くう' }] },
-      { kind: 'kun', reading: 'た.べる', examples: [{ id: 'jmdict:1', headword: '食べる', reading: 'たべる' }] },
+    const brief = (card?.readings ?? []).map((r) => [r.reading, r.examples.map((e) => e.headword)]);
+    expect(brief).toEqual([
+      ['ショク', ['食器']],
+      ['ジキ', []],
+      ['く.う', ['食う']],
+      ['た.べる', ['食べる']],
     ]);
+    // Each example carries its furigana, for ruby over the word.
+    expect(card?.readings[0]?.examples[0]).toEqual({
+      id: 'jmdict:2',
+      headword: '食器',
+      reading: 'しょっき',
+      furigana: [
+        { text: '食', ruby: 'しょっ' },
+        { text: '器', ruby: 'き' },
+      ],
+    });
   });
 
   it('takes examples from the dictionary for a reading our corpus never uses', async () => {
@@ -258,7 +269,15 @@ describe('kanjiCard', () => {
 
     expect(readings.find((r) => r.reading === 'ショク')?.examples.map((e) => e.headword)).toEqual(['食事']);
     expect(readings.find((r) => r.reading === 'ジキ')?.examples).toEqual([
-      { id: 'jmdict:2', headword: '断食', reading: 'だんじき' },
+      {
+        id: 'jmdict:2',
+        headword: '断食',
+        reading: 'だんじき',
+        furigana: [
+          { text: '断', ruby: 'だん' },
+          { text: '食', ruby: 'じき' },
+        ],
+      },
     ]);
     // Not listed among the corpus words: it was never counted.
     expect((await kanjiCard(TestDataSource, '食', 'en'))?.words.map((w) => w.headword)).toEqual(['食事']);

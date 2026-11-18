@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { mdiReplay } from '@mdi/js';
-import { type KanjiCardData, type KanjiCardWordRef, splitKunReading } from '~/utils/kanjiLookup';
+import { type KanjiCardData, type KanjiCardExample, type KanjiCardWordRef, splitKunReading } from '~/utils/kanjiLookup';
 import type { KanjiViewState } from '~/composables/useKanjiView';
 
 /**
@@ -53,7 +53,7 @@ interface ReadingRow {
   key: string;
   stem: string;
   okurigana: string;
-  examples: KanjiCardWordRef[];
+  examples: KanjiCardExample[];
 }
 
 /** Readings grouped by kind, so the on/kun label is written once per group. */
@@ -194,9 +194,9 @@ const relatedTitle = (kanji: { reading: string | null; meaning: string | null })
                   <button
                     type="button"
                     class="kanji-view__example"
-                    :title="example.reading ?? undefined"
+                    :aria-label="example.reading ? `${example.headword} (${example.reading})` : example.headword"
                     @click="emit('open-word', example)"
-                  >{{ example.headword }}</button>
+                  ><template v-if="example.furigana.length > 0"><template v-for="(seg, si) in example.furigana" :key="si"><ruby v-if="seg.ruby">{{ seg.text }}<rt>{{ seg.ruby }}</rt></ruby><template v-else>{{ seg.text }}</template></template></template><template v-else>{{ example.headword }}</template></button>
                 </template>
               </span>
             </template>
@@ -488,12 +488,13 @@ const relatedTitle = (kanji: { reading: string | null; meaning: string | null })
   color: var(--accent-soft);
 }
 
-/* 2. Readings: label | reading | words, in one grid so the columns line up. */
+/* 2. Readings: label | reading | words, in one grid so the columns line up. Rows leave room for the ruby over
+   the examples. */
 .kanji-view__readings {
   display: grid;
   grid-template-columns: auto auto 1fr;
   column-gap: 12px;
-  row-gap: 4px;
+  row-gap: 6px;
   align-items: baseline;
 }
 
@@ -529,10 +530,18 @@ const relatedTitle = (kanji: { reading: string | null; meaning: string | null })
   cursor: pointer;
 }
 
-.kanji-view__example:hover {
+.kanji-view__example {
+  line-height: 1.9;
+}
+
+.kanji-view__example rt {
+  font-size: 0.6em;
+  color: var(--ink-faint);
+}
+
+.kanji-view__example:hover,
+.kanji-view__example:hover rt {
   color: var(--accent-soft);
-  text-decoration: underline;
-  text-underline-offset: 2px;
 }
 
 /* 3. Words. */

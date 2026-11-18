@@ -1137,7 +1137,15 @@ export type DictionaryKanji = {
          * Katakana for on; hiragana with `.` before the okurigana for kun.
          */
         reading: string;
-        examples: Array<DictionaryKanjiWordRef>;
+        examples: Array<DictionaryKanjiWordRef & {
+            /**
+             * The headword split into runs, with ruby over each kanji run (JmdictFurigana).
+             */
+            furigana: Array<{
+                text: string;
+                ruby?: string;
+            }>;
+        }>;
     }>;
     meanings: Array<string>;
     /**

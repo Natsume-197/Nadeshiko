@@ -366,7 +366,21 @@ describe('the kanji the headword is written with', () => {
     jlpt: 5,
     radical: { glyph: '⽊', number: 75, reading: 'き', meaning: 'tree, wood', character: '木' },
     readings: [
-      { kind: 'on', reading: 'ホン', examples: [{ id: 'jmdict:1522150', headword: '本当', reading: 'ほんとう' }] },
+      {
+        kind: 'on',
+        reading: 'ホン',
+        examples: [
+          {
+            id: 'jmdict:1522150',
+            headword: '本当',
+            reading: 'ほんとう',
+            furigana: [
+              { text: '本', ruby: 'ほん' },
+              { text: '当', ruby: 'とう' },
+            ],
+          },
+        ],
+      },
       { kind: 'kun', reading: 'もと', examples: [] },
     ],
     meanings: ['book', 'origin'],
@@ -475,7 +489,9 @@ describe('the kanji the headword is written with', () => {
 
     peekWord.mockReturnValue({ candidates: [candidate('本当')], reason: null, nameOnly: false });
     const example = document.querySelector<HTMLButtonElement>('.kanji-view__example')!;
-    expect(example.textContent).toBe('本当');
+    // With ruby over each kanji, like the headword of a word card.
+    expect([...example.querySelectorAll('rt')].map((rt) => rt.textContent)).toEqual(['ほん', 'とう']);
+    expect(example.getAttribute('aria-label')).toBe('本当 (ほんとう)');
     example.click();
     await nextTick();
     await nextTick();

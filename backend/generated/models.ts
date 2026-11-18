@@ -301,7 +301,12 @@ export type t_DictionaryKanji = {
     reading: string;
   } | null;
   readings: {
-    examples: t_DictionaryKanjiWordRef[];
+    examples: (t_DictionaryKanjiWordRef & {
+      furigana: {
+        ruby?: string;
+        text: string;
+      }[];
+    })[];
     kind: 'on' | 'kun';
     reading: string;
   }[];
