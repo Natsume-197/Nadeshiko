@@ -53,6 +53,23 @@ describe('deconjugate', () => {
     expect(new Deconjugator().deconjugate(text).map((f) => f.text)).toContain(expected);
   });
 
+  // Negative volitional まい reaches the verb of every godan class, not only く verbs.
+  it.each([
+    ['書くまい', '書く', 'v5k'],
+    ['読むまい', '読む', 'v5m'],
+    ['言うまい', '言う', 'v5u'],
+    ['待つまい', '待つ', 'v5t'],
+    ['あるまい', 'ある', 'v5r'],
+    ['話すまい', '話す', 'v5s'],
+  ])('reads %s as %s with まい', (text, expected, tag) => {
+    const forms = new Deconjugator().deconjugate(text);
+    expect(
+      forms.some(
+        (f) => f.text === expected && f.tags.at(-1) === tag && f.process.includes('negative volition/conjecture'),
+      ),
+    ).toBe(true);
+  });
+
   it('is deterministic for the same input', () => {
     const deconjugator = new Deconjugator();
     const first = deconjugator.deconjugate('終わってしまった').map(formatForm);
