@@ -1,4 +1,9 @@
-import { COMPLETION_AUX_VERBS, TE_FORM_AUX_CHAIN_VERBS, TE_FORM_SUBSIDIARY_VERBS } from '../data/ruleData';
+import {
+  COMPLETION_AUX_VERBS,
+  endsOnSubsidiaryVerbClass,
+  TE_FORM_AUX_CHAIN_VERBS,
+  TE_FORM_SUBSIDIARY_VERBS,
+} from '../data/ruleData';
 import {
   append,
   deconj,
@@ -9,7 +14,7 @@ import {
   SECTION,
   verbDictFormExists,
 } from '../group';
-import { deconjugationKey } from '../kana';
+import { deconjugationKey, isKanji } from '../kana';
 import type { CombineContext, Group } from '../types';
 
 /*
@@ -275,7 +280,7 @@ export function combineVerbDependant(groups: Group[], ctx: CombineContext): Grou
   if (groups.length < 2) return groups;
   let out = combineVerbDependants(groups);
   out = combineVerbPossibleDependants(out, ctx);
-  out = combineVerbDependantsSuru(out);
+  out = combineVerbDependantsSuru(out, ctx);
   out = combineVerbDependantsTeiru(out, ctx);
   return out;
 }
@@ -322,7 +327,22 @@ function combineVerbPossibleDependants(groups: Group[], ctx: CombineContext): Gr
   );
 }
 
-function combineVerbDependantsSuru(groups: Group[]): Group[] {
+/** `KanjiCompoundsWithPrevious`: a single kanji that compounds with the group before it (忘れ|物 → 忘れ物) belongs to
+ * that noun, not to a following する. */
+export function kanjiCompoundsWithPrevious(groups: readonly Group[], i: number, ctx: CombineContext): boolean {
+  const current = groups[i];
+  const previous = groups[i - 1];
+  return (
+    !!current &&
+    !!previous &&
+    [...current.s].length === 1 &&
+    isKanji(current.s) &&
+    (previous.cls === 'Verb' || previous.cls === 'Noun' || previous.cls === 'CommonNoun') &&
+    known(ctx, previous.s + current.s)
+  );
+}
+
+function combineVerbDependantsSuru(groups: Group[], ctx: CombineContext): Group[] {
   const out: Group[] = [];
   let changed = false;
   for (let i = 0; i < groups.length; i++) {
@@ -337,7 +357,7 @@ function combineVerbDependantsSuru(groups: Group[]): Group[] {
         !next.s.endsWith('過ぎ');
       const isLiterarySuru = next.d === 'す' && next.n === '為る';
       const isSuruNoun = hasSection(current, SECTION.PossibleSuru) || hasSection(current, SECTION.PossibleVerbSuruNoun);
-      if (isSuruNoun && (isModernSuru || isLiterarySuru)) {
+      if (isSuruNoun && (isModernSuru || isLiterarySuru) && !kanjiCompoundsWithPrevious(groups, i, ctx)) {
         // Upstream keeps the noun's lemma and finds 油断する at lookup; we name the verb here (as CombineInflections does).
         const d = current.cls === 'Noun' ? `${current.d}する` : current.d;
         out.push(append(current, next, { ...VIA_DEPENDANT, d, cls: 'Verb' }));
@@ -392,13 +412,14 @@ function combineVerbDependantsTeiru(groups: Group[], ctx: CombineContext): Group
             TE_FORM_SUBSIDIARY_VERBS.has(next.n);
         }
         if (!isKnownSubsidiary) {
-          isKnownSubsidiary = ctx
-            .deconjugate(deconjugationKey(next.s))
-            .some(
-              (form) =>
-                TE_FORM_SUBSIDIARY_VERBS.has(form.text) ||
-                (TE_FORM_AUX_CHAIN_VERBS.has(form.text) && form.tags.some((tag) => tag.startsWith('v'))),
+          isKnownSubsidiary = ctx.deconjugate(deconjugationKey(next.s)).some((form) => {
+            const bareSubsidiary = form.tags.length === 0 && TE_FORM_SUBSIDIARY_VERBS.has(form.text);
+            return (
+              bareSubsidiary ||
+              ((TE_FORM_SUBSIDIARY_VERBS.has(form.text) || TE_FORM_AUX_CHAIN_VERBS.has(form.text)) &&
+                endsOnSubsidiaryVerbClass(form))
             );
+          });
         }
         if (isKnownSubsidiary) {
           out.push(append(current, next, VIA_DEPENDANT));

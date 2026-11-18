@@ -1,4 +1,4 @@
-import { append, DICTIONARY_VERB_ENDINGS, hasSection, known, SECTION } from '../group';
+import { append, DICTIONARY_VERB_ENDINGS, hasSection, isNonWordToken, known, SECTION } from '../group';
 import { hasKanji, isKanji } from '../kana';
 import type { CombineContext, Group } from '../types';
 
@@ -23,6 +23,7 @@ export function combineSuffix(groups: Group[], ctx: CombineContext): Group[] {
 
     if (
       isSuffix(next) &&
+      !isNonWordToken(current) &&
       (next.d === 'っこ' ||
         next.d === 'さ' ||
         // 何|がって is が + って, not 何がる.
@@ -59,7 +60,7 @@ export function reclassifyOrphanedSuffixes(groups: Group[], ctx: CombineContext)
     out[i] = group;
   };
 
-  for (let i = 1; i < groups.length; i++) {
+  for (let i = 0; i < groups.length; i++) {
     const word = groups[i] as Group;
     if (word.cls !== 'Suffix') continue;
 
@@ -92,13 +93,16 @@ export function reclassifyOrphanedSuffixes(groups: Group[], ctx: CombineContext)
     }
 
     // A predicate-tail suffix (チッチャ|い) can't host a suffix; 車 after it must reclassify to reach its noun.
-    const previous = (out ?? groups)[i - 1] as Group;
-    const prevIsPredicateTailSuffix = previous.cls === 'Suffix' && ['い', 'く', 'かっ'].includes(previous.s);
-    if (
-      ['Noun', 'CommonNoun', 'Numeral', 'Prefix', 'Pronoun'].includes(previous.cls) ||
-      (previous.cls === 'Suffix' && !prevIsPredicateTailSuffix)
-    )
-      continue;
+    // A suffix opening the sentence has no host at all.
+    const previous = (out ?? groups)[i - 1];
+    if (previous) {
+      const prevIsPredicateTailSuffix = previous.cls === 'Suffix' && ['い', 'く', 'かっ'].includes(previous.s);
+      if (
+        ['Noun', 'CommonNoun', 'Numeral', 'Prefix', 'Pronoun'].includes(previous.cls) ||
+        (previous.cls === 'Suffix' && !prevIsPredicateTailSuffix)
+      )
+        continue;
+    }
 
     // 形容詞的 (っぽい) need their POS for the adj branch; 形状詞的 (気) may start expressions (気を引き締める).
     if (word.sec[0] === SECTION.Adjectival || word.sec[0] === SECTION.NaAdjectiveLike) continue;

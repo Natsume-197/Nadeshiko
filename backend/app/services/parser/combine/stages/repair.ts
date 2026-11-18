@@ -23,7 +23,7 @@
  */
 
 import { GODAN_VERB_ENDINGS, GODAN_VOLITIONAL_O_KANA, VERB_INDICATING_AUXILIARIES } from '../data/ruleData';
-import { deconj, known, knownVerbOrAdjective } from '../group';
+import { deconj, isNonWordToken, known, knownVerbOrAdjective } from '../group';
 import { deconjugationKey, hasKanji, isKana, isKanji, isNumeralChar, toHiragana, toKatakana } from '../kana';
 import { type Piece, recut, scanRewrite } from '../recut';
 import type { CombineContext, Group, WordClass } from '../types';
@@ -217,7 +217,7 @@ export function repairVowelElongation(groups: Group[], ctx: CombineContext): Gro
   const result: Group[] = [];
   for (const current of words) {
     const prev = result.at(-1);
-    if (!prev) {
+    if (!prev || isNonWordToken(prev)) {
       result.push(current);
       continue;
     }
@@ -785,9 +785,10 @@ export function repairQuotativeTte(groups: Group[], ctx: CombineContext): Group[
     const word = groups[i] as Group;
     const next = groups[i + 1];
     // Departure: a blank or symbol before the thief is no word to reattach to (the deconjugator reads " た" as a
-    // past, so 2-3日じゃ もって would become " も|って").
+    // past, so 2-3日じゃ もって would become " も|って"). Upstream also judges it on the text, since Sudachi tags
+    // some punctuation as a noun.
     const last = result.at(-1);
-    const prev = last && !SYMBOLS.has(last.cls) ? last : undefined;
+    const prev = last && !SYMBOLS.has(last.cls) && !isNonWordToken(last) ? last : undefined;
 
     // Nominal + だって|ば is copula だ + emphatic ってば (ダルマザメだってば), not the conjunction だって.
     if (
@@ -1725,7 +1726,14 @@ export function repairTankaToTaNKa(groups: Group[], ctx: CombineContext): Group[
 
     // Noun たか after a verb stem is past た + か (言い過ぎ|たか); 鷹/高 after を/の never forms a past tense.
     // Departure: not after a blank or symbol, which the deconjugator also reads as a stem (じゃ たか).
-    if (word.cls === 'Noun' && word.s === 'たか' && last && !SYMBOLS.has(last.cls) && isVerbPast(ctx, `${last.s}た`)) {
+    if (
+      word.cls === 'Noun' &&
+      word.s === 'たか' &&
+      last &&
+      !SYMBOLS.has(last.cls) &&
+      !isNonWordToken(last) &&
+      isVerbPast(ctx, `${last.s}た`)
+    ) {
       rebuild(result, 1, [word], [{ s: `${last.s}た`, from: last, cls: 'Verb', r: last.r ? `${last.r}タ` : '' }, ka()]);
       changed = true;
       continue;

@@ -61,6 +61,40 @@ export const TE_FORM_AUX_CHAIN_VERBS: ReadonlySet<string> = new Set([
   '見る',
 ]);
 
+/** A deconjugation only proves a subsidiary verb when it ends on that verb's own class; おくれ reaches おく via a
+ * dead-end stem. */
+export const SUBSIDIARY_VERB_CLASSES: ReadonlyMap<string, readonly string[]> = new Map([
+  ['あげる', ['v1']],
+  ['上げる', ['v1']],
+  ['くれる', ['v1', 'v1-s']],
+  ['呉れる', ['v1', 'v1-s']],
+  ['もらう', ['v5u']],
+  ['貰う', ['v5u']],
+  ['やる', ['v5r']],
+  ['くださる', ['v5aru']],
+  ['下さる', ['v5aru']],
+  ['おく', ['v5k']],
+  ['置く', ['v5k']],
+  ['みる', ['v1']],
+  ['見る', ['v1']],
+  ['いる', ['v1']],
+  ['居る', ['v1']],
+  ['ある', ['v5r-i', 'v5r']],
+  ['有る', ['v5r-i', 'v5r']],
+  ['しまう', ['v5u']],
+  ['仕舞う', ['v5u']],
+  ['いく', ['v5k-s', 'v5k']],
+  ['行く', ['v5k-s', 'v5k']],
+  ['くる', ['vk']],
+  ['来る', ['vk']],
+]);
+
+/** `EndsOnSubsidiaryVerbClass`. */
+export function endsOnSubsidiaryVerbClass(form: { text: string; tags: readonly string[] }): boolean {
+  const last = form.tags.at(-1);
+  return last !== undefined && (SUBSIDIARY_VERB_CLASSES.get(form.text)?.includes(last) ?? false);
+}
+
 export const PREFIX_COMBINE_EXCLUSIONS: ReadonlySet<string> = new Set(['おつもり', 'おいま', 'おにく']);
 
 // Merged only when JMDict attests the compound (逃げ|切った → 逃げ切る), so 紙を切った is untouched.
@@ -269,7 +303,6 @@ export const SPECIAL_CASES_2: ReadonlyArray<readonly [string, string, WordClass]
   ['何に', 'も', 'Adverb'],
   ['ま', 'だ', 'Adverb'],
   ['いっしょ', 'に', 'Adverb'],
-  ['と', '言った', 'Conjunction'],
   ['その', '時', 'Expression'],
   ['そう', 'いえば', 'Expression'],
   ['出来', 'なさそう', 'Verb'],

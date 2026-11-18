@@ -34,7 +34,7 @@ const pinned = (group: Group, pin: number): Group => ({ ...group, flags: { ...gr
 
 const lexicon = new InMemoryLexicon(['凛', '堂々と', '思い出', '思い出す', '話し', '滲み出す', '田中', '気'], {
   exp: ['病は気から'],
-  verb: ['見学'],
+  verb: ['見学', 'いく'],
 });
 const ctx: CombineContext = { lexicon, deconjugate };
 
@@ -232,6 +232,11 @@ describe('SplitTanSuffix', () => {
       ['だ', 'Auxiliary', 'だ'],
     ]);
     expect(out[1]).toMatchObject({ d: 'の', n: 'ん', sec: ['準体助詞', '*', '*'] });
+  });
+
+  it('keeps a name + たん (るみ|たん|だ): the past must be of a real verb', () => {
+    const input = line(['るみ', '名詞,固有名詞,人名'], ['たん', '接尾辞,名詞的,一般', 'たん', 'タン'], ['だ', AUX]);
+    expect(splitTanSuffix(input, ctx)).toBe(input);
   });
 
   it('re-cuts after a て-form: 見|て|たん|です → 見 + てた + ん + です', () => {

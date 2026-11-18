@@ -11,7 +11,7 @@
  */
 
 import { AUXILIARY_VERB_STEMS, COMPOUND_VERB_SPLIT_SUFFIXES } from '../data/ruleData';
-import { deconj, hasSection, known, SECTION } from '../group';
+import { deconj, hasSection, known, knownVerbOrAdjective, SECTION } from '../group';
 import { deconjugationKey, hasKanji } from '../kana';
 import { cpLength, recut, scanRewrite } from '../recut';
 import type { CombineContext, Group } from '../types';
@@ -57,9 +57,6 @@ export function splitCompoundAuxiliaryVerbs(groups: Group[], ctx: CombineContext
     return 1;
   });
 }
-
-const PAST_TAGGED = (ctx: CombineContext, text: string) =>
-  deconj(ctx, text).some((form) => form.tags.some((tag) => tag.startsWith('v')) && form.process.includes('past'));
 
 /** SplitTatteParticle: だな read as 棚, かって and いたって read as adverbs, and the 接続助詞 たって/だって after a
  * 連用形, re-cut so the past た/だ reaches the deconjugator. */
@@ -163,7 +160,8 @@ export function splitUnattestedToAdverbs(groups: Group[], ctx: CombineContext): 
   });
 }
 
-/** Re-cuts Sudachi's イッ + たん(suffix) + だ as イッた + ん + だ; ProcessSpecialCases then merges ん + だ. */
+/** Re-cuts Sudachi's イッ + たん(suffix) + だ as イッた + ん + だ; the verb must exist, or a name + たん (るみたん)
+ * reads as a past tense. */
 export function splitTanSuffix(groups: Group[], ctx: CombineContext): Group[] {
   if (groups.length < 2) return groups;
   return scanRewrite(groups, (list, i, emit) => {
@@ -182,7 +180,14 @@ export function splitTanSuffix(groups: Group[], ctx: CombineContext): Group[] {
     // Departure: a blank or symbol is no verb stem, though the deconjugator reads " た" as a past.
     if (['Symbol', 'SupplementarySymbol', 'BlankSpace'].includes(prev.cls)) return 0;
     const ending = lastChar(prev.s);
-    if (ending !== 'て' && ending !== 'で' && !PAST_TAGGED(ctx, `${prev.s}た`)) return 0;
+    // The verb must exist, or a name + たん (るみたん) reads as a past tense.
+    const isPastOfRealVerb = deconj(ctx, `${prev.s}た`).some(
+      (form) =>
+        form.tags.some((tag) => tag.startsWith('v')) &&
+        form.process.includes('past') &&
+        knownVerbOrAdjective(ctx, form.text),
+    );
+    if (ending !== 'て' && ending !== 'で' && !isPastOfRealVerb) return 0;
     const out = emit();
     out.splice(
       -1,

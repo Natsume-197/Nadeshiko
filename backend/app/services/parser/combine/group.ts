@@ -175,6 +175,19 @@ export function known(ctx: CombineContext, text: string): boolean {
   return ctx.lexicon.has(text) || ctx.lexicon.has(normalizeLongVowels(toHiragana(text)));
 }
 
+/** `IsNonWordToken`: punctuation and blanks never host a returned mora or a suffix; judged on the text because
+ * Sudachi tags some punctuation as a noun. */
+export const isNonWordToken = (group: Group) => !/[\p{L}\p{N}]/u.test(group.s);
+
+/** `IsPrenominalModifier`: attributive forms only modify nouns, so the kanji after one is a noun head, never a verb
+ * stem (綺麗な|目してる is not 目する). */
+export const isPrenominalModifier = (group: Group) =>
+  group.cls === 'PrenounAdjectival' ||
+  (['NaAdjective', 'Auxiliary', 'Noun', 'CommonNoun'].includes(group.cls) &&
+    group.s.endsWith('な') &&
+    !group.d.endsWith('な')) ||
+  (group.cls === 'IAdjective' && group.s.endsWith('い'));
+
 /** `HasVerbOrAdjectiveLookup`. */
 export function knownVerbOrAdjective(ctx: CombineContext, text: string): boolean {
   return ctx.lexicon.hasClass(text, 'verb') || ctx.lexicon.hasClass(text, 'adj-i');

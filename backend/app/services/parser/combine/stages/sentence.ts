@@ -7,7 +7,16 @@ import {
   TWO_TOKEN_EXPRESSION_WHITELIST,
   TWO_TOKEN_NOUN_VERB_IDIOMS,
 } from '../data/ruleData';
-import { concatText, DICTIONARY_VERB_ENDINGS, deconj, isNameLike, isNounForCompounding, known, span } from '../group';
+import {
+  concatText,
+  DICTIONARY_VERB_ENDINGS,
+  deconj,
+  isNameLike,
+  isNounForCompounding,
+  isPrenominalModifier,
+  known,
+  span,
+} from '../group';
 import { isKanji, toHiragana } from '../kana';
 import type { LexClass } from '../lexicon';
 import type { CombineContext, Group } from '../types';
@@ -213,6 +222,17 @@ function matchWindow(
     if (!matched || excluded(candidate)) continue;
     // A pronoun is never a suru-noun stem: 私+してない is not 私する "use for personal gain".
     if (first.cls === 'Pronoun' && !isExpression && ctx.lexicon.hasClass(candidate, 'verb')) continue;
+    // Attributive forms only modify nouns, so the noun after one is a noun head, never a verb stem (綺麗な|目してる
+    // is not 目する).
+    if (
+      beforeFirst &&
+      (first.cls === 'Noun' || first.cls === 'CommonNoun') &&
+      isPrenominalModifier(beforeFirst) &&
+      dictForm.endsWith('する') &&
+      !isExpression &&
+      ctx.lexicon.hasClass(candidate, 'verb')
+    )
+      continue;
     return { start, dictionaryForm: candidate };
   }
   return null;

@@ -22,7 +22,7 @@ import type {
   TokenTemplate,
   WindowCond,
 } from '../data/rewriteRules';
-import { REWRITE_RULES, SECTION_LABELS } from '../data/rewriteRules';
+import { CONTEXT_SECTION_LABELS, REWRITE_RULES, SECTION_LABELS } from '../data/rewriteRules';
 import { deconj, hasSection, known, SECTION } from '../group';
 import { deconjugationKey, hasKanji, toKatakana } from '../kana';
 import { type Piece, recut } from '../recut';
@@ -109,6 +109,8 @@ function matchesContext(neighbour: Group | undefined, cond: ContextCond): boolea
   if (cond.textStartsWithAnyOf)
     ok &&= !!neighbour && cond.textStartsWithAnyOf.some((start) => neighbour.s.startsWith(start));
   if (cond.pos) ok &&= !!neighbour && cond.pos.includes(neighbour.cls);
+  if (cond.sectionAnyOf)
+    ok &&= !!neighbour && cond.sectionAnyOf.some((section) => hasSection(neighbour, CONTEXT_SECTION_LABELS[section]));
   if (cond.numeral) ok &&= !!neighbour && isNumeralToken(neighbour);
   if (cond.clauseBoundary) ok &&= isClauseBoundary(neighbour);
   return cond.negate ? !ok : ok;

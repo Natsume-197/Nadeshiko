@@ -1,7 +1,7 @@
 /*
  * The token rewrite-rule table and the record types it is written in (`RewriteRulesTable`, `RewritePhase`,
  * `LookupGuardKind`, `TokenPattern`, `TokenTemplate`, `ContextCond`, `WindowCond`, `LookupGuard`, `RewriteRule`;
- * Apache-2.0 data, see ../../NOTICE). All 175 rows (Early 72, Late 11, Cleanup 76, Reading 16) are copied as data,
+ * Apache-2.0 data, see ../../NOTICE). All 231 rows (Early 98, Late 13, Cleanup 97, Reading 23) are copied as data,
  * in the upstream order and with the upstream ids and comments; only the C# record syntax became object literals
  * (enum members are strings, `PosAnyOf` is `pos`).
  */
@@ -55,8 +55,19 @@ export interface TokenTemplate {
   recoverConjugations?: boolean;
 }
 
+/** The `PartOfSpeechSection` values the rows test on a neighbour; {@link CONTEXT_SECTION_LABELS} maps them to
+ * UniDic labels. */
+export type ContextSection = 'Counter' | 'PossibleCounterWord' | 'PotentialAdverb';
+
+export const CONTEXT_SECTION_LABELS: Record<ContextSection, string> = {
+  Counter: '助数詞',
+  PossibleCounterWord: '助数詞可能',
+  PotentialAdverb: '副詞可能',
+};
+
 /** `ContextCond`: the constraints AND, `negate` flips. `clauseBoundary` is a symbol or blank neighbour or the
- * edge; `numeral` also matches Sudachi's 名詞-数詞 nouns. */
+ * edge; `numeral` also matches Sudachi's 名詞-数詞 nouns; `sectionAnyOf` holds when the neighbour has one of the
+ * sections. */
 export interface ContextCond {
   textAnyOf?: readonly string[];
   textEndsWithAnyOf?: readonly string[];
@@ -65,6 +76,7 @@ export interface ContextCond {
   clauseBoundary?: boolean;
   numeral?: boolean;
   negate?: boolean;
+  sectionAnyOf?: readonly ContextSection[];
 }
 
 /** `WindowCond`: some token in [from, to] relative to the match start satisfies the constraints. */
@@ -95,6 +107,195 @@ export interface RewriteRule {
 }
 
 export const REWRITE_RULES: readonly RewriteRule[] = [
+  // おくれ after a te-form or を is the request お呉れ (待っておくれ, 水をおくれ), not 遅れ; inflected おくれた stays 遅れる.
+  {
+    id: 'okure-request-te',
+    phase: 'Cleanup',
+    match: [{ textAnyOf: ['おくれ', 'おくれー'] }],
+    replace: [
+      {
+        text: '',
+        dictForm: 'おくれ',
+        normalizedForm: 'お呉れ',
+        pos: 'Expression',
+        posSection: 'None',
+        pin: 2868242,
+        pinReadingIndex: 1,
+        hardPin: true,
+      },
+    ],
+    prev: { textEndsWithAnyOf: ['て', 'で'], pos: ['Verb', 'Auxiliary', 'Expression', 'Interjection', 'Noun'] },
+    next: { textAnyOf: ['を', 'が', 'の', 'は', 'も', 'に', '気味', 'がち'], negate: true },
+  },
+  {
+    id: 'okure-request-wo',
+    phase: 'Cleanup',
+    match: [{ textAnyOf: ['おくれ', 'おくれー'] }],
+    replace: [
+      {
+        text: '',
+        dictForm: 'おくれ',
+        normalizedForm: 'お呉れ',
+        pos: 'Expression',
+        posSection: 'None',
+        pin: 2868242,
+        pinReadingIndex: 1,
+        hardPin: true,
+      },
+    ],
+    prev: { textAnyOf: ['を'] },
+    next: { textAnyOf: ['を', 'が', 'の', 'は', 'も', 'に', '気味', 'がち'], negate: true },
+  },
+  {
+    id: 'okureyo-request-te',
+    phase: 'Cleanup',
+    match: [{ text: 'おくれよ' }],
+    replace: [
+      {
+        text: 'おくれ',
+        dictForm: 'おくれ',
+        normalizedForm: 'お呉れ',
+        pos: 'Expression',
+        posSection: 'None',
+        pin: 2868242,
+        pinReadingIndex: 1,
+        hardPin: true,
+        reading: 'オクレ',
+      },
+      { text: 'よ', dictForm: 'よ', normalizedForm: 'よ', pos: 'Particle', reading: 'ヨ' },
+    ],
+    prev: { textEndsWithAnyOf: ['て', 'で'], pos: ['Verb', 'Auxiliary', 'Expression', 'Interjection', 'Noun'] },
+  },
+  {
+    id: 'okureyo-request-wo',
+    phase: 'Cleanup',
+    match: [{ text: 'おくれよ' }],
+    replace: [
+      {
+        text: 'おくれ',
+        dictForm: 'おくれ',
+        normalizedForm: 'お呉れ',
+        pos: 'Expression',
+        posSection: 'None',
+        pin: 2868242,
+        pinReadingIndex: 1,
+        hardPin: true,
+        reading: 'オクレ',
+      },
+      { text: 'よ', dictForm: 'よ', normalizedForm: 'よ', pos: 'Particle', reading: 'ヨ' },
+    ],
+    prev: { textAnyOf: ['を'] },
+  },
+  {
+    id: 'okure-request-split-te',
+    phase: 'Cleanup',
+    match: [
+      { text: 'お', pos: ['Prefix'] },
+      { text: 'くれ', pos: ['Verb'], dictFormAnyOf: ['くれる', '呉れる'] },
+    ],
+    replace: [
+      {
+        text: 'おくれ',
+        dictForm: 'おくれ',
+        normalizedForm: 'お呉れ',
+        pos: 'Expression',
+        posSection: 'None',
+        pin: 2868242,
+        pinReadingIndex: 1,
+        hardPin: true,
+        reading: 'オクレ',
+      },
+    ],
+    prev: { textEndsWithAnyOf: ['て', 'で'], pos: ['Verb', 'Auxiliary', 'Expression', 'Interjection', 'Noun'] },
+    next: { textAnyOf: ['を', 'が', 'の', 'は', 'も', 'に', '気味', 'がち'], negate: true },
+  },
+  {
+    id: 'okure-request-split-wo',
+    phase: 'Cleanup',
+    match: [
+      { text: 'お', pos: ['Prefix'] },
+      { text: 'くれ', pos: ['Verb'], dictFormAnyOf: ['くれる', '呉れる'] },
+    ],
+    replace: [
+      {
+        text: 'おくれ',
+        dictForm: 'おくれ',
+        normalizedForm: 'お呉れ',
+        pos: 'Expression',
+        posSection: 'None',
+        pin: 2868242,
+        pinReadingIndex: 1,
+        hardPin: true,
+        reading: 'オクレ',
+      },
+    ],
+    prev: { textAnyOf: ['を'] },
+    next: { textAnyOf: ['を', 'が', 'の', 'は', 'も', 'に', '気味', 'がち'], negate: true },
+  },
+  // Sudachi files the で after an expression's ない as a case particle (気にしない|で|お|くれ).
+  {
+    id: 'okure-request-naide-split',
+    phase: 'Cleanup',
+    match: [
+      { text: 'で', pos: ['Particle'] },
+      { text: 'お', pos: ['Prefix'] },
+      { text: 'くれ', pos: ['Verb'], dictFormAnyOf: ['くれる', '呉れる'] },
+    ],
+    replace: [
+      { text: 'で', dictForm: 'で', normalizedForm: 'で', pos: 'Particle', reading: 'デ' },
+      {
+        text: 'おくれ',
+        dictForm: 'おくれ',
+        normalizedForm: 'お呉れ',
+        pos: 'Expression',
+        posSection: 'None',
+        pin: 2868242,
+        pinReadingIndex: 1,
+        hardPin: true,
+        reading: 'オクレ',
+      },
+    ],
+    prev: { textEndsWithAnyOf: ['ない'] },
+    next: { textAnyOf: ['を', 'が', 'の', 'は', 'も', 'に', '気味', 'がち'], negate: true },
+  },
+  {
+    id: 'okure-request-naide',
+    phase: 'Cleanup',
+    match: [{ text: 'で', pos: ['Particle'] }, { text: 'おくれ' }],
+    replace: [
+      { text: '' },
+      {
+        text: '',
+        dictForm: 'おくれ',
+        normalizedForm: 'お呉れ',
+        pos: 'Expression',
+        posSection: 'None',
+        pin: 2868242,
+        pinReadingIndex: 1,
+        hardPin: true,
+      },
+    ],
+    prev: { textEndsWithAnyOf: ['ない'] },
+    next: { textAnyOf: ['を', 'が', 'の', 'は', 'も', 'に', '気味', 'がち'], negate: true },
+  },
+  // Kyoto おくれやす is the same request with polite やす.
+  {
+    id: 'okure-yasu',
+    phase: 'Cleanup',
+    match: [{ text: 'おくれやす' }],
+    replace: [
+      {
+        text: '',
+        dictForm: 'おくれ',
+        normalizedForm: 'お呉れ',
+        pos: 'Expression',
+        posSection: 'None',
+        pin: 2868242,
+        pinReadingIndex: 1,
+        hardPin: true,
+      },
+    ],
+  },
   // Colloquial なんなん ("what the hell?"), unless followed by と (喃々と taru-adverb).
   {
     id: 'nannan',
@@ -176,6 +377,390 @@ export const REWRITE_RULES: readonly RewriteRule[] = [
     phase: 'Cleanup',
     match: [{ text: 'あん', pos: ['Verb'], dictFormAnyOf: ['ある', '有る', '在る'] }],
     replace: [{ text: '', pin: 1296400, pinReadingIndex: 2, hardPin: true }],
+  },
+  // Kana いんだ is contracted いいんだ; Sudachi and RepairNTokenisation read it as the past of 忌む.
+  {
+    id: 'in-contracted-ii',
+    phase: 'Early',
+    match: [{ text: 'いん', pos: ['Verb'], dictFormAnyOf: ['いむ'] }],
+    replace: [
+      {
+        text: 'い',
+        dictForm: 'いい',
+        normalizedForm: 'いい',
+        pos: 'IAdjective',
+        reading: 'イ',
+        pin: 2820690,
+        pinReadingIndex: 0,
+        hardPin: true,
+      },
+      { text: 'ん', dictForm: 'ん', normalizedForm: 'ん', pos: 'Particle', reading: 'ン' },
+    ],
+    next: { textAnyOf: ['だ', 'です', 'じゃ', 'でしょ', 'でしょう', 'だろ', 'だろう'] },
+  },
+  {
+    id: 'inda-contracted-ii',
+    phase: 'Early',
+    match: [{ text: 'いんだ', pos: ['Verb'], dictFormAnyOf: ['いむ'] }],
+    replace: [
+      {
+        text: 'い',
+        dictForm: 'いい',
+        normalizedForm: 'いい',
+        pos: 'IAdjective',
+        reading: 'イ',
+        pin: 2820690,
+        pinReadingIndex: 0,
+        hardPin: true,
+      },
+      { text: 'ん', dictForm: 'ん', normalizedForm: 'ん', pos: 'Particle', reading: 'ン' },
+      { text: 'だ', dictForm: 'だ', normalizedForm: 'だ', pos: 'Auxiliary', reading: 'ダ' },
+    ],
+  },
+  // Sudachi steals the negative ん into the interjection んっ (い|ませ|んっ|て); it is ぬ + quotative って.
+  {
+    id: 'n-tte-negative',
+    phase: 'Early',
+    match: [
+      { text: 'んっ', pos: ['Interjection'] },
+      { text: 'て', pos: ['Particle'] },
+    ],
+    replace: [
+      { text: 'ん', dictForm: 'ぬ', normalizedForm: 'ぬ', pos: 'Auxiliary', reading: 'ン' },
+      { text: 'って', dictForm: 'って', normalizedForm: 'って', pos: 'Particle', reading: 'ッテ' },
+    ],
+    prev: { pos: ['Verb'] },
+  },
+  {
+    id: 'n-tte-negative-masen',
+    phase: 'Early',
+    match: [
+      { text: 'んっ', pos: ['Interjection'] },
+      { text: 'て', pos: ['Particle'] },
+    ],
+    replace: [
+      { text: 'ん', dictForm: 'ぬ', normalizedForm: 'ぬ', pos: 'Auxiliary', reading: 'ン' },
+      { text: 'って', dictForm: 'って', normalizedForm: 'って', pos: 'Particle', reading: 'ッテ' },
+    ],
+    prev: { textAnyOf: ['ませ'] },
+  },
+  // The same theft after a name: 椋|ちゃ|んっ|て is the suffix ちゃん + って, not copula ちゃ.
+  {
+    id: 'chan-tte',
+    phase: 'Early',
+    match: [
+      { text: 'ちゃ', pos: ['Auxiliary'] },
+      { text: 'んっ', pos: ['Interjection'] },
+      { text: 'て', pos: ['Particle'] },
+    ],
+    replace: [
+      {
+        text: 'ちゃん',
+        dictForm: 'ちゃん',
+        normalizedForm: 'ちゃん',
+        pos: 'Suffix',
+        reading: 'チャン',
+        pin: 1007660,
+        pinReadingIndex: 0,
+      },
+      { text: 'って', dictForm: 'って', normalizedForm: 'って', pos: 'Particle', reading: 'ッテ' },
+    ],
+    prev: { pos: ['Noun', 'CommonNoun', 'Name', 'Pronoun'] },
+  },
+  // ばっか after a predicate is colloquial ばかり (買ったばっか), not the sumo rank 幕下 that noun synergy favours.
+  {
+    id: 'bakka-after-predicate',
+    phase: 'Cleanup',
+    match: [{ text: 'ばっか' }],
+    replace: [{ text: '', dictForm: 'ばっか', normalizedForm: 'ばっか', pos: 'Particle', pin: 2857403 }],
+    prev: { pos: ['Verb', 'Auxiliary'] },
+  },
+  // Noun + かって before a quote verb is question か + quotative って (女優かっていう), not かつて.
+  {
+    id: 'ka-tte-quote',
+    phase: 'Early',
+    match: [{ text: 'かって', pos: ['Adverb'] }],
+    replace: [
+      { text: 'か', dictForm: 'か', normalizedForm: 'か', pos: 'Particle', reading: 'カ' },
+      { text: 'って', dictForm: 'って', normalizedForm: 'って', pos: 'Particle', reading: 'ッテ' },
+    ],
+    prev: { pos: ['Noun', 'CommonNoun', 'Name'] },
+    next: { textStartsWithAnyOf: ['いう', 'いっ', '言', '思', 'おも'] },
+  },
+  // かってに/かってな is 勝手; かつて takes neither.
+  {
+    id: 'katte-katte',
+    phase: 'Cleanup',
+    match: [{ text: 'かって' }],
+    replace: [
+      { text: '', dictForm: '勝手', normalizedForm: '勝手', pos: 'NaAdjective', pin: 1346190, pinReadingIndex: 1 },
+    ],
+    next: { textAnyOf: ['に', 'な'] },
+  },
+  // ざま|あみ|ろっ|てん: the っ of quotative ってん is stolen into ろっ.
+  {
+    id: 'zamaa-miro-tten',
+    phase: 'Early',
+    match: [{ text: 'ろっ' }, { text: 'てん' }],
+    replace: [
+      { text: 'ろ', dictForm: 'ろ', normalizedForm: 'ろ', pos: 'Noun', reading: 'ロ' },
+      { text: 'って', dictForm: 'って', normalizedForm: 'って', pos: 'Particle', reading: 'ッテ' },
+      { text: 'ん', dictForm: 'ん', normalizedForm: 'ん', pos: 'Particle', reading: 'ン' },
+    ],
+    prev: { textAnyOf: ['あみ'] },
+  },
+  // Compound matching never probes the interjection ざまあみろ from ざま|あみ|ろ or ざ|まー|みろ.
+  {
+    id: 'zamaa-miro',
+    phase: 'Late',
+    match: [{ text: 'ざま' }, { text: 'あみ' }, { text: 'ろ' }],
+    replace: [
+      {
+        text: 'ざまあみろ',
+        dictForm: 'ざまあみろ',
+        normalizedForm: 'ざまあみろ',
+        pos: 'Interjection',
+        reading: 'ザマアミロ',
+        pin: 2420000,
+        pinReadingIndex: 2,
+        hardPin: true,
+      },
+    ],
+  },
+  {
+    id: 'zamaa-miro-long',
+    phase: 'Late',
+    match: [{ text: 'ざ' }, { text: 'まー' }, { text: 'みろ' }],
+    replace: [
+      {
+        text: 'ざまーみろ',
+        dictForm: 'ざまあみろ',
+        normalizedForm: 'ざまあみろ',
+        pos: 'Interjection',
+        reading: 'ザマーミロ',
+        pin: 2420000,
+        pinReadingIndex: 6,
+        hardPin: true,
+      },
+    ],
+  },
+  // Interjection やだ is final; compound matching otherwise fuses やだ|ね into 矢種.
+  {
+    id: 'yada-interjection',
+    phase: 'Cleanup',
+    match: [{ text: 'やだ', pos: ['Interjection'] }],
+    replace: [{ text: '', pin: 2710010, pinReadingIndex: 0, hardPin: true }],
+  },
+  // Sudachi fuses ああやって as a conjunction and strands られん; it is ああ + やってられん.
+  {
+    id: 'aa-yatterarenn',
+    phase: 'Early',
+    match: [{ text: 'ああやって', pos: ['Conjunction'] }, { text: 'られん' }],
+    replace: [
+      { text: 'ああ', dictForm: 'ああ', normalizedForm: 'ああ', pos: 'Adverb', reading: 'アア' },
+      {
+        text: 'やってられん',
+        dictForm: 'やってられない',
+        normalizedForm: 'やってられない',
+        pos: 'Expression',
+        reading: 'ヤッテラレン',
+        pin: 2831142,
+        pinReadingIndex: 2,
+        hardPin: true,
+      },
+    ],
+  },
+  {
+    id: 'aa-yatterarenai',
+    phase: 'Early',
+    match: [{ text: 'ああやって', pos: ['Conjunction'] }, { text: 'られない' }],
+    replace: [
+      { text: 'ああ', dictForm: 'ああ', normalizedForm: 'ああ', pos: 'Adverb', reading: 'アア' },
+      {
+        text: 'やってられない',
+        dictForm: 'やってられない',
+        normalizedForm: 'やってられない',
+        pos: 'Expression',
+        reading: 'ヤッテラレナイ',
+        pin: 2831142,
+        pinReadingIndex: 0,
+        hardPin: true,
+      },
+    ],
+  },
+  // Kana おっ- tagged 居る is humble おる (言っておった), not 置く via the 行く-class past; after を it is 折る/織る.
+  {
+    id: 'oru-humble',
+    phase: 'Cleanup',
+    match: [{ textStartsWith: 'おっ', pos: ['Verb'], dictFormAnyOf: ['居る', 'おる'] }],
+    replace: [
+      {
+        text: '',
+        dictForm: 'おる',
+        normalizedForm: '居る',
+        pin: 1577985,
+        pinReadingIndex: 1,
+        recoverConjugations: true,
+      },
+    ],
+    prev: { textAnyOf: ['を'], negate: true },
+  },
+  // te-form + くるっ|て is 来る + quotative って (作ってくるって), not 狂う.
+  {
+    id: 'kuru-tte',
+    phase: 'Early',
+    match: [
+      { text: 'くるっ', dictFormAnyOf: ['狂う', 'くるう'] },
+      { text: 'て', pos: ['Particle'] },
+    ],
+    replace: [
+      { text: 'くる', dictForm: 'くる', normalizedForm: '来る', pos: 'Verb', reading: 'クル' },
+      { text: 'って', dictForm: 'って', normalizedForm: 'って', pos: 'Particle', reading: 'ッテ' },
+    ],
+    prev: { textAnyOf: ['て', 'で'], pos: ['Particle'] },
+  },
+  // を|あ|されば is 漁る's conditional, not an interjection plus the conjunction されば.
+  {
+    id: 'asareba',
+    phase: 'Early',
+    match: [
+      { text: 'あ', pos: ['Interjection'] },
+      { text: 'されば', pos: ['Conjunction'] },
+    ],
+    replace: [
+      {
+        text: 'あされば',
+        dictForm: '漁る',
+        normalizedForm: '漁る',
+        pos: 'Verb',
+        reading: 'アサレバ',
+        pin: 1232970,
+        pinReadingIndex: 1,
+        recoverConjugations: true,
+      },
+    ],
+    prev: { textAnyOf: ['を'] },
+  },
+  // Sudachi reads 何|かきっかけ as 書きかけ; it is 何か + きっかけ.
+  {
+    id: 'ka-kikkake',
+    phase: 'Early',
+    match: [{ text: 'かきっかけ' }],
+    replace: [
+      { text: 'か', dictForm: 'か', normalizedForm: 'か', pos: 'Particle', reading: 'カ' },
+      { text: 'きっかけ', dictForm: 'きっかけ', normalizedForm: '切っ掛け', pos: 'Noun', reading: 'キッカケ' },
+    ],
+  },
+  // Noun|い|なさそう is いる + なさそう (彼氏いなさそう), not 去なす.
+  {
+    id: 'i-nasasou',
+    phase: 'Early',
+    match: [{ text: 'い', pos: ['Particle'] }, { text: 'なさそう' }],
+    replace: [
+      {
+        text: 'いなさそう',
+        dictForm: 'いる',
+        normalizedForm: '居る',
+        pos: 'Verb',
+        reading: 'イナサソウ',
+        pin: 1577980,
+        pinReadingIndex: 1,
+        recoverConjugations: true,
+      },
+    ],
+    prev: { pos: ['Noun', 'CommonNoun', 'Pronoun', 'Name'] },
+  },
+  // か|らっす is から + っす; らっす otherwise lands on ラス "lath".
+  {
+    id: 'kara-ssu',
+    phase: 'Early',
+    match: [{ text: 'か', pos: ['Particle'] }, { text: 'らっす' }],
+    replace: [
+      { text: 'から', dictForm: 'から', normalizedForm: 'から', pos: 'Particle', reading: 'カラ' },
+      { text: 'っす', dictForm: 'っす', normalizedForm: 'っす', pos: 'Auxiliary', reading: 'ッス' },
+    ],
+  },
+  // ハズ|い is the adjective はずい ("embarrassing"); 筈 never takes いる.
+  {
+    id: 'hazui',
+    phase: 'Early',
+    match: [{ text: 'ハズ' }, { text: 'い', pos: ['Verb'] }],
+    replace: [
+      {
+        text: 'ハズい',
+        dictForm: 'はずい',
+        normalizedForm: 'はずい',
+        pos: 'IAdjective',
+        reading: 'ハズイ',
+        pin: 2092890,
+        pinReadingIndex: 3,
+        hardPin: true,
+      },
+    ],
+  },
+  // Katakana チャン after a name or noun is the suffix ちゃん, not 瀝青 "pitch".
+  {
+    id: 'chan-katakana',
+    phase: 'Cleanup',
+    match: [{ text: 'チャン', pos: ['Noun', 'CommonNoun'] }],
+    replace: [
+      { text: '', dictForm: 'ちゃん', normalizedForm: 'ちゃん', pos: 'Suffix', pin: 1007660, pinReadingIndex: 0 },
+    ],
+    prev: { pos: ['Noun', 'CommonNoun', 'Name', 'Pronoun', 'Adverb'] },
+  },
+  // Katakana タン after a kinship word is the suffix たん (おばあタン), not tongue; 牛タン keeps tongue.
+  {
+    id: 'tan-katakana-kinship',
+    phase: 'Cleanup',
+    match: [{ text: 'タン', pos: ['Noun', 'CommonNoun'] }],
+    replace: [{ text: '', dictForm: 'たん', normalizedForm: 'たん', pos: 'Suffix', pin: 2201000, pinReadingIndex: 0 }],
+    window: {
+      from: -2,
+      to: -1,
+      textAnyOf: [
+        'ばあ',
+        'おばあ',
+        'じい',
+        'おじい',
+        'ねえ',
+        'おねえ',
+        'にい',
+        'おにい',
+        'かあ',
+        'おかあ',
+        'とう',
+        'おとう',
+      ],
+    },
+  },
+  // モロ before a content word is the adverb もろ ("totally"), not the Moro people.
+  {
+    id: 'moro-adverb',
+    phase: 'Cleanup',
+    match: [{ text: 'モロ', pos: ['Noun', 'CommonNoun'] }],
+    replace: [{ text: '', dictForm: 'もろ', normalizedForm: 'もろ', pos: 'Adverb', pin: 2701220, pinReadingIndex: 1 }],
+    next: { pos: ['Noun', 'CommonNoun', 'Verb', 'NaAdjective', 'IAdjective'] },
+  },
+  // 次第|に not after a noun or verb stem (準備次第, 決まり次第) is the adverb 次第に "gradually".
+  {
+    id: 'shidaini-adverb',
+    phase: 'Early',
+    match: [
+      { text: '次第', pos: ['Noun', 'CommonNoun'] },
+      { text: 'に', pos: ['Particle'] },
+    ],
+    replace: [
+      {
+        text: '次第に',
+        dictForm: '次第に',
+        normalizedForm: '次第に',
+        pos: 'Adverb',
+        reading: 'シダイニ',
+        pin: 1316690,
+        pinReadingIndex: 0,
+      },
+    ],
+    prev: { pos: ['Noun', 'CommonNoun', 'Name', 'Pronoun', 'Suffix', 'Verb'], negate: true },
   },
   // カンパン = the food 乾パン, not 肝斑/甲板/乾板.
   {
@@ -739,7 +1324,7 @@ export const REWRITE_RULES: readonly RewriteRule[] = [
     ],
     prev: { textAnyOf: ['この', 'その', 'あの', 'こんな', 'そんな', 'あんな'] },
   },
-  // こった after an adjective is the ことだ contraction (いいこった), not 凝る.
+  // こった after an adjective (いいこった, ご苦労なこった) is the ことだ contraction, not 凝る.
   {
     id: 'kotta-kotoda',
     phase: 'Cleanup',
@@ -755,7 +1340,69 @@ export const REWRITE_RULES: readonly RewriteRule[] = [
         pinReadingIndex: 0,
       },
     ],
-    prev: { pos: ['IAdjective'] },
+    prev: { textEndsWithAnyOf: ['な', 'い'] },
+  },
+  {
+    id: 'kotta-kotoda-verb',
+    phase: 'Cleanup',
+    match: [{ text: 'こった', pos: ['Verb'], dictFormAnyOf: ['こる', '凝る'] }],
+    replace: [
+      {
+        text: '',
+        dictForm: 'こった',
+        normalizedForm: 'こった',
+        pos: 'Expression',
+        reading: 'コッタ',
+        pin: 2106260,
+        pinReadingIndex: 0,
+      },
+    ],
+    prev: { textEndsWithAnyOf: ['な', 'い'] },
+    next: { pos: ['Particle', 'Auxiliary'] },
+  },
+  {
+    id: 'kotta-kotoda-verb-final',
+    phase: 'Cleanup',
+    match: [{ text: 'こった', pos: ['Verb'], dictFormAnyOf: ['こる', '凝る'] }],
+    replace: [
+      {
+        text: '',
+        dictForm: 'こった',
+        normalizedForm: 'こった',
+        pos: 'Expression',
+        reading: 'コッタ',
+        pin: 2106260,
+        pinReadingIndex: 0,
+      },
+    ],
+    prev: { textEndsWithAnyOf: ['な', 'い'] },
+    next: { clauseBoundary: true },
+  },
+  // やってられない is its own expression ("can't stand it"); scoring otherwise picks やる's potential chain.
+  {
+    id: 'yatterarenai',
+    phase: 'Cleanup',
+    match: [{ textAnyOf: ['やってられない', 'やってらんない', 'やってられん'] }],
+    replace: [
+      { text: '', dictForm: 'やってられない', normalizedForm: 'やってられない', pos: 'Expression', pin: 2831142 },
+    ],
+  },
+  // であります is its own polite expression; scoring otherwise prefers である's polite chain. ものであります keeps its own entry.
+  {
+    id: 'de-arimasu',
+    phase: 'Cleanup',
+    match: [{ text: 'であります' }],
+    replace: [
+      {
+        text: '',
+        dictForm: 'であります',
+        normalizedForm: 'であります',
+        pos: 'Expression',
+        pin: 2255600,
+        pinReadingIndex: 0,
+      },
+    ],
+    prev: { textAnyOf: ['もの', 'もん'], negate: true },
   },
   // Compound matching probes unattested ざまあみやがる, so shredded ざま|あみ|やがれ never reaches its entry.
   {
@@ -1056,6 +1703,74 @@ export const REWRITE_RULES: readonly RewriteRule[] = [
     replace: [{ text: '', dictForm: 'っつう', pos: 'Particle', pin: 2798260 }],
   },
   // --- Re-cuts (splits/merges): text is conserved, asserted at load. ---
+  // Sudachi reads おくれってば as おく + an OOV れってば; it is お呉れ + ってば.
+  {
+    id: 'okure-tteba',
+    phase: 'Early',
+    match: [{ text: 'おく', dictFormAnyOf: ['おく', '置く'] }, { text: 'れってば' }],
+    replace: [
+      {
+        text: 'おくれ',
+        dictForm: 'おくれ',
+        normalizedForm: 'お呉れ',
+        pos: 'Expression',
+        posSection: 'None',
+        pin: 2868242,
+        pinReadingIndex: 1,
+        hardPin: true,
+        reading: 'オクレ',
+      },
+      { text: 'ってば', dictForm: 'ってば', normalizedForm: 'ってば', pos: 'Particle', reading: 'ッテバ' },
+    ],
+    prev: { textAnyOf: ['て', 'で'] },
+  },
+  {
+    id: 'okure-ttara',
+    phase: 'Early',
+    match: [{ text: 'おく', dictFormAnyOf: ['おく', '置く'] }, { text: 'れったら' }],
+    replace: [
+      {
+        text: 'おくれ',
+        dictForm: 'おくれ',
+        normalizedForm: 'お呉れ',
+        pos: 'Expression',
+        posSection: 'None',
+        pin: 2868242,
+        pinReadingIndex: 1,
+        hardPin: true,
+        reading: 'オクレ',
+      },
+      { text: 'ったら', dictForm: 'ったら', normalizedForm: 'ったら', pos: 'Particle', reading: 'ッタラ' },
+    ],
+    prev: { textAnyOf: ['て', 'で'] },
+  },
+  // 何やら|か|し is 何 + やらかし (何やらかした); かしこまる, かしら and かしましい arrive as single tokens.
+  {
+    id: 'nani-yarakasu',
+    phase: 'Early',
+    match: [
+      { text: '何やら' },
+      { text: 'か', pos: ['Particle'] },
+      { text: 'し', pos: ['Verb'], dictFormAnyOf: ['する', '為る'] },
+    ],
+    replace: [
+      { text: '何', dictForm: '何', normalizedForm: '何', pos: 'Pronoun', reading: 'ナニ' },
+      { text: 'やらかし', dictForm: 'やらかす', normalizedForm: '遣らかす', pos: 'Verb', reading: 'ヤラカシ' },
+    ],
+  },
+  {
+    id: 'nani-yarakasu-kana',
+    phase: 'Early',
+    match: [
+      { text: 'なにやら' },
+      { text: 'か', pos: ['Particle'] },
+      { text: 'し', pos: ['Verb'], dictFormAnyOf: ['する', '為る'] },
+    ],
+    replace: [
+      { text: 'なに', dictForm: 'なに', normalizedForm: '何', pos: 'Pronoun', reading: 'ナニ' },
+      { text: 'やらかし', dictForm: 'やらかす', normalizedForm: '遣らかす', pos: 'Verb', reading: 'ヤラカシ' },
+    ],
+  },
   // 行く steals ない's い before the という contraction or quotative (できな|いっ|つー, たまんな|いっ|て).
   {
     id: 'nai-ttsuu',
@@ -1801,6 +2516,131 @@ export const REWRITE_RULES: readonly RewriteRule[] = [
     match: [{ text: 'っけ', pos: ['Suffix'], requireUnpinned: false }],
     replace: [{ text: '', pos: 'Particle', posSection: 'SentenceEndingParticle' }],
   },
+  // Sudachi tags the quotative と after a closing quote as an interjection, which resolves to 戸.
+  {
+    id: 'to-tagged-interjection',
+    phase: 'Early',
+    match: [{ text: 'と', pos: ['Interjection'], requireUnpinned: false }],
+    replace: [{ text: '', pos: 'Particle', posSection: 'CaseMarkingParticle' }],
+  },
+  // Right after a closing quote Sudachi fuses the quotative と into と言って "however" and といった "such as".
+  {
+    id: 'to-itte-after-quote',
+    phase: 'Early',
+    match: [{ text: 'と言って' }],
+    replace: [
+      {
+        text: 'と',
+        dictForm: 'と',
+        normalizedForm: 'と',
+        pos: 'Particle',
+        posSection: 'CaseMarkingParticle',
+        reading: 'ト',
+      },
+      {
+        text: '言って',
+        dictForm: '言う',
+        normalizedForm: '言う',
+        pos: 'Verb',
+        reading: 'イッテ',
+        pin: 1587040,
+        recoverConjugations: true,
+      },
+    ],
+    prev: { textAnyOf: ['」', '』'] },
+  },
+  {
+    id: 'to-itte-kana-after-quote',
+    phase: 'Early',
+    match: [{ text: 'といって' }],
+    replace: [
+      {
+        text: 'と',
+        dictForm: 'と',
+        normalizedForm: 'と',
+        pos: 'Particle',
+        posSection: 'CaseMarkingParticle',
+        reading: 'ト',
+      },
+      {
+        text: 'いって',
+        dictForm: 'いう',
+        normalizedForm: '言う',
+        pos: 'Verb',
+        reading: 'イッテ',
+        pin: 1587040,
+        recoverConjugations: true,
+      },
+    ],
+    prev: { textAnyOf: ['」', '』'] },
+  },
+  {
+    id: 'to-itta-kana-after-quote',
+    phase: 'Early',
+    match: [{ text: 'といった' }],
+    replace: [
+      {
+        text: 'と',
+        dictForm: 'と',
+        normalizedForm: 'と',
+        pos: 'Particle',
+        posSection: 'CaseMarkingParticle',
+        reading: 'ト',
+      },
+      {
+        text: 'いった',
+        dictForm: 'いう',
+        normalizedForm: '言う',
+        pos: 'Verb',
+        reading: 'イッタ',
+        pin: 1587040,
+        recoverConjugations: true,
+      },
+    ],
+    prev: { textAnyOf: ['」', '』'] },
+    next: { clauseBoundary: true },
+  },
+  // Sudachi splits に於いて before a pause or は/も; an を object nearby keeps the literal 置いて (横において立ち上がった).
+  {
+    id: 'nioite-boundary',
+    phase: 'Early',
+    match: [{ text: 'に', pos: ['Particle'] }, { text: 'おい', dictFormAnyOf: ['おく', '置く'] }, { text: 'て' }],
+    replace: [
+      {
+        text: 'において',
+        dictForm: 'において',
+        normalizedForm: 'において',
+        pos: 'Particle',
+        posSection: 'CaseMarkingParticle',
+        reading: 'ニオイテ',
+        pin: 1009550,
+        pinReadingIndex: 2,
+      },
+    ],
+    prev: { pos: ['Noun', 'CommonNoun', 'Pronoun', 'Name', 'Suffix'] },
+    next: { clauseBoundary: true },
+    window: { from: -4, to: -1, textAnyOf: ['を'], negate: true },
+  },
+  {
+    id: 'nioite-topic',
+    phase: 'Early',
+    match: [{ text: 'に', pos: ['Particle'] }, { text: 'おい', dictFormAnyOf: ['おく', '置く'] }, { text: 'て' }],
+    replace: [
+      {
+        text: 'において',
+        dictForm: 'において',
+        normalizedForm: 'において',
+        pos: 'Particle',
+        posSection: 'CaseMarkingParticle',
+        reading: 'ニオイテ',
+        pin: 1009550,
+        pinReadingIndex: 2,
+      },
+    ],
+    prev: { pos: ['Noun', 'CommonNoun', 'Pronoun', 'Name', 'Suffix'] },
+    next: { textAnyOf: ['は', 'も', 'さえ', 'の'] },
+    window: { from: -4, to: -1, textAnyOf: ['を'], negate: true },
+  },
   // 私戦 + いたく(痛く) is 私 + 戦いたく, not しせん "private war".
   {
     id: 'shisen-itaku',
@@ -2248,6 +3088,94 @@ export const REWRITE_RULES: readonly RewriteRule[] = [
     prev: { textAnyOf: ['の'], negate: true },
     next: { textAnyOf: ['と'], negate: true },
   },
+  // Sudachi reads every 何時 as いつ; asking the hour takes a copula, に, で or 頃 (何時ですか, 何時に).
+  {
+    id: 'nanji-hour',
+    phase: 'Reading',
+    match: [{ text: '何時', readingPrefix: 'イツ' }],
+    replace: [{ text: '', reading: 'ナンジ', pin: 1188770 }],
+    next: { textAnyOf: ['だ', 'です', 'ですか', 'でしょう', 'で', 'ごろ', '頃', 'なの', '？', '?'] },
+  },
+  // 何時になったら / 何時になっても stay いつ.
+  {
+    id: 'nanji-hour-ni',
+    phase: 'Reading',
+    match: [{ text: '何時', readingPrefix: 'イツ' }],
+    replace: [{ text: '', reading: 'ナンジ', pin: 1188770 }],
+    next: { textAnyOf: ['に'] },
+    window: {
+      from: 2,
+      to: 2,
+      textAnyOf: [
+        'なる',
+        'なっ',
+        'なって',
+        'なっても',
+        'なった',
+        'なったら',
+        'なるか',
+        'なれば',
+        'なり',
+        'なります',
+        'なりました',
+        'なるの',
+        'なるん',
+        'なろう',
+      ],
+      negate: true,
+    },
+  },
+  // 何 before a counter is the prefix なん "how many" (何軒, 何冊), a separate entry from the pronoun; 何一つ and 何時 are not.
+  {
+    id: 'nan-counter',
+    phase: 'Reading',
+    match: [{ text: '何' }],
+    replace: [{ text: '', reading: 'ナン', pin: 2846738 }],
+    next: { pos: ['Counter'] },
+    window: { from: 1, to: 1, textAnyOf: ['一つ', '１つ', '1つ', 'ひとつ', '一', '時', 'ッ', 'っ'], negate: true },
+  },
+  {
+    id: 'nan-counter-noun',
+    phase: 'Reading',
+    match: [{ text: '何' }],
+    replace: [{ text: '', reading: 'ナン', pin: 2846738 }],
+    next: { sectionAnyOf: ['Counter', 'PossibleCounterWord'] },
+    window: { from: 1, to: 1, textAnyOf: ['一つ', '１つ', '1つ', 'ひとつ', '一', '時', 'ッ', 'っ'], negate: true },
+  },
+  // Heuristic, about 80% right on fiction: 君 after an adverbial noun is usually きみ (来年君は), but a surname that doubles as one is not (古代君).
+  {
+    id: 'kimi-after-adverbial-noun',
+    phase: 'Reading',
+    match: [{ text: '君', readingPrefix: 'クン' }],
+    replace: [{ text: '', reading: 'キミ', pin: 1247250 }],
+    prev: { sectionAnyOf: ['PotentialAdverb'] },
+  },
+  // Heuristic, about 80% right on fiction: の側 before a place particle is usually そば (私の側に), but "on X's side" is がわ (敵の側につく).
+  {
+    id: 'soba-beside',
+    phase: 'Reading',
+    match: [{ text: '側', readingPrefix: 'ガワ' }],
+    replace: [{ text: '', reading: 'ソバ', pin: 1403830 }],
+    prev: { textAnyOf: ['の'] },
+    next: { textAnyOf: ['に', 'で', 'を', 'へ', 'まで'] },
+  },
+  // 金 as the object or subject is money (金を払う); Sudachi's きん is right for the metal (金の指輪, 金と銀).
+  {
+    id: 'kane-money',
+    phase: 'Reading',
+    match: [{ text: '金', readingPrefix: 'キン' }],
+    replace: [{ text: '', reading: 'カネ', pin: 1242590 }],
+    next: { textAnyOf: ['を', 'が', 'も'] },
+  },
+  // Kanji 行けない is the potential of 行く; the expression "must not" is written in kana.
+  {
+    id: 'ikenai-kanji',
+    phase: 'Cleanup',
+    match: [{ textStartsWith: '行けな' }],
+    replace: [
+      { text: '', dictForm: '行く', normalizedForm: '行く', pos: 'Verb', pin: 1578850, recoverConjugations: true },
+    ],
+  },
   // Sudachi's あの tags are unreliable: 感動詞 is treated as prenominal, 連体詞 as the filler when no nominal follows.
   {
     id: 'ano-prenoun',
@@ -2260,6 +3188,20 @@ export const REWRITE_RULES: readonly RewriteRule[] = [
     phase: 'Reading',
     match: [{ text: 'あの', pos: ['PrenounAdjectival'] }],
     replace: [{ text: '', pos: 'Interjection' }],
-    next: { pos: ['Noun', 'Pronoun', 'NaAdjective', 'Counter', 'Numeral'], negate: true },
+    next: {
+      pos: [
+        'Noun',
+        'CommonNoun',
+        'Name',
+        'Pronoun',
+        'NaAdjective',
+        'IAdjective',
+        'PrenounAdjectival',
+        'Prefix',
+        'Counter',
+        'Numeral',
+      ],
+      negate: true,
+    },
   },
 ];

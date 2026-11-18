@@ -4,6 +4,15 @@ import type { CombineContext, Group, WordClass } from '../types';
 
 const startsWithShire = (text: string) => ['しれ', 'しんな', 'しんね'].some((head) => text.startsWith(head));
 
+/** `IsNominaliserBeforeCopula`: の|で before は, も or ある is the nominaliser plus the copula, not ので "because";
+ * なのである is its own entry, hence `beforeAru`. */
+function isNominaliserBeforeCopula(groups: readonly Group[], deIndex: number, beforeAru = true): boolean {
+  if (groups[deIndex]?.s !== 'で') return false;
+  const next = groups[deIndex + 1];
+  if (!next) return false;
+  return next.s === 'は' || next.s === 'も' || (beforeAru && (next.d === 'ある' || next.d === '有る'));
+}
+
 /**
  * Compound particles and the かもしれない / ではない(か) / じゃないか clusters (に|は → には, か|も|しれ|ない).
  * `CombineParticles`. Unlike upstream, which keeps the first
@@ -149,7 +158,10 @@ export function combineFinal(groups: Group[], _ctx: CombineContext): Group[] {
       const before = groups[i - 1];
       const tokoroDeBlocked =
         current.s === 'ところ' && before !== undefined && !(before.s.endsWith('た') || before.s.endsWith('だ'));
-      const match = pairs.find((pair) => !(pair.second === 'で' && tokoroDeBlocked) && next.s === pair.second);
+      const nominaliser = current.s === 'の' && isNominaliserBeforeCopula(groups, i + 1);
+      const match = pairs.find(
+        (pair) => !(pair.second === 'で' && tokoroDeBlocked) && !nominaliser && next.s === pair.second,
+      );
       if (match) {
         const text = current.s + next.s;
         out.push(append(current, next, { d: text, n: text, cls: match.cls, flags: { via } }));
@@ -165,7 +177,8 @@ export function combineFinal(groups: Group[], _ctx: CombineContext): Group[] {
       const match = triples.find(
         (triple) =>
           next.s === triple.second &&
-          (third.s === triple.third || (triple.third.endsWith('ー') && third.s === triple.third.slice(0, -1))),
+          (third.s === triple.third || (triple.third.endsWith('ー') && third.s === triple.third.slice(0, -1))) &&
+          !(next.s === 'の' && isNominaliserBeforeCopula(groups, i + 2, false)),
       );
       if (match) {
         const d = current.s + next.s + match.third;

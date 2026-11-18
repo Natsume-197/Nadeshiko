@@ -18,6 +18,7 @@ import { combineFinal, combineParticles, combineQuotativeToIu } from './stages/p
 import { combinePrefixes } from './stages/prefixes';
 import { combineCompounds, combineExpressions, combineLexicalAdverbs, combineNounCompounds } from './stages/sentence';
 import { linkReadings, readAmounts } from './stages/readings';
+import { repairEmphaticKanaSpelling, repairSplitMimeticAdverb, repairTeOkuRequest } from './stages/repairEmphatic';
 import { repairNdaPastTense } from './stages/repairNda';
 import {
   collapseReduplicatedMimetic,
@@ -80,7 +81,8 @@ const REWRITE = 'rewrite rules';
  * RepairKanjiVerbShred), which need lookups we do not have (partial kana spellings, frequency ranks), and
  * RepairClassicalKiAdjective (classical Japanese). RepairNTokenisation is only its ん+だ/で past-tense part. The
  * disambiguation stages are reduced to the rules that settle a reading. ReadAmounts and LinkReadings then settle the
- * readings upstream takes from JMdict at lookup.
+ * readings upstream takes from JMdict at lookup. RepairIntensifierKaeru stays although upstream dropped it: upstream
+ * now gets のさばり|かえって from its resegmentation pass, which we do not have.
  */
 export const STAGES: readonly Stage[] = [
   { name: 'SplitCompoundAuxiliaryVerbs', origin: SPLIT, run: splitCompoundAuxiliaryVerbs },
@@ -95,17 +97,20 @@ export const STAGES: readonly Stage[] = [
   { name: 'RepairNTokenisation', origin: `${REPAIR} (ん+だ/で only)`, run: repairNdaPastTense },
   { name: 'RepairVowelElongation', origin: REPAIR, run: repairVowelElongation },
   { name: 'ApplyTokenRewriteRulesEarly', origin: REWRITE, run: applyTokenRewriteRulesEarly },
+  { name: 'RepairTeOkuRequest', origin: REPAIR, run: repairTeOkuRequest },
   { name: 'RepairColloquialNegativeNee', origin: REPAIR, run: repairColloquialNegativeNee },
   { name: 'RepairColloquialRanNai', origin: REPAIR, run: repairColloquialRanNai },
-  { name: 'RepairIntensifierKaeru', origin: REPAIR, run: repairIntensifierKaeru },
-  { name: 'RepairNounReadAsTeForm', origin: REPAIR, run: repairNounReadAsTeForm },
+  { name: 'RepairIntensifierKaeru', origin: `${REPAIR} (kept: upstream dropped it)`, run: repairIntensifierKaeru },
   { name: 'RepairQuotativeTte', origin: REPAIR, run: repairQuotativeTte },
+  { name: 'RepairNounReadAsTeForm', origin: REPAIR, run: repairNounReadAsTeForm },
   { name: 'RepairStolenUBeforeSsu', origin: REPAIR, run: repairStolenUBeforeSsu },
   { name: 'RecombineHiraganaTokens', origin: REPAIR, run: recombineHiraganaTokens },
   { name: 'ApplyTokenRewriteRulesLate', origin: REWRITE, run: applyTokenRewriteRulesLate },
   { name: 'RepairSakkiMoraTheft', origin: REPAIR, run: repairSakkiMoraTheft },
   { name: 'CollapseReduplicatedMimetic', origin: REPAIR, run: collapseReduplicatedMimetic },
   { name: 'RepairClippedAdjective', origin: REPAIR, run: repairClippedAdjective },
+  { name: 'RepairSplitMimeticAdverb', origin: REPAIR, run: repairSplitMimeticAdverb },
+  { name: 'RepairEmphaticKanaSpelling', origin: REPAIR, run: repairEmphaticKanaSpelling },
   { name: 'CombinePrefixes', origin: COMBINE, requires: 'Prefix', run: combinePrefixes },
   { name: 'CombineInflections', origin: COMBINE, requires: 'InflectableBase', run: combineInflections },
   { name: 'CombineCompletionAuxVerb', origin: COMBINE, requires: 'DictKiru', run: combineCompletionAuxVerb },
