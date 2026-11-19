@@ -7,7 +7,8 @@
 #
 # The values come from the R2 bucket and its API token: the S3 endpoint
 # (https://<account-id>.r2.cloudflarestorage.com), the bucket name, the Access Key ID and the Secret Access Key.
-# Existing parameters are overwritten, so this also rotates the token.
+# Existing parameters are overwritten, so this also rotates the token. Writes go through the nadeshiko-admin profile
+# (AWS_PROFILE to override): nadeshiko-staging and nadeshiko-prod are read-only (docs/operations/secrets.md).
 set -euo pipefail
 
 if [[ $# -eq 0 ]]; then
@@ -38,14 +39,14 @@ if [[ -z "$bucket" || -z "$access_key_id" || -z "$secret_access_key" ]]; then
 fi
 
 region="${AWS_REGION:-eu-north-1}"
+profile="${AWS_PROFILE:-nadeshiko-admin}"
+
+if ! aws --profile "$profile" --region "$region" sts get-caller-identity >/dev/null 2>&1; then
+  echo "AWS SSO credentials unavailable for $profile; running aws sso login --profile $profile" >&2
+  aws sso login --profile "$profile" >&2
+fi
 
 for destination in "$@"; do
-  profile="nadeshiko-${destination}"
-  if ! aws --profile "$profile" --region "$region" sts get-caller-identity >/dev/null 2>&1; then
-    echo "AWS SSO credentials unavailable for $profile; running aws sso login --profile $profile" >&2
-    aws sso login --profile "$profile" >&2
-  fi
-
   put() {
     # The value goes through a private temp file (`file://`), not the command line, so `ps` never shows it.
     local value_file
