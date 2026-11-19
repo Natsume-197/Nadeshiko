@@ -175,6 +175,10 @@ paths:
     $ref: "./paths/user/v1_user_connections_patreon.yaml"
   "/v1/user/connections/patreon/callback":
     $ref: "./paths/user/v1_user_connections_patreon_callback.yaml"
+  "/v1/user/dictionaries":
+    $ref: "./paths/user/v1_user_dictionaries.yaml"
+  "/v1/user/dictionaries/{id}":
+    $ref: "./paths/user/v1_user_dictionaries_id.yaml"
   "/v1/user/excluded-media":
     $ref: "./paths/user/v1_user_excluded_media.yaml"
   "/v1/user/excluded-media/{mediaPublicId}":

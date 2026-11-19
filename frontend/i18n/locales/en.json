@@ -495,7 +495,8 @@
       "users": "Users",
       "reports": "Reports",
       "agentActivity": "Agent Activity",
-      "announcement": "Announcement"
+      "announcement": "Announcement",
+      "dictionaries": "Dictionaries"
     },
     "dashboard": {
       "roles": {
@@ -1043,6 +1044,47 @@
       "allDescription": "Sign-in links and account emails are always sent, whatever you choose here.",
       "turnedOn": "{name}: on",
       "turnedOff": "{name}: off"
+    },
+    "dictionaries": {
+      "title": "Custom Dictionaries",
+      "description": "Upload your own Yomitan (.zip) dictionaries to your account. They sync across devices and appear inside word cards in the order you choose.",
+      "quotaUsed": "{used} / {max} dictionaries",
+      "maxZipSize": "Up to {maxMb} MB per .zip",
+      "patronUpsell": "Patrons can upload up to 6 dictionaries (95 MB each).",
+      "shirabeProviderNotice": "Your word cards are currently using Shirabe. Switch to Nadeshiko to use your uploaded dictionaries.",
+      "switchToNadeshiko": "Use Nadeshiko",
+      "dropPrompt": "Click to choose a Yomitan .zip or drop it here",
+      "uploading": "Uploading… {progress}%",
+      "supportedFormats": "Supports Yomitan v3 term, frequency, and pitch accent dictionaries (without images).",
+      "invalidZipType": "Please select a Yomitan .zip archive.",
+      "fileTooLarge": "This file exceeds the {maxMb} MB limit for your account.",
+      "quotaReached": "You have reached the limit of {max} custom dictionaries.",
+      "uploadedReadyToast": "{title} is ready to use.",
+      "uploadedProcessingToast": "{title} uploaded — indexing in the background…",
+      "uploadError": "Could not upload the dictionary.",
+      "loadError": "Could not load your custom dictionaries.",
+      "saveError": "Could not save dictionary order.",
+      "deleteError": "Could not delete the dictionary.",
+      "deletedToast": "Removed {title}.",
+      "stackTitle": "Dictionary order",
+      "stackHint": "Top dictionary appears first on word cards",
+      "loading": "Loading dictionaries…",
+      "builtinTitle": "Nadeshiko JMdict",
+      "builtinBadge": "Built-in",
+      "builtinDescription": "Built-in Japanese-English dictionary with corpus frequency and UniDic pitch fallback.",
+      "statusProcessing": "Indexing…",
+      "statusFailed": "Failed",
+      "bankTerms": "Terms",
+      "bankFrequency": "Frequency",
+      "bankPitch": "Pitch",
+      "termCount": "{count} terms",
+      "frequencyCount": "{count} frequencies",
+      "pitchCount": "{count} pitches",
+      "moveUp": "Move dictionary up",
+      "moveDown": "Move dictionary down",
+      "enable": "Enable dictionary",
+      "disable": "Disable dictionary",
+      "delete": "Delete dictionary"
     }
   },
   "blog": {
@@ -1589,7 +1631,10 @@
     "support": "Support Nadeshiko",
     "proposeCta": "Propose a show",
     "filterLabel": "Filter roadmap",
-    "filters": { "content": "Titles", "feature": "Features" },
+    "filters": {
+      "content": "Titles",
+      "feature": "Features"
+    },
     "dateFlexible": "Timing open",
     "featureSoon": "Soon™",
     "featureReleased": "Released",
@@ -1686,7 +1731,10 @@
     "callbackDone": "Patreon connected",
     "callbackDoneBody": "Your membership has been checked. You can now return to the roadmap.",
     "backToRoadmap": "Back to the roadmap",
-    "admin": { "tab": "Roadmap", "title": "Roadmap queue" }
+    "admin": {
+      "tab": "Roadmap",
+      "title": "Roadmap queue"
+    }
   },
   "feedback": {
     "open": "Feedback",

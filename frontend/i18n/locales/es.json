@@ -495,7 +495,8 @@
       "users": "Usuarios",
       "reports": "Reportes",
       "agentActivity": "Ediciones del agente",
-      "announcement": "Avisos"
+      "announcement": "Avisos",
+      "dictionaries": "Diccionarios"
     },
     "dashboard": {
       "roles": {
@@ -1043,6 +1044,47 @@
       "allDescription": "Los correos de acceso y los relacionados con tu cuenta se envían independientemente de estas preferencias.",
       "turnedOn": "Recibirás: {name}",
       "turnedOff": "No recibirás: {name}"
+    },
+    "dictionaries": {
+      "title": "Diccionarios personalizados",
+      "description": "Sube tus propios diccionarios de Yomitan (.zip) a tu cuenta. Se sincronizan en todos tus dispositivos y aparecen en la tarjeta de palabra en el orden que elijas.",
+      "quotaUsed": "{used} / {max} diccionarios",
+      "maxZipSize": "Hasta {maxMb} MB por .zip",
+      "patronUpsell": "Los mecenas pueden subir hasta 6 diccionarios (95 MB cada uno).",
+      "shirabeProviderNotice": "Tus tarjetas de palabra usan Shirabe actualmente. Cambia a Nadeshiko para usar tus diccionarios subidos.",
+      "switchToNadeshiko": "Usar Nadeshiko",
+      "dropPrompt": "Haz clic para elegir un .zip de Yomitan o arrástralo aquí",
+      "uploading": "Subiendo… {progress}%",
+      "supportedFormats": "Compatible con diccionarios Yomitan v3 de definiciones, frecuencia y pitch accent (sin imágenes).",
+      "invalidZipType": "Selecciona un archivo .zip de Yomitan.",
+      "fileTooLarge": "Este archivo supera el límite de {maxMb} MB para tu cuenta.",
+      "quotaReached": "Has alcanzado el límite de {max} diccionarios personalizados.",
+      "uploadedReadyToast": "{title} está listo para usar.",
+      "uploadedProcessingToast": "{title} subido — indexando en segundo plano…",
+      "uploadError": "No se pudo subir el diccionario.",
+      "loadError": "No se pudieron cargar tus diccionarios.",
+      "saveError": "No se pudo guardar el orden de diccionarios.",
+      "deleteError": "No se pudo eliminar el diccionario.",
+      "deletedToast": "Se eliminó {title}.",
+      "stackTitle": "Orden de diccionarios",
+      "stackHint": "El superior aparece primero en la tarjeta",
+      "loading": "Cargando diccionarios…",
+      "builtinTitle": "Nadeshiko JMdict",
+      "builtinBadge": "Integrado",
+      "builtinDescription": "Diccionario japonés-inglés integrado con frecuencia del corpus y pitch accent UniDic.",
+      "statusProcessing": "Indexando…",
+      "statusFailed": "Error",
+      "bankTerms": "Definiciones",
+      "bankFrequency": "Frecuencia",
+      "bankPitch": "Pitch",
+      "termCount": "{count} términos",
+      "frequencyCount": "{count} frecuencias",
+      "pitchCount": "{count} acentos",
+      "moveUp": "Subir diccionario",
+      "moveDown": "Bajar diccionario",
+      "enable": "Activar diccionario",
+      "disable": "Desactivar diccionario",
+      "delete": "Eliminar diccionario"
     }
   },
   "blog": {
@@ -1589,7 +1631,10 @@
     "support": "Apoyar a Nadeshiko",
     "proposeCta": "Proponer un anime",
     "filterLabel": "Filtrar el roadmap",
-    "filters": { "content": "Títulos", "feature": "Funciones" },
+    "filters": {
+      "content": "Títulos",
+      "feature": "Funciones"
+    },
     "dateFlexible": "Fecha por definir",
     "featureSoon": "Próximamente™",
     "featureReleased": "Publicado",
@@ -1686,7 +1731,10 @@
     "callbackDone": "Patreon conectado",
     "callbackDoneBody": "Hemos comprobado tu membresía. Ya puedes volver al roadmap.",
     "backToRoadmap": "Volver al roadmap",
-    "admin": { "tab": "Roadmap", "title": "Cola del roadmap" }
+    "admin": {
+      "tab": "Roadmap",
+      "title": "Cola del roadmap"
+    }
   },
   "feedback": {
     "open": "Comentarios",

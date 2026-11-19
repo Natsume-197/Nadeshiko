@@ -1,5 +1,29 @@
-import { describe, expect, it } from 'vitest';
-import { __testing, chosenProvider, setReaderProvider } from '~/utils/wordLookup';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { __testing, chosenProvider, fetchWord, peekWord, setReaderProvider } from '~/utils/wordLookup';
+
+describe('fetchWord with uploaded dictionaries still on their way', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('shows a pending answer but does not keep it for the next hover', async () => {
+    const ref = { lemma: '保留', surface: '保留', reading: 'ホリュウ', pos: 'noun' };
+    const candidate = { id: 'jmdict:1', headword: '保留', reading: 'ほりゅう', entries: [] };
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({ candidates: [candidate], pending: true })
+      .mockResolvedValueOnce({ candidates: [candidate] });
+    vi.stubGlobal('$fetch', fetchMock);
+
+    expect((await fetchWord(ref, 'en')).candidates).toHaveLength(1);
+    expect(peekWord(ref, 'en')).toBeUndefined();
+
+    await fetchWord(ref, 'en');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    // The complete answer is kept.
+    expect(peekWord(ref, 'en')?.candidates).toHaveLength(1);
+  });
+});
 
 const { cacheKey } = __testing;
 

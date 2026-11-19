@@ -1021,7 +1021,7 @@ export type DictionaryCandidate = {
      * The JMdict/JMnedict entry sequence number.
      */
     sourceId: string;
-    dictionary: 'jmdict' | 'jmnedict';
+    dictionary: string;
     /**
      * Unofficial JLPT level estimate (N5-N1).
      */
@@ -1047,6 +1047,15 @@ export type DictionaryCandidate = {
         perMillion: number;
     }>;
     /**
+     * Frequencies from the authenticated reader's enabled custom Yomitan frequency dictionaries.
+     */
+    customFrequencies?: Array<{
+        dictionary: string;
+        dictionaryName: string;
+        value: number;
+        displayValue: string;
+    }>;
+    /**
      * Present and true when nothing is filed under the text looked up and this word is its dictionary form
      * (食べた → 食べる).
      *
@@ -1058,13 +1067,20 @@ export type DictionaryCandidate = {
      */
     inflection?: Array<string>;
     /**
-     * UniDic accent, at most two patterns. No audio yet.
+     * Accent patterns from the user's custom pitch dictionaries or UniDic fallback.
      */
     pitch?: Array<{
         /**
          * 0 is flat (heiban); n is the mora after which the pitch drops.
          */
         downstep: number;
+        /**
+         * Custom pitch dictionary title when sourced from a user upload.
+         */
+        source?: string;
+        nasal?: Array<number>;
+        devoice?: Array<number>;
+        tags?: Array<string>;
     }>;
     /**
      * The words a compound or expression is made of (捜査本部: 捜査, 本部), content words only, each one
@@ -1092,8 +1108,12 @@ export type DictionaryCandidate = {
         senses: Array<{
             position: number;
             definitions: Array<{
-                lang: 'en' | 'es';
+                lang: 'en' | 'es' | 'ja';
                 text: string;
+                /**
+                 * Sanitized Yomitan structured-content AST for custom dictionaries.
+                 */
+                structuredContent?: unknown;
             }>;
             tags: Array<{
                 category: 'partOfSpeech' | 'misc' | 'field' | 'dialect';
@@ -2146,6 +2166,52 @@ export type PatreonConnection = {
     entitledAmountCents: number;
     membershipCheckedAt: string;
     linkedAt: string;
+};
+
+/**
+ * One custom Yomitan dictionary attached to the user's account.
+ */
+export type UserDictionary = {
+    id: number;
+    stackId: string;
+    title: string;
+    revision: string;
+    author: string;
+    description: string;
+    url: string;
+    frequencyMode: string;
+    hasTerms: boolean;
+    hasFrequency: boolean;
+    hasPitch: boolean;
+    termCount: number;
+    frequencyCount: number;
+    pitchCount: number;
+    zipBytes: number;
+    sqliteBytes: number;
+    status: 'processing' | 'ready' | 'failed';
+    errorMessage: string;
+    enabled: boolean;
+    sortOrder: number;
+    createdAt: string;
+};
+
+/**
+ * The signed-in user's custom Yomitan dictionary stack, built-in JMdict placement, and account quota.
+ */
+export type UserDictionaryListResponse = {
+    dictionaries: Array<UserDictionary>;
+    builtin: {
+        id: string;
+        enabled: boolean;
+        position: number;
+    };
+    quota: {
+        used: number;
+        max: number;
+        maxZipBytes: number;
+        isPatron: boolean;
+    };
+    stackFingerprint: string;
 };
 
 export type ReportTargetMedia = {
@@ -3602,6 +3668,10 @@ export type IdentifyDictionaryWordResponses = {
          * Best first; empty when no entry matches.
          */
         candidates: Array<DictionaryCandidate>;
+        /**
+         * Fingerprint of the reader's custom dictionary stack when custom dictionaries were applied.
+         */
+        stackFingerprint?: string;
     };
 };
 
@@ -5433,6 +5503,141 @@ export type CompletePatreonLinkResponses = {
 };
 
 export type CompletePatreonLinkResponse = CompletePatreonLinkResponses[keyof CompletePatreonLinkResponses];
+
+export type ListUserDictionariesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/user/dictionaries';
+};
+
+export type ListUserDictionariesErrors = {
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Forbidden
+     */
+    403: Error403;
+    /**
+     * Too Many Requests. The response body indicates whether the request was rejected due to per-minute rate limiting or monthly quota exhaustion.
+     */
+    429: Error429;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type ListUserDictionariesError = ListUserDictionariesErrors[keyof ListUserDictionariesErrors];
+
+export type ListUserDictionariesResponses = {
+    /**
+     * OK
+     */
+    200: UserDictionaryListResponse;
+};
+
+export type ListUserDictionariesResponse = ListUserDictionariesResponses[keyof ListUserDictionariesResponses];
+
+export type UpdateUserDictionariesData = {
+    body: {
+        items: Array<{
+            id: string;
+            enabled: boolean;
+        }>;
+    };
+    path?: never;
+    query?: never;
+    url: '/v1/user/dictionaries';
+};
+
+export type UpdateUserDictionariesErrors = {
+    /**
+     * Bad Request
+     */
+    400: Error400;
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Forbidden
+     */
+    403: Error403;
+    /**
+     * Too Many Requests. The response body indicates whether the request was rejected due to per-minute rate limiting or monthly quota exhaustion.
+     */
+    429: Error429;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type UpdateUserDictionariesError = UpdateUserDictionariesErrors[keyof UpdateUserDictionariesErrors];
+
+export type UpdateUserDictionariesResponses = {
+    /**
+     * OK
+     */
+    200: UserDictionaryListResponse;
+};
+
+export type UpdateUserDictionariesResponse = UpdateUserDictionariesResponses[keyof UpdateUserDictionariesResponses];
+
+export type DeleteUserDictionaryData = {
+    body?: never;
+    path: {
+        /**
+         * Numeric ID of the user's attached custom dictionary.
+         */
+        id: number;
+    };
+    query?: never;
+    url: '/v1/user/dictionaries/{id}';
+};
+
+export type DeleteUserDictionaryErrors = {
+    /**
+     * Bad Request
+     */
+    400: Error400;
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Forbidden
+     */
+    403: Error403;
+    /**
+     * Not Found
+     */
+    404: Error404;
+    /**
+     * Too Many Requests. The response body indicates whether the request was rejected due to per-minute rate limiting or monthly quota exhaustion.
+     */
+    429: Error429;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type DeleteUserDictionaryError = DeleteUserDictionaryErrors[keyof DeleteUserDictionaryErrors];
+
+export type DeleteUserDictionaryResponses = {
+    /**
+     * OK
+     */
+    200: {
+        stackFingerprint: string;
+    };
+};
+
+export type DeleteUserDictionaryResponse = DeleteUserDictionaryResponses[keyof DeleteUserDictionaryResponses];
 
 export type ListExcludedMediaData = {
     body?: never;

@@ -112,6 +112,12 @@ env:
     # runbook"). Pointing at an accessory that was never booted is harmless while Shirabe parses.
     SUDACHI_URL: "http://nadeshiko-backend-prod-sudachi:8090"
     SEGMENT_PARSER: shirabe
+    # Custom Yomitan dictionaries (task 48), off until the operator turns them on. To turn on: put USER_DICT_R2_ENDPOINT,
+    # _BUCKET, _ACCESS_KEY_ID and _SECRET_ACCESS_KEY in SSM (/nadeshiko/prod/...), add them to .kamal/secrets.prod and
+    # env.secret above, then set this to "true". With it on and R2 unset the backend refuses to boot.
+    USER_DICTIONARIES_ENABLED: "false"
+    USER_DICTIONARIES_DIR: /app/data/user-dictionaries
+    USER_DICT_R2_PREFIX: user-dicts/prod
 
     R2_BASE_URL: https://cdn.nadeshiko.co
 

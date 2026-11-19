@@ -8,9 +8,10 @@ import { logger } from '~~/server/utils/logger';
 
 // Share one session read between cache decision and handler per request.
 const CONTEXT_KEY = 'shirabeReaderStack';
+const CUSTOM_DICT_CONTEXT_KEY = 'nadeshikoCustomDictStack';
 
 // Nitro cached handlers copy context, not request headers. Stash the cookie during shouldBypassCache
-// so credential/report calls inside the handler can authenticate the reader.
+// so credential/report/lookup calls inside the handler can authenticate the reader.
 const COOKIE_KEY = 'shirabeReaderCookie';
 
 function stashCookie(event: H3Event): string {
@@ -19,13 +20,14 @@ function stashCookie(event: H3Event): string {
   return cookie;
 }
 
-function readerCookie(event: H3Event): string {
+export function readerCookie(event: H3Event): string {
   return (event.context[COOKIE_KEY] as string | undefined) || getRequestHeader(event, 'cookie') || '';
 }
 
 interface SessionResponse {
   user?: {
     shirabe?: { linked?: boolean; stackFingerprint?: string | null } | null;
+    customDictionaries?: { count?: number; stackFingerprint?: string | null } | null;
   } | null;
 }
 
@@ -35,7 +37,33 @@ export interface ReaderStack {
   fingerprint: string | null;
 }
 
+export interface CustomDictionaryStack {
+  hasStack: boolean;
+  fingerprint: string | null;
+}
+
 const UNLINKED: ReaderStack = { linked: false, fingerprint: null };
+const NO_CUSTOM_STACK: CustomDictionaryStack = { hasStack: false, fingerprint: null };
+
+async function fetchReaderSession(event: H3Event): Promise<SessionResponse | null> {
+  stashCookie(event);
+
+  if (!hasSessionCookie(event)) return null;
+
+  const config = useRuntimeConfig();
+  // Use a separate scope from identity-auth: raw get-session and identity bundles have different shapes.
+  return await ssrAuthFetch(
+    event,
+    () =>
+      // Disable session refresh here: a shared-cacheable lookup cannot safely forward renewed session cookies.
+      // Leave renewal to identity-auth on personal HTML.
+      $fetch<SessionResponse>(internalBackendUrl(config, '/v1/auth/get-session?disableRefresh=true'), {
+        headers: buildInternalBackendHeaders(config, { cookie: getRequestHeader(event, 'cookie') || '' }, event),
+        timeout: 2000,
+      }),
+    'shirabe',
+  );
+}
 
 // Resolve stack status server-side, never from client claims: it controls shared-cache eligibility.
 // Backend failures degrade to default dictionaries rather than break word cards.
@@ -52,26 +80,28 @@ export async function readerHasOwnStack(event: H3Event): Promise<boolean> {
   return (await readerStack(event)).linked;
 }
 
-async function resolveStack(event: H3Event): Promise<ReaderStack> {
-  stashCookie(event);
-
-  if (!hasSessionCookie(event)) return UNLINKED;
+export async function customDictionaryStack(event: H3Event): Promise<CustomDictionaryStack> {
+  const cached = event.context[CUSTOM_DICT_CONTEXT_KEY] as CustomDictionaryStack | undefined;
+  if (cached !== undefined) return cached;
 
   try {
-    const config = useRuntimeConfig();
-    // Use a separate scope from identity-auth: raw get-session and identity bundles have different shapes.
-    const session = await ssrAuthFetch(
-      event,
-      () =>
-        // Disable session refresh here: a shared-cacheable lookup cannot safely forward renewed session cookies.
-        // Leave renewal to identity-auth on personal HTML.
-        $fetch<SessionResponse>(internalBackendUrl(config, '/v1/auth/get-session?disableRefresh=true'), {
-          headers: buildInternalBackendHeaders(config, { cookie: getRequestHeader(event, 'cookie') || '' }, event),
-          timeout: 2000,
-        }),
-      'shirabe',
-    );
+    const session = await fetchReaderSession(event);
+    const custom = session?.user?.customDictionaries;
+    const resolved: CustomDictionaryStack = custom?.stackFingerprint
+      ? { hasStack: true, fingerprint: custom.stackFingerprint }
+      : NO_CUSTOM_STACK;
+    event.context[CUSTOM_DICT_CONTEXT_KEY] = resolved;
+    return resolved;
+  } catch (error) {
+    logger.warn({ err: error }, 'Could not resolve custom dictionary stack; answering with built-in JMdict');
+    event.context[CUSTOM_DICT_CONTEXT_KEY] = NO_CUSTOM_STACK;
+    return NO_CUSTOM_STACK;
+  }
+}
 
+async function resolveStack(event: H3Event): Promise<ReaderStack> {
+  try {
+    const session = await fetchReaderSession(event);
     const shirabe = session?.user?.shirabe;
     if (!shirabe?.linked) return UNLINKED;
 

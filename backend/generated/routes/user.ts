@@ -27,6 +27,7 @@ import type {
   t_DeleteUserActivityByDateParamSchema,
   t_DeleteUserActivityByIdParamSchema,
   t_DeleteUserActivityQuerySchema,
+  t_DeleteUserDictionaryParamSchema,
   t_Error400,
   t_Error401,
   t_Error403,
@@ -42,12 +43,14 @@ import type {
   t_ReportShirabeRefusalRequestBody,
   t_ResyncShirabeStackRequestBody,
   t_ShirabeConnection,
+  t_UpdateUserDictionariesRequestBody,
   t_UserActivityRequest,
+  t_UserDictionaryListResponse,
   t_UserExportResponse,
   t_UserMe,
   t_UserPreferences,
 } from '../models.ts';
-import type { AddExcludedMediaRequestBodyOutput, AddFavoriteMediaRequestBodyOutput, CompletePatreonLinkRequestBodyOutput, CompleteShirabeLinkRequestBodyOutput, CreateReportRequestOutput, CreateUserApiKeyRequestBodyOutput, DeleteUserActivityQueryOutput, ReportShirabeRefusalRequestBodyOutput, ResyncShirabeStackRequestBodyOutput, UserActivityRequestOutput, UserPreferencesOutput } from '../outputTypes.ts';
+import type { AddExcludedMediaRequestBodyOutput, AddFavoriteMediaRequestBodyOutput, CompletePatreonLinkRequestBodyOutput, CompleteShirabeLinkRequestBodyOutput, CreateReportRequestOutput, CreateUserApiKeyRequestBodyOutput, DeleteUserActivityQueryOutput, ReportShirabeRefusalRequestBodyOutput, ResyncShirabeStackRequestBodyOutput, UpdateUserDictionariesRequestBodyOutput, UserActivityRequestOutput, UserPreferencesOutput } from '../outputTypes.ts';
 import {
   s_ActivityType,
   s_AddExcludedMediaRequestBody,
@@ -70,7 +73,9 @@ import {
   s_ReportShirabeRefusalRequestBody,
   s_ResyncShirabeStackRequestBody,
   s_ShirabeConnection,
+  s_UpdateUserDictionariesRequestBody,
   s_UserActivityRequest,
+  s_UserDictionaryListResponse,
   s_UserExportResponse,
   s_UserMe,
   s_UserPreferences,
@@ -299,6 +304,59 @@ export type CompletePatreonLinkResponder = {
 export type CompletePatreonLink = (
   params: Params<void, void, CompletePatreonLinkRequestBodyOutput, void>,
   respond: CompletePatreonLinkResponder,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
+
+export type ListUserDictionariesResponder = {
+  with200(): ExpressRuntimeResponse<t_UserDictionaryListResponse>;
+  with401(): ExpressRuntimeResponse<t_Error401>;
+  with403(): ExpressRuntimeResponse<t_Error403>;
+  with429(): ExpressRuntimeResponse<t_Error429>;
+  with500(): ExpressRuntimeResponse<t_Error500>;
+} & ExpressRuntimeResponder;
+
+export type ListUserDictionaries = (
+  params: Params<void, void, void, void>,
+  respond: ListUserDictionariesResponder,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
+
+export type UpdateUserDictionariesResponder = {
+  with200(): ExpressRuntimeResponse<t_UserDictionaryListResponse>;
+  with400(): ExpressRuntimeResponse<t_Error400>;
+  with401(): ExpressRuntimeResponse<t_Error401>;
+  with403(): ExpressRuntimeResponse<t_Error403>;
+  with429(): ExpressRuntimeResponse<t_Error429>;
+  with500(): ExpressRuntimeResponse<t_Error500>;
+} & ExpressRuntimeResponder;
+
+export type UpdateUserDictionaries = (
+  params: Params<void, void, UpdateUserDictionariesRequestBodyOutput, void>,
+  respond: UpdateUserDictionariesResponder,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
+
+export type DeleteUserDictionaryResponder = {
+  with200(): ExpressRuntimeResponse<{
+    stackFingerprint: string | null;
+  }>;
+  with400(): ExpressRuntimeResponse<t_Error400>;
+  with401(): ExpressRuntimeResponse<t_Error401>;
+  with403(): ExpressRuntimeResponse<t_Error403>;
+  with404(): ExpressRuntimeResponse<t_Error404>;
+  with429(): ExpressRuntimeResponse<t_Error429>;
+  with500(): ExpressRuntimeResponse<t_Error500>;
+} & ExpressRuntimeResponder;
+
+export type DeleteUserDictionary = (
+  params: Params<t_DeleteUserDictionaryParamSchema, void, void, void>,
+  respond: DeleteUserDictionaryResponder,
   req: Request,
   res: Response,
   next: NextFunction,
@@ -588,6 +646,9 @@ export type UserImplementation = {
   startPatreonLink: StartPatreonLink;
   unlinkPatreon: UnlinkPatreon;
   completePatreonLink: CompletePatreonLink;
+  listUserDictionaries: ListUserDictionaries;
+  updateUserDictionaries: UpdateUserDictionaries;
+  deleteUserDictionary: DeleteUserDictionary;
   listExcludedMedia: ListExcludedMedia;
   addExcludedMedia: AddExcludedMedia;
   removeExcludedMedia: RemoveExcludedMedia;
@@ -1294,6 +1355,175 @@ export function createUserRouter(
         .completePatreonLink(input, responder, req, res, next)
         .catch(handleImplementationError)
         .then(handleResponse(res, completePatreonLinkResponseBodyValidator));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  const listUserDictionariesResponseBodyValidator = responseValidationFactory(
+    [
+      ['200', s_UserDictionaryListResponse],
+      ['401', s_Error401],
+      ['403', s_Error403],
+      ['429', s_Error429],
+      ['500', s_Error500],
+    ],
+    undefined,
+  );
+
+  // listUserDictionaries
+  router.get(`/v1/user/dictionaries`, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const input = {
+        params: undefined,
+        query: undefined,
+        body: undefined,
+        headers: undefined,
+      };
+
+      const responder = {
+        with200() {
+          return new ExpressRuntimeResponse<t_UserDictionaryListResponse>(200);
+        },
+        with401() {
+          return new ExpressRuntimeResponse<t_Error401>(401);
+        },
+        with403() {
+          return new ExpressRuntimeResponse<t_Error403>(403);
+        },
+        with429() {
+          return new ExpressRuntimeResponse<t_Error429>(429);
+        },
+        with500() {
+          return new ExpressRuntimeResponse<t_Error500>(500);
+        },
+        withStatus(status: StatusCode) {
+          return new ExpressRuntimeResponse(status);
+        },
+      };
+
+      await implementation
+        .listUserDictionaries(input, responder, req, res, next)
+        .catch(handleImplementationError)
+        .then(handleResponse(res, listUserDictionariesResponseBodyValidator));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  const updateUserDictionariesResponseBodyValidator = responseValidationFactory(
+    [
+      ['200', s_UserDictionaryListResponse],
+      ['400', s_Error400],
+      ['401', s_Error401],
+      ['403', s_Error403],
+      ['429', s_Error429],
+      ['500', s_Error500],
+    ],
+    undefined,
+  );
+
+  // updateUserDictionaries
+  router.patch(`/v1/user/dictionaries`, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const input = {
+        params: undefined,
+        query: undefined,
+        body: parseRequestInput(s_UpdateUserDictionariesRequestBody, req.body, RequestInputType.RequestBody),
+        headers: undefined,
+      };
+
+      const responder = {
+        with200() {
+          return new ExpressRuntimeResponse<t_UserDictionaryListResponse>(200);
+        },
+        with400() {
+          return new ExpressRuntimeResponse<t_Error400>(400);
+        },
+        with401() {
+          return new ExpressRuntimeResponse<t_Error401>(401);
+        },
+        with403() {
+          return new ExpressRuntimeResponse<t_Error403>(403);
+        },
+        with429() {
+          return new ExpressRuntimeResponse<t_Error429>(429);
+        },
+        with500() {
+          return new ExpressRuntimeResponse<t_Error500>(500);
+        },
+        withStatus(status: StatusCode) {
+          return new ExpressRuntimeResponse(status);
+        },
+      };
+
+      await implementation
+        .updateUserDictionaries(input, responder, req, res, next)
+        .catch(handleImplementationError)
+        .then(handleResponse(res, updateUserDictionariesResponseBodyValidator));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  const deleteUserDictionaryParamSchema = z.object({ id: z.coerce.number().min(1) });
+
+  const deleteUserDictionaryResponseBodyValidator = responseValidationFactory(
+    [
+      ['200', z.object({ stackFingerprint: z.string().nullable() })],
+      ['400', s_Error400],
+      ['401', s_Error401],
+      ['403', s_Error403],
+      ['404', s_Error404],
+      ['429', s_Error429],
+      ['500', s_Error500],
+    ],
+    undefined,
+  );
+
+  // deleteUserDictionary
+  router.delete(`/v1/user/dictionaries/:id`, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const input = {
+        params: parseRequestInput(deleteUserDictionaryParamSchema, req.params, RequestInputType.RouteParam),
+        query: undefined,
+        body: undefined,
+        headers: undefined,
+      };
+
+      const responder = {
+        with200() {
+          return new ExpressRuntimeResponse<{
+            stackFingerprint: string | null;
+          }>(200);
+        },
+        with400() {
+          return new ExpressRuntimeResponse<t_Error400>(400);
+        },
+        with401() {
+          return new ExpressRuntimeResponse<t_Error401>(401);
+        },
+        with403() {
+          return new ExpressRuntimeResponse<t_Error403>(403);
+        },
+        with404() {
+          return new ExpressRuntimeResponse<t_Error404>(404);
+        },
+        with429() {
+          return new ExpressRuntimeResponse<t_Error429>(429);
+        },
+        with500() {
+          return new ExpressRuntimeResponse<t_Error500>(500);
+        },
+        withStatus(status: StatusCode) {
+          return new ExpressRuntimeResponse(status);
+        },
+      };
+
+      await implementation
+        .deleteUserDictionary(input, responder, req, res, next)
+        .catch(handleImplementationError)
+        .then(handleResponse(res, deleteUserDictionaryResponseBodyValidator));
     } catch (error) {
       next(error);
     }

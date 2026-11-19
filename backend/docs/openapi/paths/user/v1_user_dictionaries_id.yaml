@@ -1,0 +1,44 @@
+delete:
+  tags:
+    - User
+  x-internal: true
+  operationId: deleteUserDictionary
+  summary: Delete a custom Yomitan dictionary
+  description: |
+    Removes one custom dictionary from the authenticated user's account and frees its underlying indexed SQLite file
+    when no other account references it.
+  security:
+    - SessionCookie: []
+  parameters:
+    - name: id
+      in: path
+      required: true
+      description: Numeric ID of the user's attached custom dictionary.
+      schema:
+        type: integer
+        minimum: 1
+  responses:
+    "200":
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - stackFingerprint
+            properties:
+              stackFingerprint:
+                type: string
+                nullable: true
+    "400":
+      $ref: "../../components/responses/BadRequest.yaml"
+    "401":
+      $ref: "../../components/responses/Unauthorized.yaml"
+    "403":
+      $ref: "../../components/responses/Forbidden.yaml"
+    "404":
+      $ref: "../../components/responses/NotFound.yaml"
+    "429":
+      $ref: "../../components/responses/TooManyRequests.yaml"
+    "500":
+      $ref: "../../components/responses/InternalServerError.yaml"

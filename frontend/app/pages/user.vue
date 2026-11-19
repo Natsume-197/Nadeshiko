@@ -14,6 +14,7 @@ import {
   mdiRobotOutline,
   mdiTimelineClockOutline,
   mdiPaletteOutline,
+  mdiBookOpenVariantOutline,
 } from '@mdi/js';
 import { useDragScroll } from '~/composables/useDragScroll';
 import { splitLocalePrefix } from '~/utils/routes';
@@ -27,6 +28,9 @@ const store = userStore();
 const tabsGeneral = computed(() => [
   { name: t('accountSettings.tabs.settings'), icon: mdiAccount, route: '/user/settings' },
   { name: t('accountSettings.tabs.themes'), icon: mdiPaletteOutline, route: '/user/themes' },
+  ...(store.customDictionariesAvailable
+    ? [{ name: t('accountSettings.tabs.dictionaries'), icon: mdiBookOpenVariantOutline, route: '/user/dictionaries' }]
+    : []),
   { name: t('accountSettings.tabs.sync'), icon: mdiSync, route: '/user/sync' },
   { name: t('accountSettings.tabs.collections'), icon: mdiFormatListBulletedSquare, route: '/user/collections' },
   { name: t('accountSettings.tabs.activity'), icon: mdiHistory, route: '/user/activity' },

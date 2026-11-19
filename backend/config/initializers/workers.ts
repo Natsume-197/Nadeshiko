@@ -8,6 +8,8 @@ import { registerTokenParseWorker } from '@app/workers/tokenParseWorker';
 import { registerDictionaryRefreshWorker } from '@app/workers/dictionaryRefreshWorker';
 import { registerRecurringLinesWorker } from '@app/workers/recurringLinesWorker';
 import { registerPatreonMembershipRefreshWorker } from '@app/workers/patreonMembershipRefreshWorker';
+import { registerUserDictionaryImportWorker } from '@app/workers/userDictionaryImportWorker';
+import { closeAllArtifactHandles } from '@app/services/dictionary/custom/sqlitePool';
 import { sendRecurringSweepJob } from '@app/workers/recurringLinesQueue';
 import { setBossInstance } from '@app/workers/pgBossClient';
 import { registerQueueMetrics } from '@app/workers/workerInstrumentation';
@@ -26,6 +28,8 @@ import {
   RECURRING_RECOMPUTE_QUEUE,
   RECURRING_SWEEP_QUEUE,
   PATREON_MEMBERSHIP_REFRESH_QUEUE,
+  USER_DICTIONARY_IMPORT_QUEUE,
+  USER_DICTIONARY_MAINTENANCE_QUEUE,
 } from '@app/workers/queueNames';
 import { getAppPostgresConfig } from '@config/postgresConfig';
 import { logger } from '@config/log';
@@ -199,6 +203,26 @@ export const workersInitializer: RuntimeInitializer = {
           retentionSeconds: 86400,
         },
       },
+      {
+        name: USER_DICTIONARY_IMPORT_QUEUE,
+        options: {
+          // Large monolingual Yomitan zips finish in seconds on SQLite; no retries because the temp zip is cleaned up
+          // on failure and the user can re-upload directly.
+          retryLimit: 0,
+          retryDelay: 0,
+          expireInSeconds: 1800,
+          retentionSeconds: 86400,
+        },
+      },
+      {
+        name: USER_DICTIONARY_MAINTENANCE_QUEUE,
+        options: {
+          retryLimit: 1,
+          retryDelay: 300,
+          expireInSeconds: 900,
+          retentionSeconds: 86400,
+        },
+      },
     ];
 
     // `createQueue` leaves existing queues unchanged, so update each one to keep the stored options in sync.
@@ -222,6 +246,9 @@ export const workersInitializer: RuntimeInitializer = {
     // Re-checks linked Patreon memberships, so an API-only patron who cancels drops back to their own quota within a
     // day. Clear of the database sweeps, since its time is spent waiting on Patreon.
     await boss.schedule(PATREON_MEMBERSHIP_REFRESH_QUEUE, '15 2 * * *', {});
+    // Custom dictionaries (task 48): interrupted imports, orphaned artifacts, local cache size. A no-op while
+    // USER_DICTIONARIES_ENABLED is off.
+    await boss.schedule(USER_DICTIONARY_MAINTENANCE_QUEUE, '45 2 * * *', {});
     logger.info('PgBoss initialized, queues created, cron scheduled');
 
     setBossInstance(boss);
@@ -236,11 +263,13 @@ export const workersInitializer: RuntimeInitializer = {
     await registerDictionaryRefreshWorker(boss);
     await registerRecurringLinesWorker(boss);
     await registerPatreonMembershipRefreshWorker(boss);
+    await registerUserDictionaryImportWorker(boss);
     // Also sweep at boot: the first deploy fills the flags with no manual step, and any later deploy converges them.
     // Collapsed to one sweep per ten minutes, so a burst of restarts does not queue several.
     await sendRecurringSweepJob('boot');
   },
   shutdown: async () => {
+    closeAllArtifactHandles();
     if (boss) {
       await boss.stop();
       boss = null;

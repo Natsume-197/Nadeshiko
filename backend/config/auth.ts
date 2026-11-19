@@ -22,6 +22,7 @@ import { countryFromAuthContext } from '@app/services/auth/requestCountry';
 import { recordLastSeen, resolveUserId, shouldRecordLastSeen } from '@app/services/auth/lastSeen';
 import { Cache, createCacheNamespace } from '@lib/cache';
 import { refreshIfStale, stackIsStale } from '@app/services/shirabe/connection';
+import { gcOrphanArtifacts, getSessionCustomDictionaries } from '@app/services/dictionary/custom/service';
 
 const postgres = getAppPostgresConfig();
 
@@ -277,12 +278,18 @@ export async function resolveGrantableApiPermissions(
  * already caches them with session data; this removes a sequential SSR request. Missing rows return `{}` so
  * defaults apply. */
 export async function enrichSessionUser(user: BetterAuthSessionUser, findUserById: FindUserById = defaultFindUserById) {
-  const dbUser = await findUserById(Number(user.id));
+  const userId = Number(user.id);
+  const [dbUser, shirabe, customDictionaries] = await Promise.all([
+    findUserById(userId),
+    sessionShirabe(userId),
+    getSessionCustomDictionaries(userId),
+  ]);
   return {
     ...user,
     role: dbUser?.role ?? UserRoleType.USER,
     preferences: dbUser?.preferences ?? {},
-    shirabe: await sessionShirabe(Number(user.id)),
+    shirabe,
+    customDictionaries,
   };
 }
 
@@ -429,6 +436,14 @@ export function buildAuthOptions(dependencies: BuildAuthOptionsDependencies = {}
       deleteUser: {
         enabled: true,
         beforeDelete: async (_user, request) => requireRecentDeleteAuthentication(request),
+        // The cascade drops the account's custom dictionary links, not the files; delete the ones nobody else uses
+        // (task 48). Fire-and-forget: the nightly maintenance job retries whatever this misses.
+        afterDelete: async () => {
+          if (!config.USER_DICTIONARIES_ENABLED) return;
+          void gcOrphanArtifacts().catch((error) =>
+            logger.warn({ err: error }, 'Could not delete custom dictionaries after an account deletion'),
+          );
+        },
       },
     },
     session: {

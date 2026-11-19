@@ -128,6 +128,14 @@ import {
   unlinkPatreon,
 } from '@app/controllers/patreonConnectionController';
 import {
+  deleteUserDictionary,
+  listUserDictionaries,
+  updateUserDictionaries,
+  uploadUserDictionary,
+  USER_DICTIONARY_UPLOAD_PATH,
+} from '@app/controllers/userDictionaryController';
+import { requireSessionAuth } from '@app/middleware/authentication';
+import {
   createAdminRoadmapItem,
   createRoadmapProposal,
   listAdminRoadmap,
@@ -342,6 +350,9 @@ const UserRoutes = createUserRouter({
   startPatreonLink,
   completePatreonLink,
   unlinkPatreon,
+  listUserDictionaries,
+  updateUserDictionaries,
+  deleteUserDictionary,
   listExcludedMedia,
   addExcludedMedia,
   removeExcludedMedia,
@@ -457,6 +468,16 @@ router.use('/', EmailRoutes);
 router.get(EMAIL_LINK_PATH, noCache, setRouteTemplate(EMAIL_LINK_PATH), handleEmailLinkClick);
 
 router.post(WEBHOOK_SES_PATH, noCache, setRouteTemplate(WEBHOOK_SES_PATH), handleSesWebhook);
+
+// Streaming raw `.zip` upload for custom Yomitan dictionaries (task 48): mounted outside `express.json()` so large
+// archives stream straight to disk without heap buffering.
+router.post(
+  USER_DICTIONARY_UPLOAD_PATH,
+  noCache,
+  setRouteTemplate(USER_DICTIONARY_UPLOAD_PATH),
+  requireSessionAuth,
+  uploadUserDictionary,
+);
 
 export function mountRoutes(app: Application): Application {
   app.get('/up', noCache, healthCheck);

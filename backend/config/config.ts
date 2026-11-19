@@ -57,6 +57,24 @@ const envSchema = z.object({
   // Weekly refresh of our own dictionary (`dict` schema, ~1.9 GB with names) from jmdict-simplified and
   // JmdictFurigana. Off until the operator decides the server has the disk for it.
   DICTIONARY_REFRESH_ENABLED: booleanString,
+  // Custom Yomitan dictionaries per account (task 48). Off: the endpoints answer 404, lookups and sessions ignore
+  // uploaded dictionaries, and no import worker runs, so a deploy needs no R2 secrets until the operator turns it on.
+  USER_DICTIONARIES_ENABLED: booleanString,
+  // Local cache directory for indexed user dictionary SQLite files (task 48). In deployed environments R2 is the
+  // durable source of truth and this directory is a bounded LRU cache; in local dev with R2 unset it is the store.
+  USER_DICTIONARIES_DIR: z.string().trim().min(1).default('./data/user-dictionaries'),
+  USER_DICTIONARIES_CACHE_MAX_BYTES: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(2 * 1024 * 1024 * 1024),
+  // Cloudflare R2 (S3 API) storage for user dictionary `.sqlite` artifacts. Required outside `ENVIRONMENT=local` when
+  // USER_DICTIONARIES_ENABLED is on.
+  USER_DICT_R2_ENDPOINT: optionalString,
+  USER_DICT_R2_BUCKET: optionalString,
+  USER_DICT_R2_ACCESS_KEY_ID: optionalString,
+  USER_DICT_R2_SECRET_ACCESS_KEY: optionalString,
+  USER_DICT_R2_PREFIX: z.string().trim().default('user-dicts'),
   // The Sudachi sidecar (backend/sudachi) our own parser analyses text with, e.g. http://sudachi:8090. Unset: our
   // parser cannot run, and Shirabe keeps parsing.
   SUDACHI_URL: optionalString,
@@ -190,5 +208,19 @@ export const config: Readonly<z.infer<typeof envSchema>> = Object.freeze(envSche
 // A boot error rather than a first failed parse job: switching the parser without the sidecar would stall ingest.
 if (config.SEGMENT_PARSER === 'nadeshiko' && !config.SUDACHI_URL) {
   throw new Error('SEGMENT_PARSER=nadeshiko needs SUDACHI_URL (the Sudachi sidecar)');
+}
+// Once custom dictionaries are on, require R2 outside local dev so containers stay stateless across deploys.
+if (
+  config.USER_DICTIONARIES_ENABLED &&
+  config.ENVIRONMENT !== 'local' &&
+  (!config.USER_DICT_R2_ENDPOINT ||
+    !config.USER_DICT_R2_BUCKET ||
+    !config.USER_DICT_R2_ACCESS_KEY_ID ||
+    !config.USER_DICT_R2_SECRET_ACCESS_KEY)
+) {
+  throw new Error(
+    'USER_DICT_R2_ENDPOINT, USER_DICT_R2_BUCKET, USER_DICT_R2_ACCESS_KEY_ID, and USER_DICT_R2_SECRET_ACCESS_KEY ' +
+      'must be configured outside ENVIRONMENT=local when USER_DICTIONARIES_ENABLED=true',
+  );
 }
 export type AppConfig = z.infer<typeof envSchema>;

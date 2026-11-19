@@ -1,0 +1,76 @@
+get:
+  tags:
+    - User
+  x-internal: true
+  operationId: listUserDictionaries
+  summary: List custom Yomitan dictionaries
+  description: |
+    Returns the authenticated user's uploaded custom Yomitan dictionaries, built-in JMdict stack position,
+    account quota, and current stack fingerprint.
+  security:
+    - SessionCookie: []
+  responses:
+    "200":
+      description: OK
+      content:
+        application/json:
+          schema:
+            $ref: "../../components/schemas/UserDictionaryListResponse.yaml"
+    "401":
+      $ref: "../../components/responses/Unauthorized.yaml"
+    "403":
+      $ref: "../../components/responses/Forbidden.yaml"
+    "429":
+      $ref: "../../components/responses/TooManyRequests.yaml"
+    "500":
+      $ref: "../../components/responses/InternalServerError.yaml"
+
+patch:
+  tags:
+    - User
+  x-internal: true
+  operationId: updateUserDictionaries
+  summary: Reorder and toggle custom Yomitan dictionaries
+  description: |
+    Atomically updates the stack order and enabled flags for the user's custom dictionaries and built-in JMdict.
+  security:
+    - SessionCookie: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - items
+          properties:
+            items:
+              type: array
+              maxItems: 50
+              items:
+                type: object
+                required: [id, enabled]
+                properties:
+                  id:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                  enabled:
+                    type: boolean
+  responses:
+    "200":
+      description: OK
+      content:
+        application/json:
+          schema:
+            $ref: "../../components/schemas/UserDictionaryListResponse.yaml"
+    "400":
+      $ref: "../../components/responses/BadRequest.yaml"
+    "401":
+      $ref: "../../components/responses/Unauthorized.yaml"
+    "403":
+      $ref: "../../components/responses/Forbidden.yaml"
+    "429":
+      $ref: "../../components/responses/TooManyRequests.yaml"
+    "500":
+      $ref: "../../components/responses/InternalServerError.yaml"

@@ -40,6 +40,7 @@ import type {
 } from '../models.ts';
 import type { GetDictionaryKanjiIndexQueryOutput, GetDictionaryKanjiQueryOutput, IdentifyDictionaryWordQueryOutput, SearchMediaRequestOutput, SearchMultipleRequestOutput, SearchRequestOutput, SearchStatsRequestOutput } from '../outputTypes.ts';
 import {
+  PermissiveBoolean,
   s_DictionaryCandidate,
   s_DictionaryKanji,
   s_Error400,
@@ -132,6 +133,8 @@ export type SearchMedia = (
 export type IdentifyDictionaryWordResponder = {
   with200(): ExpressRuntimeResponse<{
     candidates: t_DictionaryCandidate[];
+    customDictionariesPending?: boolean;
+    stackFingerprint?: string | null;
   }>;
   with400(): ExpressRuntimeResponse<t_Error400>;
   with403(): ExpressRuntimeResponse<t_Error403>;
@@ -446,7 +449,14 @@ export function createSearchRouter(
 
   const identifyDictionaryWordResponseBodyValidator = responseValidationFactory(
     [
-      ['200', z.object({ candidates: z.array(s_DictionaryCandidate) })],
+      [
+        '200',
+        z.object({
+          candidates: z.array(s_DictionaryCandidate),
+          stackFingerprint: z.string().nullable().optional(),
+          customDictionariesPending: PermissiveBoolean.optional(),
+        }),
+      ],
       ['400', s_Error400],
       ['403', s_Error403],
       ['429', s_Error429],
@@ -469,6 +479,8 @@ export function createSearchRouter(
         with200() {
           return new ExpressRuntimeResponse<{
             candidates: t_DictionaryCandidate[];
+            customDictionariesPending?: boolean;
+            stackFingerprint?: string | null;
           }>(200);
         },
         with400() {

@@ -2,13 +2,17 @@ import { describe, test, expect, beforeEach, vi } from 'vitest';
 import { DictionaryError } from '~~/server/utils/dictionary/types';
 
 // The reader's choice of dictionary, and failing over to the other one when theirs is down.
-const { logger, shirabe, nadeshiko, readerStack, readerToken } = vi.hoisted(() => ({
-  logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },
-  shirabe: vi.fn(),
-  nadeshiko: vi.fn(),
-  readerStack: vi.fn(),
-  readerToken: vi.fn(),
-}));
+const { logger, shirabe, nadeshiko, readerStack, readerToken, customDictionaryStack, readerCookie } = vi.hoisted(
+  () => ({
+    logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },
+    shirabe: vi.fn(),
+    nadeshiko: vi.fn(),
+    readerStack: vi.fn(),
+    readerToken: vi.fn(),
+    customDictionaryStack: vi.fn(),
+    readerCookie: vi.fn(),
+  }),
+);
 
 vi.mock('~~/server/utils/logger', () => ({ logger }));
 vi.mock('~~/server/utils/dictionary/shirabe', () => ({ shirabeDictionary: { name: 'shirabe', identify: shirabe } }));
@@ -18,6 +22,8 @@ vi.mock('~~/server/utils/dictionary/nadeshiko', () => ({
 vi.mock('~~/server/utils/shirabeReader', () => ({
   readerStack: (...a: unknown[]) => readerStack(...a),
   readerToken: (...a: unknown[]) => readerToken(...a),
+  customDictionaryStack: (...a: unknown[]) => customDictionaryStack(...a),
+  readerCookie: (...a: unknown[]) => readerCookie(...a),
   reportShirabeRefusal: vi.fn(),
   reportStackFingerprint: vi.fn(),
 }));
@@ -59,6 +65,8 @@ beforeEach(() => {
   runtime = { shirabeApiKey: 'service-key', backendInternalUrl: 'http://backend', dictionaryProvider: 'shirabe' };
   readerStack.mockResolvedValue({ linked: false, fingerprint: null });
   readerToken.mockResolvedValue(null);
+  customDictionaryStack.mockResolvedValue({ hasStack: false, fingerprint: null });
+  readerCookie.mockReturnValue('');
   shirabe.mockResolvedValue(answer('shirabe:1'));
   nadeshiko.mockResolvedValue(answer('jmdict:1358280'));
 });
@@ -101,6 +109,46 @@ describe('which dictionary answers', () => {
 
     expect(cacheOptions!.getKey(event({ provider: 'shirabe' }))).toBe(plain);
     expect(cacheOptions!.getKey(event({ provider: 'nadeshiko' }))).not.toBe(plain);
+  });
+
+  test('custom Nadeshiko dictionaries bypass shared cache, forward the session cookie, and set private caching', async () => {
+    customDictionaryStack.mockResolvedValue({ hasStack: true, fingerprint: 'custom-fp-1' });
+    readerCookie.mockReturnValue('nadeshiko.session_token=abc');
+    nadeshiko.mockResolvedValue({ ...answer('jmdict:1358280'), stackFingerprint: 'custom-fp-1' });
+
+    const reqEvent = event({ provider: 'nadeshiko' });
+    expect(await cacheOptions!.shouldBypassCache(reqEvent)).toBe(true);
+
+    const body = await handler(reqEvent);
+    expect(nadeshiko).toHaveBeenCalledWith(expect.objectContaining({ lemma: '食べる' }), {
+      readerCookie: 'nadeshiko.session_token=abc',
+    });
+    expect(reqEvent.headers['cache-control']).toBe('private, max-age=86400');
+    expect(body.stackFingerprint).toBe('custom-fp-1');
+  });
+
+  test('an answer still missing one of the reader’s dictionaries is cached nowhere', async () => {
+    customDictionaryStack.mockResolvedValue({ hasStack: true, fingerprint: 'custom-fp-1' });
+    readerCookie.mockReturnValue('nadeshiko.session_token=abc');
+    nadeshiko.mockResolvedValue({ ...answer('jmdict:1358280'), stackFingerprint: 'custom-fp-1', pending: true });
+
+    const reqEvent = event({ provider: 'nadeshiko' });
+    const body = await handler(reqEvent);
+
+    expect(reqEvent.headers['cache-control']).toBe('no-store');
+    expect(body.pending).toBe(true);
+  });
+
+  test('a pending answer with no entry is an empty answer, not a 404 the browser would keep', async () => {
+    customDictionaryStack.mockResolvedValue({ hasStack: true, fingerprint: 'custom-fp-1' });
+    readerCookie.mockReturnValue('nadeshiko.session_token=abc');
+    nadeshiko.mockResolvedValue({ candidates: [], stackFingerprint: 'custom-fp-1', pending: true });
+
+    const reqEvent = event({ provider: 'nadeshiko' });
+    const body = await handler(reqEvent);
+
+    expect(body).toMatchObject({ candidates: [], pending: true });
+    expect(reqEvent.headers['cache-control']).toBe('no-store');
   });
 });
 

@@ -471,6 +471,11 @@ paths:
                     description: Best first; empty when no entry matches.
                     items:
                       $ref: "#/components/schemas/DictionaryCandidate"
+                  stackFingerprint:
+                    type: string
+                    nullable: true
+                    description: Fingerprint of the reader's custom dictionary stack when custom
+                      dictionaries were applied.
         "400":
           $ref: "#/components/responses/BadRequest"
         "403":
@@ -2392,6 +2397,134 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /v1/user/dictionaries:
+    get:
+      tags:
+        - User
+      x-internal: true
+      operationId: listUserDictionaries
+      summary: List custom Yomitan dictionaries
+      description: >
+        Returns the authenticated user's uploaded custom Yomitan dictionaries,
+        built-in JMdict stack position,
+
+        account quota, and current stack fingerprint.
+      security:
+        - SessionCookie: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserDictionaryListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    patch:
+      tags:
+        - User
+      x-internal: true
+      operationId: updateUserDictionaries
+      summary: Reorder and toggle custom Yomitan dictionaries
+      description: >
+        Atomically updates the stack order and enabled flags for the user's
+        custom dictionaries and built-in JMdict.
+      security:
+        - SessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - items
+              properties:
+                items:
+                  type: array
+                  maxItems: 50
+                  items:
+                    type: object
+                    required:
+                      - id
+                      - enabled
+                    properties:
+                      id:
+                        type: string
+                        minLength: 1
+                        maxLength: 64
+                      enabled:
+                        type: boolean
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserDictionaryListResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /v1/user/dictionaries/{id}:
+    delete:
+      tags:
+        - User
+      x-internal: true
+      operationId: deleteUserDictionary
+      summary: Delete a custom Yomitan dictionary
+      description: >
+        Removes one custom dictionary from the authenticated user's account and
+        frees its underlying indexed SQLite file
+
+        when no other account references it.
+      security:
+        - SessionCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Numeric ID of the user's attached custom dictionary.
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - stackFingerprint
+                properties:
+                  stackFingerprint:
+                    type: string
+                    nullable: true
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
         "500":
           $ref: "#/components/responses/InternalServerError"
   /v1/user/excluded-media:
@@ -8788,9 +8921,7 @@ components:
           example: "1358280"
         dictionary:
           type: string
-          enum:
-            - jmdict
-            - jmnedict
+          example: jmdict
         jlpt:
           type: string
           nullable: true
@@ -8831,6 +8962,27 @@ components:
                 type: number
                 description: Occurrences per million words of that kind of media.
                 example: 431.7
+        customFrequencies:
+          type: array
+          description: Frequencies from the authenticated reader's enabled custom Yomitan
+            frequency dictionaries.
+          items:
+            type: object
+            required:
+              - dictionary
+              - dictionaryName
+              - value
+              - displayValue
+            properties:
+              dictionary:
+                type: string
+              dictionaryName:
+                type: string
+              value:
+                type: number
+                nullable: true
+              displayValue:
+                type: string
         baseForm:
           type: boolean
           description: >
@@ -8849,7 +9001,8 @@ components:
             - past
         pitch:
           type: array
-          description: UniDic accent, at most two patterns. No audio yet.
+          description: Accent patterns from the user's custom pitch dictionaries or UniDic
+            fallback.
           items:
             type: object
             required:
@@ -8859,6 +9012,21 @@ components:
                 type: integer
                 minimum: 0
                 description: 0 is flat (heiban); n is the mora after which the pitch drops.
+              source:
+                type: string
+                description: Custom pitch dictionary title when sourced from a user upload.
+              nasal:
+                type: array
+                items:
+                  type: integer
+              devoice:
+                type: array
+                items:
+                  type: integer
+              tags:
+                type: array
+                items:
+                  type: string
         parts:
           type: array
           description: >
@@ -8952,8 +9120,11 @@ components:
                             enum:
                               - en
                               - es
+                              - ja
                           text:
                             type: string
+                          structuredContent:
+                            description: Sanitized Yomitan structured-content AST for custom dictionaries.
                     tags:
                       type: array
                       items:
@@ -10609,6 +10780,132 @@ components:
         linkedAt:
           type: string
           format: date-time
+    UserDictionary:
+      type: object
+      description: One custom Yomitan dictionary attached to the user's account.
+      required:
+        - id
+        - stackId
+        - title
+        - revision
+        - author
+        - description
+        - url
+        - frequencyMode
+        - hasTerms
+        - hasFrequency
+        - hasPitch
+        - termCount
+        - frequencyCount
+        - pitchCount
+        - zipBytes
+        - sqliteBytes
+        - status
+        - errorMessage
+        - enabled
+        - sortOrder
+        - createdAt
+      properties:
+        id:
+          type: integer
+        stackId:
+          type: string
+          example: custom:42
+        title:
+          type: string
+        revision:
+          type: string
+        author:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        url:
+          type: string
+          nullable: true
+        frequencyMode:
+          type: string
+          nullable: true
+        hasTerms:
+          type: boolean
+        hasFrequency:
+          type: boolean
+        hasPitch:
+          type: boolean
+        termCount:
+          type: integer
+        frequencyCount:
+          type: integer
+        pitchCount:
+          type: integer
+        zipBytes:
+          type: integer
+        sqliteBytes:
+          type: integer
+        status:
+          type: string
+          enum:
+            - processing
+            - ready
+            - failed
+        errorMessage:
+          type: string
+          nullable: true
+        enabled:
+          type: boolean
+        sortOrder:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+    UserDictionaryListResponse:
+      type: object
+      description: The signed-in user's custom Yomitan dictionary stack, built-in
+        JMdict placement, and account quota.
+      required:
+        - dictionaries
+        - builtin
+        - quota
+        - stackFingerprint
+      properties:
+        dictionaries:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserDictionary"
+        builtin:
+          type: object
+          required:
+            - id
+            - enabled
+            - position
+          properties:
+            id:
+              type: string
+              example: jmdict
+            enabled:
+              type: boolean
+            position:
+              type: integer
+        quota:
+          type: object
+          required:
+            - used
+            - max
+            - maxZipBytes
+            - isPatron
+          properties:
+            used:
+              type: integer
+            max:
+              type: integer
+            maxZipBytes:
+              type: integer
+            isPatron:
+              type: boolean
+        stackFingerprint:
+          type: string
+          nullable: true
     ReportTargetMedia:
       type: object
       required:

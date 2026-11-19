@@ -235,13 +235,20 @@ export type t_CursorPagination = {
 export type t_DictionaryCandidate = {
   baseForm?: boolean;
   common: boolean;
-  dictionary: 'jmdict' | 'jmnedict';
+  customFrequencies?: {
+    dictionary: string;
+    dictionaryName: string;
+    displayValue: string;
+    value: number | null;
+  }[];
+  dictionary: string;
   entries: {
     dictionary: string;
     dictionaryName: string;
     senses: {
       definitions: {
-        lang: 'en' | 'es';
+        lang: 'en' | 'es' | 'ja';
+        structuredContent?: unknown;
         text: string;
       }[];
       notes?: string[];
@@ -280,7 +287,11 @@ export type t_DictionaryCandidate = {
     text: string;
   }[];
   pitch?: {
+    devoice?: number[];
     downstep: number;
+    nasal?: number[];
+    source?: string;
+    tags?: string[];
   }[];
   reading: string | null;
   sourceId: string;
@@ -1052,6 +1063,46 @@ export type t_UserActivityStats = {
   totalShares: number;
 };
 
+export type t_UserDictionary = {
+  author: string | null;
+  createdAt: string;
+  description: string | null;
+  enabled: boolean;
+  errorMessage: string | null;
+  frequencyCount: number;
+  frequencyMode: string | null;
+  hasFrequency: boolean;
+  hasPitch: boolean;
+  hasTerms: boolean;
+  id: number;
+  pitchCount: number;
+  revision: string;
+  sortOrder: number;
+  sqliteBytes: number;
+  stackId: string;
+  status: 'processing' | 'ready' | 'failed';
+  termCount: number;
+  title: string;
+  url: string | null;
+  zipBytes: number;
+};
+
+export type t_UserDictionaryListResponse = {
+  builtin: {
+    enabled: boolean;
+    id: string;
+    position: number;
+  };
+  dictionaries: t_UserDictionary[];
+  quota: {
+    isPatron: boolean;
+    max: number;
+    maxZipBytes: number;
+    used: number;
+  };
+  stackFingerprint: string | null;
+};
+
 export type t_UserExportCollection = t_Collection & {
   segmentIds: number[];
 };
@@ -1261,6 +1312,10 @@ export type t_DeleteUserActivityByDateParamSchema = {
 
 export type t_DeleteUserActivityByIdParamSchema = {
   activityId: number;
+};
+
+export type t_DeleteUserDictionaryParamSchema = {
+  id: number;
 };
 
 export type t_ForgetFamiliarMediaParamSchema = {
@@ -1502,4 +1557,11 @@ export type t_UpdateMediaParamSchema = {
 
 export type t_UpdateSegmentParamSchema = {
   segmentPublicId: string;
+};
+
+export type t_UpdateUserDictionariesRequestBody = {
+  items: {
+    enabled: boolean;
+    id: string;
+  }[];
 };

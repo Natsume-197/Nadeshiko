@@ -495,7 +495,8 @@
       "users": "ユーザー",
       "reports": "問題の報告",
       "agentActivity": "エージェントの編集履歴",
-      "announcement": "お知らせ"
+      "announcement": "お知らせ",
+      "dictionaries": "辞書"
     },
     "dashboard": {
       "roles": {
@@ -1043,6 +1044,47 @@
       "allDescription": "ログインリンクとアカウント関連のメールは、ここでの設定にかかわらず必ず送信されます。",
       "turnedOn": "{name}：オン",
       "turnedOff": "{name}：オフ"
+    },
+    "dictionaries": {
+      "title": "カスタム辞書",
+      "description": "Yomitan形式（.zip）の辞書をアカウントにアップロードできます。端末間で同期され、設定した順番で単語カードに表示されます。",
+      "quotaUsed": "{used} / {max} 辞書",
+      "maxZipSize": "1ファイル最大 {maxMb} MB",
+      "patronUpsell": "サポーターは最大6個（各95 MB）までアップロードできます。",
+      "shirabeProviderNotice": "現在、単語カードはShirabeを使用しています。カスタム辞書を使うにはNadeshikoに切り替えてください。",
+      "switchToNadeshiko": "Nadeshikoを使う",
+      "dropPrompt": "クリックしてYomitan .zipを選択、またはここにドロップ",
+      "uploading": "アップロード中… {progress}%",
+      "supportedFormats": "Yomitan v3の語義・頻度・ピッチアクセント辞書に対応しています（画像なし）。",
+      "invalidZipType": "Yomitan形式の.zipファイルを選択してください。",
+      "fileTooLarge": "このファイルはアカウントの上限（{maxMb} MB）を超えています。",
+      "quotaReached": "カスタム辞書の上限（{max}個）に達しています。",
+      "uploadedReadyToast": "{title} の準備が完了しました。",
+      "uploadedProcessingToast": "{title} をアップロードしました。バックグラウンドで索引を作成しています…",
+      "uploadError": "辞書のアップロードに失敗しました。",
+      "loadError": "カスタム辞書を読み込めませんでした。",
+      "saveError": "辞書の並び順を保存できませんでした。",
+      "deleteError": "辞書を削除できませんでした。",
+      "deletedToast": "{title} を削除しました。",
+      "stackTitle": "辞書の優先順位",
+      "stackHint": "上にある辞書から単語カードに表示されます",
+      "loading": "辞書を読み込み中…",
+      "builtinTitle": "Nadeshiko JMdict",
+      "builtinBadge": "内蔵",
+      "builtinDescription": "コーパス頻度とUniDicアクセント付きの内蔵和英辞書。",
+      "statusProcessing": "索引作成中…",
+      "statusFailed": "失敗",
+      "bankTerms": "語義",
+      "bankFrequency": "頻度",
+      "bankPitch": "ピッチ",
+      "termCount": "{count} 語",
+      "frequencyCount": "{count} 頻度",
+      "pitchCount": "{count} ピッチ",
+      "moveUp": "上へ移動",
+      "moveDown": "下へ移動",
+      "enable": "辞書を有効化",
+      "disable": "辞書を無効化",
+      "delete": "辞書を削除"
     }
   },
   "blog": {
@@ -1589,7 +1631,10 @@
     "support": "Nadeshikoを支援する",
     "proposeCta": "作品を提案する",
     "filterLabel": "ロードマップを絞り込む",
-    "filters": { "content": "作品", "feature": "機能" },
+    "filters": {
+      "content": "作品",
+      "feature": "機能"
+    },
     "dateFlexible": "時期未定",
     "featureSoon": "近日公開™",
     "featureReleased": "リリース済み",
@@ -1686,7 +1731,10 @@
     "callbackDone": "Patreonと連携しました",
     "callbackDoneBody": "メンバーシップを確認しました。ロードマップに戻れます。",
     "backToRoadmap": "ロードマップに戻る",
-    "admin": { "tab": "ロードマップ", "title": "ロードマップのキュー" }
+    "admin": {
+      "tab": "ロードマップ",
+      "title": "ロードマップのキュー"
+    }
   },
   "feedback": {
     "open": "フィードバック",

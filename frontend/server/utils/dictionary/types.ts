@@ -40,13 +40,18 @@ export interface Candidate {
 export interface DictionaryAnswer {
   // Ranked best first; empty means no entry, which is an answer, not a failure.
   candidates: Candidate[];
-  // Digest of the dictionaries that answered; only a linked Shirabe reader's stack has one.
+  // Digest of the dictionaries that answered: a linked Shirabe reader's stack, or a reader's uploaded dictionaries.
   stackFingerprint?: string | null;
+  // The answer lacks one of the reader's uploaded dictionaries (still indexing, or still being fetched by the
+  // backend). Nothing may cache it, or the card would keep it for a day.
+  pending?: boolean;
 }
 
 export interface DictionaryLookupOptions {
   // A linked reader's own Shirabe key. Goes away with account linking.
   readerKey?: string;
+  // Forwarded session cookie when looking up a reader's own custom Yomitan dictionaries on Nadeshiko's backend.
+  readerCookie?: string;
 }
 
 export interface Dictionary {

@@ -3,11 +3,29 @@ import { tagLabel, tagLanguage, type TagLanguage } from '~/utils/wordTagLabels';
 
 /** Word-card response shapes and language selection, independent of tooltip layout. */
 
+/** Sanitized Yomitan v3 structured-content AST node (task 48). */
+export interface YomitanElementNode {
+  tag: string;
+  content?: YomitanNode | YomitanNode[];
+  style?: Record<string, string>;
+  lang?: string;
+  title?: string;
+  href?: string;
+  colSpan?: number;
+  rowSpan?: number;
+  open?: boolean;
+  data?: Record<string, string>;
+}
+
+export type YomitanNode = string | YomitanElementNode;
+
 /** A piece of text Shirabe tagged with the language it is written in, which is
- *  the shape every definition arrives in. */
+ *  the shape every definition arrives in. Custom Yomitan definitions may also
+ *  carry a sanitized `structuredContent` AST alongside the plain-text fallback. */
 export interface ShirabeText {
   lang: string;
   text: string;
+  structuredContent?: YomitanNode | YomitanNode[];
 }
 
 export interface ShirabeTag {
@@ -56,11 +74,23 @@ export interface ShirabePart {
 export interface ShirabePitch {
   downstep: number;
   pattern?: string;
+  /** Custom pitch dictionary title when sourced from a user's uploaded Yomitan pitch bank. */
+  source?: string;
+  nasal?: number[];
+  devoice?: number[];
+  tags?: string[];
   /** A pre-generated clip of the reading spoken at this accent, on Shirabe's
    *  public CDN. Null when that (reading, accent) was never generated: coverage
    *  is per clip and lights up batch by batch, so a word can have a pitch
    *  pattern and no recording of it. */
   audioUrl?: string | null;
+}
+
+export interface CustomFrequencyBadge {
+  dictionary: string;
+  dictionaryName: string;
+  value: number | null;
+  displayValue: string;
 }
 
 /**
@@ -89,6 +119,8 @@ export interface ShirabeWord {
   frequency?: number | null;
   /** Our dictionary only: the rank in each kind of media the word occurs in, the kind that uses it most first. */
   frequencyByCategory?: Array<{ category: string; rank: number; perMillion: number }>;
+  /** Custom Yomitan frequency dictionaries enabled on the reader's account (task 48). */
+  customFrequencies?: CustomFrequencyBadge[];
   /** Our dictionary only, for a word found as the dictionary form of what was looked up: the inflection labels. */
   inflection?: string[];
   pitch?: ShirabePitch[];
@@ -306,6 +338,8 @@ export interface CardGlossRow {
    *  render it conditionally rather than assuming a label is always there. */
   label: string;
   text: string;
+  /** Present for custom Yomitan structured-content definitions; `text` remains the plain fallback for Anki/summaries. */
+  structuredContent?: YomitanNode | YomitanNode[];
 }
 
 export interface CardTag {
@@ -360,7 +394,16 @@ function glossRows(definitions: ShirabeText[]): CardGlossRow[] {
   for (const definition of definitions) {
     const lang = definition.lang?.toLowerCase() as PrintLanguage;
     if (lang !== 'en' && lang !== 'es' && lang !== 'ja') continue;
-    const existing = rows.find((row) => row.lang === lang);
+    if (definition.structuredContent !== undefined) {
+      rows.push({
+        lang,
+        label: GLOSS_LABEL[lang],
+        text: definition.text,
+        structuredContent: definition.structuredContent,
+      });
+      continue;
+    }
+    const existing = rows.find((row) => row.lang === lang && row.structuredContent === undefined);
     if (existing) existing.text += `; ${definition.text}`;
     else rows.push({ lang, label: GLOSS_LABEL[lang], text: definition.text });
   }

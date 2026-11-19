@@ -125,7 +125,7 @@ export const s_DictionaryCandidate = z.object({
   common: PermissiveBoolean,
   name: PermissiveBoolean,
   sourceId: z.string(),
-  dictionary: z.enum(['jmdict', 'jmnedict']),
+  dictionary: z.string(),
   jlpt: z.string().nullable(),
   frequency: z.coerce.number().nullable(),
   frequencyByCategory: z
@@ -137,9 +137,29 @@ export const s_DictionaryCandidate = z.object({
       }),
     )
     .optional(),
+  customFrequencies: z
+    .array(
+      z.object({
+        dictionary: z.string(),
+        dictionaryName: z.string(),
+        value: z.coerce.number().nullable(),
+        displayValue: z.string(),
+      }),
+    )
+    .optional(),
   baseForm: PermissiveBoolean.optional(),
   inflection: z.array(z.string()).optional(),
-  pitch: z.array(z.object({ downstep: z.coerce.number().min(0) })).optional(),
+  pitch: z
+    .array(
+      z.object({
+        downstep: z.coerce.number().min(0),
+        source: z.string().optional(),
+        nasal: z.array(z.coerce.number()).optional(),
+        devoice: z.array(z.coerce.number()).optional(),
+        tags: z.array(z.string()).optional(),
+      }),
+    )
+    .optional(),
   parts: z.array(z.object({ text: z.string(), lemma: z.string(), reading: z.string(), id: z.string() })).optional(),
   furigana: z.array(z.object({ text: z.string(), ruby: z.string().optional() })).optional(),
   forms: z.array(z.object({ text: z.string(), script: z.enum(['kanji', 'kana']), common: PermissiveBoolean })),
@@ -150,7 +170,9 @@ export const s_DictionaryCandidate = z.object({
       senses: z.array(
         z.object({
           position: z.coerce.number(),
-          definitions: z.array(z.object({ lang: z.enum(['en', 'es']), text: z.string() })),
+          definitions: z.array(
+            z.object({ lang: z.enum(['en', 'es', 'ja']), text: z.string(), structuredContent: z.unknown().optional() }),
+          ),
           tags: z.array(
             z.object({
               category: z.enum(['partOfSpeech', 'misc', 'field', 'dialect']),
@@ -542,6 +564,30 @@ export const s_UserActivityStats = z.object({
   ),
 });
 
+export const s_UserDictionary = z.object({
+  id: z.coerce.number(),
+  stackId: z.string(),
+  title: z.string(),
+  revision: z.string(),
+  author: z.string().nullable(),
+  description: z.string().nullable(),
+  url: z.string().nullable(),
+  frequencyMode: z.string().nullable(),
+  hasTerms: PermissiveBoolean,
+  hasFrequency: PermissiveBoolean,
+  hasPitch: PermissiveBoolean,
+  termCount: z.coerce.number(),
+  frequencyCount: z.coerce.number(),
+  pitchCount: z.coerce.number(),
+  zipBytes: z.coerce.number(),
+  sqliteBytes: z.coerce.number(),
+  status: z.enum(['processing', 'ready', 'failed']),
+  errorMessage: z.string().nullable(),
+  enabled: PermissiveBoolean,
+  sortOrder: z.coerce.number(),
+  createdAt: z.iso.datetime({ offset: true }),
+});
+
 export const s_UserMe = z.object({
   user: z.object({ username: z.string().min(1), createdAt: z.iso.datetime({ offset: true }), role: z.string().min(1) }),
   quota: z.object({
@@ -914,6 +960,18 @@ export const s_UserActivity = z.object({
   createdAt: z.iso.datetime({ offset: true }),
 });
 
+export const s_UserDictionaryListResponse = z.object({
+  dictionaries: z.array(s_UserDictionary),
+  builtin: z.object({ id: z.string(), enabled: PermissiveBoolean, position: z.coerce.number() }),
+  quota: z.object({
+    used: z.coerce.number(),
+    max: z.coerce.number(),
+    maxZipBytes: z.coerce.number(),
+    isPatron: PermissiveBoolean,
+  }),
+  stackFingerprint: z.string().nullable(),
+});
+
 export const s_UserPreferences = z.object({
   mediaNameLanguage: z.enum(['ENGLISH', 'JAPANESE', 'ROMAJI']).optional(),
   contentRatingPreferences: z.object({ nsfw: z.enum(['SHOW', 'BLUR', 'HIDE']).optional() }).optional(),
@@ -1165,6 +1223,10 @@ export const s_ResyncShirabeStackRequestBody = z.object({ stackFingerprint: z.st
 export const s_ReportShirabeRefusalRequestBody = z.object({ status: z.coerce.number().min(100).max(599) });
 
 export const s_CompletePatreonLinkRequestBody = z.object({ code: z.string().min(1), state: z.string().min(1) });
+
+export const s_UpdateUserDictionariesRequestBody = z.object({
+  items: z.array(z.object({ id: z.string().min(1).max(64), enabled: PermissiveBoolean })).max(50),
+});
 
 export const s_AddExcludedMediaRequestBody = z.object({
   mediaPublicId: z.string().regex(new RegExp('^[A-Za-z0-9_-]{12}$')),

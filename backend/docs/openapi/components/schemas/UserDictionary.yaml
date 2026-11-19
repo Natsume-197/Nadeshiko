@@ -1,0 +1,75 @@
+type: object
+description: One custom Yomitan dictionary attached to the user's account.
+required:
+  - id
+  - stackId
+  - title
+  - revision
+  - author
+  - description
+  - url
+  - frequencyMode
+  - hasTerms
+  - hasFrequency
+  - hasPitch
+  - termCount
+  - frequencyCount
+  - pitchCount
+  - zipBytes
+  - sqliteBytes
+  - status
+  - errorMessage
+  - enabled
+  - sortOrder
+  - createdAt
+properties:
+  id:
+    type: integer
+  stackId:
+    type: string
+    example: "custom:42"
+  title:
+    type: string
+  revision:
+    type: string
+  author:
+    type: string
+    nullable: true
+  description:
+    type: string
+    nullable: true
+  url:
+    type: string
+    nullable: true
+  frequencyMode:
+    type: string
+    nullable: true
+  hasTerms:
+    type: boolean
+  hasFrequency:
+    type: boolean
+  hasPitch:
+    type: boolean
+  termCount:
+    type: integer
+  frequencyCount:
+    type: integer
+  pitchCount:
+    type: integer
+  zipBytes:
+    type: integer
+  sqliteBytes:
+    type: integer
+  status:
+    type: string
+    enum: [processing, ready, failed]
+  errorMessage:
+    type: string
+    nullable: true
+  enabled:
+    type: boolean
+  sortOrder:
+    type: integer
+  createdAt:
+    type: string
+    format: date-time

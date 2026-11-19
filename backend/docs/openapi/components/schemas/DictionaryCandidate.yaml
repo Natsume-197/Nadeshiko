@@ -38,7 +38,7 @@ properties:
     example: "1358280"
   dictionary:
     type: string
-    enum: [jmdict, jmnedict]
+    example: jmdict
   jlpt:
     type: string
     nullable: true
@@ -69,6 +69,19 @@ properties:
           type: number
           description: Occurrences per million words of that kind of media.
           example: 431.7
+  customFrequencies:
+    type: array
+    description: Frequencies from the authenticated reader's enabled custom Yomitan frequency dictionaries.
+    items:
+      type: object
+      required: [dictionary, dictionaryName, value, displayValue]
+      properties:
+        dictionary: { type: string }
+        dictionaryName: { type: string }
+        value:
+          type: number
+          nullable: true
+        displayValue: { type: string }
   baseForm:
     type: boolean
     description: |
@@ -82,7 +95,7 @@ properties:
     example: [past]
   pitch:
     type: array
-    description: UniDic accent, at most two patterns. No audio yet.
+    description: Accent patterns from the user's custom pitch dictionaries or UniDic fallback.
     items:
       type: object
       required: [downstep]
@@ -91,6 +104,18 @@ properties:
           type: integer
           minimum: 0
           description: 0 is flat (heiban); n is the mora after which the pitch drops.
+        source:
+          type: string
+          description: Custom pitch dictionary title when sourced from a user upload.
+        nasal:
+          type: array
+          items: { type: integer }
+        devoice:
+          type: array
+          items: { type: integer }
+        tags:
+          type: array
+          items: { type: string }
   parts:
     type: array
     description: |
@@ -142,8 +167,10 @@ properties:
                   type: object
                   required: [lang, text]
                   properties:
-                    lang: { type: string, enum: [en, es] }
+                    lang: { type: string, enum: [en, es, ja] }
                     text: { type: string }
+                    structuredContent:
+                      description: Sanitized Yomitan structured-content AST for custom dictionaries.
               tags:
                 type: array
                 items:

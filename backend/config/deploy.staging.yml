@@ -107,6 +107,12 @@ env:
     # (task 46) before production does; its corpus is reparsed with `tokens:reparse -- --stale`.
     SUDACHI_URL: "http://nadeshiko-backend-prod-sudachi:8090"
     SEGMENT_PARSER: nadeshiko
+    # Custom Yomitan dictionaries (task 48), off until the operator turns them on. To turn on: put USER_DICT_R2_ENDPOINT,
+    # _BUCKET, _ACCESS_KEY_ID and _SECRET_ACCESS_KEY in SSM (/nadeshiko/staging/...), add them to .kamal/secrets.staging and
+    # env.secret above, then set this to "true". With it on and R2 unset the backend refuses to boot.
+    USER_DICTIONARIES_ENABLED: "false"
+    USER_DICTIONARIES_DIR: /app/data/user-dictionaries
+    USER_DICT_R2_PREFIX: user-dicts/staging
 
     R2_BASE_URL: https://cdn.nadeshiko.co
 

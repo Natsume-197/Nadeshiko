@@ -495,7 +495,8 @@
       "users": "使用者",
       "reports": "問題回饋",
       "agentActivity": "自動稽核記錄",
-      "announcement": "公告"
+      "announcement": "公告",
+      "dictionaries": "辭典"
     },
     "dashboard": {
       "roles": {
@@ -1043,6 +1044,47 @@
       "allDescription": "無論此處如何設定，登入連結和必要的賬戶郵件都會正常傳送。",
       "turnedOn": "{name}：已開啟",
       "turnedOff": "{name}：已關閉"
+    },
+    "dictionaries": {
+      "title": "自訂辭典",
+      "description": "將你的 Yomitan（.zip）辭典上傳至帳號。它們會在所有裝置間同步，並依你設定的順序顯示於單字卡片中。",
+      "quotaUsed": "{used} / {max} 本辭典",
+      "maxZipSize": "每個 .zip 最大 {maxMb} MB",
+      "patronUpsell": "贊助者最多可上傳 6 本辭典（每本最高 95 MB）。",
+      "shirabeProviderNotice": "你目前的單字卡片使用 Shirabe。切換為 Nadeshiko 以使用自訂辭典。",
+      "switchToNadeshiko": "使用 Nadeshiko",
+      "dropPrompt": "點擊選擇 Yomitan .zip 檔案或拖曳到此處",
+      "uploading": "正在上傳… {progress}%",
+      "supportedFormats": "支援 Yomitan v3 釋義、詞頻與音調辭典（不含圖片）。",
+      "invalidZipType": "請選擇 Yomitan .zip 壓縮檔。",
+      "fileTooLarge": "此檔案超過你帳號的 {maxMb} MB 上限。",
+      "quotaReached": "已達到自訂辭典數量上限（{max} 本）。",
+      "uploadedReadyToast": "{title} 已準備就緒。",
+      "uploadedProcessingToast": "{title} 已上傳 — 正在背景建立索引…",
+      "uploadError": "上傳辭典失敗。",
+      "loadError": "無法載入自訂辭典。",
+      "saveError": "無法儲存辭典順序。",
+      "deleteError": "無法刪除該辭典。",
+      "deletedToast": "已移除 {title}。",
+      "stackTitle": "辭典順序",
+      "stackHint": "排在前面的辭典會優先顯示於單字卡片中",
+      "loading": "正在載入辭典…",
+      "builtinTitle": "Nadeshiko JMdict",
+      "builtinBadge": "內建",
+      "builtinDescription": "內建日英辭典，包含語料庫詞頻與 UniDic 音調。",
+      "statusProcessing": "索引中…",
+      "statusFailed": "失敗",
+      "bankTerms": "釋義",
+      "bankFrequency": "詞頻",
+      "bankPitch": "音調",
+      "termCount": "{count} 詞條",
+      "frequencyCount": "{count} 詞頻",
+      "pitchCount": "{count} 音調",
+      "moveUp": "上移辭典",
+      "moveDown": "下移辭典",
+      "enable": "啟用辭典",
+      "disable": "停用辭典",
+      "delete": "刪除辭典"
     }
   },
   "blog": {
@@ -1589,7 +1631,10 @@
     "support": "支持 Nadeshiko",
     "proposeCta": "推薦作品",
     "filterLabel": "篩選路線圖",
-    "filters": { "content": "作品", "feature": "功能" },
+    "filters": {
+      "content": "作品",
+      "feature": "功能"
+    },
     "dateFlexible": "時間待定",
     "featureSoon": "即將推出™",
     "featureReleased": "已發布",
@@ -1644,8 +1689,14 @@
         "title": "Patreon 作品推薦",
         "description": "贊助會員可以連結會員資格、推薦作品，並在公開路線圖中追蹤已核准的新增內容。"
       },
-      "searchFilters": { "title": "更好用的搜尋篩選", "description": "可直接按作品名稱、標籤及其他精確條件進行搜尋。" },
-      "publicRoadmap": { "title": "公開路線圖", "description": "集中查看即將加入和已經發布的作品與功能。" },
+      "searchFilters": {
+        "title": "更好用的搜尋篩選",
+        "description": "可直接按作品名稱、標籤及其他精確條件進行搜尋。"
+      },
+      "publicRoadmap": {
+        "title": "公開路線圖",
+        "description": "集中查看即將加入和已經發布的作品與功能。"
+      },
       "interfaceLanguages": {
         "title": "七種介面語言",
         "description": "除英語、西班牙語和日語外，Nadeshiko 現已支援葡萄牙語、印尼語、簡體中文和繁體中文。"
@@ -1680,7 +1731,10 @@
     "callbackDone": "已連結 Patreon",
     "callbackDoneBody": "會員資格已檢查。現在可以返回路線圖。",
     "backToRoadmap": "返回路線圖",
-    "admin": { "tab": "路線圖", "title": "路線圖佇列" }
+    "admin": {
+      "tab": "路線圖",
+      "title": "路線圖佇列"
+    }
   },
   "feedback": {
     "open": "意見回饋",

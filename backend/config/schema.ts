@@ -28,6 +28,8 @@ import {
   WordFrequency,
   PatreonConnection,
   RoadmapItem,
+  UserDictionary,
+  UserDictionaryArtifact,
 } from '@app/models';
 import { SegmentSubscriber } from '@app/subscribers';
 
@@ -54,6 +56,8 @@ export const APP_ENTITIES = [
   WordFrequency,
   PatreonConnection,
   RoadmapItem,
+  UserDictionary,
+  UserDictionaryArtifact,
 ];
 
 export const APP_SUBSCRIBERS = [SegmentSubscriber];

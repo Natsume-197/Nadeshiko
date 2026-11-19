@@ -29,6 +29,7 @@ export function useWordCardContent(
   glossLanguages: () => GlossPreference,
   hiddenDefinitionLanguages: () => readonly GlossLanguage[],
   shirabeLinked: () => boolean,
+  hasCustomDictionaries: () => boolean = () => false,
 ) {
   // 1. Head. The reading is the dictionary's, not the surface's: 焼けた reads
   // やけた, but the word above the senses is 焼ける, and printing it over the
@@ -89,6 +90,8 @@ export function useWordCardContent(
     }),
   );
 
+  const customFrequencies = computed(() => word()?.customFrequencies ?? []);
+
   /**
    * Limit pitch to two patterns so senses stay visible. Audio is per reading/accent on
    * Shirabe's public CDN; show a button only when that pattern has a recording.
@@ -99,6 +102,7 @@ export function useWordCardContent(
     return (word()?.pitch ?? []).slice(0, 2).map((pattern) => ({
       downstep: pattern.downstep,
       audioUrl: pattern.audioUrl ?? '',
+      source: pattern.source ?? '',
       morae: pitchMorae(reading, pattern.downstep),
     }));
   });
@@ -107,15 +111,15 @@ export function useWordCardContent(
   const senses = computed(() => cardSenses(word(), glossLanguages()));
 
   /** How many dictionaries this card is made of. One for every reader who has not
-   *  linked a Shirabe account, which is what decides whether the senses are worth
-   *  attributing at all. */
+   *  linked a Shirabe account or uploaded custom dictionaries, which is what
+   *  decides whether the senses are worth attributing at all. */
   const sourceCount = computed(() => new Set(senses.value.map((sense) => sense.dictionary)).size);
 
   /**
-   * Name sources for multiple dictionaries or any linked account, where an unexpected fallback
+   * Name sources for multiple dictionaries or any linked/custom stack, where an unexpected fallback
    * dictionary otherwise appears unexplained.
    */
-  const namesSources = computed(() => sourceCount.value > 1 || shirabeLinked());
+  const namesSources = computed(() => sourceCount.value > 1 || shirabeLinked() || hasCustomDictionaries());
 
   /**
    * Merged expressions hide their constituent tokens; the parts row restores access. Offer only
@@ -142,6 +146,7 @@ export function useWordCardContent(
     inflectionLine,
     badges,
     frequencySplit,
+    customFrequencies,
     pitchPatterns,
     senses,
     sourceCount,

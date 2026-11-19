@@ -51,6 +51,11 @@ export interface SessionUser {
      *  Empty when the stack names no gloss language. */
     glossLanguages?: string[] | null;
   } | null;
+  /** User-uploaded Yomitan dictionaries on Nadeshiko's backend (task 48). */
+  customDictionaries?: {
+    count?: number;
+    stackFingerprint?: string | null;
+  } | null;
 }
 
 export interface SessionInfo {
@@ -93,6 +98,12 @@ function defaultAuthState() {
      *  two above: a reader can be linked and have neither a fingerprint copied
      *  yet nor a gloss language in their stack. */
     shirabeLinked: false,
+    /** Fingerprint and active count for the reader's own uploaded Yomitan dictionaries (task 48). */
+    customDictionariesFingerprint: null as string | null,
+    customDictionariesCount: 0,
+    /** Whether the backend offers custom dictionaries at all (`USER_DICTIONARIES_ENABLED`): it sends
+     *  `customDictionaries: null` in the session while the feature is off. */
+    customDictionariesAvailable: false,
     activeSessions: [] as UserSession[],
     preferences: {} as UserPreferences,
     isImpersonating: false,
@@ -196,15 +207,23 @@ export const userStore = defineStore('user', {
         shirabeStackFingerprint: sessionUser?.shirabe?.stackFingerprint ?? null,
         shirabeGlossLanguages: sessionUser?.shirabe?.glossLanguages ?? [],
         shirabeLinked: sessionUser?.shirabe?.linked === true,
+        customDictionariesFingerprint: sessionUser?.customDictionaries?.stackFingerprint ?? null,
+        customDictionariesCount: sessionUser?.customDictionaries?.count ?? 0,
+        customDictionariesAvailable: sessionUser?.customDictionaries != null,
         isImpersonating: impersonating,
         impersonatedUsername: impersonating ? (sessionUser?.name ?? null) : null,
       });
 
       // The word-lookup cache keys on this, and cannot reach in for it: see
       // `setReaderStack`. Pushed from the one place that knows a session landed.
-      setReaderStack(sessionUser?.shirabe?.stackFingerprint);
+      setReaderStack(sessionUser?.shirabe?.stackFingerprint ?? sessionUser?.customDictionaries?.stackFingerprint);
 
       return true;
+    },
+
+    setCustomDictionariesState(fingerprint: string | null, count: number) {
+      this.customDictionariesFingerprint = fingerprint;
+      this.customDictionariesCount = count;
     },
 
     async loginWithProvider(provider: 'google' | 'discord') {

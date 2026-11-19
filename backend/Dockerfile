@@ -40,6 +40,7 @@ RUN set -eux; \
 FROM node:26.13.0-slim@sha256:5adad64f9a1fca2d51972caa65983634c8a774eb300d72b20f7f2a0f60368072 AS release
 WORKDIR /app
 COPY --from=build /app /app
+RUN mkdir -p /app/data/user-dictionaries && chown -R node:node /app/data
 USER node
 
 # Leave memory beyond V8 old space for database/search/telemetry buffers; this is not a total-heap cap. Keep

@@ -495,7 +495,8 @@
       "users": "用户",
       "reports": "问题反馈",
       "agentActivity": "自动审核记录",
-      "announcement": "公告"
+      "announcement": "公告",
+      "dictionaries": "词典"
     },
     "dashboard": {
       "roles": {
@@ -1043,6 +1044,47 @@
       "allDescription": "无论此处如何设置，登录链接和必要的账户邮件都会正常发送。",
       "turnedOn": "{name}：已开启",
       "turnedOff": "{name}：已关闭"
+    },
+    "dictionaries": {
+      "title": "自定义词典",
+      "description": "将你的 Yomitan（.zip）词典上传到账号。它们会在所有设备间同步，并按你设置的顺序显示在单词卡片中。",
+      "quotaUsed": "{used} / {max} 本词典",
+      "maxZipSize": "每个 .zip 最大 {maxMb} MB",
+      "patronUpsell": "赞助者最多可上传 6 本词典（每本最高 95 MB）。",
+      "shirabeProviderNotice": "你当前的单词卡片使用 Shirabe。切换到 Nadeshiko 以使用自定义词典。",
+      "switchToNadeshiko": "使用 Nadeshiko",
+      "dropPrompt": "点击选择 Yomitan .zip 文件或拖放到此处",
+      "uploading": "正在上传… {progress}%",
+      "supportedFormats": "支持 Yomitan v3 释义、词频和音调词典（不含图片）。",
+      "invalidZipType": "请选择 Yomitan .zip 压缩包。",
+      "fileTooLarge": "该文件超出了你账号的 {maxMb} MB 上限。",
+      "quotaReached": "已达到自定义词典数量上限（{max} 本）。",
+      "uploadedReadyToast": "{title} 已准备就绪。",
+      "uploadedProcessingToast": "{title} 已上传 — 正在后台建立索引…",
+      "uploadError": "上传词典失败。",
+      "loadError": "无法加载自定义词典。",
+      "saveError": "无法保存词典顺序。",
+      "deleteError": "无法删除该词典。",
+      "deletedToast": "已移除 {title}。",
+      "stackTitle": "词典顺序",
+      "stackHint": "排在前面的词典会优先显示在单词卡片中",
+      "loading": "正在加载词典…",
+      "builtinTitle": "Nadeshiko JMdict",
+      "builtinBadge": "内置",
+      "builtinDescription": "内置日英词典，包含语料库词频与 UniDic 音调。",
+      "statusProcessing": "索引中…",
+      "statusFailed": "失败",
+      "bankTerms": "释义",
+      "bankFrequency": "词频",
+      "bankPitch": "音调",
+      "termCount": "{count} 词条",
+      "frequencyCount": "{count} 词频",
+      "pitchCount": "{count} 音调",
+      "moveUp": "上移词典",
+      "moveDown": "下移词典",
+      "enable": "启用词典",
+      "disable": "停用词典",
+      "delete": "删除词典"
     }
   },
   "blog": {
@@ -1589,7 +1631,10 @@
     "support": "支持 Nadeshiko",
     "proposeCta": "推荐作品",
     "filterLabel": "筛选路线图",
-    "filters": { "content": "作品", "feature": "功能" },
+    "filters": {
+      "content": "作品",
+      "feature": "功能"
+    },
     "dateFlexible": "时间待定",
     "featureSoon": "即将推出™",
     "featureReleased": "已发布",
@@ -1644,8 +1689,14 @@
         "title": "Patreon 作品推荐",
         "description": "赞助会员可以关联会员资格、推荐作品，并在公开路线图中跟踪已批准的新增内容。"
       },
-      "searchFilters": { "title": "更好用的搜索筛选", "description": "可直接按作品名称、标签及其他精确条件进行搜索。" },
-      "publicRoadmap": { "title": "公开路线图", "description": "集中查看即将加入和已经发布的作品与功能。" },
+      "searchFilters": {
+        "title": "更好用的搜索筛选",
+        "description": "可直接按作品名称、标签及其他精确条件进行搜索。"
+      },
+      "publicRoadmap": {
+        "title": "公开路线图",
+        "description": "集中查看即将加入和已经发布的作品与功能。"
+      },
       "interfaceLanguages": {
         "title": "七种界面语言",
         "description": "除英语、西班牙语和日语外，Nadeshiko 现已支持葡萄牙语、印度尼西亚语、简体中文和繁体中文。"
@@ -1670,14 +1721,20 @@
         "title": "搜索历史与熟悉的作品",
         "description": "登录用户可跨设备查看最近搜索，收藏和学过的作品也会影响排序。"
       },
-      "apiKeys": { "title": "细粒度 API 密钥", "description": "API 密钥可设为只读、完全访问，或仅限明确选择的权限。" }
+      "apiKeys": {
+        "title": "细粒度 API 密钥",
+        "description": "API 密钥可设为只读、完全访问，或仅限明确选择的权限。"
+      }
     },
     "callbackDeclined": "Patreon 关联未获批准。",
     "callbackFailed": "无法完成 Patreon 关联。",
     "callbackDone": "已关联 Patreon",
     "callbackDoneBody": "会员资格已检查。现在可以返回路线图。",
     "backToRoadmap": "返回路线图",
-    "admin": { "tab": "路线图", "title": "路线图队列" }
+    "admin": {
+      "tab": "路线图",
+      "title": "路线图队列"
+    }
   },
   "feedback": {
     "open": "意见反馈",

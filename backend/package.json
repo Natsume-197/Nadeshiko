@@ -63,6 +63,7 @@
     "node": ">=26.13.0"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1163.0",
     "@aws-sdk/client-sesv2": "^3.1163.0",
     "@better-auth/api-key": "^1.7.18",
     "@brigadasos/nadeshiko-shared": "*",

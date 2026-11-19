@@ -23,6 +23,7 @@ import { useKanjiView } from '~/composables/useKanjiView';
 import type { KanjiCardWordRef } from '~/utils/kanjiLookup';
 import WordCardKanji from './WordCardKanji.vue';
 import PitchGraph from './PitchGraph.vue';
+import YomitanContent from './YomitanContent.vue';
 // Two different verbs, so two different shapes. These sit side by side at 16px,
 // where `mdiStarCheckOutline` and `mdiStarPlusOutline` -- the pair that was here
 // -- were one star with a smudge in the corner: the reader could not tell "show
@@ -152,6 +153,7 @@ const {
   inflectionLine,
   badges,
   frequencySplit,
+  customFrequencies,
   pitchPatterns,
   senses,
   namesSources,
@@ -166,6 +168,7 @@ const {
   () => glossLanguages.value,
   () => hiddenDefinitionLanguages.value,
   () => userStore().shirabeLinked,
+  () => userStore().customDictionariesCount > 0,
 );
 
 /** Whether the rank by kind of media is open under the badges. Kept from word to word: a reader who opened it
@@ -1104,7 +1107,7 @@ function reportDictionaryClick(dictionary: DictionaryId, surface: ShirabeLinkSur
           <div v-else class="token-tooltip__body" aria-live="polite">
             <p v-if="inflectionLine" class="token-tooltip__inflection">{{ inflectionLine }}</p>
 
-            <div v-if="badges.length > 0" class="token-tooltip__badges">
+            <div v-if="badges.length > 0 || customFrequencies.length > 0" class="token-tooltip__badges">
               <template v-for="badge in badges" :key="badge.id">
                 <!-- The corpus rank opens its split by kind of media, when the dictionary gives one. -->
                 <button
@@ -1119,6 +1122,13 @@ function reportDictionaryClick(dictionary: DictionaryId, surface: ShirabeLinkSur
                 >{{ badge.text }} <span aria-hidden="true">{{ frequencyOpen ? '▴' : '▾' }}</span></button>
                 <span v-else class="token-tooltip__badge" :class="badge.kind">{{ badge.text }}</span>
               </template>
+              <span
+                v-for="cf in customFrequencies"
+                :key="cf.dictionary"
+                class="token-tooltip__badge is-freq"
+                :title="cf.dictionaryName"
+                data-testid="word-card-custom-frequency"
+              >{{ cf.dictionaryName }}: {{ cf.displayValue }}</span>
             </div>
             <ul v-if="frequencyOpen && frequencySplit.length > 0" class="token-tooltip__freq-split" data-testid="word-card-frequency-split">
               <li v-for="entry in frequencySplit" :key="entry.category">
@@ -1223,8 +1233,8 @@ function reportDictionaryClick(dictionary: DictionaryId, surface: ShirabeLinkSur
                       :class="`token-tooltip__chip--${chip.category}`"
                       :title="chip.title"
                     >{{ chip.label }}</span></span>
-                    <span v-for="row in sense.glosses" :key="row.lang" class="token-tooltip__gloss-row">
-                      <span v-if="row.label" class="token-tooltip__lang">{{ row.label }}</span>{{ row.text }}
+                    <span v-for="(row, ri) in sense.glosses" :key="`${row.lang}-${ri}`" class="token-tooltip__gloss-row">
+                      <span v-if="row.label" class="token-tooltip__lang">{{ row.label }}</span><YomitanContent v-if="row.structuredContent !== undefined" :content="row.structuredContent" /><span v-else class="token-tooltip__gloss-text">{{ row.text }}</span>
                     </span>
                     <!-- On the sense it qualifies, never carried down to the next:
                          "usu. in kana" on sense 3 and not on sense 4 is a real
@@ -1284,7 +1294,8 @@ function reportDictionaryClick(dictionary: DictionaryId, surface: ShirabeLinkSur
                     <path d="M13 4a6 6 0 0 1 0 8" />
                   </svg>
                 </button>
-                <PitchGraph :morae="pattern.morae" :downstep="pattern.downstep" />
+                <PitchGraph :morae="pattern.morae" :downstep="pattern.downstep" :title="pattern.source || undefined" />
+                <span v-if="pattern.source && pi === 0" class="token-tooltip__pitch-source">{{ pattern.source }}</span>
               </span>
             </div>
 
@@ -2194,6 +2205,12 @@ a.token-tooltip__word:hover {
   margin-right: 6px;
 }
 
+.token-tooltip__pitch-source {
+  margin-left: 6px;
+  font-size: 10px;
+  color: rgb(var(--c-gray-400));
+}
+
 /* Share number-column and gap variables across grid and indentation; each sub-sense step is one column plus
  * gap.
  */
@@ -2486,6 +2503,10 @@ a.token-tooltip__word:hover {
 
 .token-tooltip__gloss-row {
   display: block;
+}
+
+.token-tooltip__gloss-text {
+  white-space: pre-line;
 }
 
 .token-tooltip__gloss-row + .token-tooltip__gloss-row {

@@ -41,6 +41,8 @@ vi.mock('@app/workers/tokenParseWorker', () => ({ registerTokenParseWorker: vi.f
 vi.mock('@app/workers/dictionaryRefreshWorker', () => ({ registerDictionaryRefreshWorker: vi.fn() }));
 vi.mock('@app/workers/recurringLinesWorker', () => ({ registerRecurringLinesWorker: vi.fn() }));
 vi.mock('@app/workers/patreonMembershipRefreshWorker', () => ({ registerPatreonMembershipRefreshWorker: vi.fn() }));
+vi.mock('@app/workers/userDictionaryImportWorker', () => ({ registerUserDictionaryImportWorker: vi.fn() }));
+vi.mock('@app/services/dictionary/custom/sqlitePool', () => ({ closeAllArtifactHandles: vi.fn() }));
 vi.mock('@app/workers/recurringLinesQueue', () => ({ sendRecurringSweepJob: vi.fn() }));
 
 import { workersInitializer } from '@config/initializers/workers';

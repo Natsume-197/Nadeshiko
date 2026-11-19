@@ -12,6 +12,8 @@ const PREFERENCE_WRITE_PATHS = [
   /^\/v1\/user\/favorite-media(?:\/|$)/,
   // Shirabe linking also changes the identity cached by get-session.
   /^\/v1\/user\/connections\/shirabe(?:\/callback)?\/?$/,
+  // Custom Yomitan dictionary uploads, reorders, toggles and deletes change the reader's session stack fingerprint.
+  /^\/v1\/user\/dictionaries(?:\/|$)/,
 ];
 
 export function writesPreferences(method: string, pathname: string): boolean {

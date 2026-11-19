@@ -63,6 +63,11 @@ export interface UserPreferences {
   defaultSearchCategory?: CategoryType | 'ALL';
   /** A patron's custom theme. Writing it needs an active patron or an admin; see `customTheme.ts`. */
   customTheme?: CustomTheme | null;
+  /** Built-in JMdict placement and toggle relative to the user's uploaded Yomitan dictionaries (task 48). */
+  dictionaryStack?: {
+    builtinEnabled?: boolean;
+    builtinPosition?: number;
+  };
 }
 
 export interface CustomTheme {

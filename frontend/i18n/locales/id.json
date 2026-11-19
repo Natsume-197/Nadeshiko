@@ -495,7 +495,8 @@
       "users": "Pengguna",
       "reports": "Laporan",
       "agentActivity": "Aktivitas agen",
-      "announcement": "Pengumuman"
+      "announcement": "Pengumuman",
+      "dictionaries": "Kamus"
     },
     "dashboard": {
       "roles": {
@@ -1043,6 +1044,47 @@
       "allDescription": "Email tautan masuk dan email terkait akun tetap dikirim, apa pun pilihan Anda di sini.",
       "turnedOn": "{name}: aktif",
       "turnedOff": "{name}: nonaktif"
+    },
+    "dictionaries": {
+      "title": "Kamus Kustom",
+      "description": "Unggah kamus Yomitan (.zip) milik Anda ke akun Anda. Kamus tersinkronisasi antar perangkat dan tampil di kartu kata sesuai urutan pilihan Anda.",
+      "quotaUsed": "{used} / {max} kamus",
+      "maxZipSize": "Maksimal {maxMb} MB per .zip",
+      "patronUpsell": "Pendukung Patreon dapat mengunggah hingga 6 kamus (95 MB masing-masing).",
+      "shirabeProviderNotice": "Kartu kata Anda saat ini menggunakan Shirabe. Beralih ke Nadeshiko untuk memakai kamus kustom Anda.",
+      "switchToNadeshiko": "Gunakan Nadeshiko",
+      "dropPrompt": "Klik untuk memilih .zip Yomitan atau seret ke sini",
+      "uploading": "Mengunggah… {progress}%",
+      "supportedFormats": "Mendukung kamus Yomitan v3 untuk definisi, frekuensi, dan pitch accent (tanpa gambar).",
+      "invalidZipType": "Silakan pilih file arsip .zip Yomitan.",
+      "fileTooLarge": "File ini melebihi batas {maxMb} MB untuk akun Anda.",
+      "quotaReached": "Anda telah mencapai batas {max} kamus kustom.",
+      "uploadedReadyToast": "{title} siap digunakan.",
+      "uploadedProcessingToast": "{title} diunggah — sedang mengindeks di latar belakang…",
+      "uploadError": "Gagal mengunggah kamus.",
+      "loadError": "Gagal memuat kamus kustom Anda.",
+      "saveError": "Gagal menyimpan urutan kamus.",
+      "deleteError": "Gagal menghapus kamus.",
+      "deletedToast": "{title} dihapus.",
+      "stackTitle": "Urutan kamus",
+      "stackHint": "Kamus teratas tampil lebih dulu di kartu kata",
+      "loading": "Memuat kamus…",
+      "builtinTitle": "Nadeshiko JMdict",
+      "builtinBadge": "Bawaan",
+      "builtinDescription": "Kamus Jepang-Inggris bawaan dengan frekuensi korpus dan pitch accent UniDic.",
+      "statusProcessing": "Mengindeks…",
+      "statusFailed": "Gagal",
+      "bankTerms": "Definisi",
+      "bankFrequency": "Frekuensi",
+      "bankPitch": "Pitch",
+      "termCount": "{count} entri",
+      "frequencyCount": "{count} frekuensi",
+      "pitchCount": "{count} pitch",
+      "moveUp": "Pindah ke atas",
+      "moveDown": "Pindah ke bawah",
+      "enable": "Aktifkan kamus",
+      "disable": "Nonaktifkan kamus",
+      "delete": "Hapus kamus"
     }
   },
   "blog": {
@@ -1589,7 +1631,10 @@
     "support": "Dukung Nadeshiko",
     "proposeCta": "Usulkan anime",
     "filterLabel": "Saring peta jalan",
-    "filters": { "content": "Judul", "feature": "Fitur" },
+    "filters": {
+      "content": "Judul",
+      "feature": "Fitur"
+    },
     "dateFlexible": "Waktu belum ditentukan",
     "featureSoon": "Segera™",
     "featureReleased": "Telah dirilis",
@@ -1686,7 +1731,10 @@
     "callbackDone": "Patreon terhubung",
     "callbackDoneBody": "Keanggotaan Anda telah diperiksa. Anda sekarang dapat kembali ke peta jalan.",
     "backToRoadmap": "Kembali ke peta jalan",
-    "admin": { "tab": "Peta Jalan", "title": "Antrean peta jalan" }
+    "admin": {
+      "tab": "Peta Jalan",
+      "title": "Antrean peta jalan"
+    }
   },
   "feedback": {
     "open": "Masukan",

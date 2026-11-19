@@ -11,7 +11,14 @@ import {
   type ProviderName,
   type WordQuery,
 } from '~~/server/utils/dictionary';
-import { readerStack, readerToken, reportShirabeRefusal, reportStackFingerprint } from '~~/server/utils/shirabeReader';
+import {
+  customDictionaryStack,
+  readerCookie,
+  readerStack,
+  readerToken,
+  reportShirabeRefusal,
+  reportStackFingerprint,
+} from '~~/server/utils/shirabeReader';
 import { distinctNameAnswers, withoutNameEntries } from '~~/server/utils/shirabeNames';
 
 // Identify with reading/POS hints: bare-lemma lookup ignores homograph context. Return ranked alternatives because
@@ -62,11 +69,16 @@ function lookupCacheKey(event: H3Event): string {
   return stableCacheKey(query.locale, query.lemma, query.surface ?? '', query.reading ?? '', query.pos ?? '', ...keyed);
 }
 
-/** A linked reader's own Shirabe stack only matters when Shirabe is the one answering. */
+/** Both a linked Shirabe stack and a reader's own uploaded Yomitan dictionaries on Nadeshiko bypass shared cache. */
 async function usesReaderStack(event: H3Event): Promise<boolean> {
   const input = lookupInput(event);
-  if (input?.provider !== 'shirabe') return false;
-  return (await readerStack(event)).linked;
+  if (input?.provider === 'shirabe') {
+    return (await readerStack(event)).linked;
+  }
+  if (input?.provider === 'nadeshiko') {
+    return (await customDictionaryStack(event)).hasStack;
+  }
+  return false;
 }
 
 /** Ranked candidates as the card wants them; a 404 when the dictionary has no entry. */
@@ -75,6 +87,9 @@ function shape(answer: DictionaryAnswer, answeredAsReader: boolean) {
   const all = answer.candidates;
   const words = withoutNameEntries(all);
   const candidates = words.length > 0 ? words : all;
+  // A pending answer may only lack the entry because the dictionary that has it is not ready: an empty 200 the
+  // browser does not keep, rather than a 404 it remembers as "no entry".
+  if (!candidates.length && answer.pending) return { candidates: [], nameOnly: false, pending: true };
   if (!candidates.length) throw createError({ statusCode: 404, statusMessage: 'No entry for this word' });
 
   // Collapse multiple distinct name glosses, not repeated copies of one useful definition.
@@ -85,6 +100,8 @@ function shape(answer: DictionaryAnswer, answeredAsReader: boolean) {
     candidates,
     nameOnly,
     ...(answeredAsReader && answer.stackFingerprint ? { stackFingerprint: answer.stackFingerprint } : {}),
+    // Tells the browser not to keep this answer either (see `fetchWord`).
+    ...(answer.pending ? { pending: true } : {}),
   };
 }
 
@@ -95,17 +112,23 @@ const handler = defineEventHandler(async (event) => {
   const { lemma } = query;
   const dictionary = dictionaryFor(provider);
 
-  // Fetch a linked reader's key only on a cache miss, and only for Shirabe, which is where their stack lives.
+  // Resolve reader-specific stack only on a cache miss: Shirabe key for Shirabe, session cookie for custom Yomitan
+  // dictionaries on Nadeshiko.
   const reader = provider === 'shirabe' ? await readerStack(event) : { linked: false, fingerprint: null };
-  const hasOwnStack = reader.linked;
-  const readerKey = hasOwnStack ? ((await readerToken(event)) ?? undefined) : undefined;
+  const custom = provider === 'nadeshiko' ? await customDictionaryStack(event) : { hasStack: false, fingerprint: null };
+  const hasOwnStack = reader.linked || custom.hasStack;
+  const readerKey = reader.linked ? ((await readerToken(event)) ?? undefined) : undefined;
+  const forwardedCookie = custom.hasStack ? readerCookie(event) || undefined : undefined;
 
   try {
     let answer: DictionaryAnswer;
     // A service fallback must never be reported as the reader's dictionary stack.
-    let answeredAsReader = Boolean(readerKey);
+    let answeredAsReader = Boolean(readerKey || forwardedCookie);
     try {
-      answer = await dictionary.identify(query, { readerKey });
+      answer = await dictionary.identify(query, {
+        ...(readerKey ? { readerKey } : {}),
+        ...(forwardedCookie ? { readerCookie: forwardedCookie } : {}),
+      });
     } catch (readerError: unknown) {
       // Only reader-key refusals/rate limits fall back to service dictionaries, not arbitrary upstream failures.
       if (!(readerError instanceof DictionaryError) || readerError.kind !== 'refused') throw readerError;
@@ -120,17 +143,27 @@ const handler = defineEventHandler(async (event) => {
       answer = await dictionary.identify(query);
     }
 
-    // Report changed reader stacks without delaying this fresh answer; the next request uses the updated cache key.
-    if (answeredAsReader && answer.stackFingerprint && answer.stackFingerprint !== reader.fingerprint) {
+    // Report changed Shirabe stacks without delaying this fresh answer; the next request uses the updated cache key.
+    if (
+      provider === 'shirabe' &&
+      answeredAsReader &&
+      answer.stackFingerprint &&
+      answer.stackFingerprint !== reader.fingerprint
+    ) {
       void reportStackFingerprint(event, answer.stackFingerprint);
     }
 
     const body = shape(answer, answeredAsReader);
-    // Linked stacks may include private uploads; only unlinked default answers can be shared-cached.
+    // Linked stacks may include private uploads; only unlinked default answers can be shared-cached. An answer still
+    // missing one of the reader's dictionaries is cached nowhere.
     setResponseHeader(
       event,
       'cache-control',
-      hasOwnStack ? `private, max-age=${CACHE_SECONDS}` : `public, max-age=${CACHE_SECONDS}`,
+      answer.pending
+        ? 'no-store'
+        : hasOwnStack
+          ? `private, max-age=${CACHE_SECONDS}`
+          : `public, max-age=${CACHE_SECONDS}`,
     );
     return body;
   } catch (error: unknown) {

@@ -117,25 +117,27 @@ export function fetchWord(ref: WordRef, locale: string): Promise<WordLookup> {
   const pending = inFlight.get(key);
   if (pending) return pending;
 
-  const request = $fetch<{ candidates: ShirabeCandidate[]; nameOnly?: boolean; stackFingerprint?: string }>(
-    `/api/shirabe/words/candidates/${encodeURIComponent(ref.lemma)}`,
-    {
-      // `stack` is a cache key and nothing else: the route ignores it when
-      // calling Shirabe, which resolves the stack from the reader's own key.
-      // Sent only for a linked reader, so every other URL is unchanged.
-      query: {
-        locale,
-        surface: ref.surface,
-        reading: ref.reading,
-        pos: ref.pos,
-        ...(stack ? { stack } : {}),
-        ...(readerProvider ? { provider: readerProvider } : {}),
-      },
-      // Bound the browser request beyond the server's shorter timeouts so a hung connection cannot leave the
-      // card loading forever.
-      timeout: 8000,
+  const request = $fetch<{
+    candidates: ShirabeCandidate[];
+    nameOnly?: boolean;
+    stackFingerprint?: string;
+    pending?: boolean;
+  }>(`/api/shirabe/words/candidates/${encodeURIComponent(ref.lemma)}`, {
+    // `stack` is a cache key and nothing else: the route ignores it when
+    // calling Shirabe, which resolves the stack from the reader's own key.
+    // Sent only for a linked reader, so every other URL is unchanged.
+    query: {
+      locale,
+      surface: ref.surface,
+      reading: ref.reading,
+      pos: ref.pos,
+      ...(stack ? { stack } : {}),
+      ...(readerProvider ? { provider: readerProvider } : {}),
     },
-  )
+    // Bound the browser request beyond the server's shorter timeouts so a hung connection cannot leave the
+    // card loading forever.
+    timeout: 8000,
+  })
     .then((answer): WordLookup => {
       // A changed response fingerprint identifies stack drift. Update the browser fingerprint, discard stale
       // resolved answers and store this response under its observed stack instead of waiting for session
@@ -150,8 +152,14 @@ export function fetchWord(ref: WordRef, locale: string): Promise<WordLookup> {
 
       const found = answer?.candidates ?? [];
       // An empty candidate list has the same missing-entry meaning as HTTP 404.
-      if (found.length === 0) return remember(resolved, answerKey, { candidates: [], reason: 'missing' });
-      return remember(resolved, answerKey, { candidates: found, nameOnly: answer?.nameOnly === true });
+      const lookup: WordLookup =
+        found.length === 0
+          ? { candidates: [], reason: 'missing' }
+          : { candidates: found, nameOnly: answer?.nameOnly === true };
+      // Missing one of the reader's uploaded dictionaries (indexing, or the server still fetching it): show it, but
+      // ask again on the next hover instead of keeping it for the tab's life.
+      if (answer?.pending) return lookup;
+      return remember(resolved, answerKey, lookup);
     })
     .catch((error: unknown): WordLookup => {
       // 404 means no entry; other failures describe the request. Support both status locations used by

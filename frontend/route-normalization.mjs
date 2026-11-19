@@ -34,6 +34,7 @@ const STATIC_PAGES = new Set([
   '/user/settings',
   '/user/sync',
   '/user/themes',
+  '/user/dictionaries',
   '/user/admin',
   '/user/admin/agent-activity',
   '/user/admin/announcement',

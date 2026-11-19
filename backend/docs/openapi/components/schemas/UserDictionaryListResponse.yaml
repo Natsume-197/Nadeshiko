@@ -1,0 +1,38 @@
+type: object
+description: The signed-in user's custom Yomitan dictionary stack, built-in JMdict placement, and account quota.
+required:
+  - dictionaries
+  - builtin
+  - quota
+  - stackFingerprint
+properties:
+  dictionaries:
+    type: array
+    items:
+      $ref: "./UserDictionary.yaml"
+  builtin:
+    type: object
+    required: [id, enabled, position]
+    properties:
+      id:
+        type: string
+        example: jmdict
+      enabled:
+        type: boolean
+      position:
+        type: integer
+  quota:
+    type: object
+    required: [used, max, maxZipBytes, isPatron]
+    properties:
+      used:
+        type: integer
+      max:
+        type: integer
+      maxZipBytes:
+        type: integer
+      isPatron:
+        type: boolean
+  stackFingerprint:
+    type: string
+    nullable: true
