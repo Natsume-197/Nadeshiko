@@ -19,6 +19,8 @@ Los datos de diccionario que se muestran en este sitio, y cualquier dato derivad
 
 Las frases se dividen en palabras con [Sudachi](https://github.com/WorksApplications/Sudachi) y su diccionario, de Works Applications, bajo la licencia Apache 2.0.
 
+Sudachi también lee un diccionario de usuario con palabras y expresiones de JMdict (para que あけましておめでとうございます o 気がついてる sigan siendo una sola palabra), creado por [Jiten](https://jiten.moe) a partir de JMdict, bajo la [licencia Creative Commons Atribución-CompartirIgual 4.0](https://creativecommons.org/licenses/by-sa/4.0/deed.es).
+
 Cuando una frase escribe un verbo en kana, la palabra que es tras un sustantivo y una partícula dados (ピアノをひいた es 弾く, no 引く) sale de los propios subtítulos de Nadeshiko y de la tabla de colocaciones sustantivo–verbo de [Jiten](https://jiten.moe), bajo la [licencia Creative Commons Atribución-CompartirIgual 4.0](https://creativecommons.org/licenses/by-sa/4.0/deed.es).
 
 ## Tarjetas de palabras

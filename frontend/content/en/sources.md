@@ -19,6 +19,8 @@ Dictionary data shown on this site, and any data derived from it that you export
 
 Sentences are split into words with [Sudachi](https://github.com/WorksApplications/Sudachi) and its dictionary, by Works Applications, under the Apache License 2.0.
 
+Sudachi also reads a user dictionary of JMdict words and expressions (so あけましておめでとうございます or 気がついてる stay one word), built by [Jiten](https://jiten.moe) from JMdict, under the [Creative Commons Attribution-ShareAlike 4.0 licence](https://creativecommons.org/licenses/by-sa/4.0/).
+
 When a sentence writes a verb in kana, the word it stands for after a given noun and particle (ピアノをひいた is 弾く, not 引く) comes from Nadeshiko's own subtitles and from the noun–verb collocation table of [Jiten](https://jiten.moe), under the [Creative Commons Attribution-ShareAlike 4.0 licence](https://creativecommons.org/licenses/by-sa/4.0/).
 
 ## Word cards

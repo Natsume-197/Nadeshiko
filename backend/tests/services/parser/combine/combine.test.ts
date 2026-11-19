@@ -194,6 +194,7 @@ describe('stage list', () => {
       'ApplyCollocations',
       'ReadAmounts',
       'LinkReadings',
+      'AbsorbStretchedVowel',
       'AssignKinds',
     ]);
   });

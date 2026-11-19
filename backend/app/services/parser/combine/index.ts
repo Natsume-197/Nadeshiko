@@ -57,6 +57,7 @@ import {
   splitUnattestedToAdverbs,
   splitUnresolvableSuruCompounds,
 } from './stages/split';
+import { absorbStretchedVowel } from './stages/elongation';
 import { processSpecialCases } from './stages/specialCases';
 import { combineSuffix, reclassifyOrphanedSuffixes } from './stages/suffix';
 import type { CombineContext, Feature, Group, Stage } from './types';
@@ -152,6 +153,7 @@ export const STAGES: readonly Stage[] = [
     origin: '(ours, after FormReading)',
     run: linkReadings,
   },
+  { name: 'AbsorbStretchedVowel', origin: '(ours)', run: absorbStretchedVowel },
   { name: 'AssignKinds', origin: '(ours)', run: assignKinds },
 ];
 
