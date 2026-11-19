@@ -1102,7 +1102,6 @@
   "wordEntry": {
     "label": "Entrada del diccionario",
     "common": "Frecuente",
-    "pitch": "Acento tonal",
     "allSenses": "Ver los {count} significados",
     "fewerSenses": "Ver menos",
     "others": "También puede ser",
@@ -1132,6 +1131,7 @@
     "kanjiNewspaper": "n.º {rank} en prensa",
     "kanjiCorpusRank": "n.º {rank} en Nadeshiko",
     "frequencyByCategory": "Posición por tipo de medio",
+    "pitchAccent": "Acento tonal",
     "kanjiReadingShare": "{percent} % de sus frases en Nadeshiko",
     "kanjiWordRank": "n.º {rank} entre las palabras de Nadeshiko",
     "kanjiParts": "Partes",

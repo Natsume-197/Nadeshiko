@@ -22,6 +22,7 @@ import { fetchWord, peekWord, type WordLookup } from '~/utils/wordLookup';
 import { useKanjiView } from '~/composables/useKanjiView';
 import type { KanjiCardWordRef } from '~/utils/kanjiLookup';
 import WordCardKanji from './WordCardKanji.vue';
+import PitchGraph from './PitchGraph.vue';
 // Two different verbs, so two different shapes. These sit side by side at 16px,
 // where `mdiStarCheckOutline` and `mdiStarPlusOutline` -- the pair that was here
 // -- were one star with a smudge in the corner: the reader could not tell "show
@@ -1125,37 +1126,6 @@ function reportDictionaryClick(dictionary: DictionaryId, surface: ShirabeLinkSur
               </li>
             </ul>
 
-            <!-- The play buttons sit on the pitch row because both are about how
-                 the word SOUNDS, and one leads each pattern because each pattern
-                 is a different recording: a word read two ways gets a button per
-                 accent, in front of the diagram that names the accent it plays. -->
-            <div v-if="pitchPatterns.length > 0" class="token-tooltip__pitch">
-              <span v-for="(pattern, pi) in pitchPatterns" :key="pi" class="token-tooltip__pitch-pattern">
-                <button
-                  v-if="pattern.audioUrl"
-                  type="button"
-                  class="token-tooltip__audio"
-                  :class="{ 'is-playing': playingUrl === pattern.audioUrl }"
-                  :aria-label="$t('tokenTooltip.playAudio')"
-                  :title="$t('tokenTooltip.playAudio')"
-                  @click="playHeadword(pattern.audioUrl)"
-                >
-                  <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M8.5 2.75 4.9 5.75H2.4v4.5h2.5l3.6 3z" fill="currentColor" stroke="none" />
-                    <path d="M11 6a3 3 0 0 1 0 4" />
-                    <path d="M13 4a6 6 0 0 1 0 8" />
-                  </svg>
-                </button>
-                <span
-                  v-for="(mora, mi) in pattern.morae"
-                  :key="mi"
-                  class="token-tooltip__mora"
-                  :class="{ 'is-high': mora.high, 'is-drop': mora.drop }"
-                >{{ mora.text }}</span>
-                <span class="token-tooltip__downstep">[{{ pattern.downstep }}]</span>
-              </span>
-            </div>
-
             <!-- What this expression is made of, and the only way to reach those
                  words: the chip spans them, so they cannot be hovered, and a
                  merged expression is the only candidate, so the picker offers no
@@ -1291,6 +1261,32 @@ function reportDictionaryClick(dictionary: DictionaryId, surface: ShirabeLinkSur
                  true, and the dictionary chips below still work. -->
             <p v-else-if="wordState === 'unavailable'" class="token-tooltip__pending">{{ $t('tokenTooltip.unavailable') }}</p>
 
+
+            <!-- How the word sounds, after what it means: the definitions are what the reader opened the card
+                 for. The play buttons sit on the pitch row because both are about how the word SOUNDS, and one
+                 leads each pattern because each pattern is a different recording: a word read two ways gets a
+                 button per accent, in front of the graph that names the accent it plays. -->
+            <div v-if="pitchPatterns.length > 0" class="token-tooltip__pitch">
+              <span class="token-tooltip__pitch-label">{{ $t('tokenTooltip.pitchAccent') }}</span>
+              <span v-for="(pattern, pi) in pitchPatterns" :key="pi" class="token-tooltip__pitch-pattern">
+                <button
+                  v-if="pattern.audioUrl"
+                  type="button"
+                  class="token-tooltip__audio"
+                  :class="{ 'is-playing': playingUrl === pattern.audioUrl }"
+                  :aria-label="$t('tokenTooltip.playAudio')"
+                  :title="$t('tokenTooltip.playAudio')"
+                  @click="playHeadword(pattern.audioUrl)"
+                >
+                  <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M8.5 2.75 4.9 5.75H2.4v4.5h2.5l3.6 3z" fill="currentColor" stroke="none" />
+                    <path d="M11 6a3 3 0 0 1 0 4" />
+                    <path d="M13 4a6 6 0 0 1 0 8" />
+                  </svg>
+                </button>
+                <PitchGraph :morae="pattern.morae" :downstep="pattern.downstep" />
+              </span>
+            </div>
 
             <!-- The other spellings. The reader may well have met one of these
                  rather than the headword above, and nothing else on the card
@@ -2174,45 +2170,28 @@ a.token-tooltip__word:hover {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px 12px;
+  gap: 4px 20px;
   margin-top: 8px;
+}
+
+/* The section's name on a line of its own, above the graphs, in the card's label style (ALSO WRITTEN). */
+.token-tooltip__pitch-label {
+  flex: 0 0 100%;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
 }
 
 .token-tooltip__pitch-pattern {
   display: inline-flex;
-  align-items: baseline;
+  align-items: center;
 }
 
-/* Spaced off its own diagram, but by less than the 12px between two patterns:
-   the button has to read as belonging to the accent on its right rather than
-   floating between two of them. The margin goes here rather than a `gap` on the
-   pattern, because the morae are a continuous overline and must stay touching. */
+/* Spaced off its own graph, but by less than the gap between two patterns: the button has to read as belonging
+   to the accent on its right rather than floating between two of them. */
 .token-tooltip__pitch-pattern .token-tooltip__audio {
   margin-right: 6px;
-}
-
-.token-tooltip__mora {
-  padding: 1px 0;
-  font-size: 13px;
-  line-height: 1.4;
-  color: var(--ink);
-  border-top: 2px solid transparent;
-}
-
-.token-tooltip__mora.is-high {
-  border-top-color: var(--accent-soft);
-}
-
-.token-tooltip__mora.is-drop {
-  border-right: 2px solid var(--accent-soft);
-}
-
-.token-tooltip__downstep {
-  margin-left: 6px;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--ink-faint);
-  font-variant-numeric: tabular-nums;
 }
 
 /* Share number-column and gap variables across grid and indentation; each sub-sense step is one column plus

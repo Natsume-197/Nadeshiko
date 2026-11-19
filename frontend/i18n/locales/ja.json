@@ -1102,7 +1102,6 @@
   "wordEntry": {
     "label": "辞書の項目",
     "common": "常用",
-    "pitch": "アクセント",
     "allSenses": "全{count}件の意味を表示",
     "fewerSenses": "閉じる",
     "others": "ほかの語",
@@ -1132,6 +1131,7 @@
     "kanjiNewspaper": "新聞での頻度 {rank}位",
     "kanjiCorpusRank": "Nadeshikoでの頻度 {rank}位",
     "frequencyByCategory": "メディア別の頻度順位",
+    "pitchAccent": "アクセント",
     "kanjiReadingShare": "Nadeshikoの例文の{percent}%",
     "kanjiWordRank": "Nadeshikoの単語で{rank}位",
     "kanjiParts": "部品",

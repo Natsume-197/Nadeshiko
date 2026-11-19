@@ -1102,7 +1102,6 @@
   "wordEntry": {
     "label": "Verbete do dicionário",
     "common": "Comum",
-    "pitch": "Acento tonal",
     "allSenses": "Ver os {count} significados",
     "fewerSenses": "Ver menos",
     "others": "Também pode ser",
@@ -1132,6 +1131,7 @@
     "kanjiNewspaper": "nº {rank} em jornais",
     "kanjiCorpusRank": "nº {rank} no Nadeshiko",
     "frequencyByCategory": "Posição por tipo de mídia",
+    "pitchAccent": "Acento tonal",
     "kanjiReadingShare": "{percent}% das suas frases no Nadeshiko",
     "kanjiWordRank": "nº {rank} entre as palavras do Nadeshiko",
     "kanjiParts": "Partes",

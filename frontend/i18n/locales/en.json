@@ -1102,7 +1102,6 @@
   "wordEntry": {
     "label": "Dictionary entry",
     "common": "Common",
-    "pitch": "Pitch accent",
     "allSenses": "Show all {count} meanings",
     "fewerSenses": "Show fewer",
     "others": "Also could be",
@@ -1132,6 +1131,7 @@
     "kanjiNewspaper": "#{rank} in newspapers",
     "kanjiCorpusRank": "#{rank} on Nadeshiko",
     "frequencyByCategory": "Rank by kind of media",
+    "pitchAccent": "Pitch accent",
     "kanjiReadingShare": "{percent}% of its sentences on Nadeshiko",
     "kanjiWordRank": "#{rank} among the words on Nadeshiko",
     "kanjiParts": "Parts",

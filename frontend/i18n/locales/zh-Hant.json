@@ -1102,7 +1102,6 @@
   "wordEntry": {
     "label": "辭典條目",
     "common": "常用",
-    "pitch": "音調",
     "allSenses": "顯示全部 {count} 個釋義",
     "fewerSenses": "收起",
     "others": "也可能是",
@@ -1132,6 +1131,7 @@
     "kanjiNewspaper": "報紙頻率第{rank}位",
     "kanjiCorpusRank": "Nadeshiko 頻率第{rank}位",
     "frequencyByCategory": "依媒體類型的頻率排名",
+    "pitchAccent": "音調",
     "kanjiReadingShare": "占 Nadeshiko 例句的 {percent}%",
     "kanjiWordRank": "Nadeshiko 詞頻第{rank}位",
     "kanjiParts": "部件",

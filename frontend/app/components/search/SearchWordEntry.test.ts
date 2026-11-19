@@ -57,7 +57,7 @@ describe('the word entry above a word search', () => {
   test('as on the word card: furigana over the word, the pitch row under the badges, the reading beside the word only without furigana', () => {
     const wrapper = render();
     expect(wrapper.find('ruby').text()).toBe('食た');
-    expect(wrapper.find('.word-entry__pitch').text()).toBe('たべる[2]');
+    expect(wrapper.find('.word-entry__pitch [data-testid="pitch-graph"]').attributes('aria-label')).toBe('たべる [2]');
     expect(wrapper.find('.word-entry__reading').exists()).toBe(false);
 
     expect(
@@ -106,6 +106,13 @@ describe('the word entry above a word search', () => {
 
     expect(wrapper.find('[data-testid="word-entry-inflected"]').text()).toBe('negative · past');
     expect(render().find('[data-testid="word-entry-inflected"]').exists()).toBe(false);
+  });
+
+  test('the pitch accent comes after the definitions, under its own label', () => {
+    const html = render().html();
+
+    expect(html.indexOf('word-entry__pitch-label')).toBeGreaterThan(html.lastIndexOf('word-entry__sense-body'));
+    expect(render().find('.word-entry__pitch-label').text()).toBe('tokenTooltip.pitchAccent');
   });
 
   test('three senses, then all of them on request', async () => {

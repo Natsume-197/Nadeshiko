@@ -9,6 +9,7 @@ import {
   type ShirabeWord,
 } from '~/utils/wordCard';
 import { CATEGORY_LABEL_KEYS } from '~/utils/categories';
+import PitchGraph from '~/components/search/segment/PitchGraph.vue';
 import { type EntryBrief, toHiragana } from '#shared/utils/wordEntry';
 
 /**
@@ -128,18 +129,6 @@ const kanjiPath = (character: string) => localePath(`/kanji/${encodeURIComponent
       </li>
     </ul>
 
-    <div v-if="pitch.length > 0" class="word-entry__pitch" :title="$t('wordEntry.pitch')">
-      <span v-for="(pattern, index) in pitch" :key="index" class="word-entry__pitch-pattern" lang="ja">
-        <span
-          v-for="(mora, mi) in pattern.morae"
-          :key="mi"
-          class="word-entry__mora"
-          :class="{ 'is-high': mora.high, 'is-drop': mora.drop }"
-        >{{ mora.text }}</span>
-        <span class="word-entry__downstep">[{{ pattern.downstep }}]</span>
-      </span>
-    </div>
-
     <div v-if="parts.length > 0" class="word-entry__parts">
       <span class="word-entry__parts-label">{{ $t('tokenTooltip.parts') }}</span>
       <NuxtLink
@@ -188,6 +177,12 @@ const kanjiPath = (character: string) => localePath(`/kanji/${encodeURIComponent
     >
       {{ allSenses ? $t('wordEntry.fewerSenses') : $t('wordEntry.allSenses', { count: sensesTotal }) }}
     </button>
+
+    <!-- How the word sounds, after what it means, as on the card. -->
+    <div v-if="pitch.length > 0" class="word-entry__pitch">
+      <span class="word-entry__pitch-label">{{ $t('tokenTooltip.pitchAccent') }}</span>
+      <PitchGraph v-for="(pattern, index) in pitch" :key="index" :morae="pattern.morae" :downstep="pattern.downstep" />
+    </div>
 
     <div v-if="otherForms.length > 0" class="word-entry__forms">
       <span class="word-entry__forms-label">{{ $t('wordEntry.forms') }}</span>
@@ -327,37 +322,16 @@ const kanjiPath = (character: string) => localePath(`/kanji/${encodeURIComponent
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px 12px;
+  gap: 4px 20px;
   margin-top: 8px;
 }
 
-.word-entry__pitch-pattern {
-  display: inline-flex;
-  align-items: baseline;
-}
-
-.word-entry__mora {
-  padding: 1px 0;
-  font-size: 13px;
-  line-height: 1.4;
-  color: var(--ink);
-  border-top: 2px solid transparent;
-}
-
-.word-entry__mora.is-high {
-  border-top-color: var(--accent-soft);
-}
-
-.word-entry__mora.is-drop {
-  border-right: 2px solid var(--accent-soft);
-}
-
-.word-entry__downstep {
-  margin-left: 6px;
-  font-size: 11px;
-  font-weight: 600;
+.word-entry__pitch-label {
+  flex: 0 0 100%;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   color: var(--ink-faint);
-  font-variant-numeric: tabular-nums;
 }
 
 .word-entry__parts,

@@ -1102,7 +1102,6 @@
   "wordEntry": {
     "label": "Entri kamus",
     "common": "Umum",
-    "pitch": "Aksen nada",
     "allSenses": "Tampilkan semua {count} arti",
     "fewerSenses": "Tampilkan lebih sedikit",
     "others": "Bisa juga",
@@ -1132,6 +1131,7 @@
     "kanjiNewspaper": "#{rank} di surat kabar",
     "kanjiCorpusRank": "#{rank} di Nadeshiko",
     "frequencyByCategory": "Peringkat menurut jenis media",
+    "pitchAccent": "Aksen nada",
     "kanjiReadingShare": "{percent}% kalimatnya di Nadeshiko",
     "kanjiWordRank": "#{rank} di antara kata di Nadeshiko",
     "kanjiParts": "Bagian",
