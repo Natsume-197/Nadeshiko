@@ -3672,6 +3672,10 @@ export type IdentifyDictionaryWordResponses = {
          * Fingerprint of the reader's custom dictionary stack when custom dictionaries were applied.
          */
         stackFingerprint?: string;
+        /**
+         * True when the answer lacks one of the reader's enabled custom dictionaries, because it is still indexing or this server is still fetching it. Such an answer must not be cached.
+         */
+        customDictionariesPending?: boolean;
     };
 };
 

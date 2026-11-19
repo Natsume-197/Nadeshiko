@@ -54,10 +54,7 @@ export const uploadUserDictionary = async (req: Request, res: Response, next: Ne
 
     // A raw `.zip` body only. Also keeps an HTML form on another site (which can only send form or text bodies) from
     // posting here even if a browser ever sent the session cookie along.
-    const contentType = String(req.headers['content-type'] ?? '')
-      .split(';')[0]
-      .trim()
-      .toLowerCase();
+    const contentType = (String(req.headers['content-type'] ?? '').split(';')[0] ?? '').trim().toLowerCase();
     if (!UPLOAD_CONTENT_TYPES.has(contentType)) {
       req.resume();
       res.status(415).json({
