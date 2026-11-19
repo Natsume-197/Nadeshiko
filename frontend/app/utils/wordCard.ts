@@ -264,13 +264,11 @@ export function glossPreference(
 }
 
 /**
- * The page's own language and nothing else, for the dictionary entry above a word search: JMdict files its Spanish
- * senses apart from the English ones, so adding English would say everything twice (comer, to eat). `cardSenses`
- * still falls back to English for a word with nothing in Spanish.
+ * English glosses for the dictionary entry above a word search, with part-of-speech and usage chips localized to the
+ * page's own language.
  */
 export function pageGlossPreference(uiLocale: string): GlossPreference {
-  const home: GlossLanguage = uiLocale === 'es' ? 'es' : 'en';
-  return { ...glossPreference(uiLocale, { en: 'show', es: 'show' }), order: [home], fallback: [], labels: home };
+  return { ...glossPreference(uiLocale, { en: 'show', es: 'show' }), order: ['en'], fallback: [], labels: 'en' };
 }
 
 function homeFirst(home: GlossLanguage): GlossLanguage[] {

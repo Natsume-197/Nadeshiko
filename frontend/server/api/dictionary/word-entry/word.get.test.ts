@@ -78,7 +78,9 @@ describe('word entry', () => {
     const answer = await handler(event('はし'));
 
     expect(answer.entry?.headword).toBe('橋');
-    expect(answer.others).toEqual([{ headword: '箸', reading: 'ハシ', gloss: 'chopsticks' }]);
+    expect(answer.others).toEqual([
+      { headword: '箸', reading: 'ハシ', gloss: 'chopsticks', entry: expect.objectContaining({ headword: '箸' }) },
+    ]);
     expect(answer.inflected).toBe(false);
   });
 

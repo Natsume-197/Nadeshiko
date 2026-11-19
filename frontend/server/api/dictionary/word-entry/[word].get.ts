@@ -31,8 +31,8 @@ const handler = defineEventHandler(async (event) => {
     const { candidates } = await nadeshikoDictionary.identify({ lemma: query.word, locale: query.locale });
     setResponseHeader(event, 'cache-control', `public, max-age=${CACHE_SECONDS}`);
     const { entry, others, inflected } = pickEntries(candidates, query.word);
-    // The other words only need a name and a hint of what they mean: each links to its own page.
-    return { entry, inflected, others: others.map((other) => brief(other, query.locale)) };
+    // The other words carry their whole entry too: the box switches between them in place (はし: 端, 橋, 箸).
+    return { entry, inflected, others: others.map((other) => ({ ...brief(other, query.locale), entry: other })) };
   } catch (error: unknown) {
     const status = error instanceof DictionaryError ? error.status : undefined;
     logger.warn({ word: query.word, status, err: error }, 'Word entry lookup failed');
@@ -48,6 +48,6 @@ export default defineCachedEventHandler(handler, {
   maxAge: CACHE_SECONDS,
   getKey: (event) => {
     const query = input(event);
-    return query ? stableCacheKey('word-entry', query.locale, query.word) : 'invalid-word';
+    return query ? stableCacheKey('word-entry-v3', query.locale, query.word) : 'invalid-word';
   },
 });

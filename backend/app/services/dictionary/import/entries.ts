@@ -5,8 +5,8 @@ import type { JMdictWord, JMnedictWord, Xref } from '@scriptin/jmdict-simplified
 
 export type DictionarySource = 'jmdict' | 'jmnedict';
 
-/** Glosses kept; everything else (Dutch, French, German, ...) is dropped at import. */
-export const KEPT_LANGUAGES = ['eng', 'spa'] as const;
+/** Glosses kept: English only; every other language is dropped at import. */
+export const KEPT_LANGUAGES = ['eng'] as const;
 export type KeptLanguage = (typeof KEPT_LANGUAGES)[number];
 
 export interface FormInput {

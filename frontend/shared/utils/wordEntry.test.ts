@@ -82,7 +82,7 @@ describe('pickEntries', () => {
   });
 });
 
-test('brief keeps the headword, reading and first meaning in the page language, else English', () => {
+test('brief keeps the headword, reading and first English meaning', () => {
   const word = {
     headword: '箸',
     reading: 'ハシ',
@@ -95,7 +95,7 @@ test('brief keeps the headword, reading and first meaning in the page language, 
       },
     ],
   };
-  expect(brief(word, 'es')).toEqual({ headword: '箸', reading: 'ハシ', gloss: 'palillos' });
+  expect(brief(word, 'es')).toEqual({ headword: '箸', reading: 'ハシ', gloss: 'chopsticks' });
   expect(brief({ ...word, entries: [] }, 'es')).toEqual({ headword: '箸', reading: 'ハシ', gloss: null });
 });
 

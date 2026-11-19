@@ -280,19 +280,15 @@ function readingOf(word: StoredWord, headword: StoredForm, query: IdentifyQuery)
   return options[0] ?? word.forms.find((form) => form.kana);
 }
 
-/** Senses in the label language first, then the other; one definition per gloss, as the card expects. */
-function sensesOf(word: StoredWord, locale: 'en' | 'es', tags: Record<string, string>) {
-  const lang = (code: 'eng' | 'spa'): 'en' | 'es' => (code === 'spa' ? 'es' : 'en');
+/** English senses only, in upstream order; one definition per gloss, as the card expects. */
+function sensesOf(word: StoredWord, _locale: 'en' | 'es', tags: Record<string, string>) {
   const label = (code: string) => tags[code] ?? code;
-  const ordered = [...word.senses].sort((a, b) => {
-    const rank = (sense: StoredSense) => (lang(sense.lang) === locale ? 0 : 1);
-    return rank(a) - rank(b) || a.idx - b.idx;
-  });
+  const ordered = word.senses.filter((sense) => sense.lang === 'eng').sort((a, b) => a.idx - b.idx);
   return ordered.map((sense, position) => {
     const notes = sense.info.filter((note) => note.trim());
     return {
       position,
-      definitions: sense.glosses.map((gloss) => ({ lang: lang(sense.lang), text: gloss.text })),
+      definitions: sense.glosses.map((gloss) => ({ lang: 'en' as const, text: gloss.text })),
       tags: [
         ...sense.pos.map((code) => ({ category: 'partOfSpeech' as const, code, label: label(code) })),
         ...sense.misc.map((code) => ({ category: 'misc' as const, code, label: label(code) })),

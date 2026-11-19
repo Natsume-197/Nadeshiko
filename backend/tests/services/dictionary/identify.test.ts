@@ -197,7 +197,7 @@ describe('identifyWord', () => {
     appliesToKanji: [],
   });
   const kana = (text: string): FormInput => ({ text, kana: true, common: true, tags: [], appliesToKanji: ['*'] });
-  const meaning = (lang: 'eng' | 'spa', text: string, pos: string[], misc: string[] = []): SenseInput => ({
+  const meaning = (lang: 'eng', text: string, pos: string[], misc: string[] = []): SenseInput => ({
     lang,
     pos,
     misc,
@@ -228,11 +228,7 @@ describe('identifyWord', () => {
       TestDataSource,
       'jmdict',
       iterate([
-        entry(
-          1202440,
-          [kanji('開く'), kana('ひらく')],
-          [meaning('eng', 'to open', ['v5k']), meaning('spa', 'abrir', ['v5k'])],
-        ),
+        entry(1202440, [kanji('開く'), kana('ひらく')], [meaning('eng', 'to open', ['v5k'])]),
         entry(1586270, [kanji('開く'), kanji('空く'), kana('あく')], [meaning('eng', 'to open (doors)', ['v5k'])]),
         entry(1313580, [kanji('事'), kana('こと')], [meaning('eng', 'thing', ['n'], ['uk'])]),
       ]),
@@ -278,11 +274,6 @@ describe('identifyWord', () => {
             {
               position: 0,
               definitions: [{ lang: 'en', text: 'to open' }],
-              tags: [{ category: 'partOfSpeech', code: 'v5k', label: 'Godan verb with ‘ku’ ending' }],
-            },
-            {
-              position: 1,
-              definitions: [{ lang: 'es', text: 'abrir' }],
               tags: [{ category: 'partOfSpeech', code: 'v5k', label: 'Godan verb with ‘ku’ ending' }],
             },
           ],

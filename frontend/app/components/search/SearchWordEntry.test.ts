@@ -57,7 +57,7 @@ describe('the word entry above a word search', () => {
   test('as on the word card: furigana over the word, the pitch row under the badges, the reading beside the word only without furigana', () => {
     const wrapper = render();
     expect(wrapper.find('ruby').text()).toBe('食た');
-    expect(wrapper.find('.word-entry__pitch [data-testid="pitch-graph"]').attributes('aria-label')).toBe('たべる [2]');
+    expect(wrapper.find('.word-entry__pitch [data-testid="pitch-graph"]').attributes('aria-label')).toBe('タベル [2]');
     expect(wrapper.find('.word-entry__reading').exists()).toBe(false);
 
     expect(
@@ -80,7 +80,7 @@ describe('the word entry above a word search', () => {
     ]);
   });
 
-  test('lists the other words the search can be, each to its own page', () => {
+  test('the words the search can be, as chips on top: links when only named', () => {
     const wrapper = mount(SearchWordEntry, {
       props: {
         entry: { ...TABERU, headword: '橋' } as ShirabeWord,
@@ -92,10 +92,40 @@ describe('the word entry above a word search', () => {
       global: { mocks: { $t: (key: string) => key }, stubs: { NuxtLink: RouterLinkStub } },
     });
 
-    const others = wrapper.findAll('[data-testid="word-entry-other"]');
-    expect(others.map((other) => other.text())).toEqual(['箸chopsticks', '端']);
-    expect(others[0]?.findComponent(RouterLinkStub).props('to')).toBe(`/search/${encodeURIComponent('箸')}`);
+    const chips = wrapper.findAll('[data-testid="word-entry-other"]');
+    expect(chips.map((chip) => chip.find('.word-entry__choice-word').text())).toEqual(['橋', '箸', '端']);
+    expect(chips[0]?.attributes('aria-pressed')).toBe('true');
+    expect(chips[1]?.findComponent(RouterLinkStub).props('to')).toBe(`/search/${encodeURIComponent('箸')}`);
     expect(render().find('[data-testid="word-entry-others"]').exists()).toBe(false);
+  });
+
+  test('a chip with its entry opens that word in place, glossed in English', async () => {
+    const hashi = {
+      ...TABERU,
+      headword: '箸',
+      reading: 'ハシ',
+      furigana: [],
+      entries: [{ dictionary: 'jmdict', dictionaryName: 'JMdict', senses: [sense('chopsticks', null, 'n')] }],
+    } as ShirabeWord;
+    locale.value = 'es';
+    try {
+      const wrapper = mount(SearchWordEntry, {
+        props: { entry: TABERU, others: [{ headword: '箸', reading: 'ハシ', gloss: 'chopsticks', entry: hashi }] },
+        global: {
+          mocks: { $t: (key: string) => key },
+          stubs: { NuxtLink: RouterLinkStub },
+        },
+      });
+      const chips = wrapper.findAll('[data-testid="word-entry-other"]');
+      expect(chips[0]?.find('.word-entry__choice-gloss').text()).toBe('to eat 0');
+      expect(chips[1]?.find('.word-entry__choice-gloss').text()).toBe('chopsticks');
+
+      await chips[1]?.trigger('click');
+      expect(wrapper.find('.word-entry__word').text()).toBe('箸');
+      expect(wrapper.find('[data-testid="word-entry-search"]').exists()).toBe(true);
+    } finally {
+      locale.value = 'en';
+    }
   });
 
   test('a conjugated search shows what the conjugation does, as the card does ("past")', () => {
@@ -157,8 +187,7 @@ describe('the word entry above a word search', () => {
     expect(wrapper.findAll('[data-testid="word-entry-kanji"]').map((link) => link.text())).toEqual(['彼', '女']);
   });
 
-  test('a Spanish page reads only the Spanish senses, and English when the word has none', () => {
-    // Our dictionary files JMdict's Spanish senses apart from the English ones.
+  test('a Spanish page reads the English senses', () => {
     const spanish = (text: string) => ({ position: 0, definitions: [{ lang: 'es', text }], tags: [] });
     const english = (text: string) => ({ position: 0, definitions: [{ lang: 'en', text }], tags: [] });
     const entry = (senses: object[]) =>
@@ -170,8 +199,7 @@ describe('the word entry above a word search', () => {
 
     locale.value = 'es';
     try {
-      expect(glosses(entry([spanish('comer'), english('to eat')]))).toEqual([expect.stringContaining('comer')]);
-      expect(glosses(entry([english('to eat')]))).toEqual([expect.stringContaining('to eat')]);
+      expect(glosses(entry([spanish('comer'), english('to eat')]))).toEqual(['to eat']);
     } finally {
       locale.value = 'en';
     }

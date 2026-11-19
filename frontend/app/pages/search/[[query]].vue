@@ -17,7 +17,8 @@ import { type EntryBrief, isWordQuery } from '#shared/utils/wordEntry';
 /** What `/api/dictionary/word-entry/:word` answers. */
 interface WordEntryAnswer {
   entry: ShirabeWord | null;
-  others: EntryBrief[];
+  /** Other words the search can be, each with its whole entry so the box can show it in place. */
+  others: Array<EntryBrief & { entry?: ShirabeWord }>;
   inflected: boolean;
 }
 

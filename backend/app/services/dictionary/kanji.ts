@@ -193,7 +193,6 @@ interface KanjiRowResult {
   on_readings: string[];
   kun_readings: string[];
   meanings_en: string[];
-  meanings_es: string[];
   jlpt: number | null;
   kanken: string | null;
   components: Array<{ character: string; has_card: boolean; meaning: string | null }> | null;
@@ -207,7 +206,6 @@ interface WordRowResult {
   reading: string | null;
   rank: number;
   segments: Array<{ text: string; ruby?: string }> | null;
-  glosses_local: Array<{ text: string }> | null;
   glosses_en: Array<{ text: string }> | null;
 }
 
@@ -219,9 +217,8 @@ interface RelatedRowResult {
   total: number;
 }
 
-/** First meaning in the requested language (`$2`), English when there is none in it. */
-const meaningSql = (alias: string) =>
-  `coalesce(CASE WHEN $2 = 'es' THEN ${alias}.meanings_es[1] END, ${alias}.meanings_en[1])`;
+/** First English meaning of a kanji. */
+const meaningSql = (alias: string) => `${alias}.meanings_en[1]`;
 
 /**
  * One kanji's card. `related: 'all'` lists every kanji under the same radical and every kanji built with it (for the
@@ -230,13 +227,13 @@ const meaningSql = (alias: string) =>
 export async function kanjiCard(
   dataSource: DataSource,
   character: string,
-  locale: 'en' | 'es',
+  _locale: 'en' | 'es',
   options: { related?: 'short' | 'all' } = {},
 ): Promise<KanjiCard | null> {
   const relatedLimit = options.related === 'all' ? RELATED_KANJI_ALL : RELATED_KANJI;
   const [row]: KanjiRowResult[] = await dataSource.query(
     `SELECT k.character, k.stroke_count, k.grade, k.frequency, k.radical, k.on_readings, k.kun_readings, k.meanings_en,
-            k.meanings_es, j.level AS jlpt, kk.level AS kanken, kf.rank AS corpus_rank, s.paths AS strokes,
+            j.level AS jlpt, kk.level AS kanken, kf.rank AS corpus_rank, s.paths AS strokes,
             s.numbers AS stroke_numbers,
             (SELECT jsonb_agg(jsonb_build_object(
                       'character', part,
@@ -254,17 +251,17 @@ export async function kanjiCard(
        LEFT JOIN dict.kanji_kanken kk ON kk.character = k.character
        LEFT JOIN dict.kanji_frequency kf ON kf.character = k.character
       WHERE k.character = $1`,
-    [character, locale],
+    [character],
   );
   if (!row) return null;
 
   const [words, radical, sameRadical, containedIn] = await Promise.all([
-    wordsWith(dataSource, character, locale),
+    wordsWith(dataSource, character),
     radicalOf(dataSource, row.radical),
     relatedKanji(
       dataSource,
-      `FROM dict.kanji k WHERE k.radical = $3 AND k.character <> $1`,
-      [character, locale, row.radical ?? -1],
+      `FROM dict.kanji k WHERE k.radical = $2 AND k.character <> $1`,
+      [character, row.radical ?? -1],
       relatedLimit,
     ),
     relatedKanji(
@@ -272,13 +269,12 @@ export async function kanjiCard(
       // Not the ones already listed under the same radical: for a kanji that is a radical itself (食), most kanji that
       // contain it are filed under it.
       `FROM dict.kanji_component c JOIN dict.kanji k ON k.character = c.character
-        WHERE c.components @> ARRAY[$1] AND c.character <> $1 AND k.radical IS DISTINCT FROM $3`,
-      [character, locale, row.radical ?? -1],
+        WHERE c.components @> ARRAY[$1] AND c.character <> $1 AND k.radical IS DISTINCT FROM $2`,
+      [character, row.radical ?? -1],
       relatedLimit,
     ),
   ]);
 
-  const meaningsLanguage = locale === 'es' && row.meanings_es.length > 0 ? 'es' : 'en';
   return {
     character: row.character,
     strokeCount: row.stroke_count,
@@ -289,8 +285,8 @@ export async function kanjiCard(
     kanken: row.kanken,
     radical,
     readings: await readingsWithExamples(dataSource, row, words),
-    meanings: meaningsLanguage === 'es' ? row.meanings_es : row.meanings_en,
-    meaningsLanguage,
+    meanings: row.meanings_en,
+    meaningsLanguage: 'en',
     components: (row.components ?? []).map((part) => ({
       character: part.character,
       hasCard: part.has_card,
@@ -299,7 +295,7 @@ export async function kanjiCard(
     strokes: row.strokes ?? [],
     strokeNumbers: row.stroke_numbers ?? [],
     words: words.slice(0, KANJI_WORDS).map((word) => {
-      const glosses = word.glosses_local ?? word.glosses_en ?? [];
+      const glosses = word.glosses_en ?? [];
       return {
         id: `jmdict:${word.word_id}`,
         headword: word.headword,
@@ -322,7 +318,7 @@ export async function kanjiCard(
 }
 
 /** Our most frequent words written with the kanji, with each one's furigana so the readings can be told apart. */
-function wordsWith(dataSource: DataSource, character: string, locale: 'en' | 'es'): Promise<WordRowResult[]> {
+function wordsWith(dataSource: DataSource, character: string): Promise<WordRowResult[]> {
   return dataSource.query(
     // Words our corpus counted, spelled with this kanji in one of their active written forms. The forms are found
     // through `form_chars_idx`, so the cost follows how many spellings use the kanji (a few thousand at most), not the
@@ -339,7 +335,7 @@ function wordsWith(dataSource: DataSource, character: string, locale: 'en' | 'es
                        WHERE f.word_id = fr.word_id AND NOT f.kana AND f.active
                          AND string_to_array(f.text, NULL) @> ARRAY[$1])
         ORDER BY fr.rank
-        LIMIT $3
+        LIMIT $2
      ), read AS (
        SELECT t.*,
               (SELECT k.text FROM dict.form k
@@ -354,15 +350,12 @@ function wordsWith(dataSource: DataSource, character: string, locale: 'en' | 'es
             (SELECT fu.segments FROM dict.furigana fu
               WHERE fu.text = r.text AND fu.reading = r.reading AND fu.source = 'jmdict-furigana') AS segments,
             -- Glosses only for the words the card lists; the rest are only sorted under readings.
-            CASE WHEN r.n <= $4 THEN
-              (SELECT s.glosses FROM dict.sense s WHERE s.word_id = r.word_id AND s.lang = $2 ORDER BY s.idx LIMIT 1)
-            END AS glosses_local,
-            CASE WHEN r.n <= $4 THEN
+            CASE WHEN r.n <= $3 THEN
               (SELECT s.glosses FROM dict.sense s WHERE s.word_id = r.word_id AND s.lang = 'eng' ORDER BY s.idx LIMIT 1)
             END AS glosses_en
        FROM numbered r
       ORDER BY r.rank`,
-    [character, locale === 'es' ? 'spa' : 'eng', READING_SAMPLE, KANJI_WORDS],
+    [character, READING_SAMPLE, KANJI_WORDS],
   );
 }
 
@@ -492,15 +485,14 @@ export interface KanjiIndexEntry {
  * Every kanji a learner is likely to study, for the kanji index page: the 2,136 jōyō kanji (grades 1-6 and 8) and
  * any other kanji on the JLPT lists, school kanji first by grade, then by newspaper frequency.
  */
-export async function kanjiIndex(dataSource: DataSource, locale: 'en' | 'es'): Promise<KanjiIndexEntry[]> {
+export async function kanjiIndex(dataSource: DataSource, _locale: 'en' | 'es'): Promise<KanjiIndexEntry[]> {
   return dataSource.query(
     `SELECT k.character, k.grade, j.level AS jlpt, k.frequency,
             coalesce(k.on_readings[1], k.kun_readings[1]) AS reading,
-            coalesce(CASE WHEN $1 = 'es' THEN k.meanings_es[1] END, k.meanings_en[1]) AS meaning
+            k.meanings_en[1] AS meaning
        FROM dict.kanji k
        LEFT JOIN dict.kanji_jlpt j ON j.character = k.character
       WHERE (k.grade BETWEEN 1 AND 8 AND k.grade <> 7) OR j.level IS NOT NULL
       ORDER BY coalesce(k.grade, 99), coalesce(k.frequency, 9999), k.character`,
-    [locale],
   );
 }

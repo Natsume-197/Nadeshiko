@@ -79,7 +79,7 @@ const HON = character(
 );
 
 describe('kanjiRow', () => {
-  it('keeps the Japanese readings and the English and Spanish meanings', () => {
+  it('keeps the Japanese readings and English meanings only', () => {
     expect(kanjiRow(HON)).toEqual({
       character: '本',
       stroke_count: 5,
@@ -89,7 +89,7 @@ describe('kanjiRow', () => {
       on_readings: ['ホン'],
       kun_readings: ['もと'],
       meanings_en: ['book', 'origin'],
-      meanings_es: ['libro'],
+      meanings_es: [],
     });
   });
 
@@ -249,9 +249,9 @@ describe('importing', () => {
     const report = await importKanjidic(TestDataSource, path, { versionLabel: '3.6.2+20261116' });
 
     expect(report).toEqual({ source: 'kanjidic2', version: '3.6.2+20261116', rows: 1, dryRun: false });
-    expect(await TestDataSource.query(`SELECT character, stroke_count, meanings_es FROM dict.kanji`)).toEqual([
-      { character: '本', stroke_count: 5, meanings_es: ['libro'] },
-    ]);
+    expect(
+      await TestDataSource.query(`SELECT character, stroke_count, meanings_en, meanings_es FROM dict.kanji`),
+    ).toEqual([{ character: '本', stroke_count: 5, meanings_en: ['book', 'origin'], meanings_es: [] }]);
     expect(await TestDataSource.query(`SELECT version FROM dict.source WHERE name = 'kanjidic2'`)).toEqual([
       { version: '3.6.2+20261116' },
     ]);

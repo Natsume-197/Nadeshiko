@@ -82,15 +82,14 @@ describe('fromJmdict', () => {
     expect(entry.forms[1]?.tags).toEqual(['sK']);
   });
 
-  it('keeps English and Spanish only, one sense per language, in upstream order', () => {
+  it('keeps English only, in upstream order', () => {
     const entry = fromJmdict(TABERU);
 
     expect(entry.senses.map((sense) => [sense.lang, sense.glosses.map((g) => g.text)])).toEqual([
       ['eng', ['to eat']],
-      ['spa', ['comer']],
       ['eng', ['to consume']],
     ]);
-    expect(entry.senses[2]?.glosses[0]?.type).toBe('figurative');
+    expect(entry.senses[1]?.glosses[0]?.type).toBe('figurative');
   });
 });
 

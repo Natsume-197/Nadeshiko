@@ -17,7 +17,7 @@ const META: JMdictDictionaryMetadata = {
 
 const kanji = (text: string): FormInput => ({ text, kana: false, common: true, tags: [], appliesToKanji: [] });
 const kana = (text: string): FormInput => ({ text, kana: true, common: true, tags: [], appliesToKanji: ['*'] });
-const sense = (lang: 'eng' | 'spa', text: string): SenseInput => ({
+const sense = (lang: 'eng', text: string): SenseInput => ({
   lang,
   pos: ['v1'],
   misc: [],
@@ -52,18 +52,15 @@ const filler = Array.from({ length: 10 }, (_, i) => word(2_000_000 + i, [kana(`�
 
 describe('importDictionary', () => {
   it('writes words, forms, senses, lookups and the source version', async () => {
-    const report = await run([
-      word(1358280, [kanji('食べる'), kana('たべる')], [sense('eng', 'to eat'), sense('spa', 'comer')]),
-    ]);
+    const report = await run([word(1358280, [kanji('食べる'), kana('たべる')], [sense('eng', 'to eat')])]);
 
-    expect(report).toMatchObject({ entries: 1, wordsAdded: 1, formsAdded: 2, senses: 2, version: '3.6.2' });
+    expect(report).toMatchObject({ entries: 1, wordsAdded: 1, formsAdded: 2, senses: 1, version: '3.6.2' });
     expect(await query(`SELECT idx, text, kana, active FROM dict.form WHERE word_id = 1358280 ORDER BY idx`)).toEqual([
       { idx: 0, text: '食べる', kana: false, active: true },
       { idx: 1, text: 'たべる', kana: true, active: true },
     ]);
     expect(await query(`SELECT lang, glosses FROM dict.sense WHERE word_id = 1358280 ORDER BY idx`)).toEqual([
       { lang: 'eng', glosses: [{ text: 'to eat', type: null }] },
-      { lang: 'spa', glosses: [{ text: 'comer', type: null }] },
     ]);
     expect(await query(`SELECT version, tags FROM dict.source WHERE name = 'jmdict'`)).toEqual([
       { version: '3.6.2', tags: { v1: 'Ichidan verb' } },

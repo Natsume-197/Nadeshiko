@@ -67,8 +67,8 @@ export interface EntryBrief {
   gloss: string | null;
 }
 
-/** A candidate cut down to an `EntryBrief`. */
-export function brief(candidate: object, locale: 'en' | 'es'): EntryBrief {
+/** A candidate cut down to an `EntryBrief` (English gloss). */
+export function brief(candidate: object, _locale: 'en' | 'es' = 'en'): EntryBrief {
   const word = candidate as {
     headword?: string;
     reading?: string | null;
@@ -77,9 +77,7 @@ export function brief(candidate: object, locale: 'en' | 'es'): EntryBrief {
   const definitions = (word.entries ?? [])
     .flatMap((entry) => entry.senses ?? [])
     .flatMap((sense) => sense.definitions ?? []);
-  const gloss =
-    definitions.find((definition) => definition.lang === locale) ??
-    definitions.find((definition) => definition.lang === 'en');
+  const gloss = definitions.find((definition) => definition.lang === 'en') ?? definitions[0];
   return { headword: word.headword ?? '', reading: word.reading ?? null, gloss: gloss?.text ?? null };
 }
 

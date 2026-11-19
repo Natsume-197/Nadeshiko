@@ -117,13 +117,13 @@ describe('kanjiCard', () => {
     });
   });
 
-  it('gives the Spanish meanings when there are some, and English otherwise', async () => {
+  it('always gives English meanings even for a Spanish locale', async () => {
     expect(await kanjiCard(TestDataSource, '食', 'es')).toMatchObject({
-      meanings: ['comer'],
-      meaningsLanguage: 'es',
+      meanings: ['eat', 'food'],
+      meaningsLanguage: 'en',
       components: [
         { character: '𠆢', meaning: 'person' },
-        { character: '良', meaning: 'bueno' },
+        { character: '良', meaning: 'good' },
       ],
     });
     expect(await kanjiCard(TestDataSource, '飯', 'es')).toMatchObject({
@@ -178,7 +178,7 @@ describe('kanjiCard', () => {
     const card = await kanjiCard(TestDataSource, '食', 'es');
 
     expect(card?.words).toEqual([
-      { id: 'jmdict:1358280', headword: '食べる', reading: 'たべる', frequency: 195, gloss: 'comer' },
+      { id: 'jmdict:1358280', headword: '食べる', reading: 'たべる', frequency: 195, gloss: 'to eat' },
       { id: 'jmdict:1356690', headword: '食事', reading: 'しょくじ', frequency: 900, gloss: 'meal' },
     ]);
   });
@@ -339,7 +339,7 @@ describe('kanjiIndex', () => {
       jlpt: 5,
       frequency: 328,
       reading: 'ショク',
-      meaning: 'comer',
+      meaning: 'eat',
     });
     expect(list.find((k) => k.character === '飢')).toMatchObject({ grade: null, jlpt: 1, meaning: 'hungry' });
   });

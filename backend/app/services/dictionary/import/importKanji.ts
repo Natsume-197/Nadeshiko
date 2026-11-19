@@ -38,17 +38,17 @@ export interface KanjiImportReport {
 export function kanjiRow(character: Kanjidic2Character): KanjiRow | null {
   const onReadings: string[] = [];
   const kunReadings: string[] = [];
-  const meanings: Record<'en' | 'es', string[]> = { en: [], es: [] };
+  const meaningsEn: string[] = [];
   for (const group of character.readingMeaning?.groups ?? []) {
     for (const reading of group.readings) {
       if (reading.type === 'ja_on') onReadings.push(reading.value);
       else if (reading.type === 'ja_kun') kunReadings.push(reading.value);
     }
     for (const meaning of group.meanings) {
-      if (meaning.lang === 'en' || meaning.lang === 'es') meanings[meaning.lang].push(meaning.value);
+      if (meaning.lang === 'en') meaningsEn.push(meaning.value);
     }
   }
-  if (onReadings.length === 0 && kunReadings.length === 0 && meanings.en.length === 0) return null;
+  if (onReadings.length === 0 && kunReadings.length === 0 && meaningsEn.length === 0) return null;
 
   return {
     character: character.literal,
@@ -59,8 +59,8 @@ export function kanjiRow(character: Kanjidic2Character): KanjiRow | null {
     radical: character.radicals?.find((radical) => radical.type === 'classical')?.value ?? null,
     on_readings: onReadings,
     kun_readings: kunReadings,
-    meanings_en: meanings.en,
-    meanings_es: meanings.es,
+    meanings_en: meaningsEn,
+    meanings_es: [],
   };
 }
 
