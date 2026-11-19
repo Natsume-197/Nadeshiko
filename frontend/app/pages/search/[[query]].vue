@@ -449,7 +449,8 @@ useSchemaOrg(schemaOrgNodes);
                                     v-if="shownWordEntry?.entry && wantsWordEntry && !mediaQueryParam"
                                     :entry="shownWordEntry.entry"
                                     :others="shownWordEntry.others ?? []"
-                                    :inflected-from="shownWordEntry.inflected ? searchQuery.trim() : null" />
+                                    :inflected-from="shownWordEntry.inflected ? searchQuery.trim() : null"
+                                    :kanji-info="wordEntryAnswer?.kanji ?? {}" />
                             </template>
                         </SearchContainer>
                     </div>

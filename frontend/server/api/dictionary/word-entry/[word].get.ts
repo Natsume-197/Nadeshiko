@@ -3,12 +3,14 @@ import { brief, isWordQuery, pickEntries } from '#shared/utils/wordEntry';
 import { stableCacheKey } from '~~/server/utils/cacheKey';
 import { DictionaryError } from '~~/server/utils/dictionary';
 import { nadeshikoDictionary } from '~~/server/utils/dictionary/nadeshiko';
+import { kanjiBriefs } from '~~/server/utils/kanjiBriefs';
 import { logger } from '~~/server/utils/logger';
 
 // The dictionary entry above a word search (`/search/食べる`), from Nadeshiko's own dictionary whatever card provider
 // the reader picked: it is the page's own content, server-rendered for every reader and for search engines alike.
 // `{ entry: null }` when the query is not a dictionary word, so that answer is cached too. With it: `others`, the
-// other words the query can be (はし: 箸, 端), and `inflected` when the query is a conjugated form of the entry. Same for every reader:
+// other words the query can be (はし: 箸, 端), `inflected` when the query is a conjugated form of the entry, and `kanji`,
+// each kanji's first reading and meaning. Same for every reader:
 // cached a day here and in the browser, like the kanji card.
 
 const CACHE_SECONDS = 60 * 60 * 24;
@@ -31,8 +33,15 @@ const handler = defineEventHandler(async (event) => {
     const { candidates } = await nadeshikoDictionary.identify({ lemma: query.word, locale: query.locale });
     setResponseHeader(event, 'cache-control', `public, max-age=${CACHE_SECONDS}`);
     const { entry, others, inflected } = pickEntries(candidates, query.word);
+    // Each kanji's reading and meaning, for the entry's kanji rows, for every word the box can show.
+    const kanji = await kanjiBriefs([entry, ...others].flatMap((word) => (word ? [word.headword] : [])));
     // The other words carry their whole entry too: the box switches between them in place (はし: 端, 橋, 箸).
-    return { entry, inflected, others: others.map((other) => ({ ...brief(other, query.locale), entry: other })) };
+    return {
+      entry,
+      inflected,
+      others: others.map((other) => ({ ...brief(other, query.locale), entry: other })),
+      kanji,
+    };
   } catch (error: unknown) {
     const status = error instanceof DictionaryError ? error.status : undefined;
     logger.warn({ word: query.word, status, err: error }, 'Word entry lookup failed');
@@ -48,6 +57,6 @@ export default defineCachedEventHandler(handler, {
   maxAge: CACHE_SECONDS,
   getKey: (event) => {
     const query = input(event);
-    return query ? stableCacheKey('word-entry-v3', query.locale, query.word) : 'invalid-word';
+    return query ? stableCacheKey('word-entry-v4', query.locale, query.word) : 'invalid-word';
   },
 });

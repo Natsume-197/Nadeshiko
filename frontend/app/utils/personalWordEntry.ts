@@ -7,6 +7,8 @@ export interface WordEntryAnswer {
   /** Other words the search can be, each with its whole entry so the box can show it in place. */
   others: Array<EntryBrief & { entry?: ShirabeWord }>;
   inflected: boolean;
+  /** Each kanji's first reading and meaning, by character; the shared entry's, which the personal one reuses. */
+  kanji?: Record<string, { reading: string | null; meaning: string | null }>;
 }
 
 /** Whether the reader's uploaded dictionaries (task 48) add anything to this word: an entry or a frequency badge. */

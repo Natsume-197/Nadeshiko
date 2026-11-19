@@ -57,7 +57,9 @@ describe('the word entry above a word search', () => {
   test('as on the word card: furigana over the word, the pitch row under the badges, the reading beside the word only without furigana', () => {
     const wrapper = render();
     expect(wrapper.find('ruby').text()).toBe('食た');
-    expect(wrapper.find('.word-entry__pitch [data-testid="pitch-graph"]').attributes('aria-label')).toBe('タベル [2]');
+    expect(wrapper.find('[data-testid="word-entry-pitch"] [data-testid="pitch-graph"]').attributes('aria-label')).toBe(
+      'タベル [2]',
+    );
     expect(wrapper.find('.word-entry__reading').exists()).toBe(false);
 
     expect(
@@ -138,11 +140,22 @@ describe('the word entry above a word search', () => {
     expect(render().find('[data-testid="word-entry-inflected"]').exists()).toBe(false);
   });
 
-  test('the pitch accent comes after the definitions, under its own label', () => {
+  test('the pitch accent sits right under the word, before the definitions', () => {
     const html = render().html();
 
-    expect(html.indexOf('word-entry__pitch-label')).toBeGreaterThan(html.lastIndexOf('word-entry__sense-body'));
-    expect(render().find('.word-entry__pitch-label').text()).toBe('tokenTooltip.pitchAccent');
+    expect(html.indexOf('data-testid="word-entry-pitch"')).toBeLessThan(html.indexOf('word-entry__sense-body'));
+    expect(render().find('[data-testid="word-entry-pitch"]').attributes('title')).toBe('tokenTooltip.pitchAccent');
+  });
+
+  test('each kanji with its reading and meaning, and a bare link for one without them', () => {
+    const wrapper = mount(SearchWordEntry, {
+      props: { entry: TABERU, kanjiInfo: { 食: { reading: 'ショク', meaning: 'eat' } } },
+      global: { mocks: { $t: (key: string) => key }, stubs: { NuxtLink: RouterLinkStub } },
+    });
+    const rows = wrapper.findAll('.word-entry__kanji-row');
+    expect(rows.map((row) => row.findAll('a, span').map((part) => part.text()))).toEqual([['食', 'ショク', 'eat']]);
+    expect(render().find('.word-entry__kanji-reading').exists()).toBe(false);
+    expect(render().find('[data-testid="word-entry-kanji"]').text()).toBe('食');
   });
 
   test('three senses, then all of them on request', async () => {

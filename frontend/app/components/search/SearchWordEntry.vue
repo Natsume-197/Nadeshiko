@@ -29,8 +29,10 @@ const props = withDefaults(
     others?: Array<EntryBrief & { entry?: ShirabeWord }>;
     /** The search when it is a conjugated form of the entry (食べた for 食べる); null otherwise. */
     inflectedFrom?: string | null;
+    /** Each kanji's first reading and meaning, by character (商: ショウ, "make a deal"). */
+    kanjiInfo?: Record<string, { reading: string | null; meaning: string | null }>;
   }>(),
-  { others: () => [], inflectedFrom: null },
+  { others: () => [], inflectedFrom: null, kanjiInfo: () => ({}) },
 );
 
 const { t, locale } = useI18n();
@@ -159,9 +161,7 @@ const frequencyOpen = ref(false);
 const otherForms = computed(() => cardForms(shown.value).filter((form) => form !== shown.value.headword));
 const parts = computed(() => (shown.value.parts ?? []).filter((part) => part.lemma));
 const kanji = computed(() => kanjiIn(shown.value.headword));
-const hasSide = computed(
-  () => pitch.value.length > 0 || otherForms.value.length > 0 || parts.value.length > 0 || kanji.value.length > 0,
-);
+const hasSide = computed(() => otherForms.value.length > 0 || parts.value.length > 0 || kanji.value.length > 0);
 
 const wordPath = (word: string) => localePath(`/search/${encodeURIComponent(word)}`);
 const kanjiPath = (character: string) => localePath(`/kanji/${encodeURIComponent(character)}`);
@@ -222,6 +222,16 @@ const kanjiPath = (character: string) => localePath(`/kanji/${encodeURIComponent
               #{{ formatNumber(shown.frequency) }}
             </span>
           </div>
+        </div>
+
+        <!-- How the word is said, right under it. -->
+        <div
+          v-if="pitch.length > 0"
+          class="word-entry__pitch-inline"
+          :title="$t('tokenTooltip.pitchAccent')"
+          data-testid="word-entry-pitch"
+        >
+          <PitchGraph v-for="(pattern, index) in pitch" :key="index" :morae="pattern.morae" :downstep="pattern.downstep" />
         </div>
 
         <!-- A conjugated search (食べた) says what the conjugation does, as the card does for a word met in a
@@ -329,34 +339,31 @@ const kanjiPath = (character: string) => localePath(`/kanji/${encodeURIComponent
       </div>
 
       <aside v-if="hasSide" class="word-entry__side">
-        <!-- How the word sounds, after what it means, as on the card. -->
-        <div v-if="pitch.length > 0" class="word-entry__section word-entry__pitch">
-          <span class="word-entry__label word-entry__pitch-label">{{ $t('tokenTooltip.pitchAccent') }}</span>
-          <div class="word-entry__pitch-graphs">
-            <PitchGraph v-for="(pattern, index) in pitch" :key="index" :morae="pattern.morae" :downstep="pattern.downstep" />
-          </div>
-        </div>
-
-        <div v-if="otherForms.length > 0 || kanji.length > 0" class="word-entry__section word-entry__side-pair">
-          <div v-if="otherForms.length > 0" class="word-entry__sub word-entry__forms">
-            <span class="word-entry__label word-entry__forms-label">{{ $t('wordEntry.forms') }}</span>
-            <div class="word-entry__row">
-              <NuxtLink v-for="form in otherForms" :key="form" :to="wordPath(form)" class="word-entry__form" lang="ja">{{ form }}</NuxtLink>
-            </div>
-          </div>
-
-          <div v-if="kanji.length > 0" class="word-entry__sub word-entry__kanji">
-            <span class="word-entry__label">{{ $t('kanjiIndex.title') }}</span>
-            <div class="word-entry__row">
+        <!-- The kanji first, each with its reading and meaning, as a dictionary page lists them. -->
+        <div v-if="kanji.length > 0" class="word-entry__section word-entry__kanji">
+          <span class="word-entry__label">{{ $t('kanjiIndex.title') }}</span>
+          <ul class="word-entry__kanji-list">
+            <li v-for="character in kanji" :key="character" class="word-entry__kanji-row">
               <NuxtLink
-                v-for="character in kanji"
-                :key="character"
                 :to="kanjiPath(character)"
                 class="word-entry__kanji-link"
                 lang="ja"
                 data-testid="word-entry-kanji"
               >{{ character }}</NuxtLink>
-            </div>
+              <span v-if="kanjiInfo[character]?.reading" class="word-entry__kanji-reading" lang="ja">{{
+                kanjiInfo[character]?.reading
+              }}</span>
+              <span v-if="kanjiInfo[character]?.meaning" class="word-entry__kanji-meaning">{{
+                kanjiInfo[character]?.meaning
+              }}</span>
+            </li>
+          </ul>
+        </div>
+
+        <div v-if="otherForms.length > 0" class="word-entry__section word-entry__forms">
+          <span class="word-entry__label word-entry__forms-label">{{ $t('wordEntry.forms') }}</span>
+          <div class="word-entry__row">
+            <NuxtLink v-for="form in otherForms" :key="form" :to="wordPath(form)" class="word-entry__form" lang="ja">{{ form }}</NuxtLink>
           </div>
         </div>
 
@@ -753,8 +760,7 @@ const kanjiPath = (character: string) => localePath(`/kanji/${encodeURIComponent
 }
 
 /* Side column: reference matter, quieter */
-.word-entry__section,
-.word-entry__sub {
+.word-entry__section {
   display: flex;
   flex-direction: column;
   gap: 5px;
@@ -765,14 +771,6 @@ const kanjiPath = (character: string) => localePath(`/kanji/${encodeURIComponent
   border-top: 1px solid color-mix(in srgb, var(--line) 60%, transparent);
 }
 
-.word-entry__side-pair {
-  flex-direction: row;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 10px 20px;
-}
-
 .word-entry__label {
   font-size: 10px;
   font-weight: 600;
@@ -781,16 +779,11 @@ const kanjiPath = (character: string) => localePath(`/kanji/${encodeURIComponent
   color: var(--ink-faint);
 }
 
-.word-entry__row,
-.word-entry__pitch-graphs {
+.word-entry__row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 6px 10px;
-}
-
-.word-entry__pitch-graphs {
-  gap: 4px 20px;
 }
 
 .word-entry__form {
@@ -832,5 +825,46 @@ const kanjiPath = (character: string) => localePath(`/kanji/${encodeURIComponent
   background: color-mix(in srgb, var(--accent-soft) 14%, transparent);
   border-color: var(--accent-soft);
   color: var(--accent-soft);
+}
+
+/* One kanji per row: the character, its reading, its meaning (商 ショウ make a deal). */
+.word-entry__kanji-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.word-entry__kanji-row {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.word-entry__kanji-reading {
+  font-size: 12px;
+  color: var(--ink-soft, var(--ink-faint));
+  white-space: nowrap;
+}
+
+.word-entry__kanji-meaning {
+  overflow: hidden;
+  font-size: 13px;
+  color: var(--ink-faint);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The pitch right under the word, as a dictionary page shows how it is said. */
+.word-entry__pitch-inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 20px;
+  margin-top: 6px;
 }
 </style>

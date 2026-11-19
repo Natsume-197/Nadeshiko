@@ -7,6 +7,10 @@ const { identify, logger } = vi.hoisted(() => ({
 }));
 
 vi.mock('~~/server/utils/logger', () => ({ logger }));
+vi.mock('~~/server/utils/kanjiBriefs', () => ({
+  kanjiBriefs: async (words: string[]) =>
+    words.some((word) => word.includes('食')) ? { 食: { reading: 'ショク', meaning: 'eat' } } : {},
+}));
 vi.mock('~~/server/utils/dictionary/nadeshiko', () => ({ nadeshikoDictionary: { identify } }));
 vi.mock('~~/server/utils/dictionary', async () => ({
   DictionaryError: (await import('~~/server/utils/dictionary/types')).DictionaryError,
@@ -57,6 +61,7 @@ describe('word entry', () => {
 
     expect(identify).toHaveBeenCalledWith({ lemma: '食べる', locale: 'es' });
     expect(answer.entry?.headword).toBe('食べる');
+    expect((answer as { kanji?: unknown }).kanji).toEqual({ 食: { reading: 'ショク', meaning: 'eat' } });
     expect(request.headers['cache-control']).toBe('public, max-age=86400');
   });
 
