@@ -47,13 +47,19 @@ for destination in "$@"; do
   fi
 
   put() {
-    # The value goes through a file descriptor, not the command line, so `ps` never shows it.
-    aws --profile "$profile" --region "$region" ssm put-parameter \
+    # The value goes through a private temp file (`file://`), not the command line, so `ps` never shows it.
+    local value_file
+    value_file=$(umask 077 && mktemp)
+    printf '%s' "$2" > "$value_file"
+    if aws --profile "$profile" --region "$region" ssm put-parameter \
       --name "/nadeshiko/${destination}/$1" --type SecureString --overwrite \
-      --cli-input-json "file:///dev/stdin" >/dev/null <<JSON
-{"Value": $(printf '%s' "$2" | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read()))')}
-JSON
-    echo "  /nadeshiko/${destination}/$1 saved"
+      --value "file://$value_file" >/dev/null; then
+      echo "  /nadeshiko/${destination}/$1 saved"
+    else
+      rm -f "$value_file"
+      exit 1
+    fi
+    rm -f "$value_file"
   }
 
   echo "== $destination"
