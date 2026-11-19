@@ -7,10 +7,15 @@ import type { PitchMora } from '~/utils/wordCard';
  * by accent type, the usual convention: flat (heiban) blue, head-high (atamadaka) red, middle (nakadaka) orange,
  * tail (odaka) green. Shared by the word card and the dictionary entry above a word search.
  */
-const props = defineProps<{
-  morae: PitchMora[];
-  downstep: number;
-}>();
+const props = withDefaults(
+  defineProps<{
+    morae: PitchMora[];
+    downstep: number;
+    /** Drawn size, 1 the card's; the drawing scales whole, kana included. */
+    scale?: number;
+  }>(),
+  { scale: 1 },
+);
 
 const HIGH_Y = 26;
 const LOW_Y = 44;
@@ -49,8 +54,8 @@ const label = computed(() => `${props.morae.map((mora) => mora.text).join('')} [
   <svg
     class="pitch-graph"
     :class="`is-${kind}`"
-    :width="width"
-    :height="HEIGHT"
+    :width="width * scale"
+    :height="HEIGHT * scale"
     :viewBox="`0 0 ${width} ${HEIGHT}`"
     role="img"
     :aria-label="label"

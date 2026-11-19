@@ -9,6 +9,7 @@ import {
   type ShirabeWord,
 } from '~/utils/wordCard';
 import { CATEGORY_LABEL_KEYS } from '~/utils/categories';
+import PitchGraph from '~/components/search/segment/PitchGraph.vue';
 import YomitanContent from '~/components/search/segment/YomitanContent.vue';
 import { type EntryBrief, toHiragana } from '#shared/utils/wordEntry';
 
@@ -136,17 +137,14 @@ const reading = computed(() => {
 
 const formatNumber = (value: number) => new Intl.NumberFormat(locale.value).format(value);
 
-/** In hiragana, the way a dictionary prints a reading's accent. */
+/** In katakana, as the word card draws it. */
 const pitch = computed(() => {
-  const read = toHiragana(shown.value.reading || shown.value.headword);
+  const read = shown.value.reading || shown.value.headword;
   return (shown.value.pitch ?? []).slice(0, 2).map((pattern) => ({
     downstep: pattern.downstep,
     morae: pitchMorae(read, pattern.downstep),
   }));
 });
-const pitchLabel = computed(() =>
-  pitch.value.map((pattern) => `${pattern.morae.map((mora) => mora.text).join('')} [${pattern.downstep}]`).join(', '),
-);
 
 const byCategory = computed(() =>
   (shown.value.frequencyByCategory ?? []).flatMap((entry) => {
@@ -225,26 +223,20 @@ const kanjiPath = (character: string) => localePath(`/kanji/${encodeURIComponent
             </span>
           </div>
 
-          <!-- How the word is said, in one compact line as a dictionary prints it: a line over the high morae, a
-               tick where the pitch drops, the drop's number in brackets (しょ￣うばい [1]). -->
+          <!-- How the word is said, on the word's line: the card's graph, smaller. -->
           <span
             v-if="pitch.length > 0"
             class="word-entry__pitch-line"
             :title="$t('tokenTooltip.pitchAccent')"
-            :aria-label="pitchLabel"
             data-testid="word-entry-pitch"
-            lang="ja"
           >
-            <span v-for="(pattern, patternIndex) in pitch" :key="patternIndex" class="word-entry__pitch-pattern">
-              <span
-                v-for="(mora, moraIndex) in pattern.morae"
-                :key="moraIndex"
-                class="word-entry__mora"
-                :class="{ 'is-high': mora.high, 'is-drop': mora.drop }"
-                aria-hidden="true"
-              >{{ mora.text }}</span>
-              <span class="word-entry__pitch-number" aria-hidden="true">[{{ pattern.downstep }}]</span>
-            </span>
+            <PitchGraph
+              v-for="(pattern, index) in pitch"
+              :key="index"
+              :morae="pattern.morae"
+              :downstep="pattern.downstep"
+              :scale="0.8"
+            />
           </span>
         </div>
 
@@ -877,35 +869,7 @@ const kanjiPath = (character: string) => localePath(`/kanji/${encodeURIComponent
 .word-entry__pitch-line {
   display: inline-flex;
   flex-wrap: wrap;
-  align-items: baseline;
+  align-items: flex-end;
   gap: 2px 14px;
-  font-size: 14px;
-  color: var(--ink);
-}
-
-.word-entry__pitch-pattern {
-  display: inline-flex;
-  align-items: baseline;
-  padding-top: 3px;
-}
-
-.word-entry__mora {
-  padding: 1px 1px 0;
-  border-top: 1.5px solid transparent;
-  line-height: 1.3;
-}
-
-.word-entry__mora.is-high {
-  border-top-color: var(--accent-soft);
-}
-
-.word-entry__mora.is-drop {
-  border-right: 1.5px solid var(--accent-soft);
-}
-
-.word-entry__pitch-number {
-  margin-left: 5px;
-  font-size: 12px;
-  color: var(--ink-faint);
 }
 </style>

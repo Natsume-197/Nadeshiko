@@ -54,17 +54,13 @@ function render(entry: ShirabeWord = TABERU) {
 }
 
 describe('the word entry above a word search', () => {
-  test('furigana over the word, the pitch in one line as a dictionary prints it, the reading beside the word only without furigana', () => {
+  test('furigana over the word, a smaller pitch graph on its line, the reading beside the word only without furigana', () => {
     const wrapper = render();
     expect(wrapper.find('ruby').text()).toBe('食た');
-    // たべる [2]: low た, high べ with the drop after it, low る.
-    const morae = wrapper.findAll('[data-testid="word-entry-pitch"] .word-entry__mora');
-    expect(morae.map((mora) => [mora.text(), mora.classes('is-high'), mora.classes('is-drop')])).toEqual([
-      ['た', false, false],
-      ['べ', true, true],
-      ['る', false, false],
-    ]);
-    expect(wrapper.find('[data-testid="word-entry-pitch"]').attributes('aria-label')).toBe('たべる [2]');
+    const graph = wrapper.find('[data-testid="word-entry-pitch"] [data-testid="pitch-graph"]');
+    expect(graph.attributes('aria-label')).toBe('タベル [2]');
+    // The card's graph, drawn smaller on the word's line.
+    expect(Number(graph.attributes('height'))).toBe(40);
     expect(wrapper.find('.word-entry__reading').exists()).toBe(false);
 
     expect(
