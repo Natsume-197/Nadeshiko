@@ -1146,6 +1146,8 @@
     "common": "Common",
     "allSenses": "Show all {count} meanings",
     "fewerSenses": "Show fewer",
+    "showMore": "Show more",
+    "dictionaries": "Dictionaries",
     "others": "Also could be",
     "forms": "Also written"
   },

@@ -1146,6 +1146,8 @@
     "common": "常用",
     "allSenses": "顯示全部 {count} 個釋義",
     "fewerSenses": "收起",
+    "showMore": "顯示更多",
+    "dictionaries": "詞典",
     "others": "也可能是",
     "forms": "其他寫法"
   },

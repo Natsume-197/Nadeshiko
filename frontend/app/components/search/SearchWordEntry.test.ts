@@ -245,6 +245,27 @@ describe("the word entry with a reader's own dictionaries", () => {
     expect(wrapper.find('.yomitan-content span').text()).toBe('危険');
   });
 
+  test('shows one dictionary at a time, switched by its tab, so more dictionaries do not make the entry taller', async () => {
+    const wrapper = render(YABAI);
+    expect(wrapper.find('[data-testid="word-entry-senses"]').text()).toContain('危険');
+    expect(wrapper.find('[data-testid="word-entry-senses"]').text()).not.toContain('dangerous');
+
+    await wrapper.findAll('[data-testid="word-entry-source"]')[1]?.trigger('click');
+    expect(wrapper.find('[data-testid="word-entry-senses"]').text()).toContain('dangerous');
+    expect(wrapper.find('.yomitan-content').exists()).toBe(false);
+  });
+
+  test('cuts a long structured entry until "Show more", and opens it in place', async () => {
+    const wrapper = render(YABAI);
+    const senses = () => wrapper.find('[data-testid="word-entry-senses"]');
+    expect(senses().classes()).toContain('is-clamped');
+    expect(wrapper.find('[data-testid="word-entry-more"]').text()).toContain('wordEntry.showMore');
+
+    await wrapper.find('[data-testid="word-entry-more"]').trigger('click');
+    expect(senses().classes()).not.toContain('is-clamped');
+    expect(wrapper.find('[data-testid="word-entry-more"]').text()).toContain('wordEntry.fewerSenses');
+  });
+
   test('names no dictionary when JMdict answers alone', () => {
     expect(render().find('[data-testid="word-entry-source"]').exists()).toBe(false);
   });

@@ -1146,6 +1146,8 @@
     "common": "Umum",
     "allSenses": "Tampilkan semua {count} arti",
     "fewerSenses": "Tampilkan lebih sedikit",
+    "showMore": "Tampilkan lebih banyak",
+    "dictionaries": "Kamus",
     "others": "Bisa juga",
     "forms": "Juga ditulis"
   },

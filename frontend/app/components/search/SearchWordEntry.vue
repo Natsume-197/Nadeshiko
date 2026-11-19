@@ -50,6 +50,7 @@ watch(
     selected.value = 0;
     allSenses.value = false;
     frequencyOpen.value = false;
+    pickedSource.value = '';
   },
 );
 
@@ -98,12 +99,33 @@ function choose(index: number) {
 }
 
 const allSenses = ref(false);
-const senses = computed(() => cardSenses(shown.value, preference.value, allSenses.value ? ALL_SENSES : SENSES_SHOWN));
-const sensesTotal = computed(() => cardSenses(shown.value, preference.value, ALL_SENSES).length);
-/** Name each dictionary only when more than one answers: the shared entry is JMdict alone and says nothing. */
-const namesSources = computed(
-  () => new Set(cardSenses(shown.value, preference.value, ALL_SENSES).map((sense) => sense.dictionary)).size > 1,
+const everySense = computed(() => cardSenses(shown.value, preference.value, ALL_SENSES));
+
+/**
+ * The dictionaries that answer, in the reader's stack order. With the reader's own dictionaries (task 48) there can
+ * be several, and stacking them would make the entry as tall as all of them together: each gets a tab and one shows
+ * at a time, so the entry is as tall as one dictionary however many the reader has.
+ */
+const sources = computed(() => [...new Set(everySense.value.map((sense) => sense.dictionary))]);
+const pickedSource = ref('');
+const activeSource = computed(() =>
+  sources.value.includes(pickedSource.value) ? pickedSource.value : (sources.value[0] ?? ''),
 );
+function pickSource(source: string) {
+  pickedSource.value = source;
+  allSenses.value = false;
+}
+
+const sourceSenses = computed(() =>
+  sources.value.length > 1 ? everySense.value.filter((sense) => sense.dictionary === activeSource.value) : everySense.value,
+);
+const senses = computed(() => (allSenses.value ? sourceSenses.value : sourceSenses.value.slice(0, SENSES_SHOWN)));
+const sensesTotal = computed(() => sourceSenses.value.length);
+/** A monolingual dictionary's entry is often one long block: it is cut to a few lines until the reader opens it. */
+const hasLongContent = computed(() =>
+  sourceSenses.value.some((sense) => sense.glosses.some((row) => row.structuredContent !== undefined)),
+);
+const canExpand = computed(() => sensesTotal.value > SENSES_SHOWN || hasLongContent.value);
 
 const furigana = computed(() => headwordFurigana(shown.value));
 const reading = computed(() => {
@@ -219,16 +241,35 @@ const kanjiPath = (character: string) => localePath(`/kanji/${encodeURIComponent
           </li>
         </ul>
 
-        <ol class="word-entry__senses">
-          <template v-for="(sense, index) in senses" :key="index">
-          <!-- The reader's own dictionaries (task 48) stack with JMdict here as on the card: say whose senses these are. -->
-          <li
-            v-if="namesSources && sense.dictionary !== senses[index - 1]?.dictionary"
-            class="word-entry__source"
-            role="presentation"
+        <!-- The reader's own dictionaries (task 48): one tab each, one dictionary on show at a time. -->
+        <div
+          v-if="sources.length > 1"
+          class="word-entry__sources"
+          role="tablist"
+          :aria-label="$t('wordEntry.dictionaries')"
+          data-testid="word-entry-sources"
+        >
+          <button
+            v-for="source in sources"
+            :key="source"
+            type="button"
+            role="tab"
+            class="word-entry__source-tab"
+            :class="{ 'is-active': source === activeSource }"
+            :aria-selected="source === activeSource"
             data-testid="word-entry-source"
-          >{{ sense.dictionary }}</li>
-          <li class="word-entry__sense" :class="`is-indent-${sense.indent}`">
+            @click="pickSource(source)"
+          >
+            {{ source }}
+          </button>
+        </div>
+
+        <ol
+          class="word-entry__senses"
+          :class="{ 'is-clamped': hasLongContent && !allSenses }"
+          data-testid="word-entry-senses"
+        >
+          <li v-for="(sense, index) in senses" :key="index" class="word-entry__sense" :class="`is-indent-${sense.indent}`">
             <span class="word-entry__sense-number">{{ sense.number }}</span>
             <div class="word-entry__sense-body">
               <span v-for="row in sense.glosses" :key="row.lang" class="word-entry__gloss-row">
@@ -253,16 +294,22 @@ const kanjiPath = (character: string) => localePath(`/kanji/${encodeURIComponent
               <span v-for="note in sense.notes" :key="note" class="word-entry__note">{{ note }}</span>
             </div>
           </li>
-          </template>
         </ol>
         <button
-          v-if="sensesTotal > SENSES_SHOWN"
+          v-if="canExpand"
           type="button"
           class="word-entry__more"
           :aria-expanded="allSenses"
+          data-testid="word-entry-more"
           @click="allSenses = !allSenses"
         >
-          {{ allSenses ? $t('wordEntry.fewerSenses') : $t('wordEntry.allSenses', { count: sensesTotal }) }}
+          {{
+            allSenses
+              ? $t('wordEntry.fewerSenses')
+              : sensesTotal > SENSES_SHOWN
+                ? $t('wordEntry.allSenses', { count: sensesTotal })
+                : $t('wordEntry.showMore')
+          }}
           <span aria-hidden="true">{{ allSenses ? '▴' : '▾' }}</span>
         </button>
 
@@ -526,15 +573,39 @@ const kanjiPath = (character: string) => localePath(`/kanji/${encodeURIComponent
   list-style: none;
 }
 
-/* Whose senses follow, when the reader's own dictionaries answer beside JMdict. */
-.word-entry__source {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--ink-faint);
+/* One tab per dictionary when the reader's own dictionaries answer beside JMdict. */
+.word-entry__sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
 }
 
-.word-entry__source:not(:first-child) {
-  margin-top: 0.4rem;
+.word-entry__source-tab {
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid rgb(var(--c-white) / 0.14);
+  font-size: 12px;
+  color: var(--ink-faint);
+  cursor: pointer;
+}
+
+.word-entry__source-tab:hover {
+  color: rgb(var(--c-white) / 0.85);
+}
+
+.word-entry__source-tab.is-active {
+  color: rgb(var(--c-white));
+  border-color: rgb(var(--c-brand) / 0.7);
+  background: rgb(var(--c-brand) / 0.15);
+}
+
+/* A long entry from a monolingual dictionary shows its start and fades, until "Show more". */
+.word-entry__senses.is-clamped {
+  max-height: 11rem;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to bottom, #000 65%, transparent);
+  mask-image: linear-gradient(to bottom, #000 65%, transparent);
 }
 
 .word-entry__sense {

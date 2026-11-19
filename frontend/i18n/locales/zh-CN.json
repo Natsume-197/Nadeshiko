@@ -1146,6 +1146,8 @@
     "common": "常用",
     "allSenses": "显示全部 {count} 个释义",
     "fewerSenses": "收起",
+    "showMore": "显示更多",
+    "dictionaries": "词典",
     "others": "也可能是",
     "forms": "其他写法"
   },

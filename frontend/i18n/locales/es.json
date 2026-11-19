@@ -1146,6 +1146,8 @@
     "common": "Frecuente",
     "allSenses": "Ver los {count} significados",
     "fewerSenses": "Ver menos",
+    "showMore": "Mostrar más",
+    "dictionaries": "Diccionarios",
     "others": "También puede ser",
     "forms": "También se escribe"
   },

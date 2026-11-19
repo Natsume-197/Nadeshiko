@@ -1146,6 +1146,8 @@
     "common": "Comum",
     "allSenses": "Ver os {count} significados",
     "fewerSenses": "Ver menos",
+    "showMore": "Mostrar mais",
+    "dictionaries": "Dicionários",
     "others": "Também pode ser",
     "forms": "Também se escreve"
   },

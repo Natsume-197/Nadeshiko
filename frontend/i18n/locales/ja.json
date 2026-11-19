@@ -1146,6 +1146,8 @@
     "common": "常用",
     "allSenses": "全{count}件の意味を表示",
     "fewerSenses": "閉じる",
+    "showMore": "もっと見る",
+    "dictionaries": "辞書",
     "others": "ほかの語",
     "forms": "別表記"
   },
