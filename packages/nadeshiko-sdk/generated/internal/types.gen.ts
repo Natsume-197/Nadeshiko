@@ -1031,6 +1031,33 @@ export type DictionaryCandidate = {
      */
     frequency: number;
     /**
+     * Rank in each kind of media the word occurs in, the kind that uses it most first (by occurrences per
+     * million words of that kind). Absent when not counted.
+     *
+     */
+    frequencyByCategory?: Array<{
+        category: 'ANIME' | 'JDRAMA' | 'YOUTUBE' | 'AUDIOBOOK';
+        /**
+         * 1 is the most frequent word in that kind of media.
+         */
+        rank: number;
+        /**
+         * Occurrences per million words of that kind of media.
+         */
+        perMillion: number;
+    }>;
+    /**
+     * Present and true when nothing is filed under the text looked up and this word is its dictionary form
+     * (食べた → 食べる).
+     *
+     */
+    baseForm?: boolean;
+    /**
+     * With `baseForm`: what the conjugation does, in the word card's inflection labels, outermost first.
+     *
+     */
+    inflection?: Array<string>;
+    /**
      * UniDic accent, at most two patterns. No audio yet.
      */
     pitch?: Array<{
