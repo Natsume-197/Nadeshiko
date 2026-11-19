@@ -295,10 +295,10 @@ describe('identifyWord', () => {
     expect(direct?.baseForm).toBeUndefined();
   });
 
-  it('puts the reader’s language first', async () => {
+  it('returns English definitions even for a Spanish locale', async () => {
     const [best] = await identifyWord(TestDataSource, { lemma: '開く', reading: 'ヒラク', locale: 'es' });
 
-    expect(best?.entries[0]?.senses.map((s) => s.definitions[0]?.lang)).toEqual(['es', 'en']);
+    expect(best?.entries[0]?.senses.map((s) => s.definitions[0]?.lang)).toEqual(['en']);
   });
 
   it('shows a word usually written in kana in kana when met in kana', async () => {
