@@ -1099,6 +1099,14 @@
     "loading": "載入中",
     "noResultsSupport": "沒有找到想要的內容？歡迎到我們的{link}建議下一批收錄的作品。"
   },
+  "wordEntry": {
+    "label": "辭典條目",
+    "common": "常用",
+    "allSenses": "顯示全部 {count} 個釋義",
+    "fewerSenses": "收起",
+    "others": "也可能是",
+    "forms": "其他寫法"
+  },
   "kanjiIndex": {
     "title": "漢字",
     "intro": "所有常用漢字和 JLPT 漢字，依等級排列。打開一個漢字，查看讀音、筆順以及使用它的動畫、日劇、有聲書和 YouTube 例句。",

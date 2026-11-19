@@ -11,6 +11,15 @@ import type { Media } from '@brigadasos/nadeshiko-sdk';
 import { reportError } from '~/utils/reportError';
 import { seoEpisodeLabel } from '~/utils/media';
 import { buildMediaPath, decodeSearchQuery, readSearchRouteFilters } from '~/utils/routes';
+import { cardSenses, pageGlossPreference, type ShirabeWord } from '~/utils/wordCard';
+import { type EntryBrief, isWordQuery } from '#shared/utils/wordEntry';
+
+/** What `/api/dictionary/word-entry/:word` answers. */
+interface WordEntryAnswer {
+  entry: ShirabeWord | null;
+  others: EntryBrief[];
+  inflected: boolean;
+}
 
 definePageMeta({
   // Leaving a title scope changes the route, not the list's scroll position.
@@ -19,7 +28,7 @@ definePageMeta({
   },
 });
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const { formatNumber } = useFormat();
 const route = useRoute();
 const localePath = useLocalePath();
@@ -136,7 +145,25 @@ const rendersForCrawler = useRequestTraffic() === 'bot';
 // so switching users without a reload cannot reuse the previous reader's ranking.
 const familiarMediaCacheKey = computed(() => `familiar-media-${userStore().userEmail ?? 'anonymous'}`);
 
-const [{ data: initialSentenceOutcome }, { data: initialStatsOutcome }, , { data: scopedMedia }] = await Promise.all([
+// A search for one word is that word's page: its dictionary entry goes above the sentences. Only on the word's own
+// page (not scoped to a title or a single sentence), and only for a query that can be one word.
+const entryLocale = computed<'en' | 'es'>(() => (locale.value === 'es' ? 'es' : 'en'));
+const wantsWordEntry = computed(
+  () =>
+    isWordQuery(searchQuery.value) &&
+    !mediaQueryParam.value &&
+    episodeNumberParam.value == null &&
+    !route.query.uuid &&
+    !routeFilters.value.segmentPublicId,
+);
+
+const [
+  { data: initialSentenceOutcome },
+  { data: initialStatsOutcome },
+  ,
+  { data: scopedMedia },
+  { data: wordEntryAnswer },
+] = await Promise.all([
   useAsyncData(sentenceCacheKey.value, () => fetchSentenceData(), {
     server: true,
     lazy: false,
@@ -172,7 +199,36 @@ const [{ data: initialSentenceOutcome }, { data: initialStatsOutcome }, , { data
     },
     { server: true, lazy: false, watch: [mediaQueryParam], default: () => null as Media | null },
   ),
+  // The entry is extra: a failed lookup leaves the page as it was, with its sentences.
+  useAsyncData(
+    () => `search-word-entry-${entryLocale.value}-${wantsWordEntry.value ? searchQuery.value : ''}`,
+    async (): Promise<WordEntryAnswer | null> => {
+      if (!wantsWordEntry.value) return null;
+      try {
+        return await $fetch<WordEntryAnswer>(
+          `/api/dictionary/word-entry/${encodeURIComponent(searchQuery.value.trim())}`,
+          { query: { locale: entryLocale.value } },
+        );
+      } catch {
+        return null;
+      }
+    },
+    { server: true, lazy: false, default: () => null as WordEntryAnswer | null },
+  ),
 ]);
+
+const wordEntry = computed(() => wordEntryAnswer.value?.entry ?? null);
+
+/** The entry's first meanings in the page's language, for the meta description and structured data. */
+const entryMeaning = computed(() => {
+  const entry = wordEntry.value;
+  if (!entry) return '';
+  // As the entry prints them: the page's language, English when the word has nothing in it.
+  return cardSenses(entry, pageGlossPreference(locale.value), 3)
+    .map((sense) => sense.glosses[0]?.text ?? '')
+    .filter(Boolean)
+    .join('; ');
+});
 
 const initialSentenceData = computed(() =>
   initialSentenceOutcome.value?.status === 'ok' ? initialSentenceOutcome.value.data : null,
@@ -267,6 +323,12 @@ const metaTags = computed(() => {
     } else {
       description = t('seo.search.descriptionNoResults', { query: q });
     }
+    // A dictionary word says what it means first: that is what a searcher looking it up wants to see.
+    if (entryMeaning.value) {
+      // An inflected query names the word it is a form of: 食べた (食べる): to eat.
+      const named = wordEntryAnswer.value?.inflected ? `${q} (${wordEntry.value?.headword})` : q;
+      description = `${named}: ${entryMeaning.value}. ${description}`;
+    }
 
     const social = socialTitle(title);
     // Indexable word pages need descriptive titles; share-card titles stay short.
@@ -327,6 +389,19 @@ const breadcrumbItems = computed(() => {
 const schemaOrgNodes = computed(() => [
   defineWebPage({ '@type': 'CollectionPage' }),
   defineBreadcrumb({ itemListElement: breadcrumbItems.value }),
+  // The word's entry, as the kanji pages describe theirs.
+  // Only on the word's own page: 食べた's page is not the entry for 食べる.
+  ...(wordEntry.value && !wordEntryAnswer.value?.inflected
+    ? [
+        {
+          '@type': 'DefinedTerm',
+          name: wordEntry.value.headword,
+          inLanguage: 'ja',
+          ...(entryMeaning.value ? { description: entryMeaning.value } : {}),
+          ...(wordEntry.value.reading ? { alternateName: wordEntry.value.reading } : {}),
+        },
+      ]
+    : []),
 ]);
 
 useSchemaOrg(schemaOrgNodes);
@@ -347,6 +422,13 @@ useSchemaOrg(schemaOrgNodes);
                             <!-- Keep the hero below tabs. Use the requested scope; scopedMedia can lag a tick. -->
                             <template #below-tabs>
                                 <MediaHeader v-if="scopedMedia && mediaQueryParam" :media="scopedMedia" heading="h2" />
+                            </template>
+                            <template #above-results>
+                                <SearchWordEntry
+                                    v-if="wordEntry && wantsWordEntry && !mediaQueryParam"
+                                    :entry="wordEntry"
+                                    :others="wordEntryAnswer?.others ?? []"
+                                    :inflected-from="wordEntryAnswer?.inflected ? searchQuery.trim() : null" />
                             </template>
                         </SearchContainer>
                     </div>

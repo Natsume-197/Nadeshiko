@@ -1064,6 +1064,9 @@ onBeforeRouteUpdate(async (to, from) => {
         </div>
         <div class="flex mx-auto w-full">
             <div class="flex-1 mx-auto w-full">
+                <!-- Inside the results column, so what goes here (a word's dictionary entry) shares the row with
+                     the title filter instead of pushing it down. -->
+                <slot name="above-results" />
                 <!-- Above the results rather than in the sticky header: the header's
                      height is a fixed `--search-controls-height` that the sidebar
                      offsets itself by, and this line is a notice to read once, not a
