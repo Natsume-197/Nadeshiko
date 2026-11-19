@@ -59,6 +59,7 @@ import {
 } from './stages/split';
 import { absorbStretchedVowel } from './stages/elongation';
 import { repairLemmas } from './stages/lemma';
+import { joinNounStemCompounds } from './stages/nounCompound';
 import { processSpecialCases } from './stages/specialCases';
 import { combineSuffix, reclassifyOrphanedSuffixes } from './stages/suffix';
 import type { CombineContext, Feature, Group, Stage } from './types';
@@ -144,6 +145,7 @@ export const STAGES: readonly Stage[] = [
   { name: 'FixReadingAmbiguity', origin: DISAMBIGUATION, run: fixReadingAmbiguity },
   { name: 'CombineNounCompounds', origin: PREPROCESS, run: combineNounCompounds },
   { name: 'CombineCompounds', origin: PREPROCESS, run: combineCompounds },
+  { name: 'JoinNounStemCompounds', origin: '(ours)', run: joinNounStemCompounds },
   { name: 'CombineExpressions', origin: PREPROCESS, run: combineExpressions },
   { name: 'CombineLexicalAdverbs', origin: PREPROCESS, run: combineLexicalAdverbs },
   { name: 'ResolveOrphanDeverbalNoun', origin: 'form choice, deverbal-suffix rule', run: resolveOrphanDeverbalNoun },

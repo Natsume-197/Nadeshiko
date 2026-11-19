@@ -364,6 +364,8 @@ const isBoundary = (unit: Unit) => unit.n === STOP || (unit.o === '' && /^\s$/u.
 
 const PUNCTUATION = /^[\p{P}\p{S}\s]+$/u;
 const SOKUON_ONLY = /^[っッ]+$/u;
+/** Stretch and emphasis characters, which belong to the word they stretch however many there are. */
+const STRETCH = /^[ぁぃぅぇぉァィゥェォーっッ〜～]+$/u;
 
 /** A Sudachi morpheme mapped onto the original text, with the normalised surface Sudachi read (`ns`). */
 export type MappedMorpheme = Morpheme & { ns: string };
@@ -398,7 +400,14 @@ function chunksOf(units: readonly Unit[]): Chunk[] {
     } else if (unit.n === '') {
       const at = current.spans.length - 1;
       const list = current.deleted.get(at) ?? [];
-      list.push({ o: unit.o, b: offset, e: offset + length });
+      // Consecutive deleted characters are one piece (a deleted ハハハハ run stays together).
+      const previous = list.at(-1);
+      if (previous && previous.e === offset) {
+        previous.o += unit.o;
+        previous.e = offset + length;
+      } else {
+        list.push({ o: unit.o, b: offset, e: offset + length });
+      }
       current.deleted.set(at, list);
     } else {
       current.text += unit.n;
@@ -410,27 +419,57 @@ function chunksOf(units: readonly Unit[]): Chunk[] {
   return chunks;
 }
 
-/** Deleted text goes to the word before it, or stands alone when it is punctuation or nothing precedes it. */
+/** A morpheme that is a word, not a blank or punctuation, so stretched or emphatic characters can join it. */
+const isWord = (morpheme: MappedMorpheme) => morpheme.pos[0] !== '空白' && morpheme.pos[0] !== '補助記号';
+
+/** Extends `last` to `end` in the original text. */
+function extend(last: MappedMorpheme, end: number, original: readonly string[]): void {
+  last.e = end;
+  last.s = original.slice(last.b, last.e).join('');
+  const a = last.a.at(-1);
+  if (a) a.e = end;
+}
+
+/**
+ * Deleted text: stretch and emphasis characters, or any one or two characters, join the word right before it
+ * (行けぇーー, だめっ);
+ * punctuation stays a symbol; anything longer (a deleted ハハハハ sound effect) is an interjection of its own.
+ */
 function pushDeleted(piece: Deleted, out: MappedMorpheme[], original: readonly string[]): void {
   if (!piece.o) return;
+  // A deleted stutter keeps its punctuation apart (は、 → は | 、).
+  const runs = [...piece.o.matchAll(/[\p{P}\p{S}\s]+|[^\p{P}\p{S}\s]+/gu)];
+  if (runs.length > 1) {
+    let b = piece.b;
+    for (const run of runs) {
+      const length = [...run[0]].length;
+      pushDeleted({ o: run[0], b, e: b + length }, out, original);
+      b += length;
+    }
+    return;
+  }
   const last = out.at(-1);
-  if (!PUNCTUATION.test(piece.o) && last && last.e === piece.b) {
-    last.e = piece.e;
-    last.s = original.slice(last.b, last.e).join('');
-    const a = last.a.at(-1);
-    if (a) a.e = piece.e;
+  const punctuation = PUNCTUATION.test(piece.o);
+  if (
+    !punctuation &&
+    (STRETCH.test(piece.o) || [...piece.o].length <= 2) &&
+    last &&
+    last.e === piece.b &&
+    isWord(last)
+  ) {
+    extend(last, piece.e, original);
     return;
   }
   out.push({
     s: piece.o,
     b: piece.b,
     e: piece.e,
-    pos: ['補助記号', '一般', '*', '*', '*', '*'],
+    pos: punctuation ? ['補助記号', '一般', '*', '*', '*', '*'] : ['感動詞', '一般', '*', '*', '*', '*'],
     d: piece.o,
     n: piece.o,
     r: piece.o,
     a: [],
-    ns: '',
+    ns: punctuation ? '' : piece.o,
   });
 }
 
@@ -444,7 +483,7 @@ function mapBack(chunk: Chunk, morphemes: readonly Morpheme[], out: MappedMorphe
 
   for (const piece of chunk.deleted.get(-1) ?? []) pushDeleted(piece, out, original);
 
-  morphemes.forEach((morpheme, index) => {
+  morphemes.forEach((morpheme) => {
     const span = spanOf(morpheme.b, morpheme.e);
     if (!span) return;
     let [start, end] = span;
@@ -459,12 +498,9 @@ function mapBack(chunk: Chunk, morphemes: readonly Morpheme[], out: MappedMorphe
     if (a.length > 0) (a.at(-1) as { e: number }).e = end;
 
     const last = out.at(-1);
-    // A lone emphatic っ that a boundary cut off joins the word before it (だめ|っ → だめっ).
-    if (index === 0 && SOKUON_ONLY.test(morpheme.s) && last && last.e === start && !PUNCTUATION.test(last.s)) {
-      last.e = end;
-      last.s = original.slice(last.b, last.e).join('');
-      const lastA = last.a.at(-1);
-      if (lastA) lastA.e = end;
+    // A lone emphatic っ that a boundary cut off joins the word before it (だめ|っ → だめっ, ハハハハ|ッ).
+    if (SOKUON_ONLY.test(morpheme.s) && last && last.e === start && isWord(last)) {
+      extend(last, end, original);
     } else {
       out.push({ ...morpheme, s: original.slice(start, end).join(''), b: start, e: end, a, ns: morpheme.s });
     }
@@ -477,16 +513,84 @@ function mapBack(chunk: Chunk, morphemes: readonly Morpheme[], out: MappedMorphe
  * morpheme's surface and offsets are those of the original span its units cover, and `ns` is what Sudachi read.
  */
 export async function analyseSentences(texts: readonly string[], mode: SplitMode = 'B'): Promise<MappedMorpheme[][]> {
-  const prepared = texts.map((text) => ({ original: [...text], chunks: chunksOf(preprocess(text).units) }));
-  const flat = prepared.flatMap(({ chunks }) => chunks.filter((chunk) => chunk.text).map((chunk) => chunk.text));
+  const prepared = texts.map((text) => {
+    const original = [...text];
+    const chunks = chunksOf(preprocess(text).units).map((chunk) => ({
+      chunk,
+      stripped: withoutStretch(chunk, original),
+    }));
+    return { original, chunks };
+  });
+  const flat = prepared.flatMap(({ chunks }) =>
+    chunks.flatMap(({ chunk, stripped }) =>
+      chunk.text ? (stripped ? [chunk.text, stripped.text] : [chunk.text]) : [],
+    ),
+  );
   const analysed = flat.length > 0 ? await analyse(flat, mode) : [];
   let cursor = 0;
   return prepared.map(({ original, chunks }) => {
     const sentence: MappedMorpheme[] = [];
-    for (const chunk of chunks) {
-      const morphemes = chunk.text ? (analysed[cursor++] ?? []) : [];
-      mapBack(chunk, morphemes, sentence, original);
+    for (const { chunk, stripped } of chunks) {
+      if (!chunk.text) {
+        mapBack(chunk, [], sentence, original);
+        continue;
+      }
+      const morphemes = analysed[cursor++] ?? [];
+      const alternative = stripped ? (analysed[cursor++] ?? []) : undefined;
+      if (stripped && alternative && prefersStripped(morphemes, alternative))
+        mapBack(stripped, alternative, sentence, original);
+      else mapBack(chunk, morphemes, sentence, original);
     }
     return sentence;
   });
+}
+
+/** A chunk ending in hiragana + ー: the same chunk with that ー run read off (it joins the word before it). */
+const TRAILING_STRETCH = /(?<=[ぁ-ゖ])ー+$/u;
+
+function withoutStretch(chunk: Chunk, original: readonly string[]): Chunk | undefined {
+  const match = TRAILING_STRETCH.exec(chunk.text);
+  if (!match) return undefined;
+  const cut = [...chunk.text].length - [...match[0]].length;
+  if (cut <= 0) return undefined;
+  const deleted = new Map<number, Deleted[]>();
+  const removed: Deleted[] = [];
+  for (const [at, pieces] of chunk.deleted) {
+    if (at < cut - 1) deleted.set(at, pieces);
+    else removed.push(...pieces);
+  }
+  for (const [b, e] of chunk.spans.slice(cut)) removed.push({ o: original.slice(b, e).join(''), b, e });
+  removed.sort((x, y) => x.b - y.b);
+  const merged: Deleted[] = [];
+  for (const piece of removed) {
+    const last = merged.at(-1);
+    if (last && last.e === piece.b) {
+      last.o += piece.o;
+      last.e = piece.e;
+    } else merged.push({ ...piece });
+  }
+  deleted.set(cut - 1, merged);
+  return { text: [...chunk.text].slice(0, cut).join(''), spans: chunk.spans.slice(0, cut), deleted };
+}
+
+const WORD_ENDINGS = new Set(['動詞', '形容詞', '助動詞', '副詞', '助詞', '形状詞', '代名詞', '名詞']);
+
+/**
+ * (ours) Which reading of a chunk that ends in a stretched ー to keep. Sudachi cuts stretched imperatives badly
+ * (行けー → 行 + interjection けー, やめろー → やめ + ろ + ー), but some colloquial words carry their ー
+ * (うるせー, すげー): those are kept when Sudachi already reads them as one verb or adjective ending in ー.
+ */
+function prefersStripped(withStretch: readonly Morpheme[], stripped: readonly Morpheme[]): boolean {
+  const last = withStretch.at(-1);
+  if (
+    last &&
+    [...last.s].length >= 3 &&
+    last.s.endsWith('ー') &&
+    last.d.endsWith('ー') &&
+    ['形容詞', '動詞', '助動詞'].includes(last.pos[0])
+  )
+    return false;
+  const strippedLast = stripped.at(-1);
+  if (!strippedLast || !WORD_ENDINGS.has(strippedLast.pos[0])) return false;
+  return stripped.length <= withStretch.length;
 }

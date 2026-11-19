@@ -188,6 +188,7 @@ describe('stage list', () => {
       'FixReadingAmbiguity',
       'CombineNounCompounds',
       'CombineCompounds',
+      'JoinNounStemCompounds',
       'CombineExpressions',
       'CombineLexicalAdverbs',
       'ResolveOrphanDeverbalNoun',

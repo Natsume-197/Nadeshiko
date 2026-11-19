@@ -55,8 +55,9 @@ describe('preprocess (upstream PreprocessText)', () => {
 
   it('drops a shouted small vowel and collapses ー runs for Sudachi only (行けぇーー)', async () => {
     const [ike] = await analyseSentences(['行けぇーー']);
-    expect(sent).toEqual(['行けー']);
-    expect(ike?.map((morpheme) => morpheme.s)).toEqual(['行けぇーー']);
+    // Read with and without the final stretch; the reading without it wins and the ー stays in the surface.
+    expect(sent).toEqual(['行けー', '行け']);
+    expect(ike?.map((morpheme) => [morpheme.s, morpheme.ns])).toEqual([['行けぇーー', '行け']]);
   });
 
   it('tiles the original sentence whatever the rewrites', async () => {

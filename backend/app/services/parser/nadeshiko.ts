@@ -16,7 +16,7 @@ import { analyseSentences } from './preprocess';
  */
 
 /** `<revision>`: bump when output changes in a way stored rows should be reparsed for. */
-export const NADESHIKO_PARSER_REVISION = 5;
+export const NADESHIKO_PARSER_REVISION = 6;
 
 const hasKanji = (text: string) => /\p{Script=Han}/u.test(text);
 
