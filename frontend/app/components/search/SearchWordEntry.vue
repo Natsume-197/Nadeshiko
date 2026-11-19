@@ -241,6 +241,8 @@ const kanjiPath = (character: string) => localePath(`/kanji/${encodeURIComponent
           </li>
         </ul>
 
+        <div class="word-entry__meaning-head">
+        <span class="word-entry__label">{{ $t('wordEntry.meaning') }}</span>
         <!-- The reader's own dictionaries (task 48): one tab each, one dictionary on show at a time. -->
         <div
           v-if="sources.length > 1"
@@ -263,14 +265,21 @@ const kanjiPath = (character: string) => localePath(`/kanji/${encodeURIComponent
             {{ source }}
           </button>
         </div>
+        </div>
 
         <ol
           class="word-entry__senses"
           :class="{ 'is-clamped': hasLongContent && !allSenses }"
           data-testid="word-entry-senses"
         >
-          <li v-for="(sense, index) in senses" :key="index" class="word-entry__sense" :class="`is-indent-${sense.indent}`">
-            <span class="word-entry__sense-number">{{ sense.number }}</span>
+          <li
+            v-for="(sense, index) in senses"
+            :key="index"
+            class="word-entry__sense"
+            :class="[`is-indent-${sense.indent}`, { 'is-single': sensesTotal === 1 }]"
+          >
+            <!-- A dictionary that gives one entry numbers its own senses inside it (❶❷): ours would be a second number. -->
+            <span v-if="sensesTotal > 1" class="word-entry__sense-number">{{ sense.number }}</span>
             <div class="word-entry__sense-body">
               <span v-for="row in sense.glosses" :key="row.lang" class="word-entry__gloss-row">
                 <YomitanContent v-if="row.structuredContent !== undefined" :content="row.structuredContent" />
@@ -568,17 +577,30 @@ const kanjiPath = (character: string) => localePath(`/kanji/${encodeURIComponent
 
 /* Senses: the meaning first and largest, its grammar under it */
 .word-entry__senses {
-  margin: 14px 0 0;
+  margin: 10px 0 0;
   padding-left: 0;
   list-style: none;
 }
 
-/* One tab per dictionary when the reader's own dictionaries answer beside JMdict. */
+/* "Meaning", and beside it one tab per dictionary when the reader's own dictionaries answer beside JMdict. */
+.word-entry__meaning-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  margin-top: 16px;
+}
+
 .word-entry__sources {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin-top: 12px;
+}
+
+/* A dictionary's own long entry reads as body text, a step below JMdict's short glosses. */
+.word-entry__gloss-row .yomitan-content {
+  font-size: 15px;
+  line-height: 1.7;
 }
 
 .word-entry__source-tab {
@@ -617,6 +639,10 @@ const kanjiPath = (character: string) => localePath(`/kanji/${encodeURIComponent
   font-size: 17px;
   line-height: 1.45;
   color: var(--ink);
+}
+
+.word-entry__sense.is-single {
+  grid-template-columns: 1fr;
 }
 
 .word-entry__sense + .word-entry__sense {

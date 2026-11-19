@@ -1144,6 +1144,7 @@
   "wordEntry": {
     "label": "Entri kamus",
     "common": "Umum",
+    "meaning": "Arti",
     "allSenses": "Tampilkan semua {count} arti",
     "fewerSenses": "Tampilkan lebih sedikit",
     "showMore": "Tampilkan lebih banyak",

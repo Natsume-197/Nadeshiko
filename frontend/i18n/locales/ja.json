@@ -1144,6 +1144,7 @@
   "wordEntry": {
     "label": "辞書の項目",
     "common": "常用",
+    "meaning": "意味",
     "allSenses": "全{count}件の意味を表示",
     "fewerSenses": "閉じる",
     "showMore": "もっと見る",

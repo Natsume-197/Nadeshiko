@@ -1144,6 +1144,7 @@
   "wordEntry": {
     "label": "Entrada del diccionario",
     "common": "Frecuente",
+    "meaning": "Significado",
     "allSenses": "Ver los {count} significados",
     "fewerSenses": "Ver menos",
     "showMore": "Mostrar más",

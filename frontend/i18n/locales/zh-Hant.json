@@ -1144,6 +1144,7 @@
   "wordEntry": {
     "label": "辭典條目",
     "common": "常用",
+    "meaning": "釋義",
     "allSenses": "顯示全部 {count} 個釋義",
     "fewerSenses": "收起",
     "showMore": "顯示更多",

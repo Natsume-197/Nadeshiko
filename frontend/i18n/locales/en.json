@@ -1144,6 +1144,7 @@
   "wordEntry": {
     "label": "Dictionary entry",
     "common": "Common",
+    "meaning": "Meaning",
     "allSenses": "Show all {count} meanings",
     "fewerSenses": "Show fewer",
     "showMore": "Show more",

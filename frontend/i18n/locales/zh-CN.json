@@ -1144,6 +1144,7 @@
   "wordEntry": {
     "label": "词典条目",
     "common": "常用",
+    "meaning": "释义",
     "allSenses": "显示全部 {count} 个释义",
     "fewerSenses": "收起",
     "showMore": "显示更多",

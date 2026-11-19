@@ -121,3 +121,41 @@ describe('YomitanContent & custom dictionary card senses', () => {
     expect(candidateSummary(word, pref)).toBe('固形の食物をかんで飲み込む。');
   });
 });
+
+describe("a monolingual entry's structure kept in its text", () => {
+  const MEIKYO = [
+    'か‐の‐じょ【彼女】',
+    { tag: 'span', content: '(━ヂョ)', style: { fontSize: '65%' } },
+    '\n 〘代〙\n❶ 〚三人称の人代名詞〛話し手・聞き手以外の女性を指し示す語。\n「それは━の本だ」\n❷ 〔俗〕相手の女性。\n⇔',
+    { tag: 'a', content: '彼氏', href: '?query=彼氏&wildcards=off' },
+  ];
+
+  it('draws one line per part, each styled by what it is', () => {
+    const wrapper = mount(YomitanContent, { props: { content: MEIKYO } });
+    const lines = wrapper.findAll('.yc-line');
+    expect(lines.map((line) => line.classes().filter((name) => name.startsWith('is-')))).toEqual([
+      ['is-headline'],
+      [],
+      ['is-sense'],
+      ['is-example'],
+      ['is-sense'],
+      ['is-ref'],
+    ]);
+    expect(wrapper.findAll('.yc-marker').map((marker) => marker.text())).toEqual(['❶', '❷']);
+    expect(wrapper.findAll('.yc-label').map((label) => label.text())).toEqual([
+      '〘代〙',
+      '〚三人称の人代名詞〛',
+      '〔俗〕',
+    ]);
+    // The cross-reference stays a search link on its line.
+    expect(lines[5]?.find('a').attributes('href')).toBe(`/search/${encodeURIComponent('彼氏')}`);
+  });
+
+  it('leaves content that is already in blocks as the dictionary built it', () => {
+    const wrapper = mount(YomitanContent, {
+      props: { content: [{ tag: 'div', content: '危険な様子。' }, '\n', { tag: 'div', content: '「やばい」' }] },
+    });
+    expect(wrapper.find('.yc-line').exists()).toBe(false);
+    expect(wrapper.findAll('.yomitan-content > div')).toHaveLength(2);
+  });
+});

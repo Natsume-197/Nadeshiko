@@ -1144,6 +1144,7 @@
   "wordEntry": {
     "label": "Verbete do dicionário",
     "common": "Comum",
+    "meaning": "Significado",
     "allSenses": "Ver os {count} significados",
     "fewerSenses": "Ver menos",
     "showMore": "Mostrar mais",
