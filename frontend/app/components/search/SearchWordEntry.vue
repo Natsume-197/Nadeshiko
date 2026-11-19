@@ -10,6 +10,7 @@ import {
 } from '~/utils/wordCard';
 import { CATEGORY_LABEL_KEYS } from '~/utils/categories';
 import PitchGraph from '~/components/search/segment/PitchGraph.vue';
+import YomitanContent from '~/components/search/segment/YomitanContent.vue';
 import { type EntryBrief, toHiragana } from '#shared/utils/wordEntry';
 
 /**
@@ -52,14 +53,19 @@ watch(
   },
 );
 
-/** First English meaning, first synonym only: a chip is a hint, not a definition. */
-const chipGloss = (word: ShirabeWord): string =>
-  (
-    cardSenses(word, preference.value, 3)
+/** First English meaning, first synonym only: a chip is a hint, not a definition. From JMdict when it answers: a
+ * reader's own monolingual dictionary would put a whole Japanese definition in the chip. */
+const chipGloss = (word: ShirabeWord): string => {
+  const entries = word.entries ?? [];
+  const builtin = entries.filter((entry) => !entry.dictionary.startsWith('custom:'));
+  const source = builtin.length > 0 && builtin.length < entries.length ? { ...word, entries: builtin } : word;
+  return (
+    cardSenses(source, preference.value, 3)
       .flatMap((sense) => sense.glosses)[0]
       ?.text.split(';')[0]
       ?.trim() ?? ''
   );
+};
 
 interface Choice {
   headword: string;
@@ -94,6 +100,10 @@ function choose(index: number) {
 const allSenses = ref(false);
 const senses = computed(() => cardSenses(shown.value, preference.value, allSenses.value ? ALL_SENSES : SENSES_SHOWN));
 const sensesTotal = computed(() => cardSenses(shown.value, preference.value, ALL_SENSES).length);
+/** Name each dictionary only when more than one answers: the shared entry is JMdict alone and says nothing. */
+const namesSources = computed(
+  () => new Set(cardSenses(shown.value, preference.value, ALL_SENSES).map((sense) => sense.dictionary)).size > 1,
+);
 
 const furigana = computed(() => headwordFurigana(shown.value));
 const reading = computed(() => {
@@ -210,11 +220,20 @@ const kanjiPath = (character: string) => localePath(`/kanji/${encodeURIComponent
         </ul>
 
         <ol class="word-entry__senses">
-          <li v-for="(sense, index) in senses" :key="index" class="word-entry__sense" :class="`is-indent-${sense.indent}`">
+          <template v-for="(sense, index) in senses" :key="index">
+          <!-- The reader's own dictionaries (task 48) stack with JMdict here as on the card: say whose senses these are. -->
+          <li
+            v-if="namesSources && sense.dictionary !== senses[index - 1]?.dictionary"
+            class="word-entry__source"
+            role="presentation"
+            data-testid="word-entry-source"
+          >{{ sense.dictionary }}</li>
+          <li class="word-entry__sense" :class="`is-indent-${sense.indent}`">
             <span class="word-entry__sense-number">{{ sense.number }}</span>
             <div class="word-entry__sense-body">
               <span v-for="row in sense.glosses" :key="row.lang" class="word-entry__gloss-row">
-                <span class="word-entry__gloss">{{ row.text }}</span>
+                <YomitanContent v-if="row.structuredContent !== undefined" :content="row.structuredContent" />
+                <span v-else class="word-entry__gloss">{{ row.text }}</span>
               </span>
               <span v-if="sense.partsOfSpeech.length > 0 || sense.tags.length > 0" class="word-entry__chips">
                 <span
@@ -234,6 +253,7 @@ const kanjiPath = (character: string) => localePath(`/kanji/${encodeURIComponent
               <span v-for="note in sense.notes" :key="note" class="word-entry__note">{{ note }}</span>
             </div>
           </li>
+          </template>
         </ol>
         <button
           v-if="sensesTotal > SENSES_SHOWN"
@@ -504,6 +524,17 @@ const kanjiPath = (character: string) => localePath(`/kanji/${encodeURIComponent
   margin: 14px 0 0;
   padding-left: 0;
   list-style: none;
+}
+
+/* Whose senses follow, when the reader's own dictionaries answer beside JMdict. */
+.word-entry__source {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-faint);
+}
+
+.word-entry__source:not(:first-child) {
+  margin-top: 0.4rem;
 }
 
 .word-entry__sense {

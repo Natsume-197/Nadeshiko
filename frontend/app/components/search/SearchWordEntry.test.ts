@@ -205,3 +205,59 @@ describe('the word entry above a word search', () => {
     }
   });
 });
+
+describe("the word entry with a reader's own dictionaries", () => {
+  const YABAI = {
+    ...TABERU,
+    id: 'jmdict:yabai',
+    headword: 'やばい',
+    reading: 'ヤバイ',
+    furigana: [],
+    forms: [],
+    entries: [
+      {
+        dictionary: 'custom:11',
+        dictionaryName: '実用日本語表現辞典',
+        senses: [
+          {
+            position: 0,
+            definitions: [
+              {
+                lang: 'ja',
+                text: '危険または不都合な様子。',
+                structuredContent: { tag: 'div', content: [{ tag: 'span', content: '危険' }, 'または不都合な様子。'] },
+              },
+            ],
+            tags: [],
+          },
+        ],
+      },
+      { dictionary: 'jmdict', dictionaryName: 'JMdict', senses: [sense('dangerous; risky', null, 'adj-i')] },
+    ],
+  } as unknown as ShirabeWord;
+
+  test('names each dictionary and renders structured content instead of its plain text', () => {
+    const wrapper = render(YABAI);
+    expect(wrapper.findAll('[data-testid="word-entry-source"]').map((label) => label.text())).toEqual([
+      '実用日本語表現辞典',
+      'JMdict',
+    ]);
+    expect(wrapper.find('.yomitan-content span').text()).toBe('危険');
+  });
+
+  test('names no dictionary when JMdict answers alone', () => {
+    expect(render().find('[data-testid="word-entry-source"]').exists()).toBe(false);
+  });
+
+  test("keeps JMdict's English meaning in a homograph chip", () => {
+    const other = { ...TABERU, id: 'jmdict:ume', headword: '野梅', reading: 'ヤバイ' } as ShirabeWord;
+    const wrapper = mount(SearchWordEntry, {
+      props: { entry: YABAI, others: [{ headword: '野梅', reading: 'ヤバイ', gloss: null, entry: other }] },
+      global: {
+        mocks: { $t: (key: string) => key },
+        stubs: { NuxtLink: RouterLinkStub },
+      },
+    });
+    expect(wrapper.find('[data-testid="word-entry-others"]').text()).toContain('dangerous');
+  });
+});

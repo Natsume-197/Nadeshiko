@@ -11,16 +11,9 @@ import type { Media } from '@brigadasos/nadeshiko-sdk';
 import { reportError } from '~/utils/reportError';
 import { seoEpisodeLabel } from '~/utils/media';
 import { buildMediaPath, decodeSearchQuery, readSearchRouteFilters } from '~/utils/routes';
-import { cardSenses, pageGlossPreference, type ShirabeWord } from '~/utils/wordCard';
-import { type EntryBrief, isWordQuery } from '#shared/utils/wordEntry';
-
-/** What `/api/dictionary/word-entry/:word` answers. */
-interface WordEntryAnswer {
-  entry: ShirabeWord | null;
-  /** Other words the search can be, each with its whole entry so the box can show it in place. */
-  others: Array<EntryBrief & { entry?: ShirabeWord }>;
-  inflected: boolean;
-}
+import { cardSenses, pageGlossPreference } from '~/utils/wordCard';
+import { personalEntryFor, type WordEntryAnswer } from '~/utils/personalWordEntry';
+import { isWordQuery } from '#shared/utils/wordEntry';
 
 definePageMeta({
   // Leaving a title scope changes the route, not the list's scroll position.
@@ -219,6 +212,33 @@ const [
 ]);
 
 const wordEntry = computed(() => wordEntryAnswer.value?.entry ?? null);
+
+/**
+ * The same entry with the reader's own uploaded dictionaries (task 48), fetched in the browser once the page is up.
+ * The server-rendered entry stays JMdict only: it is cached for everyone and is what crawlers and the page's
+ * metadata read. This replaces it on screen only when the reader's dictionaries add something to it.
+ */
+const userState = userStore();
+const personalWordEntry = ref<WordEntryAnswer | null>(null);
+watch(
+  () =>
+    [
+      wantsWordEntry.value ? searchQuery.value.trim() : '',
+      entryLocale.value,
+      userState.customDictionariesFingerprint,
+    ] as const,
+  async ([word, entryLang, stack]) => {
+    personalWordEntry.value = null;
+    if (!import.meta.client || !word || !stack) return;
+    const answer = await personalEntryFor(word, entryLang, stack);
+    // A later search may have started while this one was on its way.
+    if (word === (wantsWordEntry.value ? searchQuery.value.trim() : '') && stack === userState.customDictionariesFingerprint) {
+      personalWordEntry.value = answer;
+    }
+  },
+  { immediate: true },
+);
+const shownWordEntry = computed(() => personalWordEntry.value ?? wordEntryAnswer.value);
 
 /** The entry's first meanings in the page's language, for the meta description and structured data. */
 const entryMeaning = computed(() => {
@@ -426,10 +446,10 @@ useSchemaOrg(schemaOrgNodes);
                             </template>
                             <template #above-results>
                                 <SearchWordEntry
-                                    v-if="wordEntry && wantsWordEntry && !mediaQueryParam"
-                                    :entry="wordEntry"
-                                    :others="wordEntryAnswer?.others ?? []"
-                                    :inflected-from="wordEntryAnswer?.inflected ? searchQuery.trim() : null" />
+                                    v-if="shownWordEntry?.entry && wantsWordEntry && !mediaQueryParam"
+                                    :entry="shownWordEntry.entry"
+                                    :others="shownWordEntry.others ?? []"
+                                    :inflected-from="shownWordEntry.inflected ? searchQuery.trim() : null" />
                             </template>
                         </SearchContainer>
                     </div>
