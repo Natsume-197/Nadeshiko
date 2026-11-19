@@ -202,7 +202,7 @@ accessories:
   # once, before switching SEGMENT_PARSER. Shared with staging like Postgres and Elasticsearch. Unpublished: only the
   # apps on the kamal network reach it. The image pins SudachiPy and the same SudachiDict as the Elasticsearch image.
   sudachi:
-    image: <%= ENV.fetch("SUDACHI_IMAGE", "ghcr.io/natsume-197/nadeshiko-sudachi:0.6.10-dict-20260116-user1") %>
+    image: <%= ENV.fetch("SUDACHI_IMAGE", "ghcr.io/natsume-197/nadeshiko-sudachi:0.6.10-dict-20260116-user2") %>
     host: nadeshiko
     options:
       # ~140MB resident after parsing 33k segments locally; the 1.2GB dictionary is mmapped and its page cache is

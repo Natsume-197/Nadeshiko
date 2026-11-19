@@ -16,7 +16,7 @@ permissions:
 
 env:
   # SudachiPy and SudachiDict versions; keep the dictionary equal to the Elasticsearch image's.
-  SUDACHI_IMAGE_TAG: 0.6.10-dict-20260116-user1
+  SUDACHI_IMAGE_TAG: 0.6.10-dict-20260116-user2
 
 jobs:
   build:

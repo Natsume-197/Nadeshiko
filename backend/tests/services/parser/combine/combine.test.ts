@@ -60,8 +60,8 @@ describe('combine: dictionary forms, kinds and deconjugations', () => {
     expect(group.r).toBe('タベサセラレタ');
   });
 
-  it('turns a suru-noun and its する into the verb', () => {
-    expect(run('勉強した')[0]).toMatchObject({ s: '勉強した', d: '勉強する', kind: 'inflected', cls: 'Verb' });
+  it('turns a suru-noun and its する into the verb, mined as the noun (勉強)', () => {
+    expect(run('勉強した')[0]).toMatchObject({ s: '勉強した', d: '勉強', kind: 'inflected', cls: 'Verb' });
   });
 
   it('gives an expression its dictionary entry as d', () => {
@@ -196,6 +196,7 @@ describe('stage list', () => {
       'LinkReadings',
       'AbsorbStretchedVowel',
       'AssignKinds',
+      'RepairLemmas',
     ]);
   });
 

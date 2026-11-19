@@ -58,6 +58,7 @@ import {
   splitUnresolvableSuruCompounds,
 } from './stages/split';
 import { absorbStretchedVowel } from './stages/elongation';
+import { repairLemmas } from './stages/lemma';
 import { processSpecialCases } from './stages/specialCases';
 import { combineSuffix, reclassifyOrphanedSuffixes } from './stages/suffix';
 import type { CombineContext, Feature, Group, Stage } from './types';
@@ -155,6 +156,7 @@ export const STAGES: readonly Stage[] = [
   },
   { name: 'AbsorbStretchedVowel', origin: '(ours)', run: absorbStretchedVowel },
   { name: 'AssignKinds', origin: '(ours)', run: assignKinds },
+  { name: 'RepairLemmas', origin: '(ours)', run: repairLemmas },
 ];
 
 /** The features present in a sentence, as `TokenFeatureScanner.Scan` computes them (the subset we gate on). */

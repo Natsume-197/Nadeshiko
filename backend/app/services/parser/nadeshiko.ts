@@ -16,7 +16,7 @@ import { analyseSentences } from './preprocess';
  */
 
 /** `<revision>`: bump when output changes in a way stored rows should be reparsed for. */
-export const NADESHIKO_PARSER_REVISION = 4;
+export const NADESHIKO_PARSER_REVISION = 5;
 
 const hasKanji = (text: string) => /\p{Script=Han}/u.test(text);
 
@@ -97,7 +97,8 @@ export function toSlimToken(
   // Any conjugated group, expressions too (手に入って, だったら): the chain is what the card prints.
   if (group.deconjugation && group.kind !== 'symbol') {
     const labels = inflectionLabels(group.deconjugation.process, group.s);
-    if (labels.length > 0) token.inflection = { labels, base: token.d };
+    // The base is the verb the chain ends at (勉強する for 勉強した, whose lemma is the noun 勉強).
+    if (labels.length > 0) token.inflection = { labels, base: group.deconjugation.text || token.d };
   }
   return token;
 }
