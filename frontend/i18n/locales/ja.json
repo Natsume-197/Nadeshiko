@@ -1099,14 +1099,6 @@
     "loading": "読み込み中",
     "noResultsSupport": "まだ収録されていない作品をお探しですか？次に追加する作品を {link} で提案できます。"
   },
-  "wordEntry": {
-    "label": "辞書の項目",
-    "common": "常用",
-    "allSenses": "全{count}件の意味を表示",
-    "fewerSenses": "閉じる",
-    "others": "ほかの語",
-    "forms": "別表記"
-  },
   "kanjiIndex": {
     "title": "漢字",
     "intro": "常用漢字とJLPTの漢字をレベル別に。漢字を開くと、読み方・書き順・その漢字を使うアニメ・ドラマ・オーディオブック・YouTubeの例文が見られます。",

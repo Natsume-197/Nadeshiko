@@ -1099,14 +1099,6 @@
     "loading": "Loading",
     "noResultsSupport": "Looking for something we don't have yet? Suggest what we add next on our {link}"
   },
-  "wordEntry": {
-    "label": "Dictionary entry",
-    "common": "Common",
-    "allSenses": "Show all {count} meanings",
-    "fewerSenses": "Show fewer",
-    "others": "Also could be",
-    "forms": "Also written"
-  },
   "kanjiIndex": {
     "title": "Kanji",
     "intro": "Every jōyō and JLPT kanji, by level. Open one to see how it is read, how it is written, and real sentences that use it from anime, drama, audiobooks and YouTube.",

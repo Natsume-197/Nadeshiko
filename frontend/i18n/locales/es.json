@@ -1099,14 +1099,6 @@
     "loading": "Cargando",
     "noResultsSupport": "¿Buscas un título que aún no tenemos? Puedes proponerlo en {link}."
   },
-  "wordEntry": {
-    "label": "Entrada del diccionario",
-    "common": "Frecuente",
-    "allSenses": "Ver los {count} significados",
-    "fewerSenses": "Ver menos",
-    "others": "También puede ser",
-    "forms": "También se escribe"
-  },
   "kanjiIndex": {
     "title": "Kanji",
     "intro": "Todos los kanji jōyō y del JLPT, por nivel. Abre uno para ver cómo se lee, cómo se escribe y frases reales que lo usan de anime, dramas, audiolibros y YouTube.",

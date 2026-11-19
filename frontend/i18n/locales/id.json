@@ -1099,14 +1099,6 @@
     "loading": "Memuat",
     "noResultsSupport": "Belum menemukan yang Anda cari? Usulkan konten untuk ditambahkan melalui {link} kami."
   },
-  "wordEntry": {
-    "label": "Entri kamus",
-    "common": "Umum",
-    "allSenses": "Tampilkan semua {count} arti",
-    "fewerSenses": "Tampilkan lebih sedikit",
-    "others": "Bisa juga",
-    "forms": "Juga ditulis"
-  },
   "kanjiIndex": {
     "title": "Kanji",
     "intro": "Semua kanji jōyō dan JLPT, per level. Buka salah satunya untuk melihat cara baca, cara tulis, dan kalimat nyata yang memakainya dari anime, drama, buku audio, dan YouTube.",
