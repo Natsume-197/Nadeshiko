@@ -54,12 +54,17 @@ function render(entry: ShirabeWord = TABERU) {
 }
 
 describe('the word entry above a word search', () => {
-  test('as on the word card: furigana over the word, the pitch row under the badges, the reading beside the word only without furigana', () => {
+  test('furigana over the word, the pitch in one line as a dictionary prints it, the reading beside the word only without furigana', () => {
     const wrapper = render();
     expect(wrapper.find('ruby').text()).toBe('食た');
-    expect(wrapper.find('[data-testid="word-entry-pitch"] [data-testid="pitch-graph"]').attributes('aria-label')).toBe(
-      'タベル [2]',
-    );
+    // たべる [2]: low た, high べ with the drop after it, low る.
+    const morae = wrapper.findAll('[data-testid="word-entry-pitch"] .word-entry__mora');
+    expect(morae.map((mora) => [mora.text(), mora.classes('is-high'), mora.classes('is-drop')])).toEqual([
+      ['た', false, false],
+      ['べ', true, true],
+      ['る', false, false],
+    ]);
+    expect(wrapper.find('[data-testid="word-entry-pitch"]').attributes('aria-label')).toBe('たべる [2]');
     expect(wrapper.find('.word-entry__reading').exists()).toBe(false);
 
     expect(
@@ -140,7 +145,7 @@ describe('the word entry above a word search', () => {
     expect(render().find('[data-testid="word-entry-inflected"]').exists()).toBe(false);
   });
 
-  test('the pitch accent sits right under the word, before the definitions', () => {
+  test('the pitch accent sits with the word, before the definitions', () => {
     const html = render().html();
 
     expect(html.indexOf('data-testid="word-entry-pitch"')).toBeLessThan(html.indexOf('word-entry__sense-body'));
