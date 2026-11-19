@@ -233,6 +233,7 @@ export type t_CursorPagination = {
 };
 
 export type t_DictionaryCandidate = {
+  baseForm?: boolean;
   common: boolean;
   dictionary: 'jmdict' | 'jmnedict';
   entries: {
@@ -258,12 +259,18 @@ export type t_DictionaryCandidate = {
     text: string;
   }[];
   frequency: number | null;
+  frequencyByCategory?: {
+    category: 'ANIME' | 'JDRAMA' | 'YOUTUBE' | 'AUDIOBOOK';
+    perMillion: number;
+    rank: number;
+  }[];
   furigana?: {
     ruby?: string;
     text: string;
   }[];
   headword: string;
   id: string;
+  inflection?: string[];
   jlpt: string | null;
   name: boolean;
   parts?: {

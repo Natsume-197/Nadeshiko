@@ -128,6 +128,17 @@ export const s_DictionaryCandidate = z.object({
   dictionary: z.enum(['jmdict', 'jmnedict']),
   jlpt: z.string().nullable(),
   frequency: z.coerce.number().nullable(),
+  frequencyByCategory: z
+    .array(
+      z.object({
+        category: z.enum(['ANIME', 'JDRAMA', 'YOUTUBE', 'AUDIOBOOK']),
+        rank: z.coerce.number(),
+        perMillion: z.coerce.number(),
+      }),
+    )
+    .optional(),
+  baseForm: PermissiveBoolean.optional(),
+  inflection: z.array(z.string()).optional(),
   pitch: z.array(z.object({ downstep: z.coerce.number().min(0) })).optional(),
   parts: z.array(z.object({ text: z.string(), lemma: z.string(), reading: z.string(), id: z.string() })).optional(),
   furigana: z.array(z.object({ text: z.string(), ruby: z.string().optional() })).optional(),

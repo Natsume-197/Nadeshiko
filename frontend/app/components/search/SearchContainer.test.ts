@@ -200,36 +200,12 @@ describe('the search-inside-words notice', () => {
     pagination: { cursor: null, hasMore: n > 3, estimatedTotalHits: n },
   });
 
-  test('offers the search inside words when a Japanese word search comes back short', async () => {
+  test('suggests nothing when a word search comes back short', async () => {
     searchFor('糊');
     const wrapper = render({ sentenceData: results(0) });
     await flushPromises();
 
-    const notice = wrapper.get('[data-testid="contains-notice"]');
-    expect(notice.attributes('data-active')).toBe('false');
-    await notice.get('[data-act="toggle"]').trigger('click');
-    expect(setQuery).toHaveBeenCalledWith({ match: 'contains' }, { scroll: true });
-  });
-
-  test('stays quiet for a full page, a romaji query, or query syntax', async () => {
-    searchFor('糊');
-    expect(
-      render({ sentenceData: results(30) })
-        .find('[data-testid="contains-notice"]')
-        .exists(),
-    ).toBe(false);
-    searchFor('word');
-    expect(
-      render({ sentenceData: results(0) })
-        .find('[data-testid="contains-notice"]')
-        .exists(),
-    ).toBe(false);
-    searchFor('"糊"');
-    expect(
-      render({ sentenceData: results(0) })
-        .find('[data-testid="contains-notice"]')
-        .exists(),
-    ).toBe(false);
+    expect(wrapper.find('[data-testid="contains-notice"]').exists()).toBe(false);
   });
 
   test('says the mode is on and leads back to whole words', async () => {

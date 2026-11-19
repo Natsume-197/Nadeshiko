@@ -1,13 +1,14 @@
 <script setup lang="ts">
 /**
- * Word search matches whole words, so `糊` misses the single word `血糊`. In word mode this offers the search
- * inside words once a Japanese query comes back short; in that mode it says so and leads back.
+ * Word search matches whole words, so `糊` misses the single word `血糊`. While the reader searches inside words
+ * (`?match=contains`, from `*糊*` or a kanji's sentence link), this says so and leads back to the word search. It
+ * no longer suggests the mode on short results (dropped 2026-11-19).
  */
 import { mdiTextSearchVariant } from '@mdi/js';
 
 defineProps<{
   query: string;
-  /** The reader is already searching inside words (`?match=contains`). */
+  /** Always true now; kept so the container's call site reads the same. */
   active: boolean;
 }>();
 
@@ -21,7 +22,7 @@ defineEmits<{ toggle: [] }>();
     <UiBaseIcon :path="mdiTextSearchVariant" size="16" class="shrink-0" />
     <span>
       <!-- biome-ignore lint/a11y/noHeaderScope: vue-i18n scope, not a table header -->
-      <i18n-t scope="global" :keypath="active ? 'searchContainer.containsActive' : 'searchContainer.containsOffer'" tag="span">
+      <i18n-t scope="global" keypath="searchContainer.containsActive" tag="span">
         <template #query><span lang="ja" class="text-white/70">{{ query }}</span></template>
       </i18n-t>
     </span>
@@ -30,7 +31,7 @@ defineEmits<{ toggle: [] }>();
       data-testid="contains-match-toggle"
       class="font-medium text-white/70 hover:text-white underline underline-offset-2 transition-colors"
       @click="$emit('toggle')">
-      {{ active ? $t('searchContainer.containsBack') : $t('searchContainer.containsSearch') }}
+      {{ $t('searchContainer.containsBack') }}
     </button>
   </div>
 </template>

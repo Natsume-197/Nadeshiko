@@ -1099,6 +1099,15 @@
     "loading": "Memuat",
     "noResultsSupport": "Belum menemukan yang Anda cari? Usulkan konten untuk ditambahkan melalui {link} kami."
   },
+  "wordEntry": {
+    "label": "Entri kamus",
+    "common": "Umum",
+    "pitch": "Aksen nada",
+    "allSenses": "Tampilkan semua {count} arti",
+    "fewerSenses": "Tampilkan lebih sedikit",
+    "others": "Bisa juga",
+    "forms": "Juga ditulis"
+  },
   "kanjiIndex": {
     "title": "Kanji",
     "intro": "Semua kanji jōyō dan JLPT, per level. Buka salah satunya untuk melihat cara baca, cara tulis, dan kalimat nyata yang memakainya dari anime, drama, buku audio, dan YouTube.",
@@ -1122,6 +1131,7 @@
     "kanjiJinmeiyo": "Jinmeiyō (nama)",
     "kanjiNewspaper": "#{rank} di surat kabar",
     "kanjiCorpusRank": "#{rank} di Nadeshiko",
+    "frequencyByCategory": "Peringkat menurut jenis media",
     "kanjiReadingShare": "{percent}% kalimatnya di Nadeshiko",
     "kanjiWordRank": "#{rank} di antara kata di Nadeshiko",
     "kanjiParts": "Bagian",
@@ -1198,9 +1208,7 @@
     "hiddenResultsRevealed": "Judul yang biasanya Anda sembunyikan sedang ditampilkan",
     "hiddenResultsRestore": "Sembunyikan kembali",
     "hiddenResultsManage": "Kelola",
-    "containsOffer": "Hasil lebih sedikit dari dugaan? {query} mungkin bagian dari kata yang lebih panjang.",
     "containsActive": "Menampilkan kata yang mengandung {query}.",
-    "containsSearch": "Cari di dalam kata",
     "containsBack": "Kembali ke kata utuh",
     "loading": "Memuat…",
     "hiddenMediaImageAlt": "Ilustrasi judul tersembunyi",

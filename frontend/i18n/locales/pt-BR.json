@@ -1099,6 +1099,15 @@
     "loading": "Carregando",
     "noResultsSupport": "Não encontrou o que procurava? Sugira o próximo conteúdo no nosso {link}."
   },
+  "wordEntry": {
+    "label": "Verbete do dicionário",
+    "common": "Comum",
+    "pitch": "Acento tonal",
+    "allSenses": "Ver os {count} significados",
+    "fewerSenses": "Ver menos",
+    "others": "Também pode ser",
+    "forms": "Também se escreve"
+  },
   "kanjiIndex": {
     "title": "Kanji",
     "intro": "Todos os kanji jōyō e do JLPT, por nível. Abra um para ver como se lê, como se escreve e frases reais que o usam de anime, doramas, audiolivros e YouTube.",
@@ -1122,6 +1131,7 @@
     "kanjiJinmeiyo": "Jinmeiyō (nomes)",
     "kanjiNewspaper": "nº {rank} em jornais",
     "kanjiCorpusRank": "nº {rank} no Nadeshiko",
+    "frequencyByCategory": "Posição por tipo de mídia",
     "kanjiReadingShare": "{percent}% das suas frases no Nadeshiko",
     "kanjiWordRank": "nº {rank} entre as palavras do Nadeshiko",
     "kanjiParts": "Partes",
@@ -1198,9 +1208,7 @@
     "hiddenResultsRevealed": "Exibindo títulos que você costuma ocultar",
     "hiddenResultsRestore": "Ocultar novamente",
     "hiddenResultsManage": "Gerenciar",
-    "containsOffer": "Menos resultados do que esperava? {query} pode fazer parte de palavras mais longas.",
     "containsActive": "Mostrando palavras que contêm {query}.",
-    "containsSearch": "Buscar dentro das palavras",
     "containsBack": "Voltar a palavras inteiras",
     "loading": "Carregando…",
     "hiddenMediaImageAlt": "Ilustração de conteúdo oculto",

@@ -150,6 +150,7 @@ const {
   headFurigana,
   inflectionLine,
   badges,
+  frequencySplit,
   pitchPatterns,
   senses,
   namesSources,
@@ -165,6 +166,11 @@ const {
   () => hiddenDefinitionLanguages.value,
   () => userStore().shirabeLinked,
 );
+
+/** Whether the rank by kind of media is open under the badges. Kept from word to word: a reader who opened it
+ *  once wants it on the next word too. */
+const frequencyOpen = ref(false);
+const formatRank = (rank: number) => new Intl.NumberFormat(locale.value).format(rank);
 
 /** Mining uses local AnkiConnect and stays hidden without a configured profile; see useWordMining for cache
  * constraints.
@@ -1098,8 +1104,26 @@ function reportDictionaryClick(dictionary: DictionaryId, surface: ShirabeLinkSur
             <p v-if="inflectionLine" class="token-tooltip__inflection">{{ inflectionLine }}</p>
 
             <div v-if="badges.length > 0" class="token-tooltip__badges">
-              <span v-for="badge in badges" :key="badge.id" class="token-tooltip__badge" :class="badge.kind">{{ badge.text }}</span>
+              <template v-for="badge in badges" :key="badge.id">
+                <!-- The corpus rank opens its split by kind of media, when the dictionary gives one. -->
+                <button
+                  v-if="badge.id === 'freq' && frequencySplit.length > 0"
+                  type="button"
+                  class="token-tooltip__badge token-tooltip__badge--button"
+                  :class="badge.kind"
+                  :aria-expanded="frequencyOpen"
+                  :title="$t('tokenTooltip.frequencyByCategory')"
+                  data-testid="word-card-frequency"
+                  @click="frequencyOpen = !frequencyOpen"
+                >{{ badge.text }} <span aria-hidden="true">{{ frequencyOpen ? '▴' : '▾' }}</span></button>
+                <span v-else class="token-tooltip__badge" :class="badge.kind">{{ badge.text }}</span>
+              </template>
             </div>
+            <ul v-if="frequencyOpen && frequencySplit.length > 0" class="token-tooltip__freq-split" data-testid="word-card-frequency-split">
+              <li v-for="entry in frequencySplit" :key="entry.category">
+                {{ $t(entry.labelKey) }} <strong>#{{ formatRank(entry.rank) }}</strong>
+              </li>
+            </ul>
 
             <!-- The play buttons sit on the pitch row because both are about how
                  the word SOUNDS, and one leads each pattern because each pattern
@@ -2084,6 +2108,34 @@ a.token-tooltip__word:hover {
   background: rgb(48 48 48);
   color: var(--ink-muted);
   font-variant-numeric: tabular-nums;
+}
+
+.token-tooltip__badge--button {
+  border: 0;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.token-tooltip__badge--button:hover,
+.token-tooltip__badge--button:focus-visible {
+  color: var(--ink);
+}
+
+.token-tooltip__freq-split {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.token-tooltip__freq-split strong {
+  color: var(--ink);
+  font-weight: 600;
 }
 
 .token-tooltip__body {

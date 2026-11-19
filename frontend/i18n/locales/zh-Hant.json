@@ -1099,6 +1099,15 @@
     "loading": "載入中",
     "noResultsSupport": "沒有找到想要的內容？歡迎到我們的{link}建議下一批收錄的作品。"
   },
+  "wordEntry": {
+    "label": "辭典條目",
+    "common": "常用",
+    "pitch": "音調",
+    "allSenses": "顯示全部 {count} 個釋義",
+    "fewerSenses": "收起",
+    "others": "也可能是",
+    "forms": "其他寫法"
+  },
   "kanjiIndex": {
     "title": "漢字",
     "intro": "所有常用漢字和 JLPT 漢字，依等級排列。打開一個漢字，查看讀音、筆順以及使用它的動畫、日劇、有聲書和 YouTube 例句。",
@@ -1122,6 +1131,7 @@
     "kanjiJinmeiyo": "人名用漢字",
     "kanjiNewspaper": "報紙頻率第{rank}位",
     "kanjiCorpusRank": "Nadeshiko 頻率第{rank}位",
+    "frequencyByCategory": "依媒體類型的頻率排名",
     "kanjiReadingShare": "占 Nadeshiko 例句的 {percent}%",
     "kanjiWordRank": "Nadeshiko 詞頻第{rank}位",
     "kanjiParts": "部件",
@@ -1198,9 +1208,7 @@
     "hiddenResultsRevealed": "正在顯示你平時隱藏的作品",
     "hiddenResultsRestore": "重新隱藏",
     "hiddenResultsManage": "管理",
-    "containsOffer": "結果比預期少？{query} 可能是更長詞語的一部分。",
     "containsActive": "正在顯示包含 {query} 的詞語。",
-    "containsSearch": "在詞語內部搜尋",
     "containsBack": "返回整詞搜尋",
     "loading": "載入中…",
     "hiddenMediaImageAlt": "作品已隱藏的提示插圖",

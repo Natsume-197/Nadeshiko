@@ -5879,6 +5879,46 @@ components:
           nullable: true
           description: Rank in Nadeshiko's own corpus (1 is the most frequent word); null when not counted.
           example: 19
+        frequencyByCategory:
+          type: array
+          description: |
+            Rank in each kind of media the word occurs in, the kind that uses it most first (by occurrences per
+            million words of that kind). Absent when not counted.
+          items:
+            type: object
+            required:
+              - category
+              - rank
+              - perMillion
+            properties:
+              category:
+                type: string
+                enum:
+                  - ANIME
+                  - JDRAMA
+                  - YOUTUBE
+                  - AUDIOBOOK
+              rank:
+                type: integer
+                description: 1 is the most frequent word in that kind of media.
+                example: 212
+              perMillion:
+                type: number
+                description: Occurrences per million words of that kind of media.
+                example: 431.7
+        baseForm:
+          type: boolean
+          description: |
+            Present and true when nothing is filed under the text looked up and this word is its dictionary form
+            (食べた → 食べる).
+        inflection:
+          type: array
+          description: |
+            With `baseForm`: what the conjugation does, in the word card's inflection labels, outermost first.
+          items:
+            type: string
+          example:
+            - past
         pitch:
           type: array
           description: UniDic accent, at most two patterns. No audio yet.

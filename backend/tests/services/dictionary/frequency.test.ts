@@ -1,5 +1,13 @@
 import { describe, it, expect } from 'vitest';
-import { attribute, countKanji, type KanjiCount, kanjiRows, tokenTripleOf } from '@app/services/dictionary/frequency';
+import {
+  attribute,
+  CATEGORIES,
+  categoryRows,
+  countKanji,
+  type KanjiCount,
+  kanjiRows,
+  tokenTripleOf,
+} from '@app/services/dictionary/frequency';
 import type { StoredWord } from '@app/services/dictionary/identify';
 
 const form = (idx: number, text: string, kana: boolean) => ({
@@ -123,5 +131,35 @@ describe('kanji counts', () => {
       { character: '物', count: 2, sentences: 2, rank: 2 },
       { character: '時', count: 1, sentences: 1, rank: 3 },
     ]);
+  });
+});
+
+describe('categoryRows', () => {
+  const at = (counts: Partial<Record<(typeof CATEGORIES)[number], number>>) =>
+    CATEGORIES.map((category) => counts[category] ?? 0);
+
+  it('ranks each kind of media apart, per million words of that kind', () => {
+    const byWord = new Map<number, number[]>([
+      [1, at({ ANIME: 10, AUDIOBOOK: 1 })],
+      [2, at({ ANIME: 30 })],
+      [3, at({ AUDIOBOOK: 4 })],
+    ]);
+    const totals = at({ ANIME: 1_000, AUDIOBOOK: 100 });
+
+    const rows = categoryRows(byWord, totals);
+
+    expect(rows.filter((row) => row.category === 'ANIME')).toEqual([
+      { word_id: 2, category: 'ANIME', count: 30, per_million: 30_000, rank: 1 },
+      { word_id: 1, category: 'ANIME', count: 10, per_million: 10_000, rank: 2 },
+    ]);
+    expect(rows.filter((row) => row.category === 'AUDIOBOOK')).toEqual([
+      { word_id: 3, category: 'AUDIOBOOK', count: 4, per_million: 40_000, rank: 1 },
+      { word_id: 1, category: 'AUDIOBOOK', count: 1, per_million: 10_000, rank: 2 },
+    ]);
+    expect(rows.some((row) => row.category === 'JDRAMA')).toBe(false);
+  });
+
+  it('leaves out a share under half an occurrence', () => {
+    expect(categoryRows(new Map([[1, at({ YOUTUBE: 0.3 })]]), at({ YOUTUBE: 10 }))).toEqual([]);
   });
 });

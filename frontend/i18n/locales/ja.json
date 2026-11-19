@@ -1099,6 +1099,15 @@
     "loading": "読み込み中",
     "noResultsSupport": "まだ収録されていない作品をお探しですか？次に追加する作品を {link} で提案できます。"
   },
+  "wordEntry": {
+    "label": "辞書の項目",
+    "common": "常用",
+    "pitch": "アクセント",
+    "allSenses": "全{count}件の意味を表示",
+    "fewerSenses": "閉じる",
+    "others": "ほかの語",
+    "forms": "別表記"
+  },
   "kanjiIndex": {
     "title": "漢字",
     "intro": "常用漢字とJLPTの漢字をレベル別に。漢字を開くと、読み方・書き順・その漢字を使うアニメ・ドラマ・オーディオブック・YouTubeの例文が見られます。",
@@ -1122,6 +1131,7 @@
     "kanjiJinmeiyo": "人名用漢字",
     "kanjiNewspaper": "新聞での頻度 {rank}位",
     "kanjiCorpusRank": "Nadeshikoでの頻度 {rank}位",
+    "frequencyByCategory": "メディア別の頻度順位",
     "kanjiReadingShare": "Nadeshikoの例文の{percent}%",
     "kanjiWordRank": "Nadeshikoの単語で{rank}位",
     "kanjiParts": "部品",
@@ -1198,9 +1208,7 @@
     "hiddenResultsRevealed": "非表示にしている作品を表示しています",
     "hiddenResultsRestore": "再び非表示にする",
     "hiddenResultsManage": "管理",
-    "containsOffer": "結果が少ない場合、{query} は長い語の一部かもしれません。",
     "containsActive": "{query} を含む語を表示しています。",
-    "containsSearch": "語の中も検索",
     "containsBack": "語単位の検索に戻る",
     "loading": "読み込み中...",
     "hiddenMediaImageAlt": "非表示コンテンツのイラスト",

@@ -1099,6 +1099,15 @@
     "loading": "Loading",
     "noResultsSupport": "Looking for something we don't have yet? Suggest what we add next on our {link}"
   },
+  "wordEntry": {
+    "label": "Dictionary entry",
+    "common": "Common",
+    "pitch": "Pitch accent",
+    "allSenses": "Show all {count} meanings",
+    "fewerSenses": "Show fewer",
+    "others": "Also could be",
+    "forms": "Also written"
+  },
   "kanjiIndex": {
     "title": "Kanji",
     "intro": "Every jōyō and JLPT kanji, by level. Open one to see how it is read, how it is written, and real sentences that use it from anime, drama, audiobooks and YouTube.",
@@ -1122,6 +1131,7 @@
     "kanjiJinmeiyo": "Jinmeiyō (names)",
     "kanjiNewspaper": "#{rank} in newspapers",
     "kanjiCorpusRank": "#{rank} on Nadeshiko",
+    "frequencyByCategory": "Rank by kind of media",
     "kanjiReadingShare": "{percent}% of its sentences on Nadeshiko",
     "kanjiWordRank": "#{rank} among the words on Nadeshiko",
     "kanjiParts": "Parts",
@@ -1198,9 +1208,7 @@
     "hiddenResultsRevealed": "Showing titles you normally hide",
     "hiddenResultsRestore": "Hide again",
     "hiddenResultsManage": "Manage",
-    "containsOffer": "Fewer results than expected? {query} may be part of longer words.",
     "containsActive": "Showing words that contain {query}.",
-    "containsSearch": "Search inside words",
     "containsBack": "Back to whole words",
     "loading": "Loading...",
     "hiddenMediaImageAlt": "Hidden media illustration",

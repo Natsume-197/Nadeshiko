@@ -5,6 +5,7 @@ import { parseWithNadeshiko } from '@app/services/parser/nadeshiko';
 import { loadLexicon } from '@app/services/parser/combine/lexicon';
 import { deconjugate } from '@app/services/parser/deconjugator';
 import type { SlimToken } from '@app/models/Segment';
+import { ALL_CATEGORIES, type CategoryType } from '@app/models/Media';
 import { lookupKeys, toHiragana } from './import/entries';
 import { type IdentifyQuery, loadWords, scoreWord, type StoredWord } from './identify';
 import { type CollocationCounts, collocationRows, countCollocations, writeCollocations } from './collocations';
@@ -22,6 +23,9 @@ import { type CollocationCounts, collocationRows, countCollocations, writeColloc
  * The same pass counts every kanji written (`dict.kanji_frequency`), for the kanji card's rank in our corpus, and mines
  * the noun + particle + verb collocations the parser uses to name a verb written in kana (`dict.collocation`, see
  * ./collocations.ts).
+ *
+ * Every count is also kept per kind of media (anime, drama, YouTube, audiobooks: the sentence's media category), for
+ * `dict.frequency_category`: the card's rank in each kind.
  */
 
 const PAGE = 2_000;
@@ -39,7 +43,41 @@ export interface FrequencyReport {
   kanji: number;
   /** Collocation rows kept for `dict.collocation`. */
   collocations: number;
+  /** Words ranked in each kind of media. */
+  categories: Partial<Record<CategoryType, number>>;
   dryRun: boolean;
+}
+
+/** The kinds of media counted apart, in a fixed order: a triple's `byCategory[i]` is its count in `CATEGORIES[i]`. */
+export const CATEGORIES: readonly CategoryType[] = ALL_CATEGORIES;
+
+/** One row of `dict.frequency_category`. */
+export interface CategoryRow {
+  word_id: number;
+  category: CategoryType;
+  count: number;
+  per_million: number;
+  rank: number;
+}
+
+/**
+ * Per-category counts as table rows: in each category, the words it has, most frequent first, ranked from 1, per
+ * million words of that category. A word under half an occurrence in a category (a tie shared three ways, say) is
+ * not ranked there. Exported for tests.
+ */
+export function categoryRows(byWord: Map<number, number[]>, morphemesByCategory: number[]): CategoryRow[] {
+  const out: CategoryRow[] = [];
+  for (const [index, category] of CATEGORIES.entries()) {
+    const total = Math.max(1, morphemesByCategory[index] ?? 0);
+    const rows = [...byWord]
+      .map(([word_id, counts]) => ({ word_id, count: Math.round(counts[index] ?? 0) }))
+      .filter((row) => row.count > 0)
+      .sort((a, b) => b.count - a.count || a.word_id - b.word_id);
+    for (const [position, row] of rows.entries()) {
+      out.push({ ...row, category, per_million: (row.count / total) * 1e6, rank: position + 1 });
+    }
+  }
+  return out;
 }
 
 /** How often one kanji is written: every occurrence, and the sentences it is in. */
@@ -88,6 +126,8 @@ export interface Triple {
   r?: string;
   pt?: string;
   count: number;
+  /** The count split by kind of media, in `CATEGORIES` order; absent when not counted that way. */
+  byCategory?: number[];
 }
 
 const hasKanji = (text: string) => /\p{Script=Han}/u.test(text);
@@ -112,7 +152,8 @@ export function tokenTripleOf(token: SlimToken): Omit<Triple, 'count'> | null {
     : { n: d, kana: toHiragana(d), pt: token.pt };
 }
 
-const tripleKey = (t: Omit<Triple, 'count'>) => [t.n, t.kana ?? '', t.s ?? '', t.r ?? '', t.pt ?? ''].join('\u0000');
+const tripleKey = (t: Omit<Triple, 'count' | 'byCategory'>) =>
+  [t.n, t.kana ?? '', t.s ?? '', t.r ?? '', t.pt ?? ''].join('\u0000');
 
 /** Count every word morpheme of the served corpus. Exported for tests. */
 export async function countMorphemes(
@@ -124,37 +165,49 @@ export async function countMorphemes(
   collocations: CollocationCounts;
   segments: number;
   morphemes: number;
+  /** Word morphemes per kind of media, in `CATEGORIES` order. */
+  morphemesByCategory: number[];
 }> {
   const triples = new Map<string, Triple>();
   const kanji = new Map<string, KanjiCount>();
   const collocations: CollocationCounts = new Map();
   const lexicon = await loadLexicon(dataSource);
+  const morphemesByCategory = CATEGORIES.map(() => 0);
   let cursor = 0;
   let segments = 0;
   let morphemes = 0;
 
   for (;;) {
-    const rows: Array<{ id: number; content: string }> = await dataSource.query(
-      `SELECT id, content FROM "Segment"
-        WHERE id > $1 AND status IN ('ACTIVE', 'VERIFIED') AND coalesce(content, '') <> ''
-        ORDER BY id LIMIT $2`,
+    const rows: Array<{ id: number; content: string; category: string | null }> = await dataSource.query(
+      `SELECT s.id, s.content, m.category
+         FROM "Segment" s LEFT JOIN "Media" m ON m.id = s.media_id
+        WHERE s.id > $1 AND s.status IN ('ACTIVE', 'VERIFIED') AND coalesce(s.content, '') <> ''
+        ORDER BY s.id LIMIT $2`,
       [cursor, PAGE],
     );
     if (rows.length === 0) break;
     const texts = rows.map((row) => row.content);
+    // -1 for a category we do not split by: the sentence still counts in the totals.
+    const categoryOf = rows.map((row) => CATEGORIES.indexOf(row.category as CategoryType));
     for (const text of texts) countKanji(text, kanji);
-    const add = (triple: Omit<Triple, 'count'>) => {
+    const add = (triple: Omit<Triple, 'count' | 'byCategory'>, category: number) => {
       const key = tripleKey(triple);
-      const seen = triples.get(key);
-      if (seen) seen.count += 1;
-      else triples.set(key, { ...triple, count: 1 });
+      let seen = triples.get(key);
+      if (!seen) {
+        seen = { ...triple, count: 0, byCategory: CATEGORIES.map(() => 0) };
+        triples.set(key, seen);
+      }
+      seen.count += 1;
+      if (category >= 0 && seen.byCategory) seen.byCategory[category] = (seen.byCategory[category] ?? 0) + 1;
     };
     const [analysed, parsed] = await Promise.all([analyse(texts), parseWithNadeshiko(dataSource, texts)]);
-    for (const sentence of analysed) {
+    for (const [index, sentence] of analysed.entries()) {
+      const category = categoryOf[index] ?? -1;
       for (const m of sentence) {
         if (NOT_WORDS.has(m.pos[0]) || !m.n) continue;
         morphemes += 1;
-        add(tripleOf(m));
+        if (category >= 0) morphemesByCategory[category] = (morphemesByCategory[category] ?? 0) + 1;
+        add(tripleOf(m), category);
       }
     }
     for (const [index, sentence] of parsed.entries()) {
@@ -162,14 +215,14 @@ export async function countMorphemes(
       const lemmas = new Set((analysed[index] ?? []).flatMap((m) => [m.n, m.d]));
       for (const token of sentence) {
         const triple = tokenTripleOf(token);
-        if (triple && !lemmas.has(triple.n)) add(triple);
+        if (triple && !lemmas.has(triple.n)) add(triple, categoryOf[index] ?? -1);
       }
     }
     segments += rows.length;
     cursor = rows[rows.length - 1]?.id ?? cursor;
     onPage?.(segments);
   }
-  return { triples, kanji, collocations, segments, morphemes };
+  return { triples, kanji, collocations, segments, morphemes, morphemesByCategory };
 }
 
 /**
@@ -197,7 +250,10 @@ export async function computeFrequency(
   dataSource: DataSource,
   options: { dryRun?: boolean; onPage?: (done: number) => void } = {},
 ): Promise<FrequencyReport> {
-  const { triples, kanji, collocations, segments, morphemes } = await countMorphemes(dataSource, options.onPage);
+  const { triples, kanji, collocations, segments, morphemes, morphemesByCategory } = await countMorphemes(
+    dataSource,
+    options.onPage,
+  );
   const collocationTable = collocationRows(collocations);
 
   // One dictionary lookup per normalised form, shared by every triple that has it.
@@ -209,15 +265,28 @@ export async function computeFrequency(
   }
 
   const counts = new Map<number, number>();
+  const byCategory = new Map<number, number[]>();
   let attributed = 0;
   for (const [form, list] of byForm) {
     const words = await loadWords(dataSource, lookupKeys(form));
     for (const triple of list) {
       const owners = attribute(triple, words);
       if (owners.length > 0) attributed += triple.count;
-      for (const { id, share } of owners) counts.set(id, (counts.get(id) ?? 0) + share);
+      for (const { id, share } of owners) {
+        counts.set(id, (counts.get(id) ?? 0) + share);
+        if (!triple.byCategory) continue;
+        // Shared between tied owners the same way as the total.
+        const part = share / triple.count;
+        let split = byCategory.get(id);
+        if (!split) {
+          split = CATEGORIES.map(() => 0);
+          byCategory.set(id, split);
+        }
+        for (const [index, count] of triple.byCategory.entries()) split[index] = (split[index] ?? 0) + count * part;
+      }
     }
   }
+  const categoryTable = categoryRows(byCategory, morphemesByCategory);
 
   const rows = [...counts]
     .map(([word_id, count]) => ({ word_id, count: Math.max(1, Math.round(count)) }))
@@ -232,6 +301,9 @@ export async function computeFrequency(
     words: rows.length,
     kanji: kanji.size,
     collocations: collocationTable.length,
+    categories: Object.fromEntries(
+      CATEGORIES.map((category) => [category, categoryTable.filter((row) => row.category === category).length]),
+    ),
     dryRun: options.dryRun ?? false,
   };
   const kanjiTable = kanjiRows(kanji);
@@ -245,6 +317,16 @@ export async function computeFrequency(
          SELECT x.word_id, x.count, x.per_million, x.rank
            FROM jsonb_to_recordset($1::jsonb) AS x(word_id int, count int, per_million real, rank int)`,
         [JSON.stringify(rows.slice(i, i + 10_000))],
+      );
+    }
+    await manager.query(`DELETE FROM dict.frequency_category`);
+    for (let i = 0; i < categoryTable.length; i += 10_000) {
+      await manager.query(
+        `INSERT INTO dict.frequency_category (word_id, category, count, per_million, rank)
+         SELECT x.word_id, x.category, x.count, x.per_million, x.rank
+           FROM jsonb_to_recordset($1::jsonb)
+             AS x(word_id int, category text, count int, per_million real, rank int)`,
+        [JSON.stringify(categoryTable.slice(i, i + 10_000))],
       );
     }
     await manager.query(`DELETE FROM dict.kanji_frequency`);

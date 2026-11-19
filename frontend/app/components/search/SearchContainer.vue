@@ -758,19 +758,12 @@ const categoryFilter = (categoryKey: string) => {
 };
 
 /**
- * Offer the search inside words where word search is the likely reason for a short list: a plain Japanese query
- * (no quotes, wildcards or operators, which mean something else) that returned less than a page.
+ * While searching inside words, a line says so and leads back to the word search. No suggestion to switch on a
+ * short list ("Fewer results than expected?"): dropped 2026-11-19, it was noise above real results.
  */
-const CONTAINS_OFFER_BELOW = 30;
-const JAPANESE_TEXT = /[぀-ヿ㐀-鿿]/;
-const QUERY_SYNTAX = /["()*?]|(?:^|\s)-|(?:^|\s)(?:AND|OR|NOT)(?:\s|$)/;
-const containsNotice = computed<'active' | 'offer' | null>(() => {
+const containsNotice = computed<'active' | null>(() => {
   if (props.collectionId || uuid.value || isSingleSentenceView.value || !hasSearchQuery.value) return null;
-  if (matchMode.value === 'CONTAINS') return 'active';
-  if (isLoading.value || sentenceFailure.value || !sentenceData.value) return null;
-  if (!JAPANESE_TEXT.test(query.value) || QUERY_SYNTAX.test(query.value)) return null;
-  const total = sentenceData.value.pagination?.estimatedTotalHits ?? 0;
-  return total < CONTAINS_OFFER_BELOW ? 'offer' : null;
+  return matchMode.value === 'CONTAINS' ? 'active' : null;
 });
 
 const toggleContainsMatch = () => {
@@ -1071,6 +1064,9 @@ onBeforeRouteUpdate(async (to, from) => {
         </div>
         <div class="flex mx-auto w-full">
             <div class="flex-1 mx-auto w-full">
+                <!-- Inside the results column, so what goes here (a word's dictionary entry) shares the row with
+                     the title filter instead of pushing it down. -->
+                <slot name="above-results" />
                 <!-- Above the results rather than in the sticky header: the header's
                      height is a fixed `--search-controls-height` that the sidebar
                      offsets itself by, and this line is a notice to read once, not a

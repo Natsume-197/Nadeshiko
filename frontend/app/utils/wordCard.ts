@@ -87,6 +87,10 @@ export interface ShirabeWord {
   common?: boolean;
   jlpt?: string | null;
   frequency?: number | null;
+  /** Our dictionary only: the rank in each kind of media the word occurs in, the kind that uses it most first. */
+  frequencyByCategory?: Array<{ category: string; rank: number; perMillion: number }>;
+  /** Our dictionary only, for a word found as the dictionary form of what was looked up: the inflection labels. */
+  inflection?: string[];
   pitch?: ShirabePitch[];
   /** Ruby for the headword, aligned by Shirabe against the dictionary. */
   furigana?: Array<{ text: string; ruby?: string }>;
@@ -257,6 +261,16 @@ export function glossPreference(
     labels: order[0] ?? home,
     tags: tagLanguage(uiLocale),
   };
+}
+
+/**
+ * The page's own language and nothing else, for the dictionary entry above a word search: JMdict files its Spanish
+ * senses apart from the English ones, so adding English would say everything twice (comer, to eat). `cardSenses`
+ * still falls back to English for a word with nothing in Spanish.
+ */
+export function pageGlossPreference(uiLocale: string): GlossPreference {
+  const home: GlossLanguage = uiLocale === 'es' ? 'es' : 'en';
+  return { ...glossPreference(uiLocale, { en: 'show', es: 'show' }), order: [home], fallback: [], labels: home };
 }
 
 function homeFirst(home: GlossLanguage): GlossLanguage[] {

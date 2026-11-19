@@ -9,6 +9,7 @@ import {
   type GlossPreference,
 } from '~/utils/wordCard';
 import type { EnrichedToken } from '~/utils/tokenEnrichment';
+import { CATEGORY_LABEL_KEYS } from '~/utils/categories';
 
 // Use gloss language, not UI locale, so the badge matches the definitions around it.
 const COMMON_LABEL: Record<GlossLanguage, string> = { en: 'Common', es: 'Frecuente' };
@@ -79,6 +80,15 @@ export function useWordCardContent(
     return items;
   });
 
+  /** The rank in each kind of media (anime, drama, YouTube, audiobooks), behind the "#N" badge: a word can be
+   *  everyday speech in anime and rare in audiobooks. Kinds we do not label are left out. */
+  const frequencySplit = computed(() =>
+    (word()?.frequencyByCategory ?? []).flatMap((entry) => {
+      const labelKey = CATEGORY_LABEL_KEYS[entry.category as keyof typeof CATEGORY_LABEL_KEYS];
+      return labelKey ? [{ category: entry.category, rank: entry.rank, labelKey }] : [];
+    }),
+  );
+
   /**
    * Limit pitch to two patterns so senses stay visible. Audio is per reading/accent on
    * Shirabe's public CDN; show a button only when that pattern has a recording.
@@ -131,6 +141,7 @@ export function useWordCardContent(
     headFurigana,
     inflectionLine,
     badges,
+    frequencySplit,
     pitchPatterns,
     senses,
     sourceCount,

@@ -292,6 +292,18 @@ describe('identifyWord', () => {
     expect(next?.reading).toBe('アク');
   });
 
+  it('finds the dictionary form of an inflected form nothing is filed under, and says so', async () => {
+    const found = await identifyWord(TestDataSource, { lemma: '開いた', locale: 'en' });
+
+    expect(found.map((candidate) => candidate.headword)).toContain('開く');
+    expect(found.every((candidate) => candidate.baseForm === true)).toBe(true);
+    // With the card's inflection labels for what the conjugation does.
+    expect(found.find((candidate) => candidate.headword === '開く')?.inflection).toEqual(['past']);
+    // A word found directly is never marked.
+    const [direct] = await identifyWord(TestDataSource, { lemma: '開く', locale: 'en' });
+    expect(direct?.baseForm).toBeUndefined();
+  });
+
   it('puts the reader’s language first', async () => {
     const [best] = await identifyWord(TestDataSource, { lemma: '開く', reading: 'ヒラク', locale: 'es' });
 

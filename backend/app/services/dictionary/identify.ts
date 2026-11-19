@@ -4,6 +4,7 @@ import { logger } from '@config/log';
 import { analyse, type Morpheme } from '@app/services/parser/sudachi';
 import { tokenPos } from '@app/services/parser/pos';
 import { deconjugate } from '@app/services/parser/deconjugator';
+import { inflectionLabels } from '@app/services/parser/labels';
 import { lookupKeys, toHiragana, toKatakana } from './import/entries';
 
 /**
@@ -44,7 +45,18 @@ export interface DictionaryCandidate {
   dictionary: 'jmdict' | 'jmnedict';
   jlpt: string | null;
   frequency: number | null;
+  /** Rank in each kind of media the word occurs in (`dict.frequency_category`), most used kind first. Absent when
+   * never counted that way. */
+  frequencyByCategory?: Array<{
+    category: 'ANIME' | 'JDRAMA' | 'YOUTUBE' | 'AUDIOBOOK';
+    rank: number;
+    perMillion: number;
+  }>;
   furigana?: Array<{ text: string; ruby?: string }>;
+  /** True when the word was found only as the dictionary form of what was looked up (食べた → 食べる). */
+  baseForm?: boolean;
+  /** With `baseForm`: what the conjugation does, in the card's inflection labels, outermost first (食べた: past). */
+  inflection?: string[];
   /** UniDic accent: 0 flat, n the mora the pitch drops after. No audio yet. */
   pitch?: Array<{ downstep: number }>;
   /** The words a compound or expression is made of (捜査本部: 捜査, 本部), each one the card can open. Absent for a
@@ -512,6 +524,13 @@ export async function identifyWord(dataSource: DataSource, query: IdentifyQuery)
     const variants = asciiVariants(query.surface || query.lemma).flatMap(lookupKeys);
     if (variants.length > 0) words = await loadWords(dataSource, variants);
   }
+  // Last, an inflected form no dictionary files (食べた, 行かない): the words it is a conjugation of, marked so a
+  // caller can say "a form of 食べる" rather than present 食べる as what was looked up.
+  let fromBase = new Set<number>();
+  if (words.length === 0) {
+    words = await baseFormWords(dataSource, query, new Set());
+    fromBase = new Set(words.map((word) => word.id));
+  }
   if (words.length === 0) return [];
 
   const exact = surfaceWord(surfaceWords, query);
@@ -574,14 +593,86 @@ export async function identifyWord(dataSource: DataSource, query: IdentifyQuery)
   const pitch = new Map(pitchRows.map((row) => [pairKey(row.text, row.reading), row.downsteps]));
 
   const candidates = ranked.map((word) => toCandidate(word, queryFor(word), tags, furigana, pitch));
-  const parts = await partsOf(
-    dataSource,
-    candidates.map((candidate) => candidate.headword),
-  );
+  const [parts, byCategory] = await Promise.all([
+    partsOf(
+      dataSource,
+      candidates.map((candidate) => candidate.headword),
+    ),
+    categoryFrequency(
+      dataSource,
+      ranked.map((word) => word.id),
+    ),
+  ]);
   return candidates.map((candidate, index) => {
     const found = parts[index];
-    return found ? { ...candidate, parts: found } : candidate;
+    const split = byCategory.get(ranked[index]?.id ?? -1);
+    return {
+      ...candidate,
+      ...(found ? { parts: found } : {}),
+      ...(split ? { frequencyByCategory: split } : {}),
+      ...baseFormFields(query.surface || query.lemma, ranked[index], fromBase),
+    };
   });
+}
+
+/** Each word's rank per kind of media, most used kind first (by occurrences per million words of that kind).
+ * Exported for tests. */
+export async function categoryFrequency(
+  dataSource: DataSource,
+  wordIds: number[],
+): Promise<Map<number, NonNullable<DictionaryCandidate['frequencyByCategory']>>> {
+  const out = new Map<number, NonNullable<DictionaryCandidate['frequencyByCategory']>>();
+  if (wordIds.length === 0) return out;
+  type Category = NonNullable<DictionaryCandidate['frequencyByCategory']>[number]['category'];
+  let rows: Array<{ word_id: number; category: Category; rank: number; per_million: number }>;
+  try {
+    rows = await dataSource.query(
+      `SELECT word_id, category, rank, per_million FROM dict.frequency_category
+        WHERE word_id = ANY($1::int[])
+        ORDER BY word_id, per_million DESC, category`,
+      [wordIds],
+    );
+  } catch (error) {
+    // An extra on the card: never worth failing the lookup for.
+    logger.warn({ err: error }, 'Could not read the per-category frequency; the card goes without it');
+    return out;
+  }
+  for (const row of rows) {
+    const list = out.get(row.word_id) ?? [];
+    list.push({ category: row.category, rank: row.rank, perMillion: row.per_million });
+    out.set(row.word_id, list);
+  }
+  return out;
+}
+
+/** `baseForm` and `inflection` for a candidate found only as the dictionary form of the text looked up. */
+function baseFormFields(
+  surface: string,
+  word: StoredWord | undefined,
+  fromBase: Set<number>,
+): Pick<DictionaryCandidate, 'baseForm' | 'inflection'> {
+  if (!word || !fromBase.has(word.id)) return {};
+  const labels = baseFormLabels(surface, word);
+  return labels.length > 0 ? { baseForm: true, inflection: labels } : { baseForm: true };
+}
+
+/**
+ * What a conjugation does to a word, in the word card's inflection labels (食べた → 食べる: past; 行かない → 行く:
+ * negative): the shortest real deconjugation of `surface` that lands on one of the word's spellings with a part of
+ * speech it has. The same labels the parser stores on tokens (./labels), so the entry and the card say the same.
+ * Exported for tests.
+ */
+export function baseFormLabels(surface: string, word: StoredWord): string[] {
+  let best: readonly string[] | null = null;
+  for (const form of deconjugate(surface)) {
+    const tag = form.tags.at(-1);
+    if (!tag || tag.startsWith('stem') || form.text === surface) continue;
+    if (form.process.some((step) => step.includes('slang'))) continue;
+    if (!word.forms.some((spelling) => spelling.text === form.text && usable(spelling))) continue;
+    if (!word.senses.some((sense) => sense.pos.includes(tag))) continue;
+    if (!best || form.process.length < best.length) best = form.process;
+  }
+  return best ? inflectionLabels(best, surface) : [];
 }
 
 /** Deconjugation steps that only take a verb to its stem or te-form. */
