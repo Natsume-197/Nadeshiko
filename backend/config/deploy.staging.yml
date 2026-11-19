@@ -71,6 +71,11 @@ env:
     - PATREON_OAUTH_CLIENT_SECRET
     - PATREON_CONNECTION_SECRET
     - PATREON_CAMPAIGN_ID
+    # Custom Yomitan dictionaries in R2 (task 48). Stored with .kamal/ssm-put-user-dicts staging.
+    - USER_DICT_R2_ENDPOINT
+    - USER_DICT_R2_BUCKET
+    - USER_DICT_R2_ACCESS_KEY_ID
+    - USER_DICT_R2_SECRET_ACCESS_KEY
 
   clear:
     ENVIRONMENT: development
@@ -107,10 +112,9 @@ env:
     # (task 46) before production does; its corpus is reparsed with `tokens:reparse -- --stale`.
     SUDACHI_URL: "http://nadeshiko-backend-prod-sudachi:8090"
     SEGMENT_PARSER: nadeshiko
-    # Custom Yomitan dictionaries (task 48), off until the operator turns them on. To turn on: put USER_DICT_R2_ENDPOINT,
-    # _BUCKET, _ACCESS_KEY_ID and _SECRET_ACCESS_KEY in SSM (/nadeshiko/staging/...), add them to .kamal/secrets.staging and
-    # env.secret above, then set this to "true". With it on and R2 unset the backend refuses to boot.
-    USER_DICTIONARIES_ENABLED: "false"
+    # Custom Yomitan dictionaries (task 48), on in staging first. Needs the four USER_DICT_R2_* secrets above; with
+    # them missing the backend refuses to boot.
+    USER_DICTIONARIES_ENABLED: "true"
     USER_DICTIONARIES_DIR: /app/data/user-dictionaries
     USER_DICT_R2_PREFIX: user-dicts/staging
 

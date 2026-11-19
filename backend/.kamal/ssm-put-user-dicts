@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+# Stores the four R2 settings for custom dictionaries (task 48) in SSM, for one or both Kamal destinations.
+# Prompts for each value, the secret without echoing it, so nothing lands in shell history or on screen.
+#
+#   backend/.kamal/ssm-put-user-dicts staging
+#   backend/.kamal/ssm-put-user-dicts staging prod
+#
+# The values come from the R2 bucket and its API token: the S3 endpoint
+# (https://<account-id>.r2.cloudflarestorage.com), the bucket name, the Access Key ID and the Secret Access Key.
+# Existing parameters are overwritten, so this also rotates the token.
+set -euo pipefail
+
+if [[ $# -eq 0 ]]; then
+  echo "Usage: $0 staging [prod]" >&2
+  exit 1
+fi
+
+for destination in "$@"; do
+  case "$destination" in
+    prod|staging) ;;
+    *) echo "Unknown Kamal destination: $destination" >&2; exit 1 ;;
+  esac
+done
+
+read -r -p "R2 S3 endpoint (https://<account-id>.r2.cloudflarestorage.com): " endpoint
+read -r -p "R2 bucket name: " bucket
+read -r -p "R2 Access Key ID: " access_key_id
+read -r -s -p "R2 Secret Access Key (hidden): " secret_access_key
+echo
+
+if [[ ! "$endpoint" =~ ^https://[a-z0-9]+\.r2\.cloudflarestorage\.com/?$ ]]; then
+  echo "The endpoint should look like https://<account-id>.r2.cloudflarestorage.com (no bucket in it)." >&2
+  exit 1
+fi
+if [[ -z "$bucket" || -z "$access_key_id" || -z "$secret_access_key" ]]; then
+  echo "Every value is required." >&2
+  exit 1
+fi
+
+region="${AWS_REGION:-eu-north-1}"
+
+for destination in "$@"; do
+  profile="nadeshiko-${destination}"
+  if ! aws --profile "$profile" --region "$region" sts get-caller-identity >/dev/null 2>&1; then
+    echo "AWS SSO credentials unavailable for $profile; running aws sso login --profile $profile" >&2
+    aws sso login --profile "$profile" >&2
+  fi
+
+  put() {
+    # The value goes through a file descriptor, not the command line, so `ps` never shows it.
+    aws --profile "$profile" --region "$region" ssm put-parameter \
+      --name "/nadeshiko/${destination}/$1" --type SecureString --overwrite \
+      --cli-input-json "file:///dev/stdin" >/dev/null <<JSON
+{"Value": $(printf '%s' "$2" | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read()))')}
+JSON
+    echo "  /nadeshiko/${destination}/$1 saved"
+  }
+
+  echo "== $destination"
+  put USER_DICT_R2_ENDPOINT "${endpoint%/}"
+  put USER_DICT_R2_BUCKET "$bucket"
+  put USER_DICT_R2_ACCESS_KEY_ID "$access_key_id"
+  put USER_DICT_R2_SECRET_ACCESS_KEY "$secret_access_key"
+done
+
+echo "Done. Check with: backend/.kamal/ssm-secret <destination> USER_DICT_R2_BUCKET"
