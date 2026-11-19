@@ -28,7 +28,14 @@ MAX_CHARS = 200_000
 
 MODES = {"A": SplitMode.A, "B": SplitMode.B, "C": SplitMode.C}
 
-_dictionary = Dictionary(dict=DICTIONARY_PATH)
+# Optional user dictionaries (comma-separated paths), compiled against the same system dictionary.
+USER_DICTIONARIES = [path for path in os.environ.get("SUDACHI_USER_DICTIONARIES", "").split(",") if path]
+
+_dictionary = (
+    Dictionary(dict=DICTIONARY_PATH, config=json.dumps({"userDict": USER_DICTIONARIES}))
+    if USER_DICTIONARIES
+    else Dictionary(dict=DICTIONARY_PATH)
+)
 _local = threading.local()
 
 

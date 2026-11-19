@@ -57,6 +57,7 @@ import {
   splitUnattestedToAdverbs,
   splitUnresolvableSuruCompounds,
 } from './stages/split';
+import { processSpecialCases } from './stages/specialCases';
 import { combineSuffix, reclassifyOrphanedSuffixes } from './stages/suffix';
 import type { CombineContext, Feature, Group, Stage } from './types';
 
@@ -99,6 +100,7 @@ export const STAGES: readonly Stage[] = [
   { name: 'RepairVowelElongation', origin: REPAIR, run: repairVowelElongation },
   { name: 'ApplyTokenRewriteRulesEarly', origin: REWRITE, run: applyTokenRewriteRulesEarly },
   { name: 'RepairTeOkuRequest', origin: REPAIR, run: repairTeOkuRequest },
+  { name: 'ProcessSpecialCases', origin: REPAIR, run: processSpecialCases },
   { name: 'RepairColloquialNegativeNee', origin: REPAIR, run: repairColloquialNegativeNee },
   { name: 'RepairColloquialRanNai', origin: REPAIR, run: repairColloquialRanNai },
   { name: 'RepairIntensifierKaeru', origin: `${REPAIR} (kept: upstream dropped it)`, run: repairIntensifierKaeru },

@@ -146,6 +146,7 @@ describe('stage list', () => {
       'RepairVowelElongation',
       'ApplyTokenRewriteRulesEarly',
       'RepairTeOkuRequest',
+      'ProcessSpecialCases',
       'RepairColloquialNegativeNee',
       'RepairColloquialRanNai',
       'RepairIntensifierKaeru',

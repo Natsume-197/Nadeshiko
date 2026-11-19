@@ -6,7 +6,7 @@ import { deconjugate } from './deconjugator';
 import { type RubySegment, surfaceFurigana } from './furigana';
 import { inflectionLabels } from './labels';
 import { tokenPos } from './pos';
-import { analyse } from './sudachi';
+import { analyseSentences } from './preprocess';
 
 /**
  * Nadeshiko's own parser (task 40, phase 3): Sudachi split mode B from the sidecar, combine stages checked against
@@ -16,7 +16,7 @@ import { analyse } from './sudachi';
  */
 
 /** `<revision>`: bump when output changes in a way stored rows should be reparsed for. */
-export const NADESHIKO_PARSER_REVISION = 3;
+export const NADESHIKO_PARSER_REVISION = 4;
 
 const hasKanji = (text: string) => /\p{Script=Han}/u.test(text);
 
@@ -105,7 +105,7 @@ export function toSlimToken(
 /** One token array per input, in input order; a sentence with nothing in it is an empty array. */
 export async function parseWithNadeshiko(dataSource: DataSource, texts: string[]): Promise<SlimToken[][]> {
   if (texts.length === 0) return [];
-  const [morphemes, lexicon] = await Promise.all([analyse(texts, 'B'), loadLexicon(dataSource)]);
+  const [morphemes, lexicon] = await Promise.all([analyseSentences(texts, 'B'), loadLexicon(dataSource)]);
   const sentences = morphemes.map((list) => combine(list, { lexicon, deconjugate }));
 
   const spellings = new Set<string>();
