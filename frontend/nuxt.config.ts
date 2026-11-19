@@ -158,8 +158,7 @@ export default defineNuxtConfig({
     shirabeApiBase: env.NUXT_SHIRABE_API_BASE || 'https://shirabe.org',
     // Optional tailnet fast path; the lookup route falls back to the public host, changing latency only.
     shirabeApiDirect: env.NUXT_SHIRABE_API_DIRECT || '',
-    // Which dictionary answers the word card, server-wide: 'shirabe' (default) or 'nadeshiko'. Temporary until the
-    // per-reader choice exists.
+    // The word-card dictionary for readers who never chose one: 'shirabe' or 'nadeshiko'.
     dictionaryProvider: env.NUXT_DICTIONARY_PROVIDER,
     internalProxySecret: env.NUXT_INTERNAL_PROXY_SECRET,
     backendInternalUrl: env.NUXT_BACKEND_INTERNAL_URL,
@@ -181,6 +180,7 @@ export default defineNuxtConfig({
       // Our own dictionary needs no key, so it counts as configured.
       shirabeLookups: Boolean(env.NUXT_SHIRABE_API_KEY) || env.NUXT_DICTIONARY_PROVIDER === 'nadeshiko',
       // The site's default word-card dictionary, so Settings can show what a reader who never chose is getting.
+      // Fixed at build time: deploys set NUXT_PUBLIC_DICTIONARY_PROVIDER next to NUXT_DICTIONARY_PROVIDER.
       dictionaryProvider: env.NUXT_DICTIONARY_PROVIDER,
     },
   },

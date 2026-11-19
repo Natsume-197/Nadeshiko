@@ -80,6 +80,9 @@ env:
     # readers who linked a Shirabe account keep it. Changing it: purge /api/shirabe/words/candidates/* at
     # Cloudflare in the same release (answers are cached a day).
     NUXT_DICTIONARY_PROVIDER: nadeshiko
+    # The public copy is fixed at build time like NUXT_PUBLIC_SHIRABE_LOOKUPS, so set it here too or Settings
+    # marks Shirabe as the default. Keep the two equal.
+    NUXT_PUBLIC_DICTIONARY_PROVIDER: nadeshiko
 
     NUXT_BACKEND_INTERNAL_URL: https://api.nadeshiko.co
     PORT: 3000

@@ -61,6 +61,7 @@ env:
     NUXT_SHIRABE_API_BASE: https://shirabe.org
     # Same default card as production (task 46).
     NUXT_DICTIONARY_PROVIDER: nadeshiko
+    NUXT_PUBLIC_DICTIONARY_PROVIDER: nadeshiko
     NODE_ENV: production
     NUXT_BACKEND_INTERNAL_URL: https://api-stg.nadeshiko.co
     PORT: 3000
