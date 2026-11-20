@@ -961,6 +961,12 @@ export const s_UserDictionaryListResponse = z.object({
     maxIndexedBytes: z.coerce.number(),
   }),
   stackFingerprint: z.string().nullable(),
+  directUpload: PermissiveBoolean,
+});
+
+export const s_UserDictionaryUploadResult = z.object({
+  dictionary: s_UserDictionary,
+  stackFingerprint: z.string().nullable(),
 });
 
 export const s_UserPreferences = z.object({
@@ -1207,6 +1213,8 @@ export const s_CompletePatreonLinkRequestBody = z.object({ code: z.string().min(
 export const s_UpdateUserDictionariesRequestBody = z.object({
   items: z.array(z.object({ id: z.string().min(1).max(64), enabled: PermissiveBoolean })).max(50),
 });
+
+export const s_ReserveUserDictionaryUploadRequestBody = z.object({ sizeBytes: z.coerce.number().min(22) });
 
 export const s_AddExcludedMediaRequestBody = z.object({
   mediaPublicId: z.string().regex(new RegExp('^[A-Za-z0-9_-]{12}$')),

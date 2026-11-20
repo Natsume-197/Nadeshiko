@@ -119,8 +119,10 @@ import {
   unlinkPatreon,
 } from '@app/controllers/patreonConnectionController';
 import {
+  completeUserDictionaryUpload,
   deleteUserDictionary,
   listUserDictionaries,
+  reserveUserDictionaryUpload,
   updateUserDictionaries,
   uploadUserDictionary,
   USER_DICTIONARY_UPLOAD_PATH,
@@ -337,6 +339,8 @@ const UserRoutes = createUserRouter({
   listUserDictionaries,
   updateUserDictionaries,
   deleteUserDictionary,
+  reserveUserDictionaryUpload,
+  completeUserDictionaryUpload,
   listExcludedMedia,
   addExcludedMedia,
   removeExcludedMedia,

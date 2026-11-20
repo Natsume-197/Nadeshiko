@@ -5,6 +5,7 @@ required:
   - builtin
   - quota
   - stackFingerprint
+  - directUpload
 properties:
   dictionaries:
     type: array
@@ -42,3 +43,6 @@ properties:
   stackFingerprint:
     type: string
     nullable: true
+  directUpload:
+    type: boolean
+    description: Whether uploads go straight to storage (reserve, PUT, complete) rather than through the upload endpoint.

@@ -210,6 +210,11 @@ function uploadZipFile(file: File) {
   uploading.value = true;
   uploadProgress.value = 0;
 
+  if (data.value?.directUpload) {
+    void uploadDirect(file);
+    return;
+  }
+
   const xhr = new XMLHttpRequest();
   xhr.open('POST', '/v1/user/dictionaries', true);
   xhr.withCredentials = true;
@@ -264,6 +269,63 @@ function uploadZipFile(file: File) {
   };
 
   xhr.send(file);
+}
+
+/** The reader-facing reason for a refused upload: one we know in their language, anything else as the server said. */
+function uploadFailureText(message: string | null | undefined): string {
+  const known = dictionaryImportError(message);
+  if (known !== 'generic') return t(`accountSettings.dictionaries.importErrors.${known}`);
+  return message || t('accountSettings.dictionaries.uploadError');
+}
+
+function endUpload() {
+  uploading.value = false;
+  uploadProgress.value = 0;
+  if (fileInputRef.value) fileInputRef.value.value = '';
+}
+
+/** PUTs the file to a presigned URL, reporting progress; resolves with the HTTP status. */
+function putWithProgress(url: string, headers: Record<string, string>, file: File): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('PUT', url, true);
+    for (const [name, value] of Object.entries(headers)) xhr.setRequestHeader(name, value);
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable && event.total > 0) {
+        uploadProgress.value = Math.min(99, Math.round((event.loaded / event.total) * 100));
+      }
+    };
+    xhr.onload = () => resolve(xhr.status);
+    xhr.onerror = () => reject(new Error('Upload to storage failed'));
+    xhr.send(file);
+  });
+}
+
+/**
+ * Direct upload (Shirabe lessons, phase 2): reserve, PUT the file straight to storage, then complete. The archive
+ * never goes through Nadeshiko's servers on the way in.
+ */
+async function uploadDirect(file: File) {
+  try {
+    const reservation = await sdk.reserveUserDictionaryUpload({ sizeBytes: file.size });
+    const status = await putWithProgress(reservation.url, reservation.headers, file);
+    if (status < 200 || status >= 300) throw new Error(t('accountSettings.dictionaries.uploadError'));
+    uploadProgress.value = 100;
+    const result = await sdk.completeUserDictionaryUpload(reservation.uploadId);
+    endUpload();
+    const title = result.dictionary?.title ?? file.name;
+    useToastSuccess(
+      result.dictionary?.status === 'ready'
+        ? t('accountSettings.dictionaries.uploadedReadyToast', { title })
+        : t('accountSettings.dictionaries.uploadedProcessingToast', { title }),
+    );
+    await fetchDictionaries(true);
+  } catch (error) {
+    endUpload();
+    const message = (error as { detail?: string } | null)?.detail ?? (error instanceof Error ? error.message : '');
+    uploadError.value = uploadFailureText(message);
+    useToastError(uploadError.value);
+  }
 }
 
 function onFileChange(event: Event) {

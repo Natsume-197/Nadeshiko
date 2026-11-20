@@ -11,6 +11,7 @@ import { resolveCustomDictionaryQuota } from './quotas';
 import {
   artifactExistsInStorage,
   deleteArtifactFromR2,
+  getR2StorageConfig,
   pruneLocalDictionaryCache,
   sweepStaleTempFiles,
   uploadArtifactToR2,
@@ -67,6 +68,8 @@ export interface UserDictionaryListResponse {
     maxIndexedBytes: number;
   };
   stackFingerprint: string | null;
+  /** Uploads go straight to R2 (reserve, PUT, complete) rather than through the upload endpoint. */
+  directUpload: boolean;
 }
 
 export interface SessionCustomDictionaries {
@@ -351,6 +354,8 @@ export async function listUserDictionaries(user: Pick<User, 'id' | 'role'>): Pro
       maxIndexedBytes: quota.maxIndexedBytes,
     },
     stackFingerprint: buildStackFingerprint(rows, builtinEnabled, builtinPosition),
+    // Every deployed environment has R2; local development without it keeps the classic upload.
+    directUpload: getR2StorageConfig() !== null,
   };
 }
 

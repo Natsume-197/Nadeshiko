@@ -1,7 +1,9 @@
+import { createHash } from 'node:crypto';
 import { createReadStream, createWriteStream, existsSync } from 'node:fs';
 import { mkdir, readdir, rename, stat, unlink, utimes } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import type { Readable } from 'node:stream';
+import { Transform } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import {
   DeleteObjectCommand,
@@ -12,6 +14,7 @@ import {
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { config } from '@config/config';
 import { logger } from '@config/log';
 import { artifactSqlitePath, closeArtifactHandle } from './sqlitePool';
@@ -90,6 +93,86 @@ function isNotFound(error: unknown): boolean {
     error instanceof NotFound ||
     (error as { $metadata?: { httpStatusCode?: number } })?.$metadata?.httpStatusCode === 404
   );
+}
+
+/** Object key for a direct `.zip` upload, kept apart from the indexed files under the same prefix. */
+export function r2UploadKey(uploadId: string, prefix: string): string {
+  const cleanPrefix = prefix.replace(/^\/+|\/+$/g, '');
+  return cleanPrefix ? `${cleanPrefix}/uploads/${uploadId}.zip` : `uploads/${uploadId}.zip`;
+}
+
+/**
+ * A presigned PUT for one direct upload (task 48, phase 2). It signs the content type and length, so R2 refuses a
+ * body of any other size than the one reserved.
+ */
+export async function presignDictionaryUpload(
+  objectKey: string,
+  bytes: number,
+  expiresInSeconds: number,
+): Promise<string> {
+  const r2 = getR2StorageConfig();
+  if (!r2) throw new Error('R2 is not configured');
+  return getSignedUrl(
+    r2Client(r2),
+    new PutObjectCommand({ Bucket: r2.bucket, Key: objectKey, ContentType: 'application/zip', ContentLength: bytes }),
+    { expiresIn: expiresInSeconds, signableHeaders: new Set(['content-type', 'content-length']) },
+  );
+}
+
+/** The size of an uploaded object, or null when it is not there. */
+export async function r2ObjectSize(objectKey: string): Promise<number | null> {
+  const r2 = getR2StorageConfig();
+  if (!r2) return null;
+  try {
+    const head = await r2Client(r2).send(new HeadObjectCommand({ Bucket: r2.bucket, Key: objectKey }));
+    return typeof head.ContentLength === 'number' ? head.ContentLength : null;
+  } catch (error) {
+    if (isNotFound(error)) return null;
+    throw error;
+  }
+}
+
+/**
+ * Downloads an uploaded object to `localPath`, hashing it on the way, and refuses one larger than `maxBytes` (the
+ * object can be replaced between the size check and the download while the presigned URL is still valid).
+ */
+export async function downloadR2Object(
+  objectKey: string,
+  localPath: string,
+  maxBytes: number,
+): Promise<{ sha256: string; bytes: number }> {
+  const r2 = getR2StorageConfig();
+  if (!r2) throw new Error('R2 is not configured');
+  const response = await r2Client(r2).send(new GetObjectCommand({ Bucket: r2.bucket, Key: objectKey }));
+  if (!response.Body) throw new Error('Uploaded dictionary is empty');
+  const hash = createHash('sha256');
+  let bytes = 0;
+  const meter = new Transform({
+    transform(chunk: Buffer, _encoding, done) {
+      bytes += chunk.length;
+      if (bytes > maxBytes) {
+        done(new Error('Uploaded dictionary is larger than reserved'));
+        return;
+      }
+      hash.update(chunk);
+      done(null, chunk);
+    },
+  });
+  await mkdir(dirname(localPath), { recursive: true });
+  await pipeline(response.Body as Readable, meter, createWriteStream(localPath));
+  return { sha256: hash.digest('hex'), bytes };
+}
+
+/** Deletes any object by key (a direct upload once read, or an abandoned one). A missing object counts as deleted. */
+export async function deleteR2Object(objectKey: string): Promise<void> {
+  const r2 = getR2StorageConfig();
+  if (!r2) return;
+  try {
+    await r2Client(r2).send(new DeleteObjectCommand({ Bucket: r2.bucket, Key: objectKey }));
+  } catch (error) {
+    if (isNotFound(error)) return;
+    logger.warn({ err: error, key: objectKey }, 'Failed to delete dictionary upload from R2');
+  }
 }
 
 /**

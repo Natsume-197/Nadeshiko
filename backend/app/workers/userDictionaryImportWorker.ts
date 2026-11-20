@@ -3,6 +3,7 @@ import { config } from '@config/config';
 import { logger } from '@config/log';
 import { acquireImportSlot, releaseImportSlot } from '@app/services/dictionary/custom/importAdmission';
 import { sweepStaleTempFiles } from '@app/services/dictionary/custom/r2Storage';
+import { sweepExpiredUploads } from '@app/services/dictionary/custom/directUpload';
 import {
   failInterruptedImports,
   processArtifactImportJob,
@@ -41,6 +42,7 @@ export async function registerUserDictionaryImportWorker(boss: PgBoss): Promise<
     { batchSize: 1 },
     instrumentedHandler(USER_DICTIONARY_MAINTENANCE_QUEUE, async () => {
       await runUserDictionaryMaintenance();
+      if (config.USER_DICTIONARIES_ENABLED) await sweepExpiredUploads();
     }),
   );
 

@@ -29,6 +29,7 @@ import {
   RoadmapItem,
   UserDictionary,
   UserDictionaryArtifact,
+  UserDictionaryUpload,
 } from '@app/models';
 import { SegmentSubscriber } from '@app/subscribers';
 
@@ -56,6 +57,7 @@ export const APP_ENTITIES = [
   RoadmapItem,
   UserDictionary,
   UserDictionaryArtifact,
+  UserDictionaryUpload,
 ];
 
 export const APP_SUBSCRIBERS = [SegmentSubscriber];

@@ -1,0 +1,46 @@
+post:
+  tags:
+    - User
+  x-internal: true
+  operationId: completeUserDictionaryUpload
+  summary: Complete a direct upload of a custom Yomitan dictionary
+  description: |
+    Checks that the reserved upload reached storage with the declared size, then indexes it like a classic upload:
+    201 when an identical file was already indexed, 202 while indexing runs.
+  security:
+    - SessionCookie: []
+  parameters:
+    - name: id
+      in: path
+      required: true
+      description: Upload ID from the reservation.
+      schema:
+        type: string
+        format: uuid
+  responses:
+    "201":
+      description: Ready (an identical file was already indexed)
+      content:
+        application/json:
+          schema:
+            $ref: "../../components/schemas/UserDictionaryUploadResult.yaml"
+    "202":
+      description: Indexing
+      content:
+        application/json:
+          schema:
+            $ref: "../../components/schemas/UserDictionaryUploadResult.yaml"
+    "400":
+      $ref: "../../components/responses/BadRequest.yaml"
+    "401":
+      $ref: "../../components/responses/Unauthorized.yaml"
+    "403":
+      $ref: "../../components/responses/Forbidden.yaml"
+    "404":
+      $ref: "../../components/responses/NotFound.yaml"
+    "409":
+      $ref: "../../components/responses/Conflict.yaml"
+    "429":
+      $ref: "../../components/responses/TooManyRequests.yaml"
+    "500":
+      $ref: "../../components/responses/InternalServerError.yaml"

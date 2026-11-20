@@ -4,7 +4,7 @@ import { createClient as createApiClient, createConfig, type Client } from './cl
 import type { Auth } from './core/auth.gen';
 import type { ClientOptions } from './types.gen';
 import type * as Types from './types.gen';
-import { search, getSearchStats, searchWords, searchMedia, getStatsOverview, listMedia, getSegment, getSegmentContext, getMedia, listEpisodes, getEpisode, getMe, createUserApiKey, listExcludedMedia, addExcludedMedia, removeExcludedMedia, listFavoriteMedia, addFavoriteMedia, removeFavoriteMedia, listFamiliarMedia, listUserActivity, getUserActivityHeatmap, getUserActivityStats, listCollections, createCollection, getCollection, deleteCollection, addSegmentToCollection, searchCollectionSegments, removeSegmentFromCollection, listRoadmap, createRoadmapProposal, identifyDictionaryWord, getDictionaryKanjiIndex, getDictionaryKanji, getCoveredWords, triggerCoveredWordsUpdate, createMedia, updateSegment, listSegmentRevisions, restoreSegmentRevision, updateMedia, deleteMedia, createEpisode, updateEpisode, deleteEpisode, listSegments, createSegment, createSegmentsBatch, moderateEpisodeSegments, getPatreonConnection, startPatreonLink, unlinkPatreon, completePatreonLink, listUserDictionaries, updateUserDictionaries, deleteUserDictionary, clearFamiliarMedia, forgetFamiliarMedia, createUserReport, getUserPreferences, updateUserPreferences, trackUserActivity, deleteUserActivity, deleteUserActivityByDate, deleteUserActivityById, exportUserData, createFeedback, getFeedbackFormToken, unsubscribeFromEmail, getEmailPreferencesByToken, updateEmailPreferencesByToken, updateCollection, updateCollectionSegment, getCollectionStats, listAdminReports, batchUpdateAdminReports, bulkUpdateAdminReports, bulkDeleteAdminReports, updateAdminReport, deleteAdminReport, listAgentActivity, getAnnouncement, updateAnnouncement, getAdminUsersWithProviders, listTiers, getAdminUserQuota, updateAdminUserQuota, listAdminRoadmap, createAdminRoadmapItem, updateAdminRoadmapItem, getSession, getSessionPost, signOut, socialSignIn, signInWithMagicLink, signInWithEmailOtp, listUserSessions, authRevokeSession, authRevokeSessions, authRevokeOtherSessions, deleteUser, changeEmail, authApiKeyCreate, authApiKeyList, authApiKeyUpdate, banUser, unbanUser, impersonateUser, authAdminStopImpersonating, type Options } from './sdk.gen';
+import { search, getSearchStats, searchWords, searchMedia, getStatsOverview, listMedia, getSegment, getSegmentContext, getMedia, listEpisodes, getEpisode, getMe, createUserApiKey, listExcludedMedia, addExcludedMedia, removeExcludedMedia, listFavoriteMedia, addFavoriteMedia, removeFavoriteMedia, listFamiliarMedia, listUserActivity, getUserActivityHeatmap, getUserActivityStats, listCollections, createCollection, getCollection, deleteCollection, addSegmentToCollection, searchCollectionSegments, removeSegmentFromCollection, listRoadmap, createRoadmapProposal, identifyDictionaryWord, getDictionaryKanjiIndex, getDictionaryKanji, getCoveredWords, triggerCoveredWordsUpdate, createMedia, updateSegment, listSegmentRevisions, restoreSegmentRevision, updateMedia, deleteMedia, createEpisode, updateEpisode, deleteEpisode, listSegments, createSegment, createSegmentsBatch, moderateEpisodeSegments, getPatreonConnection, startPatreonLink, unlinkPatreon, completePatreonLink, listUserDictionaries, updateUserDictionaries, deleteUserDictionary, reserveUserDictionaryUpload, completeUserDictionaryUpload, clearFamiliarMedia, forgetFamiliarMedia, createUserReport, getUserPreferences, updateUserPreferences, trackUserActivity, deleteUserActivity, deleteUserActivityByDate, deleteUserActivityById, exportUserData, createFeedback, getFeedbackFormToken, unsubscribeFromEmail, getEmailPreferencesByToken, updateEmailPreferencesByToken, updateCollection, updateCollectionSegment, getCollectionStats, listAdminReports, batchUpdateAdminReports, bulkUpdateAdminReports, bulkDeleteAdminReports, updateAdminReport, deleteAdminReport, listAgentActivity, getAnnouncement, updateAnnouncement, getAdminUsersWithProviders, listTiers, getAdminUserQuota, updateAdminUserQuota, listAdminRoadmap, createAdminRoadmapItem, updateAdminRoadmapItem, getSession, getSessionPost, signOut, socialSignIn, signInWithMagicLink, signInWithEmailOtp, listUserSessions, authRevokeSession, authRevokeSessions, authRevokeOtherSessions, deleteUser, changeEmail, authApiKeyCreate, authApiKeyList, authApiKeyUpdate, banUser, unbanUser, impersonateUser, authAdminStopImpersonating, type Options } from './sdk.gen';
 import { withRetry, type RetryOptions } from './retry';
 import { NadeshikoError, buildNadeshikoError, isProblemDetails, type NadeshikoErrorCode, type RateLimitReason } from './errors';
 import { flatPaginate } from './paginate';
@@ -297,6 +297,15 @@ export type NadeshikoClient = {
       (id: number): Promise<Types.DeleteUserDictionaryResponse>;
       (params: Types.DeleteUserDictionaryData['path'] & { throwOnError: false }): Promise<{ data: Types.DeleteUserDictionaryResponse; response: Response; request: Request } | { error: Types.DeleteUserDictionaryErrors; response: Response; request: Request }>;
       (params: Types.DeleteUserDictionaryData['path']): Promise<Types.DeleteUserDictionaryResponse>;
+    };
+    reserveUserDictionaryUpload: {
+      (params: NonNullable<Types.ReserveUserDictionaryUploadData['body']> & { throwOnError: false }): Promise<{ data: Types.ReserveUserDictionaryUploadResponse; response: Response; request: Request } | { error: Types.ReserveUserDictionaryUploadErrors; response: Response; request: Request }>;
+      (params: NonNullable<Types.ReserveUserDictionaryUploadData['body']>): Promise<Types.ReserveUserDictionaryUploadResponse>;
+    };
+    completeUserDictionaryUpload: {
+      (id: string): Promise<Types.CompleteUserDictionaryUploadResponse>;
+      (params: Types.CompleteUserDictionaryUploadData['path'] & { throwOnError: false }): Promise<{ data: Types.CompleteUserDictionaryUploadResponse; response: Response; request: Request } | { error: Types.CompleteUserDictionaryUploadErrors; response: Response; request: Request }>;
+      (params: Types.CompleteUserDictionaryUploadData['path']): Promise<Types.CompleteUserDictionaryUploadResponse>;
     };
     clearFamiliarMedia: {
       (params: { throwOnError: false }): Promise<{ data: Types.ClearFamiliarMediaResponse; response: Response; request: Request } | { error: Types.ClearFamiliarMediaErrors; response: Response; request: Request }>;
@@ -1071,6 +1080,22 @@ export function createNadeshikoClient(config: NadeshikoConfig): NadeshikoClient 
     return tOE === false ? p : p.then((r: any) => r.data);
   };
 
+  const _reserveUserDictionaryUpload = (params?: any) => {
+    const { throwOnError: tOE, ...body } = params ?? {};
+    const p = reserveUserDictionaryUpload({ body, client: clientInstance, throwOnError: tOE === false ? false : true } as any);
+    return tOE === false ? p : p.then((r: any) => r.data);
+  };
+
+  const _completeUserDictionaryUpload = (paramsOrId?: any) => {
+    if (typeof paramsOrId === 'string') {
+      return completeUserDictionaryUpload({ throwOnError: true, path: { id: paramsOrId }, client: clientInstance } as any).then((r: any) => r.data);
+    }
+    const params = paramsOrId;
+    const { throwOnError: tOE, id } = params ?? {};
+    const p = completeUserDictionaryUpload({ path: { id }, client: clientInstance, throwOnError: tOE === false ? false : true } as any);
+    return tOE === false ? p : p.then((r: any) => r.data);
+  };
+
   const _clearFamiliarMedia = (params?: any) => {
     const tOE = params?.throwOnError;
     const p = clearFamiliarMedia({ client: clientInstance, throwOnError: tOE === false ? false : true } as any);
@@ -1495,6 +1520,8 @@ export function createNadeshikoClient(config: NadeshikoConfig): NadeshikoClient 
     listUserDictionaries: _listUserDictionaries,
     updateUserDictionaries: _updateUserDictionaries,
     deleteUserDictionary: _deleteUserDictionary,
+    reserveUserDictionaryUpload: _reserveUserDictionaryUpload,
+    completeUserDictionaryUpload: _completeUserDictionaryUpload,
     clearFamiliarMedia: _clearFamiliarMedia,
     forgetFamiliarMedia: _forgetFamiliarMedia,
     createUserReport: _createUserReport,

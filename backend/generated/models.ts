@@ -1083,6 +1083,7 @@ export type t_UserDictionaryListResponse = {
     position: number;
   };
   dictionaries: t_UserDictionary[];
+  directUpload: boolean;
   quota: {
     indexedBytesUsed: number;
     isPatron: boolean;
@@ -1091,6 +1092,11 @@ export type t_UserDictionaryListResponse = {
     maxZipBytes: number;
     used: number;
   };
+  stackFingerprint: string | null;
+};
+
+export type t_UserDictionaryUploadResult = {
+  dictionary: t_UserDictionary;
   stackFingerprint: string | null;
 };
 
@@ -1242,6 +1248,10 @@ export type t_AddSegmentToCollectionParamSchema = {
 export type t_CompletePatreonLinkRequestBody = {
   code: string;
   state: string;
+};
+
+export type t_CompleteUserDictionaryUploadParamSchema = {
+  id: string;
 };
 
 export type t_CreateEpisodeParamSchema = {
@@ -1466,6 +1476,10 @@ export type t_RemoveFavoriteMediaParamSchema = {
 export type t_RemoveSegmentFromCollectionParamSchema = {
   collectionPublicId: string;
   segmentPublicId: string;
+};
+
+export type t_ReserveUserDictionaryUploadRequestBody = {
+  sizeBytes: number;
 };
 
 export type t_RestoreSegmentRevisionParamSchema = {

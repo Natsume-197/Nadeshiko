@@ -9,6 +9,8 @@ export { PatreonConnection } from './PatreonConnection';
 export { UserDictionary } from './UserDictionary';
 export { UserDictionaryArtifact } from './UserDictionaryArtifact';
 export type { UserDictionaryArtifactStatus } from './UserDictionaryArtifact';
+export { UserDictionaryUpload } from './UserDictionaryUpload';
+export type { UserDictionaryUploadStatus } from './UserDictionaryUpload';
 export { RoadmapItem, RoadmapItemKind, RoadmapItemStatus } from './RoadmapItem';
 export { Tier } from './Tier';
 export { resolveQuotaLimit, patreonQuotaTier, unmatchedPatreonTierIds, PATREON_QUOTA_STALE_MS } from './quota';

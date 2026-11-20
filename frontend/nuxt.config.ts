@@ -233,6 +233,9 @@ export default defineNuxtConfig({
             'connect-src': [
               "'self'",
               CDN_ORIGIN,
+              // Custom dictionaries are uploaded straight to R2 with a presigned URL (task 48). The account host carries
+              // the account id, which the presigned URL shows anyway; a wildcard keeps it out of the config.
+              'https://*.r2.cloudflarestorage.com',
               POSTHOG_ORIGIN,
               CF_INSIGHTS_ORIGIN,
               GOOGLE_TRANSLATE_API_ORIGIN,

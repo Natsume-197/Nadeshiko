@@ -21,6 +21,7 @@ import type {
   t_AffectedCountResponse,
   t_ApiKeyScope,
   t_CompletePatreonLinkRequestBody,
+  t_CompleteUserDictionaryUploadParamSchema,
   t_CreateReportRequest,
   t_CreateUserApiKeyRequestBody,
   t_DeleteUserActivityByDateParamSchema,
@@ -31,6 +32,7 @@ import type {
   t_Error401,
   t_Error403,
   t_Error404,
+  t_Error409,
   t_Error429,
   t_Error500,
   t_ForgetFamiliarMediaParamSchema,
@@ -39,14 +41,16 @@ import type {
   t_RemoveExcludedMediaParamSchema,
   t_RemoveFavoriteMediaParamSchema,
   t_Report,
+  t_ReserveUserDictionaryUploadRequestBody,
   t_UpdateUserDictionariesRequestBody,
   t_UserActivityRequest,
   t_UserDictionaryListResponse,
+  t_UserDictionaryUploadResult,
   t_UserExportResponse,
   t_UserMe,
   t_UserPreferences,
 } from '../models.ts';
-import type { AddExcludedMediaRequestBodyOutput, AddFavoriteMediaRequestBodyOutput, CompletePatreonLinkRequestBodyOutput, CreateReportRequestOutput, CreateUserApiKeyRequestBodyOutput, DeleteUserActivityQueryOutput, UpdateUserDictionariesRequestBodyOutput, UserActivityRequestOutput, UserPreferencesOutput } from '../outputTypes.ts';
+import type { AddExcludedMediaRequestBodyOutput, AddFavoriteMediaRequestBodyOutput, CompletePatreonLinkRequestBodyOutput, CreateReportRequestOutput, CreateUserApiKeyRequestBodyOutput, DeleteUserActivityQueryOutput, ReserveUserDictionaryUploadRequestBodyOutput, UpdateUserDictionariesRequestBodyOutput, UserActivityRequestOutput, UserPreferencesOutput } from '../outputTypes.ts';
 import {
   s_ActivityType,
   s_AddExcludedMediaRequestBody,
@@ -60,14 +64,17 @@ import {
   s_Error401,
   s_Error403,
   s_Error404,
+  s_Error409,
   s_Error429,
   s_Error500,
   s_MediaSummary,
   s_PatreonConnection,
   s_Report,
+  s_ReserveUserDictionaryUploadRequestBody,
   s_UpdateUserDictionariesRequestBody,
   s_UserActivityRequest,
   s_UserDictionaryListResponse,
+  s_UserDictionaryUploadResult,
   s_UserExportResponse,
   s_UserMe,
   s_UserPreferences,
@@ -228,6 +235,50 @@ export type DeleteUserDictionaryResponder = {
 export type DeleteUserDictionary = (
   params: Params<t_DeleteUserDictionaryParamSchema, void, void, void>,
   respond: DeleteUserDictionaryResponder,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
+
+export type ReserveUserDictionaryUploadResponder = {
+  with201(): ExpressRuntimeResponse<{
+    expiresAt: string;
+    headers: Record<string, string>;
+    method: 'PUT';
+    uploadId: string;
+    url: string;
+  }>;
+  with400(): ExpressRuntimeResponse<t_Error400>;
+  with401(): ExpressRuntimeResponse<t_Error401>;
+  with403(): ExpressRuntimeResponse<t_Error403>;
+  with404(): ExpressRuntimeResponse<t_Error404>;
+  with429(): ExpressRuntimeResponse<t_Error429>;
+  with500(): ExpressRuntimeResponse<t_Error500>;
+} & ExpressRuntimeResponder;
+
+export type ReserveUserDictionaryUpload = (
+  params: Params<void, void, ReserveUserDictionaryUploadRequestBodyOutput, void>,
+  respond: ReserveUserDictionaryUploadResponder,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
+
+export type CompleteUserDictionaryUploadResponder = {
+  with201(): ExpressRuntimeResponse<t_UserDictionaryUploadResult>;
+  with202(): ExpressRuntimeResponse<t_UserDictionaryUploadResult>;
+  with400(): ExpressRuntimeResponse<t_Error400>;
+  with401(): ExpressRuntimeResponse<t_Error401>;
+  with403(): ExpressRuntimeResponse<t_Error403>;
+  with404(): ExpressRuntimeResponse<t_Error404>;
+  with409(): ExpressRuntimeResponse<t_Error409>;
+  with429(): ExpressRuntimeResponse<t_Error429>;
+  with500(): ExpressRuntimeResponse<t_Error500>;
+} & ExpressRuntimeResponder;
+
+export type CompleteUserDictionaryUpload = (
+  params: Params<t_CompleteUserDictionaryUploadParamSchema, void, void, void>,
+  respond: CompleteUserDictionaryUploadResponder,
   req: Request,
   res: Response,
   next: NextFunction,
@@ -513,6 +564,8 @@ export type UserImplementation = {
   listUserDictionaries: ListUserDictionaries;
   updateUserDictionaries: UpdateUserDictionaries;
   deleteUserDictionary: DeleteUserDictionary;
+  reserveUserDictionaryUpload: ReserveUserDictionaryUpload;
+  completeUserDictionaryUpload: CompleteUserDictionaryUpload;
   listExcludedMedia: ListExcludedMedia;
   addExcludedMedia: AddExcludedMedia;
   removeExcludedMedia: RemoveExcludedMedia;
@@ -1022,6 +1075,149 @@ export function createUserRouter(
         .deleteUserDictionary(input, responder, req, res, next)
         .catch(handleImplementationError)
         .then(handleResponse(res, deleteUserDictionaryResponseBodyValidator));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  const reserveUserDictionaryUploadResponseBodyValidator = responseValidationFactory(
+    [
+      [
+        '201',
+        z.object({
+          uploadId: z.string(),
+          url: z.string(),
+          method: z.literal('PUT'),
+          headers: z.record(z.string(), z.string()),
+          expiresAt: z.iso.datetime({ offset: true }),
+        }),
+      ],
+      ['400', s_Error400],
+      ['401', s_Error401],
+      ['403', s_Error403],
+      ['404', s_Error404],
+      ['429', s_Error429],
+      ['500', s_Error500],
+    ],
+    undefined,
+  );
+
+  // reserveUserDictionaryUpload
+  router.post(`/v1/user/dictionaries/uploads`, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const input = {
+        params: undefined,
+        query: undefined,
+        body: parseRequestInput(s_ReserveUserDictionaryUploadRequestBody, req.body, RequestInputType.RequestBody),
+        headers: undefined,
+      };
+
+      const responder = {
+        with201() {
+          return new ExpressRuntimeResponse<{
+            expiresAt: string;
+            headers: Record<string, string>;
+            method: 'PUT';
+            uploadId: string;
+            url: string;
+          }>(201);
+        },
+        with400() {
+          return new ExpressRuntimeResponse<t_Error400>(400);
+        },
+        with401() {
+          return new ExpressRuntimeResponse<t_Error401>(401);
+        },
+        with403() {
+          return new ExpressRuntimeResponse<t_Error403>(403);
+        },
+        with404() {
+          return new ExpressRuntimeResponse<t_Error404>(404);
+        },
+        with429() {
+          return new ExpressRuntimeResponse<t_Error429>(429);
+        },
+        with500() {
+          return new ExpressRuntimeResponse<t_Error500>(500);
+        },
+        withStatus(status: StatusCode) {
+          return new ExpressRuntimeResponse(status);
+        },
+      };
+
+      await implementation
+        .reserveUserDictionaryUpload(input, responder, req, res, next)
+        .catch(handleImplementationError)
+        .then(handleResponse(res, reserveUserDictionaryUploadResponseBodyValidator));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  const completeUserDictionaryUploadParamSchema = z.object({ id: z.string() });
+
+  const completeUserDictionaryUploadResponseBodyValidator = responseValidationFactory(
+    [
+      ['201', s_UserDictionaryUploadResult],
+      ['202', s_UserDictionaryUploadResult],
+      ['400', s_Error400],
+      ['401', s_Error401],
+      ['403', s_Error403],
+      ['404', s_Error404],
+      ['409', s_Error409],
+      ['429', s_Error429],
+      ['500', s_Error500],
+    ],
+    undefined,
+  );
+
+  // completeUserDictionaryUpload
+  router.post(`/v1/user/dictionaries/uploads/:id/complete`, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const input = {
+        params: parseRequestInput(completeUserDictionaryUploadParamSchema, req.params, RequestInputType.RouteParam),
+        query: undefined,
+        body: undefined,
+        headers: undefined,
+      };
+
+      const responder = {
+        with201() {
+          return new ExpressRuntimeResponse<t_UserDictionaryUploadResult>(201);
+        },
+        with202() {
+          return new ExpressRuntimeResponse<t_UserDictionaryUploadResult>(202);
+        },
+        with400() {
+          return new ExpressRuntimeResponse<t_Error400>(400);
+        },
+        with401() {
+          return new ExpressRuntimeResponse<t_Error401>(401);
+        },
+        with403() {
+          return new ExpressRuntimeResponse<t_Error403>(403);
+        },
+        with404() {
+          return new ExpressRuntimeResponse<t_Error404>(404);
+        },
+        with409() {
+          return new ExpressRuntimeResponse<t_Error409>(409);
+        },
+        with429() {
+          return new ExpressRuntimeResponse<t_Error429>(429);
+        },
+        with500() {
+          return new ExpressRuntimeResponse<t_Error500>(500);
+        },
+        withStatus(status: StatusCode) {
+          return new ExpressRuntimeResponse(status);
+        },
+      };
+
+      await implementation
+        .completeUserDictionaryUpload(input, responder, req, res, next)
+        .catch(handleImplementationError)
+        .then(handleResponse(res, completeUserDictionaryUploadResponseBodyValidator));
     } catch (error) {
       next(error);
     }

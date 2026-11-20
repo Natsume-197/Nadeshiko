@@ -1,0 +1,61 @@
+post:
+  tags:
+    - User
+  x-internal: true
+  operationId: reserveUserDictionaryUpload
+  summary: Reserve a direct upload of a custom Yomitan dictionary
+  description: |
+    Checks the account's limits and returns a short-lived presigned URL the browser uploads the `.zip` to directly,
+    bound to the declared size. Complete the upload afterwards to index it.
+  security:
+    - SessionCookie: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required: [sizeBytes]
+          properties:
+            sizeBytes:
+              type: integer
+              minimum: 22
+              description: Exact size of the `.zip` to upload, in bytes.
+  responses:
+    "201":
+      description: Created
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [uploadId, url, method, headers, expiresAt]
+            properties:
+              uploadId:
+                type: string
+                format: uuid
+              url:
+                type: string
+                description: Presigned URL to PUT the file to.
+              method:
+                type: string
+                enum: [PUT]
+              headers:
+                type: object
+                additionalProperties:
+                  type: string
+                description: Headers the PUT must send.
+              expiresAt:
+                type: string
+                format: date-time
+    "400":
+      $ref: "../../components/responses/BadRequest.yaml"
+    "401":
+      $ref: "../../components/responses/Unauthorized.yaml"
+    "403":
+      $ref: "../../components/responses/Forbidden.yaml"
+    "404":
+      $ref: "../../components/responses/NotFound.yaml"
+    "429":
+      $ref: "../../components/responses/TooManyRequests.yaml"
+    "500":
+      $ref: "../../components/responses/InternalServerError.yaml"

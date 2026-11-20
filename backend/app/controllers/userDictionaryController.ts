@@ -3,11 +3,18 @@ import { createWriteStream } from 'node:fs';
 import { mkdir, unlink } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { NextFunction, Request, Response } from 'express';
-import type { DeleteUserDictionary, ListUserDictionaries, UpdateUserDictionaries } from 'generated/routes/user';
+import type {
+  CompleteUserDictionaryUpload,
+  DeleteUserDictionary,
+  ListUserDictionaries,
+  ReserveUserDictionaryUpload,
+  UpdateUserDictionaries,
+} from 'generated/routes/user';
 import { assertUser } from '@app/middleware/authentication';
 import { InvalidRequestError } from '@app/errors';
 import { config } from '@config/config';
 import { resolveCustomDictionaryQuota } from '@app/services/dictionary/custom/quotas';
+import { completeDictionaryUpload, reserveDictionaryUpload } from '@app/services/dictionary/custom/directUpload';
 import {
   assertCustomDictionariesEnabled,
   attachOrQueueUploadedDictionary,
@@ -37,6 +44,23 @@ export const deleteUserDictionary: DeleteUserDictionary = async ({ params }, res
   const user = assertUser(req);
   const data = await deleteUserDictionaryService(user, params.id);
   return respond.with200().body(data);
+};
+
+/** Reserves a direct upload to R2 (Shirabe lessons, phase 2): the browser PUTs the file to the returned URL. */
+export const reserveUserDictionaryUpload: ReserveUserDictionaryUpload = async ({ body }, respond, req) => {
+  assertCustomDictionariesEnabled();
+  const user = assertUser(req);
+  return respond.with201().body(await reserveDictionaryUpload(user, body.sizeBytes));
+};
+
+/** Indexes a direct upload once it is in R2: 201 when an identical file was already indexed, 202 while it indexes. */
+export const completeUserDictionaryUpload: CompleteUserDictionaryUpload = async ({ params }, respond, req) => {
+  assertCustomDictionariesEnabled();
+  const user = assertUser(req);
+  const result = await completeDictionaryUpload(user, params.id);
+  // `deduplicated` stays server-side, as on the classic upload.
+  const body = { dictionary: result.dictionary, stackFingerprint: result.stackFingerprint };
+  return result.dictionary.status === 'ready' ? respond.with201().body(body) : respond.with202().body(body);
 };
 
 const UPLOAD_CONTENT_TYPES = new Set(['application/zip', 'application/x-zip-compressed', 'application/octet-stream']);

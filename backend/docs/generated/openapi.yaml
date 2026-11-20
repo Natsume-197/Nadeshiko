@@ -1982,6 +1982,122 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
+  /v1/user/dictionaries/uploads:
+    post:
+      tags:
+        - User
+      x-internal: true
+      operationId: reserveUserDictionaryUpload
+      summary: Reserve a direct upload of a custom Yomitan dictionary
+      description: |
+        Checks the account's limits and returns a short-lived presigned URL the browser uploads the `.zip` to directly,
+        bound to the declared size. Complete the upload afterwards to index it.
+      security:
+        - SessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - sizeBytes
+              properties:
+                sizeBytes:
+                  type: integer
+                  minimum: 22
+                  description: Exact size of the `.zip` to upload, in bytes.
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - uploadId
+                  - url
+                  - method
+                  - headers
+                  - expiresAt
+                properties:
+                  uploadId:
+                    type: string
+                    format: uuid
+                  url:
+                    type: string
+                    description: Presigned URL to PUT the file to.
+                  method:
+                    type: string
+                    enum:
+                      - PUT
+                  headers:
+                    type: object
+                    additionalProperties:
+                      type: string
+                    description: Headers the PUT must send.
+                  expiresAt:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/user/dictionaries/uploads/{id}/complete:
+    post:
+      tags:
+        - User
+      x-internal: true
+      operationId: completeUserDictionaryUpload
+      summary: Complete a direct upload of a custom Yomitan dictionary
+      description: |
+        Checks that the reserved upload reached storage with the declared size, then indexes it like a classic upload:
+        201 when an identical file was already indexed, 202 while indexing runs.
+      security:
+        - SessionCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Upload ID from the reservation.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '201':
+          description: Ready (an identical file was already indexed)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDictionaryUploadResult'
+        '202':
+          description: Indexing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDictionaryUploadResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /v1/user/excluded-media:
     get:
       tags:
@@ -7479,6 +7595,7 @@ components:
         - builtin
         - quota
         - stackFingerprint
+        - directUpload
       properties:
         dictionaries:
           type: array
@@ -7522,6 +7639,21 @@ components:
             maxIndexedBytes:
               type: integer
               description: Indexed space the account may use, in bytes; new uploads are refused once it is used up.
+        stackFingerprint:
+          type: string
+          nullable: true
+        directUpload:
+          type: boolean
+          description: Whether uploads go straight to storage (reserve, PUT, complete) rather than through the upload endpoint.
+    UserDictionaryUploadResult:
+      type: object
+      description: The dictionary an upload created or attached, and the account's new stack fingerprint.
+      required:
+        - dictionary
+        - stackFingerprint
+      properties:
+        dictionary:
+          $ref: '#/components/schemas/UserDictionary'
         stackFingerprint:
           type: string
           nullable: true

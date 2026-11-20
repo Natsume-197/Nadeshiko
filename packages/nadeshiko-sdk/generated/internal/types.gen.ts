@@ -2178,6 +2178,18 @@ export type UserDictionaryListResponse = {
         maxIndexedBytes: number;
     };
     stackFingerprint: string;
+    /**
+     * Whether uploads go straight to storage (reserve, PUT, complete) rather than through the upload endpoint.
+     */
+    directUpload: boolean;
+};
+
+/**
+ * The dictionary an upload created or attached, and the account's new stack fingerprint.
+ */
+export type UserDictionaryUploadResult = {
+    dictionary: UserDictionary;
+    stackFingerprint: string;
 };
 
 export type ReportTargetMedia = {
@@ -5307,6 +5319,128 @@ export type DeleteUserDictionaryResponses = {
 };
 
 export type DeleteUserDictionaryResponse = DeleteUserDictionaryResponses[keyof DeleteUserDictionaryResponses];
+
+export type ReserveUserDictionaryUploadData = {
+    body: {
+        /**
+         * Exact size of the `.zip` to upload, in bytes.
+         */
+        sizeBytes: number;
+    };
+    path?: never;
+    query?: never;
+    url: '/v1/user/dictionaries/uploads';
+};
+
+export type ReserveUserDictionaryUploadErrors = {
+    /**
+     * Bad Request
+     */
+    400: Error400;
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Forbidden
+     */
+    403: Error403;
+    /**
+     * Not Found
+     */
+    404: Error404;
+    /**
+     * Too Many Requests. The response body indicates whether the request was rejected due to per-minute rate limiting or monthly quota exhaustion.
+     */
+    429: Error429;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type ReserveUserDictionaryUploadError = ReserveUserDictionaryUploadErrors[keyof ReserveUserDictionaryUploadErrors];
+
+export type ReserveUserDictionaryUploadResponses = {
+    /**
+     * Created
+     */
+    201: {
+        uploadId: string;
+        /**
+         * Presigned URL to PUT the file to.
+         */
+        url: string;
+        method: 'PUT';
+        /**
+         * Headers the PUT must send.
+         */
+        headers: {
+            [key: string]: string;
+        };
+        expiresAt: string;
+    };
+};
+
+export type ReserveUserDictionaryUploadResponse = ReserveUserDictionaryUploadResponses[keyof ReserveUserDictionaryUploadResponses];
+
+export type CompleteUserDictionaryUploadData = {
+    body?: never;
+    path: {
+        /**
+         * Upload ID from the reservation.
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/v1/user/dictionaries/uploads/{id}/complete';
+};
+
+export type CompleteUserDictionaryUploadErrors = {
+    /**
+     * Bad Request
+     */
+    400: Error400;
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Forbidden
+     */
+    403: Error403;
+    /**
+     * Not Found
+     */
+    404: Error404;
+    /**
+     * Conflict
+     */
+    409: Error409;
+    /**
+     * Too Many Requests. The response body indicates whether the request was rejected due to per-minute rate limiting or monthly quota exhaustion.
+     */
+    429: Error429;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type CompleteUserDictionaryUploadError = CompleteUserDictionaryUploadErrors[keyof CompleteUserDictionaryUploadErrors];
+
+export type CompleteUserDictionaryUploadResponses = {
+    /**
+     * Ready (an identical file was already indexed)
+     */
+    201: UserDictionaryUploadResult;
+    /**
+     * Indexing
+     */
+    202: UserDictionaryUploadResult;
+};
+
+export type CompleteUserDictionaryUploadResponse = CompleteUserDictionaryUploadResponses[keyof CompleteUserDictionaryUploadResponses];
 
 export type ListExcludedMediaData = {
     body?: never;

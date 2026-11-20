@@ -1,0 +1,11 @@
+type: object
+description: The dictionary an upload created or attached, and the account's new stack fingerprint.
+required:
+  - dictionary
+  - stackFingerprint
+properties:
+  dictionary:
+    $ref: "./UserDictionary.yaml"
+  stackFingerprint:
+    type: string
+    nullable: true

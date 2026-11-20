@@ -169,6 +169,10 @@ paths:
     $ref: "./paths/user/v1_user_dictionaries.yaml"
   "/v1/user/dictionaries/{id}":
     $ref: "./paths/user/v1_user_dictionaries_id.yaml"
+  "/v1/user/dictionaries/uploads":
+    $ref: "./paths/user/v1_user_dictionaries_uploads.yaml"
+  "/v1/user/dictionaries/uploads/{id}/complete":
+    $ref: "./paths/user/v1_user_dictionaries_uploads_id_complete.yaml"
   "/v1/user/excluded-media":
     $ref: "./paths/user/v1_user_excluded_media.yaml"
   "/v1/user/excluded-media/{mediaPublicId}":
