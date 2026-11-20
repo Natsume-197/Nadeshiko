@@ -57,10 +57,10 @@ type CardEntry = EnrichedDictionaryCandidate['entries'][number];
 
 const MAX_SENSES_PER_CUSTOM_DICT = 8;
 
-/** How long a lookup waits for a dictionary that is not in this container's cache yet (the first lookup after a
- * deploy, or after an eviction). Past it the card answers without that dictionary, marked pending so nothing caches
- * the answer, and the download carries on for the next lookup. Well under the frontend's 3 s timeout. */
-export const COLD_ARTIFACT_WAIT_MS = 1200;
+/** How long a lookup waits for a dictionary that is not in the local cache (a new one, or one evicted). Enough for a
+ * small file to arrive; a large one keeps downloading after it, and the card answers without it, marked pending so
+ * nothing caches the answer. With the cache on a volume this is rare, so a short wait keeps the card fast. */
+export const COLD_ARTIFACT_WAIT_MS = 300;
 
 /** The card shows two patterns; a few more leave room for every source. */
 const MAX_PITCH_PATTERNS = 4;
@@ -148,7 +148,13 @@ interface FoundEntry {
 function customEntriesFor(dicts: Located[], lookup: Lookup): FoundEntry[] {
   const out: FoundEntry[] = [];
   for (const { dict, path } of dicts) {
-    const { rows, tags } = queryArtifactTerms(path, lookup.headword, lookup.headwordHira, lookup.readingHira);
+    const { rows, tags } = queryArtifactTerms(
+      path,
+      lookup.headword,
+      lookup.headwordHira,
+      lookup.readingHira,
+      MAX_SENSES_PER_CUSTOM_DICT,
+    );
     const [first] = rows;
     if (!first) continue;
     const entry = buildCustomEntry(dict.stackId, dict.title, rows, tags);

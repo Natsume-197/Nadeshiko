@@ -1065,6 +1065,7 @@
       "statusProcessing": "索引作成中…",
       "statusFailed": "失敗",
       "importErrors": {
+        "indexedQuota": "辞書がアカウントの索引容量をすべて使っています。どれかを削除して空きを作ってください。",
         "tooLarge": "この辞書は展開後のサイズが大きすぎます。小さい版を使うか、分割してください。",
         "tooManyEntries": "この辞書の項目数が索引できる上限（150万件）を超えています。",
         "notYomitan": "この.zipはYomitanの辞書ではありません。index.jsonがないか壊れています。",

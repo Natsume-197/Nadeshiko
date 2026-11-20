@@ -232,7 +232,10 @@ function uploadZipFile(file: File) {
     let detail = t('accountSettings.dictionaries.uploadError');
     try {
       const body = JSON.parse(xhr.responseText) as { detail?: string; message?: string; title?: string };
-      detail = body.detail || body.message || body.title || detail;
+      const message = body.detail || body.message || body.title;
+      // A reason we know is said in the reader's language; anything else is shown as the server put it.
+      const known = dictionaryImportError(message);
+      detail = known !== 'generic' ? t(`accountSettings.dictionaries.importErrors.${known}`) : message || detail;
     } catch {
       // keep fallback error
     }

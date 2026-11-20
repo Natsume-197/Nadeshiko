@@ -1065,6 +1065,7 @@
       "statusProcessing": "Indexando…",
       "statusFailed": "Error",
       "importErrors": {
+        "indexedQuota": "Tus diccionarios ya ocupan todo el espacio indexado de tu cuenta. Borra alguno para hacer sitio.",
         "tooLarge": "Este diccionario es demasiado grande una vez descomprimido. Prueba una edición más pequeña o divídelo.",
         "tooManyEntries": "Este diccionario tiene más entradas de las que podemos indexar (1,5 millones).",
         "notYomitan": "Este .zip no es un diccionario de Yomitan: falta index.json o está dañado.",

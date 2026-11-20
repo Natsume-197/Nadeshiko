@@ -13,6 +13,7 @@ import {
   failInterruptedImports,
   gcOrphanArtifacts,
   INTERRUPTED_IMPORT_MESSAGE,
+  invalidateUserDictionaryStack,
   loadActiveUserDictionaryStack,
 } from '@app/services/dictionary/custom/service';
 import { artifactSqlitePath, closeAllArtifactHandles } from '@app/services/dictionary/custom/sqlitePool';
@@ -146,6 +147,8 @@ beforeAll(async () => {
 });
 
 beforeEach(() => {
+  // The database is reset between tests and ids come back; a cached stack from the last test must not answer.
+  invalidateUserDictionaryStack();
   setEnabled(true);
   signInAs(app, fixtures.users.regular);
 });
@@ -398,6 +401,8 @@ describe('word cards', () => {
     await upload(monolingualZip());
     const ready = await stackFor(fixtures.users.regular);
     await UserDictionaryArtifact.update({ title: 'テスト国語' }, { status: 'processing' });
+    // Written behind the service's back; the service's own status changes invalidate the cache themselves.
+    invalidateUserDictionaryStack();
     const indexing = await stackFor(fixtures.users.regular);
 
     expect(indexing.stackFingerprint).toBe(ready.stackFingerprint);

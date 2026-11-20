@@ -1065,6 +1065,7 @@
       "statusProcessing": "索引中…",
       "statusFailed": "失败",
       "importErrors": {
+        "indexedQuota": "你的词典已用完账户的全部索引空间。请删除一本以腾出空间。",
         "tooLarge": "这本词典解压后太大。请尝试较小的版本或将其拆分。",
         "tooManyEntries": "这本词典的条目数超过了可索引的上限（150 万条）。",
         "notYomitan": "这个 .zip 不是 Yomitan 词典：缺少 index.json 或文件已损坏。",

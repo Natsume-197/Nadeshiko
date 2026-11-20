@@ -37,6 +37,10 @@ export interface R2StorageConfig {
 /** Deduplicates concurrent cache-miss downloads for the same artifact key. */
 const inFlightDownloads = new Map<string, Promise<string | null>>();
 
+/** When each cached file's mtime was last refreshed; the LRU only needs it to the minute, not on every lookup. */
+const lastTouched = new Map<string, number>();
+const TOUCH_EVERY_MS = 60_000;
+
 export function getR2StorageConfig(): R2StorageConfig | null {
   const endpoint = config.USER_DICT_R2_ENDPOINT;
   const bucket = config.USER_DICT_R2_BUCKET;
@@ -149,9 +153,13 @@ export async function artifactExistsInStorage(storageKey: string): Promise<boole
 export async function ensureArtifactCachedLocally(storageKey: string): Promise<string | null> {
   const localPath = artifactSqlitePath(config.USER_DICTIONARIES_DIR, storageKey);
   if (existsSync(localPath)) {
-    // Touch mtime asynchronously so LRU pruning preserves frequently queried dictionaries.
-    const now = new Date();
-    void utimes(localPath, now, now).catch(() => {});
+    // Touch mtime asynchronously so LRU pruning preserves frequently queried dictionaries, at most once a minute.
+    const now = Date.now();
+    if (now - (lastTouched.get(localPath) ?? 0) >= TOUCH_EVERY_MS) {
+      lastTouched.set(localPath, now);
+      const when = new Date(now);
+      void utimes(localPath, when, when).catch(() => {});
+    }
     return localPath;
   }
 
@@ -259,6 +267,7 @@ export async function pruneLocalDictionaryCache(): Promise<void> {
   for (const file of files) {
     if (total <= target) break;
     closeArtifactHandle(file.path);
+    lastTouched.delete(file.path);
     await unlink(file.path).catch(() => {});
     total -= file.size;
   }

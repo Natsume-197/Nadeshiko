@@ -115,6 +115,7 @@ import {
   failInterruptedImports,
   gcOrphanArtifacts,
   getSessionCustomDictionaries,
+  invalidateUserDictionaryStack,
   listUserDictionaries,
   loadActiveUserDictionaryStack,
   processArtifactImportJob,
@@ -198,6 +199,8 @@ function makeQueryBuilder(affected: number) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // The per-reader stack cache would carry one test's mocked stack into the next.
+  invalidateUserDictionaryStack();
   tempDir = mkdtempSync(join(tmpdir(), 'nadeshiko-svc-r2-'));
   mockConfig.USER_DICTIONARIES_ENABLED = true;
   mockConfig.USER_DICTIONARIES_DIR = tempDir;
@@ -363,6 +366,7 @@ describe('custom dictionary service', () => {
     expect(session?.count).toBe(1);
     expect(session?.stackFingerprint).toMatch(/^[0-9a-f]{16}$/);
 
+    invalidateUserDictionaryStack(10);
     mockUserFindOne.mockRejectedValueOnce(new Error('db down'));
     expect(await getSessionCustomDictionaries(10)).toEqual({ count: 0, stackFingerprint: null });
   });

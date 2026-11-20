@@ -155,10 +155,38 @@ function builtinPlacement(
 }
 
 /**
- * Loads the user's active (enabled + ready) custom dictionaries and built-in JMdict settings.
- * Used on the lookup hot path and by session enrichment.
+ * Each reader's stack, kept 30 s: the word card asks for it on every word, and it changes only when the reader
+ * changes it (invalidated here) or an import ends (all dropped). Another container picks a change up within 30 s.
  */
-export async function loadActiveUserDictionaryStack(userId: number): Promise<ActiveUserDictionaryStack> {
+const STACK_CACHE_MS = 30_000;
+const STACK_CACHE_MAX_ENTRIES = 20_000;
+const stackCache = new Map<number, { at: number; stack: Promise<ActiveUserDictionaryStack> }>();
+
+/** Drops one reader's cached stack, or everyone's when no id is given (an import ended for a shared file). */
+export function invalidateUserDictionaryStack(userId?: number): void {
+  if (userId === undefined) stackCache.clear();
+  else stackCache.delete(userId);
+}
+
+/**
+ * Loads the user's active (enabled + ready) custom dictionaries and built-in JMdict settings.
+ * Used on the lookup hot path and by session enrichment, through a short per-reader cache.
+ */
+export function loadActiveUserDictionaryStack(userId: number): Promise<ActiveUserDictionaryStack> {
+  const now = Date.now();
+  const cached = stackCache.get(userId);
+  if (cached && now - cached.at < STACK_CACHE_MS) return cached.stack;
+
+  if (stackCache.size >= STACK_CACHE_MAX_ENTRIES) stackCache.clear();
+  const stack = readActiveUserDictionaryStack(userId);
+  stackCache.set(userId, { at: now, stack });
+  stack.catch(() => {
+    if (stackCache.get(userId)?.stack === stack) stackCache.delete(userId);
+  });
+  return stack;
+}
+
+async function readActiveUserDictionaryStack(userId: number): Promise<ActiveUserDictionaryStack> {
   const [user, rows] = await Promise.all([
     User.findOne({ where: { id: userId }, select: { id: true, preferences: true } }),
     UserDictionary.find({
@@ -241,7 +269,10 @@ export async function failInterruptedImports(): Promise<number> {
     .andWhere(`updated_at < now() - make_interval(mins => :minutes)`, { minutes: INTERRUPTED_IMPORT_AFTER_MINUTES })
     .execute();
   const count = result.affected ?? 0;
-  if (count > 0) logger.warn({ count }, 'Marked interrupted custom dictionary imports as failed');
+  if (count > 0) {
+    invalidateUserDictionaryStack();
+    logger.warn({ count }, 'Marked interrupted custom dictionary imports as failed');
+  }
   return count;
 }
 
@@ -339,6 +370,7 @@ export async function processArtifactImportJob(artifactId: number, tmpZipPath: s
     await artifact.save().catch(() => {});
     logger.warn({ err: error, artifactId: artifact.id }, 'Failed to index custom Yomitan dictionary');
   } finally {
+    invalidateUserDictionaryStack();
     await unlink(tmpZipPath).catch(() => {});
   }
 }
@@ -398,6 +430,18 @@ export async function attachOrQueueUploadedDictionary(
       );
     }
 
+    // Space already indexed for this account; a new upload is refused once it is used up.
+    const indexedBytes = existingRows.reduce(
+      (sum, row) => (row === alreadyLinked ? sum : sum + Number(row.artifact?.sqliteBytes ?? 0)),
+      0,
+    );
+    if (indexedBytes >= quota.maxIndexedBytes) {
+      const gb = (bytes: number) => (bytes / (1024 * 1024 * 1024)).toFixed(1);
+      throw new InvalidRequestError(
+        `Your dictionaries already use ${gb(indexedBytes)} GB of the ${gb(quota.maxIndexedBytes)} GB indexed space for your account`,
+      );
+    }
+
     let artifact = await UserDictionaryArtifact.findOneBy({ sha256 });
     let deduplicated = false;
     let needsImport = false;
@@ -430,6 +474,8 @@ export async function attachOrQueueUploadedDictionary(
       artifact.status = 'processing';
       artifact.errorMessage = null;
       await artifact.save();
+      // A shared file is being rebuilt: every reader who has it now waits for it, not just this one.
+      invalidateUserDictionaryStack();
       needsImport = true;
     } else {
       artifact = UserDictionaryArtifact.create({
@@ -520,6 +566,7 @@ export async function attachOrQueueUploadedDictionary(
       }
     }
 
+    invalidateUserDictionaryStack(user.id);
     const updated = await loadActiveUserDictionaryStack(user.id);
     return {
       dictionary: toDto(userDict, artifact),
@@ -595,6 +642,7 @@ export async function updateUserDictionaryStack(
     }
   });
 
+  invalidateUserDictionaryStack(user.id);
   return listUserDictionaries(user);
 }
 
@@ -632,6 +680,7 @@ export async function deleteUserDictionary(
     }
   }
 
+  invalidateUserDictionaryStack(user.id);
   const updated = await loadActiveUserDictionaryStack(user.id);
   return { stackFingerprint: updated.stackFingerprint };
 }

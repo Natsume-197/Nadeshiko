@@ -77,8 +77,10 @@ vi.mock('@app/services/dictionary/custom/r2Storage', async (importOriginal) => {
 
 import {
   FREE_MAX_DICTIONARIES,
+  FREE_MAX_INDEXED_BYTES,
   FREE_MAX_ZIP_BYTES,
   PATRON_MAX_DICTIONARIES,
+  PATRON_MAX_INDEXED_BYTES,
   PATRON_MAX_ZIP_BYTES,
   resolveCustomDictionaryQuota,
 } from '@app/services/dictionary/custom/quotas';
@@ -186,6 +188,7 @@ describe('resolveCustomDictionaryQuota', () => {
     expect(await resolveCustomDictionaryQuota({ id: 1, role: UserRoleType.USER })).toEqual({
       maxDictionaries: FREE_MAX_DICTIONARIES,
       maxZipBytes: FREE_MAX_ZIP_BYTES,
+      maxIndexedBytes: FREE_MAX_INDEXED_BYTES,
       isPatron: false,
     });
 
@@ -193,6 +196,7 @@ describe('resolveCustomDictionaryQuota', () => {
     expect(await resolveCustomDictionaryQuota({ id: 2, role: UserRoleType.ADMIN })).toEqual({
       maxDictionaries: PATRON_MAX_DICTIONARIES,
       maxZipBytes: PATRON_MAX_ZIP_BYTES,
+      maxIndexedBytes: PATRON_MAX_INDEXED_BYTES,
       isPatron: true,
     });
   });

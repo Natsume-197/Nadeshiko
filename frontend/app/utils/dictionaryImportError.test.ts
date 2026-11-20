@@ -3,6 +3,10 @@ import { dictionaryImportError } from './dictionaryImportError';
 
 describe('dictionaryImportError', () => {
   it.each([
+    ['Your dictionaries already use 2.0 GB of the 2.0 GB indexed space for your account', 'indexedQuota'],
+    ['Indexed dictionary exceeds safety limit', 'tooLarge'],
+    ['A dictionary entry exceeds the maximum allowed size (term_bank_1.json)', 'tooLarge'],
+    ['Bank contains invalid JSON (term_bank_2.json)', 'noEntries'],
     ['Uncompressed dictionary data exceeds safety limit', 'tooLarge'],
     ['ZIP contains too many entries (300000)', 'tooLarge'],
     ['ZIP central directory exceeds allowed size', 'tooLarge'],

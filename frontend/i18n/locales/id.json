@@ -1065,6 +1065,7 @@
       "statusProcessing": "Mengindeks…",
       "statusFailed": "Gagal",
       "importErrors": {
+        "indexedQuota": "Kamus Anda sudah memakai seluruh ruang terindeks akun Anda. Hapus salah satu untuk memberi ruang.",
         "tooLarge": "Kamus ini terlalu besar setelah diekstrak. Coba edisi yang lebih kecil atau pecah menjadi beberapa bagian.",
         "tooManyEntries": "Kamus ini memiliki lebih banyak entri daripada yang bisa kami indeks (1,5 juta).",
         "notYomitan": "File .zip ini bukan kamus Yomitan: index.json tidak ada atau rusak.",
