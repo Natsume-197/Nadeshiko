@@ -1064,6 +1064,16 @@
       "builtinDescription": "Built-in Japanese-English dictionary with corpus frequency and UniDic pitch fallback.",
       "statusProcessing": "Indexing…",
       "statusFailed": "Failed",
+      "importErrors": {
+        "tooLarge": "This dictionary is too large once unzipped. Try a smaller edition or split it.",
+        "tooManyEntries": "This dictionary has more entries than we can index (1.5 million).",
+        "notYomitan": "This .zip is not a Yomitan dictionary: index.json is missing or broken.",
+        "unsupportedFormat": "Only Yomitan dictionaries in format 3 are supported. Rebuild or download a newer version.",
+        "noEntries": "No definitions, frequencies or pitch accents were found in this dictionary.",
+        "badZip": "The .zip file is damaged or incomplete. Download it again and retry.",
+        "interrupted": "Indexing was interrupted by a server restart. Upload the file again.",
+        "generic": "This dictionary could not be indexed. Delete it and try again."
+      },
       "bankTerms": "Terms",
       "bankFrequency": "Frequency",
       "bankPitch": "Pitch",

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { dictionaryImportError } from '~/utils/dictionaryImportError';
 import {
   mdiArrowDown,
   mdiArrowUp,
@@ -444,8 +445,13 @@ onBeforeUnmount(stopPolling);
                 <span>{{ formatMb(row.dict.zipBytes) }}</span>
                 <span v-if="row.dict.revision" class="truncate opacity-75">{{ row.dict.revision }}</span>
               </div>
-              <p v-if="row.dict?.status === 'failed' && row.dict.errorMessage" class="mt-1 text-xs text-red-400">
-                {{ row.dict.errorMessage }}
+              <p
+                v-if="row.dict?.status === 'failed'"
+                class="mt-1 text-xs text-red-400"
+                :title="row.dict.errorMessage ?? undefined"
+                data-testid="dictionary-import-error"
+              >
+                {{ t(`accountSettings.dictionaries.importErrors.${dictionaryImportError(row.dict.errorMessage)}`) }}
               </p>
             </div>
           </div>

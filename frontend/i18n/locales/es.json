@@ -1064,6 +1064,16 @@
       "builtinDescription": "Diccionario japonés-inglés integrado con frecuencia del corpus y pitch accent UniDic.",
       "statusProcessing": "Indexando…",
       "statusFailed": "Error",
+      "importErrors": {
+        "tooLarge": "Este diccionario es demasiado grande una vez descomprimido. Prueba una edición más pequeña o divídelo.",
+        "tooManyEntries": "Este diccionario tiene más entradas de las que podemos indexar (1,5 millones).",
+        "notYomitan": "Este .zip no es un diccionario de Yomitan: falta index.json o está dañado.",
+        "unsupportedFormat": "Solo se admiten diccionarios de Yomitan en formato 3. Vuelve a generarlo o descarga una versión más nueva.",
+        "noEntries": "No se encontraron definiciones, frecuencias ni pitch accent en este diccionario.",
+        "badZip": "El .zip está dañado o incompleto. Descárgalo de nuevo y vuelve a intentarlo.",
+        "interrupted": "El indexado se interrumpió porque el servidor se reinició. Vuelve a subir el archivo.",
+        "generic": "No se pudo indexar este diccionario. Bórralo e inténtalo de nuevo."
+      },
       "bankTerms": "Definiciones",
       "bankFrequency": "Frecuencia",
       "bankPitch": "Pitch",

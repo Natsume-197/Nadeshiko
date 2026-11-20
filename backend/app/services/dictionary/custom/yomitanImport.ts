@@ -51,7 +51,10 @@ const MAX_INDEX_BYTES = 1 * 1024 * 1024; // 1 MB
 // 32 MB per JSON bank file: parsing one has to fit in the import thread's heap (`IMPORT_THREAD_HEAP_MB`). Yomitan's
 // builders split banks at a few thousand entries, so real banks are a few MB.
 const MAX_BANK_BYTES = 32 * 1024 * 1024;
-const MAX_TOTAL_UNCOMPRESSED_BYTES = 600 * 1024 * 1024; // 600 MB total JSON cap (zip-bomb defense)
+// Total JSON across banks (zip-bomb defense). Banks are read one at a time, so this bounds disk and time, not heap.
+// Structured-content dictionaries compress 6-8x: 大辞林 第四版 is a 94 MB .zip over 600 MB of JSON, so the cap sits
+// at ~16x the largest .zip a patron may upload (95 MB).
+const MAX_TOTAL_UNCOMPRESSED_BYTES = 1536 * 1024 * 1024;
 const MAX_ROWS_PER_ARTIFACT = 1_500_000;
 
 const TERM_BANK_RE = /^(?:.*\/)?term_bank_(\d+)\.json$/;

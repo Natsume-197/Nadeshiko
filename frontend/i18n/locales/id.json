@@ -1064,6 +1064,16 @@
       "builtinDescription": "Kamus Jepang-Inggris bawaan dengan frekuensi korpus dan pitch accent UniDic.",
       "statusProcessing": "Mengindeks…",
       "statusFailed": "Gagal",
+      "importErrors": {
+        "tooLarge": "Kamus ini terlalu besar setelah diekstrak. Coba edisi yang lebih kecil atau pecah menjadi beberapa bagian.",
+        "tooManyEntries": "Kamus ini memiliki lebih banyak entri daripada yang bisa kami indeks (1,5 juta).",
+        "notYomitan": "File .zip ini bukan kamus Yomitan: index.json tidak ada atau rusak.",
+        "unsupportedFormat": "Hanya kamus Yomitan format 3 yang didukung. Buat ulang atau unduh versi yang lebih baru.",
+        "noEntries": "Tidak ada definisi, frekuensi, atau pitch accent yang ditemukan di kamus ini.",
+        "badZip": "File .zip rusak atau tidak lengkap. Unduh lagi lalu coba kembali.",
+        "interrupted": "Pengindeksan terhenti karena server dimulai ulang. Unggah file lagi.",
+        "generic": "Kamus ini tidak dapat diindeks. Hapus lalu coba lagi."
+      },
       "bankTerms": "Definisi",
       "bankFrequency": "Frekuensi",
       "bankPitch": "Pitch",

@@ -1064,6 +1064,16 @@
       "builtinDescription": "コーパス頻度とUniDicアクセント付きの内蔵和英辞書。",
       "statusProcessing": "索引作成中…",
       "statusFailed": "失敗",
+      "importErrors": {
+        "tooLarge": "この辞書は展開後のサイズが大きすぎます。小さい版を使うか、分割してください。",
+        "tooManyEntries": "この辞書の項目数が索引できる上限（150万件）を超えています。",
+        "notYomitan": "この.zipはYomitanの辞書ではありません。index.jsonがないか壊れています。",
+        "unsupportedFormat": "対応しているのはYomitan形式3の辞書だけです。作り直すか、新しい版をダウンロードしてください。",
+        "noEntries": "この辞書には定義・頻度・ピッチアクセントが見つかりませんでした。",
+        "badZip": ".zipファイルが壊れているか不完全です。もう一度ダウンロードしてお試しください。",
+        "interrupted": "サーバーの再起動で索引作成が中断されました。もう一度アップロードしてください。",
+        "generic": "この辞書を索引できませんでした。削除してもう一度お試しください。"
+      },
       "bankTerms": "語義",
       "bankFrequency": "頻度",
       "bankPitch": "ピッチ",
