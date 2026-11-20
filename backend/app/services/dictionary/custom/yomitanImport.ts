@@ -2,14 +2,17 @@ import { mkdir, rename, stat, unlink } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { toHiragana } from '../import/entries';
+import { encodeGlossary } from './glossaryCodec';
+import { JsonArrayElementError, JsonArrayStream } from './jsonArrayStream';
 import { normalizeGlossary } from './structuredContent';
-import { ZipReader } from './zipReader';
+import { type ZipEntry, ZipLimitError, ZipReader } from './zipReader';
 
 /**
  * Parses a Yomitan v3 `.zip` archive into a standalone read-only-optimized SQLite database.
  *
- * Streams one JSON bank file at a time (skipping images and unsupported banks) inside batched transactions so large
- * monolingual dictionaries (50–95 MB compressed, ~200k terms) stay well under the staging container's memory budget.
+ * Streams each JSON bank row by row (skipping images and unsupported banks) inside batched transactions, so memory
+ * follows the largest row rather than the largest bank or the dictionary: 明鏡 第三版 ships one 106 MB bank, 大辞林
+ * 第四版 2.7 GB of JSON.
  */
 
 export interface YomitanIndex {
@@ -45,17 +48,19 @@ export class YomitanValidationError extends Error {
  * it whenever any of that changes: artifacts are shared by SHA-256 and never rebuilt on their own, so an upload of an
  * artifact built by an older version re-indexes it instead of reusing it (`service.ts`).
  */
-export const IMPORTER_VERSION = 1;
+export const IMPORTER_VERSION = 2;
 
 const MAX_INDEX_BYTES = 1 * 1024 * 1024; // 1 MB
-// 32 MB per JSON bank file: parsing one has to fit in the import thread's heap (`IMPORT_THREAD_HEAP_MB`). Yomitan's
-// builders split banks at a few thousand entries, so real banks are a few MB.
-const MAX_BANK_BYTES = 32 * 1024 * 1024;
-// Total JSON across banks (zip-bomb defense). Banks are read one at a time, so this bounds disk and time, not heap.
-// Structured-content dictionaries compress 6-8x: 大辞林 第四版 is a 94 MB .zip over 600 MB of JSON, so the cap sits
-// at ~16x the largest .zip a patron may upload (95 MB).
-const MAX_TOTAL_UNCOMPRESSED_BYTES = 1536 * 1024 * 1024;
-const MAX_ROWS_PER_ARTIFACT = 1_500_000;
+// Total JSON across banks (zip-bomb defense). Rows are streamed, so this bounds time, not memory: 大辞林 第四版 is
+// 2.7 GB of JSON from a 94 MB zip (28×), and the cap leaves room for ~40× the largest zip a patron may upload.
+const MAX_TOTAL_UNCOMPRESSED_BYTES = 4 * 1024 * 1024 * 1024;
+// One row of a bank, as JSON text. Real rows are a few KB; a structured-content article can reach a few hundred.
+const MAX_ROW_CHARS = 8 * 1024 * 1024;
+// What an artifact may take on disk once indexed: it has to fit, with others, in the local cache (5 GB in prod).
+export const MAX_ARTIFACT_SQLITE_BYTES = 1536 * 1024 * 1024;
+const MAX_ROWS_PER_ARTIFACT = 3_000_000;
+// Rows per transaction: keeps SQLite's dirty page set small.
+const ROWS_PER_TRANSACTION = 5_000;
 
 const TERM_BANK_RE = /^(?:.*\/)?term_bank_(\d+)\.json$/;
 const TERM_META_BANK_RE = /^(?:.*\/)?term_meta_bank_(\d+)\.json$/;
@@ -225,6 +230,9 @@ function bankNumber(name: string, re: RegExp): number {
 /**
  * Builds a complete SQLite database for a Yomitan `.zip` at `targetSqlitePath` atomically (writing to a temporary file
  * first and renaming only on success).
+ *
+ * Schema (importer version 2): no AUTOINCREMENT, no stored hiragana reading for terms (the reading filter runs on the
+ * rows a lookup returns), and the glossary as a tagged, usually deflated BLOB (`glossaryCodec.ts`).
  */
 export async function importYomitanZipToSqlite(
   zipPath: string,
@@ -265,8 +273,18 @@ export async function importYomitanZipToSqlite(
       );
     }
 
+    // Declared sizes first, so an oversized archive fails before any work (they can lie; inflation re-checks).
+    const declared = [indexEntry, ...tagBanks, ...termBanks, ...metaBanks].reduce(
+      (sum, e) => sum + e.uncompressedSize,
+      0,
+    );
+    if (declared > MAX_TOTAL_UNCOMPRESSED_BYTES) {
+      throw new YomitanValidationError('Uncompressed dictionary data exceeds safety limit');
+    }
+
     db = new DatabaseSync(tempSqlitePath);
-    db.exec(`
+    const conn = db;
+    conn.exec(`
       PRAGMA journal_mode = OFF;
       PRAGMA synchronous = OFF;
       PRAGMA temp_store = MEMORY;
@@ -285,21 +303,20 @@ export async function importYomitanZipToSqlite(
       );
 
       CREATE TABLE terms (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id INTEGER PRIMARY KEY,
         expression TEXT NOT NULL,
         reading TEXT NOT NULL,
         expression_hira TEXT NOT NULL,
-        reading_hira TEXT NOT NULL,
         definition_tags TEXT NOT NULL DEFAULT '',
         rules TEXT NOT NULL DEFAULT '',
         score INTEGER NOT NULL DEFAULT 0,
-        glossary_json TEXT NOT NULL,
+        glossary BLOB NOT NULL,
         sequence INTEGER NOT NULL DEFAULT 0,
         term_tags TEXT NOT NULL DEFAULT ''
       );
 
       CREATE TABLE term_meta (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id INTEGER PRIMARY KEY,
         expression TEXT NOT NULL,
         expression_hira TEXT NOT NULL,
         mode TEXT NOT NULL,
@@ -309,107 +326,115 @@ export async function importYomitanZipToSqlite(
       );
     `);
 
-    const insertMeta = db.prepare('INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)');
+    const insertMeta = conn.prepare('INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)');
     insertMeta.run('title', index.title);
     insertMeta.run('revision', index.revision);
+    insertMeta.run('importerVersion', String(IMPORTER_VERSION));
     if (index.frequencyMode) insertMeta.run('frequencyMode', index.frequencyMode);
 
-    let totalUncompressed = indexEntry.uncompressedSize;
+    let budget = MAX_TOTAL_UNCOMPRESSED_BYTES - indexEntry.uncompressedSize;
     let totalRows = 0;
+    let rowsInTransaction = 0;
+    const pageSize = Number((conn.prepare('PRAGMA page_size').get() as { page_size: number }).page_size);
+    const pageCount = conn.prepare('PRAGMA page_count');
+
+    const countRow = () => {
+      totalRows += 1;
+      if (totalRows > MAX_ROWS_PER_ARTIFACT) {
+        throw new YomitanValidationError('Dictionary exceeds maximum supported entry count');
+      }
+      rowsInTransaction += 1;
+      if (rowsInTransaction >= ROWS_PER_TRANSACTION) {
+        conn.exec('COMMIT');
+        conn.exec('BEGIN');
+        rowsInTransaction = 0;
+        const bytes = Number((pageCount.get() as { page_count: number }).page_count) * pageSize;
+        if (bytes > MAX_ARTIFACT_SQLITE_BYTES) {
+          throw new YomitanValidationError('Indexed dictionary exceeds safety limit');
+        }
+      }
+    };
+
+    /** Streams one bank's rows into `onRow`, inside a transaction committed every few thousand rows. */
+    const streamBank = async (entry: ZipEntry, onRow: (row: unknown) => void) => {
+      conn.exec('BEGIN');
+      rowsInTransaction = 0;
+      try {
+        const parser = new JsonArrayStream(onRow, MAX_ROW_CHARS);
+        const used = await reader.readEntryChunks(entry, budget, (chunk) => parser.write(chunk));
+        parser.end();
+        budget -= used;
+        conn.exec('COMMIT');
+      } catch (err) {
+        conn.exec('ROLLBACK');
+        if (err instanceof JsonArrayElementError) {
+          throw new YomitanValidationError(`${err.message} (${entry.name})`);
+        }
+        if (err instanceof ZipLimitError) {
+          throw new YomitanValidationError('Uncompressed dictionary data exceeds safety limit');
+        }
+        throw err;
+      }
+    };
 
     // 1. Tag banks
-    const insertTag = db.prepare(
+    const insertTag = conn.prepare(
       'INSERT OR REPLACE INTO tag_meta (name, category, sort_order, notes, score) VALUES (?, ?, ?, ?, ?)',
     );
     for (const entry of tagBanks) {
-      totalUncompressed += entry.uncompressedSize;
-      if (totalUncompressed > MAX_TOTAL_UNCOMPRESSED_BYTES) {
-        throw new YomitanValidationError('Uncompressed dictionary data exceeds safety limit');
-      }
-      const rawText = await reader.readEntryText(entry, MAX_BANK_BYTES);
-      const rows = JSON.parse(rawText);
-      if (!Array.isArray(rows)) continue;
-
-      db.exec('BEGIN');
-      try {
-        for (const row of rows) {
-          if (!Array.isArray(row) || typeof row[0] !== 'string') continue;
-          const name = row[0].trim();
-          if (!name) continue;
-          const category = typeof row[1] === 'string' ? row[1].trim() : '';
-          const sortOrder = typeof row[2] === 'number' && Number.isFinite(row[2]) ? Math.trunc(row[2]) : 0;
-          const notes = typeof row[3] === 'string' ? row[3].trim().slice(0, 300) : '';
-          const score = typeof row[4] === 'number' && Number.isFinite(row[4]) ? Math.trunc(row[4]) : 0;
-          insertTag.run(name, category, sortOrder, notes, score);
-        }
-        db.exec('COMMIT');
-      } catch (err) {
-        db.exec('ROLLBACK');
-        throw err;
-      }
+      await streamBank(entry, (row) => {
+        if (!Array.isArray(row) || typeof row[0] !== 'string') return;
+        const name = row[0].trim();
+        if (!name) return;
+        const category = typeof row[1] === 'string' ? row[1].trim() : '';
+        const sortOrder = typeof row[2] === 'number' && Number.isFinite(row[2]) ? Math.trunc(row[2]) : 0;
+        const notes = typeof row[3] === 'string' ? row[3].trim().slice(0, 300) : '';
+        const score = typeof row[4] === 'number' && Number.isFinite(row[4]) ? Math.trunc(row[4]) : 0;
+        insertTag.run(name, category, sortOrder, notes, score);
+      });
     }
 
     // 2. Term banks
-    const insertTerm = db.prepare(`
+    const insertTerm = conn.prepare(`
       INSERT INTO terms (
-        expression, reading, expression_hira, reading_hira,
-        definition_tags, rules, score, glossary_json, sequence, term_tags
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        expression, reading, expression_hira,
+        definition_tags, rules, score, glossary, sequence, term_tags
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     let termCount = 0;
     for (const entry of termBanks) {
-      totalUncompressed += entry.uncompressedSize;
-      if (totalUncompressed > MAX_TOTAL_UNCOMPRESSED_BYTES) {
-        throw new YomitanValidationError('Uncompressed dictionary data exceeds safety limit');
-      }
-      const rawText = await reader.readEntryText(entry, MAX_BANK_BYTES);
-      const rows = JSON.parse(rawText);
-      if (!Array.isArray(rows)) continue;
+      await streamBank(entry, (row) => {
+        if (!Array.isArray(row) || row.length < 6) return;
+        const expression = typeof row[0] === 'string' ? row[0].trim() : '';
+        if (!expression) return;
+        const reading = typeof row[1] === 'string' ? row[1].trim() : '';
+        const defTags = typeof row[2] === 'string' ? row[2].trim() : '';
+        const rules = typeof row[3] === 'string' ? row[3].trim() : '';
+        const score = typeof row[4] === 'number' && Number.isFinite(row[4]) ? Math.trunc(row[4]) : 0;
+        const glossary = normalizeGlossary(row[5]);
+        if (glossary.length === 0) return;
+        const sequence = typeof row[6] === 'number' && Number.isFinite(row[6]) ? Math.trunc(row[6]) : 0;
+        const termTags = typeof row[7] === 'string' ? row[7].trim() : '';
 
-      db.exec('BEGIN');
-      try {
-        for (const row of rows) {
-          if (!Array.isArray(row) || row.length < 6) continue;
-          const expression = typeof row[0] === 'string' ? row[0].trim() : '';
-          if (!expression) continue;
-          const reading = typeof row[1] === 'string' ? row[1].trim() : '';
-          const defTags = typeof row[2] === 'string' ? row[2].trim() : '';
-          const rules = typeof row[3] === 'string' ? row[3].trim() : '';
-          const score = typeof row[4] === 'number' && Number.isFinite(row[4]) ? Math.trunc(row[4]) : 0;
-          const glossary = normalizeGlossary(row[5]);
-          if (glossary.length === 0) continue;
-          const sequence = typeof row[6] === 'number' && Number.isFinite(row[6]) ? Math.trunc(row[6]) : 0;
-          const termTags = typeof row[7] === 'string' ? row[7].trim() : '';
-
-          totalRows += 1;
-          if (totalRows > MAX_ROWS_PER_ARTIFACT) {
-            throw new YomitanValidationError('Dictionary exceeds maximum supported entry count');
-          }
-
-          insertTerm.run(
-            expression,
-            reading,
-            toHiragana(expression),
-            toHiragana(reading),
-            defTags,
-            rules,
-            score,
-            JSON.stringify(glossary),
-            sequence,
-            termTags,
-          );
-          termCount += 1;
-        }
-        db.exec('COMMIT');
-      } catch (err) {
-        db.exec('ROLLBACK');
-        throw err;
-      }
+        insertTerm.run(
+          expression,
+          reading,
+          toHiragana(expression),
+          defTags,
+          rules,
+          score,
+          encodeGlossary(glossary),
+          sequence,
+          termTags,
+        );
+        termCount += 1;
+        countRow();
+      });
     }
 
     // 3. Term meta banks (frequency & pitch)
-    const insertTermMeta = db.prepare(`
+    const insertTermMeta = conn.prepare(`
       INSERT INTO term_meta (
         expression, expression_hira, mode, reading, reading_hira, data_json
       ) VALUES (?, ?, ?, ?, ?, ?)
@@ -418,61 +443,40 @@ export async function importYomitanZipToSqlite(
     let frequencyCount = 0;
     let pitchCount = 0;
     for (const entry of metaBanks) {
-      totalUncompressed += entry.uncompressedSize;
-      if (totalUncompressed > MAX_TOTAL_UNCOMPRESSED_BYTES) {
-        throw new YomitanValidationError('Uncompressed dictionary data exceeds safety limit');
-      }
-      const rawText = await reader.readEntryText(entry, MAX_BANK_BYTES);
-      const rows = JSON.parse(rawText);
-      if (!Array.isArray(rows)) continue;
+      await streamBank(entry, (row) => {
+        if (!Array.isArray(row) || row.length < 3) return;
+        const expression = typeof row[0] === 'string' ? row[0].trim() : '';
+        const mode = typeof row[1] === 'string' ? row[1].trim() : '';
+        if (!expression) return;
 
-      db.exec('BEGIN');
-      try {
-        for (const row of rows) {
-          if (!Array.isArray(row) || row.length < 3) continue;
-          const expression = typeof row[0] === 'string' ? row[0].trim() : '';
-          const mode = typeof row[1] === 'string' ? row[1].trim() : '';
-          if (!expression) continue;
-
-          if (mode === 'freq') {
-            const parsed = parseFrequencyPayload(row[2]);
-            if (!parsed) continue;
-            totalRows += 1;
-            if (totalRows > MAX_ROWS_PER_ARTIFACT) {
-              throw new YomitanValidationError('Dictionary exceeds maximum supported entry count');
-            }
-            insertTermMeta.run(
-              expression,
-              toHiragana(expression),
-              'freq',
-              parsed.reading,
-              toHiragana(parsed.reading),
-              JSON.stringify({ value: parsed.value, displayValue: parsed.displayValue }),
-            );
-            frequencyCount += 1;
-          } else if (mode === 'pitch') {
-            const parsed = parsePitchPayload(row[2]);
-            if (!parsed) continue;
-            totalRows += 1;
-            if (totalRows > MAX_ROWS_PER_ARTIFACT) {
-              throw new YomitanValidationError('Dictionary exceeds maximum supported entry count');
-            }
-            insertTermMeta.run(
-              expression,
-              toHiragana(expression),
-              'pitch',
-              parsed.reading,
-              toHiragana(parsed.reading),
-              JSON.stringify(parsed.pitches),
-            );
-            pitchCount += 1;
-          }
+        if (mode === 'freq') {
+          const parsed = parseFrequencyPayload(row[2]);
+          if (!parsed) return;
+          insertTermMeta.run(
+            expression,
+            toHiragana(expression),
+            'freq',
+            parsed.reading,
+            toHiragana(parsed.reading),
+            JSON.stringify({ value: parsed.value, displayValue: parsed.displayValue }),
+          );
+          frequencyCount += 1;
+          countRow();
+        } else if (mode === 'pitch') {
+          const parsed = parsePitchPayload(row[2]);
+          if (!parsed) return;
+          insertTermMeta.run(
+            expression,
+            toHiragana(expression),
+            'pitch',
+            parsed.reading,
+            toHiragana(parsed.reading),
+            JSON.stringify(parsed.pitches),
+          );
+          pitchCount += 1;
+          countRow();
         }
-        db.exec('COMMIT');
-      } catch (err) {
-        db.exec('ROLLBACK');
-        throw err;
-      }
+      });
     }
 
     if (termCount === 0 && frequencyCount === 0 && pitchCount === 0) {
@@ -480,15 +484,15 @@ export async function importYomitanZipToSqlite(
     }
 
     // Create lookup indexes after bulk inserts for speed and compact B-trees.
-    db.exec(`
-      CREATE INDEX idx_terms_expr ON terms(expression, reading_hira);
+    conn.exec(`
+      CREATE INDEX idx_terms_expr ON terms(expression);
       CREATE INDEX idx_terms_expr_hira ON terms(expression_hira);
       CREATE INDEX idx_term_meta_expr ON term_meta(expression, mode);
       CREATE INDEX idx_term_meta_hira ON term_meta(expression_hira, mode);
       PRAGMA optimize;
     `);
 
-    db.close();
+    conn.close();
     db = null;
 
     await rename(tempSqlitePath, targetSqlitePath);

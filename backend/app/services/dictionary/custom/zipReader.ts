@@ -245,6 +245,25 @@ export class ZipReader {
    * Streams raw compressed chunks into `zlib.createInflateRaw()` so a zip bomb aborts mid-stream.
    */
   async readEntryText(entry: ZipEntry, maxUncompressedBytes: number): Promise<string> {
+    const chunks: Buffer[] = [];
+    let total = 0;
+    await this.readEntryChunks(entry, maxUncompressedBytes, (chunk) => {
+      chunks.push(chunk);
+      total += chunk.length;
+    });
+    return Buffer.concat(chunks, total).toString('utf8');
+  }
+
+  /**
+   * Decompresses a single entry chunk by chunk into `onChunk`, enforcing `maxUncompressedBytes` on what actually comes
+   * out (the declared size can lie). `onChunk` runs synchronously before the next chunk is read, so a throw stops the
+   * read and rejects. Returns the uncompressed byte count.
+   */
+  async readEntryChunks(
+    entry: ZipEntry,
+    maxUncompressedBytes: number,
+    onChunk: (chunk: Buffer) => void,
+  ): Promise<number> {
     if (this.closed) throw new Error('ZipReader is closed');
     if (entry.uncompressedSize > maxUncompressedBytes) {
       throw new ZipLimitError(`Entry "${entry.name}" exceeds maximum allowed uncompressed size`);
@@ -264,17 +283,24 @@ export class ZipReader {
       throw new ZipFormatError(`Entry "${entry.name}" extends past end of ZIP file`);
     }
 
+    const CHUNK_SIZE = 64 * 1024;
+
     if (entry.method === METHOD_STORE) {
       if (entry.compressedSize > maxUncompressedBytes) {
         throw new ZipLimitError(`Entry "${entry.name}" exceeds maximum allowed uncompressed size`);
       }
-      const raw = await readExact(this.handle, dataOffset, entry.compressedSize);
-      return raw.toString('utf8');
+      let remaining = entry.compressedSize;
+      let cursor = dataOffset;
+      while (remaining > 0) {
+        const raw = await readExact(this.handle, cursor, Math.min(remaining, CHUNK_SIZE));
+        onChunk(raw);
+        remaining -= raw.length;
+        cursor += raw.length;
+      }
+      return entry.compressedSize;
     }
 
-    const chunks: Buffer[] = [];
     let totalOut = 0;
-
     await new Promise<void>((resolve, reject) => {
       const inflate = createInflateRaw();
       let settled = false;
@@ -286,12 +312,17 @@ export class ZipReader {
       };
 
       inflate.on('data', (chunk: Buffer) => {
+        if (settled) return;
         totalOut += chunk.length;
         if (totalOut > maxUncompressedBytes) {
           fail(new ZipLimitError(`Entry "${entry.name}" exceeded uncompressed size limit during inflation`));
           return;
         }
-        chunks.push(chunk);
+        try {
+          onChunk(chunk);
+        } catch (err) {
+          fail(err instanceof Error ? err : new Error(String(err)));
+        }
       });
       inflate.on('error', (err) =>
         fail(new ZipFormatError(`Corrupt deflate stream in "${entry.name}": ${err.message}`)),
@@ -303,7 +334,6 @@ export class ZipReader {
         }
       });
 
-      const CHUNK_SIZE = 64 * 1024;
       const pump = async () => {
         let remaining = entry.compressedSize;
         let cursor = dataOffset;
@@ -328,7 +358,7 @@ export class ZipReader {
       pump().catch((err) => fail(err instanceof Error ? err : new Error(String(err))));
     });
 
-    return Buffer.concat(chunks, totalOut).toString('utf8');
+    return totalOut;
   }
 
   async close(): Promise<void> {
