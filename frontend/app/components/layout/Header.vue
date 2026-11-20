@@ -65,8 +65,8 @@ watch(() => route.fullPath, closeNavSidebar);
 </script>
 <template>
     <header
-        class="nd-site-header relative flex flex-wrap md:justify-start md:flex-nowrap w-[100vw] bg-white py-3 lg:py-2 dark:bg-header-background yomitan-ignore">
-        <nav class="nd-page px-4 md:px-0 md:flex md:items-center md:justify-between text-xs">
+        class="nd-site-header relative flex flex-wrap lg:justify-start lg:flex-nowrap w-[100vw] bg-white py-3 lg:py-2 dark:bg-header-background yomitan-ignore">
+        <nav class="nd-page px-4 lg:px-0 lg:flex lg:items-center lg:justify-between text-xs">
             <div class="flex items-center justify-between">
                 <div class="flex mr-7">
                     <NuxtLink :to="localePath('/')"
@@ -76,7 +76,7 @@ watch(() => route.fullPath, closeNavSidebar);
                     </NuxtLink>
                 </div>
 
-                <div class="md:hidden">
+                <div class="lg:hidden">
                     <button type="button"
                         class="relative size-9 flex justify-center items-center rounded-lg bg-white/10 text-white hover:bg-white/20 focus:outline-none focus:bg-white/20"
                         data-testid="hamburger-menu"
@@ -93,8 +93,10 @@ watch(() => route.fullPath, closeNavSidebar);
                 </div>
             </div>
 
-            <div class="hidden md:flex md:flex-1 md:items-center md:ps-5">
-                <div class="gap-6 flex md:flex-row md:mr-auto">
+            <!-- From lg, not md: in Spanish the links and the two menus need ~950px, and at tablet width the Profile
+                 menu was pushed off screen. -->
+            <div class="hidden lg:flex lg:flex-1 lg:items-center lg:ps-5">
+                <div class="gap-6 flex lg:flex-row lg:mr-auto whitespace-nowrap">
                     <NuxtLink :to="localePath('/media')" data-testid="nav-catalog"
                         class="text-sm font-semibold text-white transition-all duration-200 hover:text-opacity-80">
                         {{ $t("navbar.buttons.media") }}
@@ -197,7 +199,7 @@ watch(() => route.fullPath, closeNavSidebar);
         :open="isNavSidebarOpen"
         transition="nd-drawer"
         z-index-class="z-[80]"
-        overlay-class="md:hidden"
+        overlay-class="lg:hidden"
         panel-class="h-full max-w-xs w-full bg-surface border-s border-hairline"
         :label="$t('common.navigationMenu')"
         @close="closeNavSidebar"
