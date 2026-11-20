@@ -79,4 +79,16 @@ export class UserDictionaryArtifact extends BaseEntity {
    * older version re-indexes it rather than reusing it. */
   @Column({ name: 'importer_version', type: 'smallint', default: 0 })
   importerVersion!: number;
+
+  /** When the running import began; null while it waits in the queue. */
+  @Column({ name: 'import_started_at', type: 'timestamptz', nullable: true })
+  importStartedAt?: Date | null;
+
+  /** Last sign of life from the running import; one older than a couple of minutes means it died. */
+  @Column({ name: 'import_heartbeat_at', type: 'timestamptz', nullable: true })
+  importHeartbeatAt?: Date | null;
+
+  /** How far the running import got, 0–100. */
+  @Column({ name: 'import_progress', type: 'smallint', nullable: true })
+  importProgress?: number | null;
 }

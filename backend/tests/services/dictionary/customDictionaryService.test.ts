@@ -283,20 +283,53 @@ describe('removing, re-indexing and sweeping', () => {
     expect(retry.body.dictionary.status).toBe('ready');
   });
 
-  it('marks an import interrupted by a restart as failed, and leaves a recent one alone', async () => {
-    await upload(monolingualZip('古い'));
-    await upload(monolingualZip('新しい'));
-    await UserDictionaryArtifact.query(
-      `UPDATE "UserDictionaryArtifact" SET status = 'processing',
-         updated_at = CASE WHEN title = '古い' THEN now() - interval '1 hour' ELSE now() END`,
-    );
+  it('fails a running import whose heartbeat stopped and a queued one that never started, and nothing else', async () => {
+    // An admin, for room for four.
+    signInAs(app, fixtures.users.kevin);
+    for (const title of ['止まった', '動いてる', '古い待ち', '新しい待ち']) await upload(monolingualZip(title));
+    await UserDictionaryArtifact.query(`
+      UPDATE "UserDictionaryArtifact" SET status = 'processing', import_progress = 40,
+        import_started_at = CASE WHEN title IN ('止まった', '動いてる') THEN now() - interval '20 minutes' END,
+        import_heartbeat_at = CASE
+          WHEN title = '止まった' THEN now() - interval '10 minutes'
+          WHEN title = '動いてる' THEN now() - interval '10 seconds' END,
+        updated_at = CASE WHEN title = '古い待ち' THEN now() - interval '3 hours' ELSE now() - interval '10 minutes' END`);
 
-    expect(await failInterruptedImports()).toBe(1);
-    expect(await UserDictionaryArtifact.findOneByOrFail({ title: '古い' })).toMatchObject({
+    expect(await failInterruptedImports()).toBe(2);
+    const status = async (title: string) => UserDictionaryArtifact.findOneByOrFail({ title });
+    expect(await status('止まった')).toMatchObject({
       status: 'failed',
       errorMessage: INTERRUPTED_IMPORT_MESSAGE,
+      importProgress: null,
     });
-    expect((await UserDictionaryArtifact.findOneByOrFail({ title: '新しい' })).status).toBe('processing');
+    expect((await status('古い待ち')).status).toBe('failed');
+    expect((await status('動いてる')).status).toBe('processing');
+    expect((await status('新しい待ち')).status).toBe('processing');
+  });
+
+  it('lists progress for a running import, queue places for waiting ones, and the indexed space', async () => {
+    signInAs(app, fixtures.users.kevin);
+    for (const title of ['一番', '二番', '三番']) await upload(monolingualZip(title));
+    const used = (await UserDictionaryArtifact.find()).reduce((sum, a) => sum + Number(a.sqliteBytes), 0);
+    await UserDictionaryArtifact.query(`
+      UPDATE "UserDictionaryArtifact" SET status = 'processing',
+        import_started_at = CASE WHEN title = '一番' THEN now() END,
+        import_heartbeat_at = CASE WHEN title = '一番' THEN now() END,
+        import_progress = CASE WHEN title = '一番' THEN 37 END,
+        updated_at = CASE WHEN title = '二番' THEN now() - interval '2 minutes' ELSE now() - interval '1 minute' END`);
+    invalidateUserDictionaryStack();
+
+    const list = await request(app).get('/v1/user/dictionaries');
+    const byTitle = Object.fromEntries(
+      (list.body.dictionaries as Array<{ title: string; progress: number | null; queuePosition: number | null }>).map(
+        (d) => [d.title, d],
+      ),
+    );
+    expect(byTitle['一番']).toMatchObject({ progress: 37, queuePosition: null });
+    expect(byTitle['二番']).toMatchObject({ progress: null, queuePosition: 1 });
+    expect(byTitle['三番']).toMatchObject({ progress: null, queuePosition: 2 });
+    expect(list.body.quota.indexedBytesUsed).toBe(used);
+    expect(list.body.quota.maxIndexedBytes).toBe(2 * 1024 * 1024 * 1024);
   });
 
   it('deletes files nobody links to any more, except very new ones', async () => {

@@ -2143,6 +2143,14 @@ export type UserDictionary = {
     enabled: boolean;
     sortOrder: number;
     createdAt: string;
+    /**
+     * How far a running import got, 0-100; null when it is queued, ready or failed.
+     */
+    progress: number;
+    /**
+     * Place in the import queue while waiting to start (1 = next); null once it runs or is done.
+     */
+    queuePosition: number;
 };
 
 /**
@@ -2160,6 +2168,14 @@ export type UserDictionaryListResponse = {
         max: number;
         maxZipBytes: number;
         isPatron: boolean;
+        /**
+         * Disk the account's dictionaries take once indexed, in bytes.
+         */
+        indexedBytesUsed: number;
+        /**
+         * Indexed space the account may use, in bytes; new uploads are refused once it is used up.
+         */
+        maxIndexedBytes: number;
     };
     stackFingerprint: string;
 };

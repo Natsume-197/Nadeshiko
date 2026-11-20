@@ -22,6 +22,8 @@ required:
   - enabled
   - sortOrder
   - createdAt
+  - progress
+  - queuePosition
 properties:
   id:
     type: integer
@@ -73,3 +75,14 @@ properties:
   createdAt:
     type: string
     format: date-time
+  progress:
+    type: integer
+    nullable: true
+    minimum: 0
+    maximum: 100
+    description: How far a running import got, 0-100; null when it is queued, ready or failed.
+  queuePosition:
+    type: integer
+    nullable: true
+    minimum: 1
+    description: Place in the import queue while waiting to start (1 = next); null once it runs or is done.

@@ -109,6 +109,9 @@ env:
     # 5 GB on a 75 GB disk shared with everything else. Files are immutable and renamed into place, so the old and new
     # containers of a rolling deploy can share it.
     USER_DICTIONARIES_CACHE_MAX_BYTES: "5368709120"
+    # Up to two imports at once; the second starts only with memory to spare (importAdmission.ts), so a busy
+    # container falls back to one. Staging stays at the default of one: half a core and 768 MB.
+    USER_DICTIONARY_IMPORT_CONCURRENCY: "2"
     USER_DICT_R2_PREFIX: user-dicts/prod
 
     R2_BASE_URL: https://cdn.nadeshiko.co

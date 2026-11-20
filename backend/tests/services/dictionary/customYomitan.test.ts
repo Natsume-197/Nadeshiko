@@ -311,6 +311,15 @@ describe('importRunner (import off the main thread)', () => {
     );
   });
 
+  it('stops an import that goes quiet, and frees its slot well before the time limit', async () => {
+    const dir = makeTempDir();
+    const zipPath = writeSmallDictionary(dir);
+
+    await expect(
+      runYomitanImportInThread(zipPath, join(dir, 'quiet.sqlite'), { stallMs: 1, timeoutMs: 60_000 }),
+    ).rejects.toMatchObject({ name: 'ImportThreadError', message: expect.stringContaining('stopped responding') });
+  });
+
   it('records the importer version that built an artifact', () => {
     expect(Number.isInteger(IMPORTER_VERSION) && IMPORTER_VERSION > 0).toBe(true);
   });

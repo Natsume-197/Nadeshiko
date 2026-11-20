@@ -573,6 +573,8 @@ export const s_UserDictionary = z.object({
   enabled: PermissiveBoolean,
   sortOrder: z.coerce.number(),
   createdAt: z.iso.datetime({ offset: true }),
+  progress: z.coerce.number().min(0).max(100).nullable(),
+  queuePosition: z.coerce.number().min(1).nullable(),
 });
 
 export const s_UserMe = z.object({
@@ -955,6 +957,8 @@ export const s_UserDictionaryListResponse = z.object({
     max: z.coerce.number(),
     maxZipBytes: z.coerce.number(),
     isPatron: PermissiveBoolean,
+    indexedBytesUsed: z.coerce.number(),
+    maxIndexedBytes: z.coerce.number(),
   }),
   stackFingerprint: z.string().nullable(),
 });

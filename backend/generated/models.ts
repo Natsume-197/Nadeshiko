@@ -1063,6 +1063,8 @@ export type t_UserDictionary = {
   hasTerms: boolean;
   id: number;
   pitchCount: number;
+  progress: number | null;
+  queuePosition: number | null;
   revision: string;
   sortOrder: number;
   sqliteBytes: number;
@@ -1082,8 +1084,10 @@ export type t_UserDictionaryListResponse = {
   };
   dictionaries: t_UserDictionary[];
   quota: {
+    indexedBytesUsed: number;
     isPatron: boolean;
     max: number;
+    maxIndexedBytes: number;
     maxZipBytes: number;
     used: number;
   };

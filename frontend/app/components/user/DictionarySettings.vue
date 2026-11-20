@@ -48,6 +48,13 @@ let pollTimer: ReturnType<typeof setInterval> | null = null;
 
 const formatNumber = (n: number) => new Intl.NumberFormat(locale.value).format(n);
 const formatMb = (bytes: number) => `${(bytes / (1024 * 1024)).toFixed(bytes >= 10 * 1024 * 1024 ? 0 : 1)} MB`;
+/** Indexed space, which can pass a gigabyte. */
+const formatSize = (bytes: number) =>
+  bytes >= 1024 * 1024 * 1024 ? `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB` : formatMb(bytes);
+/** Indexed space still free for this account, in bytes. */
+const indexedRemaining = computed(() =>
+  data.value ? Math.max(0, data.value.quota.maxIndexedBytes - data.value.quota.indexedBytesUsed) : null,
+);
 
 const quotaPercent = computed(() => {
   if (!data.value || data.value.quota.max <= 0) return 0;
@@ -193,6 +200,12 @@ function uploadZipFile(file: File) {
     });
     return;
   }
+  // Indexed, a dictionary takes at least about its zip size, so a file larger than what is left will not fit. The
+  // server checks again after the upload.
+  if (indexedRemaining.value !== null && file.size > indexedRemaining.value) {
+    uploadError.value = t('accountSettings.dictionaries.importErrors.indexedQuota');
+    return;
+  }
 
   uploading.value = true;
   uploadProgress.value = 0;
@@ -286,6 +299,14 @@ onBeforeUnmount(stopPolling);
         </div>
         <div>
           {{ t('accountSettings.dictionaries.maxZipSize', { maxMb: Math.round(data.quota.maxZipBytes / (1024 * 1024)) }) }}
+        </div>
+        <div data-testid="dictionary-indexed-space">
+          {{
+            t('accountSettings.dictionaries.indexedSpace', {
+              used: formatSize(data.quota.indexedBytesUsed),
+              max: formatSize(data.quota.maxIndexedBytes),
+            })
+          }}
         </div>
       </div>
     </div>
@@ -403,7 +424,17 @@ onBeforeUnmount(stopPolling);
                     class="inline-flex items-center gap-1 rounded bg-amber-500/20 px-1.5 py-0.5 text-[0.65rem] font-semibold text-amber-300"
                   >
                     <UiBaseIcon :path="mdiLoading" size="12" class="animate-spin" />
-                    {{ t('accountSettings.dictionaries.statusProcessing') }}
+                    <template v-if="row.dict.progress !== null">
+                      {{ t('accountSettings.dictionaries.statusIndexing', { percent: row.dict.progress }) }}
+                    </template>
+                    <template v-else-if="row.dict.queuePosition !== null">
+                      {{
+                        row.dict.queuePosition <= 1
+                          ? t('accountSettings.dictionaries.statusQueuedNext')
+                          : t('accountSettings.dictionaries.statusQueued', { ahead: row.dict.queuePosition - 1 })
+                      }}
+                    </template>
+                    <template v-else>{{ t('accountSettings.dictionaries.statusProcessing') }}</template>
                   </span>
                   <span
                     v-else-if="row.dict.status === 'failed'"

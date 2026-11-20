@@ -13,9 +13,16 @@ import type { YomitanImportResult } from './yomitanImport';
  * this; raise both together, and mind the container limit (768 MB on staging) shared with the web process. */
 export const IMPORT_THREAD_HEAP_MB = 320;
 
-/** Generous cap for one import: large monolingual dictionaries finish in well under a minute. Kept under the queue's
+/** Generous cap for one import: 大辞林 第四版 takes a few minutes on staging's half core. Kept under the queue's
  * 30-minute expiry so the job never outlives its own timeout. */
 export const IMPORT_THREAD_TIMEOUT_MS = 20 * 60 * 1000;
+
+/** An import that sends no heartbeat for this long is stuck (a bank that never ends, a hung thread) and is stopped,
+ * freeing its slot, instead of holding the queue until the overall timeout. The thread beats about once a second. */
+export const IMPORT_THREAD_STALL_MS = 2 * 60 * 1000;
+
+/** Tags the thread's heartbeats, which carry the share of the archive read so far. */
+export const IMPORT_PROGRESS_MESSAGE = 'nadeshiko:yomitan-import-progress';
 
 export class ImportThreadError extends Error {
   constructor(message: string) {
@@ -37,10 +44,21 @@ function isThreadMessage(message: unknown): message is ThreadMessage {
   return (message as { type?: unknown } | null)?.type === IMPORT_THREAD_MESSAGE;
 }
 
+function isProgressMessage(message: unknown): message is { type: string; fraction: number } {
+  const m = message as { type?: unknown; fraction?: unknown } | null;
+  return m?.type === IMPORT_PROGRESS_MESSAGE && typeof m.fraction === 'number';
+}
+
 export function runYomitanImportInThread(
   zipPath: string,
   targetPath: string,
-  options: { heapMb?: number; timeoutMs?: number } = {},
+  options: {
+    heapMb?: number;
+    timeoutMs?: number;
+    stallMs?: number;
+    /** Each heartbeat's progress, 0–1. */
+    onProgress?: (fraction: number) => void;
+  } = {},
 ): Promise<YomitanImportResult> {
   return new Promise((resolve, reject) => {
     // The runtime loads TypeScript through tsx (`node --import tsx main.ts`); the thread needs the same loader, and
@@ -56,6 +74,7 @@ export function runYomitanImportInThread(
       if (settled) return;
       settled = true;
       clearTimeout(timer);
+      clearTimeout(stall);
       fn();
     };
 
@@ -64,7 +83,20 @@ export function runYomitanImportInThread(
       void worker.terminate();
     }, options.timeoutMs ?? IMPORT_THREAD_TIMEOUT_MS);
 
+    const stallMs = options.stallMs ?? IMPORT_THREAD_STALL_MS;
+    const onStall = () => {
+      finish(() => reject(new ImportThreadError('Dictionary import stopped responding and was stopped')));
+      void worker.terminate();
+    };
+    let stall = setTimeout(onStall, stallMs);
+
     worker.on('message', (message: unknown) => {
+      if (isProgressMessage(message)) {
+        clearTimeout(stall);
+        stall = setTimeout(onStall, stallMs);
+        options.onProgress?.(message.fraction);
+        return;
+      }
       if (!isThreadMessage(message)) return;
       finish(() => {
         if (message.ok) {

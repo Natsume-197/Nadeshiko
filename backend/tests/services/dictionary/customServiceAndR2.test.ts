@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, rmSync, utimesSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, rmSync, utimesSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Readable } from 'node:stream';
@@ -106,6 +106,7 @@ import {
   pruneLocalDictionaryCache,
   r2Client,
   resolveArtifactsWithin,
+  sweepStaleTempFiles,
   uploadArtifactToR2,
 } from '@app/services/dictionary/custom/r2Storage';
 import {
@@ -556,5 +557,27 @@ describe('custom dictionary service', () => {
     await runUserDictionaryMaintenance();
     mockConfig.USER_DICTIONARIES_ENABLED = false;
     await runUserDictionaryMaintenance();
+  });
+
+  it('sweeps abandoned upload zips and half-built files older than three hours, and nothing else', async () => {
+    const tmp = join(tempDir, 'tmp');
+    mkdirSync(tmp, { recursive: true });
+    const old = new Date(Date.now() - 4 * 60 * 60 * 1000);
+    const files = {
+      oldZip: join(tmp, 'old.zip'),
+      newZip: join(tmp, 'new.zip'),
+      oldBuild: join(tempDir, '.tmp-1-2-abc.sqlite'),
+      oldDownload: join(tempDir, '.dl-abc-1-2.sqlite'),
+      cached: join(tempDir, `${'d'.repeat(64)}.sqlite`),
+    };
+    for (const path of Object.values(files)) writeFileSync(path, 'x');
+    for (const path of [files.oldZip, files.oldBuild, files.oldDownload, files.cached]) utimesSync(path, old, old);
+
+    expect(await sweepStaleTempFiles()).toBe(3);
+    expect(existsSync(files.oldZip)).toBe(false);
+    expect(existsSync(files.oldBuild)).toBe(false);
+    expect(existsSync(files.oldDownload)).toBe(false);
+    expect(existsSync(files.newZip)).toBe(true);
+    expect(existsSync(files.cached)).toBe(true);
   });
 });

@@ -1,5 +1,5 @@
 import { parentPort, workerData } from 'node:worker_threads';
-import { IMPORT_THREAD_MESSAGE } from './importRunner';
+import { IMPORT_PROGRESS_MESSAGE, IMPORT_THREAD_MESSAGE } from './importRunner';
 import { importYomitanZipToSqlite } from './yomitanImport';
 
 /**
@@ -12,7 +12,17 @@ const { zipPath, targetPath } = workerData as { zipPath: string; targetPath: str
 const port = parentPort;
 if (!port) throw new Error('importThread.ts runs only as a worker thread');
 
-importYomitanZipToSqlite(zipPath, targetPath).then(
+// A heartbeat about once a second, carrying how far the import got: the parent's watchdog stops an import that goes
+// quiet, and the progress reaches the reader's settings page.
+let lastBeat = 0;
+const beat = (fraction: number) => {
+  const now = Date.now();
+  if (now - lastBeat < 1000) return;
+  lastBeat = now;
+  port.postMessage({ type: IMPORT_PROGRESS_MESSAGE, fraction });
+};
+
+importYomitanZipToSqlite(zipPath, targetPath, beat).then(
   (result) => port.postMessage({ type: IMPORT_THREAD_MESSAGE, ok: true, result }),
   (error: unknown) =>
     port.postMessage({

@@ -1063,6 +1063,10 @@
       "builtinBadge": "内蔵",
       "builtinDescription": "コーパス頻度とUniDicアクセント付きの内蔵和英辞書。",
       "statusProcessing": "索引作成中…",
+      "indexedSpace": "索引済み {used} / {max}",
+      "statusIndexing": "索引作成中 {percent}%",
+      "statusQueued": "待機中・前に{ahead}件",
+      "statusQueuedNext": "次に処理",
       "statusFailed": "失敗",
       "importErrors": {
         "indexedQuota": "辞書がアカウントの索引容量をすべて使っています。どれかを削除して空きを作ってください。",

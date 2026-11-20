@@ -1,6 +1,8 @@
 import type { Job, PgBoss } from 'pg-boss';
 import { config } from '@config/config';
 import { logger } from '@config/log';
+import { acquireImportSlot, releaseImportSlot } from '@app/services/dictionary/custom/importAdmission';
+import { sweepStaleTempFiles } from '@app/services/dictionary/custom/r2Storage';
 import {
   failInterruptedImports,
   processArtifactImportJob,
@@ -15,15 +17,21 @@ export interface UserDictionaryImportPayload {
 }
 
 export async function registerUserDictionaryImportWorker(boss: PgBoss): Promise<void> {
-  // Run one import at a time so concurrent large monolingual zips do not spike container RAM on the shared Hetzner host.
-  // Each import runs in its own thread with its own heap cap (`importRunner.ts`), off the request path.
+  // Up to USER_DICTIONARY_IMPORT_CONCURRENCY imports at once, each past the first only while the container has memory
+  // for it (`importAdmission.ts`). Each import runs in its own thread with its own heap cap (`importRunner.ts`), off
+  // the request path.
   await boss.work<UserDictionaryImportPayload>(
     USER_DICTIONARY_IMPORT_QUEUE,
-    { batchSize: 1 },
+    { batchSize: 1, localConcurrency: config.USER_DICTIONARY_IMPORT_CONCURRENCY },
     instrumentedHandler(USER_DICTIONARY_IMPORT_QUEUE, async (jobs: Job<UserDictionaryImportPayload>[]) => {
       for (const job of jobs) {
         const { artifactId, tmpZipPath } = job.data;
-        await processArtifactImportJob(artifactId, tmpZipPath);
+        await acquireImportSlot();
+        try {
+          await processArtifactImportJob(artifactId, tmpZipPath);
+        } finally {
+          releaseImportSlot();
+        }
       }
     }),
   );
@@ -41,6 +49,9 @@ export async function registerUserDictionaryImportWorker(boss: PgBoss): Promise<
   if (config.USER_DICTIONARIES_ENABLED) {
     await failInterruptedImports().catch((error) =>
       logger.warn({ err: error }, 'Could not mark interrupted custom dictionary imports at boot'),
+    );
+    await sweepStaleTempFiles().catch((error) =>
+      logger.warn({ err: error }, 'Could not sweep custom dictionary temp files at boot'),
     );
   }
 }

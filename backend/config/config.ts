@@ -59,6 +59,9 @@ const envSchema = z.object({
     .int()
     .positive()
     .default(2 * 1024 * 1024 * 1024),
+  // Most dictionary imports one container runs at once. Each one past the first also needs memory room
+  // (`importAdmission.ts`), so this is a ceiling, not a promise.
+  USER_DICTIONARY_IMPORT_CONCURRENCY: z.coerce.number().int().min(1).max(4).default(1),
   // Cloudflare R2 (S3 API) storage for user dictionary `.sqlite` artifacts. Required outside `ENVIRONMENT=local` when
   // USER_DICTIONARIES_ENABLED is on.
   USER_DICT_R2_ENDPOINT: optionalString,

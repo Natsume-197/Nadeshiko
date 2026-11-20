@@ -235,6 +235,42 @@ export async function resolveArtifactsWithin(
   return { paths, missing: storageKeys.filter((key) => !paths.has(key)).length };
 }
 
+/** Leftovers older than this are abandoned: an upload's `.zip` whose import never ran, a half-built or half-downloaded
+ * `.sqlite`. Longer than any import or download takes. */
+export const STALE_TEMP_FILE_MS = 3 * 60 * 60 * 1000;
+
+/**
+ * Deletes abandoned temporary files from the dictionary directory, which lives on a volume and so keeps them across
+ * deploys: uploaded `.zip` files in `tmp/`, and `.tmp-*` / `.dl-*` SQLite files an interrupted import or download left.
+ * Returns how many were removed.
+ */
+export async function sweepStaleTempFiles(now = Date.now()): Promise<number> {
+  const dir = config.USER_DICTIONARIES_DIR;
+  const targets: string[] = [];
+  const collect = async (folder: string, match: (name: string) => boolean) => {
+    if (!existsSync(folder)) return;
+    for (const entry of await readdir(folder, { withFileTypes: true })) {
+      if (entry.isFile() && match(entry.name)) targets.push(join(folder, entry.name));
+    }
+  };
+  await collect(join(dir, 'tmp'), (name) => name.endsWith('.zip'));
+  await collect(dir, (name) => (name.startsWith('.tmp-') || name.startsWith('.dl-')) && name.endsWith('.sqlite'));
+
+  let removed = 0;
+  for (const path of targets) {
+    try {
+      const info = await stat(path);
+      if (now - info.mtimeMs < STALE_TEMP_FILE_MS) continue;
+      await unlink(path);
+      removed += 1;
+    } catch {
+      // gone already, or in use by a container that just finished with it
+    }
+  }
+  if (removed > 0) logger.info({ removed }, 'Removed abandoned custom dictionary temp files');
+  return removed;
+}
+
 /**
  * Keeps the local SQLite cache under `USER_DICTIONARIES_CACHE_MAX_BYTES` by evicting the least-recently-used `.sqlite`
  * files. Only runs when R2 is configured (in local disk-only mode, local files are the primary copy).

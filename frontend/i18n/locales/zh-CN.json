@@ -1063,6 +1063,10 @@
       "builtinBadge": "内置",
       "builtinDescription": "内置日英词典，包含语料库词频与 UniDic 音调。",
       "statusProcessing": "索引中…",
+      "indexedSpace": "已索引 {used} / {max}",
+      "statusIndexing": "正在索引 {percent}%",
+      "statusQueued": "排队中 · 前面 {ahead} 个",
+      "statusQueuedNext": "下一个处理",
       "statusFailed": "失败",
       "importErrors": {
         "indexedQuota": "你的词典已用完账户的全部索引空间。请删除一本以腾出空间。",

@@ -12,6 +12,7 @@ import {
   artifactExistsInStorage,
   deleteArtifactFromR2,
   pruneLocalDictionaryCache,
+  sweepStaleTempFiles,
   uploadArtifactToR2,
 } from './r2Storage';
 import { runYomitanImportInThread } from './importRunner';
@@ -44,6 +45,10 @@ export interface UserDictionaryDto {
   enabled: boolean;
   sortOrder: number;
   createdAt: string;
+  /** Running import, 0–100; null when queued, ready or failed. */
+  progress: number | null;
+  /** Place in the import queue (1 = next) while waiting to start; null once it runs or is done. */
+  queuePosition: number | null;
 }
 
 export interface UserDictionaryListResponse {
@@ -58,6 +63,8 @@ export interface UserDictionaryListResponse {
     max: number;
     maxZipBytes: number;
     isPatron: boolean;
+    indexedBytesUsed: number;
+    maxIndexedBytes: number;
   };
   stackFingerprint: string | null;
 }
@@ -88,7 +95,12 @@ export interface ActiveUserDictionaryStack {
   pendingCount: number;
 }
 
-function toDto(row: UserDictionary, artifact: UserDictionaryArtifact): UserDictionaryDto {
+function toDto(
+  row: UserDictionary,
+  artifact: UserDictionaryArtifact,
+  queuePositions: ReadonlyMap<number, number> = new Map(),
+): UserDictionaryDto {
+  const running = artifact.status === 'processing' && artifact.importStartedAt != null;
   return {
     id: row.id,
     stackId: `${CUSTOM_DICT_PREFIX}${row.id}`,
@@ -111,7 +123,20 @@ function toDto(row: UserDictionary, artifact: UserDictionaryArtifact): UserDicti
     enabled: row.enabled,
     sortOrder: row.sortOrder,
     createdAt: row.createdAt.toISOString(),
+    progress: running ? (artifact.importProgress ?? 0) : null,
+    queuePosition: artifact.status === 'processing' && !running ? (queuePositions.get(artifact.id) ?? null) : null,
   };
+}
+
+/** Where each queued import (processing, not started) stands, 1 = next, in the order they were queued. */
+async function importQueuePositions(): Promise<Map<number, number>> {
+  const queued: Array<{ id: number }> = await UserDictionaryArtifact.createQueryBuilder('a')
+    .select('a.id', 'id')
+    .where("a.status = 'processing' AND a.import_started_at IS NULL")
+    .orderBy('a.updated_at', 'ASC')
+    .addOrderBy('a.id', 'ASC')
+    .getRawMany();
+  return new Map(queued.map((row, index) => [Number(row.id), index + 1]));
 }
 
 /**
@@ -252,21 +277,33 @@ export async function getSessionCustomDictionaries(userId: number): Promise<Sess
 }
 
 /** Longer than the import queue's 30-minute expiry: past it, no import job can still be running for the artifact. */
-export const INTERRUPTED_IMPORT_AFTER_MINUTES = 35;
+/** A running import heartbeats every few seconds; one silent this long died with its container or thread. */
+export const STALLED_IMPORT_AFTER_MINUTES = 3;
+/** A queued import that never started this long after it was queued lost its job. Generous: a queue of large
+ * dictionaries on a small container can take this long to drain. */
+export const INTERRUPTED_IMPORT_AFTER_MINUTES = 120;
 
 export const INTERRUPTED_IMPORT_MESSAGE = 'Indexing was interrupted (the server restarted). Upload the file again.';
 
+/** How often a running import's heartbeat is written to its row (the thread beats every second). */
+const HEARTBEAT_WRITE_MS = 5000;
+
 /**
- * Marks imports that can no longer finish as failed. The uploaded `.zip` waits on the container's own disk and the
- * queue does not retry, so a restart or deploy mid-import leaves an artifact in `processing` forever otherwise; while it
- * sits there, nobody can upload that file again, because the upload attaches to the import still "running".
+ * Marks imports that can no longer finish as failed: running ones whose heartbeat stopped, and queued ones that never
+ * started. Otherwise a restart mid-import leaves an artifact in `processing` forever; while it sits there, nobody can
+ * upload that file again, because the upload attaches to the import still "running".
  */
 export async function failInterruptedImports(): Promise<number> {
   const result = await UserDictionaryArtifact.createQueryBuilder()
     .update()
-    .set({ status: 'failed', errorMessage: INTERRUPTED_IMPORT_MESSAGE })
+    .set({ status: 'failed', errorMessage: INTERRUPTED_IMPORT_MESSAGE, importProgress: null })
     .where('status = :status', { status: 'processing' })
-    .andWhere(`updated_at < now() - make_interval(mins => :minutes)`, { minutes: INTERRUPTED_IMPORT_AFTER_MINUTES })
+    .andWhere(
+      `((import_started_at IS NOT NULL
+          AND coalesce(import_heartbeat_at, import_started_at) < now() - make_interval(mins => :stalled))
+        OR (import_started_at IS NULL AND updated_at < now() - make_interval(mins => :queued)))`,
+      { stalled: STALLED_IMPORT_AFTER_MINUTES, queued: INTERRUPTED_IMPORT_AFTER_MINUTES },
+    )
     .execute();
   const count = result.affected ?? 0;
   if (count > 0) {
@@ -292,7 +329,11 @@ export async function listUserDictionaries(user: Pick<User, 'id' | 'role'>): Pro
   ]);
 
   const { builtinEnabled, builtinPosition } = builtinPlacement(dbUser, rows.length);
-  const dictionaries = rows.flatMap((row) => (row.artifact ? [toDto(row, row.artifact)] : []));
+  const positions = rows.some((row) => row.artifact?.status === 'processing' && !row.artifact.importStartedAt)
+    ? await importQueuePositions()
+    : new Map<number, number>();
+  const dictionaries = rows.flatMap((row) => (row.artifact ? [toDto(row, row.artifact, positions)] : []));
+  const indexedBytesUsed = rows.reduce((sum, row) => sum + Number(row.artifact?.sqliteBytes ?? 0), 0);
 
   return {
     dictionaries,
@@ -306,6 +347,8 @@ export async function listUserDictionaries(user: Pick<User, 'id' | 'role'>): Pro
       max: quota.maxDictionaries,
       maxZipBytes: quota.maxZipBytes,
       isPatron: quota.isPatron,
+      indexedBytesUsed,
+      maxIndexedBytes: quota.maxIndexedBytes,
     },
     stackFingerprint: buildStackFingerprint(rows, builtinEnabled, builtinPosition),
   };
@@ -329,8 +372,29 @@ export async function processArtifactImportJob(artifactId: number, tmpZipPath: s
     if (!existsSync(tmpZipPath)) {
       throw new Error(INTERRUPTED_IMPORT_MESSAGE);
     }
-    // Its own thread and heap: see `importRunner.ts`.
-    const result = await runYomitanImportInThread(tmpZipPath, targetPath);
+    artifact.importStartedAt = new Date();
+    artifact.importHeartbeatAt = artifact.importStartedAt;
+    artifact.importProgress = 0;
+    await artifact.save();
+    // Its own thread and heap: see `importRunner.ts`. Its heartbeats reach the row every few seconds, so a reader sees
+    // the progress and `failInterruptedImports` can tell a live import from a dead one.
+    let lastWrite = 0;
+    const result = await runYomitanImportInThread(tmpZipPath, targetPath, {
+      onProgress: (fraction) => {
+        const now = Date.now();
+        if (now - lastWrite < HEARTBEAT_WRITE_MS) return;
+        lastWrite = now;
+        // A failed heartbeat write must never fail the import itself.
+        void Promise.resolve()
+          .then(() =>
+            UserDictionaryArtifact.update(
+              { id: artifact.id, status: 'processing' },
+              { importHeartbeatAt: new Date(now), importProgress: Math.min(99, Math.floor(fraction * 100)) },
+            ),
+          )
+          .catch(() => {});
+      },
+    });
     await uploadArtifactToR2(artifact.storageKey, targetPath);
     void pruneLocalDictionaryCache().catch(() => {});
     artifact.title = result.index.title;
@@ -350,6 +414,7 @@ export async function processArtifactImportJob(artifactId: number, tmpZipPath: s
     artifact.status = 'ready';
     artifact.errorMessage = null;
     artifact.importerVersion = IMPORTER_VERSION;
+    artifact.importProgress = null;
     await artifact.save();
 
     logger.info(
@@ -367,6 +432,7 @@ export async function processArtifactImportJob(artifactId: number, tmpZipPath: s
     const message = error instanceof Error ? error.message : 'Dictionary indexing failed';
     artifact.status = 'failed';
     artifact.errorMessage = message.slice(0, 500);
+    artifact.importProgress = null;
     await artifact.save().catch(() => {});
     logger.warn({ err: error, artifactId: artifact.id }, 'Failed to index custom Yomitan dictionary');
   } finally {
@@ -473,6 +539,10 @@ export async function attachOrQueueUploadedDictionary(
       artifact.zipBytes = String(zipBytes);
       artifact.status = 'processing';
       artifact.errorMessage = null;
+      // Queued again: no start, heartbeat or progress until the job picks it up.
+      artifact.importStartedAt = null;
+      artifact.importHeartbeatAt = null;
+      artifact.importProgress = null;
       await artifact.save();
       // A shared file is being rebuilt: every reader who has it now waits for it, not just this one.
       invalidateUserDictionaryStack();
@@ -743,4 +813,5 @@ export async function runUserDictionaryMaintenance(): Promise<void> {
   await failInterruptedImports();
   await gcOrphanArtifacts();
   await pruneLocalDictionaryCache();
+  await sweepStaleTempFiles();
 }

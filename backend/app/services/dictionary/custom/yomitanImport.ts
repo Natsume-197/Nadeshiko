@@ -238,6 +238,8 @@ function bankNumber(name: string, re: RegExp): number {
 export async function importYomitanZipToSqlite(
   zipPath: string,
   targetSqlitePath: string,
+  /** Share of the archive's JSON read so far, 0–1, called as chunks arrive (the caller throttles it). */
+  onProgress?: (fraction: number) => void,
 ): Promise<YomitanImportResult> {
   await mkdir(dirname(targetSqlitePath), { recursive: true });
   const tempSqlitePath = join(
@@ -341,6 +343,8 @@ export async function importYomitanZipToSqlite(
     if (index.frequencyMode) insertMeta.run('frequencyMode', index.frequencyMode);
 
     let budget = MAX_TOTAL_UNCOMPRESSED_BYTES - indexEntry.uncompressedSize;
+    let consumed = 0;
+    const progressTotal = Math.max(1, declared - indexEntry.uncompressedSize);
     let totalRows = 0;
     let rowsInTransaction = 0;
     const pageSize = Number((conn.prepare('PRAGMA page_size').get() as { page_size: number }).page_size);
@@ -369,7 +373,11 @@ export async function importYomitanZipToSqlite(
       rowsInTransaction = 0;
       try {
         const parser = new JsonArrayStream(onRow, MAX_ROW_BYTES);
-        const used = await reader.readEntryChunks(entry, budget, (chunk) => parser.write(chunk));
+        const used = await reader.readEntryChunks(entry, budget, (chunk) => {
+          parser.write(chunk);
+          consumed += chunk.length;
+          onProgress?.(Math.min(1, consumed / progressTotal));
+        });
         parser.end();
         budget -= used;
         conn.exec('COMMIT');
