@@ -31,6 +31,7 @@ export function useWordCardContent(
   glossLanguages: () => GlossPreference,
   hiddenDefinitionLanguages: () => readonly GlossLanguage[],
   hasCustomDictionaries: () => boolean = () => false,
+  inflectionLanguage: () => GlossLanguage = () => 'en',
 ) {
   // 1. Head. The reading is the dictionary's, not the surface's: 焼けた reads
   // やけた, but the word above the senses is 焼ける, and printing it over the
@@ -66,9 +67,9 @@ export function useWordCardContent(
   const inflectionLine = computed(() => {
     const current = token();
     if (!current || current.inflectionLabels.length === 0) return '';
-    // The parser's labels, in the card's label language (as the Common badge). Surface and headword are already
+    // The parser's labels in the page's language, like the part-of-speech chips. Surface and headword are already
     // visible, so omit the redundant conversion arrow.
-    return joinInflection(current.inflectionLabels, glossLanguages().labels);
+    return joinInflection(current.inflectionLabels, inflectionLanguage());
   });
 
   // 3. Badges: how common the word is, in the three ways the dictionary knows.

@@ -9,7 +9,7 @@ import {
   type DictionaryWord,
 } from '~/utils/wordCard';
 import { CATEGORY_LABEL_KEYS } from '~/utils/categories';
-import { inflectionLine as joinInflection } from '~/utils/inflectionLabels';
+import { inflectionLanguage, inflectionLine as joinInflection } from '~/utils/inflectionLabels';
 import PitchGraph from '~/components/search/segment/PitchGraph.vue';
 import YomitanContent from '~/components/search/segment/YomitanContent.vue';
 import { type EntryBrief, toHiragana } from '#shared/utils/wordEntry';
@@ -154,7 +154,7 @@ const byCategory = computed(() =>
   }),
 );
 /** The card's inflection line (useWordCardContent): the labels outermost first, joined the same way. */
-const inflectionLine = computed(() => joinInflection(props.entry.inflection ?? [], preference.value.labels));
+const inflectionLine = computed(() => joinInflection(props.entry.inflection ?? [], inflectionLanguage(locale.value)));
 
 /** The rank by kind of media, behind the "#N ▾" badge as on the card. */
 const frequencyOpen = ref(false);

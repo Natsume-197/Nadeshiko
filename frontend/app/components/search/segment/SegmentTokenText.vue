@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { inflectionLanguage } from '~/utils/inflectionLabels';
 import type { Token } from '@brigadasos/nadeshiko-sdk';
 import { enrichTokens, type SlimToken, type EnrichedToken } from '~/utils/tokenEnrichment';
 import { tabStop, tokenKeyAction } from '~/utils/tokenNavigation';
@@ -157,6 +158,7 @@ const {
   () => glossLanguages.value,
   () => hiddenDefinitionLanguages.value,
   () => userStore().customDictionariesCount > 0,
+  () => inflectionLanguage(locale.value),
 );
 
 /** Whether the rank by kind of media is open under the badges. Kept from word to word: a reader who opened it

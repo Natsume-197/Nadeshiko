@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { inflectionLabel, inflectionLine } from './inflectionLabels';
+import { inflectionLabel, inflectionLanguage, inflectionLine } from './inflectionLabels';
 
 /** Every label the backend's parser can emit, read from its source: the strings inside its array literals. */
 function backendLabels(): string[] {
@@ -37,5 +37,13 @@ describe('inflectionLabel', () => {
       'pasado · potencial / pasiva · causativa',
     );
     expect(inflectionLine(['past', 'polite'], 'en')).toBe('past · polite');
+  });
+});
+
+describe('inflectionLanguage', () => {
+  it('follows the page: Spanish for es, English otherwise', () => {
+    expect(inflectionLanguage('es')).toBe('es');
+    expect(inflectionLanguage('en')).toBe('en');
+    expect(inflectionLanguage('ja')).toBe('en');
   });
 });
