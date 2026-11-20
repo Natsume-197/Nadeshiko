@@ -456,14 +456,15 @@ onBeforeUnmount(stopPolling);
               role="switch"
               :aria-checked="row.enabled"
               :aria-label="row.enabled ? t('accountSettings.dictionaries.disable') : t('accountSettings.dictionaries.enable')"
-              class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors disabled:opacity-50"
-              :class="row.enabled ? 'bg-brand-solid' : 'bg-white/15'"
+              class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out disabled:opacity-50"
+              :class="row.enabled ? 'bg-brand-solid' : 'bg-gray-600'"
               :disabled="saving"
               @click="toggleRow(index)"
             >
+              <!-- The site's switch, as in Settings → Emails. -->
               <span
-                class="inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform"
-                :class="row.enabled ? 'translate-x-4.5' : 'translate-x-1'"
+                class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                :class="row.enabled ? 'translate-x-5' : 'translate-x-0'"
               />
             </button>
 
