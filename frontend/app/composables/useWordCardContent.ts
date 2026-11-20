@@ -11,6 +11,7 @@ import {
 } from '~/utils/wordCard';
 import type { EnrichedToken } from '~/utils/tokenEnrichment';
 import { CATEGORY_LABEL_KEYS } from '~/utils/categories';
+import { inflectionLine as joinInflection } from '~/utils/inflectionLabels';
 
 // Use gloss language, not UI locale, so the badge matches the definitions around it.
 const COMMON_LABEL: Record<GlossLanguage, string> = { en: 'Common', es: 'Frecuente' };
@@ -65,9 +66,9 @@ export function useWordCardContent(
   const inflectionLine = computed(() => {
     const current = token();
     if (!current || current.inflectionLabels.length === 0) return '';
-    // Show the parser's inflection labels verbatim. Surface and headword are already visible, so
-    // omit the redundant conversion arrow.
-    return current.inflectionLabels.join(' · ');
+    // The parser's labels, in the card's label language (as the Common badge). Surface and headword are already
+    // visible, so omit the redundant conversion arrow.
+    return joinInflection(current.inflectionLabels, glossLanguages().labels);
   });
 
   // 3. Badges: how common the word is, in the three ways the dictionary knows.
