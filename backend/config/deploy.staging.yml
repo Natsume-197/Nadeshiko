@@ -10,6 +10,10 @@ servers:
        # Bound deploy and E2E load: staging shares the host and production database/search accessories.
       cpus: "0.5"
 
+# The custom dictionary cache (task 48), kept across deploys.
+volumes:
+  - "nadeshiko-user-dicts-staging:/app/data/user-dictionaries"
+
 proxy:
   # Leave the Tailscale address available for the private Caddy proxy.
   run:
@@ -102,6 +106,10 @@ env:
     # them missing the backend refuses to boot.
     USER_DICTIONARIES_ENABLED: "true"
     USER_DICTIONARIES_DIR: /app/data/user-dictionaries
+    # Local copy of the dictionaries readers use (R2 holds them all): a named volume, so it survives deploys, capped at
+    # 1 GB on a 75 GB disk shared with everything else. Files are immutable and renamed into place, so the old and new
+    # containers of a rolling deploy can share it.
+    USER_DICTIONARIES_CACHE_MAX_BYTES: "1073741824"
     USER_DICT_R2_PREFIX: user-dicts/staging
 
     R2_BASE_URL: https://cdn.nadeshiko.co
