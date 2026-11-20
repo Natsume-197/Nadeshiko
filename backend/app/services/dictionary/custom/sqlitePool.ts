@@ -3,7 +3,7 @@ import { unlink } from 'node:fs/promises';
 import { join } from 'node:path';
 import { DatabaseSync, type StatementSync } from 'node:sqlite';
 import { logger } from '@config/log';
-import { decodeGlossary } from './glossaryCodec';
+import { decodeGlossary, inflateBlock, parseGlossaryJson } from './glossaryCodec';
 import type { NormalizedGlossaryItem } from './structuredContent';
 
 /**
@@ -13,9 +13,47 @@ import type { NormalizedGlossaryItem } from './structuredContent';
  * read-only handles across requests (and across overlapping containers during Kamal rolling deploys) need no write
  * locks. A lookup is a few indexed reads plus decoding the rows it keeps; fast once the file's pages are in memory.
  *
- * Reads both artifact formats: importer version 1 stored the glossary as JSON text (`glossary_json`), version 2 as a
- * tagged, usually deflated BLOB (`glossary`, see `glossaryCodec.ts`).
+ * Reads every artifact format: version 1 stored the glossary as JSON text (`glossary_json`), version 2 as a tagged,
+ * usually deflated BLOB per row (`glossary`), version 3 in deflated blocks (`glossary_block`, see `glossaryCodec.ts`).
  */
+
+type GlossaryFormat = 'json' | 'blob' | 'block';
+
+/** Inflated glossary blocks of version 3 files, shared by all handles, least recently used out first. */
+const BLOCK_CACHE_BYTES = 32 * 1024 * 1024;
+const blockCache = new Map<string, Buffer>();
+let blockCacheBytes = 0;
+
+function cachedBlock(filePath: string, id: number, read: () => Uint8Array | undefined): Buffer | null {
+  const key = `${filePath}#${id}`;
+  const hit = blockCache.get(key);
+  if (hit) {
+    blockCache.delete(key);
+    blockCache.set(key, hit);
+    return hit;
+  }
+  const data = read();
+  if (!data) return null;
+  const block = inflateBlock(data);
+  blockCache.set(key, block);
+  blockCacheBytes += block.length;
+  while (blockCacheBytes > BLOCK_CACHE_BYTES) {
+    const oldest = blockCache.keys().next().value;
+    if (oldest === undefined) break;
+    blockCacheBytes -= blockCache.get(oldest)?.length ?? 0;
+    blockCache.delete(oldest);
+  }
+  return block;
+}
+
+function dropCachedBlocks(filePath: string): void {
+  const prefix = `${filePath}#`;
+  for (const [key, block] of blockCache) {
+    if (!key.startsWith(prefix)) continue;
+    blockCacheBytes -= block.length;
+    blockCache.delete(key);
+  }
+}
 
 export interface CustomTermRow {
   expression: string;
@@ -54,8 +92,10 @@ export interface CustomPitchRow {
 
 interface PooledHandle {
   db: DatabaseSync;
-  /** Version 2 files store `glossary` as a BLOB; version 1 files `glossary_json` as text. */
-  glossaryBlob: boolean;
+  filePath: string;
+  glossaryFormat: GlossaryFormat;
+  /** Version 3 only: one glossary block by id. */
+  blockById: StatementSync | null;
   byExpr: StatementSync;
   byExprHira: StatementSync;
   metaByExpr: StatementSync;
@@ -84,6 +124,7 @@ function openHandle(filePath: string): PooledHandle | null {
   let handle: PooledHandle;
   try {
     handle = prepareHandle(filePath);
+    handle.filePath = filePath;
   } catch (error) {
     // One unreadable file must cost its own dictionary, not the whole word card. A corrupt cached copy is removed so
     // the next lookup fetches it again from R2.
@@ -133,9 +174,16 @@ const MMAP_BYTES = 256 * 1024 * 1024;
 
 function buildHandle(db: DatabaseSync): PooledHandle {
   db.exec(`PRAGMA mmap_size = ${MMAP_BYTES}`);
-  const columns = db.prepare('PRAGMA table_info(terms)').all() as Array<{ name: string }>;
-  const glossaryBlob = columns.some((column) => column.name === 'glossary');
-  const glossary = glossaryBlob ? 'glossary' : 'glossary_json';
+  const columns = new Set(
+    (db.prepare('PRAGMA table_info(terms)').all() as Array<{ name: string }>).map((column) => column.name),
+  );
+  const glossaryFormat: GlossaryFormat = columns.has('block') ? 'block' : columns.has('glossary') ? 'blob' : 'json';
+  const glossary =
+    glossaryFormat === 'block'
+      ? 'block, block_offset, block_length'
+      : glossaryFormat === 'blob'
+        ? 'glossary'
+        : 'glossary_json AS glossary';
   const tags = new Map<string, CustomTagMeta>();
   try {
     const tagRows = db.prepare('SELECT name, category, notes FROM tag_meta').all() as Array<{
@@ -152,16 +200,18 @@ function buildHandle(db: DatabaseSync): PooledHandle {
 
   return {
     db,
-    glossaryBlob,
+    filePath: '',
+    glossaryFormat,
+    blockById: glossaryFormat === 'block' ? db.prepare('SELECT data FROM glossary_block WHERE id = ?') : null,
     byExpr: db.prepare(`
-      SELECT expression, reading, definition_tags, rules, score, ${glossary} AS glossary, sequence, term_tags
+      SELECT expression, reading, definition_tags, rules, score, ${glossary}, sequence, term_tags
       FROM terms
       WHERE expression = ?
       ORDER BY score DESC, id ASC
       LIMIT 30
     `),
     byExprHira: db.prepare(`
-      SELECT expression, reading, definition_tags, rules, score, ${glossary} AS glossary, sequence, term_tags
+      SELECT expression, reading, definition_tags, rules, score, ${glossary}, sequence, term_tags
       FROM terms
       WHERE expression_hira = ?
       ORDER BY score DESC, id ASC
@@ -186,6 +236,7 @@ function buildHandle(db: DatabaseSync): PooledHandle {
 }
 
 export function closeArtifactHandle(filePath: string): void {
+  dropCachedBlocks(filePath);
   const existing = pool.get(filePath);
   if (!existing) return;
   pool.delete(filePath);
@@ -211,6 +262,8 @@ export function closeAllArtifactHandles(): void {
     }
   }
   pool.clear();
+  blockCache.clear();
+  blockCacheBytes = 0;
 }
 
 interface RawTermRow {
@@ -219,7 +272,12 @@ interface RawTermRow {
   definition_tags: string;
   rules: string;
   score: number;
-  glossary: string | Uint8Array;
+  /** Versions 1 and 2. */
+  glossary?: string | Uint8Array;
+  /** Version 3. */
+  block?: number;
+  block_offset?: number;
+  block_length?: number;
   sequence: number;
   term_tags: string;
 }
@@ -228,16 +286,32 @@ interface RawTermRow {
  * Decodes rows until they hold `maxSenses` glossary items: the card shows a handful of senses, and decoding a
  * structured-content article costs more than reading it, so the rest of the 30 rows are left alone.
  */
-function hydrateTermRows(rows: RawTermRow[], glossaryBlob: boolean, maxSenses: number): CustomTermRow[] {
+function rowGlossary(handle: PooledHandle, row: RawTermRow): NormalizedGlossaryItem[] {
+  if (handle.glossaryFormat === 'block') {
+    const { blockById } = handle;
+    if (!blockById || row.block === undefined || row.block_offset === undefined || row.block_length === undefined) {
+      return [];
+    }
+    const block = cachedBlock(handle.filePath, row.block, () => {
+      const found = blockById.get(row.block as number) as { data: Uint8Array } | undefined;
+      return found?.data;
+    });
+    if (!block) return [];
+    return parseGlossaryJson(block.subarray(row.block_offset, row.block_offset + row.block_length));
+  }
+  if (handle.glossaryFormat === 'blob' && row.glossary !== undefined && typeof row.glossary !== 'string') {
+    return decodeGlossary(row.glossary);
+  }
+  return JSON.parse(String(row.glossary)) as NormalizedGlossaryItem[];
+}
+
+function hydrateTermRows(handle: PooledHandle, rows: RawTermRow[], maxSenses: number): CustomTermRow[] {
   const out: CustomTermRow[] = [];
   let senses = 0;
   for (const row of rows) {
     if (senses >= maxSenses) break;
     try {
-      const glossary =
-        glossaryBlob && typeof row.glossary !== 'string'
-          ? decodeGlossary(row.glossary)
-          : (JSON.parse(String(row.glossary)) as NormalizedGlossaryItem[]);
+      const glossary = rowGlossary(handle, row);
       if (!Array.isArray(glossary) || glossary.length === 0) continue;
       senses += glossary.length;
       out.push({
@@ -280,7 +354,7 @@ export function queryArtifactTerms(
 
   // The reading filter runs on the raw rows, before anything is decoded.
   const kept = readingHira ? raw.filter((row) => !row.reading || toHira(row.reading) === readingHira) : raw;
-  return { rows: hydrateTermRows(kept, handle.glossaryBlob, maxSenses), tags: handle.tags };
+  return { rows: hydrateTermRows(handle, kept, maxSenses), tags: handle.tags };
 }
 
 interface RawMetaRow {

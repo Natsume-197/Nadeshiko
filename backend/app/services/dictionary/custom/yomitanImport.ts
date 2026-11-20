@@ -2,7 +2,7 @@ import { mkdir, rename, stat, unlink } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { toHiragana } from '../import/entries';
-import { encodeGlossary } from './glossaryCodec';
+import { GlossaryBlockWriter, glossaryJson } from './glossaryCodec';
 import { JsonArrayElementError, JsonArrayStream } from './jsonArrayStream';
 import { normalizeGlossary } from './structuredContent';
 import { type ZipEntry, ZipLimitError, ZipReader } from './zipReader';
@@ -48,14 +48,14 @@ export class YomitanValidationError extends Error {
  * it whenever any of that changes: artifacts are shared by SHA-256 and never rebuilt on their own, so an upload of an
  * artifact built by an older version re-indexes it instead of reusing it (`service.ts`).
  */
-export const IMPORTER_VERSION = 2;
+export const IMPORTER_VERSION = 3;
 
 const MAX_INDEX_BYTES = 1 * 1024 * 1024; // 1 MB
 // Total JSON across banks (zip-bomb defense). Rows are streamed, so this bounds time, not memory: 大辞林 第四版 is
 // 2.7 GB of JSON from a 94 MB zip (28×), and the cap leaves room for ~40× the largest zip a patron may upload.
 const MAX_TOTAL_UNCOMPRESSED_BYTES = 4 * 1024 * 1024 * 1024;
-// One row of a bank, as JSON text. Real rows are a few KB; a structured-content article can reach a few hundred.
-const MAX_ROW_CHARS = 8 * 1024 * 1024;
+// One row of a bank, as JSON bytes. Real rows are a few KB; a structured-content article can reach a few hundred.
+const MAX_ROW_BYTES = 8 * 1024 * 1024;
 // What an artifact may take on disk once indexed: it has to fit, with others, in the local cache (5 GB in prod).
 export const MAX_ARTIFACT_SQLITE_BYTES = 1536 * 1024 * 1024;
 const MAX_ROWS_PER_ARTIFACT = 3_000_000;
@@ -231,8 +231,9 @@ function bankNumber(name: string, re: RegExp): number {
  * Builds a complete SQLite database for a Yomitan `.zip` at `targetSqlitePath` atomically (writing to a temporary file
  * first and renaming only on success).
  *
- * Schema (importer version 2): no AUTOINCREMENT, no stored hiragana reading for terms (the reading filter runs on the
- * rows a lookup returns), and the glossary as a tagged, usually deflated BLOB (`glossaryCodec.ts`).
+ * Schema (importer version 3): no AUTOINCREMENT, no stored hiragana reading for terms (the reading filter runs on the
+ * rows a lookup returns), and glossaries packed into deflated blocks (`glossary_block`, see `glossaryCodec.ts`), each
+ * term row pointing at its block, offset and length.
  */
 export async function importYomitanZipToSqlite(
   zipPath: string,
@@ -310,9 +311,16 @@ export async function importYomitanZipToSqlite(
         definition_tags TEXT NOT NULL DEFAULT '',
         rules TEXT NOT NULL DEFAULT '',
         score INTEGER NOT NULL DEFAULT 0,
-        glossary BLOB NOT NULL,
+        block INTEGER NOT NULL,
+        block_offset INTEGER NOT NULL,
+        block_length INTEGER NOT NULL,
         sequence INTEGER NOT NULL DEFAULT 0,
         term_tags TEXT NOT NULL DEFAULT ''
+      );
+
+      CREATE TABLE glossary_block (
+        id INTEGER PRIMARY KEY,
+        data BLOB NOT NULL
       );
 
       CREATE TABLE term_meta (
@@ -360,7 +368,7 @@ export async function importYomitanZipToSqlite(
       conn.exec('BEGIN');
       rowsInTransaction = 0;
       try {
-        const parser = new JsonArrayStream(onRow, MAX_ROW_CHARS);
+        const parser = new JsonArrayStream(onRow, MAX_ROW_BYTES);
         const used = await reader.readEntryChunks(entry, budget, (chunk) => parser.write(chunk));
         parser.end();
         budget -= used;
@@ -398,9 +406,11 @@ export async function importYomitanZipToSqlite(
     const insertTerm = conn.prepare(`
       INSERT INTO terms (
         expression, reading, expression_hira,
-        definition_tags, rules, score, glossary, sequence, term_tags
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        definition_tags, rules, score, block, block_offset, block_length, sequence, term_tags
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
+    const insertBlock = conn.prepare('INSERT INTO glossary_block (id, data) VALUES (?, ?)');
+    const blocks = new GlossaryBlockWriter((id, data) => insertBlock.run(id, data));
 
     let termCount = 0;
     for (const entry of termBanks) {
@@ -417,6 +427,7 @@ export async function importYomitanZipToSqlite(
         const sequence = typeof row[6] === 'number' && Number.isFinite(row[6]) ? Math.trunc(row[6]) : 0;
         const termTags = typeof row[7] === 'string' ? row[7].trim() : '';
 
+        const at = blocks.add(glossaryJson(glossary));
         insertTerm.run(
           expression,
           reading,
@@ -424,7 +435,9 @@ export async function importYomitanZipToSqlite(
           defTags,
           rules,
           score,
-          encodeGlossary(glossary),
+          at.block,
+          at.offset,
+          at.length,
           sequence,
           termTags,
         );
@@ -432,6 +445,11 @@ export async function importYomitanZipToSqlite(
         countRow();
       });
     }
+
+    // The last, partial block (its rows already point at it).
+    conn.exec('BEGIN');
+    blocks.flush();
+    conn.exec('COMMIT');
 
     // 3. Term meta banks (frequency & pitch)
     const insertTermMeta = conn.prepare(`

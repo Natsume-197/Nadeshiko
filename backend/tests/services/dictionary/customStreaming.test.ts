@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { decodeGlossary, encodeGlossary } from '@app/services/dictionary/custom/glossaryCodec';
+import { deflateRawSync } from 'node:zlib';
+import {
+  decodeGlossary,
+  GlossaryBlockWriter,
+  glossaryJson,
+  inflateBlock,
+  parseGlossaryJson,
+} from '@app/services/dictionary/custom/glossaryCodec';
 import { JsonArrayElementError, JsonArrayStream } from '@app/services/dictionary/custom/jsonArrayStream';
 import type { NormalizedGlossaryItem } from '@app/services/dictionary/custom/structuredContent';
 
@@ -67,33 +74,51 @@ describe('glossaryCodec', () => {
     content: [{ tag: 'span', content: 'ア' }, '　'.repeat(5), { tag: 'ul', content: [{ tag: 'li', content: '意味' }] }],
   } as NormalizedGlossaryItem['structuredContent'];
 
-  it('round-trips plain items', () => {
+  it('round-trips plain items through the stored JSON', () => {
     const items: NormalizedGlossaryItem[] = [{ text: 'to eat' }, { text: 'to live on' }];
-    expect(decodeGlossary(encodeGlossary(items))).toEqual(items);
+    expect(parseGlossaryJson(glossaryJson(items))).toEqual(items);
   });
 
   it('stores structured content without its text, and derives the text again on read', () => {
     const items: NormalizedGlossaryItem[] = [{ text: 'ア 意味', structuredContent: structured }];
-    const blob = encodeGlossary(items);
-    expect(blob.toString('utf8')).not.toContain('"text"');
-    const [decoded] = decodeGlossary(blob);
+    const json = glossaryJson(items);
+    expect(json.toString('utf8')).not.toContain('"text"');
+    const [decoded] = parseGlossaryJson(json);
     expect(decoded?.structuredContent).toEqual(structured);
     expect(decoded?.text).toContain('意味');
   });
 
-  it('deflates long glossaries and leaves short ones raw', () => {
-    const long: NormalizedGlossaryItem[] = [{ text: 'repetitive definition text '.repeat(40) }];
-    const short: NormalizedGlossaryItem[] = [{ text: 'eat' }];
-    const longBlob = encodeGlossary(long);
-    expect(longBlob[0]).toBe(1);
-    expect(longBlob.length).toBeLessThan(Buffer.byteLength(JSON.stringify(long)) / 4);
-    expect(encodeGlossary(short)[0]).toBe(0);
-    expect(decodeGlossary(longBlob)).toEqual(long);
-    expect(decodeGlossary(encodeGlossary(short))).toEqual(short);
+  it('packs rows into deflated blocks and finds each row again by block, offset and length', () => {
+    const blocks = new Map<number, Buffer>();
+    const writer = new GlossaryBlockWriter((id, data) => blocks.set(id, data));
+    const rows = Array.from({ length: 2000 }, (_, i): NormalizedGlossaryItem[] => [
+      { text: `definition number ${i}, with some repeated wording` },
+    ]);
+    const locations = rows.map((items) => writer.add(glossaryJson(items)));
+    writer.flush();
+
+    expect(blocks.size).toBeGreaterThan(1);
+    expect([...blocks.keys()]).toEqual(Array.from({ length: blocks.size }, (_, i) => i + 1));
+    const stored = [...blocks.values()].reduce((sum, data) => sum + data.length, 0);
+    const raw = rows.reduce((sum, items) => sum + glossaryJson(items).length, 0);
+    expect(stored).toBeLessThan(raw / 4);
+    for (const [i, at] of locations.entries()) {
+      const block = inflateBlock(blocks.get(at.block) as Buffer);
+      expect(parseGlossaryJson(block.subarray(at.offset, at.offset + at.length))).toEqual(rows[i]);
+    }
   });
 
-  it('decodes nothing from an empty or tiny blob', () => {
+  it('flushes nothing when no row was added', () => {
+    const writes: number[] = [];
+    new GlossaryBlockWriter((id) => writes.push(id)).flush();
+    expect(writes).toEqual([]);
+  });
+
+  it('still reads version 2 rows (one tagged BLOB each)', () => {
+    const items: NormalizedGlossaryItem[] = [{ text: 'repetitive definition text '.repeat(40) }];
+    const json = glossaryJson(items);
+    expect(decodeGlossary(Buffer.concat([Buffer.of(1), deflateRawSync(json)]))).toEqual(items);
+    expect(decodeGlossary(Buffer.concat([Buffer.of(0), json]))).toEqual(items);
     expect(decodeGlossary(new Uint8Array())).toEqual([]);
-    expect(decodeGlossary(Uint8Array.of(0))).toEqual([]);
   });
 });

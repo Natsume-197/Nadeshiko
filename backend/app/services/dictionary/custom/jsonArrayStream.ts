@@ -1,12 +1,15 @@
-import { StringDecoder } from 'node:string_decoder';
-
 /**
- * Splits a JSON document whose top level is an array into its elements as the bytes arrive, so a Yomitan bank is
- * parsed one row at a time instead of whole: memory follows the largest row, not the bank (明鏡 第三版 ships a single
- * 106 MB bank, JPDB a 48 MB one).
+ * Splits a JSON document whose top level is an array into its elements as the bytes arrive, the same way for every
+ * size: a Yomitan bank of 2 MB and one of 106 MB (明鏡 第三版) go through the same code, and memory stays bounded by
+ * the batch size plus the largest row.
  *
- * Only the top level is tracked (depth, strings, escapes); each element's text goes to `JSON.parse` on its own, which
- * does the real validation. A document that is not an array, or is cut short, throws.
+ * Two passes over each chunk, both cheap:
+ * - a byte scan finds where each top-level element ends. Only ASCII bytes matter (`"`, `\`, brackets, braces, comma);
+ *   UTF-8 continuation bytes are all ≥ 0x80, so Japanese text can be skipped without decoding it.
+ * - complete elements are collected into a batch of about `batchBytes` and handed to the native `JSON.parse` as one
+ *   array, which does the real validation; a small bank is a single batch.
+ *
+ * A document that is not an array, or is cut short, throws.
  */
 export class JsonArrayElementError extends Error {
   constructor(message: string) {
@@ -15,64 +18,82 @@ export class JsonArrayElementError extends Error {
   }
 }
 
+const QUOTE = 0x22;
+const BACKSLASH = 0x5c;
+const OPEN_BRACKET = 0x5b;
+const CLOSE_BRACKET = 0x5d;
+const OPEN_BRACE = 0x7b;
+const CLOSE_BRACE = 0x7d;
+const COMMA = 0x2c;
+const COMMA_BUFFER = Buffer.of(COMMA);
+
+function isSpace(c: number): boolean {
+  return c === 0x20 || c === 0x0a || c === 0x0d || c === 0x09;
+}
+
 export class JsonArrayStream {
-  private readonly decoder = new StringDecoder('utf8');
   private started = false;
   private done = false;
   private depth = 0;
   private inString = false;
   private escape = false;
-  /** Text of the element being read, from earlier chunks. */
-  private parts: string[] = [];
-  private partsLength = 0;
-  /** True while inside an element (an array, object, string or bare scalar at the top level). */
-  private inElement = false;
-  /** A bare scalar (number, true, false, null) ends at a comma, the closing bracket or whitespace. */
   private inScalar = false;
+  /** Bytes of the element being read that arrived in earlier chunks. */
+  private pending: Buffer[] = [];
+  private pendingBytes = 0;
+  /** Complete elements waiting for the next `JSON.parse`. */
+  private batch: Buffer[] = [];
+  private batchBytes = 0;
 
   constructor(
     private readonly onElement: (value: unknown) => void,
-    private readonly maxElementChars: number,
+    private readonly maxElementBytes: number,
+    private readonly batchLimit = 4 * 1024 * 1024,
   ) {}
 
   write(chunk: Buffer): void {
-    this.consume(this.decoder.write(chunk));
-  }
+    let begin = this.pendingBytes > 0 || this.inScalar || this.inString || this.depth > 0 ? 0 : -1;
+    const n = chunk.length;
+    // Next backslash at or after the scan position, found natively and reused until passed (-1: none left).
+    let nextBackslash = -2;
 
-  /** Call after the last chunk: throws unless the array was closed. */
-  end(): void {
-    this.consume(this.decoder.end());
-    if (!this.done) throw new JsonArrayElementError(this.started ? 'Unterminated JSON array' : 'Empty JSON document');
-  }
-
-  private consume(text: string): void {
-    let begin = this.inElement ? 0 : -1;
-    for (let i = 0; i < text.length; i++) {
-      const c = text.charCodeAt(i);
-
+    for (let i = 0; i < n; i++) {
       if (this.inString) {
-        if (this.escape) this.escape = false;
-        else if (c === 0x5c /* \ */) this.escape = true;
-        else if (c === 0x22 /* " */) {
-          this.inString = false;
-          if (this.depth === 0) {
-            this.emit(text, begin, i + 1);
-            begin = -1;
-          }
+        // Most of a dictionary is string content: jump to the next quote or backslash with the native search instead
+        // of visiting every byte.
+        if (this.escape) {
+          this.escape = false;
+          continue;
+        }
+        if (nextBackslash !== -1 && nextBackslash < i) nextBackslash = chunk.indexOf(BACKSLASH, i);
+        const quote = chunk.indexOf(QUOTE, i);
+        if (nextBackslash !== -1 && (quote === -1 || nextBackslash < quote)) {
+          this.escape = true;
+          i = nextBackslash;
+          continue;
+        }
+        if (quote === -1) break;
+        i = quote;
+        this.inString = false;
+        if (this.depth === 0) {
+          this.finish(chunk, begin, i + 1);
+          begin = -1;
         }
         continue;
       }
 
+      const c = chunk[i] as number;
+
       if (this.inScalar) {
-        if (c === 0x2c /* , */ || c === 0x5d /* ] */ || isSpace(c)) {
-          this.emit(text, begin, i);
+        if (c === COMMA || c === CLOSE_BRACKET || isSpace(c)) {
+          this.finish(chunk, begin, i);
           begin = -1;
         } else continue;
       }
 
       if (!this.started) {
         if (isSpace(c)) continue;
-        if (c !== 0x5b /* [ */) throw new JsonArrayElementError('Bank is not a JSON array');
+        if (c !== OPEN_BRACKET) throw new JsonArrayElementError('Bank is not a JSON array');
         this.started = true;
         continue;
       }
@@ -82,74 +103,81 @@ export class JsonArrayStream {
         throw new JsonArrayElementError('Unexpected data after the JSON array');
       }
 
-      switch (c) {
-        case 0x22: // "
-          if (this.depth === 0) {
-            begin = i;
-            this.inElement = true;
-          }
-          this.inString = true;
-          break;
-        case 0x5b: // [
-        case 0x7b: // {
-          if (this.depth === 0) {
-            begin = i;
-            this.inElement = true;
-          }
-          this.depth++;
-          break;
-        case 0x5d: // ]
-        case 0x7d: // }
-          if (this.depth === 0) {
-            if (c !== 0x5d) throw new JsonArrayElementError('Unbalanced JSON');
-            this.done = true;
-            break;
-          }
+      if (c === QUOTE) {
+        if (this.depth === 0) begin = i;
+        this.inString = true;
+      } else if (c === OPEN_BRACKET || c === OPEN_BRACE) {
+        if (this.depth === 0) begin = i;
+        this.depth++;
+      } else if (c === CLOSE_BRACKET || c === CLOSE_BRACE) {
+        if (this.depth === 0) {
+          if (c !== CLOSE_BRACKET) throw new JsonArrayElementError('Unbalanced JSON');
+          this.done = true;
+        } else {
           this.depth--;
           if (this.depth === 0) {
-            this.emit(text, begin, i + 1);
+            this.finish(chunk, begin, i + 1);
             begin = -1;
           }
-          break;
-        default:
-          if (this.depth === 0 && c !== 0x2c && !isSpace(c)) {
-            begin = i;
-            this.inElement = true;
-            this.inScalar = true;
-          }
+        }
+      } else if (this.depth === 0 && c !== COMMA && !isSpace(c)) {
+        begin = i;
+        this.inScalar = true;
       }
     }
 
-    if (this.inElement && begin >= 0) {
-      const tail = text.slice(begin);
-      this.parts.push(tail);
-      this.partsLength += tail.length;
-      if (this.partsLength > this.maxElementChars) {
+    // An element still open at the end of the chunk: keep its bytes for the next one.
+    if (begin >= 0) {
+      const tail = chunk.subarray(begin);
+      this.pending.push(Buffer.from(tail));
+      this.pendingBytes += tail.length;
+      if (this.pendingBytes > this.maxElementBytes) {
         throw new JsonArrayElementError('A dictionary entry exceeds the maximum allowed size');
       }
     }
+    if (this.batchBytes >= this.batchLimit) this.parseBatch();
   }
 
-  private emit(text: string, begin: number, endExclusive: number): void {
-    const piece = text.slice(Math.max(0, begin), endExclusive);
-    const whole = this.parts.length > 0 ? this.parts.join('') + piece : piece;
-    this.parts = [];
-    this.partsLength = 0;
-    this.inElement = false;
+  /** Call after the last chunk: parses what is left and throws unless the array was closed. */
+  end(): void {
+    if (!this.done) throw new JsonArrayElementError(this.started ? 'Unterminated JSON array' : 'Empty JSON document');
+    this.parseBatch();
+  }
+
+  private finish(chunk: Buffer, begin: number, endExclusive: number): void {
+    const piece = chunk.subarray(Math.max(0, begin), endExclusive);
+    let element: Buffer;
+    if (this.pendingBytes > 0) {
+      this.pending.push(piece);
+      element = Buffer.concat(this.pending, this.pendingBytes + piece.length);
+      this.pending = [];
+      this.pendingBytes = 0;
+    } else {
+      element = Buffer.from(piece);
+    }
     this.inScalar = false;
-    if (whole.length > this.maxElementChars) {
+    if (element.length > this.maxElementBytes) {
       throw new JsonArrayElementError('A dictionary entry exceeds the maximum allowed size');
     }
-    let value: unknown;
+    if (this.batch.length > 0) {
+      this.batch.push(COMMA_BUFFER);
+      this.batchBytes += 1;
+    }
+    this.batch.push(element);
+    this.batchBytes += element.length;
+  }
+
+  private parseBatch(): void {
+    if (this.batch.length === 0) return;
+    const text = `[${Buffer.concat(this.batch, this.batchBytes).toString('utf8')}]`;
+    this.batch = [];
+    this.batchBytes = 0;
+    let values: unknown[];
     try {
-      value = JSON.parse(whole);
+      values = JSON.parse(text) as unknown[];
     } catch {
       throw new JsonArrayElementError('Bank contains invalid JSON');
     }
-    this.onElement(value);
+    for (const value of values) this.onElement(value);
   }
-}
-
-function isSpace(c: number): boolean {
-  return c === 0x20 || c === 0x0a || c === 0x0d || c === 0x09;
 }
