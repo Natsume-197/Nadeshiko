@@ -31,6 +31,8 @@ export interface CustomFrequencyBadge {
 
 export interface CustomPitchPattern {
   downstep: number;
+  /** Our clip of this reading and accent, set after the merge by `withPitchAudio`. */
+  audioUrl?: string;
   source?: string;
   nasal?: number[];
   devoice?: number[];

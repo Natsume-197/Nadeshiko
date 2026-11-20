@@ -287,6 +287,7 @@ export type t_DictionaryCandidate = {
     text: string;
   }[];
   pitch?: {
+    audioUrl?: string;
     devoice?: number[];
     downstep: number;
     nasal?: number[];

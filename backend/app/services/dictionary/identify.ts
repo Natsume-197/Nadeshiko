@@ -33,8 +33,7 @@ export interface CandidateTag {
   label: string;
 }
 
-/** The word card's candidate (`DictionaryWord` in the frontend's `wordCard.ts`), minus what we do not have yet:
- * pitch and frequency. */
+/** The word card's candidate (`DictionaryWord` in the frontend's `wordCard.ts`). */
 export interface DictionaryCandidate {
   id: string;
   headword: string;
@@ -57,8 +56,9 @@ export interface DictionaryCandidate {
   baseForm?: boolean;
   /** With `baseForm`: what the conjugation does, in the card's inflection labels, outermost first (食べた: past). */
   inflection?: string[];
-  /** UniDic accent: 0 flat, n the mora the pitch drops after. No audio yet. */
-  pitch?: Array<{ downstep: number }>;
+  /** UniDic accent: 0 flat, n the mora the pitch drops after. `audioUrl` is set by `withPitchAudio` where a clip of
+   * that reading and accent is uploaded. */
+  pitch?: Array<{ downstep: number; audioUrl?: string }>;
   /** The words a compound or expression is made of (捜査本部: 捜査, 本部), each one the card can open. Absent for a
    * word of one piece, or when the Sudachi sidecar is not configured. */
   parts?: Array<{ text: string; lemma: string; reading: string; id: string }>;

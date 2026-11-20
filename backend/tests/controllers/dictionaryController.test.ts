@@ -1,6 +1,7 @@
 import { request } from '../helpers/http';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { createTestApp, setupTestSuite, type TestServer } from '../helpers/setup';
+import { createTestApp, setupTestSuite, TestDataSource, type TestServer } from '../helpers/setup';
+import { useRawQueriesAgainstTestDb } from '../helpers/rawQuery';
 
 /** Whether the request looks like it came through our own frontend proxy. */
 let fromInternalProxy = false;
@@ -13,6 +14,7 @@ const { identifyWord } = vi.hoisted(() => ({ identifyWord: vi.fn() }));
 vi.mock('@app/services/dictionary/identify', () => ({ identifyWord }));
 
 setupTestSuite();
+useRawQueriesAgainstTestDb();
 
 const CANDIDATE = {
   id: 'jmdict:1358280',
@@ -75,6 +77,22 @@ describe('GET /v1/dictionary/identify', () => {
     await request(app).get('/v1/dictionary/identify').query({ lemma: '食べる' });
 
     expect(identifyWord).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ locale: 'en' }));
+  });
+
+  it('adds the pitch clip where one is uploaded', async () => {
+    fromInternalProxy = true;
+    identifyWord.mockResolvedValue([{ ...CANDIDATE, pitch: [{ downstep: 2 }, { downstep: 0 }] }]);
+    await TestDataSource.query(
+      `INSERT INTO dict.pitch_audio (reading, downstep, voice) VALUES ('たべる', 2, 'metan-v1')`,
+    );
+
+    const res = await request(app).get('/v1/dictionary/identify').query({ lemma: '食べる' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.candidates[0].pitch).toEqual([
+      { downstep: 2, audioUrl: expect.stringMatching(/\/pitch-audio\/metan-v1\/%E3%81%9F%E3%81%B9%E3%82%8B_2\.opus$/) },
+      { downstep: 0 },
+    ]);
   });
 
   it('needs a lemma', async () => {

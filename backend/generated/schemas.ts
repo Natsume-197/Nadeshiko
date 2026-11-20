@@ -153,6 +153,7 @@ export const s_DictionaryCandidate = z.object({
     .array(
       z.object({
         downstep: z.coerce.number().min(0),
+        audioUrl: z.string().optional(),
         source: z.string().optional(),
         nasal: z.array(z.coerce.number()).optional(),
         devoice: z.array(z.coerce.number()).optional(),

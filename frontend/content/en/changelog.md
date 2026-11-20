@@ -31,6 +31,7 @@ Nadeshiko 3.0 is the first major version under new hands. It collects everything
 
 - **Word cards**: the shirabe.org link at the foot of the card can now be turned off in Settings, like the other dictionaries.
 - **Word cards**: pitch accent has its own section after the definitions, drawn as a graph: a dot for each mora, high or low, and one for the particle after the word, coloured by accent type (flat, head-high, middle or tail).
+- **Word cards**: a ▶ button plays each pitch pattern of every word with a known pitch accent, on the card and on the word's entry in searches, so you can hear where the pitch drops. The recordings are synthesised (VOICEVOX:四国めたん), and each one was checked to fall on the right mora before it was published. Anki notes get it through `{word-audio}`.
 - **Word cards**: on Nadeshiko's own card, the frequency rank opens to show the word's rank in anime, live action, YouTube and audiobooks separately: a word can be everyday speech in anime and rare in books.
 - **Word cards**: mine the form the sentence actually uses (食べた, a kana もしかして) as well as the dictionary form. The card shows both as one choice when they differ, and two new Anki placeholders, `{word-surface}` and `{word-dictionary}`, always carry both.
 - **Search filters**: the title list can be sorted A–Z or by number of sentences, with your starred titles first. Your choice is remembered.

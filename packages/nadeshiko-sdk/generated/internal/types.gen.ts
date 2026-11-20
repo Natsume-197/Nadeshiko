@@ -1074,6 +1074,12 @@ export type DictionaryCandidate = {
          */
         downstep: number;
         /**
+         * A recording of the reading with this accent (Opus in Ogg), when one exists. Synthesised with
+         * VOICEVOX:四国めたん; absent for words outside the most frequent ones.
+         *
+         */
+        audioUrl?: string;
+        /**
          * Custom pitch dictionary title when sourced from a user upload.
          */
         source?: string;

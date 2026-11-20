@@ -8755,6 +8755,16 @@ components:
                 type: integer
                 minimum: 0
                 description: 0 is flat (heiban); n is the mora after which the pitch drops.
+              audioUrl:
+                type: string
+                format: uri
+                description: >
+                  A recording of the reading with this accent (Opus in Ogg),
+                  when one exists. Synthesised with
+
+                  VOICEVOX:四国めたん; absent for words outside the most frequent
+                  ones.
+                example: https://cdn.nadeshiko.co/pitch-audio/metan-v1/%E3%81%AF%E3%81%97_2.opus
               source:
                 type: string
                 description: Custom pitch dictionary title when sourced from a user upload.
