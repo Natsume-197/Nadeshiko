@@ -5,6 +5,7 @@ import {
   headwordFurigana,
   kanjiIn,
   pitchMorae,
+  type DictionaryWord,
   type GlossLanguage,
   type GlossPreference,
 } from '~/utils/wordCard';
@@ -23,12 +24,11 @@ const COMMON_LABEL: Record<GlossLanguage, string> = { en: 'Common', es: 'Frecuen
  * mounting it, and it is why the lookup that produces `word` lives elsewhere.
  */
 export function useWordCardContent(
-  word: () => ShirabeWord | null,
+  word: () => DictionaryWord | null,
   token: () => EnrichedToken | null,
   headword: () => string,
   glossLanguages: () => GlossPreference,
   hiddenDefinitionLanguages: () => readonly GlossLanguage[],
-  shirabeLinked: () => boolean,
   hasCustomDictionaries: () => boolean = () => false,
 ) {
   // 1. Head. The reading is the dictionary's, not the surface's: 焼けた reads
@@ -42,11 +42,11 @@ export function useWordCardContent(
   });
 
   /**
-   * Use token furigana until Shirabe's alignment arrives so the headword does not change layout
+   * Use token furigana until the dictionary's alignment arrives so the headword does not change layout
    * mid-read.
    */
   const headFurigana = computed(() => {
-    // Guarded: Shirabe's per-candidate furigana does not always spell that
+    // Guarded: a candidate's furigana does not always spell that
     // candidate's headword. See `headwordFurigana`.
     const fromWord = headwordFurigana(word());
     if (fromWord.length > 0) return fromWord;
@@ -65,7 +65,7 @@ export function useWordCardContent(
   const inflectionLine = computed(() => {
     const current = token();
     if (!current || current.inflectionLabels.length === 0) return '';
-    // Show Shirabe's inflection labels verbatim. Surface and headword are already visible, so
+    // Show the parser's inflection labels verbatim. Surface and headword are already visible, so
     // omit the redundant conversion arrow.
     return current.inflectionLabels.join(' · ');
   });
@@ -93,8 +93,8 @@ export function useWordCardContent(
   const customFrequencies = computed(() => word()?.customFrequencies ?? []);
 
   /**
-   * Limit pitch to two patterns so senses stay visible. Audio is per reading/accent on
-   * Shirabe's public CDN; show a button only when that pattern has a recording.
+   * Limit pitch to two patterns so senses stay visible. Audio is per reading/accent at a
+   * public URL; show a button only when that pattern has a recording.
    */
   const pitchPatterns = computed(() => {
     const reading = word()?.reading;
@@ -111,7 +111,7 @@ export function useWordCardContent(
   const senses = computed(() => cardSenses(word(), glossLanguages()));
 
   /** How many dictionaries this card is made of. One for every reader who has not
-   *  linked a Shirabe account or uploaded custom dictionaries, which is what
+   *  uploaded custom dictionaries, which is what
    *  decides whether the senses are worth attributing at all. */
   const sourceCount = computed(() => new Set(senses.value.map((sense) => sense.dictionary)).size);
 
@@ -119,7 +119,7 @@ export function useWordCardContent(
    * Name sources for multiple dictionaries or any linked/custom stack, where an unexpected fallback
    * dictionary otherwise appears unexplained.
    */
-  const namesSources = computed(() => sourceCount.value > 1 || shirabeLinked() || hasCustomDictionaries());
+  const namesSources = computed(() => sourceCount.value > 1 || hasCustomDictionaries());
 
   /**
    * Merged expressions hide their constituent tokens; the parts row restores access. Offer only

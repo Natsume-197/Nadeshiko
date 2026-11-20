@@ -25,9 +25,7 @@ When a sentence writes a verb in kana, the word it stands for after a given noun
 
 ## Word cards
 
-You choose which dictionary answers the word card in Settings: Nadeshiko's own, or [Shirabe](https://shirabe.org), which credits its own sources for readings, pitch accent, frequency, JLPT levels and audio.
-
-Nadeshiko's own word cards use, besides JMdict and JMnedict:
+Nadeshiko's word cards use, besides JMdict and JMnedict:
 
 - **Furigana:** [JmdictFurigana](https://github.com/Doublevil/JmdictFurigana) by Doublevil, under the [Creative Commons Attribution-ShareAlike 4.0 licence](https://creativecommons.org/licenses/by-sa/4.0/).
 - **Pitch accent:** [UniDic](https://clrd.ninjal.ac.jp/unidic/) by the National Institute for Japanese Language and Linguistics (NINJAL), under the modified BSD licence. Where UniDic has none, mostly compounds: [Kanjium](https://github.com/mifunetoshiro/kanjium), under the Creative Commons Attribution-ShareAlike 4.0 licence. The pitch accent notation, verb particle data, phonetics, homonyms and other additions or modifications to EDICT, KANJIDIC or KRADFILE were provided by Uros O. through his free database.

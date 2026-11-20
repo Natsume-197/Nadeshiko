@@ -34,16 +34,9 @@ export function useTranslationLanguages() {
   );
 
   /**
-   * Linked Shirabe gloss order wins for dictionary definitions, falling back to local
-   * preferences if the stack names no en/es language. Local settings still govern subtitle
-   * rows, toolbar toggles, and copied translations.
+   * Dictionary gloss language order follows the reader's global translation languages preference.
    */
-  const dictionaryGlossLanguages = computed<GlossLanguage[]>(() => {
-    const stacked = (user.shirabeGlossLanguages ?? []).filter(
-      (language): language is GlossLanguage => language === 'en' || language === 'es',
-    );
-    return stacked.length > 0 ? [...new Set(stacked)] : glossLanguages.value;
-  });
+  const dictionaryGlossLanguages = computed<GlossLanguage[]>(() => glossLanguages.value);
 
   return { languages, glossLanguages, dictionaryGlossLanguages };
 }

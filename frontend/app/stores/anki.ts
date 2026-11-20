@@ -699,7 +699,7 @@ export const ankiStore = defineStore('anki', {
         }
 
         if (needsWordAudio && minedWord?.audioUrl && minedWord.audioFilename) {
-          // By URL, like the still: the clip is on Shirabe's public CDN and
+          // By URL, like the still: the clip is at a public URL and
           // AnkiConnect fetches it itself, so nothing has to come through the
           // page and there is no CORS to satisfy.
           mediaRequests.push(

@@ -21,7 +21,7 @@ function render(routes: { method: string; path: string }[]): string {
     '/**',
     ' * Routes the Nitro `/v1` proxy refuses to forward for a browser, however it is',
     ' * authenticated. They exist for calls this server makes on its own behalf',
-    ' * (server/utils/shirabeReader.ts), and the backend gates them on the internal',
+    ' * (server/utils/dictionaryReader.ts), and the backend gates them on the internal',
     ' * secret the proxy would otherwise stamp onto a relayed browser request. Paths',
     ' * keep their OpenAPI `{param}` templates.',
     ' */',

@@ -48,7 +48,10 @@ vi.stubGlobal('useToastError', vi.fn());
 const toastSuccess = vi.fn();
 vi.stubGlobal('useToastSuccess', toastSuccess);
 vi.stubGlobal('usePostHog', () => ({ capture: vi.fn() }));
-vi.stubGlobal('useNadeshikoSdk', () => ({ getShirabeConnection: vi.fn().mockResolvedValue(null) }));
+vi.stubGlobal(
+  '$fetch',
+  vi.fn().mockResolvedValue({ dictionaries: [], builtin: { id: 'jmdict', enabled: true, position: 0 } }),
+);
 
 import AnkiSync from './AnkiSync.vue';
 

@@ -26,7 +26,6 @@ const store = {
   userName: 'Reader',
   userEmail: 'r@example.test',
   isLoggedIn: true,
-  shirabeGlossLanguages: [],
   sessions: [],
   listSessions: vi.fn().mockResolvedValue([]),
   changeEmail: vi.fn(),

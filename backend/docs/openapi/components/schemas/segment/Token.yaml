@@ -33,8 +33,8 @@ properties:
     description: Primary part-of-speech tag
     example: 動詞
 
-  # Added when Shirabe became the parser. All optional, so an existing consumer
-  # reading the ten fields above sees no difference, and the SDKs stay compatible.
+  # Optional enrichment fields added for the grouped-token parser. Existing consumers
+  # reading the core fields above see no difference, and the SDKs stay compatible.
   posLabel:
     type: string
     description: The part of speech in words, so a client needs no UniDic table.

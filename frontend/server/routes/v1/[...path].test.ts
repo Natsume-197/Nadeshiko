@@ -29,8 +29,8 @@ const { v1ApiLimit, v1AuthLimit, v1FeedbackLimit } = await import('~~/server/uti
 
 describe('the browser /v1 proxy server-only boundary', () => {
   it.each([
-    ['GET', '/v1/user/connections/shirabe/credential/'],
-    ['HEAD', '/v1/user/connections/shirabe/CREDENTIAL'],
+    ['GET', '/v1/dictionary/identify/'],
+    ['HEAD', '/v1/dictionary/IDENTIFY'],
   ])('returns 403 and never proxies %s %s', async (method, path) => {
     await expect(request(path, method)).rejects.toMatchObject({ statusCode: 403 });
     expect(proxyToBackend).not.toHaveBeenCalled();

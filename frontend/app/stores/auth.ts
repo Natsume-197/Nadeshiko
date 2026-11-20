@@ -39,18 +39,6 @@ export interface SessionUser {
   email?: string | null;
   role?: string | null;
   createdAt?: string | null;
-  /**
-   * Linked Shirabe state comes with the session. stackFingerprint invalidates browser-cached
-   * lookups when the reader changes their dictionaries.
-   */
-  shirabe?: {
-    linked?: boolean;
-    stackFingerprint?: string | null;
-    /** Which languages they read definitions in, and in what order, as their
-     *  Shirabe stack says (`jmdict:es` above `jmdict:en` means Spanish first).
-     *  Empty when the stack names no gloss language. */
-    glossLanguages?: string[] | null;
-  } | null;
   /** User-uploaded Yomitan dictionaries on Nadeshiko's backend (task 48). */
   customDictionaries?: {
     count?: number;
@@ -88,16 +76,6 @@ function defaultAuthState() {
     userEmail: null as string | null,
     currentSessionToken: null as string | null,
     userInfo: { role: 'USER' as UserRole },
-    /** Which Shirabe dictionary stack this reader's word lookups come from, or
-     *  null when they have not linked an account. See `SessionUser.shirabe`. */
-    shirabeStackFingerprint: null as string | null,
-    /** The gloss language order their Shirabe stack implies. Empty when they have
-     *  linked nothing, or when the stack names no gloss language at all. */
-    shirabeGlossLanguages: [] as string[],
-    /** Whether a Shirabe account is linked at all. Not the same question as the
-     *  two above: a reader can be linked and have neither a fingerprint copied
-     *  yet nor a gloss language in their stack. */
-    shirabeLinked: false,
     /** Fingerprint and active count for the reader's own uploaded Yomitan dictionaries (task 48). */
     customDictionariesFingerprint: null as string | null,
     customDictionariesCount: 0,
@@ -204,9 +182,6 @@ export const userStore = defineStore('user', {
         userEmail: sessionUser?.email ?? null,
         currentSessionToken: response?.session?.token ?? null,
         userInfo: { role: (sessionUser?.role as UserRole) ?? 'USER' },
-        shirabeStackFingerprint: sessionUser?.shirabe?.stackFingerprint ?? null,
-        shirabeGlossLanguages: sessionUser?.shirabe?.glossLanguages ?? [],
-        shirabeLinked: sessionUser?.shirabe?.linked === true,
         customDictionariesFingerprint: sessionUser?.customDictionaries?.stackFingerprint ?? null,
         customDictionariesCount: sessionUser?.customDictionaries?.count ?? 0,
         customDictionariesAvailable: sessionUser?.customDictionaries != null,
@@ -216,7 +191,7 @@ export const userStore = defineStore('user', {
 
       // The word-lookup cache keys on this, and cannot reach in for it: see
       // `setReaderStack`. Pushed from the one place that knows a session landed.
-      setReaderStack(sessionUser?.shirabe?.stackFingerprint ?? sessionUser?.customDictionaries?.stackFingerprint);
+      setReaderStack(sessionUser?.customDictionaries?.stackFingerprint);
 
       return true;
     },

@@ -3,18 +3,18 @@ import {
   candidateName,
   candidatePartOfSpeech,
   pickerChips,
+  type DictionaryCandidate,
   type GlossPreference,
-  type ShirabeCandidate,
 } from '~/utils/wordCard';
 
 /** Keep the glance to one readable line; overflow candidates remain available in the list. */
 const PICKER_VISIBLE = 4;
 
 /**
- * Use Shirabe's name flag, not dictionary slug: JMdict also carries name entries. Name-only
+ * Use the candidate's name flag, not dictionary slug: JMdict also carries name entries. Name-only
  * answers retain their tags.
  */
-const isNameCandidate = (candidate: ShirabeCandidate): boolean => candidate.name === true;
+const isNameCandidate = (candidate: DictionaryCandidate): boolean => candidate.name === true;
 
 /**
  * The candidate row, derived: which chips to draw, which need a part of speech
@@ -25,7 +25,7 @@ const isNameCandidate = (candidate: ShirabeCandidate): boolean => candidate.name
  * away from the card.
  */
 export function useCandidateChips(
-  candidates: () => readonly ShirabeCandidate[],
+  candidates: () => readonly DictionaryCandidate[],
   picked: () => number,
   glossLanguages: () => GlossPreference,
 ) {
@@ -41,7 +41,7 @@ export function useCandidateChips(
    * Use the localized part-of-speech initial to disambiguate compact chips; title carries the
    * full label and the expanded list supplies glosses.
    */
-  function posInitial(candidate: ShirabeCandidate): string {
+  function posInitial(candidate: DictionaryCandidate): string {
     return [...candidatePartOfSpeech(candidate, glossLanguages())][0] ?? '';
   }
 

@@ -736,7 +736,6 @@
       },
       "translationLanguages": "Translation languages",
       "translationLanguagesDescription": "Choose the languages for subtitle translations and dictionary definitions. If you select both, you can also choose their display order.",
-      "translationLanguagesLinkedDescription": "Choose the languages and display order for subtitle translations. Dictionary definitions follow your Shirabe settings.",
       "definitionSize": "Definition text size",
       "definitionSizeDescription": "How large the word popup prints its definitions.",
       "definitionSizeOptions": {
@@ -744,13 +743,6 @@
         "MEDIUM": "Medium",
         "LARGE": "Large"
       },
-      "dictionaryProvider": "Word card dictionary",
-      "dictionaryProviderDescription": "Which dictionary answers when you tap a word. If it is down, the card answers from the other one.",
-      "dictionaryProviderOptions": {
-        "SHIRABE": "Shirabe",
-        "NADESHIKO": "Nadeshiko"
-      },
-      "dictionaryProviderDefault": "{name} (default)",
       "translationLanguageOptions": {
         "EN": "English only",
         "ES": "Spanish only",
@@ -1051,8 +1043,6 @@
       "quotaUsed": "{used} / {max} dictionaries",
       "maxZipSize": "Up to {maxMb} MB per .zip",
       "patronUpsell": "Patrons can upload up to 6 dictionaries (95 MB each).",
-      "shirabeProviderNotice": "Your word cards are currently using Shirabe. Switch to Nadeshiko to use your uploaded dictionaries.",
-      "switchToNadeshiko": "Use Nadeshiko",
       "dropPrompt": "Click to choose a Yomitan .zip or drop it here",
       "uploading": "Uploading… {progress}%",
       "supportedFormats": "Supports Yomitan v3 term, frequency, and pitch accent dictionaries (without images).",
@@ -1583,21 +1573,6 @@
   },
   "connections": {
     "title": "Connections",
-    "shirabe": {
-      "name": "Shirabe",
-      "description": "Connect with your Shirabe account to keep using your dictionaries",
-      "connect": "Connect",
-      "disconnect": "Disconnect",
-      "linkedAs": "Linked as {name}",
-      "dictionaries": "Dictionaries",
-      "dictionariesHint": "Go to Shirabe to change them",
-      "anonymous": "your Shirabe account",
-      "upgrade": "Update permissions",
-      "reconnect": "Reconnect",
-      "upgradeNeeded": "Linked as {name}. A new permission is needed for the latest features",
-      "disconnected": "Linked as {name}, but Shirabe has stopped accepting the connection, so your own dictionaries are not being used. Reconnect to bring them back.",
-      "confirmDisconnect": "Disconnect your Shirabe account? The key is revoked on Shirabe, and word cards go back to the default dictionaries."
-    },
     "patreon": {
       "name": "Patreon",
       "description": "Link Patreon to verify your membership and propose shows",
@@ -1608,15 +1583,6 @@
       "member": "your Patreon account",
       "join": "Join",
       "confirmDisconnect": "Disconnect your Patreon account from Nadeshiko?"
-    },
-    "callback": {
-      "working": "Finishing the connection…",
-      "declined": "The connection was not approved, so nothing was linked.",
-      "failed": "That connection could not be completed.",
-      "signedOut": "You are signed out here, so the connection could not be finished. Sign in and start it again from your settings.",
-      "back": "Back to settings",
-      "done": "Shirabe connected",
-      "goToSettings": "Go to settings"
     }
   },
   "supporters": {
@@ -1714,7 +1680,7 @@
       },
       "ownDictionaries": {
         "title": "Your own dictionaries",
-        "description": "Link Shirabe and Nadeshiko uses your ordered dictionary stack, including monolingual and uploaded dictionaries."
+        "description": "Upload Yomitan term and frequency dictionaries and Nadeshiko uses your ordered dictionary stack, including monolingual dictionaries."
       },
       "ankiMining": {
         "title": "Rich Anki mining",

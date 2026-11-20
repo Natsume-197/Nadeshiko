@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { mount } from '@vue/test-utils';
 import YomitanContent from './YomitanContent.vue';
-import { candidateSummary, cardSenses, glossPreference, type ShirabeWord } from '~/utils/wordCard';
+import { candidateSummary, cardSenses, glossPreference, type DictionaryWord } from '~/utils/wordCard';
 
 describe('YomitanContent & custom dictionary card senses', () => {
   it('renders nested structured-content safely and drops unsafe hrefs', () => {
@@ -71,7 +71,7 @@ describe('YomitanContent & custom dictionary card senses', () => {
   });
 
   it('preserves structuredContent on CardGlossRow while keeping plain text for summaries', () => {
-    const word: ShirabeWord = {
+    const word: DictionaryWord = {
       id: 'jmdict:1358280',
       headword: '食べる',
       reading: 'たべる',

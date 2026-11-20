@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { AddExcludedMediaData, AddExcludedMediaErrors, AddExcludedMediaResponses, AddFavoriteMediaData, AddFavoriteMediaErrors, AddFavoriteMediaResponses, AddSegmentToCollectionData, AddSegmentToCollectionErrors, AddSegmentToCollectionResponses, AuthAdminStopImpersonatingData, AuthAdminStopImpersonatingErrors, AuthAdminStopImpersonatingResponses, AuthApiKeyCreateData, AuthApiKeyCreateErrors, AuthApiKeyCreateResponses, AuthApiKeyListData, AuthApiKeyListErrors, AuthApiKeyListResponses, AuthApiKeyUpdateData, AuthApiKeyUpdateErrors, AuthApiKeyUpdateResponses, AuthRevokeOtherSessionsData, AuthRevokeOtherSessionsErrors, AuthRevokeOtherSessionsResponses, AuthRevokeSessionData, AuthRevokeSessionErrors, AuthRevokeSessionResponses, AuthRevokeSessionsData, AuthRevokeSessionsErrors, AuthRevokeSessionsResponses, BanUserData, BanUserErrors, BanUserResponses, BatchUpdateAdminReportsData, BatchUpdateAdminReportsErrors, BatchUpdateAdminReportsResponses, BulkDeleteAdminReportsData, BulkDeleteAdminReportsErrors, BulkDeleteAdminReportsResponses, BulkUpdateAdminReportsData, BulkUpdateAdminReportsErrors, BulkUpdateAdminReportsResponses, ChangeEmailData, ChangeEmailErrors, ChangeEmailResponses, ClearFamiliarMediaData, ClearFamiliarMediaErrors, ClearFamiliarMediaResponses, CompletePatreonLinkData, CompletePatreonLinkErrors, CompletePatreonLinkResponses, CompleteShirabeLinkData, CompleteShirabeLinkErrors, CompleteShirabeLinkResponses, CreateAdminRoadmapItemData, CreateAdminRoadmapItemErrors, CreateAdminRoadmapItemResponses, CreateCollectionData, CreateCollectionErrors, CreateCollectionResponses, CreateEpisodeData, CreateEpisodeErrors, CreateEpisodeResponses, CreateFeedbackData, CreateFeedbackErrors, CreateFeedbackResponses, CreateMediaData, CreateMediaErrors, CreateMediaResponses, CreateRoadmapProposalData, CreateRoadmapProposalErrors, CreateRoadmapProposalResponses, CreateSegmentData, CreateSegmentErrors, CreateSegmentResponses, CreateSegmentsBatchData, CreateSegmentsBatchErrors, CreateSegmentsBatchResponses, CreateUserApiKeyData, CreateUserApiKeyErrors, CreateUserApiKeyResponses, CreateUserReportData, CreateUserReportErrors, CreateUserReportResponses, DeleteAdminReportData, DeleteAdminReportErrors, DeleteAdminReportResponses, DeleteCollectionData, DeleteCollectionErrors, DeleteCollectionResponses, DeleteEpisodeData, DeleteEpisodeErrors, DeleteEpisodeResponses, DeleteMediaData, DeleteMediaErrors, DeleteMediaResponses, DeleteUserActivityByDateData, DeleteUserActivityByDateErrors, DeleteUserActivityByDateResponses, DeleteUserActivityByIdData, DeleteUserActivityByIdErrors, DeleteUserActivityByIdResponses, DeleteUserActivityData, DeleteUserActivityErrors, DeleteUserActivityResponses, DeleteUserData, DeleteUserDictionaryData, DeleteUserDictionaryErrors, DeleteUserDictionaryResponses, DeleteUserErrors, DeleteUserResponses, ExportUserDataData, ExportUserDataErrors, ExportUserDataResponses, ForgetFamiliarMediaData, ForgetFamiliarMediaErrors, ForgetFamiliarMediaResponses, GetAdminUserQuotaData, GetAdminUserQuotaErrors, GetAdminUserQuotaResponses, GetAdminUsersWithProvidersData, GetAdminUsersWithProvidersErrors, GetAdminUsersWithProvidersResponses, GetAnnouncementData, GetAnnouncementErrors, GetAnnouncementResponses, GetCollectionData, GetCollectionErrors, GetCollectionResponses, GetCollectionStatsData, GetCollectionStatsErrors, GetCollectionStatsResponses, GetCoveredWordsData, GetCoveredWordsErrors, GetCoveredWordsResponses, GetDictionaryKanjiData, GetDictionaryKanjiErrors, GetDictionaryKanjiIndexData, GetDictionaryKanjiIndexErrors, GetDictionaryKanjiIndexResponses, GetDictionaryKanjiResponses, GetEmailPreferencesByTokenData, GetEmailPreferencesByTokenErrors, GetEmailPreferencesByTokenResponses, GetEpisodeData, GetEpisodeErrors, GetEpisodeResponses, GetFeedbackFormTokenData, GetFeedbackFormTokenErrors, GetFeedbackFormTokenResponses, GetMeData, GetMediaData, GetMediaErrors, GetMediaResponses, GetMeErrors, GetMeResponses, GetPatreonConnectionData, GetPatreonConnectionErrors, GetPatreonConnectionResponses, GetSearchStatsData, GetSearchStatsErrors, GetSearchStatsResponses, GetSegmentContextData, GetSegmentContextErrors, GetSegmentContextResponses, GetSegmentData, GetSegmentErrors, GetSegmentResponses, GetSessionData, GetSessionErrors, GetSessionPostData, GetSessionPostErrors, GetSessionPostResponses, GetSessionResponses, GetShirabeConnectionData, GetShirabeConnectionErrors, GetShirabeConnectionResponses, GetShirabeCredentialData, GetShirabeCredentialErrors, GetShirabeCredentialResponses, GetStatsOverviewData, GetStatsOverviewErrors, GetStatsOverviewResponses, GetUserActivityHeatmapData, GetUserActivityHeatmapErrors, GetUserActivityHeatmapResponses, GetUserActivityStatsData, GetUserActivityStatsErrors, GetUserActivityStatsResponses, GetUserPreferencesData, GetUserPreferencesErrors, GetUserPreferencesResponses, IdentifyDictionaryWordData, IdentifyDictionaryWordErrors, IdentifyDictionaryWordResponses, ImpersonateUserData, ImpersonateUserErrors, ImpersonateUserResponses, ListAdminReportsData, ListAdminReportsErrors, ListAdminReportsResponses, ListAdminRoadmapData, ListAdminRoadmapErrors, ListAdminRoadmapResponses, ListAgentActivityData, ListAgentActivityErrors, ListAgentActivityResponses, ListCollectionsData, ListCollectionsErrors, ListCollectionsResponses, ListEpisodesData, ListEpisodesErrors, ListEpisodesResponses, ListExcludedMediaData, ListExcludedMediaErrors, ListExcludedMediaResponses, ListFamiliarMediaData, ListFamiliarMediaErrors, ListFamiliarMediaResponses, ListFavoriteMediaData, ListFavoriteMediaErrors, ListFavoriteMediaResponses, ListMediaData, ListMediaErrors, ListMediaResponses, ListRoadmapData, ListRoadmapErrors, ListRoadmapResponses, ListSegmentRevisionsData, ListSegmentRevisionsErrors, ListSegmentRevisionsResponses, ListSegmentsData, ListSegmentsErrors, ListSegmentsResponses, ListTiersData, ListTiersErrors, ListTiersResponses, ListUserActivityData, ListUserActivityErrors, ListUserActivityResponses, ListUserDictionariesData, ListUserDictionariesErrors, ListUserDictionariesResponses, ListUserSessionsData, ListUserSessionsErrors, ListUserSessionsResponses, ModerateEpisodeSegmentsData, ModerateEpisodeSegmentsErrors, ModerateEpisodeSegmentsResponses, RemoveExcludedMediaData, RemoveExcludedMediaErrors, RemoveExcludedMediaResponses, RemoveFavoriteMediaData, RemoveFavoriteMediaErrors, RemoveFavoriteMediaResponses, RemoveSegmentFromCollectionData, RemoveSegmentFromCollectionErrors, RemoveSegmentFromCollectionResponses, ReportShirabeRefusalData, ReportShirabeRefusalErrors, ReportShirabeRefusalResponses, RestoreSegmentRevisionData, RestoreSegmentRevisionErrors, RestoreSegmentRevisionResponses, ResyncShirabeStackData, ResyncShirabeStackErrors, ResyncShirabeStackResponses, SearchCollectionSegmentsData, SearchCollectionSegmentsErrors, SearchCollectionSegmentsResponses, SearchData, SearchErrors, SearchMediaData, SearchMediaErrors, SearchMediaResponses, SearchResponses, SearchWordsData, SearchWordsErrors, SearchWordsResponses, SignInWithEmailOtpData, SignInWithEmailOtpErrors, SignInWithEmailOtpResponses, SignInWithMagicLinkData, SignInWithMagicLinkErrors, SignInWithMagicLinkResponses, SignOutData, SignOutErrors, SignOutResponses, SocialSignInData, SocialSignInErrors, SocialSignInResponses, StartPatreonLinkData, StartPatreonLinkErrors, StartPatreonLinkResponses, StartShirabeLinkData, StartShirabeLinkErrors, StartShirabeLinkResponses, TrackUserActivityData, TrackUserActivityErrors, TrackUserActivityResponses, TriggerCoveredWordsUpdateData, TriggerCoveredWordsUpdateErrors, TriggerCoveredWordsUpdateResponses, UnbanUserData, UnbanUserErrors, UnbanUserResponses, UnlinkPatreonData, UnlinkPatreonErrors, UnlinkPatreonResponses, UnlinkShirabeData, UnlinkShirabeErrors, UnlinkShirabeResponses, UnsubscribeFromEmailData, UnsubscribeFromEmailErrors, UnsubscribeFromEmailResponses, UpdateAdminReportData, UpdateAdminReportErrors, UpdateAdminReportResponses, UpdateAdminRoadmapItemData, UpdateAdminRoadmapItemErrors, UpdateAdminRoadmapItemResponses, UpdateAdminUserQuotaData, UpdateAdminUserQuotaErrors, UpdateAdminUserQuotaResponses, UpdateAnnouncementData, UpdateAnnouncementErrors, UpdateAnnouncementResponses, UpdateCollectionData, UpdateCollectionErrors, UpdateCollectionResponses, UpdateCollectionSegmentData, UpdateCollectionSegmentErrors, UpdateCollectionSegmentResponses, UpdateEmailPreferencesByTokenData, UpdateEmailPreferencesByTokenErrors, UpdateEmailPreferencesByTokenResponses, UpdateEpisodeData, UpdateEpisodeErrors, UpdateEpisodeResponses, UpdateMediaData, UpdateMediaErrors, UpdateMediaResponses, UpdateSegmentData, UpdateSegmentErrors, UpdateSegmentResponses, UpdateUserDictionariesData, UpdateUserDictionariesErrors, UpdateUserDictionariesResponses, UpdateUserPreferencesData, UpdateUserPreferencesErrors, UpdateUserPreferencesResponses } from './types.gen';
+import type { AddExcludedMediaData, AddExcludedMediaErrors, AddExcludedMediaResponses, AddFavoriteMediaData, AddFavoriteMediaErrors, AddFavoriteMediaResponses, AddSegmentToCollectionData, AddSegmentToCollectionErrors, AddSegmentToCollectionResponses, AuthAdminStopImpersonatingData, AuthAdminStopImpersonatingErrors, AuthAdminStopImpersonatingResponses, AuthApiKeyCreateData, AuthApiKeyCreateErrors, AuthApiKeyCreateResponses, AuthApiKeyListData, AuthApiKeyListErrors, AuthApiKeyListResponses, AuthApiKeyUpdateData, AuthApiKeyUpdateErrors, AuthApiKeyUpdateResponses, AuthRevokeOtherSessionsData, AuthRevokeOtherSessionsErrors, AuthRevokeOtherSessionsResponses, AuthRevokeSessionData, AuthRevokeSessionErrors, AuthRevokeSessionResponses, AuthRevokeSessionsData, AuthRevokeSessionsErrors, AuthRevokeSessionsResponses, BanUserData, BanUserErrors, BanUserResponses, BatchUpdateAdminReportsData, BatchUpdateAdminReportsErrors, BatchUpdateAdminReportsResponses, BulkDeleteAdminReportsData, BulkDeleteAdminReportsErrors, BulkDeleteAdminReportsResponses, BulkUpdateAdminReportsData, BulkUpdateAdminReportsErrors, BulkUpdateAdminReportsResponses, ChangeEmailData, ChangeEmailErrors, ChangeEmailResponses, ClearFamiliarMediaData, ClearFamiliarMediaErrors, ClearFamiliarMediaResponses, CompletePatreonLinkData, CompletePatreonLinkErrors, CompletePatreonLinkResponses, CreateAdminRoadmapItemData, CreateAdminRoadmapItemErrors, CreateAdminRoadmapItemResponses, CreateCollectionData, CreateCollectionErrors, CreateCollectionResponses, CreateEpisodeData, CreateEpisodeErrors, CreateEpisodeResponses, CreateFeedbackData, CreateFeedbackErrors, CreateFeedbackResponses, CreateMediaData, CreateMediaErrors, CreateMediaResponses, CreateRoadmapProposalData, CreateRoadmapProposalErrors, CreateRoadmapProposalResponses, CreateSegmentData, CreateSegmentErrors, CreateSegmentResponses, CreateSegmentsBatchData, CreateSegmentsBatchErrors, CreateSegmentsBatchResponses, CreateUserApiKeyData, CreateUserApiKeyErrors, CreateUserApiKeyResponses, CreateUserReportData, CreateUserReportErrors, CreateUserReportResponses, DeleteAdminReportData, DeleteAdminReportErrors, DeleteAdminReportResponses, DeleteCollectionData, DeleteCollectionErrors, DeleteCollectionResponses, DeleteEpisodeData, DeleteEpisodeErrors, DeleteEpisodeResponses, DeleteMediaData, DeleteMediaErrors, DeleteMediaResponses, DeleteUserActivityByDateData, DeleteUserActivityByDateErrors, DeleteUserActivityByDateResponses, DeleteUserActivityByIdData, DeleteUserActivityByIdErrors, DeleteUserActivityByIdResponses, DeleteUserActivityData, DeleteUserActivityErrors, DeleteUserActivityResponses, DeleteUserData, DeleteUserDictionaryData, DeleteUserDictionaryErrors, DeleteUserDictionaryResponses, DeleteUserErrors, DeleteUserResponses, ExportUserDataData, ExportUserDataErrors, ExportUserDataResponses, ForgetFamiliarMediaData, ForgetFamiliarMediaErrors, ForgetFamiliarMediaResponses, GetAdminUserQuotaData, GetAdminUserQuotaErrors, GetAdminUserQuotaResponses, GetAdminUsersWithProvidersData, GetAdminUsersWithProvidersErrors, GetAdminUsersWithProvidersResponses, GetAnnouncementData, GetAnnouncementErrors, GetAnnouncementResponses, GetCollectionData, GetCollectionErrors, GetCollectionResponses, GetCollectionStatsData, GetCollectionStatsErrors, GetCollectionStatsResponses, GetCoveredWordsData, GetCoveredWordsErrors, GetCoveredWordsResponses, GetDictionaryKanjiData, GetDictionaryKanjiErrors, GetDictionaryKanjiIndexData, GetDictionaryKanjiIndexErrors, GetDictionaryKanjiIndexResponses, GetDictionaryKanjiResponses, GetEmailPreferencesByTokenData, GetEmailPreferencesByTokenErrors, GetEmailPreferencesByTokenResponses, GetEpisodeData, GetEpisodeErrors, GetEpisodeResponses, GetFeedbackFormTokenData, GetFeedbackFormTokenErrors, GetFeedbackFormTokenResponses, GetMeData, GetMediaData, GetMediaErrors, GetMediaResponses, GetMeErrors, GetMeResponses, GetPatreonConnectionData, GetPatreonConnectionErrors, GetPatreonConnectionResponses, GetSearchStatsData, GetSearchStatsErrors, GetSearchStatsResponses, GetSegmentContextData, GetSegmentContextErrors, GetSegmentContextResponses, GetSegmentData, GetSegmentErrors, GetSegmentResponses, GetSessionData, GetSessionErrors, GetSessionPostData, GetSessionPostErrors, GetSessionPostResponses, GetSessionResponses, GetStatsOverviewData, GetStatsOverviewErrors, GetStatsOverviewResponses, GetUserActivityHeatmapData, GetUserActivityHeatmapErrors, GetUserActivityHeatmapResponses, GetUserActivityStatsData, GetUserActivityStatsErrors, GetUserActivityStatsResponses, GetUserPreferencesData, GetUserPreferencesErrors, GetUserPreferencesResponses, IdentifyDictionaryWordData, IdentifyDictionaryWordErrors, IdentifyDictionaryWordResponses, ImpersonateUserData, ImpersonateUserErrors, ImpersonateUserResponses, ListAdminReportsData, ListAdminReportsErrors, ListAdminReportsResponses, ListAdminRoadmapData, ListAdminRoadmapErrors, ListAdminRoadmapResponses, ListAgentActivityData, ListAgentActivityErrors, ListAgentActivityResponses, ListCollectionsData, ListCollectionsErrors, ListCollectionsResponses, ListEpisodesData, ListEpisodesErrors, ListEpisodesResponses, ListExcludedMediaData, ListExcludedMediaErrors, ListExcludedMediaResponses, ListFamiliarMediaData, ListFamiliarMediaErrors, ListFamiliarMediaResponses, ListFavoriteMediaData, ListFavoriteMediaErrors, ListFavoriteMediaResponses, ListMediaData, ListMediaErrors, ListMediaResponses, ListRoadmapData, ListRoadmapErrors, ListRoadmapResponses, ListSegmentRevisionsData, ListSegmentRevisionsErrors, ListSegmentRevisionsResponses, ListSegmentsData, ListSegmentsErrors, ListSegmentsResponses, ListTiersData, ListTiersErrors, ListTiersResponses, ListUserActivityData, ListUserActivityErrors, ListUserActivityResponses, ListUserDictionariesData, ListUserDictionariesErrors, ListUserDictionariesResponses, ListUserSessionsData, ListUserSessionsErrors, ListUserSessionsResponses, ModerateEpisodeSegmentsData, ModerateEpisodeSegmentsErrors, ModerateEpisodeSegmentsResponses, RemoveExcludedMediaData, RemoveExcludedMediaErrors, RemoveExcludedMediaResponses, RemoveFavoriteMediaData, RemoveFavoriteMediaErrors, RemoveFavoriteMediaResponses, RemoveSegmentFromCollectionData, RemoveSegmentFromCollectionErrors, RemoveSegmentFromCollectionResponses, RestoreSegmentRevisionData, RestoreSegmentRevisionErrors, RestoreSegmentRevisionResponses, SearchCollectionSegmentsData, SearchCollectionSegmentsErrors, SearchCollectionSegmentsResponses, SearchData, SearchErrors, SearchMediaData, SearchMediaErrors, SearchMediaResponses, SearchResponses, SearchWordsData, SearchWordsErrors, SearchWordsResponses, SignInWithEmailOtpData, SignInWithEmailOtpErrors, SignInWithEmailOtpResponses, SignInWithMagicLinkData, SignInWithMagicLinkErrors, SignInWithMagicLinkResponses, SignOutData, SignOutErrors, SignOutResponses, SocialSignInData, SocialSignInErrors, SocialSignInResponses, StartPatreonLinkData, StartPatreonLinkErrors, StartPatreonLinkResponses, TrackUserActivityData, TrackUserActivityErrors, TrackUserActivityResponses, TriggerCoveredWordsUpdateData, TriggerCoveredWordsUpdateErrors, TriggerCoveredWordsUpdateResponses, UnbanUserData, UnbanUserErrors, UnbanUserResponses, UnlinkPatreonData, UnlinkPatreonErrors, UnlinkPatreonResponses, UnsubscribeFromEmailData, UnsubscribeFromEmailErrors, UnsubscribeFromEmailResponses, UpdateAdminReportData, UpdateAdminReportErrors, UpdateAdminReportResponses, UpdateAdminRoadmapItemData, UpdateAdminRoadmapItemErrors, UpdateAdminRoadmapItemResponses, UpdateAdminUserQuotaData, UpdateAdminUserQuotaErrors, UpdateAdminUserQuotaResponses, UpdateAnnouncementData, UpdateAnnouncementErrors, UpdateAnnouncementResponses, UpdateCollectionData, UpdateCollectionErrors, UpdateCollectionResponses, UpdateCollectionSegmentData, UpdateCollectionSegmentErrors, UpdateCollectionSegmentResponses, UpdateEmailPreferencesByTokenData, UpdateEmailPreferencesByTokenErrors, UpdateEmailPreferencesByTokenResponses, UpdateEpisodeData, UpdateEpisodeErrors, UpdateEpisodeResponses, UpdateMediaData, UpdateMediaErrors, UpdateMediaResponses, UpdateSegmentData, UpdateSegmentErrors, UpdateSegmentResponses, UpdateUserDictionariesData, UpdateUserDictionariesErrors, UpdateUserDictionariesResponses, UpdateUserPreferencesData, UpdateUserPreferencesErrors, UpdateUserPreferencesResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -133,12 +133,11 @@ export const searchMedia = <ThrowOnError extends boolean = false>(options: Optio
 });
 
 /**
- * Rank Nadeshiko's own dictionary entries for one token, for our own server only
+ * Rank Nadeshiko's dictionary entries for one token, for our own server only
  *
- * The word card's lookup when the reader's provider is Nadeshiko rather than
- * Shirabe. Takes what a stored token carries and returns ranked candidates in
- * the card's shape. Called by the frontend server, which owns caching and
- * provider choice; refused unless the request came through our own Nitro proxy.
+ * The word card's dictionary lookup. Takes what a stored token carries and
+ * returns ranked candidates in the card's shape. Called by the frontend server,
+ * which owns caching; refused unless the request came through our own Nitro proxy.
  *
  */
 export const identifyDictionaryWord = <ThrowOnError extends boolean = false>(options: Options<IdentifyDictionaryWordData, ThrowOnError>): RequestResult<IdentifyDictionaryWordResponses, IdentifyDictionaryWordErrors, ThrowOnError> => (options.client ?? client).get<IdentifyDictionaryWordResponses, IdentifyDictionaryWordErrors, ThrowOnError>({ url: '/v1/dictionary/identify', ...options });
@@ -548,188 +547,6 @@ export const createUserApiKey = <ThrowOnError extends boolean = false>(options: 
             type: 'apiKey'
         }],
     url: '/v1/user/api-keys',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Unlink the Shirabe account
- *
- * Forgets the stored key AND asks Shirabe to revoke it, so the reader is not
- * left with a live credential on their Shirabe access list that nothing here
- * can reach again.
- *
- * The local link goes either way. If Shirabe cannot be reached, the reader
- * still gets what they asked for here and can revoke the key themselves at
- * `/account/settings#access`.
- *
- */
-export const unlinkShirabe = <ThrowOnError extends boolean = false>(options?: Options<UnlinkShirabeData, ThrowOnError>): RequestResult<UnlinkShirabeResponses, UnlinkShirabeErrors, ThrowOnError> => (options?.client ?? client).delete<UnlinkShirabeResponses, UnlinkShirabeErrors, ThrowOnError>({
-    security: [{
-            in: 'cookie',
-            name: 'nadeshiko.session_token',
-            type: 'apiKey'
-        }],
-    url: '/v1/user/connections/shirabe',
-    ...options
-});
-
-/**
- * Read the linked Shirabe account
- *
- * Whether the signed-in reader has linked a Shirabe account, and what it is
- * shaped like: who they are over there, which dictionaries their stack names,
- * and when we last re-read it.
- *
- * Never returns the stored key. Nothing the browser is shown can be used to
- * act on their Shirabe account.
- *
- */
-export const getShirabeConnection = <ThrowOnError extends boolean = false>(options?: Options<GetShirabeConnectionData, ThrowOnError>): RequestResult<GetShirabeConnectionResponses, GetShirabeConnectionErrors, ThrowOnError> => (options?.client ?? client).get<GetShirabeConnectionResponses, GetShirabeConnectionErrors, ThrowOnError>({
-    security: [{
-            in: 'cookie',
-            name: 'nadeshiko.session_token',
-            type: 'apiKey'
-        }],
-    url: '/v1/user/connections/shirabe',
-    ...options
-});
-
-/**
- * Begin linking a Shirabe account
- *
- * Starts an OAuth 2.0 authorization-code flow (PKCE) against Shirabe and
- * returns where to send the reader. Nothing is stored until they approve.
- *
- * The `state` is the pending flow itself, sealed with a server-side key rather
- * than a handle into server memory: the request that starts the link and the
- * one that finishes it are minutes apart and nothing routes them to the same
- * process.
- *
- */
-export const startShirabeLink = <ThrowOnError extends boolean = false>(options?: Options<StartShirabeLinkData, ThrowOnError>): RequestResult<StartShirabeLinkResponses, StartShirabeLinkErrors, ThrowOnError> => (options?.client ?? client).post<StartShirabeLinkResponses, StartShirabeLinkErrors, ThrowOnError>({
-    security: [{
-            in: 'cookie',
-            name: 'nadeshiko.session_token',
-            type: 'apiKey'
-        }],
-    url: '/v1/user/connections/shirabe',
-    ...options
-});
-
-/**
- * Finish linking a Shirabe account
- *
- * Exchanges the one-time code Shirabe redirected back with for a scoped key,
- * reads the reader's dictionary stack, and stores the link.
- *
- * The `state` must be the one this session started the flow with. It carries
- * the account it belongs to, and a mismatch is refused: otherwise somebody who
- * completed their own authorization at Shirabe could hand the callback URL to a
- * signed-in victim and attach their account to the victim's.
- *
- */
-export const completeShirabeLink = <ThrowOnError extends boolean = false>(options: Options<CompleteShirabeLinkData, ThrowOnError>): RequestResult<CompleteShirabeLinkResponses, CompleteShirabeLinkErrors, ThrowOnError> => (options.client ?? client).post<CompleteShirabeLinkResponses, CompleteShirabeLinkErrors, ThrowOnError>({
-    security: [{
-            in: 'cookie',
-            name: 'nadeshiko.session_token',
-            type: 'apiKey'
-        }],
-    url: '/v1/user/connections/shirabe/callback',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * The reader's Shirabe key, for our own server only
- *
- * Hands the stored Shirabe key to our frontend server so a word lookup can be
- * made AS the reader, which is the entire point of linking an account.
- *
- * Refused unless the request came through our own Nitro proxy (the shared
- * internal secret). A session alone is not enough, even the reader's own: a key
- * that reaches a browser is a key that has been given away, and this one is a
- * live credential on somebody else's service. The reader has no need for it
- * here — it is already listed, and revocable, on their Shirabe account.
- *
- */
-export const getShirabeCredential = <ThrowOnError extends boolean = false>(options?: Options<GetShirabeCredentialData, ThrowOnError>): RequestResult<GetShirabeCredentialResponses, GetShirabeCredentialErrors, ThrowOnError> => (options?.client ?? client).get<GetShirabeCredentialResponses, GetShirabeCredentialErrors, ThrowOnError>({
-    security: [{
-            in: 'cookie',
-            name: 'nadeshiko.session_token',
-            type: 'apiKey'
-        }],
-    url: '/v1/user/connections/shirabe/credential',
-    ...options
-});
-
-/**
- * Reconcile the stored Shirabe stack against a fingerprint a lookup saw
- *
- * Shirabe echoes the calling key's current stack fingerprint on every word
- * lookup. Our frontend server hands it back here, so a reader who switches a
- * dictionary off over there stops being served their cached definitions for it.
- *
- * Cheap by design. When the fingerprint matches what we hold, this only records
- * that the copy was confirmed; only a mismatch costs a round trip to Shirabe.
- *
- * Refused unless the request came through our own Nitro proxy (the shared
- * internal secret), like the credential route beside it. Nothing here is a
- * reader-facing action: the browser never sees a fingerprint, and one supplied
- * by a client would be a client choosing when our copy looks stale.
- *
- */
-export const resyncShirabeStack = <ThrowOnError extends boolean = false>(options: Options<ResyncShirabeStackData, ThrowOnError>): RequestResult<ResyncShirabeStackResponses, ResyncShirabeStackErrors, ThrowOnError> => (options.client ?? client).post<ResyncShirabeStackResponses, ResyncShirabeStackErrors, ThrowOnError>({
-    security: [{
-            in: 'cookie',
-            name: 'nadeshiko.session_token',
-            type: 'apiKey'
-        }],
-    url: '/v1/user/connections/shirabe/resync',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Report that Shirabe refused a reader's key on a lookup
- *
- * A word lookup is where a dead link is actually discovered: the reader's key
- * is sent, Shirabe refuses it, and the lookup quietly answers from the default
- * dictionaries instead. Without this, that refusal was a log line and nothing
- * else -- the settings page went on naming the account, and every later lookup
- * repeated the same doomed round trip.
- *
- * What the status means is Shirabe's own distinction, and the three outcomes
- * are different repairs:
- *
- * * `401` - the key is invalid, expired or revoked. The link is over until the
- * reader makes a new one, and it is marked so the settings page can say so.
- * * `403` - the key works but is missing a permission. The stack is re-read so
- * the stored scopes catch up, which surfaces as a re-consent rather than a
- * repair.
- * * anything else - not an answer about the key. Ignored.
- *
- * Refused unless the request came through our own Nitro proxy (the shared
- * internal secret), like the credential and resync routes beside it. A client
- * that could post here could disconnect its own reader's link at will.
- *
- */
-export const reportShirabeRefusal = <ThrowOnError extends boolean = false>(options: Options<ReportShirabeRefusalData, ThrowOnError>): RequestResult<ReportShirabeRefusalResponses, ReportShirabeRefusalErrors, ThrowOnError> => (options.client ?? client).post<ReportShirabeRefusalResponses, ReportShirabeRefusalErrors, ThrowOnError>({
-    security: [{
-            in: 'cookie',
-            name: 'nadeshiko.session_token',
-            type: 'apiKey'
-        }],
-    url: '/v1/user/connections/shirabe/refused',
     ...options,
     headers: {
         'Content-Type': 'application/json',

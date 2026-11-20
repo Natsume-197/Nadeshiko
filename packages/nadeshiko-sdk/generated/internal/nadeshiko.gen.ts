@@ -4,7 +4,7 @@ import { createClient as createApiClient, createConfig, type Client } from './cl
 import type { Auth } from './core/auth.gen';
 import type { ClientOptions } from './types.gen';
 import type * as Types from './types.gen';
-import { search, getSearchStats, searchWords, searchMedia, getStatsOverview, listMedia, getSegment, getSegmentContext, getMedia, listEpisodes, getEpisode, getMe, createUserApiKey, listExcludedMedia, addExcludedMedia, removeExcludedMedia, listFavoriteMedia, addFavoriteMedia, removeFavoriteMedia, listFamiliarMedia, listUserActivity, getUserActivityHeatmap, getUserActivityStats, listCollections, createCollection, getCollection, deleteCollection, addSegmentToCollection, searchCollectionSegments, removeSegmentFromCollection, listRoadmap, createRoadmapProposal, identifyDictionaryWord, getDictionaryKanjiIndex, getDictionaryKanji, getCoveredWords, triggerCoveredWordsUpdate, createMedia, updateSegment, listSegmentRevisions, restoreSegmentRevision, updateMedia, deleteMedia, createEpisode, updateEpisode, deleteEpisode, listSegments, createSegment, createSegmentsBatch, moderateEpisodeSegments, getShirabeConnection, startShirabeLink, unlinkShirabe, completeShirabeLink, getShirabeCredential, resyncShirabeStack, reportShirabeRefusal, getPatreonConnection, startPatreonLink, unlinkPatreon, completePatreonLink, listUserDictionaries, updateUserDictionaries, deleteUserDictionary, clearFamiliarMedia, forgetFamiliarMedia, createUserReport, getUserPreferences, updateUserPreferences, trackUserActivity, deleteUserActivity, deleteUserActivityByDate, deleteUserActivityById, exportUserData, createFeedback, getFeedbackFormToken, unsubscribeFromEmail, getEmailPreferencesByToken, updateEmailPreferencesByToken, updateCollection, updateCollectionSegment, getCollectionStats, listAdminReports, batchUpdateAdminReports, bulkUpdateAdminReports, bulkDeleteAdminReports, updateAdminReport, deleteAdminReport, listAgentActivity, getAnnouncement, updateAnnouncement, getAdminUsersWithProviders, listTiers, getAdminUserQuota, updateAdminUserQuota, listAdminRoadmap, createAdminRoadmapItem, updateAdminRoadmapItem, getSession, getSessionPost, signOut, socialSignIn, signInWithMagicLink, signInWithEmailOtp, listUserSessions, authRevokeSession, authRevokeSessions, authRevokeOtherSessions, deleteUser, changeEmail, authApiKeyCreate, authApiKeyList, authApiKeyUpdate, banUser, unbanUser, impersonateUser, authAdminStopImpersonating, type Options } from './sdk.gen';
+import { search, getSearchStats, searchWords, searchMedia, getStatsOverview, listMedia, getSegment, getSegmentContext, getMedia, listEpisodes, getEpisode, getMe, createUserApiKey, listExcludedMedia, addExcludedMedia, removeExcludedMedia, listFavoriteMedia, addFavoriteMedia, removeFavoriteMedia, listFamiliarMedia, listUserActivity, getUserActivityHeatmap, getUserActivityStats, listCollections, createCollection, getCollection, deleteCollection, addSegmentToCollection, searchCollectionSegments, removeSegmentFromCollection, listRoadmap, createRoadmapProposal, identifyDictionaryWord, getDictionaryKanjiIndex, getDictionaryKanji, getCoveredWords, triggerCoveredWordsUpdate, createMedia, updateSegment, listSegmentRevisions, restoreSegmentRevision, updateMedia, deleteMedia, createEpisode, updateEpisode, deleteEpisode, listSegments, createSegment, createSegmentsBatch, moderateEpisodeSegments, getPatreonConnection, startPatreonLink, unlinkPatreon, completePatreonLink, listUserDictionaries, updateUserDictionaries, deleteUserDictionary, clearFamiliarMedia, forgetFamiliarMedia, createUserReport, getUserPreferences, updateUserPreferences, trackUserActivity, deleteUserActivity, deleteUserActivityByDate, deleteUserActivityById, exportUserData, createFeedback, getFeedbackFormToken, unsubscribeFromEmail, getEmailPreferencesByToken, updateEmailPreferencesByToken, updateCollection, updateCollectionSegment, getCollectionStats, listAdminReports, batchUpdateAdminReports, bulkUpdateAdminReports, bulkDeleteAdminReports, updateAdminReport, deleteAdminReport, listAgentActivity, getAnnouncement, updateAnnouncement, getAdminUsersWithProviders, listTiers, getAdminUserQuota, updateAdminUserQuota, listAdminRoadmap, createAdminRoadmapItem, updateAdminRoadmapItem, getSession, getSessionPost, signOut, socialSignIn, signInWithMagicLink, signInWithEmailOtp, listUserSessions, authRevokeSession, authRevokeSessions, authRevokeOtherSessions, deleteUser, changeEmail, authApiKeyCreate, authApiKeyList, authApiKeyUpdate, banUser, unbanUser, impersonateUser, authAdminStopImpersonating, type Options } from './sdk.gen';
 import { withRetry, type RetryOptions } from './retry';
 import { NadeshikoError, buildNadeshikoError, isProblemDetails, type NadeshikoErrorCode, type RateLimitReason } from './errors';
 import { flatPaginate } from './paginate';
@@ -268,34 +268,6 @@ export type NadeshikoClient = {
     moderateEpisodeSegments: {
       (params: Types.ModerateEpisodeSegmentsData['path'] & NonNullable<Types.ModerateEpisodeSegmentsData['body']> & { throwOnError: false }): Promise<{ data: Types.ModerateEpisodeSegmentsResponse; response: Response; request: Request } | { error: Types.ModerateEpisodeSegmentsErrors; response: Response; request: Request }>;
       (params: Types.ModerateEpisodeSegmentsData['path'] & NonNullable<Types.ModerateEpisodeSegmentsData['body']>): Promise<Types.ModerateEpisodeSegmentsResponse>;
-    };
-    getShirabeConnection: {
-      (params: { throwOnError: false }): Promise<{ data: Types.GetShirabeConnectionResponse; response: Response; request: Request } | { error: Types.GetShirabeConnectionErrors; response: Response; request: Request }>;
-      (): Promise<Types.GetShirabeConnectionResponse>;
-    };
-    startShirabeLink: {
-      (params: { throwOnError: false }): Promise<{ data: Types.StartShirabeLinkResponse; response: Response; request: Request } | { error: Types.StartShirabeLinkErrors; response: Response; request: Request }>;
-      (): Promise<Types.StartShirabeLinkResponse>;
-    };
-    unlinkShirabe: {
-      (params: { throwOnError: false }): Promise<{ data: Types.UnlinkShirabeResponse; response: Response; request: Request } | { error: Types.UnlinkShirabeErrors; response: Response; request: Request }>;
-      (): Promise<Types.UnlinkShirabeResponse>;
-    };
-    completeShirabeLink: {
-      (params: NonNullable<Types.CompleteShirabeLinkData['body']> & { throwOnError: false }): Promise<{ data: Types.CompleteShirabeLinkResponse; response: Response; request: Request } | { error: Types.CompleteShirabeLinkErrors; response: Response; request: Request }>;
-      (params: NonNullable<Types.CompleteShirabeLinkData['body']>): Promise<Types.CompleteShirabeLinkResponse>;
-    };
-    getShirabeCredential: {
-      (params: { throwOnError: false }): Promise<{ data: Types.GetShirabeCredentialResponse; response: Response; request: Request } | { error: Types.GetShirabeCredentialErrors; response: Response; request: Request }>;
-      (): Promise<Types.GetShirabeCredentialResponse>;
-    };
-    resyncShirabeStack: {
-      (params: NonNullable<Types.ResyncShirabeStackData['body']> & { throwOnError: false }): Promise<{ data: Types.ResyncShirabeStackResponse; response: Response; request: Request } | { error: Types.ResyncShirabeStackErrors; response: Response; request: Request }>;
-      (params: NonNullable<Types.ResyncShirabeStackData['body']>): Promise<Types.ResyncShirabeStackResponse>;
-    };
-    reportShirabeRefusal: {
-      (params: NonNullable<Types.ReportShirabeRefusalData['body']> & { throwOnError: false }): Promise<{ data: Types.ReportShirabeRefusalResponse; response: Response; request: Request } | { error: Types.ReportShirabeRefusalErrors; response: Response; request: Request }>;
-      (params: NonNullable<Types.ReportShirabeRefusalData['body']>): Promise<Types.ReportShirabeRefusalResponse>;
     };
     getPatreonConnection: {
       (params: { throwOnError: false }): Promise<{ data: Types.GetPatreonConnectionResponse; response: Response; request: Request } | { error: Types.GetPatreonConnectionErrors; response: Response; request: Request }>;
@@ -1053,48 +1025,6 @@ export function createNadeshikoClient(config: NadeshikoConfig): NadeshikoClient 
     return tOE === false ? p : p.then((r: any) => r.data);
   };
 
-  const _getShirabeConnection = (params?: any) => {
-    const tOE = params?.throwOnError;
-    const p = getShirabeConnection({ client: clientInstance, throwOnError: tOE === false ? false : true } as any);
-    return tOE === false ? p : p.then((r: any) => r.data);
-  };
-
-  const _startShirabeLink = (params?: any) => {
-    const tOE = params?.throwOnError;
-    const p = startShirabeLink({ client: clientInstance, throwOnError: tOE === false ? false : true } as any);
-    return tOE === false ? p : p.then((r: any) => r.data);
-  };
-
-  const _unlinkShirabe = (params?: any) => {
-    const tOE = params?.throwOnError;
-    const p = unlinkShirabe({ client: clientInstance, throwOnError: tOE === false ? false : true } as any);
-    return tOE === false ? p : p.then((r: any) => r.data);
-  };
-
-  const _completeShirabeLink = (params?: any) => {
-    const { throwOnError: tOE, ...body } = params ?? {};
-    const p = completeShirabeLink({ body, client: clientInstance, throwOnError: tOE === false ? false : true } as any);
-    return tOE === false ? p : p.then((r: any) => r.data);
-  };
-
-  const _getShirabeCredential = (params?: any) => {
-    const tOE = params?.throwOnError;
-    const p = getShirabeCredential({ client: clientInstance, throwOnError: tOE === false ? false : true } as any);
-    return tOE === false ? p : p.then((r: any) => r.data);
-  };
-
-  const _resyncShirabeStack = (params?: any) => {
-    const { throwOnError: tOE, ...body } = params ?? {};
-    const p = resyncShirabeStack({ body, client: clientInstance, throwOnError: tOE === false ? false : true } as any);
-    return tOE === false ? p : p.then((r: any) => r.data);
-  };
-
-  const _reportShirabeRefusal = (params?: any) => {
-    const { throwOnError: tOE, ...body } = params ?? {};
-    const p = reportShirabeRefusal({ body, client: clientInstance, throwOnError: tOE === false ? false : true } as any);
-    return tOE === false ? p : p.then((r: any) => r.data);
-  };
-
   const _getPatreonConnection = (params?: any) => {
     const tOE = params?.throwOnError;
     const p = getPatreonConnection({ client: clientInstance, throwOnError: tOE === false ? false : true } as any);
@@ -1558,13 +1488,6 @@ export function createNadeshikoClient(config: NadeshikoConfig): NadeshikoClient 
     createSegment: _createSegment,
     createSegmentsBatch: _createSegmentsBatch,
     moderateEpisodeSegments: _moderateEpisodeSegments,
-    getShirabeConnection: _getShirabeConnection,
-    startShirabeLink: _startShirabeLink,
-    unlinkShirabe: _unlinkShirabe,
-    completeShirabeLink: _completeShirabeLink,
-    getShirabeCredential: _getShirabeCredential,
-    resyncShirabeStack: _resyncShirabeStack,
-    reportShirabeRefusal: _reportShirabeRefusal,
     getPatreonConnection: _getPatreonConnection,
     startPatreonLink: _startPatreonLink,
     unlinkPatreon: _unlinkPatreon,

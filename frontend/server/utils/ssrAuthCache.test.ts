@@ -229,22 +229,22 @@ describe('scopes', () => {
     const event = fakeEvent(SIGNED_IN);
 
     const identity = await ssrAuthFetch(event as never, async () => ({ session: { user: { id: 1 } } }), 'identity');
-    const shirabe = await ssrAuthFetch(
+    const dictionary = await ssrAuthFetch(
       event as never,
-      async () => ({ user: { shirabe: { linked: true } } }),
-      'shirabe',
+      async () => ({ user: { customDictionaries: { count: 1 } } }),
+      'dictionary',
     );
 
     expect(identity).toEqual({ session: { user: { id: 1 } } });
-    expect(shirabe).toEqual({ user: { shirabe: { linked: true } } });
+    expect(dictionary).toEqual({ user: { customDictionaries: { count: 1 } } });
   });
 
   it('still caches within a scope, which is what it is for', async () => {
     const event = fakeEvent(SIGNED_IN);
     const fetcher = vi.fn(async () => ({ user: { id: 1 } }));
 
-    await ssrAuthFetch(event as never, fetcher, 'shirabe');
-    await ssrAuthFetch(event as never, fetcher, 'shirabe');
+    await ssrAuthFetch(event as never, fetcher, 'dictionary');
+    await ssrAuthFetch(event as never, fetcher, 'dictionary');
 
     expect(fetcher).toHaveBeenCalledTimes(1);
   });
@@ -252,16 +252,16 @@ describe('scopes', () => {
   it('drops every scope for the session', async () => {
     const event = fakeEvent(SIGNED_IN);
     const identity = vi.fn(async () => ({ a: 1 }));
-    const shirabe = vi.fn(async () => ({ b: 2 }));
+    const dictionary = vi.fn(async () => ({ b: 2 }));
     await ssrAuthFetch(event as never, identity, 'identity');
-    await ssrAuthFetch(event as never, shirabe, 'shirabe');
+    await ssrAuthFetch(event as never, dictionary, 'dictionary');
 
     dropSessionEntries(event as never);
 
     await ssrAuthFetch(event as never, identity, 'identity');
-    await ssrAuthFetch(event as never, shirabe, 'shirabe');
+    await ssrAuthFetch(event as never, dictionary, 'dictionary');
     expect(identity).toHaveBeenCalledTimes(2);
-    expect(shirabe).toHaveBeenCalledTimes(2);
+    expect(dictionary).toHaveBeenCalledTimes(2);
   });
 });
 
@@ -305,9 +305,9 @@ describe('lookup counter', () => {
   it('tags each lookup with its scope, so the two callers can be told apart', async () => {
     const fetcher = vi.fn().mockResolvedValue({});
     await ssrAuthFetch(fakeEvent(SIGNED_IN), fetcher, 'identity');
-    await ssrAuthFetch(fakeEvent(SIGNED_IN), fetcher, 'shirabe');
+    await ssrAuthFetch(fakeEvent(SIGNED_IN), fetcher, 'dictionary');
 
-    expect(adds.map((a) => a.attributes.scope)).toEqual(['identity', 'shirabe']);
+    expect(adds.map((a) => a.attributes.scope)).toEqual(['identity', 'dictionary']);
     expect(adds.every((a) => a.value === 1)).toBe(true);
   });
 });

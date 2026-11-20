@@ -23,7 +23,7 @@ usage() {
 Usage: scripts/remote-db.sh <env> <command> [${PROD_FLAG}]
 
   env:      staging (aliases: stg, dev) | prod
-  command:  status | prepare | migrate | parse-corpus | reindex | reindex-media <publicId>
+  command:  status | prepare | migrate | reindex | reindex-media <publicId>
             | audit-wakati | create-service-key -- --user <id|email> --name <label> --permissions <scopes>
 
 For prepare/migrate against prod, ${PROD_FLAG} is required as a safety check.
@@ -69,8 +69,8 @@ case "$ENV" in
 esac
 
 case "$CMD" in
-  status|prepare|migrate|parse-corpus|reindex|reindex-media|audit-wakati|backfill-session-country|backfill-last-seen|create-service-key) ;;
-  *) echo "error: command must be status, prepare, migrate, parse-corpus, reindex, reindex-media, audit-wakati, backfill-session-country, backfill-last-seen or create-service-key (got '$CMD')" >&2; exit 1 ;;
+  status|prepare|migrate|reindex|reindex-media|audit-wakati|backfill-session-country|backfill-last-seen|create-service-key) ;;
+  *) echo "error: command must be status, prepare, migrate, reindex, reindex-media, audit-wakati, backfill-session-country, backfill-last-seen or create-service-key (got '$CMD')" >&2; exit 1 ;;
 esac
 
 # Reindex rebuilds Elasticsearch from authoritative PostgreSQL, swaps a versioned alias with zero downtime, and is the
@@ -203,13 +203,10 @@ echo "  elasticsearch: $REMOTE_NODE:9200 via http://127.0.0.1:$LOCAL_ES_PORT (in
 echo
 
 run_with_env() {
-  # Pin the public Shirabe endpoint: inheriting backend/.env could send a production parse to a developer laptop and
-  # write those results into production. Staging uses the same public service.
   POSTGRES_HOST="127.0.0.1" \
   POSTGRES_PORT="$LOCAL_PG_PORT" \
   POSTGRES_ADMIN_HOST="127.0.0.1" \
   POSTGRES_ADMIN_PORT="$LOCAL_PG_PORT" \
-  SHIRABE_API_BASE="https://shirabe.org" \
   ELASTICSEARCH_HOST="http://127.0.0.1:$LOCAL_ES_PORT" \
   ELASTICSEARCH_INDEX="$ES_INDEX" \
   ENVIRONMENT="$APP_ENV" \
@@ -217,10 +214,6 @@ run_with_env() {
 }
 
 case "$CMD" in
-  parse-corpus)
-    # Run from this checkout because the production image lacks the script; the environment below is what targets prod.
-    run_with_env node --import tsx scripts/parse-corpus-with-shirabe.ts "${@:4}"
-    ;;
   reindex)
     # Zero downtime: build a versioned index and swap the alias after completion.
     run_with_env node --import tsx bin/es.ts reindex

@@ -32,7 +32,6 @@ Object.assign(process.env, {
   NUXT_BACKEND_HOST_HEADER: '',
   NUXT_NADESHIKO_API_KEY: 'fixture-only',
   NUXT_INTERNAL_PROXY_SECRET: 'fixture-only',
-  NUXT_SHIRABE_API_KEY: '',
   NUXT_ASSET_ARCHIVE_DIR: '',
   NUXT_SITEMAP_SNAPSHOT_DIR: dir,
   OTEL_SDK_DISABLED: 'true',

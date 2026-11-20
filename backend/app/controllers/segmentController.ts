@@ -160,7 +160,7 @@ export const createSegmentsBatch: CreateSegmentsBatch = async ({ params, body },
       logger.error({ err: error }, 'Failed to enqueue bulk ES sync jobs for batch segment creation');
     });
 
-    // Index immediately and tokenize asynchronously; Shirabe outage must not block search, and both sync handlers
+    // Index immediately and tokenize asynchronously; a parser outage must not block search, and both sync handlers
     // re-read Postgres before writing.
     sendBulkTokenParseJobs(allIds).catch((error) => {
       logger.error({ err: error }, 'Failed to enqueue token parse jobs for batch segment creation');

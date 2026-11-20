@@ -7,12 +7,10 @@ import { isAccountLinkCallback } from './accountLinks';
 // "signed in" toast, a fabricated login event, and a stripped query.
 describe('isAccountLinkCallback', () => {
   it('recognises the link callback, with and without a locale prefix', () => {
-    expect(isAccountLinkCallback('/link/shirabe/callback')).toBe(true);
-    expect(isAccountLinkCallback('/en/link/shirabe/callback')).toBe(true);
-    expect(isAccountLinkCallback('/es/link/shirabe/callback')).toBe(true);
-    expect(isAccountLinkCallback('/ja/link/shirabe/callback')).toBe(true);
     expect(isAccountLinkCallback('/link/patreon/callback')).toBe(true);
+    expect(isAccountLinkCallback('/en/link/patreon/callback')).toBe(true);
     expect(isAccountLinkCallback('/es/link/patreon/callback')).toBe(true);
+    expect(isAccountLinkCallback('/ja/link/patreon/callback')).toBe(true);
   });
 
   it('leaves a real auth callback alone', () => {
@@ -24,7 +22,7 @@ describe('isAccountLinkCallback', () => {
   // Anchored on purpose: a page whose path merely CONTAINS the segment is not
   // the callback, and an unanchored test would hand it the same exemption.
   it('does not match a path that merely contains the segment', () => {
-    expect(isAccountLinkCallback('/en/blog/link/shirabe')).toBe(false);
+    expect(isAccountLinkCallback('/en/blog/link/patreon')).toBe(false);
     expect(isAccountLinkCallback('/linked')).toBe(false);
     expect(isAccountLinkCallback('/en/linkage/x')).toBe(false);
   });

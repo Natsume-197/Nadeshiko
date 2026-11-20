@@ -495,19 +495,6 @@ export const s_SegmentRevision = z.object({
 
 export const s_SegmentStatus = z.enum(['ACTIVE', 'HIDDEN', 'DELETED']);
 
-export const s_ShirabeConnection = z.object({
-  needsUpgrade: PermissiveBoolean,
-  missingScopes: z.array(z.string()),
-  disconnected: PermissiveBoolean,
-  linkedAt: z.iso.datetime({ offset: true }),
-  shirabeName: z.string().nullable().optional(),
-  scopes: z.array(z.string()),
-  dictionaries: z.array(z.string()),
-  dictionaryNames: z.record(z.string(), z.string()).optional(),
-  stackIsPrivate: PermissiveBoolean,
-  syncedAt: z.iso.datetime({ offset: true }).nullable().optional(),
-});
-
 export const s_Tier = z.object({
   id: z.string(),
   displayName: z.string(),
@@ -987,12 +974,7 @@ export const s_UserPreferences = z.object({
     .max(2)
     .refine((array) => new Set([...array]).size === array.length, { message: 'Array must contain unique element(s)' })
     .optional(),
-  wordPopup: z
-    .object({
-      definitionSize: z.enum(['SMALL', 'MEDIUM', 'LARGE']).optional(),
-      dictionaryProvider: z.enum(['SHIRABE', 'NADESHIKO']).optional(),
-    })
-    .optional(),
+  wordPopup: z.object({ definitionSize: z.enum(['SMALL', 'MEDIUM', 'LARGE']).optional() }).optional(),
   searchHistory: z.object({ enabled: PermissiveBoolean.optional() }).optional(),
   ankiProfiles: z
     .array(
@@ -1215,12 +1197,6 @@ export const s_CreateUserApiKeyRequestBody = z.object({
   name: z.string().min(1).max(100),
   scopes: z.array(s_ApiKeyScope).min(1).max(12),
 });
-
-export const s_CompleteShirabeLinkRequestBody = z.object({ code: z.string(), state: z.string() });
-
-export const s_ResyncShirabeStackRequestBody = z.object({ stackFingerprint: z.string().max(64) });
-
-export const s_ReportShirabeRefusalRequestBody = z.object({ status: z.coerce.number().min(100).max(599) });
 
 export const s_CompletePatreonLinkRequestBody = z.object({ code: z.string().min(1), state: z.string().min(1) });
 

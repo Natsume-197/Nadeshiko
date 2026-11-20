@@ -43,7 +43,6 @@ const STATIC_PAGES = new Set([
   '/user/admin/roadmap',
   '/settings',
   '/auth/callback',
-  '/link/shirabe/callback',
   '/link/patreon/callback',
   // Keep unsubscribe failures visible independently; they affect sending reputation.
   '/unsubscribe',

@@ -8,7 +8,7 @@ import {
 } from '~~/server/utils/dictionary/types';
 
 // Nadeshiko's own dictionary (JMdict in the backend's `dict` schema, plus the reader's uploaded Yomitan dictionaries
-// when authenticated), behind the same interface as Shirabe. The backend answers in the card's shape already; this
+// when authenticated), behind the `Dictionary` interface. The backend answers in the card's shape already; this
 // only carries the query (and optional reader cookie) there and classifies failures.
 
 const TIMEOUT_MS = 3000;

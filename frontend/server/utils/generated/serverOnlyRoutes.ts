@@ -4,7 +4,7 @@
 /**
  * Routes the Nitro `/v1` proxy refuses to forward for a browser, however it is
  * authenticated. They exist for calls this server makes on its own behalf
- * (server/utils/shirabeReader.ts), and the backend gates them on the internal
+ * (server/utils/dictionaryReader.ts), and the backend gates them on the internal
  * secret the proxy would otherwise stamp onto a relayed browser request. Paths
  * keep their OpenAPI `{param}` templates.
  */
@@ -17,7 +17,4 @@ export const serverOnlyRoutes: ServerOnlyRoute[] = [
   { method: 'GET', path: '/v1/dictionary/identify' },
   { method: 'GET', path: '/v1/dictionary/kanji' },
   { method: 'GET', path: '/v1/dictionary/kanji/{character}' },
-  { method: 'GET', path: '/v1/user/connections/shirabe/credential' },
-  { method: 'POST', path: '/v1/user/connections/shirabe/resync' },
-  { method: 'POST', path: '/v1/user/connections/shirabe/refused' },
 ];

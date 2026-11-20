@@ -18,9 +18,9 @@ const MODEL_FIELDS = ['Expression', 'Meaning'];
  * than only on what landed in the input.
  *
  * AnkiConnect is a service on the reader's own machine, mocked the same way
- * anki-deck-model.spec.ts mocks it. The dictionaries come from Shirabe, so that
- * endpoint is stubbed too -- a reader who has linked nothing is never offered
- * the submenu at all.
+ * anki-deck-model.spec.ts mocks it. The dictionaries come from `/v1/user/dictionaries`,
+ * so that endpoint is stubbed too -- a reader with no custom dictionaries is never
+ * offered the submenu at all.
  *
  * Runs at desktop width, where the fields are a two-column table. Below `md`
  * every row becomes a block with its name above its own full-width input, which
@@ -50,20 +50,23 @@ async function mockAnki(page: Page) {
 }
 
 /**
- * Two dictionaries, one of them read in two languages.
- *
- * The stack entry is `slug:language` and the same pack sits in it once per
- * language, but a FIELD maps to the dictionary rather than to one language of
- * it -- so three entries must offer two rows.
+ * One uploaded custom dictionary alongside built-in JMdict, offering two rows
+ * in the `{definition:<slug>}` submenu.
  */
-async function mockShirabeDictionaries(page: Page) {
-  await page.route('**/v1/user/connections/shirabe', (route: Route) =>
+async function mockUserDictionaries(page: Page) {
+  await page.route('**/v1/user/dictionaries', (route: Route) =>
     route.fulfill({
       json: {
-        connection: {
-          dictionaries: ['sanseido:ja', 'jmdict:en', 'jmdict:es'],
-          dictionaryNames: { sanseido: '三省堂国語辞典', jmdict: 'JMdict' },
-        },
+        dictionaries: [
+          {
+            stackId: 'sanseido',
+            title: '三省堂国語辞典',
+            hasTerms: true,
+            enabled: true,
+            status: 'ready',
+          },
+        ],
+        builtin: { id: 'jmdict', enabled: true, position: 1 },
       },
     }),
   );
@@ -73,7 +76,7 @@ async function mockShirabeDictionaries(page: Page) {
  *  on screen: the table is built from the model's own field names. */
 const openFieldTable = async (page: Page) => {
   await mockAnki(page);
-  await mockShirabeDictionaries(page);
+  await mockUserDictionaries(page);
   // The profile lives on the account, so a field template left behind by an
   // earlier spec -- or an earlier run of this one -- would still be in the input
   // these tests assert the exact contents of. Cleared rather than overwritten:

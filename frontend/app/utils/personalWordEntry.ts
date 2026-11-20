@@ -1,18 +1,18 @@
 import { brief, type EntryBrief, pickEntries } from '#shared/utils/wordEntry';
-import type { ShirabeWord } from '~/utils/wordCard';
+import type { DictionaryWord } from '~/utils/wordCard';
 
 /** What `/api/dictionary/word-entry/:word` answers, and what the personal version below builds. */
 export interface WordEntryAnswer {
-  entry: ShirabeWord | null;
+  entry: DictionaryWord | null;
   /** Other words the search can be, each with its whole entry so the box can show it in place. */
-  others: Array<EntryBrief & { entry?: ShirabeWord }>;
+  others: Array<EntryBrief & { entry?: DictionaryWord }>;
   inflected: boolean;
   /** Each kanji's first reading and meaning, by character; the shared entry's, which the personal one reuses. */
   kanji?: Record<string, { reading: string | null; meaning: string | null }>;
 }
 
 /** Whether the reader's uploaded dictionaries (task 48) add anything to this word: an entry or a frequency badge. */
-export function hasOwnDictionaries(word: ShirabeWord): boolean {
+export function hasOwnDictionaries(word: DictionaryWord): boolean {
   return (
     (word.entries ?? []).some((entry) => entry.dictionary.startsWith('custom:')) ||
     (word.customFrequencies?.length ?? 0) > 0
@@ -25,7 +25,7 @@ export function hasOwnDictionaries(word: ShirabeWord): boolean {
  * so the shared, server-rendered entry stays on screen.
  */
 export function personalEntryFrom(
-  candidates: readonly ShirabeWord[],
+  candidates: readonly DictionaryWord[],
   word: string,
   locale: 'en' | 'es',
 ): WordEntryAnswer | null {
@@ -46,9 +46,9 @@ export async function personalEntryFor(
   stack: string,
 ): Promise<WordEntryAnswer | null> {
   try {
-    const answer = await $fetch<{ candidates?: ShirabeWord[] }>(
-      `/api/shirabe/words/candidates/${encodeURIComponent(word)}`,
-      { query: { locale, provider: 'nadeshiko', stack } },
+    const answer = await $fetch<{ candidates?: DictionaryWord[] }>(
+      `/api/dictionary/words/candidates/${encodeURIComponent(word)}`,
+      { query: { locale, stack } },
     );
     return personalEntryFrom(answer?.candidates ?? [], word, locale);
   } catch {

@@ -16,15 +16,6 @@ const envSchema = z.object({
   ),
   NUXT_BACKEND_INTERNAL_URL: z.string().trim().default(''),
   NUXT_NADESHIKO_API_KEY: z.string().trim().default(''),
-  // Server-only definition lookup key, distinct from the backend's corpus parsing key.
-  NUXT_SHIRABE_API_KEY: z.string().trim().default(''),
-  NUXT_SHIRABE_API_BASE: z.string().trim().default('https://shirabe.org'),
-  // Public reader settings URL; independent of the server API address and contains no key.
-  NUXT_PUBLIC_SHIRABE_SITE: z.string().trim().default('https://shirabe.org'),
-  // Optional direct endpoint tried before the public fallback; unset uses only the public API.
-  NUXT_SHIRABE_API_DIRECT: z.string().trim().default(''),
-  // Word-card dictionary for the whole server until readers choose their own.
-  NUXT_DICTIONARY_PROVIDER: z.enum(['shirabe', 'nadeshiko']).default('shirabe'),
   // Exempts proxied backend requests from its per-IP limiter; match INTERNAL_PROXY_SECRET.
   NUXT_INTERNAL_PROXY_SECRET: z.string().trim().default(''),
   // E2E bypass for HTML and /v1 IP limits and SSR admission; prevents throttling
@@ -42,8 +33,8 @@ const envSchema = z.object({
   NUXT_RATE_LIMIT_V1_API_MAX: z.coerce.number().int().positive().default(120),
   // Separate low budget for unauthenticated feedback writes, which each queue an email.
   NUXT_RATE_LIMIT_V1_FEEDBACK_MAX: z.coerce.number().int().positive().default(5),
-  // Word-card lookups by readers; hovering through a long page stays well below this.
-  NUXT_RATE_LIMIT_SHIRABE_MAX: z.coerce.number().int().positive().default(120),
+  // Word-card and kanji lookups by readers; hovering through a long page stays well below this.
+  NUXT_RATE_LIMIT_DICTIONARY_MAX: z.coerce.number().int().positive().default(120),
   NUXT_RATE_LIMIT_HTML_MAX: z.coerce.number().int().positive().default(60),
   // Per-process SSR admission cap: excess gets 503. Workers cannot share event-loop
   // capacity; see server/middleware/99-ssr-admission.ts for default sizing.

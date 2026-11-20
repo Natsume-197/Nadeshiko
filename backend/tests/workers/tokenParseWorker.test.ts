@@ -6,15 +6,19 @@ import { Segment, SegmentStatus, type SlimToken } from '@app/models/Segment';
 import { setBossInstance } from '@app/workers/pgBossClient';
 import { registerTokenParseWorker } from '@app/workers/tokenParseWorker';
 import { TOKEN_PARSE_QUEUE, TOKEN_SWEEP_QUEUE } from '@app/workers/queueNames';
-import { parseSegments } from '@app/services/shirabe/parseSegments';
+import { NADESHIKO_PARSER_REVISION, parseWithNadeshiko } from '@app/services/parser/nadeshiko';
 
-vi.mock('@app/services/shirabe/parseSegments', () => ({
-  parseSegments: vi.fn(),
-}));
+vi.mock('@app/services/parser/nadeshiko', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@app/services/parser/nadeshiko')>();
+  return {
+    ...actual,
+    parseWithNadeshiko: vi.fn(),
+  };
+});
 
 setupTestSuite();
 
-const parseSegmentsMock = vi.mocked(parseSegments);
+const parseWithNadeshikoMock = vi.mocked(parseWithNadeshiko);
 
 let fixtures: LoadedFixtures;
 let insert: ReturnType<typeof vi.fn>;
@@ -69,23 +73,22 @@ beforeEach(async () => {
   insert = vi.fn().mockResolvedValue(['job-id']);
   sendDebounced = vi.fn().mockResolvedValue('job-id');
   setBossInstance({ insert, sendDebounced } as any);
-  parseSegmentsMock.mockReset();
+  parseWithNadeshikoMock.mockReset();
   await captureHandlers();
 });
 
 describe('token parse worker', () => {
-  it('writes the analysis Shirabe returns and asks for a reindex', async () => {
+  it('writes the analysis returned by the parser and asks for a reindex', async () => {
     const segment = await buildSegment({ contentJa: '走る' });
-    parseSegmentsMock.mockResolvedValue([tokensFor('走る')]);
+    parseWithNadeshikoMock.mockResolvedValue([tokensFor('走る')]);
 
     await handlers[TOKEN_PARSE_QUEUE]([{ data: { segmentId: segment.id } } as Job<any>]);
 
-    expect(parseSegmentsMock).toHaveBeenCalledWith(['走る']);
+    expect(parseWithNadeshikoMock).toHaveBeenCalledWith(expect.anything(), ['走る']);
 
     const reloaded = await Segment.findOneByOrFail({ id: segment.id });
     expect(reloaded.tokens).toEqual(tokensFor('走る'));
-    // Rows from different parsers must stay distinguishable while Shirabe is being replaced.
-    expect(reloaded.parserVersion).toBe('shirabe');
+    expect(reloaded.parserVersion).toBe(`nadeshiko-${NADESHIKO_PARSER_REVISION}`);
 
     // The UPDATE is a raw statement, so no subscriber fires — the worker owning
     // the reindex is what keeps this path from needing a second command.
@@ -95,8 +98,8 @@ describe('token parse worker', () => {
   it('refuses to write an analysis of a sentence that has since been edited', async () => {
     const segment = await buildSegment({ contentJa: '走る' });
 
-    // Do not write stale offsets after Shirabe responds; the row may have changed while parsing.
-    parseSegmentsMock.mockImplementation(async () => {
+    // Do not write stale offsets after the parser responds; the row may have changed while parsing.
+    parseWithNadeshikoMock.mockImplementation(async () => {
       await Segment.update({ id: segment.id }, { contentJa: '歩く' });
       return [tokensFor('走る')];
     });
@@ -109,10 +112,10 @@ describe('token parse worker', () => {
     expect(insert).not.toHaveBeenCalled();
   });
 
-  it('parses a whole pull in one Shirabe call and skips ids that no longer exist', async () => {
+  it('parses a whole pull in one parser call and skips ids that no longer exist', async () => {
     const first = await buildSegment({ contentJa: '朝', position: 1 });
     const second = await buildSegment({ contentJa: '夜', position: 2 });
-    parseSegmentsMock.mockResolvedValue([tokensFor('朝'), tokensFor('夜')]);
+    parseWithNadeshikoMock.mockResolvedValue([tokensFor('朝'), tokensFor('夜')]);
 
     await handlers[TOKEN_PARSE_QUEUE]([
       { data: { segmentId: first.id } },
@@ -120,17 +123,17 @@ describe('token parse worker', () => {
       { data: { segmentId: 999_999_999 } },
     ] as Job<any>[]);
 
-    expect(parseSegmentsMock).toHaveBeenCalledTimes(1);
-    expect(parseSegmentsMock).toHaveBeenCalledWith(['朝', '夜']);
+    expect(parseWithNadeshikoMock).toHaveBeenCalledTimes(1);
+    expect(parseWithNadeshikoMock).toHaveBeenCalledWith(expect.anything(), ['朝', '夜']);
 
     expect((await Segment.findOneByOrFail({ id: first.id })).tokens).toEqual(tokensFor('朝'));
     expect((await Segment.findOneByOrFail({ id: second.id })).tokens).toEqual(tokensFor('夜'));
   });
 
-  it('does not call Shirabe when every id in the pull is gone', async () => {
+  it('does not call the parser when every id in the pull is gone', async () => {
     await handlers[TOKEN_PARSE_QUEUE]([{ data: { segmentId: 999_999_999 } } as Job<any>]);
 
-    expect(parseSegmentsMock).not.toHaveBeenCalled();
+    expect(parseWithNadeshikoMock).not.toHaveBeenCalled();
     expect(insert).not.toHaveBeenCalled();
   });
 

@@ -497,14 +497,12 @@ jobs:
         run: node e2e/check-junit-budget.mjs test-results/e2e-results.xml 22
         working-directory: frontend
 
-      # Shirabe is an external dependency, so an outage there should be loud in
-      # the release report without preventing an otherwise healthy Nadeshiko
-      # revision from reaching staging.
-      - name: Probe live Shirabe lookup (advisory)
+      # Verify live dictionary lookups answer with candidates from our backend dictionary.
+      - name: Probe live dictionary lookup (advisory)
         continue-on-error: true
         run: |
           set -euo pipefail
-          result=$(curl --fail --silent --show-error 'https://stg.nadeshiko.co/api/shirabe/words/candidates/%E5%AD%A6%E6%A0%A1')
+          result=$(curl --fail --silent --show-error 'https://stg.nadeshiko.co/api/dictionary/words/candidates/%E5%AD%A6%E6%A0%A1')
           test "$(jq '.candidates | length' <<<"$result")" -gt 0
 
       - name: Upload test report

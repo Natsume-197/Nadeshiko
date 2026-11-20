@@ -164,14 +164,14 @@ describe('cache bound', () => {
 });
 
 /**
- * A linked reader changing their dictionaries in Shirabe, mid-page.
+ * A reader changing their custom dictionaries mid-page.
  *
  * The session is read once per page load, so without this the reader would keep
  * being served every word they had already hovered from a day-old copy until
- * they reloaded -- on the very page where Shirabe told us it had changed.
+ * they reloaded -- on the very page where the server told us their stack changed.
  */
 describe('a stack that changes under the reader', () => {
-  it('re-keys the cache when Shirabe reports a different stack', async () => {
+  it('re-keys the cache when the server reports a different stack', async () => {
     mod.setReaderStack('old-stack');
     fetchMock.mockResolvedValue({ ...answer('en'), stackFingerprint: 'new-stack' });
 
@@ -199,9 +199,9 @@ describe('a stack that changes under the reader', () => {
     expect(mod.peekWord(ref('犬'), 'en')).toBeUndefined();
   });
 
-  // The contract `plugins/shirabeStack.client.ts` exists to satisfy, pinned here
+  // The contract `plugins/dictionaryStack.client.ts` exists to satisfy, pinned here
   // because breaking it is silent in the worst way. Without the fingerprint the
-  // URL is byte-identical to an unlinked reader's, the response is
+  // URL is byte-identical to an anonymous reader's, the response is
   // `private, max-age=86400`, and the browser answers every word out of its own
   // day-old cache: no request, no error, no log, and a reader who just changed
   // their dictionaries still reading definitions from the ones they removed.
@@ -213,9 +213,9 @@ describe('a stack that changes under the reader', () => {
     expect(fetchMock.mock.calls[0]?.[1]?.query).toMatchObject({ stack: 'abc123' });
   });
 
-  // The unlinked reader, which is nearly all of the traffic: the route sends no
+  // The anonymous reader, which is nearly all of the traffic: the route sends no
   // fingerprint at all, and nothing about their URLs may change.
-  it('leaves an unlinked reader alone', async () => {
+  it('leaves an anonymous reader alone', async () => {
     mod.setReaderStack(null);
     fetchMock.mockResolvedValue(answer('en'));
 

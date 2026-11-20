@@ -110,15 +110,6 @@ import {
   removeFavoriteMedia,
 } from '@app/controllers/userController';
 import { createUserApiKey } from '@app/controllers/apiKeyController';
-import {
-  getShirabeConnection,
-  startShirabeLink,
-  completeShirabeLink,
-  unlinkShirabe,
-  getShirabeCredential,
-  resyncShirabeStack,
-  reportShirabeRefusal,
-} from '@app/controllers/shirabeConnectionController';
 import { listFamiliarMedia, clearFamiliarMedia, forgetFamiliarMedia } from '@app/controllers/familiarMediaController';
 import { exportUserData } from '@app/controllers/userExportController';
 import {
@@ -339,13 +330,6 @@ const RoadmapRoutes = createRoadmapRouter({ listRoadmap, createRoadmapProposal }
 const UserRoutes = createUserRouter({
   getMe,
   createUserApiKey,
-  getShirabeConnection,
-  startShirabeLink,
-  completeShirabeLink,
-  unlinkShirabe,
-  getShirabeCredential,
-  resyncShirabeStack,
-  reportShirabeRefusal,
   getPatreonConnection,
   startPatreonLink,
   completePatreonLink,

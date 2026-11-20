@@ -736,7 +736,6 @@
       },
       "translationLanguages": "Idiomas das traduções",
       "translationLanguagesDescription": "Escolha os idiomas das traduções de legendas e das definições dos dicionários. As traduções de legendas estão disponíveis em inglês e espanhol. Se selecionar os dois, escolha também a ordem de exibição.",
-      "translationLanguagesLinkedDescription": "Escolha entre inglês e espanhol para as traduções de legendas e defina a ordem de exibição. As definições dos dicionários seguem suas configurações no Shirabe.",
       "definitionSize": "Tamanho do texto das definições",
       "definitionSizeDescription": "Escolha o tamanho das definições no painel da palavra.",
       "definitionSizeOptions": {
@@ -744,13 +743,6 @@
         "MEDIUM": "Médio",
         "LARGE": "Grande"
       },
-      "dictionaryProvider": "Dicionário do cartão de palavra",
-      "dictionaryProviderDescription": "Qual dicionário responde quando você toca numa palavra. Se ele estiver fora do ar, o cartão responde com o outro.",
-      "dictionaryProviderOptions": {
-        "SHIRABE": "Shirabe",
-        "NADESHIKO": "Nadeshiko"
-      },
-      "dictionaryProviderDefault": "{name} (padrão)",
       "translationLanguageOptions": {
         "EN": "Somente inglês",
         "ES": "Somente espanhol",
@@ -1051,8 +1043,6 @@
       "quotaUsed": "{used} / {max} dicionários",
       "maxZipSize": "Até {maxMb} MB por .zip",
       "patronUpsell": "Apoiadores podem enviar até 6 dicionários (95 MB cada).",
-      "shirabeProviderNotice": "Seus cartões de palavra estão usando o Shirabe. Mude para o Nadeshiko para usar seus dicionários enviados.",
-      "switchToNadeshiko": "Usar Nadeshiko",
       "dropPrompt": "Clique para escolher um .zip do Yomitan ou solte aqui",
       "uploading": "Enviando… {progress}%",
       "supportedFormats": "Compatível com dicionários Yomitan v3 de definições, frequência e pitch accent (sem imagens).",
@@ -1583,21 +1573,6 @@
   },
   "connections": {
     "title": "Conexões",
-    "shirabe": {
-      "name": "Shirabe",
-      "description": "Conecte sua conta do Shirabe para usar seus próprios dicionários.",
-      "connect": "Conectar",
-      "disconnect": "Desconectar",
-      "linkedAs": "Conectado como {name}",
-      "dictionaries": "Dicionários",
-      "dictionariesHint": "Altere seus dicionários no Shirabe",
-      "anonymous": "sua conta do Shirabe",
-      "upgrade": "Atualizar permissões",
-      "reconnect": "Reconectar",
-      "upgradeNeeded": "Conectado como {name}. Os novos recursos precisam de uma permissão adicional.",
-      "disconnected": "Conectado como {name}, mas o Shirabe deixou de aceitar a conexão. Por isso, seus dicionários não estão sendo usados. Reconecte para usá-los novamente.",
-      "confirmDisconnect": "Desconectar sua conta do Shirabe? A chave será revogada no Shirabe e os painéis das palavras voltarão a usar os dicionários padrão."
-    },
     "patreon": {
       "name": "Patreon",
       "description": "Link Patreon to verify your membership and propose shows",
@@ -1608,15 +1583,6 @@
       "member": "your Patreon account",
       "join": "Join",
       "confirmDisconnect": "Disconnect your Patreon account from Nadeshiko?"
-    },
-    "callback": {
-      "working": "Concluindo a conexão…",
-      "declined": "A conexão não foi autorizada. Nenhuma conta foi vinculada.",
-      "failed": "Não foi possível concluir a conexão.",
-      "signedOut": "Você não está conectado ao Nadeshiko. Entre na sua conta e reinicie a conexão nas configurações.",
-      "back": "Voltar às configurações",
-      "done": "Shirabe conectado",
-      "goToSettings": "Ir para as configurações"
     }
   },
   "supporters": {
@@ -1714,7 +1680,7 @@
       },
       "ownDictionaries": {
         "title": "Seus próprios dicionários",
-        "description": "Vincule o Shirabe para o Nadeshiko usar sua coleção ordenada de dicionários, inclusive dicionários monolíngues e enviados por você."
+        "description": "Envie dicionários de termos e frequência do Yomitan para o Nadeshiko usar sua coleção ordenada de dicionários, inclusive dicionários monolíngues."
       },
       "ankiMining": {
         "title": "Criação completa de cartões no Anki",

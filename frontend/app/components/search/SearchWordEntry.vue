@@ -6,7 +6,7 @@ import {
   pageGlossPreference,
   kanjiIn,
   pitchMorae,
-  type ShirabeWord,
+  type DictionaryWord,
 } from '~/utils/wordCard';
 import { CATEGORY_LABEL_KEYS } from '~/utils/categories';
 import PitchGraph from '~/components/search/segment/PitchGraph.vue';
@@ -24,9 +24,9 @@ import { type EntryBrief, toHiragana } from '#shared/utils/wordEntry';
  */
 const props = withDefaults(
   defineProps<{
-    entry: ShirabeWord;
+    entry: DictionaryWord;
     /** Other words the search can be (はし: 箸, 端). With their entry they open in place, else as a link. */
-    others?: Array<EntryBrief & { entry?: ShirabeWord }>;
+    others?: Array<EntryBrief & { entry?: DictionaryWord }>;
     /** The search when it is a conjugated form of the entry (食べた for 食べる); null otherwise. */
     inflectedFrom?: string | null;
     /** Each kanji's first reading and meaning, by character (商: ショウ, "make a deal"). */
@@ -58,7 +58,7 @@ watch(
 
 /** First English meaning, first synonym only: a chip is a hint, not a definition. From JMdict when it answers: a
  * reader's own monolingual dictionary would put a whole Japanese definition in the chip. */
-const chipGloss = (word: ShirabeWord): string => {
+const chipGloss = (word: DictionaryWord): string => {
   const entries = word.entries ?? [];
   const builtin = entries.filter((entry) => !entry.dictionary.startsWith('custom:'));
   const source = builtin.length > 0 && builtin.length < entries.length ? { ...word, entries: builtin } : word;
@@ -74,7 +74,7 @@ interface Choice {
   headword: string;
   reading: string;
   gloss: string;
-  word: ShirabeWord | null;
+  word: DictionaryWord | null;
 }
 
 const choices = computed<Choice[]>(() => {
@@ -91,7 +91,7 @@ const choices = computed<Choice[]>(() => {
   ];
 });
 
-const shown = computed<ShirabeWord>(() => choices.value[selected.value]?.word ?? props.entry);
+const shown = computed<DictionaryWord>(() => choices.value[selected.value]?.word ?? props.entry);
 const isPrimary = computed(() => selected.value === 0);
 
 function choose(index: number) {

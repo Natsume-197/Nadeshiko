@@ -116,12 +116,11 @@ const STUB_HEADWORD = '手加減';
 
 /**
  * A fixed dictionary answer, so the assertions below are about our rendering
- * rather than about whatever Shirabe happens to say today. The route is the
- * Nuxt proxy, not Shirabe itself -- stubbing at the browser's edge keeps the
- * server route's own caching and fallbacks out of the test.
+ * rather than about today's dictionary content. Stubbing at the browser's edge
+ * keeps the server route's own caching and fallbacks out of the test.
  */
-async function stubShirabeWord(page: Page, word: unknown = STUB_WORD): Promise<void> {
-  await page.route('**/api/shirabe/words/**', (route: Route) =>
+async function stubDictionaryWord(page: Page, word: unknown = STUB_WORD): Promise<void> {
+  await page.route('**/api/dictionary/words/**', (route: Route) =>
     word === null
       ? route.fulfill({ status: 404, contentType: 'application/json', body: '{"error":"not found"}' })
       : route.fulfill({
@@ -337,11 +336,11 @@ test.describe('Word card mining', () => {
 
   test('writes the open word -- definition, pitch, audio -- onto the note', async ({ page }) => {
     // The point of the whole feature: what the reader is looking at on the card
-    // is what lands on the card they review. Shirabe is stubbed so the assertion
+    // is what lands on the card they review. The dictionary is stubbed so the assertion
     // is about our rendering rather than about today's dictionary content.
     await loginAsE2EUser(page);
     await configureAnkiProfile(page, WORD_FIELDS);
-    await stubShirabeWord(page);
+    await stubDictionaryWord(page);
     const calls = await stubAnkiConnect(page, [MINED_NOTE_ID]);
 
     const search = new SearchPage(page);
@@ -370,8 +369,6 @@ test.describe('Word card mining', () => {
       expect(fields.Definition).toContain('style=');
       expect(fields.Definition).toContain('display:block');
       expect(fields.Definition).toContain('allowance');
-      expect(fields.Definition).toContain('View on shirabe.org');
-      expect(fields.Definition).toContain('shirabe.org/');
       expect(fields.Pitch).toContain('nd-mora');
       // The position as plain text, so a template that parses its pitch field
       // for digits cannot read our inline styles as extra accents.
@@ -400,7 +397,7 @@ test.describe('Word card mining', () => {
     // with no entry reaches the same skip, and is the case a browser can drive.
     await loginAsE2EUser(page);
     await configureAnkiProfile(page, WORD_FIELDS);
-    await stubShirabeWord(page, null);
+    await stubDictionaryWord(page, null);
     const calls = await stubAnkiConnect(page, [MINED_NOTE_ID]);
 
     const search = new SearchPage(page);
@@ -436,7 +433,7 @@ test.describe('Word card mining', () => {
     // "add a card first".
     await loginAsE2EUser(page);
     await configureAnkiProfile(page, WORD_FIELDS);
-    await stubShirabeWord(page);
+    await stubDictionaryWord(page);
     const calls = await stubAnkiConnect(page, []);
 
     const search = new SearchPage(page);
@@ -477,7 +474,7 @@ test.describe('Word card mining', () => {
     // would make another -- a duplicate per visit, reported by nothing.
     await loginAsE2EUser(page);
     await configureAnkiProfile(page, [{ key: 'Sentence', value: '{sentence-jp}' }]);
-    await stubShirabeWord(page);
+    await stubDictionaryWord(page);
     const calls = await stubAnkiConnect(page, []);
 
     const search = new SearchPage(page);
@@ -512,7 +509,7 @@ test.describe('Word card mining', () => {
    */
   test('opens the Anki browser after mining, unless the reader turned that off', async ({ page }) => {
     await loginAsE2EUser(page);
-    await stubShirabeWord(page);
+    await stubDictionaryWord(page);
 
     // On by default.
     await configureAnkiProfile(page, WORD_FIELDS);
@@ -566,7 +563,7 @@ test.describe('Word card mining', () => {
   test('recognises a word mined into another deck instead of trying to duplicate it', async ({ page }) => {
     await loginAsE2EUser(page);
     await configureAnkiProfile(page, WORD_FIELDS);
-    await stubShirabeWord(page);
+    await stubDictionaryWord(page);
     const calls = await stubAnkiConnect(page, [MINED_NOTE_ID], { onlyOutsideDeck: true });
 
     const search = new SearchPage(page);
@@ -606,7 +603,7 @@ test.describe('Word card mining', () => {
   test('adds context without touching the word fields, and replaces them when asked', async ({ page }) => {
     await loginAsE2EUser(page);
     await configureAnkiProfile(page, WORD_FIELDS);
-    await stubShirabeWord(page);
+    await stubDictionaryWord(page);
     const calls = await stubAnkiConnect(page, [MINED_NOTE_ID]);
 
     const search = new SearchPage(page);
@@ -671,7 +668,7 @@ test.describe('Word card mining', () => {
   test('mines only the dictionaries the reader ticked, in place of the definition', async ({ page }) => {
     await loginAsE2EUser(page);
     await configureAnkiProfile(page, WORD_FIELDS);
-    await stubShirabeWord(page, STUB_WORD_TWO_DICTIONARIES);
+    await stubDictionaryWord(page, STUB_WORD_TWO_DICTIONARIES);
     const calls = await stubAnkiConnect(page, [MINED_NOTE_ID]);
 
     const search = new SearchPage(page);
@@ -700,9 +697,8 @@ test.describe('Word card mining', () => {
       expect(fields.Definition).toContain('allowance');
       expect(fields.Definition).not.toContain('てぬきをすること');
       // Re-rendered rather than sliced out of the card's DOM: a pick is a
-      // well-formed definition, with the way back to the word still on it.
+      // well-formed definition.
       expect(fields.Definition).toContain('nd-senses');
-      expect(fields.Definition).toContain('View on shirabe.org');
     } finally {
       await clearAnkiProfiles(page);
     }
@@ -716,7 +712,7 @@ test.describe('Word card mining', () => {
   test('leaves the definition whole when every dictionary is deselected', async ({ page }) => {
     await loginAsE2EUser(page);
     await configureAnkiProfile(page, WORD_FIELDS);
-    await stubShirabeWord(page, STUB_WORD_TWO_DICTIONARIES);
+    await stubDictionaryWord(page, STUB_WORD_TWO_DICTIONARIES);
     const calls = await stubAnkiConnect(page, [MINED_NOTE_ID]);
 
     const search = new SearchPage(page);
@@ -757,7 +753,7 @@ test.describe('Word card mining', () => {
   test('select all puts every dictionary back on the note', async ({ page }) => {
     await loginAsE2EUser(page);
     await configureAnkiProfile(page, WORD_FIELDS);
-    await stubShirabeWord(page, STUB_WORD_TWO_DICTIONARIES);
+    await stubDictionaryWord(page, STUB_WORD_TWO_DICTIONARIES);
     const calls = await stubAnkiConnect(page, [MINED_NOTE_ID]);
 
     const search = new SearchPage(page);
@@ -795,7 +791,7 @@ test.describe('Word card mining', () => {
   test('drops the pick when the card closes', async ({ page }) => {
     await loginAsE2EUser(page);
     await configureAnkiProfile(page, WORD_FIELDS);
-    await stubShirabeWord(page, STUB_WORD_TWO_DICTIONARIES);
+    await stubDictionaryWord(page, STUB_WORD_TWO_DICTIONARIES);
     const calls = await stubAnkiConnect(page, [MINED_NOTE_ID]);
 
     const search = new SearchPage(page);
@@ -839,7 +835,7 @@ test.describe('Word card mining', () => {
       { key: 'Definition', value: '{definition:sanseido}<br>{definition:jmdict}' },
       { key: 'Info', value: '{word} ({word-reading}) — {word-jlpt}' },
     ]);
-    await stubShirabeWord(page, STUB_WORD_TWO_DICTIONARIES);
+    await stubDictionaryWord(page, STUB_WORD_TWO_DICTIONARIES);
     const calls = await stubAnkiConnect(page, [MINED_NOTE_ID]);
 
     const search = new SearchPage(page);
@@ -883,7 +879,7 @@ test.describe('Word card mining', () => {
       // even though it is only ever computed from a mined word.
       { key: 'Marked', value: '{content_jp_highlight}' },
     ]);
-    await stubShirabeWord(page, STUB_WORD_TWO_DICTIONARIES);
+    await stubDictionaryWord(page, STUB_WORD_TWO_DICTIONARIES);
     const calls = await stubAnkiConnect(page, [MINED_NOTE_ID]);
 
     const search = new SearchPage(page);

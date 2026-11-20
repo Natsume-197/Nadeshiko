@@ -33,7 +33,7 @@ export interface CandidateTag {
   label: string;
 }
 
-/** The word card's candidate (`ShirabeWord` in the frontend's `wordCard.ts`), minus what we do not have yet:
+/** The word card's candidate (`DictionaryWord` in the frontend's `wordCard.ts`), minus what we do not have yet:
  * pitch and frequency. */
 export interface DictionaryCandidate {
   id: string;

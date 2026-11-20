@@ -945,19 +945,6 @@ export type t_SegmentUpdateRequest = {
   };
 };
 
-export type t_ShirabeConnection = {
-  dictionaries: string[];
-  dictionaryNames?: Record<string, string>;
-  disconnected: boolean;
-  linkedAt: string;
-  missingScopes: string[];
-  needsUpgrade: boolean;
-  scopes: string[];
-  shirabeName?: string | null;
-  stackIsPrivate: boolean;
-  syncedAt?: string | null;
-};
-
 export type t_StatsOverview = {
   dialogueHours: number;
   lastUpdated: string | null;
@@ -1211,7 +1198,6 @@ export type t_UserPreferences = {
   };
   wordPopup?: {
     definitionSize?: 'SMALL' | 'MEDIUM' | 'LARGE';
-    dictionaryProvider?: 'SHIRABE' | 'NADESHIKO';
   };
 };
 
@@ -1250,11 +1236,6 @@ export type t_AddSegmentToCollectionParamSchema = {
 };
 
 export type t_CompletePatreonLinkRequestBody = {
-  code: string;
-  state: string;
-};
-
-export type t_CompleteShirabeLinkRequestBody = {
   code: string;
   state: string;
 };
@@ -1483,17 +1464,9 @@ export type t_RemoveSegmentFromCollectionParamSchema = {
   segmentPublicId: string;
 };
 
-export type t_ReportShirabeRefusalRequestBody = {
-  status: number;
-};
-
 export type t_RestoreSegmentRevisionParamSchema = {
   revisionNumber: number;
   segmentPublicId: string;
-};
-
-export type t_ResyncShirabeStackRequestBody = {
-  stackFingerprint: string;
 };
 
 export type t_SearchCollectionSegmentsParamSchema = {

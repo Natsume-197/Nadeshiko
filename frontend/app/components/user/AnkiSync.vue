@@ -223,20 +223,13 @@ const deleteCurrentProfile = async () => {
 };
 
 /**
- * The reader's own Shirabe dictionaries, for the `{definition:<slug>}` picker.
+ * The reader's custom Yomitan term dictionaries (plus built-in JMdict), for the `{definition:<slug>}` picker.
  *
- * Read from the connection endpoint the settings page already has rather than
- * from a session field, because the NAMES only exist over there: a reader's own
- * uploads are filed under a hash of their contents, so a picker built from slugs
- * alone would offer `yomitan-c89af12122021a8a` to the person who uploaded
- * 三省堂国語辞典. Same call `ConnectionsCard` makes.
- *
- * Failure is silent and leaves the list empty, which hides the submenu: a reader
- * who has linked nothing has no dictionaries to name, and that is by far the
- * commonest case rather than an error worth a toast.
+ * Failure (including 404 when custom dictionaries are switched off) is silent and leaves the list empty, which
+ * hides the submenu: a reader with no custom dictionaries has nothing extra to name.
  */
-type ShirabeDictionary = { slug: string; name: string; language: string | null };
-const shirabeDictionaries = ref<ShirabeDictionary[]>([]);
+type UserDictionaryOption = { slug: string; name: string };
+const userDictionaries = ref<UserDictionaryOption[]>([]);
 
 /** Which field's menu is currently showing the dictionary list, by field name.
  *  Null is the ordinary placeholder menu. */
@@ -250,28 +243,27 @@ watch(openDropdownId, () => {
   dictionaryPickerFor.value = null;
 });
 
-async function loadShirabeDictionaries() {
+async function loadUserDictionaries() {
   try {
     const data = await $fetch<{
-      connection: { dictionaries?: string[]; dictionaryNames?: Record<string, string> } | null;
-    }>('/v1/user/connections/shirabe');
-    const names = data.connection?.dictionaryNames ?? {};
-    // A stack entry is `slug:language`, and the same dictionary sits in the
-    // stack twice for a reader who reads it in two languages -- but a FIELD maps
-    // to the dictionary, not to one language of it, so the slug is deduped here.
-    const seen = new Set<string>();
-    const list: ShirabeDictionary[] = [];
-    for (const source of data.connection?.dictionaries ?? []) {
-      const separator = source.lastIndexOf(':');
-      const slug = separator === -1 ? source : source.slice(0, separator);
-      const language = separator === -1 ? null : source.slice(separator + 1).toUpperCase();
-      if (seen.has(slug)) continue;
-      seen.add(slug);
-      list.push({ slug, name: names[slug] || slug, language });
+      dictionaries?: Array<{ stackId: string; title: string; hasTerms: boolean; enabled: boolean; status: string }>;
+      builtin?: { id: string; enabled: boolean; position: number };
+    }>('/v1/user/dictionaries');
+    const custom = (data.dictionaries ?? [])
+      .filter((dict) => dict.hasTerms && dict.enabled && dict.status === 'ready')
+      .map((dict): UserDictionaryOption => ({ slug: dict.stackId, name: dict.title }));
+    if (custom.length === 0) {
+      userDictionaries.value = [];
+      return;
     }
-    shirabeDictionaries.value = list;
+    const list = [...custom];
+    if (data.builtin?.enabled) {
+      const pos = Math.max(0, Math.min(data.builtin.position, list.length));
+      list.splice(pos, 0, { slug: data.builtin.id, name: t('accountSettings.dictionaries.builtinTitle') });
+    }
+    userDictionaries.value = list;
   } catch {
-    shirabeDictionaries.value = [];
+    userDictionaries.value = [];
   }
 }
 
@@ -285,9 +277,9 @@ onMounted(async () => {
   await nextTick();
   suppressWatchers = false;
   await fetchAndLoad();
-  // Not awaited with the rest: the picker is an extra, and a slow or failing
-  // connection lookup must not hold up the fields table.
-  void loadShirabeDictionaries();
+  // Not awaited with the rest: the picker is an extra, and a slow or disabled
+  // custom-dictionaries endpoint must not hold up the fields table.
+  void loadUserDictionaries();
 });
 
 /**
@@ -733,7 +725,7 @@ watch(canEditProfile, (editable) => {
                                   :text="$t('searchpage.main.buttons.wordaudio')" :iconPath="mdiVolumeHigh" />
                                 <SearchDropdownItem @click="appendFieldPlaceholder(item.key, '{definition}')"
                                   :text="$t('searchpage.main.buttons.definition')" :iconPath="mdiBookOpenVariant" />
-                                <!-- Whatever sits at the top of their Shirabe
+                                <!-- Whatever sits at the top of their dictionary
                                      stack. The zero-setup version of the named
                                      dictionary below: it follows a reorder over
                                      there, and cannot go stale when a dictionary
@@ -760,15 +752,15 @@ watch(canEditProfile, (editable) => {
                                 <!-- One named dictionary, for a note type that
                                      wants 三省堂 in one field and JMdict in
                                      another. Only offered to a reader who has
-                                     dictionaries to name, which means a linked
-                                     Shirabe account: for everybody else the three
+                                     dictionaries to name, which means custom
+                                     dictionaries uploaded: for everybody else the three
                                      definition rows above are the whole story.
 
                                      `data-nd-keep-open` because this opens the
                                      next level of the SAME menu -- without it the
                                      container's click handler closes the dropdown
                                      on the way in. -->
-                                <span v-if="shirabeDictionaries.length > 0" data-nd-keep-open>
+                                <span v-if="userDictionaries.length > 0" data-nd-keep-open>
                                   <SearchDropdownItem
                                     data-testid="anki-dictionary-submenu"
                                     :text="$t('accountSettings.anki.dictionarySubmenu')"
@@ -779,7 +771,7 @@ watch(canEditProfile, (editable) => {
 
                                 <!-- The dictionary list: the same menu, one level
                                      in. A list rather than a nested flyout because
-                                     a reader with nine dictionaries needs the room,
+                                     a reader with several dictionaries needs the room,
                                      and because a flyout on a settings table that
                                      already sits inside a scrolling panel is a
                                      placement problem with no good answer. -->
@@ -795,10 +787,10 @@ watch(canEditProfile, (editable) => {
                                     {{ $t('accountSettings.anki.dictionaryGroup') }}
                                   </div>
                                   <SearchDropdownItem
-                                    v-for="dictionary in shirabeDictionaries"
+                                    v-for="dictionary in userDictionaries"
                                     :key="dictionary.slug"
                                     data-testid="anki-dictionary-option"
-                                    :text="dictionary.language ? `${dictionary.name} (${dictionary.language})` : dictionary.name"
+                                    :text="dictionary.name"
                                     :iconPath="mdiBookOpenVariant"
                                     @click="appendFieldPlaceholder(item.key, `{definition:${dictionary.slug}}`)" />
                                 </template>

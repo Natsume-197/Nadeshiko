@@ -736,7 +736,6 @@
       },
       "translationLanguages": "譯文語言",
       "translationLanguagesDescription": "選擇字幕譯文和詞典釋義的語言，目前支援英語和西班牙語。選擇兩種語言時，還可調整顯示順序。",
-      "translationLanguagesLinkedDescription": "選擇字幕譯文的語言和顯示順序，目前支援英語和西班牙語。詞典釋義沿用你的 Shirabe 設定。",
       "definitionSize": "釋義字號",
       "definitionSizeDescription": "調整詞語彈窗中釋義文字的大小。",
       "definitionSizeOptions": {
@@ -744,13 +743,6 @@
         "MEDIUM": "中",
         "LARGE": "大"
       },
-      "dictionaryProvider": "單字卡辭典",
-      "dictionaryProviderDescription": "點按單字時使用的辭典。如果它無法使用，單字卡會改用另一個。",
-      "dictionaryProviderOptions": {
-        "SHIRABE": "Shirabe",
-        "NADESHIKO": "Nadeshiko"
-      },
-      "dictionaryProviderDefault": "{name}（預設）",
       "translationLanguageOptions": {
         "EN": "僅英語",
         "ES": "僅西班牙語",
@@ -1051,8 +1043,6 @@
       "quotaUsed": "{used} / {max} 本辭典",
       "maxZipSize": "每個 .zip 最大 {maxMb} MB",
       "patronUpsell": "贊助者最多可上傳 6 本辭典（每本最高 95 MB）。",
-      "shirabeProviderNotice": "你目前的單字卡片使用 Shirabe。切換為 Nadeshiko 以使用自訂辭典。",
-      "switchToNadeshiko": "使用 Nadeshiko",
       "dropPrompt": "點擊選擇 Yomitan .zip 檔案或拖曳到此處",
       "uploading": "正在上傳… {progress}%",
       "supportedFormats": "支援 Yomitan v3 釋義、詞頻與音調辭典（不含圖片）。",
@@ -1583,21 +1573,6 @@
   },
   "connections": {
     "title": "關聯賬戶",
-    "shirabe": {
-      "name": "Shirabe",
-      "description": "關聯 Shirabe 賬戶，繼續使用你在那裡的詞典。",
-      "connect": "關聯",
-      "disconnect": "取消關聯",
-      "linkedAs": "已關聯：{name}",
-      "dictionaries": "詞典",
-      "dictionariesHint": "前往 Shirabe 修改詞典設定",
-      "anonymous": "你的 Shirabe 賬戶",
-      "upgrade": "更新授權",
-      "reconnect": "重新關聯",
-      "upgradeNeeded": "已關聯：{name}。使用最新功能需要新增授權。",
-      "disconnected": "已關聯 {name}，但 Shirabe 已停止接受此連線，因此目前未使用你的個人詞典。重新關聯即可恢復。",
-      "confirmDisconnect": "取消關聯 Shirabe 賬戶嗎？這會撤銷 Shirabe 上的金鑰，詞語彈窗將恢復使用預設詞典。"
-    },
     "patreon": {
       "name": "Patreon",
       "description": "Link Patreon to verify your membership and propose shows",
@@ -1608,15 +1583,6 @@
       "member": "your Patreon account",
       "join": "Join",
       "confirmDisconnect": "Disconnect your Patreon account from Nadeshiko?"
-    },
-    "callback": {
-      "working": "正在完成賬戶關聯…",
-      "declined": "關聯請求未獲批准，未關聯任何賬戶。",
-      "failed": "無法完成賬戶關聯。",
-      "signedOut": "你尚未登入 Nadeshiko，無法完成關聯。請登入後從設定中重新發起關聯。",
-      "back": "返回設定",
-      "done": "已關聯 Shirabe",
-      "goToSettings": "前往設定"
     }
   },
   "supporters": {
@@ -1714,7 +1680,7 @@
       },
       "ownDictionaries": {
         "title": "使用你自己的辭典",
-        "description": "連結 Shirabe 後，Nadeshiko 會按你設定的順序使用辭典，包括單語辭典和自行上傳的辭典。"
+        "description": "上傳 Yomitan 辭典與詞頻辭典後，Nadeshiko 會按你設定的順序使用辭典，包括單語辭典。"
       },
       "ankiMining": {
         "title": "豐富的 Anki 製卡",

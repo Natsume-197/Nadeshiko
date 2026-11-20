@@ -12,7 +12,7 @@ import { segmentParser } from '@app/services/parser';
  * a reparse with `npm run es:reindex`. */
 const PAGE_SIZE = Math.max(1, Number(process.env.REPARSE_PAGE_SIZE ?? 1000) || 1000);
 
-/** `PARSE_RATE` paces requests; concurrency alone allowed Shirabe heap growth, while sleeping only for the unused
+/** `PARSE_RATE` paces requests so a full reparse does not starve the Sudachi sidecar; sleeping only for the unused
  * page budget avoids slowing pages already delayed. */
 const TARGET_RATE = Math.max(0, Number(process.env.REPARSE_TARGET_RATE ?? 0) || 0);
 
@@ -44,7 +44,7 @@ async function parseWithRetry(texts: string[]): Promise<Awaited<ReturnType<typeo
       lastError = error;
       if (!isTransient(error)) throw error;
 
-      // Backs off so a parser restart (a Shirabe container swap, or the Sudachi sidecar rebooting) is ridden out
+      // Backs off so a parser restart (the Sudachi sidecar rebooting or being swapped) is ridden out
       // rather than burning all the attempts in a few seconds.
       const delayMs = Math.min(30_000, 2_000 * 2 ** (attempt - 1));
       logger.warn({ err: error, attempt, delayMs, parser: segmentParser.version }, 'Parse failed, retrying');

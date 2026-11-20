@@ -8,7 +8,7 @@ vi.stubGlobal('useI18n', () => ({ t: (key: string) => key, locale }));
 vi.stubGlobal('useLocalePath', () => (path: string) => path);
 
 import SearchWordEntry from './SearchWordEntry.vue';
-import type { ShirabeWord } from '~/utils/wordCard';
+import type { DictionaryWord } from '~/utils/wordCard';
 
 const sense = (en: string, es: string | null, pos = 'v1') => ({
   position: 0,
@@ -16,7 +16,7 @@ const sense = (en: string, es: string | null, pos = 'v1') => ({
   tags: [{ category: 'partOfSpeech', code: pos, label: 'Ichidan verb' }],
 });
 
-const TABERU: ShirabeWord = {
+const TABERU: DictionaryWord = {
   id: 'jmdict:1358280',
   headword: '食べる',
   reading: 'タベル',
@@ -41,9 +41,9 @@ const TABERU: ShirabeWord = {
       senses: Array.from({ length: 8 }, (_, i) => sense(`to eat ${i}`, i === 0 ? 'comer' : null)),
     },
   ],
-} as ShirabeWord;
+} as DictionaryWord;
 
-function render(entry: ShirabeWord = TABERU) {
+function render(entry: DictionaryWord = TABERU) {
   return mount(SearchWordEntry, {
     props: { entry },
     global: {
@@ -86,7 +86,7 @@ describe('the word entry above a word search', () => {
   test('the words the search can be, as chips on top: links when only named', () => {
     const wrapper = mount(SearchWordEntry, {
       props: {
-        entry: { ...TABERU, headword: '橋' } as ShirabeWord,
+        entry: { ...TABERU, headword: '橋' } as DictionaryWord,
         others: [
           { headword: '箸', reading: 'ハシ', gloss: 'chopsticks' },
           { headword: '端', reading: 'ハシ', gloss: null },
@@ -109,7 +109,7 @@ describe('the word entry above a word search', () => {
       reading: 'ハシ',
       furigana: [],
       entries: [{ dictionary: 'jmdict', dictionaryName: 'JMdict', senses: [sense('chopsticks', null, 'n')] }],
-    } as ShirabeWord;
+    } as DictionaryWord;
     locale.value = 'es';
     try {
       const wrapper = mount(SearchWordEntry, {
@@ -133,7 +133,10 @@ describe('the word entry above a word search', () => {
 
   test('a conjugated search shows what the conjugation does, as the card does ("past")', () => {
     const wrapper = mount(SearchWordEntry, {
-      props: { entry: { ...TABERU, inflection: ['negative', 'past'] } as ShirabeWord, inflectedFrom: '食べなかった' },
+      props: {
+        entry: { ...TABERU, inflection: ['negative', 'past'] } as DictionaryWord,
+        inflectedFrom: '食べなかった',
+      },
       global: { mocks: { $t: (key: string) => key }, stubs: { NuxtLink: RouterLinkStub } },
     });
 
@@ -185,7 +188,7 @@ describe('the word entry above a word search', () => {
         { text: '彼', lemma: '彼', reading: 'カレ', id: 'jmdict:1' },
         { text: '女', lemma: '女', reading: 'オンナ', id: 'jmdict:2' },
       ],
-    } as ShirabeWord);
+    } as DictionaryWord);
 
     const parts = wrapper.findAll('[data-testid="word-entry-part"]');
     expect(parts.map((part) => part.text())).toEqual(['彼', '女']);
@@ -195,7 +198,7 @@ describe('the word entry above a word search', () => {
   });
 
   test('no parts row for a word the dictionary does not split', () => {
-    const wrapper = render({ ...TABERU, headword: '彼女', parts: undefined } as ShirabeWord);
+    const wrapper = render({ ...TABERU, headword: '彼女', parts: undefined } as DictionaryWord);
 
     expect(wrapper.find('[data-testid="word-entry-part"]').exists()).toBe(false);
     expect(wrapper.findAll('[data-testid="word-entry-kanji"]').map((link) => link.text())).toEqual(['彼', '女']);
@@ -205,8 +208,8 @@ describe('the word entry above a word search', () => {
     const spanish = (text: string) => ({ position: 0, definitions: [{ lang: 'es', text }], tags: [] });
     const english = (text: string) => ({ position: 0, definitions: [{ lang: 'en', text }], tags: [] });
     const entry = (senses: object[]) =>
-      ({ ...TABERU, entries: [{ dictionary: 'jmdict', dictionaryName: 'JMdict', senses }] }) as ShirabeWord;
-    const glosses = (word: ShirabeWord) =>
+      ({ ...TABERU, entries: [{ dictionary: 'jmdict', dictionaryName: 'JMdict', senses }] }) as DictionaryWord;
+    const glosses = (word: DictionaryWord) =>
       render(word)
         .findAll('.word-entry__gloss')
         .map((gloss) => gloss.text());
@@ -248,7 +251,7 @@ describe("the word entry with a reader's own dictionaries", () => {
       },
       { dictionary: 'jmdict', dictionaryName: 'JMdict', senses: [sense('dangerous; risky', null, 'adj-i')] },
     ],
-  } as unknown as ShirabeWord;
+  } as unknown as DictionaryWord;
 
   test('names each dictionary and renders structured content instead of its plain text', () => {
     const wrapper = render(YABAI);
@@ -285,7 +288,7 @@ describe("the word entry with a reader's own dictionaries", () => {
   });
 
   test("keeps JMdict's English meaning in a homograph chip", () => {
-    const other = { ...TABERU, id: 'jmdict:ume', headword: '野梅', reading: 'ヤバイ' } as ShirabeWord;
+    const other = { ...TABERU, id: 'jmdict:ume', headword: '野梅', reading: 'ヤバイ' } as DictionaryWord;
     const wrapper = mount(SearchWordEntry, {
       props: { entry: YABAI, others: [{ headword: '野梅', reading: 'ヤバイ', gloss: null, entry: other }] },
       global: {

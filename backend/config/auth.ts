@@ -1,4 +1,4 @@
-import { ApiPermission, ShirabeConnection, User, UserRoleType } from '@app/models';
+import { ApiPermission, User, UserRoleType } from '@app/models';
 import { captureAccountCreated } from '@app/services/analytics/posthog';
 import { config, type AppConfig } from '@config/config';
 import { isProdEnvironment } from '@config/environment';
@@ -21,7 +21,6 @@ import { isSuppressed } from '@app/services/email/suppression';
 import { countryFromAuthContext } from '@app/services/auth/requestCountry';
 import { recordLastSeen, resolveUserId, shouldRecordLastSeen } from '@app/services/auth/lastSeen';
 import { Cache, createCacheNamespace } from '@lib/cache';
-import { refreshIfStale, stackIsStale } from '@app/services/shirabe/connection';
 import { gcOrphanArtifacts, getSessionCustomDictionaries } from '@app/services/dictionary/custom/service';
 
 const postgres = getAppPostgresConfig();
@@ -279,61 +278,13 @@ export async function resolveGrantableApiPermissions(
  * defaults apply. */
 export async function enrichSessionUser(user: BetterAuthSessionUser, findUserById: FindUserById = defaultFindUserById) {
   const userId = Number(user.id);
-  const [dbUser, shirabe, customDictionaries] = await Promise.all([
-    findUserById(userId),
-    sessionShirabe(userId),
-    getSessionCustomDictionaries(userId),
-  ]);
+  const [dbUser, customDictionaries] = await Promise.all([findUserById(userId), getSessionCustomDictionaries(userId)]);
   return {
     ...user,
     role: dbUser?.role ?? UserRoleType.USER,
     preferences: dbUser?.preferences ?? {},
-    shirabe,
     customDictionaries,
   };
-}
-
-/** Expose linked-state on every session for lookup-cache isolation; include a per-reader fingerprint for browser
- * invalidation, derive ordered supported languages from the stack, keep credentials server-only, and fail closed to
- * “not linked”. */
-function glossLanguagesFrom(stack: string[] | null | undefined): string[] {
-  const ordered = (stack ?? [])
-    .map((source) => source.slice(source.lastIndexOf(':') + 1).toLowerCase())
-    .filter((language) => language === 'en' || language === 'es');
-
-  return [...new Set(ordered)];
-}
-
-async function sessionShirabe(userId: number) {
-  if (!Number.isInteger(userId) || userId <= 0) return null;
-
-  try {
-    // Two columns rather than an existence check, because the fingerprint is
-    // wanted on the same rows and a second query for it would be a round trip
-    // per render.
-    const connection = await ShirabeConnection.findOne({
-      where: { userId },
-      select: { id: true, stackFingerprint: true, stack: true, disconnectedAt: true, syncedAt: true },
-    });
-    if (!connection) return null;
-
-    // Refresh stale linked stacks fire-and-forget: refresh dedupes and never blocks session reads, while a successful
-    // read clears a prior disconnected mark before that check.
-    if (stackIsStale(connection.syncedAt)) void refreshIfStale(userId);
-
-    /** A refused Shirabe key is not linked: leaving `linked` true would trigger doomed credential/lookups on every
-     * word, while the settings row remains for repair guidance. */
-    if (connection.disconnectedAt) return null;
-
-    return {
-      linked: true,
-      stackFingerprint: connection.stackFingerprint ?? null,
-      glossLanguages: glossLanguagesFrom(connection.stack),
-    };
-  } catch (error) {
-    logger.warn({ err: error, userId }, 'Could not read the Shirabe connection for a session');
-    return null;
-  }
 }
 
 export async function sendWelcomeEmailAfterUserCreate(

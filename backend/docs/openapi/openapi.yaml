@@ -161,16 +161,6 @@ paths:
     $ref: "./paths/user/v1_user_me.yaml"
   "/v1/user/api-keys":
     $ref: "./paths/user/v1_user_api_keys.yaml"
-  "/v1/user/connections/shirabe":
-    $ref: "./paths/user/v1_user_connections_shirabe.yaml"
-  "/v1/user/connections/shirabe/callback":
-    $ref: "./paths/user/v1_user_connections_shirabe_callback.yaml"
-  "/v1/user/connections/shirabe/credential":
-    $ref: "./paths/user/v1_user_connections_shirabe_credential.yaml"
-  "/v1/user/connections/shirabe/resync":
-    $ref: "./paths/user/v1_user_connections_shirabe_resync.yaml"
-  "/v1/user/connections/shirabe/refused":
-    $ref: "./paths/user/v1_user_connections_shirabe_refused.yaml"
   "/v1/user/connections/patreon":
     $ref: "./paths/user/v1_user_connections_patreon.yaml"
   "/v1/user/connections/patreon/callback":

@@ -137,15 +137,13 @@ export const workersInitializer: RuntimeInitializer = {
       {
         name: TOKEN_PARSE_QUEUE,
         options: {
-          // Retry the outer Shirabe pull across deploy/502/timeout failures; `parseSegments` already retries individual
-          // chunks.
+          // Retry the pull across deploys and Sudachi sidecar restarts or timeouts.
           retryLimit: 5,
           retryDelay: 30,
           retryBackoff: true,
-          // Generous next to the ES queues' hour. A full pull is 500 sentences
-          // and the adaptive limiter drops to one chunk at a time when Shirabe
-          // is under load, which is exactly when a tighter expiry would start
-          // killing work that was going to succeed.
+          // Generous: a full pull is 500 sentences, and a slow sidecar is
+          // exactly when a tighter expiry would start killing work that was
+          // going to succeed.
           expireInSeconds: 3600,
           retentionSeconds: 86400,
         },

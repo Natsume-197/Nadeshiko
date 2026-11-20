@@ -1,8 +1,7 @@
 type: object
 description: |
-  One ranked answer from Nadeshiko's own dictionary, in the shape the word card
-  already reads from Shirabe's `words/identify`, so either provider renders the
-  same card. Pitch audio is not provided yet.
+  One ranked answer from Nadeshiko's dictionary (JMdict/JMnedict plus the
+  reader's uploaded custom Yomitan dictionaries). Pitch audio is not provided yet.
 required:
   - id
   - headword

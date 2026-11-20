@@ -5,7 +5,6 @@ export { BaseEntity } from './base.entity';
 export { User, UserRoleType } from './User';
 export type { UserPreferences } from './User';
 export { AccountQuotaUsage } from './AccountQuotaUsage';
-export { ShirabeConnection } from './ShirabeConnection';
 export { PatreonConnection } from './PatreonConnection';
 export { UserDictionary } from './UserDictionary';
 export { UserDictionaryArtifact } from './UserDictionaryArtifact';

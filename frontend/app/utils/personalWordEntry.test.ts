@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { hasOwnDictionaries, personalEntryFor, personalEntryFrom } from '~/utils/personalWordEntry';
-import type { ShirabeWord } from '~/utils/wordCard';
+import type { DictionaryWord } from '~/utils/wordCard';
 
-const word = (headword: string, dictionaries: string[], extra: Partial<ShirabeWord> = {}): ShirabeWord =>
+const word = (headword: string, dictionaries: string[], extra: Partial<DictionaryWord> = {}): DictionaryWord =>
   ({
     id: `jmdict:${headword}`,
     headword,
@@ -15,7 +15,7 @@ const word = (headword: string, dictionaries: string[], extra: Partial<ShirabeWo
       senses: [{ position: 0, definitions: [{ lang: 'en', text: `${headword} in ${dictionary}` }], tags: [] }],
     })),
     ...extra,
-  }) as unknown as ShirabeWord;
+  }) as unknown as DictionaryWord;
 
 describe("the search entry with the reader's own dictionaries", () => {
   afterEach(() => {
@@ -56,8 +56,8 @@ describe("the search entry with the reader's own dictionaries", () => {
 
     const answer = await personalEntryFor('やばい', 'en', 'fp1');
     expect(answer?.entry?.headword).toBe('やばい');
-    expect(fetchMock).toHaveBeenCalledWith(`/api/shirabe/words/candidates/${encodeURIComponent('やばい')}`, {
-      query: { locale: 'en', provider: 'nadeshiko', stack: 'fp1' },
+    expect(fetchMock).toHaveBeenCalledWith(`/api/dictionary/words/candidates/${encodeURIComponent('やばい')}`, {
+      query: { locale: 'en', stack: 'fp1' },
     });
 
     expect(await personalEntryFor('やばい', 'en', 'fp1')).toBeNull();

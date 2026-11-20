@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { __testing, chosenProvider, fetchWord, peekWord, setReaderProvider } from '~/utils/wordLookup';
+import { __testing, fetchWord, peekWord } from '~/utils/wordLookup';
 
 describe('fetchWord with uploaded dictionaries still on their way', () => {
   afterEach(() => {
@@ -70,8 +70,8 @@ describe('cacheKey', () => {
     expect(a).not.toBe(b);
   });
 
-  // The reason a linked reader's stack is in the key at all. Shirabe answers a
-  // lookup from the dictionaries the reader configured over there, so the same
+  // The reason a reader's stack is in the key at all. Nadeshiko answers a
+  // lookup from the custom dictionaries the reader configured, so the same
   // token really is a different question once they change them -- and the answer
   // is cached in this browser for a day.
   it('separates the same word under two dictionary stacks', () => {
@@ -79,26 +79,5 @@ describe('cacheKey', () => {
 
     expect(cacheKey(ref, 'en', 'abc123')).not.toBe(cacheKey(ref, 'en', 'def456'));
     expect(cacheKey(ref, 'en', '')).not.toBe(cacheKey(ref, 'en', 'abc123'));
-  });
-});
-
-describe('the reader’s dictionary', () => {
-  const ref = { lemma: '本', surface: '本', reading: 'ホン', pos: 'noun' };
-
-  it('keeps answers from different dictionaries apart', () => {
-    setReaderProvider(null);
-    const byDefault = cacheKey(ref, 'en', '');
-    setReaderProvider('nadeshiko');
-    const ours = cacheKey(ref, 'en', '');
-    setReaderProvider(null);
-
-    expect(ours).not.toBe(byDefault);
-  });
-
-  it('is the reader’s choice, else Shirabe for a linked reader, else the site default', () => {
-    expect(chosenProvider('NADESHIKO', true)).toBe('nadeshiko');
-    expect(chosenProvider('SHIRABE', false)).toBe('shirabe');
-    expect(chosenProvider(undefined, true)).toBe('shirabe');
-    expect(chosenProvider(undefined, false)).toBeNull();
   });
 });

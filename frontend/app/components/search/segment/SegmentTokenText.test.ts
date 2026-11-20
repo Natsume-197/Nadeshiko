@@ -24,7 +24,7 @@ vi.stubGlobal('useRouter', () => ({ push: routerPush }));
 vi.stubGlobal('useLocalePath', () => (p: unknown) => (typeof p === 'string' ? p : JSON.stringify(p)));
 vi.stubGlobal('usePostHog', () => ({ capture: vi.fn() }));
 vi.stubGlobal('useNuxtApp', () => ({ $i18n: { t: (k: string) => k } }));
-vi.stubGlobal('useRuntimeConfig', () => ({ public: { shirabeLookups: true } }));
+vi.stubGlobal('useRuntimeConfig', () => ({ public: {} }));
 vi.stubGlobal('useHiraganaVisibility', () => ({ showHiragana: ref(true) }));
 vi.stubGlobal('useTranslationLanguages', () => ({
   languages: ref(['EN']),
@@ -43,7 +43,7 @@ import { useDropdownState } from '~/composables/useDropdownState';
 // card never opens and every assertion about it passes by never rendering.
 vi.stubGlobal('useDropdownState', useDropdownState);
 vi.stubGlobal('onViewportWidthChange', vi.fn());
-vi.stubGlobal('userStore', () => ({ isLoggedIn: true, preferences: {}, shirabeGlossLanguages: [] }));
+vi.stubGlobal('userStore', () => ({ isLoggedIn: true, preferences: {} }));
 const fakeWordMining = (ready = false) => ({
   minedNoteId: ref<number | null>(null),
   mining: ref(false),

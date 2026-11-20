@@ -7,36 +7,20 @@ export type DictionaryPreset = {
   id: DictionaryId;
   label: string;
   /**
-   * `slug` is Shirabe's own id for the word, present once the hover card has
-   * loaded one. It beats the surface because it has already picked the
-   * homograph, but it is an id Shirabe issued: no other dictionary can be
-   * handed it, so every other preset builds its url from `word`.
+   * `locale` is the reader's gloss language, used by shirabe.org (`/en/` and `/es/`).
+   * Every other dictionary here is single-language or does its own negotiation, so they ignore it.
    */
-  /**
-   * `locale` is the reader's gloss language, and only shirabe.org takes it: its
-   * pages live under `/en/` and `/es/`, and a url without one answers 302 to
-   * `/en/` whatever the reader is reading in. Every other dictionary here is
-   * single-language or does its own negotiation, so they ignore it.
-   */
-  buildUrl: (word: string, reading: string, slug: string | undefined, locale: GlossLanguage) => string;
+  buildUrl: (word: string, reading: string, locale: GlossLanguage) => string;
   defaultEnabled: boolean;
 };
 
 // Order here is the order readers see, both in settings and in the link row on
-// the card. shirabe.org leads and is the one on by default. Since 3.0.0 it is an
-// ordinary preset a reader can turn off (task 44): the card can be built from
-// our own dictionary, so Shirabe is no longer "the dictionary you are reading".
+// the card. shirabe.org remains available as an external dictionary preset a reader can toggle.
 export const DICTIONARY_PRESETS: DictionaryPreset[] = [
   {
-    // Where a reader who wants more than the card holds lands by default. A web page rather than
-    // the `shirabelookup://` app scheme this used to be: a scheme with no app
-    // installed fails silently, and the card is already on the web.
     id: 'shirabe',
     label: 'shirabe.org',
-    // Through `shirabeWordUrl` rather than spelled out again here. There were two
-    // builders for this one destination and they disagreed: this one omitted the
-    // locale, so a Spanish reader was redirected to the English page.
-    buildUrl: (word, _reading, slug, locale) => shirabeWordUrl(slug ?? word, locale),
+    buildUrl: (word, _reading, locale) => shirabeWordUrl(word, locale),
     defaultEnabled: true,
   },
   {

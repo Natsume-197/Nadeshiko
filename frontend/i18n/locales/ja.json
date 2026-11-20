@@ -736,7 +736,6 @@
       },
       "translationLanguages": "翻訳の表示言語",
       "translationLanguagesDescription": "字幕の翻訳と辞書の語義を表示する言語を選びます。両方を選ぶ場合は、表示順も指定できます。",
-      "translationLanguagesLinkedDescription": "字幕の翻訳を表示する言語と順序を選びます。辞書の語義はShirabeの設定に従います。",
       "definitionSize": "語義の文字サイズ",
       "definitionSizeDescription": "単語を選ぶと開くポップアップで、語義の文字サイズを変更します。",
       "definitionSizeOptions": {
@@ -744,13 +743,6 @@
         "MEDIUM": "中",
         "LARGE": "大"
       },
-      "dictionaryProvider": "単語カードの辞書",
-      "dictionaryProviderDescription": "単語をタップしたときに使う辞書です。使えないときはもう一方の辞書で表示します。",
-      "dictionaryProviderOptions": {
-        "SHIRABE": "Shirabe",
-        "NADESHIKO": "Nadeshiko"
-      },
-      "dictionaryProviderDefault": "{name}（標準）",
       "translationLanguageOptions": {
         "EN": "英語のみ",
         "ES": "スペイン語のみ",
@@ -1051,8 +1043,6 @@
       "quotaUsed": "{used} / {max} 辞書",
       "maxZipSize": "1ファイル最大 {maxMb} MB",
       "patronUpsell": "サポーターは最大6個（各95 MB）までアップロードできます。",
-      "shirabeProviderNotice": "現在、単語カードはShirabeを使用しています。カスタム辞書を使うにはNadeshikoに切り替えてください。",
-      "switchToNadeshiko": "Nadeshikoを使う",
       "dropPrompt": "クリックしてYomitan .zipを選択、またはここにドロップ",
       "uploading": "アップロード中… {progress}%",
       "supportedFormats": "Yomitan v3の語義・頻度・ピッチアクセント辞書に対応しています（画像なし）。",
@@ -1583,21 +1573,6 @@
   },
   "connections": {
     "title": "外部サービスとの連携",
-    "shirabe": {
-      "name": "Shirabe",
-      "description": "Shirabeアカウントを連携すると、Shirabeで設定した辞書をNadeshikoでも使えます。",
-      "connect": "連携する",
-      "disconnect": "連携を解除",
-      "linkedAs": "{name} として連携中",
-      "dictionaries": "辞書",
-      "dictionariesHint": "Shirabe で変更する",
-      "anonymous": "Shirabe アカウント",
-      "upgrade": "権限を更新",
-      "reconnect": "再接続",
-      "upgradeNeeded": "{name}として連携中です。新機能を使うには、追加の権限を許可してください。",
-      "disconnected": "{name}として連携していましたが、Shirabe側で接続が無効になりました。Shirabeの辞書を再び使うには、再接続してください。",
-      "confirmDisconnect": "Shirabeとの連携を解除しますか？連携用のAPIキーが無効になり、単語のポップアップには標準の辞書が表示されるようになります。"
-    },
     "patreon": {
       "name": "Patreon",
       "description": "Link Patreon to verify your membership and propose shows",
@@ -1608,15 +1583,6 @@
       "member": "your Patreon account",
       "join": "Join",
       "confirmDisconnect": "Disconnect your Patreon account from Nadeshiko?"
-    },
-    "callback": {
-      "working": "Shirabeと連携しています…",
-      "declined": "連携が許可されなかったため、処理を中止しました。",
-      "failed": "連携を完了できませんでした。",
-      "signedOut": "Nadeshikoにログインしていないため、連携できませんでした。ログイン後、設定画面からもう一度お試しください。",
-      "back": "設定に戻る",
-      "done": "Shirabeと連携しました",
-      "goToSettings": "設定へ"
     }
   },
   "supporters": {
@@ -1714,7 +1680,7 @@
       },
       "ownDictionaries": {
         "title": "自分の辞書を利用",
-        "description": "Shirabeを連携すると、国語辞典やアップロードした辞書を含む、設定した順序の辞書をNadeshikoで利用できます。"
+        "description": "Yomitanの辞書や頻度辞書をアップロードすると、国語辞典を含む好みの順序でNadeshikoの単語カードに表示できます。"
       },
       "ankiMining": {
         "title": "充実したAnkiマイニング",

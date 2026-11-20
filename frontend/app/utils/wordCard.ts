@@ -19,29 +19,28 @@ export interface YomitanElementNode {
 
 export type YomitanNode = string | YomitanElementNode;
 
-/** A piece of text Shirabe tagged with the language it is written in, which is
+/** A piece of text tagged with the language it is written in, which is
  *  the shape every definition arrives in. Custom Yomitan definitions may also
  *  carry a sanitized `structuredContent` AST alongside the plain-text fallback. */
-export interface ShirabeText {
+export interface DictionaryText {
   lang: string;
   text: string;
   structuredContent?: YomitanNode | YomitanNode[];
 }
 
-export interface ShirabeTag {
+export interface DictionaryTag {
   category: string;
   code: string;
   label: string;
 }
 
-export interface ShirabeSense {
+export interface DictionarySense {
   position?: number;
   /** Which TIER the dictionary put this sense at: 0 a group, 1 a sense, 2 a
-   *  sub-sense of the one above. Absent from an older Shirabe, which reads as a
-   *  flat list of plain senses. See `numberSenses`. */
+   *  sub-sense of the one above. Absent means a flat list of plain senses. See `numberSenses`. */
   depth?: number;
-  definitions?: ShirabeText[];
-  tags?: ShirabeTag[];
+  definitions?: DictionaryText[];
+  tags?: DictionaryTag[];
   /** Usage notes ("usu. in kana", "after the -te form of a verb"). The part of a
    *  sense that changes how a word is USED rather than what it means, so a
    *  definition read without it can be understood correctly and still used
@@ -49,21 +48,17 @@ export interface ShirabeSense {
   notes?: string[];
 }
 
-export interface ShirabeEntry {
+export interface DictionaryEntry {
   dictionary: string;
-  /** What that dictionary is CALLED. A slug is not a name: a reader's own
-   *  uploads are filed under a hash of their contents, so attributing a sense by
-   *  slug prints `yomitan-c89af12122021a8a` at the person who uploaded
-   *  三省堂国語辞典. Absent from an older Shirabe, so the slug stays the fallback. */
+  /** Display name for the dictionary (e.g. "JMdict" or an uploaded Yomitan title). */
   dictionaryName?: string;
-  senses?: ShirabeSense[];
+  senses?: DictionarySense[];
 }
 
 /**
- * Expression parts keep words hidden by a merged token reachable through the card; requested with
- * `include=parts`.
+ * Expression parts keep words hidden by a merged token reachable through the card.
  */
-export interface ShirabePart {
+export interface DictionaryPart {
   text: string;
   lemma: string;
   reading?: string;
@@ -71,7 +66,7 @@ export interface ShirabePart {
   id?: string;
 }
 
-export interface ShirabePitch {
+export interface DictionaryPitch {
   downstep: number;
   pattern?: string;
   /** Custom pitch dictionary title when sourced from a user's uploaded Yomitan pitch bank. */
@@ -79,10 +74,7 @@ export interface ShirabePitch {
   nasal?: number[];
   devoice?: number[];
   tags?: string[];
-  /** A pre-generated clip of the reading spoken at this accent, on Shirabe's
-   *  public CDN. Null when that (reading, accent) was never generated: coverage
-   *  is per clip and lights up batch by batch, so a word can have a pitch
-   *  pattern and no recording of it. */
+  /** A pre-generated clip of the reading spoken at this accent, when available. */
   audioUrl?: string | null;
 }
 
@@ -97,7 +89,7 @@ export interface CustomFrequencyBadge {
  * Only fields the card renders. Example sentences come from Nadeshiko's corpus rather than dictionary
  * examples.
  */
-export interface ShirabeWord {
+export interface DictionaryWord {
   id: string;
   headword: string;
   /**
@@ -108,33 +100,27 @@ export interface ShirabeWord {
    * rendered.
    */
   matchedHeadword?: string | null;
-  parts?: ShirabePart[];
-  /** Shirabe's own answer to "is this a person rather than a word". Never derive
-   *  it from `dictionary`: JMdict carries ~7,300 JMnedict rows under its own
-   *  slug, so a slug test keeps every one of them silently. */
+  parts?: DictionaryPart[];
+  /** Whether this candidate is a proper name rather than an ordinary word. */
   name?: boolean;
   reading?: string | null;
   common?: boolean;
   jlpt?: string | null;
   frequency?: number | null;
-  /** Our dictionary only: the rank in each kind of media the word occurs in, the kind that uses it most first. */
+  /** Rank in each kind of media the word occurs in, the kind that uses it most first. */
   frequencyByCategory?: Array<{ category: string; rank: number; perMillion: number }>;
   /** Custom Yomitan frequency dictionaries enabled on the reader's account (task 48). */
   customFrequencies?: CustomFrequencyBadge[];
-  /** Our dictionary only, for a word found as the dictionary form of what was looked up: the inflection labels. */
+  /** For a word found as the dictionary form of what was looked up: the inflection labels. */
   inflection?: string[];
-  pitch?: ShirabePitch[];
-  /** Ruby for the headword, aligned by Shirabe against the dictionary. */
+  pitch?: DictionaryPitch[];
+  /** Ruby for the headword, aligned against the dictionary. */
   furigana?: Array<{ text: string; ruby?: string }>;
   /** Every spelling the word is written with. What answers the reader who met
    *  空く and is being shown 開く. */
   forms?: Array<{ text: string; script?: string; common?: boolean }>;
-  entries?: ShirabeEntry[];
-  /** The dictionary's own id for this word, and the dictionary it belongs to.
-   *  Only `POST /words/identify` carries the pair; the detail response does not,
-   *  which is why merging a candidate under a detail keeps it. Worth holding on
-   *  to: `id` is a handle derived from dictionary content and moves when a
-   *  headword or a resolution rule moves, while this pair survives a re-import. */
+  entries?: DictionaryEntry[];
+  /** The dictionary's own id for this word, and the dictionary it belongs to. */
   sourceId?: string;
   dictionary?: string;
 }
@@ -143,13 +129,13 @@ export interface ShirabeWord {
  * Identify candidates share the word-card shape. Each carries at most one dictionary entry, possibly none;
  * optional fields allow the same renderers to handle either response.
  */
-export type ShirabeCandidate = ShirabeWord;
+export type DictionaryCandidate = DictionaryWord;
 
 /**
  * Use the selected word consistently for the title, sentence search and Anki mining. The token is the
  * fallback before lookup or when no entry exists.
  */
-export function cardHeadword(word: ShirabeWord | null, tokenDictForm: string | undefined): string {
+export function cardHeadword(word: DictionaryWord | null, tokenDictForm: string | undefined): string {
   return word?.headword || tokenDictForm || '';
 }
 
@@ -168,14 +154,14 @@ export interface FuriganaSegment {
   reading: string;
 }
 
-export function headwordFurigana(word: ShirabeWord | null): FuriganaSegment[] {
+export function headwordFurigana(word: DictionaryWord | null): FuriganaSegment[] {
   const segments = (word?.furigana ?? []).filter((segment) => segment.text);
   if (segments.length === 0 || !word?.headword) return [];
   const spelled = segments.map((segment) => segment.text).join('');
   return spelled === word.headword ? segments.map((s) => ({ text: s.text, reading: s.ruby ?? '' })) : [];
 }
 
-export function candidateName(candidate: ShirabeCandidate): string {
+export function candidateName(candidate: DictionaryCandidate): string {
   return candidate.matchedHeadword || candidate.headword;
 }
 
@@ -201,7 +187,7 @@ export function lookupState(
 /** One chip in the candidate picker, carrying the index it has in the FULL
  *  ranked list rather than in the row it is drawn in. */
 export interface PickerChip {
-  candidate: ShirabeCandidate;
+  candidate: DictionaryCandidate;
   index: number;
 }
 
@@ -210,7 +196,7 @@ export interface PickerChip {
  * visible when collapsed; overflow remains reachable through the expanded list.
  */
 export function pickerChips(
-  candidates: readonly ShirabeCandidate[],
+  candidates: readonly DictionaryCandidate[],
   picked: number,
   expanded: boolean,
   limit: number,
@@ -227,7 +213,7 @@ export function pickerChips(
 }
 
 /** Show a capped list of distinct alternate spellings, excluding the headword and reading already printed. */
-export function cardForms(word: ShirabeWord | null, limit = 4): string[] {
+export function cardForms(word: DictionaryWord | null, limit = 4): string[] {
   const headword = word?.headword ?? '';
   const reading = word?.reading ?? '';
   const seen = new Set([headword, reading]);
@@ -262,8 +248,8 @@ export interface GlossPreference {
    *  They are a last-resort dictionary fallback; globally excluded languages
    *  never return through this door. */
   fallback: GlossLanguage[];
-  /** The one language Shirabe resolves part-of-speech and misc labels into
-   *  (`?locale=`). Never empty: a card whose labels are in nobody's language
+  /** The one language the dictionary resolves part-of-speech and misc labels
+   *  into (`?locale=`). Never empty: a card whose labels are in nobody's language
    *  helps nobody, so this falls back to the reader's own. */
   labels: GlossLanguage;
   /** Tag-chip language follows the interface locale, independently of the EN/ES gloss-label language. */
@@ -312,7 +298,10 @@ function homeFirst(home: GlossLanguage): GlossLanguage[] {
  * to globally enabled languages, but global exclusions never return. If all enabled languages are hidden, no
  * translated gloss is shown.
  */
-export function selectDefinitions(definitions: ShirabeText[] | undefined, preference: GlossPreference): ShirabeText[] {
+export function selectDefinitions(
+  definitions: DictionaryText[] | undefined,
+  preference: GlossPreference,
+): DictionaryText[] {
   const wanted = preference.order.length > 0 ? inLanguages(definitions, preference.order) : [];
   if (wanted.length > 0) return wanted;
 
@@ -326,7 +315,7 @@ export function selectDefinitions(definitions: ShirabeText[] | undefined, prefer
 
 /** Definitions in the given languages, that order, keeping each language's own
  *  order within itself. Anything in a language not asked for is left out. */
-function inLanguages(definitions: ShirabeText[] | undefined, langs: readonly PrintLanguage[]): ShirabeText[] {
+function inLanguages(definitions: DictionaryText[] | undefined, langs: readonly PrintLanguage[]): DictionaryText[] {
   const source = definitions ?? [];
   return langs.flatMap((lang) => source.filter((definition) => definition.lang?.toLowerCase() === lang));
 }
@@ -364,14 +353,14 @@ export interface CardSense {
   glosses: CardGlossRow[];
   /** The sense's usage notes, verbatim. Empty when it has none. */
   notes: string[];
-  /** Which dictionary wrote this sense. Worth carrying since a reader who linked
-   *  their Shirabe account can have several on one card, in their own order: a
+  /** Which dictionary wrote this sense. Worth carrying since a reader with custom
+   *  dictionaries can have several on one card, in their own order: a
    *  monolingual definition and a JMdict gloss sitting in one numbered list with
    *  nothing to tell them apart reads as one dictionary contradicting itself. */
   dictionary: string;
   /**
    * Stable dictionary identifier for stored mappings, separate from the display name. Optional for older
-   * Shirabe responses; names may change or collide.
+   * responses; names may change or collide.
    */
   dictionarySlug?: string;
   /** What to PRINT as this sense's number: `1`, `①` or `㋐` depending on its
@@ -389,7 +378,7 @@ const GLOSS_LABEL: Record<PrintLanguage, string> = { en: 'EN', es: 'ES', ja: '' 
 
 /** Group a sense's definitions into one badged row per language, keeping the
  *  reader's language order and each language's own sense order within its row. */
-function glossRows(definitions: ShirabeText[]): CardGlossRow[] {
+function glossRows(definitions: DictionaryText[]): CardGlossRow[] {
   const rows: CardGlossRow[] = [];
   for (const definition of definitions) {
     const lang = definition.lang?.toLowerCase() as PrintLanguage;
@@ -413,10 +402,10 @@ function glossRows(definitions: ShirabeText[]): CardGlossRow[] {
 const MISC_TAG_CATEGORIES = new Set(['misc', 'field', 'dialect']);
 
 /**
- * Localize chips by stable JMdict code and deduplicate by printed label. Preserve Shirabe's full wording in
+ * Localize chips by stable JMdict code and deduplicate by printed label. Preserve the full wording in
  * the tooltip.
  */
-function cardTags(tags: ShirabeTag[], lang: TagLanguage, keep: (tag: ShirabeTag) => boolean): CardTag[] {
+function cardTags(tags: DictionaryTag[], lang: TagLanguage, keep: (tag: DictionaryTag) => boolean): CardTag[] {
   const chips: CardTag[] = [];
   for (const tag of tags) {
     if (!keep(tag)) continue;
@@ -429,10 +418,9 @@ function cardTags(tags: ShirabeTag[], lang: TagLanguage, keep: (tag: ShirabeTag)
 
 /**
  * A word with no definition at all in the reader's languages reads in English rather than as an empty card.
- * JMdict, which Nadeshiko's own dictionary serves, has Spanish for only part of its entries; Shirabe has Spanish
- * everywhere, so with it this never applies. A reader who hid every language (empty `order`) is left alone.
+ * A reader who hid every language (empty `order`) is left alone.
  */
-function withEnglishFallback(word: ShirabeWord | null, preference: GlossPreference): GlossPreference {
+function withEnglishFallback(word: DictionaryWord | null, preference: GlossPreference): GlossPreference {
   if (preference.order.length === 0 || preference.order.includes('en')) return preference;
   const printable = (word?.entries ?? []).some((entry) =>
     (entry.senses ?? []).some((sense) => selectDefinitions(sense.definitions, preference).length > 0),
@@ -454,14 +442,11 @@ function samePartsOfSpeech(a: CardTag[], b: CardTag[]): boolean {
  * Keep dictionary order and a separate allowance per dictionary; omit senses with no printable gloss.
  * Suppress repeated POS chips, but retain usage qualifiers and notes on every sense they qualify.
  */
-export function cardSenses(word: ShirabeWord | null, wanted: GlossPreference, limit = SENSE_LIMIT): CardSense[] {
+export function cardSenses(word: DictionaryWord | null, wanted: GlossPreference, limit = SENSE_LIMIT): CardSense[] {
   const preference = withEnglishFallback(word, wanted);
-  // Entries arrive in the key owner's own dictionary order, so flattening keeps
+  // Entries arrive in the reader's own dictionary order, so flattening keeps
   // it: a reader who put a monolingual dictionary above JMdict reads it first.
   const senses = (word?.entries ?? []).flatMap((entry) =>
-    // Named, not slugged: what goes on screen above a group of senses is the
-    // dictionary's name. The slug is the fallback for an older Shirabe, and is
-    // what the card showed before this.
     (entry.senses ?? []).map((sense) => ({
       sense,
       dictionary: entry.dictionaryName || entry.dictionary,
@@ -474,7 +459,7 @@ export function cardSenses(word: ShirabeWord | null, wanted: GlossPreference, li
 
   // Apply quotas per dictionary; exhausting one must not stop later dictionaries.
   const printed = new Map<string, number>();
-  const kept: Array<{ sense: ShirabeSense; dictionary: string }> = [];
+  const kept: Array<{ sense: DictionarySense; dictionary: string }> = [];
 
   for (const { sense, dictionary, slug } of senses) {
     const glosses = glossRows(selectDefinitions(sense.definitions, preference));
@@ -535,7 +520,7 @@ function range(from: number, to: number): string[] {
  * child counters under a new parent; omit the unused group indentation for flat dictionaries. Mirrors
  * Shirabe's sense numbering.
  */
-function numberSenses(cards: CardSense[], kept: Array<{ sense: ShirabeSense; dictionary: string }>): CardSense[] {
+function numberSenses(cards: CardSense[], kept: Array<{ sense: DictionarySense; dictionary: string }>): CardSense[] {
   const tieredDictionaries = new Set(
     kept.filter((entry) => depthOf(entry.sense) === 0).map((entry) => entry.dictionary),
   );
@@ -548,7 +533,6 @@ function numberSenses(cards: CardSense[], kept: Array<{ sense: ShirabeSense; dic
     const tally = counts.get(key) ?? [0, 0, 0];
 
     // A group resets the senses under it; a sense resets its own sub-senses.
-    // Same three counters as `SearchHelper#number_tiers`.
     if (depth === 0) {
       tally[0] += 1;
       tally[1] = 0;
@@ -571,7 +555,7 @@ function numberSenses(cards: CardSense[], kept: Array<{ sense: ShirabeSense; dic
   });
 }
 
-function depthOf(sense: ShirabeSense | undefined): 0 | 1 | 2 {
+function depthOf(sense: DictionarySense | undefined): 0 | 1 | 2 {
   const depth = sense?.depth;
   return depth === 0 || depth === 2 ? depth : 1;
 }
@@ -587,7 +571,7 @@ function tierNumber(depth: number, ordinal: number): string {
  * language-selection rules as the open card.
  */
 export function candidateSummary(
-  candidate: ShirabeCandidate | null,
+  candidate: DictionaryCandidate | null,
   preference: GlossPreference,
   limit = SUMMARY_LIMIT,
 ): string {
@@ -611,7 +595,7 @@ const SUMMARY_LIMIT = 42;
  * Use the first printable sense's POS to distinguish candidates with identical spellings, consistently with
  * the card.
  */
-export function candidatePartOfSpeech(candidate: ShirabeCandidate | null, preference: GlossPreference): string {
+export function candidatePartOfSpeech(candidate: DictionaryCandidate | null, preference: GlossPreference): string {
   const [first] = cardSenses(candidate, preference, 1);
   return first?.partsOfSpeech[0]?.label ?? '';
 }
@@ -667,16 +651,15 @@ export function pitchMorae(reading: string, downstep: number): PitchMora[] {
 const SHIRABE_SITE = 'https://shirabe.org';
 
 /**
- * Outbound surface recorded as `utm_content`; word-card and Anki-definition links share a destination but
- * represent different entry points.
+ * Outbound surface recorded as `utm_content` for external dictionary clicks.
  */
-export type ShirabeLinkSurface = 'word-card' | 'anki-definition';
+export type DictionaryLinkSurface = 'word-card';
 
 /**
- * Use standard UTM parameters for Shirabe attribution because `noreferrer` strips the referrer. Keep that
+ * Use standard UTM parameters for external attribution because `noreferrer` strips the referrer. Keep that
  * privacy boundary: the originating URL can contain the reader's search.
  */
-function withAttribution(url: string, surface: ShirabeLinkSurface): string {
+function withAttribution(url: string, surface: DictionaryLinkSurface): string {
   const params = new URLSearchParams({
     utm_source: 'nadeshiko',
     // The visit is an onward click from a link on someone else's site, which is
@@ -688,13 +671,12 @@ function withAttribution(url: string, surface: ShirabeLinkSurface): string {
 }
 
 /**
- * Use the freshly resolved lookup id for word links, never a stored token id: content-derived ids can change
- * after dictionary re-imports.
+ * External link to a word on shirabe.org (kept as an optional dictionary preset).
  */
 export function shirabeWordUrl(
-  id: string,
+  word: string,
   locale: GlossLanguage,
-  surface: Extract<ShirabeLinkSurface, 'word-card' | 'anki-definition'> = 'word-card',
+  surface: DictionaryLinkSurface = 'word-card',
 ): string {
-  return withAttribution(`${SHIRABE_SITE}/${locale}/word/${encodeURIComponent(id)}`, surface);
+  return withAttribution(`${SHIRABE_SITE}/${locale}/word/${encodeURIComponent(word)}`, surface);
 }

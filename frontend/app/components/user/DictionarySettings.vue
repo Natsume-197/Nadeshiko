@@ -36,7 +36,6 @@ const data = ref<UserDictionaryListResponse | null>(null);
 const loading = ref(true);
 const saving = ref(false);
 const deletingId = ref<number | null>(null);
-const switchingProvider = ref(false);
 
 const draggingFile = ref(false);
 const uploading = ref(false);
@@ -57,13 +56,6 @@ const quotaPercent = computed(() => {
 const atQuotaLimit = computed(() => {
   if (!data.value) return false;
   return data.value.quota.used >= data.value.quota.max;
-});
-
-const isUsingShirabeProvider = computed(() => {
-  const pref = user.preferences?.wordPopup?.dictionaryProvider;
-  if (pref === 'SHIRABE') return true;
-  if (pref === 'NADESHIKO') return false;
-  return user.shirabeLinked || useRuntimeConfig().public.dictionaryProvider !== 'nadeshiko';
 });
 
 const stackRows = computed<StackRow[]>(() => {
@@ -178,25 +170,6 @@ async function removeDictionary(dict: UserDictionary) {
     });
   } finally {
     deletingId.value = null;
-  }
-}
-
-async function switchToNadeshikoProvider() {
-  if (switchingProvider.value) return;
-  switchingProvider.value = true;
-  try {
-    await sdk.updateUserPreferences({ wordPopup: { dictionaryProvider: 'NADESHIKO' } });
-    user.preferences = {
-      ...user.preferences,
-      wordPopup: { ...user.preferences?.wordPopup, dictionaryProvider: 'NADESHIKO' },
-    };
-    useToastSuccess(t('accountSettings.account.preferenceSaved'));
-  } catch (error) {
-    handleApiError('account:dictionary-provider-switch-failed', error, {
-      toastKey: 'accountSettings.account.preferenceError',
-    });
-  } finally {
-    switchingProvider.value = false;
   }
 }
 
@@ -327,22 +300,6 @@ onBeforeUnmount(stopPolling);
           {{ t('accountSettings.account.customTheme.seeSupport') }}
         </NuxtLink>
       </p>
-    </div>
-
-    <!-- Provider notice if reader currently uses Shirabe -->
-    <div
-      v-if="isUsingShirabeProvider && data && data.dictionaries.length > 0"
-      class="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-hairline bg-surface-lift p-3 text-sm text-gray-300"
-    >
-      <span>{{ t('accountSettings.dictionaries.shirabeProviderNotice') }}</span>
-      <button
-        type="button"
-        class="rounded-md bg-brand-solid px-3 py-1.5 text-xs font-semibold text-on-accent hover:opacity-90 disabled:opacity-50"
-        :disabled="switchingProvider"
-        @click="switchToNadeshikoProvider"
-      >
-        {{ t('accountSettings.dictionaries.switchToNadeshiko') }}
-      </button>
     </div>
 
     <!-- Upload dropzone -->

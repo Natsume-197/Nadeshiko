@@ -5,12 +5,11 @@ get:
   # Server-only: the frontend proxy blocks browsers and the controller re-checks the internal secret.
   x-server-only: true
   operationId: identifyDictionaryWord
-  summary: Rank Nadeshiko's own dictionary entries for one token, for our own server only
+  summary: Rank Nadeshiko's dictionary entries for one token, for our own server only
   description: |
-    The word card's lookup when the reader's provider is Nadeshiko rather than
-    Shirabe. Takes what a stored token carries and returns ranked candidates in
-    the card's shape. Called by the frontend server, which owns caching and
-    provider choice; refused unless the request came through our own Nitro proxy.
+    The word card's dictionary lookup. Takes what a stored token carries and
+    returns ranked candidates in the card's shape. Called by the frontend server,
+    which owns caching; refused unless the request came through our own Nitro proxy.
 
   security: []
   parameters:
@@ -42,7 +41,7 @@ get:
       schema:
         type: string
         maxLength: 16
-      description: Shirabe's short part-of-speech tag (`SlimToken.pt`).
+      description: The token's short part-of-speech tag (`SlimToken.pt`).
       example: verb
     - name: locale
       in: query

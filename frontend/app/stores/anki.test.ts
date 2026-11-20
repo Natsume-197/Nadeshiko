@@ -1289,7 +1289,7 @@ describe('addResultToAnki: media uploads', () => {
 
     await store.addResultToAnki(asResult(sentence), {
       noteId: 77,
-      word: { word: '食べる', audioUrl: 'https://shirabe.test/taberu.mp3', audioFilename: 'taberu.mp3' } as never,
+      word: { word: '食べる', audioUrl: 'https://cdn.example.test/taberu.mp3', audioFilename: 'taberu.mp3' } as never,
     });
 
     const update = ankiCall('updateNoteFields')!;
@@ -1485,7 +1485,7 @@ describe('addResultToAnki: the word’s own audio', () => {
   const minedWithAudio = {
     word: '食べる',
     reading: 'たべる',
-    audioUrl: 'https://shirabe.test/taberu.mp3',
+    audioUrl: 'https://cdn.example.test/taberu.mp3',
     audioFilename: 'taberu.mp3',
   } as never;
 
@@ -1499,10 +1499,10 @@ describe('addResultToAnki: the word’s own audio', () => {
     return ankiCalls().filter((call) => call.action === 'storeMediaFile');
   }
 
-  test('is fetched by AnkiConnect from Shirabe’s CDN', async () => {
+  test('is fetched by AnkiConnect from the audio CDN', async () => {
     const stored = await exportWordAudio(minedWithAudio);
 
-    expect(stored[0]?.params).toMatchObject({ filename: 'taberu.mp3', url: 'https://shirabe.test/taberu.mp3' });
+    expect(stored[0]?.params).toMatchObject({ filename: 'taberu.mp3', url: 'https://cdn.example.test/taberu.mp3' });
   });
 
   test('is skipped when the word has no clip, rather than storing an empty file', async () => {
@@ -1512,7 +1512,7 @@ describe('addResultToAnki: the word’s own audio', () => {
   });
 
   test('is skipped when the clip has no filename to store it under', async () => {
-    const stored = await exportWordAudio({ word: '食べる', audioUrl: 'https://shirabe.test/x.mp3' });
+    const stored = await exportWordAudio({ word: '食べる', audioUrl: 'https://cdn.example.test/x.mp3' });
 
     expect(stored).toHaveLength(0);
   });

@@ -736,7 +736,6 @@
       },
       "translationLanguages": "Bahasa terjemahan",
       "translationLanguagesDescription": "Pilih bahasa untuk terjemahan subtitle dan definisi kamus: Inggris, Spanyol, atau keduanya. Jika memilih keduanya, Anda juga dapat mengatur urutan tampilannya. Terjemahan subtitle bahasa Indonesia belum tersedia.",
-      "translationLanguagesLinkedDescription": "Pilih bahasa dan urutan tampilan terjemahan subtitle: Inggris, Spanyol, atau keduanya. Definisi kamus mengikuti pengaturan Shirabe Anda. Terjemahan subtitle bahasa Indonesia belum tersedia.",
       "definitionSize": "Ukuran teks definisi",
       "definitionSizeDescription": "Atur ukuran teks definisi pada panel kata.",
       "definitionSizeOptions": {
@@ -744,13 +743,6 @@
         "MEDIUM": "Sedang",
         "LARGE": "Besar"
       },
-      "dictionaryProvider": "Kamus kartu kata",
-      "dictionaryProviderDescription": "Kamus yang menjawab saat kamu mengetuk sebuah kata. Jika tidak tersedia, kartu memakai kamus yang lain.",
-      "dictionaryProviderOptions": {
-        "SHIRABE": "Shirabe",
-        "NADESHIKO": "Nadeshiko"
-      },
-      "dictionaryProviderDefault": "{name} (bawaan)",
       "translationLanguageOptions": {
         "EN": "Hanya Inggris",
         "ES": "Hanya Spanyol",
@@ -1051,8 +1043,6 @@
       "quotaUsed": "{used} / {max} kamus",
       "maxZipSize": "Maksimal {maxMb} MB per .zip",
       "patronUpsell": "Pendukung Patreon dapat mengunggah hingga 6 kamus (95 MB masing-masing).",
-      "shirabeProviderNotice": "Kartu kata Anda saat ini menggunakan Shirabe. Beralih ke Nadeshiko untuk memakai kamus kustom Anda.",
-      "switchToNadeshiko": "Gunakan Nadeshiko",
       "dropPrompt": "Klik untuk memilih .zip Yomitan atau seret ke sini",
       "uploading": "Mengunggah… {progress}%",
       "supportedFormats": "Mendukung kamus Yomitan v3 untuk definisi, frekuensi, dan pitch accent (tanpa gambar).",
@@ -1583,21 +1573,6 @@
   },
   "connections": {
     "title": "Akun terhubung",
-    "shirabe": {
-      "name": "Shirabe",
-      "description": "Hubungkan akun Shirabe untuk menggunakan kamus pilihan Anda di sini.",
-      "connect": "Hubungkan",
-      "disconnect": "Putuskan",
-      "linkedAs": "Terhubung sebagai {name}",
-      "dictionaries": "Kamus",
-      "dictionariesHint": "Buka Shirabe untuk mengubahnya",
-      "anonymous": "akun Shirabe Anda",
-      "upgrade": "Perbarui izin",
-      "reconnect": "Hubungkan kembali",
-      "upgradeNeeded": "Terhubung sebagai {name}. Izin baru diperlukan untuk fitur terbaru.",
-      "disconnected": "Terhubung sebagai {name}, tetapi Shirabe tidak lagi menerima koneksi ini sehingga kamus Anda tidak digunakan. Hubungkan kembali untuk menggunakannya lagi.",
-      "confirmDisconnect": "Putuskan koneksi akun Shirabe? Kunci akses akan dicabut di Shirabe, dan panel kata akan kembali menggunakan kamus bawaan."
-    },
     "patreon": {
       "name": "Patreon",
       "description": "Link Patreon to verify your membership and propose shows",
@@ -1608,15 +1583,6 @@
       "member": "your Patreon account",
       "join": "Join",
       "confirmDisconnect": "Disconnect your Patreon account from Nadeshiko?"
-    },
-    "callback": {
-      "working": "Menyelesaikan koneksi…",
-      "declined": "Koneksi tidak disetujui, sehingga akun belum dihubungkan.",
-      "failed": "Koneksi gagal diselesaikan.",
-      "signedOut": "Anda belum masuk ke Nadeshiko, sehingga koneksi tidak dapat diselesaikan. Masuk, lalu mulai lagi dari pengaturan.",
-      "back": "Kembali ke pengaturan",
-      "done": "Shirabe terhubung",
-      "goToSettings": "Buka pengaturan"
     }
   },
   "supporters": {
@@ -1714,7 +1680,7 @@
       },
       "ownDictionaries": {
         "title": "Kamus Anda sendiri",
-        "description": "Hubungkan Shirabe agar Nadeshiko memakai susunan kamus pilihan Anda, termasuk kamus ekabahasa dan kamus yang Anda unggah."
+        "description": "Unggah kamus istilah dan frekuensi Yomitan agar Nadeshiko memakai susunan kamus pilihan Anda, termasuk kamus ekabahasa."
       },
       "ankiMining": {
         "title": "Pembuatan kartu Anki yang lengkap",

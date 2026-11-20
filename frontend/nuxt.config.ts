@@ -17,8 +17,6 @@ const SITE_URL = isDev ? 'https://stg.nadeshiko.co' : 'https://nadeshiko.co';
 
 const CDN_ORIGIN = 'https://cdn.nadeshiko.co';
 
-// Shirabe lookup responses supply pronunciation clip URLs; allow its CDN for media only.
-const SHIRABE_CDN_ORIGIN = 'https://cdn.shirabe.org';
 // Dictionary/mining extensions inject passive assets governed by the page CSP.
 // Allow fonts, images and styles without granting extension script execution.
 const MIGAKU_ASSET_ORIGIN = 'https://migaku-public-data.migaku.com';
@@ -153,13 +151,6 @@ export default defineNuxtConfig({
   runtimeConfig: {
     releaseSha: env.NUXT_RELEASE_SHA,
     nadeshikoApiKey: env.NUXT_NADESHIKO_API_KEY,
-    // Keep the service key server-side; anything under public is shipped to the browser.
-    shirabeApiKey: env.NUXT_SHIRABE_API_KEY,
-    shirabeApiBase: env.NUXT_SHIRABE_API_BASE || 'https://shirabe.org',
-    // Optional tailnet fast path; the lookup route falls back to the public host, changing latency only.
-    shirabeApiDirect: env.NUXT_SHIRABE_API_DIRECT || '',
-    // The word-card dictionary for readers who never chose one: 'shirabe' or 'nadeshiko'.
-    dictionaryProvider: env.NUXT_DICTIONARY_PROVIDER,
     internalProxySecret: env.NUXT_INTERNAL_PROXY_SECRET,
     backendInternalUrl: env.NUXT_BACKEND_INTERNAL_URL,
     backendHostHeader: env.NUXT_BACKEND_HOST_HEADER,
@@ -173,15 +164,6 @@ export default defineNuxtConfig({
     public: {
       appVersion: frontendPackageJson.version,
       environment: env.NUXT_PUBLIC_ENVIRONMENT,
-      // Reader-facing settings URL, distinct from the possibly private server API address; no key is exposed.
-      shirabeSite: env.NUXT_PUBLIC_SHIRABE_SITE || 'https://shirabe.org',
-      // Expose only whether lookups are configured, not the key, to avoid doomed hover requests.
-      // Without lookups, cards still show token-provided word, reading and grammar.
-      // Our own dictionary needs no key, so it counts as configured.
-      shirabeLookups: Boolean(env.NUXT_SHIRABE_API_KEY) || env.NUXT_DICTIONARY_PROVIDER === 'nadeshiko',
-      // The site's default word-card dictionary, so Settings can show what a reader who never chose is getting.
-      // Fixed at build time: deploys set NUXT_PUBLIC_DICTIONARY_PROVIDER next to NUXT_DICTIONARY_PROVIDER.
-      dictionaryProvider: env.NUXT_DICTIONARY_PROVIDER,
     },
   },
   // Restrict scanning to Vue SFCs so colocated TypeScript helpers do not become phantom components.
@@ -265,7 +247,7 @@ export default defineNuxtConfig({
             ],
             'worker-src': ["'self'", 'blob:'],
             // Allow self-contained inline media as well as object URLs.
-            'media-src': ["'self'", 'blob:', 'data:', CDN_ORIGIN, SHIRABE_CDN_ORIGIN],
+            'media-src': ["'self'", 'blob:', 'data:', CDN_ORIGIN],
             'object-src': ["'none'"],
             'frame-src': [
               "'self'",
@@ -500,7 +482,7 @@ export default defineNuxtConfig({
     // Do not add shared HTML caching without auditing SSR personalization and nonce handling.
     // The root locale router is per-user and must never be shared-cached.
     '/': { headers: { 'Cache-Control': 'private, no-store' } },
-    // Shared /api responses (announcement, home grid, media by slug, Shirabe definitions) are cached inside their
+    // Shared /api responses (announcement, home grid, media by slug, word-card definitions) are cached inside their
     // handlers with explicit keys, not by swr route rules: a route rule keys on the full URL, so every junk query
     // string would mint a cache entry. Their swr options still overwrite Cache-Control, so custom headers here would
     // not reach clients; ETag/Last-Modified still allow browser revalidation.

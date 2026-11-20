@@ -25,9 +25,7 @@ Cuando una frase escribe un verbo en kana, la palabra que es tras un sustantivo 
 
 ## Tarjetas de palabras
 
-En Ajustes eliges qué diccionario responde en la tarjeta de palabra: el de Nadeshiko o [Shirabe](https://shirabe.org), que reconoce sus propias fuentes de lecturas, acento tonal, frecuencia, niveles JLPT y audio.
-
-Las tarjetas del diccionario de Nadeshiko usan, además de JMdict y JMnedict:
+Las tarjetas de palabras de Nadeshiko usan, además de JMdict y JMnedict:
 
 - **Furigana:** [JmdictFurigana](https://github.com/Doublevil/JmdictFurigana), de Doublevil, bajo la [licencia Creative Commons Atribución-CompartirIgual 4.0](https://creativecommons.org/licenses/by-sa/4.0/deed.es).
 - **Acento tonal:** [UniDic](https://clrd.ninjal.ac.jp/unidic/), del Instituto Nacional de Lengua y Lingüística Japonesa (NINJAL), bajo la licencia BSD modificada. Donde UniDic no lo tiene, sobre todo en palabras compuestas: [Kanjium](https://github.com/mifunetoshiro/kanjium), bajo la licencia Creative Commons Atribución-CompartirIgual 4.0. «The pitch accent notation, verb particle data, phonetics, homonyms and other additions or modifications to EDICT, KANJIDIC or KRADFILE were provided by Uros O. through his free database.»

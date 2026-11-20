@@ -42,7 +42,7 @@ const CHROMIUM = chromiumLauncher();
 // authenticatedPage reuses the project/worker storageState; omitted specs run signed out.
 // Spell out full names: the .spec.ts anchor means "activity" does not match "activity-privacy".
 const AUTHENTICATED_TESTS =
-  /(accessibility|account-lifecycle|activity|activity-privacy|admin-access|anki-deck-model|anki-field-placeholders|auth-callback|collections|developer-api-keys|favorite-media|header-navigation|hidden-categories|hidden-media|hidden-results-notice|media-filter-account|recent-searches-account|reporting|shirabe-connection|user-settings|word-mining)\.spec\.ts$/;
+  /(accessibility|account-lifecycle|activity|activity-privacy|admin-access|anki-deck-model|anki-field-placeholders|auth-callback|collections|developer-api-keys|favorite-media|header-navigation|hidden-categories|hidden-media|hidden-results-notice|media-filter-account|recent-searches-account|reporting|user-settings|word-mining)\.spec\.ts$/;
 
 // Release smoke stays serial and exercises deployed SSR, auth, edge/storage and database
 // boundaries. Pure routing and viewport behavior do not spend the production render budget.

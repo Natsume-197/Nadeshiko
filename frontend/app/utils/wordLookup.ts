@@ -1,4 +1,4 @@
-import type { ShirabeCandidate } from '~/utils/wordCard';
+import type { DictionaryCandidate } from '~/utils/wordCard';
 import type { WordRef } from '~/utils/tokenEnrichment';
 
 export type { WordRef };
@@ -14,46 +14,22 @@ export type { WordRef };
  * service unavailability.
  */
 export type WordLookup =
-  | { candidates: ShirabeCandidate[]; nameOnly?: boolean; reason?: undefined }
+  | { candidates: DictionaryCandidate[]; nameOnly?: boolean; reason?: undefined }
   | { candidates: []; nameOnly?: undefined; reason: 'missing' | 'failed' };
 
 const inFlight = new Map<string, Promise<WordLookup>>();
 
 /**
- * Include locale in the cache key: field/dialect labels and full-wording tooltips still come localized from
- * Shirabe, even when other chips use local translations.
+ * Include locale in the cache key so language-specific labels do not collide across switches.
  */
 function cacheKey(ref: WordRef, locale: string, stack: string): string {
-  return `${ref.lemma}\u0000${ref.surface}\u0000${ref.reading}\u0000${ref.pos}:${locale}:${stack}:${readerProvider}`;
-}
-
-export type DictionaryProvider = 'shirabe' | 'nadeshiko';
-
-/**
- * Which dictionary the reader wants on the card, or '' for the site default. Sent as `provider` so it is part of
- * the URL every cache (browser, Nitro, Cloudflare) keys on. Pushed from the auth store, like the stack below.
- */
-let readerProvider: DictionaryProvider | '' = '';
-
-export function setReaderProvider(provider: DictionaryProvider | null | undefined): void {
-  readerProvider = provider ?? '';
-}
-
-/** The reader's provider: their explicit choice, else Shirabe for a reader who linked a Shirabe account (they
- *  linked it to use it), else none, which means the site default. */
-export function chosenProvider(
-  preference: 'SHIRABE' | 'NADESHIKO' | null | undefined,
-  linkedShirabe: boolean,
-): DictionaryProvider | null {
-  if (preference === 'SHIRABE') return 'shirabe';
-  if (preference === 'NADESHIKO') return 'nadeshiko';
-  return linkedShirabe ? 'shirabe' : null;
+  return `${ref.lemma}\u0000${ref.surface}\u0000${ref.reading}\u0000${ref.pos}:${locale}:${stack}`;
 }
 
 /**
- * Stack fingerprint is a cache discriminator, not lookup authority; Shirabe resolves dictionaries from the
- * reader's key. It changes URLs when a linked stack changes. The auth store pushes it here to avoid importing
- * Pinia/Nuxt into these utilities.
+ * Stack fingerprint is a cache discriminator, not lookup authority; the backend resolves custom dictionaries
+ * from the reader's session. It changes URLs when the reader's custom dictionary stack changes. The auth store
+ * pushes it here to avoid importing Pinia/Nuxt into these utilities.
  */
 let readerStackFingerprint = '';
 
@@ -118,21 +94,19 @@ export function fetchWord(ref: WordRef, locale: string): Promise<WordLookup> {
   if (pending) return pending;
 
   const request = $fetch<{
-    candidates: ShirabeCandidate[];
+    candidates: DictionaryCandidate[];
     nameOnly?: boolean;
     stackFingerprint?: string;
     pending?: boolean;
-  }>(`/api/shirabe/words/candidates/${encodeURIComponent(ref.lemma)}`, {
-    // `stack` is a cache key and nothing else: the route ignores it when
-    // calling Shirabe, which resolves the stack from the reader's own key.
-    // Sent only for a linked reader, so every other URL is unchanged.
+  }>(`/api/dictionary/words/candidates/${encodeURIComponent(ref.lemma)}`, {
+    // `stack` is a cache key and nothing else: the route ignores it when calling the backend,
+    // which resolves the stack from the reader's session. Sent only when a custom stack is active.
     query: {
       locale,
       surface: ref.surface,
       reading: ref.reading,
       pos: ref.pos,
       ...(stack ? { stack } : {}),
-      ...(readerProvider ? { provider: readerProvider } : {}),
     },
     // Bound the browser request beyond the server's shorter timeouts so a hung connection cannot leave the
     // card loading forever.

@@ -736,7 +736,6 @@
       },
       "translationLanguages": "Idiomas de las traducciones",
       "translationLanguagesDescription": "Elige los idiomas de las traducciones de los subtítulos y de las definiciones del diccionario. Si eliges ambos, también puedes indicar el orden.",
-      "translationLanguagesLinkedDescription": "Elige los idiomas y el orden de las traducciones de los subtítulos. Las definiciones del diccionario siguen tus ajustes de Shirabe.",
       "definitionSize": "Tamaño del texto de las definiciones",
       "definitionSizeDescription": "Cambia el tamaño del texto de las definiciones en la ventana de cada palabra.",
       "definitionSizeOptions": {
@@ -744,13 +743,6 @@
         "MEDIUM": "Mediano",
         "LARGE": "Grande"
       },
-      "dictionaryProvider": "Diccionario de la tarjeta",
-      "dictionaryProviderDescription": "Qué diccionario responde cuando tocas una palabra. Si no está disponible, la tarjeta responde con el otro.",
-      "dictionaryProviderOptions": {
-        "SHIRABE": "Shirabe",
-        "NADESHIKO": "Nadeshiko"
-      },
-      "dictionaryProviderDefault": "{name} (predeterminado)",
       "translationLanguageOptions": {
         "EN": "Solo inglés",
         "ES": "Solo español",
@@ -1051,8 +1043,6 @@
       "quotaUsed": "{used} / {max} diccionarios",
       "maxZipSize": "Hasta {maxMb} MB por .zip",
       "patronUpsell": "Los mecenas pueden subir hasta 6 diccionarios (95 MB cada uno).",
-      "shirabeProviderNotice": "Tus tarjetas de palabra usan Shirabe actualmente. Cambia a Nadeshiko para usar tus diccionarios subidos.",
-      "switchToNadeshiko": "Usar Nadeshiko",
       "dropPrompt": "Haz clic para elegir un .zip de Yomitan o arrástralo aquí",
       "uploading": "Subiendo… {progress}%",
       "supportedFormats": "Compatible con diccionarios Yomitan v3 de definiciones, frecuencia y pitch accent (sin imágenes).",
@@ -1583,21 +1573,6 @@
   },
   "connections": {
     "title": "Servicios conectados",
-    "shirabe": {
-      "name": "Shirabe",
-      "description": "Conecta tu cuenta de Shirabe para usar tus diccionarios también en Nadeshiko.",
-      "connect": "Conectar",
-      "disconnect": "Desconectar",
-      "linkedAs": "Cuenta vinculada: {name}",
-      "dictionaries": "Diccionarios",
-      "dictionariesHint": "Gestionar en Shirabe",
-      "anonymous": "Cuenta de Shirabe",
-      "upgrade": "Actualizar permisos",
-      "reconnect": "Volver a conectar",
-      "upgradeNeeded": "Cuenta vinculada: {name}. Autoriza los permisos adicionales para usar las nuevas funciones.",
-      "disconnected": "La conexión de la cuenta {name} se ha desactivado en Shirabe. Vuelve a conectarla para usar tus diccionarios.",
-      "confirmDisconnect": "¿Desconectar tu cuenta de Shirabe? Se revocará la clave de conexión y la ventana de palabras volverá a usar los diccionarios predeterminados."
-    },
     "patreon": {
       "name": "Patreon",
       "description": "Link Patreon to verify your membership and propose shows",
@@ -1608,15 +1583,6 @@
       "member": "your Patreon account",
       "join": "Join",
       "confirmDisconnect": "Disconnect your Patreon account from Nadeshiko?"
-    },
-    "callback": {
-      "working": "Conectando con Shirabe…",
-      "declined": "La conexión no se autorizó y se ha cancelado.",
-      "failed": "No se pudo completar la conexión.",
-      "signedOut": "Debes iniciar sesión en Nadeshiko para conectar la cuenta. Después, vuelve a intentarlo desde Ajustes.",
-      "back": "Volver a ajustes",
-      "done": "Cuenta de Shirabe conectada",
-      "goToSettings": "Ir a ajustes"
     }
   },
   "supporters": {
@@ -1714,7 +1680,7 @@
       },
       "ownDictionaries": {
         "title": "Tus propios diccionarios",
-        "description": "Vincula Shirabe y Nadeshiko usará tu conjunto ordenado de diccionarios, incluidos diccionarios monolingües y subidos por ti."
+        "description": "Sube diccionarios de definiciones y frecuencia de Yomitan para que Nadeshiko use tu conjunto ordenado de diccionarios, incluidos los monolingües."
       },
       "ankiMining": {
         "title": "Minería enriquecida para Anki",

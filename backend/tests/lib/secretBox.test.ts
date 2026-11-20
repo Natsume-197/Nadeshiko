@@ -59,9 +59,9 @@ describe('secretBox', () => {
    * share a key. */
   describe('purpose separation', () => {
     it('cannot open a value sealed for another purpose', () => {
-      const sealed = encryptSecret('shra_live_token', SECRET, { purpose: 'shirabe.access-token' });
+      const sealed = encryptSecret('secret_live_token', SECRET, { purpose: 'oauth.access-token' });
 
-      expect(() => decryptSecret(sealed, SECRET, { purpose: 'shirabe.oauth-state' })).toThrow(SecretBoxError);
+      expect(() => decryptSecret(sealed, SECRET, { purpose: 'oauth.state' })).toThrow(SecretBoxError);
     });
 
     it('derives unrelated keys from the same secret', () => {
@@ -78,16 +78,16 @@ describe('secretBox', () => {
    * tag makes a ciphertext for another row fail. */
   describe('owner binding', () => {
     it('refuses a ciphertext moved to another owner', () => {
-      const mine = encryptSecret('shra_live_token', SECRET, { purpose: 'shirabe.access-token', aad: '42' });
+      const mine = encryptSecret('secret_live_token', SECRET, { purpose: 'oauth.access-token', aad: '42' });
 
-      expect(decryptSecret(mine, SECRET, { purpose: 'shirabe.access-token', aad: '42' })).toBe('shra_live_token');
-      expect(() => decryptSecret(mine, SECRET, { purpose: 'shirabe.access-token', aad: '43' })).toThrow(SecretBoxError);
+      expect(decryptSecret(mine, SECRET, { purpose: 'oauth.access-token', aad: '42' })).toBe('secret_live_token');
+      expect(() => decryptSecret(mine, SECRET, { purpose: 'oauth.access-token', aad: '43' })).toThrow(SecretBoxError);
     });
 
     it('refuses a ciphertext whose owner was dropped entirely', () => {
-      const bound = encryptSecret('shra_live_token', SECRET, { purpose: 'shirabe.access-token', aad: '42' });
+      const bound = encryptSecret('secret_live_token', SECRET, { purpose: 'oauth.access-token', aad: '42' });
 
-      expect(() => decryptSecret(bound, SECRET, { purpose: 'shirabe.access-token' })).toThrow(SecretBoxError);
+      expect(() => decryptSecret(bound, SECRET, { purpose: 'oauth.access-token' })).toThrow(SecretBoxError);
     });
   });
 

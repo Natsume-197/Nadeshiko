@@ -134,43 +134,36 @@ describe('applySession', () => {
     expect(store.isLoggedIn).toBe(false);
   });
 
-  test('pushes the reader’s dictionary stack to the word-lookup cache', () => {
+  test('pushes the reader’s custom dictionary stack to the word-lookup cache', () => {
     // The cache keys on this and cannot reach in for it, so this is the one
     // place that knows a session landed and has to push.
     const store = userStore();
 
-    store.applySession(session({ user: { shirabe: { linked: true, stackFingerprint: 'fp-1' } } }));
+    store.applySession(session({ user: { customDictionaries: { count: 2, stackFingerprint: 'fp-1' } } }));
 
-    expect(store.shirabeStackFingerprint).toBe('fp-1');
+    expect(store.customDictionariesFingerprint).toBe('fp-1');
+    expect(store.customDictionariesCount).toBe(2);
+    expect(store.customDictionariesAvailable).toBe(true);
     expect(setReaderStack).toHaveBeenCalledWith('fp-1');
   });
 
   test('clears the stack when signing out, so the next reader is not served the last one’s cards', () => {
     const store = userStore();
-    store.applySession(session({ user: { shirabe: { linked: true, stackFingerprint: 'fp-1' } } }));
+    store.applySession(session({ user: { customDictionaries: { count: 1, stackFingerprint: 'fp-1' } } }));
 
     store.applySession(null);
 
     expect(setReaderStack).toHaveBeenLastCalledWith(null);
   });
 
-  test('a reader with no Shirabe account is not marked linked', () => {
+  test('marks custom dictionaries unavailable when the session omits them', () => {
     const store = userStore();
 
-    store.applySession(session({ user: { shirabe: null } }));
+    store.applySession(session({ user: { customDictionaries: null } }));
 
-    expect(store.shirabeLinked).toBe(false);
-    expect(store.shirabeGlossLanguages).toEqual([]);
-  });
-
-  test('records the gloss languages in the order the stack gives them', () => {
-    // `jmdict:es` above `jmdict:en` means Spanish first, and the order is the
-    // information.
-    const store = userStore();
-
-    store.applySession(session({ user: { shirabe: { linked: true, glossLanguages: ['es', 'en'] } } }));
-
-    expect(store.shirabeGlossLanguages).toEqual(['es', 'en']);
+    expect(store.customDictionariesAvailable).toBe(false);
+    expect(store.customDictionariesFingerprint).toBeNull();
+    expect(store.customDictionariesCount).toBe(0);
   });
 
   test('an impersonated session is marked as one, naming who is being impersonated', () => {

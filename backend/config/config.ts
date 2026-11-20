@@ -45,15 +45,6 @@ const envSchema = z.object({
   USERNAME_API_NADEDB: requiredString,
   EMAIL_API_NADEDB: requiredString,
   API_KEY_MASTER: requiredString,
-  // Shirabe parses every segment we serve and supplies the definitions behind
-  // each word. The key is a quota-exempt service identity of ours.
-  SHIRABE_API_BASE: z.string().url().default('https://shirabe.org'),
-  SHIRABE_API_KEY: z.string().default(''),
-  // How many parse batches run at once. See the long note on PARSE_CONCURRENCY in
-  // app/services/shirabe/parseSegments.ts for why the default is deliberately
-  // small. Validated here rather than read raw so a typo is a boot error instead
-  // of a silent fallback to the default.
-  SHIRABE_PARSE_CONCURRENCY: z.coerce.number().int().positive().default(3),
   // Weekly refresh of our own dictionary (`dict` schema, ~1.9 GB with names) from jmdict-simplified and
   // JmdictFurigana. Off until the operator decides the server has the disk for it.
   DICTIONARY_REFRESH_ENABLED: booleanString,
@@ -75,31 +66,9 @@ const envSchema = z.object({
   USER_DICT_R2_ACCESS_KEY_ID: optionalString,
   USER_DICT_R2_SECRET_ACCESS_KEY: optionalString,
   USER_DICT_R2_PREFIX: z.string().trim().default('user-dicts'),
-  // The Sudachi sidecar (backend/sudachi) our own parser analyses text with, e.g. http://sudachi:8090. Unset: our
-  // parser cannot run, and Shirabe keeps parsing.
+  // The Sudachi sidecar (backend/sudachi) our parser analyses text with, e.g. http://sudachi:8090.
+  // Required outside `ENVIRONMENT=local` so a deployed container never boots without its parser.
   SUDACHI_URL: optionalString,
-  // Which parser writes Segment.tokens: Shirabe until it fails, then ours (nadeshiko-docs: plans/shirabe-replacement.md,
-  // "Switch runbook"). Global, not per reader. `nadeshiko` needs SUDACHI_URL and the `dict` schema imported.
-  SEGMENT_PARSER: z.enum(['shirabe', 'nadeshiko']).default('shirabe'),
-  // Shirabe linking is off unless client registration and the encrypted connection secret are configured; never replace
-  // the secret with cleartext third-party credentials.
-  SHIRABE_OAUTH_CLIENT_ID: z.string().default('nadeshiko'),
-  SHIRABE_OAUTH_REDIRECT_URI: z.string().default(''),
-  /** This is a confidential Shirabe client: the secret must be sent on token exchange/renewal/revocation, and empty
-   * disables linking. */
-  SHIRABE_OAUTH_CLIENT_SECRET: z.string().default(''),
-  /** Require generated key material when configured; a short value still derives a valid-looking but guessable key,
-   * so empty is the only disabled state. */
-  SHIRABE_CONNECTION_SECRET: z
-    .string()
-    .default('')
-    .refine((value) => value === '' || value.length >= 32, {
-      message:
-        'SHIRABE_CONNECTION_SECRET must be at least 32 characters of generated key material (or empty to disable linking)',
-    }),
-  /** The previous Shirabe secret is read-only during rotation; configure it while re-encrypting stored rows, then
-   * clear it. */
-  SHIRABE_CONNECTION_SECRET_PREVIOUS: z.string().default(''),
 
   // Patreon is a connected account, not a sign-in provider. Its membership is
   // what unlocks roadmap proposals, so tokens stay server-side and encrypted.
@@ -205,9 +174,9 @@ const envSchema = z.object({
 
 export const config: Readonly<z.infer<typeof envSchema>> = Object.freeze(envSchema.parse(process.env));
 
-// A boot error rather than a first failed parse job: switching the parser without the sidecar would stall ingest.
-if (config.SEGMENT_PARSER === 'nadeshiko' && !config.SUDACHI_URL) {
-  throw new Error('SEGMENT_PARSER=nadeshiko needs SUDACHI_URL (the Sudachi sidecar)');
+// A boot error rather than a first failed parse job: running outside local dev without the sidecar would stall ingest.
+if (config.ENVIRONMENT !== 'local' && !config.SUDACHI_URL) {
+  throw new Error('SUDACHI_URL (the Sudachi sidecar) must be configured outside ENVIRONMENT=local');
 }
 // Once custom dictionaries are on, require R2 outside local dev so containers stay stateless across deploys.
 if (

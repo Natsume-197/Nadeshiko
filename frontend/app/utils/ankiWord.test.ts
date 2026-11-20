@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
   definitionHtml,
-  definitionSourceHtml,
   distinctSurface,
   escapeHtml,
   highlightedSentence,
@@ -11,21 +10,21 @@ import {
   pitchHtml,
 } from './ankiWord';
 import type { EnrichedToken } from './tokenEnrichment';
-import { glossPreference, type GlossPreference, type ShirabeWord } from './wordCard';
+import { glossPreference, type DictionaryWord, type GlossPreference } from './wordCard';
 
 /** Assert field strings directly where DOM normalization could hide escaping or furigana errors. */
 
 const EN: GlossPreference = glossPreference('en', { en: 'show', es: 'show' });
 
-const TEKAGEN: ShirabeWord = {
-  id: 'tekagen',
+const TEKAGEN: DictionaryWord = {
+  id: 'jmdict:1326730',
   headword: '手加減',
   reading: 'てかげん',
   common: true,
   jlpt: 'N1',
   frequency: 12345,
   furigana: [{ text: '手加減', ruby: 'てかげん' }],
-  pitch: [{ downstep: 0, audioUrl: 'https://cdn.shirabe.org/pitch/tekagen-0.mp3' }],
+  pitch: [{ downstep: 0, audioUrl: 'https://cdn.nadeshiko.co/pitch/tekagen-0.mp3' }],
   entries: [
     {
       dictionary: 'jmdict',
@@ -185,38 +184,6 @@ describe('definitionHtml', () => {
   });
 });
 
-describe('definitionSourceHtml', () => {
-  it('links the resolved word page in the reader own locale', () => {
-    const html = definitionSourceHtml(TEKAGEN, 'es');
-
-    expect(html).toContain('class="nd-source"');
-    expect(html).toContain('View on shirabe.org');
-    expect(html).toContain('https://shirabe.org/es/word/tekagen');
-    expect(html).not.toContain('/en/word/');
-  });
-
-  it('attributes the visit as coming from an Anki note, not the hover card', () => {
-    const href = /href="([^"]+)"/.exec(definitionSourceHtml(TEKAGEN, 'en'))?.[1];
-    expect(href).toBeDefined();
-    const params = new URL(href!.replaceAll('&amp;', '&')).searchParams;
-    expect(Object.fromEntries(params)).toEqual({
-      utm_source: 'nadeshiko',
-      utm_medium: 'referral',
-      utm_content: 'anki-definition',
-    });
-  });
-
-  it('escapes the href, so a query string cannot break the attribute', () => {
-    const html = definitionSourceHtml(TEKAGEN, 'en');
-    expect(html).toContain('utm_source=nadeshiko&amp;utm_medium=referral');
-    expect(html).not.toMatch(/href="[^"]*&utm_/);
-  });
-
-  it('renders nothing without an id, so a half-built word cannot invent a url', () => {
-    expect(definitionSourceHtml({ id: '', headword: '手加減' }, 'en')).toBe('');
-  });
-});
-
 describe('pitchHtml', () => {
   it('marks heiban high from the second mora to the end, with no drop', () => {
     const html = pitchHtml('てかげん', 0);
@@ -272,15 +239,15 @@ describe('infoHtml', () => {
 
 describe('pitchAudioFilename', () => {
   it('names the clip by reading and accent, so mining twice overwrites', () => {
-    expect(pitchAudioFilename('てかげん', 0, 'https://cdn.shirabe.org/a.mp3')).toBe('nadeshiko-word-てかげん-0.mp3');
+    expect(pitchAudioFilename('てかげん', 0, 'https://cdn.nadeshiko.co/a.mp3')).toBe('nadeshiko-word-てかげん-0.mp3');
   });
 
   it('keeps the extension the CDN actually served', () => {
-    expect(pitchAudioFilename('あめ', 1, 'https://cdn.shirabe.org/a.ogg?v=2')).toBe('nadeshiko-word-あめ-1.ogg');
+    expect(pitchAudioFilename('あめ', 1, 'https://cdn.nadeshiko.co/a.ogg?v=2')).toBe('nadeshiko-word-あめ-1.ogg');
   });
 
   it('falls back to mp3 when the URL names no extension', () => {
-    expect(pitchAudioFilename('あめ', 1, 'https://cdn.shirabe.org/clip')).toBe('nadeshiko-word-あめ-1.mp3');
+    expect(pitchAudioFilename('あめ', 1, 'https://cdn.nadeshiko.co/clip')).toBe('nadeshiko-word-あめ-1.mp3');
   });
 
   it('drops anything that could escape the filename', () => {
@@ -295,11 +262,9 @@ describe('minedWord', () => {
     expect(mined.reading).toBe('てかげん');
     expect(mined.furigana).toBe('手加減[てかげん]');
     expect(mined.definition).toContain('allowance');
-    expect(mined.definition).toContain('View on shirabe.org');
-    expect(mined.definition).toContain('https://shirabe.org/en/word/tekagen');
     expect(mined.pitch).toContain('nd-mora');
     expect(mined.info).toContain('N1');
-    expect(mined.audioUrl).toBe('https://cdn.shirabe.org/pitch/tekagen-0.mp3');
+    expect(mined.audioUrl).toBe('https://cdn.nadeshiko.co/pitch/tekagen-0.mp3');
     expect(mined.audioFilename).toBe('nadeshiko-word-てかげん-0.mp3');
   });
 
@@ -317,20 +282,20 @@ describe('minedWord', () => {
   });
 
   it('leaves the reading empty when the headword is already kana', () => {
-    const kana: ShirabeWord = { id: 'k', headword: 'ある', reading: 'ある' };
+    const kana: DictionaryWord = { id: 'k', headword: 'ある', reading: 'ある' };
     expect(minedWord(kana, token(), EN).reading).toBe('');
   });
 
   it('picks the first accent that actually has a recording', () => {
-    const word: ShirabeWord = {
+    const word: DictionaryWord = {
       ...TEKAGEN,
       pitch: [
         { downstep: 0, audioUrl: null },
-        { downstep: 2, audioUrl: 'https://cdn.shirabe.org/b.mp3' },
+        { downstep: 2, audioUrl: 'https://cdn.nadeshiko.co/b.mp3' },
       ],
     };
     const mined = minedWord(word, token(), EN);
-    expect(mined.audioUrl).toBe('https://cdn.shirabe.org/b.mp3');
+    expect(mined.audioUrl).toBe('https://cdn.nadeshiko.co/b.mp3');
     expect(mined.audioFilename).toBe('nadeshiko-word-てかげん-2.mp3');
     // The DIAGRAM still shows the first pattern, which is the one the card
     // shows: the clip is chosen by what exists, the diagram by what is primary.
@@ -342,7 +307,7 @@ describe('minedWord', () => {
   });
 
   it('follows the reader into Spanish', () => {
-    const bilingual: ShirabeWord = {
+    const bilingual: DictionaryWord = {
       ...TEKAGEN,
       entries: [
         {
@@ -362,13 +327,9 @@ describe('minedWord', () => {
     const mined = minedWord(bilingual, token(), spanish);
     expect(mined.definition).toContain('indulgencia');
     expect(mined.definition).not.toContain('allowance');
-    expect(mined.definition).toContain('https://shirabe.org/es/word/tekagen');
   });
 
-  it('does not hang a lone source link on an empty definition', () => {
-    // A reader who hid every gloss language still has a word, and a link with
-    // no senses around it would count as content -- which would overwrite a
-    // glossary Yomitan already wrote on the note.
+  it('returns an empty definition when every gloss language is hidden', () => {
     const none = glossPreference('en', { en: 'hidden', es: 'hidden' });
     expect(minedWord(TEKAGEN, token(), none).definition).toBe('');
   });
@@ -473,7 +434,7 @@ describe('highlightedSentence', () => {
  * graph.
  */
 describe('pitchPositions', () => {
-  const withPitch = (pitch: unknown) => ({ ...TEKAGEN, pitch }) as ShirabeWord;
+  const withPitch = (pitch: unknown) => ({ ...TEKAGEN, pitch }) as DictionaryWord;
 
   it('is the bare number, with none of the markup the diagram carries', () => {
     const mined = minedWord(withPitch([{ downstep: 3 }]), token(), EN);
@@ -514,7 +475,7 @@ describe('splitting definitions across fields', () => {
       { dictionary: '大辞林', senses: [{ definitions: [{ lang: 'ja', text: '命がなくなる' }], tags: [] }] },
       { dictionary: 'JMdict', senses: [{ definitions: [{ lang: 'en', text: 'to die' }], tags: [] }] },
     ],
-  } as unknown as ShirabeWord;
+  } as unknown as DictionaryWord;
 
   // `{definition}` is every dictionary, the way Yomitan's `{glossary}` is, and
   // nothing else on the card can change what it contains.
@@ -561,7 +522,7 @@ describe('splitting definitions across fields', () => {
           senses: [{ definitions: [{ lang: 'en', text: 'to die' }], tags: [] }],
         },
       ],
-    } as unknown as ShirabeWord;
+    } as unknown as DictionaryWord;
 
     const { definitionsByDictionary } = minedWord(slugged, token({ dictForm: '死ぬ' }), EN);
 
@@ -603,7 +564,7 @@ describe('a note built from more than one dictionary', () => {
         senses: [{ depth: 1, definitions: [{ lang: 'ja', text: '口に入れる。' }], tags: [] }],
       },
     ],
-  } as unknown as ShirabeWord;
+  } as unknown as DictionaryWord;
 
   it('names each dictionary above its own senses', () => {
     const { definition } = minedWord(stacked, token({ dictForm: '食べる' }), EN);
@@ -660,7 +621,7 @@ describe('picking dictionaries', () => {
         senses: [{ definitions: [{ lang: 'en', text: 'to die' }], tags: [] }],
       },
     ],
-  } as unknown as ShirabeWord;
+  } as unknown as DictionaryWord;
 
   it('keeps the whole stack when the reader ticked nothing', () => {
     const { definition, pickedDictionaries } = minedWord(stack, token({ dictForm: '死ぬ' }), EN);
@@ -696,18 +657,12 @@ describe('picking dictionaries', () => {
     expect(Object.keys(definitionsByDictionary)).toEqual(['jmdict']);
   });
 
-  // Keyed on the SLUG, because that is the dictionary's identity: a name is
-  // renamed by Shirabe and shared by two of a reader's own uploads.
+  // Keyed on the SLUG, because that is the dictionary's identity: two uploads
+  // can share a display name.
   it('keys on the slug rather than the printed name', () => {
     const { definition } = minedWord(stack, token({ dictForm: '死ぬ' }), EN, '', new Set(['三省堂国語辞典']));
 
     expect(definition).toBe('');
-  });
-
-  it('still hangs the source link on a narrowed definition', () => {
-    const { definition } = minedWord(stack, token({ dictForm: '死ぬ' }), EN, '', new Set(['daijirin']));
-
-    expect(definition).toContain('shirabe.org');
   });
 
   // A dictionary the reader has since removed from their stack, or one with no
@@ -742,7 +697,7 @@ describe('minedWord surface form', () => {
       { text: 'べた', reading: '' },
     ],
   });
-  const TABERU: ShirabeWord = { ...TEKAGEN, id: 'taberu', headword: '食べる', reading: 'たべる', furigana: [] };
+  const TABERU: DictionaryWord = { ...TEKAGEN, id: 'taberu', headword: '食べる', reading: 'たべる', furigana: [] };
 
   it('mines the dictionary form by default, and carries both forms', () => {
     const mined = minedWord(TABERU, TABETA, EN);
@@ -761,7 +716,7 @@ describe('minedWord surface form', () => {
     expect(mined.dictionaryForm).toBe('食べる');
     // Definitions and pitch describe the dictionary entry, whichever form is mined.
     expect(mined.definition).toContain('allowance');
-    expect(mined.audioUrl).toBe('https://cdn.shirabe.org/pitch/tekagen-0.mp3');
+    expect(mined.audioUrl).toBe('https://cdn.nadeshiko.co/pitch/tekagen-0.mp3');
   });
 
   it('leaves the reading empty for a kana surface', () => {

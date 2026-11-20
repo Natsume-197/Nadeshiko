@@ -25,11 +25,6 @@ const { formatDate } = useFormat();
 
 const user_store = userStore();
 
-// Whether this reader's definitions come from their own Shirabe stack, which is
-// what makes the dictionary half of the languages setting somebody else's
-// business. Read off the session, so it costs no extra request.
-const shirabeLinked = computed(() => (user_store.shirabeGlossLanguages ?? []).length > 0);
-
 /** How large the word card prints its definitions. See `~/utils/wordPopup`. */
 const definitionTextSize = computed(() => definitionSize(user_store.preferences?.wordPopup?.definitionSize));
 
@@ -57,42 +52,6 @@ const updateDefinitionSize = async (value: string) => {
     handleApiError('account:definition-size-update-failed', error, {
       toastKey: 'accountSettings.account.preferenceError',
       context: { 'preference.key': 'wordPopup.definitionSize' },
-    });
-  } finally {
-    savingPreferences.value = false;
-  }
-};
-/**
- * Which dictionary answers the word card. Shows what the reader gets now: their choice, else Shirabe when they
- * linked an account, else the site default.
- */
-const DICTIONARY_PROVIDERS = ['NADESHIKO', 'SHIRABE'] as const;
-type ProviderOption = (typeof DICTIONARY_PROVIDERS)[number];
-const siteDefaultProvider = computed<ProviderOption>(() =>
-  useRuntimeConfig().public.dictionaryProvider === 'nadeshiko' ? 'NADESHIKO' : 'SHIRABE',
-);
-const dictionaryProvider = computed<ProviderOption>(
-  () =>
-    user_store.preferences?.wordPopup?.dictionaryProvider ??
-    (user_store.shirabeLinked ? 'SHIRABE' : siteDefaultProvider.value),
-);
-
-const updateDictionaryProvider = async (value: string) => {
-  const provider: ProviderOption = value === 'NADESHIKO' ? 'NADESHIKO' : 'SHIRABE';
-
-  savingPreferences.value = true;
-  try {
-    await sdk.updateUserPreferences({ wordPopup: { dictionaryProvider: provider } });
-    user_store.preferences = {
-      ...user_store.preferences,
-      wordPopup: { ...user_store.preferences?.wordPopup, dictionaryProvider: provider },
-    };
-    posthog?.capture('setting_changed', { setting_name: 'wordPopup.dictionaryProvider', value: provider });
-    useToastSuccess(t('accountSettings.account.preferenceSaved'));
-  } catch (error) {
-    handleApiError('account:dictionary-provider-update-failed', error, {
-      toastKey: 'accountSettings.account.preferenceError',
-      context: { 'preference.key': 'wordPopup.dictionaryProvider' },
     });
   } finally {
     savingPreferences.value = false;
@@ -797,7 +756,7 @@ const logoutCurrentUser = async () => {
       </div>
 
       <!-- The two dictionary rows sit last, together, and directly above the
-           Shirabe card below: all three are about where a word's definitions
+           dictionaries card below: all three are about where a word's definitions
            come from, and they were scattered through the list with unrelated
            settings between them. -->
       <div class="mt-4">
@@ -843,39 +802,8 @@ const logoutCurrentUser = async () => {
 
       <div class="mt-4 nd-settings-row">
         <div>
-          <p class="text-white">{{ $t('accountSettings.account.dictionaryProvider') }}</p>
-          <p class="text-gray-400 text-sm">{{ $t('accountSettings.account.dictionaryProviderDescription') }}</p>
-        </div>
-        <select
-          :aria-label="$t('accountSettings.account.dictionaryProvider')"
-          data-testid="dictionary-provider"
-          :value="dictionaryProvider"
-          :disabled="savingPreferences"
-          class="nd-select"
-          @change="updateDictionaryProvider(($event.target as HTMLSelectElement).value)"
-        >
-          <option v-for="provider in DICTIONARY_PROVIDERS" :key="provider" :value="provider">
-            {{
-              provider === siteDefaultProvider
-                ? $t('accountSettings.account.dictionaryProviderDefault', {
-                    name: $t(`accountSettings.account.dictionaryProviderOptions.${provider}`),
-                  })
-                : $t(`accountSettings.account.dictionaryProviderOptions.${provider}`)
-            }}
-          </option>
-        </select>
-      </div>
-
-      <div class="mt-4 nd-settings-row">
-        <div>
           <p class="text-white">{{ $t('accountSettings.account.translationLanguages') }}</p>
-          <!-- The description changes when a Shirabe account is linked, because
-               half of what this control did moved over there. It is NOT disabled
-               with it: the same value still decides which subtitle translation
-               rows render under a sentence, which EN/ES toggles search offers,
-               and which translations the segment menu copies -- none of which
-               Shirabe has any opinion about. -->
-          <p class="text-gray-400 text-sm">{{ $t(shirabeLinked ? 'accountSettings.account.translationLanguagesLinkedDescription' : 'accountSettings.account.translationLanguagesDescription') }}</p>
+          <p class="text-gray-400 text-sm">{{ $t('accountSettings.account.translationLanguagesDescription') }}</p>
         </div>
         <select
           :aria-label="$t('accountSettings.account.translationLanguages')"

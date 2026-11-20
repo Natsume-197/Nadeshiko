@@ -228,14 +228,14 @@ describe('linking a third-party account', () => {
   test('is not claimed, being the same OAuth shape but not a sign-in', async () => {
     // The bare `code`/`state` test above cannot tell them apart, and claiming
     // these pages broke the link flow.
-    const { handled } = await land({ code: 'abc', state: 'xyz' }, '/en/link/shirabe/callback');
+    const { handled } = await land({ code: 'abc', state: 'xyz' }, '/en/link/patreon/callback');
 
     expect(handled).toBe(false);
     expect(replace).not.toHaveBeenCalled();
   });
 
   test('not even when it carries the callback marker', async () => {
-    const { handled } = await land({ [AUTH_CALLBACK_PARAM]: '1' }, '/en/link/shirabe/callback');
+    const { handled } = await land({ [AUTH_CALLBACK_PARAM]: '1' }, '/en/link/patreon/callback');
 
     expect(handled).toBe(false);
   });

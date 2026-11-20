@@ -49,7 +49,7 @@ function getSessionKey(event: H3Event): string | null {
 }
 
 // Scopes separate response shapes for the same session. Callers sharing a scope must share a return type.
-export type SsrAuthScope = 'identity' | 'shirabe';
+export type SsrAuthScope = 'identity' | 'dictionary';
 
 type SsrAuthOutcome = 'hit' | 'coalesced' | 'miss' | 'anonymous';
 

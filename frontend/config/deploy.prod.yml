@@ -62,27 +62,11 @@ env:
   secret:
     - NUXT_NADESHIKO_API_KEY
     - NUXT_INTERNAL_PROXY_SECRET
-    # Separate lookup key from staging and backend corpus parsing for independent revocation.
-    - NUXT_SHIRABE_API_KEY
 
   clear:
     NUXT_RELEASE_SHA: <%= ENV.fetch("VERSION", "unknown") %>
     NUXT_PUBLIC_ENVIRONMENT: production
     NODE_ENV: production
-
-    # The key is absent during build, so explicitly enable the public runtime flag.
-    # Enable only where NUXT_SHIRABE_API_KEY is configured; never put it in the image.
-    NUXT_PUBLIC_SHIRABE_LOOKUPS: "true"
-    # Use the public apex, not www: cross-origin redirects strip Authorization.
-    # Measured in Node: www -> 401 after redirect, apex -> 200. No tailnet mapping.
-    NUXT_SHIRABE_API_BASE: https://shirabe.org
-    # Our own word card for readers who never chose one (task 46); Shirabe stays a choice in Settings, and
-    # readers who linked a Shirabe account keep it. Changing it: purge /api/shirabe/words/candidates/* at
-    # Cloudflare in the same release (answers are cached a day).
-    NUXT_DICTIONARY_PROVIDER: nadeshiko
-    # The public copy is fixed at build time like NUXT_PUBLIC_SHIRABE_LOOKUPS, so set it here too or Settings
-    # marks Shirabe as the default. Keep the two equal.
-    NUXT_PUBLIC_DICTIONARY_PROVIDER: nadeshiko
 
     NUXT_BACKEND_INTERNAL_URL: https://api.nadeshiko.co
     PORT: 3000

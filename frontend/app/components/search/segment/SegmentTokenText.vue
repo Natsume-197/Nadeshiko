@@ -9,11 +9,7 @@ import {
   candidateSummary,
   dictionaryKey,
   glossPreference,
-  // The same names that ride out to Shirabe as `utm_content`, reused here
-  // rather than restated: the click we record and the visit Shirabe records are
-  // then labelled identically, so the two sides reconcile per surface instead of
-  // only in total.
-  type ShirabeLinkSurface,
+  type DictionaryLinkSurface,
 } from '~/utils/wordCard';
 import type { DictionaryId } from '~/composables/useDictionaryLinks';
 import { distinctSurface, minedWord } from '~/utils/ankiWord';
@@ -65,12 +61,6 @@ const { t, locale } = useI18n();
 const router = useRouter();
 const localePath = useLocalePath();
 
-// This capability flag suppresses requests without a Shirabe key, not token-only cards. Runtime NUXT_PUBLIC_*
-// overrides bypass build-time zod parsing, so accept only true or "true", never arbitrary truthy strings.
-const isOn = (value: unknown): boolean => value === true || value === 'true';
-
-const config = useRuntimeConfig().public;
-const lookupsEnabled = isOn(config.shirabeLookups);
 const emit = defineEmits<{
   // `contains` asks for the "contains" search (task 43): the word inside longer words, which is what a kanji wants.
   'token-click': [query: string, options?: { contains?: boolean }];
@@ -105,8 +95,7 @@ const PREFETCH_DELAY = 140;
 // what a definition is worth showing in. Same preference the segment
 // translations obey, so a reader who turned English off gets no English here.
 const { englishMode, spanishMode } = useTranslationVisibility();
-// The DICTIONARY order, which a linked Shirabe account decides rather than the
-// account setting: see `dictionaryGlossLanguages`.
+// The DICTIONARY order: see `dictionaryGlossLanguages`.
 const { dictionaryGlossLanguages: globalGlossLanguages } = useTranslationLanguages();
 
 // How large the definitions are printed, which the reader chooses in settings.
@@ -124,7 +113,7 @@ const hiddenDefinitionLanguages = computed(() =>
   globalGlossLanguages.value.filter((language) => definitionModes.value[language] === 'hidden'),
 );
 
-/** Shirabe returns ranked candidates, not one definitive word. The server route keeps credentials private;
+/** The dictionary returns ranked candidates, not one definitive word. The server route keeps the reader's cookie private;
  * the wordLookup module cache reuses answers across segment instances.
  */
 
@@ -141,7 +130,7 @@ const { candidates, picked, othersOpen, wordState, word, clearLookup, lookUp, ca
     // Ask Anki again, about the word the dictionary just named. The probe fires
     // when the card OPENS, which is before the lookup lands, so it asks about the
     // token's own dictionary form; without this follow-up a word the reader
-    // already had read as new whenever AnkiConnect answered before Shirabe did.
+    // already had read as new whenever AnkiConnect answered before the dictionary did.
     () => probeForms(),
   );
 
@@ -167,7 +156,6 @@ const {
   () => headword.value,
   () => glossLanguages.value,
   () => hiddenDefinitionLanguages.value,
-  () => userStore().shirabeLinked,
   () => userStore().customDictionariesCount > 0,
 );
 
@@ -275,10 +263,7 @@ function isAskable(token: EnrichedToken): boolean {
 async function loadWord(token: EnrichedToken): Promise<void> {
   // A new word, so the card is not on one of the last word's kanji any more.
   kanjiView.clear();
-  // Not configured: no key on the server, so there is nothing to ask. Leaving
-  // the request out entirely beats firing one that 503s on every hover and
-  // caching the failure, and the card still answers from the token alone.
-  if (!lookupsEnabled || !isAskable(token)) {
+  if (!isAskable(token)) {
     clearLookup();
     return;
   }
@@ -342,8 +327,6 @@ function reportCardOutcome(token: EnrichedToken, answer: WordLookup, fromCache: 
 let prefetchTimer: ReturnType<typeof setTimeout> | null = null;
 
 const onTokenHover = (token: EnrichedToken) => {
-  if (!lookupsEnabled) return;
-
   // Delay until the pointer rests; fetching every crossed token would queue the clicked word behind unwanted
   // requests.
   if (prefetchTimer !== null) clearTimeout(prefetchTimer);
@@ -448,8 +431,7 @@ const pickCandidate = (index: number) => {
 
   posthog.capture('word_card_candidate_picked', {
     // The rate of this against `candidates[0]` is the direct measure of how
-    // often Shirabe's leading answer was the right one, and it is the one
-    // signal their side cannot get from its own traffic.
+    // often the dictionary's leading answer was the right one.
     lemma: hoveredToken.value?.lookupRef.lemma ?? null,
     pos: hoveredToken.value?.lookupRef.pos || null,
     from_index: picked.value,
@@ -779,16 +761,15 @@ const openAnkiSettings = () => {
 const dictionaryLinks = computed(() => {
   const token = hoveredToken.value;
   if (!token) return [];
+  const targetWord = headword.value || token.dictForm;
   return (
     presets
-      // In preset order, which puts shirabe.org first when it is on.
+      // In preset order (settings order).
       .filter((preset) => isDictionaryEnabled(preset.id))
       .map((preset) => ({
         id: preset.id,
         label: preset.label,
-        // Shirabe's id for this word is the slug of its own page, so hand it over
-        // once the card has it: it names the homograph the surface cannot.
-        href: preset.buildUrl(token.dictForm, token.readingHiragana, word.value?.id, glossLanguages.value.labels),
+        href: preset.buildUrl(targetWord, token.readingHiragana, glossLanguages.value.labels),
       }))
   );
 });
@@ -805,31 +786,27 @@ const cardOutcome = computed<'shown' | 'name' | 'no_senses' | 'missing' | 'unava
   if (wordState.value === 'name') return 'name';
   // Reported apart from 'missing' on purpose: one is the dictionary's answer
   // about the word and the other is our failure to ask, and folding them
-  // together would read as dictionary coverage collapsing whenever Shirabe has
-  // a bad five minutes.
+  // together would read as dictionary coverage collapsing whenever the backend
+  // has a bad five minutes.
   if (wordState.value === 'unavailable') return 'unavailable';
   if (word.value === null) return 'idle';
   return senses.value.length > 0 ? 'shown' : 'no_senses';
 });
 
 /** Capture outcome on each dictionary click to distinguish second opinions from missing-entry handoffs. Include
- * chip position because first-place bias affects Shirabe's share. Links open new tabs, so no beacon is needed.
+ * chip position because first-place bias affects each link's share. Links open new tabs, so no beacon is needed.
  */
-function reportDictionaryClick(dictionary: DictionaryId, surface: ShirabeLinkSurface, position: number): void {
+function reportDictionaryClick(dictionary: DictionaryId, surface: DictionaryLinkSurface, position: number): void {
   const ref = hoveredToken.value?.lookupRef;
   posthog.capture('dictionary_link_clicked', {
     dictionary,
     surface,
-    // Whether the reader was leaving the dictionary the card is built from, or
-    // leaving it FOR something else. Derivable from `dictionary`, but only if
-    // you know which preset is `required`, and that has moved once already.
-    left_shirabe: dictionary !== 'shirabe',
     outcome: cardOutcome.value,
     position,
     // How many other dictionaries this reader had switched on. A reader with
     // five enabled leaves for one of them more often than a reader with none
     // does, and that is a preference setting rather than a verdict on the card.
-    alternatives_enabled: dictionaryLinks.value.filter((link) => link.id !== 'shirabe').length,
+    alternatives_enabled: dictionaryLinks.value.length,
     lemma: ref?.lemma ?? null,
     pos: ref?.pos || null,
     // Same pair `word_card_opened` carries, so the two can be sliced together:
@@ -1182,7 +1159,7 @@ function reportDictionaryClick(dictionary: DictionaryId, surface: ShirabeLinkSur
                      the rest of the run.
 
                      Only when the card mixes several, which is only ever true
-                     for a reader who linked a Shirabe account: repeating
+                     for a reader with custom dictionaries: repeating
                      "JMdict" down a JMdict-only word is the noise this avoids. -->
                 <li
                   v-if="namesSources && sense.dictionary !== senses[si - 1]?.dictionary"
@@ -1264,7 +1241,7 @@ function reportDictionaryClick(dictionary: DictionaryId, surface: ShirabeLinkSur
                  its kanji are all still up there, and the dictionary chips below
                  are exactly where to go next. -->
             <p v-else-if="wordState === 'missing'" class="token-tooltip__pending">{{ $t('tokenTooltip.noEntry') }}</p>
-            <!-- Shirabe would not answer. Said plainly, and deliberately NOT as
+            <!-- The dictionary would not answer. Said plainly, and deliberately NOT as
                  "no entry": the word may well be in the dictionary, and blaming
                  it for our failed request would be a lie the reader cannot
                  check. The headword, reading and inflection above are all still

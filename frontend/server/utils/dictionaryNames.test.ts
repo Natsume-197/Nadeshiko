@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { distinctNameAnswers, withoutNameEntries } from './shirabeNames';
+import { distinctNameAnswers, withoutNameEntries } from './dictionaryNames';
 
 const word = (id: string, dictionary: string) => ({ id, dictionary });
 

@@ -13,7 +13,7 @@ export default defineEventHandler((event) => {
 
   const search = url.search;
 
-  // Use the stored locale for bare links, including the exact unprefixed Shirabe OAuth callback; default to English.
+  // Use the stored locale for bare links, including unprefixed OAuth callbacks; default to English.
   const stored = getCookie(event, LOCALE_PREFERENCE_COOKIE_NAME);
   const target = resolveRootLocale(stored);
   setHeader(event, 'Cache-Control', 'private, no-store');

@@ -52,13 +52,6 @@ properties:
           rather than a three-word English gloss, and a size that suited "to
           die; to pass away" is small for a paragraph of 大辞林. MEDIUM is the
           default; SMALL is what the card printed before this existed.
-      dictionaryProvider:
-        type: string
-        enum: [SHIRABE, NADESHIKO]
-        description: >
-          Which dictionary answers the word card: Shirabe, or Nadeshiko's own
-          (JMdict). Absent means the site default. If the chosen one is down,
-          the card answers from the other rather than failing.
   searchHistory:
     type: object
     properties:

@@ -27,11 +27,11 @@ export const v1FeedbackLimit: IpRateLimitOptions = {
   max: env.NUXT_RATE_LIMIT_V1_FEEDBACK_MAX,
 };
 
-export const shirabeLookupLimit: IpRateLimitOptions = {
-  route: 'api.shirabe',
+export const dictionaryLookupLimit: IpRateLimitOptions = {
+  route: 'api.dictionary',
   windowMs: WINDOW_MS_DEFAULT,
-  // Every distinct hint combination is a fresh upstream call, so the server cache alone cannot absorb a flood.
-  max: env.NUXT_RATE_LIMIT_SHIRABE_MAX,
+  // Every distinct hint combination is a fresh lookup, so the server cache alone cannot absorb a flood.
+  max: env.NUXT_RATE_LIMIT_DICTIONARY_MAX,
 };
 
 // Nitro routes case-sensitively but Express does not, so `/v1/Feedback` reaches the feedback handler through a

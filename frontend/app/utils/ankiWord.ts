@@ -1,14 +1,13 @@
 import { furiganaNotation, type EnrichedToken, type FuriganaSegment } from '~/utils/tokenEnrichment';
 import {
   type CardSense,
+  type DictionaryWord,
   type GlossPreference,
-  type ShirabeWord,
   cardSenses,
   dictionaryKey,
   headwordFurigana,
   pitchCategory,
   pitchMorae,
-  shirabeWordUrl,
 } from '~/utils/wordCard';
 
 /**
@@ -316,20 +315,6 @@ export function definitionHtml(senses: CardSense[]): string {
 }
 
 /**
- * Link directly to the resolved word, not a new homograph search. Append only beside a nonempty definition:
- * an empty field tells the store to preserve existing content.
- */
-export function definitionSourceHtml(word: ShirabeWord, locale: GlossPreference['labels']): string {
-  if (!word.id) return '';
-  const href = escapeHtml(shirabeWordUrl(word.id, locale, 'anki-definition'));
-  return (
-    `<div class="${CLASS}-source" style="${STYLE.source}">` +
-    `<a class="${CLASS}-source-link" href="${href}" style="${STYLE.sourceLink}">View on shirabe.org</a>` +
-    `</div>`
-  );
-}
-
-/**
  * Draw pitch borders on each mora so the diagram follows the note template's font and line height. The drop
  * class closes the overline at the last high mora.
  */
@@ -361,7 +346,7 @@ export function pitchHtml(reading: string, downstep: number): string {
 
 /** Common / JLPT / frequency, the card's badge row. Frequency is printed the way
  *  the card prints it, `#1234`, because the bare number reads as a count. */
-export function infoHtml(word: ShirabeWord): string {
+export function infoHtml(word: DictionaryWord): string {
   const badges: string[] = [];
   if (word.common) badges.push('Common');
   if (word.jlpt) badges.push(word.jlpt);
@@ -378,7 +363,7 @@ export function infoHtml(word: ShirabeWord): string {
  * Choose the first accent with a recording, not necessarily the first listed pattern; audio coverage is per
  * clip.
  */
-function recordedPitch(word: ShirabeWord): { downstep: number; audioUrl: string } | null {
+function recordedPitch(word: DictionaryWord): { downstep: number; audioUrl: string } | null {
   for (const pattern of word.pitch ?? []) {
     if (pattern.audioUrl) return { downstep: pattern.downstep, audioUrl: pattern.audioUrl };
   }
@@ -398,9 +383,9 @@ export function pitchAudioFilename(reading: string, downstep: number, url: strin
   return `nadeshiko-word-${safe}-${downstep}.${extension}`;
 }
 
-/** Shirabe's headword ruby in the shape the furigana renderer takes. A word with
+/** Headword ruby in the shape the furigana renderer takes. A word with
  *  no alignment renders bare, exactly as a token with no `f` does. */
-function headwordSegments(word: ShirabeWord): FuriganaSegment[] {
+function headwordSegments(word: DictionaryWord): FuriganaSegment[] {
   // Apply the card's ruby/headword alignment guard before writing Anki furigana.
   const furigana = headwordFurigana(word);
   if (furigana.length === 0) return [{ text: word.headword, reading: '' }];
@@ -415,7 +400,7 @@ function headwordSegments(word: ShirabeWord): FuriganaSegment[] {
  *               `dictionaryForm` and `surface`.
  */
 export function minedWord(
-  word: ShirabeWord | null,
+  word: DictionaryWord | null,
   token: EnrichedToken | null,
   preference: GlossPreference,
   sentenceText = '',
@@ -427,7 +412,7 @@ export function minedWord(
 }
 
 function minedDictionaryWord(
-  word: ShirabeWord | null,
+  word: DictionaryWord | null,
   token: EnrichedToken | null,
   preference: GlossPreference,
   sentenceText: string,
@@ -496,10 +481,8 @@ function minedDictionaryWord(
     // card that says the same thing twice. Same rule the tooltip applies.
     reading: reading === headword ? '' : reading,
     furigana: furiganaNotation(headwordSegments(word)),
-    definition: senses ? `${senses}${definitionSourceHtml(word, preference.labels)}` : '',
-    // Add source links to standalone definition fields, but not each named-dictionary field, to avoid
-    // duplicate links.
-    definitionFirst: firstSenses ? `${firstSenses}${definitionSourceHtml(word, preference.labels)}` : '',
+    definition: senses,
+    definitionFirst: firstSenses,
     definitionsByDictionary,
     pickedDictionaries: picked.size,
     // Count morae from the dictionary reading, not an inflected token reading.

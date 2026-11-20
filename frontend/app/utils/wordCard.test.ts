@@ -16,7 +16,7 @@ import {
   selectDefinitions,
   shirabeWordUrl,
   type GlossPreference,
-  type ShirabeWord,
+  type DictionaryWord,
 } from './wordCard';
 
 // Apply reader preferences locally to the multilingual response.
@@ -120,7 +120,7 @@ describe('selectDefinitions', () => {
   });
 });
 
-const WORD: ShirabeWord = {
+const WORD: DictionaryWord = {
   id: '焼ける',
   headword: '焼ける',
   reading: 'やける',
@@ -198,7 +198,7 @@ describe('cardSenses', () => {
     const suru = { category: 'partOfSpeech', code: 'vs', label: 'noun or participle taking the aux. verb suru' };
     const gloss = (text: string) => [{ lang: 'en', text }];
 
-    const repetitive: ShirabeWord = {
+    const repetitive: DictionaryWord = {
       ...WORD,
       entries: [
         {
@@ -225,7 +225,7 @@ describe('cardSenses', () => {
     // immediate predecessor's own labels would blank the second and then print
     // the third again, because the second's are empty by then.
     const noun = { category: 'partOfSpeech', code: 'n', label: 'noun' };
-    const run: ShirabeWord = {
+    const run: DictionaryWord = {
       ...WORD,
       entries: [
         {
@@ -243,7 +243,7 @@ describe('cardSenses', () => {
     // them, so it is printed wherever it belongs.
     const noun = { category: 'partOfSpeech', code: 'n', label: 'noun' };
     const uk = { category: 'misc', code: 'uk', label: 'usually written using kana alone' };
-    const mixed: ShirabeWord = {
+    const mixed: DictionaryWord = {
       ...WORD,
       entries: [
         {
@@ -272,7 +272,7 @@ describe('cardSenses', () => {
   });
 
   it('drops a sense with nothing to say', () => {
-    const empty: ShirabeWord = {
+    const empty: DictionaryWord = {
       ...WORD,
       entries: [{ dictionary: 'jmdict', senses: [{ definitions: [], tags: [] }, { definitions: BILINGUAL }] }],
     };
@@ -281,7 +281,7 @@ describe('cardSenses', () => {
   });
 
   it('stops at the limit rather than growing the card without end', () => {
-    const many: ShirabeWord = {
+    const many: DictionaryWord = {
       ...WORD,
       entries: [
         {
@@ -351,18 +351,10 @@ describe('shirabe links', () => {
     });
   });
 
-  it('keeps the word id readable on the other side', () => {
-    // The id is a path segment and the parameters are a query, so appending one
+  it('keeps the word readable on the other side', () => {
+    // The word is a path segment and the parameters are a query, so appending one
     // must not disturb the other.
-    expect(new URL(shirabeWordUrl('焼ける-やける', 'es')).pathname).toBe(
-      '/es/word/%E7%84%BC%E3%81%91%E3%82%8B-%E3%82%84%E3%81%91%E3%82%8B',
-    );
-  });
-
-  it('can name a different surface without changing the path', () => {
-    const url = new URL(shirabeWordUrl('焼ける-やける', 'en', 'anki-definition'));
-    expect(url.pathname).toBe('/en/word/%E7%84%BC%E3%81%91%E3%82%8B-%E3%82%84%E3%81%91%E3%82%8B');
-    expect(url.searchParams.get('utm_content')).toBe('anki-definition');
+    expect(new URL(shirabeWordUrl('焼ける', 'es')).pathname).toBe('/es/word/%E7%84%BC%E3%81%91%E3%82%8B');
   });
 });
 
@@ -394,7 +386,7 @@ describe('headwordFurigana', () => {
 });
 
 describe('cardHeadword', () => {
-  const candidate = (headword: string) => ({ id: headword, headword }) as ShirabeWord;
+  const candidate = (headword: string) => ({ id: headword, headword }) as DictionaryWord;
 
   it('names the word the reader picked, not the token they clicked', () => {
     // きみ was the spelling in the sentence; 黄身 is what they chose it meant.
@@ -435,7 +427,8 @@ describe('cardHeadword', () => {
  * the pick addresses the full list.
  */
 describe('pickerChips', () => {
-  const list = (n: number) => Array.from({ length: n }, (_, i) => ({ id: `w${i}`, headword: `w${i}` }) as ShirabeWord);
+  const list = (n: number) =>
+    Array.from({ length: n }, (_, i) => ({ id: `w${i}`, headword: `w${i}` }) as DictionaryWord);
 
   it('draws everything when the list is short enough', () => {
     expect(pickerChips(list(4), 0, false, 6).map((c) => c.index)).toEqual([0, 1, 2, 3]);
@@ -481,8 +474,8 @@ describe('pickerChips', () => {
  * the card.
  */
 describe('cardForms', () => {
-  const word = (forms: Array<{ text: string; script?: string }>): ShirabeWord =>
-    ({ id: '開く', headword: '開く', reading: 'ひらく', forms }) as ShirabeWord;
+  const word = (forms: Array<{ text: string; script?: string }>): DictionaryWord =>
+    ({ id: '開く', headword: '開く', reading: 'ひらく', forms }) as DictionaryWord;
 
   it('answers the spellings the card is not already showing', () => {
     expect(cardForms(word([{ text: '開く' }, { text: '空く' }, { text: 'ヒラく' }]))).toEqual(['空く', 'ヒラく']);
@@ -553,7 +546,7 @@ describe('lookupState', () => {
  * above JMdict. Everything below is about what changes on the card when the
  * definitions stop coming from one dictionary in one of two languages.
  */
-const STACKED: ShirabeWord = {
+const STACKED: DictionaryWord = {
   id: '開く',
   headword: '開く',
   reading: 'ひらく',
@@ -620,7 +613,7 @@ describe('a card built from more than one dictionary', () => {
 });
 
 describe('candidateSummary', () => {
-  const summary = (word: ShirabeWord, pref = preference('en')) => candidateSummary(word, pref);
+  const summary = (word: DictionaryWord, pref = preference('en')) => candidateSummary(word, pref);
 
   // The whole point of the row: a spelling is only a recognisable label to
   // someone who already knows the word, which is not the reader looking it up.
@@ -697,7 +690,7 @@ describe('lookupState with names', () => {
  * given the reader the means to answer.
  */
 describe('candidatePartOfSpeech', () => {
-  const withPos = (code: string, label: string): ShirabeWord =>
+  const withPos = (code: string, label: string): DictionaryWord =>
     ({
       ...WORD,
       entries: [
@@ -712,7 +705,7 @@ describe('candidatePartOfSpeech', () => {
           ],
         },
       ],
-    }) as ShirabeWord;
+    }) as DictionaryWord;
 
   it('names what the spelling cannot', () => {
     expect(candidatePartOfSpeech(withPos('pn', 'pronoun'), preference('en'))).toBe('Pronoun');
@@ -726,7 +719,7 @@ describe('candidatePartOfSpeech', () => {
   });
 
   it('is empty when the candidate has no part of speech to show', () => {
-    expect(candidatePartOfSpeech({ ...WORD, entries: [] } as ShirabeWord, preference('en'))).toBe('');
+    expect(candidatePartOfSpeech({ ...WORD, entries: [] } as DictionaryWord, preference('en'))).toBe('');
     expect(candidatePartOfSpeech(null, preference('en'))).toBe('');
   });
 });
@@ -738,7 +731,7 @@ describe('candidatePartOfSpeech', () => {
  */
 describe('candidateName', () => {
   const word = (headword: string, matchedHeadword?: string) =>
-    ({ id: headword, headword, matchedHeadword }) as ShirabeWord;
+    ({ id: headword, headword, matchedHeadword }) as DictionaryWord;
 
   // The case it exists for. 彼方 is "usually written in kana" so it leads with
   // かなた, and it also reads あなた -- so a reader who tapped あなた was offered
@@ -777,7 +770,7 @@ describe('cardSenses across a reader stack', () => {
         },
         { dictionary: 'yomitan-abc', senses: [{ definitions: [{ lang: 'ja', text: 'ネコ科の動物' }], tags: [] }] },
       ],
-    }) as unknown as ShirabeWord;
+    }) as unknown as DictionaryWord;
 
   it('reaches a monolingual dictionary under a JMdict entry longer than the cap', () => {
     const senses = cardSenses(stacked(8), preference('en'));
@@ -812,7 +805,7 @@ describe('sense numbering', () => {
         },
         { dictionary: 'yomitan-abc', senses: [{ definitions: [{ lang: 'ja', text: '息が絶える' }], tags: [] }] },
       ],
-    } as unknown as ShirabeWord;
+    } as unknown as DictionaryWord;
 
     expect(cardSenses(word, preference('en')).map((sense) => [sense.dictionary, sense.number])).toEqual([
       ['jmdict', '①'],
@@ -843,7 +836,7 @@ describe('sense numbering', () => {
           ],
         },
       ],
-    } as unknown as ShirabeWord;
+    } as unknown as DictionaryWord;
 
     expect(cardSenses(tiered, preference('en')).map((sense) => [sense.number, sense.indent])).toEqual([
       ['①', 0],
@@ -870,7 +863,7 @@ describe('sense numbering', () => {
           ],
         },
       ],
-    } as unknown as ShirabeWord;
+    } as unknown as DictionaryWord;
 
     expect(cardSenses(grouped, preference('en')).map((sense) => [sense.number, sense.indent])).toEqual([
       ['1', 0],
@@ -888,7 +881,7 @@ describe('sense numbering', () => {
       id: '猫',
       headword: '猫',
       entries: [{ dictionary: 'jmdict', senses: [{ definitions: [{ lang: 'en', text: 'cat' }], tags: [] }] }],
-    } as unknown as ShirabeWord;
+    } as unknown as DictionaryWord;
 
     expect(cardSenses(flat, preference('en')).map((sense) => [sense.number, sense.indent])).toEqual([['①', 0]]);
   });
@@ -917,7 +910,7 @@ describe('pitchCategory', () => {
 
 describe('cardSenses for a word with no definition in the reader’s languages', () => {
   // JMdict, which Nadeshiko's own dictionary serves, has Spanish for only part of its entries.
-  const englishOnly: ShirabeWord = {
+  const englishOnly: DictionaryWord = {
     id: 'jmdict:1',
     headword: '箇所',
     entries: [{ dictionary: 'jmdict', senses: [{ definitions: ENGLISH_ONLY }] }],
@@ -931,7 +924,7 @@ describe('cardSenses for a word with no definition in the reader’s languages',
   });
 
   it('keeps to the reader’s languages when the word has any definition in them', () => {
-    const mixed: ShirabeWord = {
+    const mixed: DictionaryWord = {
       id: 'jmdict:2',
       headword: '食べる',
       entries: [

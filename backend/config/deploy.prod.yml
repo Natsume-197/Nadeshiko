@@ -32,14 +32,6 @@ env:
     - INTERNAL_PROXY_SECRET
     - LOG_USER_SALT
 
-    # Ingest and backfill need this parsing key to populate token morphology.
-    - SHIRABE_API_KEY
-
-    # Account linking encrypts reader tokens and OAuth state; unset disables linking. Retain the previous key until
-    # stored tokens are re-encrypted.
-    - SHIRABE_CONNECTION_SECRET
-    # Confidential Shirabe client secret used for token exchange, renewal, and revocation; unset disables linking.
-    - SHIRABE_OAUTH_CLIENT_SECRET
     # Patreon linking (patron perks such as custom themes). The OAuth client belongs to the NadeshikoApp campaign;
     # PATREON_CONNECTION_SECRET encrypts the stored Patreon tokens. All four must exist in SSM before a deploy.
     - PATREON_OAUTH_CLIENT_ID
@@ -96,22 +88,14 @@ env:
     # without consuming claims; candidate timing still governs later eligibility.
     LIFECYCLE_EMAILS_ENABLED: "true"
 
-    # Shirabe exact-matches this redirect URI against the registered client. Both values must match
-    # character-for-character.
-    SHIRABE_OAUTH_CLIENT_ID: nadeshiko
-    SHIRABE_OAUTH_REDIRECT_URI: https://nadeshiko.co/link/shirabe/callback
-
     POSTGRES_HOST: "nadeshiko-backend-prod-postgres"
     POSTGRES_PORT: 5432
 
     ELASTICSEARCH_HOST: "http://nadeshiko-backend-prod-elasticsearch:9200"
     ELASTICSEARCH_INDEX: nadedb_prod
 
-    # Our own parser (task 40). The sidecar is the `sudachi` accessory below; it only parses once SEGMENT_PARSER says
-    # so, and SEGMENT_PARSER stays shirabe until Shirabe fails (nadeshiko-docs: plans/shirabe-replacement.md, "Switch
-    # runbook"). Pointing at an accessory that was never booted is harmless while Shirabe parses.
+    # Sudachi sidecar for Nadeshiko's morphological parser (`sudachi` accessory below).
     SUDACHI_URL: "http://nadeshiko-backend-prod-sudachi:8090"
-    SEGMENT_PARSER: shirabe
     # Custom Yomitan dictionaries (task 48), off until the operator turns them on. To turn on: put USER_DICT_R2_ENDPOINT,
     # _BUCKET, _ACCESS_KEY_ID and _SECRET_ACCESS_KEY in SSM (/nadeshiko/prod/...), add them to .kamal/secrets.prod and
     # env.secret above, then set this to "true". With it on and R2 unset the backend refuses to boot.
@@ -205,7 +189,7 @@ accessories:
         - max-file=5
 
   # Sudachi sidecar for our own parser (backend/sudachi). Not booted by deploys: `kamal accessory boot sudachi -d prod`
-  # once, before switching SEGMENT_PARSER. Shared with staging like Postgres and Elasticsearch. Unpublished: only the
+  # once, before the first deploy that parses with it. Shared with staging like Postgres and Elasticsearch. Unpublished: only the
   # apps on the kamal network reach it. The image pins SudachiPy and the same SudachiDict as the Elasticsearch image.
   sudachi:
     image: <%= ENV.fetch("SUDACHI_IMAGE", "ghcr.io/natsume-197/nadeshiko-sudachi:0.6.10-dict-20260116-user2") %>

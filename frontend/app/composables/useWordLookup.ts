@@ -1,6 +1,6 @@
 import { computed, ref } from 'vue';
 import { fetchWord, peekWord, type WordLookup } from '~/utils/wordLookup';
-import { lookupState, type ShirabeCandidate } from '~/utils/wordCard';
+import { lookupState, type DictionaryCandidate, type DictionaryWord } from '~/utils/wordCard';
 
 /** A word the card can ask about. The shape `peekWord`/`fetchWord` key on: two
  *  tokens for the same word in the same shape are interchangeable, two
@@ -25,12 +25,12 @@ export function useWordLookup(glossLabels: () => string, onApplied: () => void) 
   /**
    * Which words this token could be, and which of them the card is showing.
    *
-   * A LIST, not a word: Shirabe answers with every word a spelling can name,
+   * A LIST, not a word: the dictionary answers with every word a spelling can name,
    * ranked -- きみ is 君, 黄身 or 黍 -- because one answer is a claim it often
    * cannot support. `candidates[0]` is its best reading of the sentence and where
    * the card opens; `picked` is where the reader moved it.
    */
-  const candidates = ref<ShirabeCandidate[]>([]);
+  const candidates = ref<DictionaryCandidate[]>([]);
   const picked = ref(0);
 
   /**
@@ -52,7 +52,7 @@ export function useWordLookup(glossLabels: () => string, onApplied: () => void) 
   let lookupGeneration = 0;
 
   /** The word the card renders: whichever candidate the reader has picked. */
-  const word = computed<ShirabeWord | null>(() => candidates.value[picked.value] ?? null);
+  const word = computed<DictionaryWord | null>(() => candidates.value[picked.value] ?? null);
 
   /** Empty the lookup, so nothing from the last word survives into the next one.
    *  `picked` resets with the rest: a reader who chose 黄身 on one token must not

@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'vitest';
 import { ref } from 'vue';
 import { useCandidateChips } from './useCandidateChips';
-import { glossPreference, type ShirabeCandidate } from '~/utils/wordCard';
+import { glossPreference, type DictionaryCandidate } from '~/utils/wordCard';
 
 /**
  * Only duplicate displayed spellings need part-of-speech initials: avoid both ambiguous chips
@@ -9,15 +9,15 @@ import { glossPreference, type ShirabeCandidate } from '~/utils/wordCard';
  */
 const preference = glossPreference('en', { en: 'show', es: 'show' });
 
-function candidate(headword: string, reading = '', partOfSpeech?: string): ShirabeCandidate {
+function candidate(headword: string, reading = '', partOfSpeech?: string): DictionaryCandidate {
   return {
     headword,
     reading,
     senses: partOfSpeech ? [{ partOfSpeech: [partOfSpeech], glosses: [{ language: 'en', text: 'x' }] }] : [],
-  } as unknown as ShirabeCandidate;
+  } as unknown as DictionaryCandidate;
 }
 
-const chips = (list: ShirabeCandidate[], picked = 0) =>
+const chips = (list: DictionaryCandidate[], picked = 0) =>
   useCandidateChips(
     () => list,
     () => picked,

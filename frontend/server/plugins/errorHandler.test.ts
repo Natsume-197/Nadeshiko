@@ -162,11 +162,11 @@ describe('what gets reported to PostHog', () => {
     expect(captureException).not.toHaveBeenCalled();
   });
 
-  test('a handled Shirabe outage stays in metrics and logs without becoming a PostHog issue', async () => {
+  test('a handled dictionary outage stays in metrics and logs without becoming a PostHog issue', async () => {
     const fire = await loadPlugin();
 
     await fire('error', httpError(503), {
-      event: makeEvent({ url: '/api/shirabe/words/candidates/%E5%85%84' }),
+      event: makeEvent({ url: '/api/dictionary/words/candidates/%E5%85%84' }),
       tags: ['request'],
     });
 

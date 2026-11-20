@@ -22,7 +22,7 @@ info:
     ### Quota
     Each account has a monthly quota of **5,000 requests**. Once exceeded, further requests will be rejected until the next month.
     To request a quota increase, reach out via the [contact page](https://nadeshiko.co/about).
-  version: 2.4.19
+  version: 3.0.0
   contact:
     name: Nadeshiko Team
     url: https://nadeshiko.co
@@ -171,7 +171,7 @@ paths:
         - **Multi-language Support:** Search using Japanese (kanji/kana), Romaji, or English/Spanish
         - **Boolean Operators:** `AND`, `OR`, `NOT` supported (e.g., `(cat OR dog) AND bird`)
         - **Phrase Matching:** Use quotes for exact phrases (e.g., `"good morning"`), or pass `exactMatch: true` to the request body
-        - **Wildcards:** `te*t` format (leading wildcards not supported)
+        - **Wildcards:** `te*t` format (a Japanese term with a leading `*`, such as `*憬*`, searches inside words like `matchMode: CONTAINS`; other leading wildcards are not supported)
         - **Smart Field Selection:** Automatically chooses optimal search fields based on input type
 
         **Input Type Handling**
@@ -318,6 +318,224 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/dictionary/identify:
+    get:
+      tags:
+        - Search
+      x-internal: true
+      x-server-only: true
+      operationId: identifyDictionaryWord
+      summary: Rank Nadeshiko's dictionary entries for one token, for our own server only
+      description: |
+        The word card's dictionary lookup. Takes what a stored token carries and
+        returns ranked candidates in the card's shape. Called by the frontend server,
+        which owns caching; refused unless the request came through our own Nitro proxy.
+      security: []
+      parameters:
+        - name: lemma
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 100
+          description: The token's dictionary form.
+          example: 開く
+        - name: surface
+          in: query
+          schema:
+            type: string
+            maxLength: 100
+          description: The token as written in the sentence.
+          example: 開いた
+        - name: reading
+          in: query
+          schema:
+            type: string
+            maxLength: 200
+          description: The surface's reading, in katakana or hiragana.
+          example: ヒライタ
+        - name: pos
+          in: query
+          schema:
+            type: string
+            maxLength: 16
+          description: The token's short part-of-speech tag (`SlimToken.pt`).
+          example: verb
+        - name: locale
+          in: query
+          schema:
+            type: string
+            enum:
+              - en
+              - es
+            default: en
+          description: Language whose senses come first.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - candidates
+                properties:
+                  candidates:
+                    type: array
+                    description: Best first; empty when no entry matches.
+                    items:
+                      $ref: '#/components/schemas/DictionaryCandidate'
+                  stackFingerprint:
+                    type: string
+                    nullable: true
+                    description: Fingerprint of the reader's custom dictionary stack when custom dictionaries were applied.
+                  customDictionariesPending:
+                    type: boolean
+                    description: True when the answer lacks one of the reader's enabled custom dictionaries, because it is still indexing or this server is still fetching it. Such an answer must not be cached.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/dictionary/kanji:
+    get:
+      tags:
+        - Search
+      x-internal: true
+      x-server-only: true
+      operationId: getDictionaryKanjiIndex
+      summary: Every jōyō and JLPT kanji, for our own server only
+      description: |
+        The kanji index page's list: the 2,136 jōyō kanji and any other JLPT kanji,
+        each with its school grade, JLPT level, newspaper rank, one reading and one
+        meaning. Called by the frontend server, which caches it.
+      security: []
+      parameters:
+        - name: locale
+          in: query
+          schema:
+            type: string
+            enum:
+              - en
+              - es
+            default: en
+          description: Language of the meanings; English where there is none in it.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - kanji
+                properties:
+                  kanji:
+                    type: array
+                    description: School kanji first by grade, then by newspaper frequency.
+                    items:
+                      type: object
+                      required:
+                        - character
+                        - grade
+                        - jlpt
+                        - frequency
+                        - reading
+                        - meaning
+                      properties:
+                        character:
+                          type: string
+                          example: 日
+                        grade:
+                          type: integer
+                          nullable: true
+                          example: 1
+                        jlpt:
+                          type: integer
+                          nullable: true
+                          example: 5
+                        frequency:
+                          type: integer
+                          nullable: true
+                          example: 1
+                        reading:
+                          type: string
+                          nullable: true
+                          example: ニチ
+                        meaning:
+                          type: string
+                          nullable: true
+                          example: day
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/dictionary/kanji/{character}:
+    get:
+      tags:
+        - Search
+      x-internal: true
+      x-server-only: true
+      operationId: getDictionaryKanji
+      summary: One kanji's card from Nadeshiko's own dictionary, for our own server only
+      description: |
+        What the word card shows when a reader opens one of a word's kanji: readings
+        and meanings (KANJIDIC2), its parts (KRADFILE), its stroke order (KanjiVG) and
+        the words written with it that Nadeshiko's subtitles use most. Called by the
+        frontend server, which caches it; refused unless the request came through our
+        own Nitro proxy.
+      security: []
+      parameters:
+        - name: character
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 2
+          description: The kanji, one character (two UTF-16 units outside the BMP).
+          example: 本
+        - name: locale
+          in: query
+          schema:
+            type: string
+            enum:
+              - en
+              - es
+            default: en
+          description: Language of the meanings and word glosses; English where there are none in it.
+        - name: related
+          in: query
+          schema:
+            type: string
+            enum:
+              - short
+              - all
+            default: short
+          description: How many related kanji to list; `all` for the kanji's own page, `short` (the first 12) for the word card.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DictionaryKanji'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
@@ -490,6 +708,7 @@ paths:
               - ANIME
               - JDRAMA
               - YOUTUBE
+              - AUDIOBOOK
             example: ANIME
         - name: query
           in: query
@@ -1513,308 +1732,6 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
-  /v1/user/connections/shirabe:
-    get:
-      tags:
-        - User
-      x-internal: true
-      operationId: getShirabeConnection
-      summary: Read the linked Shirabe account
-      description: |
-        Whether the signed-in reader has linked a Shirabe account, and what it is
-        shaped like: who they are over there, which dictionaries their stack names,
-        and when we last re-read it.
-
-        Never returns the stored key. Nothing the browser is shown can be used to
-        act on their Shirabe account.
-      security:
-        - SessionCookie: []
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - connection
-                properties:
-                  connection:
-                    nullable: true
-                    allOf:
-                      - $ref: '#/components/schemas/ShirabeConnection'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '429':
-          $ref: '#/components/responses/TooManyRequests'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-    post:
-      tags:
-        - User
-      x-internal: true
-      operationId: startShirabeLink
-      summary: Begin linking a Shirabe account
-      description: |
-        Starts an OAuth 2.0 authorization-code flow (PKCE) against Shirabe and
-        returns where to send the reader. Nothing is stored until they approve.
-
-        The `state` is the pending flow itself, sealed with a server-side key rather
-        than a handle into server memory: the request that starts the link and the
-        one that finishes it are minutes apart and nothing routes them to the same
-        process.
-      security:
-        - SessionCookie: []
-      responses:
-        '201':
-          description: Created
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - authorizeUrl
-                  - state
-                properties:
-                  authorizeUrl:
-                    type: string
-                    format: uri
-                    description: Send the reader here. Shirabe asks them to approve, then redirects back.
-                  state:
-                    type: string
-                    description: Opaque. Comes back on the redirect and must be handed to the callback unchanged.
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '429':
-          $ref: '#/components/responses/TooManyRequests'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-    delete:
-      tags:
-        - User
-      x-internal: true
-      operationId: unlinkShirabe
-      summary: Unlink the Shirabe account
-      description: |
-        Forgets the stored key AND asks Shirabe to revoke it, so the reader is not
-        left with a live credential on their Shirabe access list that nothing here
-        can reach again.
-
-        The local link goes either way. If Shirabe cannot be reached, the reader
-        still gets what they asked for here and can revoke the key themselves at
-        `/account/settings#access`.
-      security:
-        - SessionCookie: []
-      responses:
-        '204':
-          description: No Content
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '429':
-          $ref: '#/components/responses/TooManyRequests'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /v1/user/connections/shirabe/callback:
-    post:
-      tags:
-        - User
-      x-internal: true
-      operationId: completeShirabeLink
-      summary: Finish linking a Shirabe account
-      description: |
-        Exchanges the one-time code Shirabe redirected back with for a scoped key,
-        reads the reader's dictionary stack, and stores the link.
-
-        The `state` must be the one this session started the flow with. It carries
-        the account it belongs to, and a mismatch is refused: otherwise somebody who
-        completed their own authorization at Shirabe could hand the callback URL to a
-        signed-in victim and attach their account to the victim's.
-      security:
-        - SessionCookie: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - code
-                - state
-              properties:
-                code:
-                  type: string
-                  description: The one-time authorization code from the redirect.
-                state:
-                  type: string
-                  description: The sealed state from the redirect, unchanged.
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - connection
-                properties:
-                  connection:
-                    $ref: '#/components/schemas/ShirabeConnection'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '429':
-          $ref: '#/components/responses/TooManyRequests'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /v1/user/connections/shirabe/credential:
-    get:
-      tags:
-        - User
-      x-internal: true
-      x-server-only: true
-      operationId: getShirabeCredential
-      summary: The reader's Shirabe key, for our own server only
-      description: |
-        Hands the stored Shirabe key to our frontend server so a word lookup can be
-        made AS the reader, which is the entire point of linking an account.
-
-        Refused unless the request came through our own Nitro proxy (the shared
-        internal secret). A session alone is not enough, even the reader's own: a key
-        that reaches a browser is a key that has been given away, and this one is a
-        live credential on somebody else's service. The reader has no need for it
-        here — it is already listed, and revocable, on their Shirabe account.
-      security:
-        - SessionCookie: []
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - token
-                properties:
-                  token:
-                    type: string
-                    description: The reader's Shirabe API key.
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '429':
-          $ref: '#/components/responses/TooManyRequests'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /v1/user/connections/shirabe/resync:
-    post:
-      tags:
-        - User
-      x-internal: true
-      x-server-only: true
-      operationId: resyncShirabeStack
-      summary: Reconcile the stored Shirabe stack against a fingerprint a lookup saw
-      description: |
-        Shirabe echoes the calling key's current stack fingerprint on every word
-        lookup. Our frontend server hands it back here, so a reader who switches a
-        dictionary off over there stops being served their cached definitions for it.
-
-        Cheap by design. When the fingerprint matches what we hold, this only records
-        that the copy was confirmed; only a mismatch costs a round trip to Shirabe.
-
-        Refused unless the request came through our own Nitro proxy (the shared
-        internal secret), like the credential route beside it. Nothing here is a
-        reader-facing action: the browser never sees a fingerprint, and one supplied
-        by a client would be a client choosing when our copy looks stale.
-      security:
-        - SessionCookie: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - stackFingerprint
-              properties:
-                stackFingerprint:
-                  type: string
-                  maxLength: 64
-                  description: The fingerprint Shirabe returned on the lookup.
-      responses:
-        '204':
-          description: Reconciled, or nothing to reconcile.
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '429':
-          $ref: '#/components/responses/TooManyRequests'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /v1/user/connections/shirabe/refused:
-    post:
-      tags:
-        - User
-      x-internal: true
-      x-server-only: true
-      operationId: reportShirabeRefusal
-      summary: Report that Shirabe refused a reader's key on a lookup
-      description: |
-        A word lookup is where a dead link is actually discovered: the reader's key
-        is sent, Shirabe refuses it, and the lookup quietly answers from the default
-        dictionaries instead. Without this, that refusal was a log line and nothing
-        else -- the settings page went on naming the account, and every later lookup
-        repeated the same doomed round trip.
-
-        What the status means is Shirabe's own distinction, and the three outcomes
-        are different repairs:
-
-        * `401` - the key is invalid, expired or revoked. The link is over until the
-          reader makes a new one, and it is marked so the settings page can say so.
-        * `403` - the key works but is missing a permission. The stack is re-read so
-          the stored scopes catch up, which surfaces as a re-consent rather than a
-          repair.
-        * anything else - not an answer about the key. Ignored.
-
-        Refused unless the request came through our own Nitro proxy (the shared
-        internal secret), like the credential and resync routes beside it. A client
-        that could post here could disconnect its own reader's link at will.
-      security:
-        - SessionCookie: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - status
-              properties:
-                status:
-                  type: integer
-                  minimum: 100
-                  maximum: 599
-                  description: The HTTP status Shirabe answered the lookup with.
-                  example: 401
-      responses:
-        '204':
-          description: Recorded, or nothing worth recording.
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '429':
-          $ref: '#/components/responses/TooManyRequests'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
   /v1/user/connections/patreon:
     get:
       tags:
@@ -1940,6 +1857,129 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/user/dictionaries:
+    get:
+      tags:
+        - User
+      x-internal: true
+      operationId: listUserDictionaries
+      summary: List custom Yomitan dictionaries
+      description: |
+        Returns the authenticated user's uploaded custom Yomitan dictionaries, built-in JMdict stack position,
+        account quota, and current stack fingerprint.
+      security:
+        - SessionCookie: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDictionaryListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    patch:
+      tags:
+        - User
+      x-internal: true
+      operationId: updateUserDictionaries
+      summary: Reorder and toggle custom Yomitan dictionaries
+      description: |
+        Atomically updates the stack order and enabled flags for the user's custom dictionaries and built-in JMdict.
+      security:
+        - SessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - items
+              properties:
+                items:
+                  type: array
+                  maxItems: 50
+                  items:
+                    type: object
+                    required:
+                      - id
+                      - enabled
+                    properties:
+                      id:
+                        type: string
+                        minLength: 1
+                        maxLength: 64
+                      enabled:
+                        type: boolean
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDictionaryListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/user/dictionaries/{id}:
+    delete:
+      tags:
+        - User
+      x-internal: true
+      operationId: deleteUserDictionary
+      summary: Delete a custom Yomitan dictionary
+      description: |
+        Removes one custom dictionary from the authenticated user's account and frees its underlying indexed SQLite file
+        when no other account references it.
+      security:
+        - SessionCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Numeric ID of the user's attached custom dictionary.
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - stackFingerprint
+                properties:
+                  stackFingerprint:
+                    type: string
+                    nullable: true
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
   /v1/user/excluded-media:
@@ -4473,8 +4513,20 @@ components:
           example: (猫 OR 犬) AND 好き
         exactMatch:
           type: boolean
-          description: Require exact phrase matching (disables fuzzy and partial matches)
+          description: Require exact phrase matching (disables fuzzy and partial matches). Same as `matchMode` `EXACT`; ignored when `matchMode` is set.
           default: false
+        matchMode:
+          type: string
+          description: |
+            How the Japanese text is matched. When omitted, `exactMatch` decides between `WORD` and `EXACT`.
+            - `WORD` (default): whole words, in surface, dictionary and normalized form, plus EN/ES translations
+            - `EXACT`: the exact phrase, surface form only
+            - `CONTAINS`: Japanese words that contain the text anywhere, so `糊` finds `血糊` and `糊付け`. It matches inside one word only (`糊が` matches nothing, since `糊` and `が` are separate words), and space-separated terms must all match. A `*` at either end of a term is ignored; other wildcards and boolean operators are taken literally, and leading-`-` exclusions still work. In `WORD` mode, a query made only of Japanese terms with a leading `*` (`*憬*`, `*憬`) is searched this way. Translations are not searched, and results are not ranked by relevance within the mode
+          enum:
+            - WORD
+            - EXACT
+            - CONTAINS
+          example: CONTAINS
     SearchSort:
       type: object
       description: Sort configuration
@@ -4483,9 +4535,18 @@ components:
           type: string
           description: |
             Sort mode.
-            - `RELEVANCE` (default): Elasticsearch relevance score
+            - `RELEVANCE` (default): Elasticsearch relevance score. With a search word, served in rounds by title
+              (the best segment of every title, then the second best of every title, then the rest), with
+              `preferMedia` titles as a first block; see `preferMedia`
             - `ASC` / `DESC`: by segment length (character count)
             - `TIME_ASC` / `TIME_DESC`: by episode & position within an episode
+            - `DIFFICULTY_ASC` / `DIFFICULTY_DESC`: by estimated difficulty, then by length in the same direction.
+              Each content word is ranked on an anime word-frequency list; the two rarest distinct words set the order
+              (the rarest first, then the second rarest), and longer conjugations (食べさせられた over 食べた) raise a
+              sentence within the group its rarest word sets. Proper names and words not on the list count as a moderately
+              rare word (rank 5,000), not the rarest. It does not measure speech speed. In both directions, full sentences
+              of ordinary length (6 to 40 letters) come first; then very short, very long, multi-sentence or stuttered
+              ones; then one-word and cut-off lines; segments without a scorable word come last
             - `RANDOM`: deterministic random order (pass `seed` for reproducibility)
           enum:
             - RELEVANCE
@@ -4493,6 +4554,8 @@ components:
             - DESC
             - TIME_ASC
             - TIME_DESC
+            - DIFFICULTY_ASC
+            - DIFFICULTY_DESC
             - RANDOM
           default: RELEVANCE
         seed:
@@ -4528,6 +4591,7 @@ components:
         - ANIME
         - JDRAMA
         - YOUTUBE
+        - AUDIOBOOK
       example: ANIME
       x-enum-descriptions:
         - value: ANIME
@@ -4536,6 +4600,8 @@ components:
           description: Japanese Drama
         - value: YOUTUBE
           description: YouTube channel
+        - value: AUDIOBOOK
+          description: Audiobook
     ContentRating:
       type: string
       description: Content rating level for the segment
@@ -4593,6 +4659,7 @@ components:
             - ANIME
             - JDRAMA
             - YOUTUBE
+            - AUDIOBOOK
         contentRating:
           type: array
           description: Content ratings to include (omit for all ratings)
@@ -4692,18 +4759,20 @@ components:
         preferMedia:
           type: array
           description: |
-            Public IDs of titles the caller wants first, used **only** to break ties.
+            Public IDs of titles the caller wants first.
 
-            Segments Elasticsearch ranked equally are reordered so the ones from these
-            titles come first; nothing crosses a rank boundary. Which segments land on
-            a page, how many there are and the cursor that walks to the next one are
-            all exactly what they would have been without this field — only the order
-            within an already-tied run changes.
+            With a search word and the default `RELEVANCE` order, results come in
+            rounds by title -- the best segment of every title, then the second best
+            of every title, then everything else by relevance -- so one title cannot
+            fill the top. These titles form a block of their own ahead of all others:
+            their rounds, then the rest of their segments, then the same for every
+            other title. Without a search word they get a small relevance boost
+            instead. Keep the list the same while paging through one search.
 
             Sent by the web client for a signed-in reader, from the titles they have
-            favourited and the ones their activity says they know. Ignored unless
-            `sort.mode` is `RELEVANCE`, since every other mode sorts on a key the
-            caller asked for by name. Unknown IDs are ignored rather than rejected.
+            starred. Ignored unless `sort.mode` is `RELEVANCE`, since every other mode
+            sorts on a key the caller asked for by name. Unknown IDs are ignored
+            rather than rejected.
           items:
             type: string
             pattern: ^[A-Za-z0-9_-]{12}$
@@ -4872,6 +4941,11 @@ components:
           description: Episode number this segment belongs to (0 for movies/specials)
           minimum: 0
           example: 1
+        episodeTitle:
+          type: string
+          nullable: true
+          description: Title of this segment's episode when it has one (an audiobook chapter's title), else null
+          example: (1)とにかく比企谷八幡はくさっている。
         externalVideoId:
           type: string
           nullable: true
@@ -4976,7 +5050,7 @@ components:
               description: URL to the video clip for this segment
     ExternalId:
       type: object
-      description: External IDs for this media, keyed by source. Every source appears as a key; absent mappings are represented with a null value.
+      description: External IDs for this media, keyed by source. Responses always carry every source as a key, with null for absent mappings. In requests `asin` may be omitted, so clients that predate it keep working.
       required:
         - anilist
         - imdb
@@ -5014,6 +5088,12 @@ components:
           minLength: 1
           description: YouTube channel ID
           example: UCauyM-A8JIJ9NQcw5_jF00Q
+        asin:
+          type: string
+          nullable: true
+          minLength: 1
+          description: Audible ASIN (audiobooks)
+          example: B07PPMBZHX
     Media:
       type: object
       description: Media entry with full metadata
@@ -5075,6 +5155,7 @@ components:
             - ONA
             - SPECIAL
             - YOUTUBE
+            - AUDIOBOOK
           example: TV
         airingStatus:
           type: string
@@ -5306,6 +5387,11 @@ components:
                 description: Episode number
                 minimum: 0
                 example: 1
+              title:
+                type: string
+                nullable: true
+                description: Episode title when it has one (an audiobook chapter's title), else null
+                example: (1)とにかく比企谷八幡はくさっている。
               hitCount:
                 type: integer
                 description: Number of matching segments in this episode
@@ -5382,7 +5468,19 @@ components:
         exactMatch:
           type: boolean
           default: false
-          description: Require exact phrase matching (disables fuzzy and partial matches)
+          description: Require exact phrase matching (disables fuzzy and partial matches). Same as `matchMode` `EXACT`; ignored when `matchMode` is set.
+        matchMode:
+          type: string
+          description: |
+            How each word is matched, as in the main search's `matchMode`. When omitted, `exactMatch` decides between `WORD` and `EXACT`.
+            - `WORD` (default): whole words, in surface, dictionary and normalized form, plus EN/ES translations
+            - `EXACT`: the exact phrase, surface form only
+            - `CONTAINS`: Japanese words that contain the text anywhere, so `憬` counts sentences with `憧憬`. A word written with a leading `*` (`*憬*`) is counted this way in `WORD` mode too
+          enum:
+            - WORD
+            - EXACT
+            - CONTAINS
+          example: CONTAINS
     SearchMultipleRequest:
       type: object
       required:
@@ -5480,6 +5578,7 @@ components:
             - ANIME
             - JDRAMA
             - YOUTUBE
+            - AUDIOBOOK
     SearchMediaRequest:
       type: object
       required:
@@ -5553,6 +5652,568 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/MediaSummary'
+    DictionaryCandidate:
+      type: object
+      description: |
+        One ranked answer from Nadeshiko's dictionary (JMdict/JMnedict plus the
+        reader's uploaded custom Yomitan dictionaries). Pitch audio is not provided yet.
+      required:
+        - id
+        - headword
+        - reading
+        - common
+        - name
+        - sourceId
+        - dictionary
+        - jlpt
+        - frequency
+        - forms
+        - entries
+      properties:
+        id:
+          type: string
+          description: '`<dictionary>:<ent_seq>`.'
+          example: jmdict:1358280
+        headword:
+          type: string
+          example: 食べる
+        reading:
+          type: string
+          nullable: true
+          example: たべる
+        common:
+          type: boolean
+        name:
+          type: boolean
+          description: A proper name rather than a word.
+        sourceId:
+          type: string
+          description: The JMdict/JMnedict entry sequence number.
+          example: '1358280'
+        dictionary:
+          type: string
+          example: jmdict
+        jlpt:
+          type: string
+          nullable: true
+          description: Unofficial JLPT level estimate (N5-N1).
+          example: N5
+        frequency:
+          type: integer
+          nullable: true
+          description: Rank in Nadeshiko's own corpus (1 is the most frequent word); null when not counted.
+          example: 19
+        frequencyByCategory:
+          type: array
+          description: |
+            Rank in each kind of media the word occurs in, the kind that uses it most first (by occurrences per
+            million words of that kind). Absent when not counted.
+          items:
+            type: object
+            required:
+              - category
+              - rank
+              - perMillion
+            properties:
+              category:
+                type: string
+                enum:
+                  - ANIME
+                  - JDRAMA
+                  - YOUTUBE
+                  - AUDIOBOOK
+              rank:
+                type: integer
+                description: 1 is the most frequent word in that kind of media.
+                example: 212
+              perMillion:
+                type: number
+                description: Occurrences per million words of that kind of media.
+                example: 431.7
+        customFrequencies:
+          type: array
+          description: Frequencies from the authenticated reader's enabled custom Yomitan frequency dictionaries.
+          items:
+            type: object
+            required:
+              - dictionary
+              - dictionaryName
+              - value
+              - displayValue
+            properties:
+              dictionary:
+                type: string
+              dictionaryName:
+                type: string
+              value:
+                type: number
+                nullable: true
+              displayValue:
+                type: string
+        baseForm:
+          type: boolean
+          description: |
+            Present and true when nothing is filed under the text looked up and this word is its dictionary form
+            (食べた → 食べる).
+        inflection:
+          type: array
+          description: |
+            With `baseForm`: what the conjugation does, in the word card's inflection labels, outermost first.
+          items:
+            type: string
+          example:
+            - past
+        pitch:
+          type: array
+          description: Accent patterns from the user's custom pitch dictionaries or UniDic fallback.
+          items:
+            type: object
+            required:
+              - downstep
+            properties:
+              downstep:
+                type: integer
+                minimum: 0
+                description: 0 is flat (heiban); n is the mora after which the pitch drops.
+              source:
+                type: string
+                description: Custom pitch dictionary title when sourced from a user upload.
+              nasal:
+                type: array
+                items:
+                  type: integer
+              devoice:
+                type: array
+                items:
+                  type: integer
+              tags:
+                type: array
+                items:
+                  type: string
+        parts:
+          type: array
+          description: |
+            The words a compound or expression is made of (捜査本部: 捜査, 本部), content words only, each one
+            resolvable by the card. Absent for a word of one piece.
+          items:
+            type: object
+            required:
+              - text
+              - lemma
+              - reading
+              - id
+            properties:
+              text:
+                type: string
+                example: 捜査
+              lemma:
+                type: string
+                example: 捜査
+              reading:
+                type: string
+                example: ソウサ
+              id:
+                type: string
+                example: jmdict:1399010
+        furigana:
+          type: array
+          items:
+            type: object
+            required:
+              - text
+            properties:
+              text:
+                type: string
+              ruby:
+                type: string
+        forms:
+          type: array
+          items:
+            type: object
+            required:
+              - text
+              - script
+              - common
+            properties:
+              text:
+                type: string
+              script:
+                type: string
+                enum:
+                  - kanji
+                  - kana
+              common:
+                type: boolean
+        entries:
+          type: array
+          items:
+            type: object
+            required:
+              - dictionary
+              - dictionaryName
+              - senses
+            properties:
+              dictionary:
+                type: string
+              dictionaryName:
+                type: string
+              senses:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - position
+                    - definitions
+                    - tags
+                  properties:
+                    position:
+                      type: integer
+                    definitions:
+                      type: array
+                      items:
+                        type: object
+                        required:
+                          - lang
+                          - text
+                        properties:
+                          lang:
+                            type: string
+                            enum:
+                              - en
+                              - es
+                              - ja
+                          text:
+                            type: string
+                          structuredContent:
+                            description: Sanitized Yomitan structured-content AST for custom dictionaries.
+                    tags:
+                      type: array
+                      items:
+                        type: object
+                        required:
+                          - category
+                          - code
+                          - label
+                        properties:
+                          category:
+                            type: string
+                            enum:
+                              - partOfSpeech
+                              - misc
+                              - field
+                              - dialect
+                          code:
+                            type: string
+                          label:
+                            type: string
+                    notes:
+                      type: array
+                      items:
+                        type: string
+    DictionaryKanjiWordRef:
+      type: object
+      description: A word from Nadeshiko's own dictionary, as the kanji view links it.
+      required:
+        - id
+        - headword
+        - reading
+      properties:
+        id:
+          type: string
+          example: jmdict:1358280
+        headword:
+          type: string
+          example: 食べる
+        reading:
+          type: string
+          nullable: true
+          example: たべる
+    DictionaryKanjiRelated:
+      type: object
+      description: Another kanji the kanji view lists, with one reading and one meaning.
+      required:
+        - character
+        - reading
+        - meaning
+        - grade
+      properties:
+        character:
+          type: string
+          example: 飯
+        reading:
+          type: string
+          nullable: true
+          example: ハン
+        meaning:
+          type: string
+          nullable: true
+          example: meal
+        grade:
+          type: integer
+          nullable: true
+          description: School grade (1-6 and 8 jōyō, 9-10 jinmeiyō), to group the list.
+          example: 4
+    DictionaryKanji:
+      type: object
+      description: |
+        One kanji as the word card's kanji view draws it (task 44).
+      required:
+        - character
+        - strokeCount
+        - grade
+        - frequency
+        - corpusRank
+        - jlpt
+        - kanken
+        - radical
+        - readings
+        - meanings
+        - meaningsLanguage
+        - components
+        - strokes
+        - strokeNumbers
+        - words
+        - sameRadical
+        - sameRadicalCount
+        - containedIn
+        - containedInCount
+      properties:
+        character:
+          type: string
+          example: 食
+        strokeCount:
+          type: integer
+          example: 9
+        grade:
+          type: integer
+          nullable: true
+          description: KANJIDIC2 school grade. 1-6 elementary school, 8 the rest of the jōyō list, 9-10 jinmeiyō.
+          example: 2
+        frequency:
+          type: integer
+          nullable: true
+          description: Rank among the 2,500 kanji most used in newspapers (KANJIDIC2).
+          example: 328
+        corpusRank:
+          type: integer
+          nullable: true
+          description: Rank by how often it is written in Nadeshiko's sentences (anime, drama, audiobooks and YouTube), 1 for the most written. Null until the frequency job has counted it.
+          example: 77
+        jlpt:
+          type: integer
+          nullable: true
+          description: Current JLPT level, 5 for N5 (Jonathan Waller's unofficial lists).
+          example: 5
+        kanken:
+          type: string
+          nullable: true
+          description: Kanji Kentei (漢検) level it is tested at, `10級` (easiest) to `1級` (mimneko/kanji-data, CC0).
+          example: 9級
+        radical:
+          type: object
+          nullable: true
+          description: The classical (Kangxi) radical it is filed under, named by Kanji alive.
+          required:
+            - glyph
+            - number
+            - reading
+            - meaning
+            - character
+          properties:
+            glyph:
+              type: string
+              example: ⾷
+            number:
+              type: integer
+              example: 184
+            reading:
+              type: string
+              example: しょく
+            meaning:
+              type: string
+              example: food, to eat
+            character:
+              type: string
+              nullable: true
+              description: The kanji the radical is written as, when it has a card.
+              example: 食
+        readings:
+          type: array
+          description: On readings first, then kun, each with up to three of the corpus's most frequent words read that way.
+          items:
+            type: object
+            required:
+              - kind
+              - reading
+              - examples
+            properties:
+              kind:
+                type: string
+                enum:
+                  - 'on'
+                  - kun
+              reading:
+                type: string
+                description: Katakana for on; hiragana with `.` before the okurigana for kun.
+                example: た.べる
+              examples:
+                type: array
+                items:
+                  allOf:
+                    - $ref: '#/components/schemas/DictionaryKanjiWordRef'
+                    - type: object
+                      required:
+                        - furigana
+                      properties:
+                        furigana:
+                          type: array
+                          description: The headword split into runs, with ruby over each kanji run (JmdictFurigana).
+                          items:
+                            type: object
+                            required:
+                              - text
+                            properties:
+                              text:
+                                type: string
+                                example: 食
+                              ruby:
+                                type: string
+                                example: しょく
+        meanings:
+          type: array
+          items:
+            type: string
+          example:
+            - eat
+            - food
+        meaningsLanguage:
+          type: string
+          enum:
+            - en
+            - es
+          description: The language `meanings` are in; English when KANJIDIC2 has none in the requested one.
+        components:
+          type: array
+          description: The parts it is built from (KRADFILE).
+          items:
+            type: object
+            required:
+              - character
+              - hasCard
+              - meaning
+            properties:
+              character:
+                type: string
+                example: 良
+              hasCard:
+                type: boolean
+                description: The part is a kanji with a card of its own.
+              meaning:
+                type: string
+                nullable: true
+                description: The kanji's first meaning, or the radical's (English) for a shape with no card.
+                example: good
+        strokes:
+          type: array
+          description: One SVG path per stroke in writing order, in KanjiVG's 109×109 view box. Empty when not drawn.
+          items:
+            type: string
+        strokeNumbers:
+          type: array
+          description: Where KanjiVG places each stroke's number, as `[x, y]`. Empty when it has none.
+          items:
+            type: array
+            minItems: 2
+            maxItems: 2
+            items:
+              type: number
+        words:
+          type: array
+          description: Words written with this kanji, most frequent in Nadeshiko's corpus first (up to 40).
+          items:
+            type: object
+            required:
+              - id
+              - headword
+              - reading
+              - frequency
+              - gloss
+            properties:
+              id:
+                type: string
+                example: jmdict:1358280
+              headword:
+                type: string
+                example: 食べる
+              reading:
+                type: string
+                nullable: true
+                example: たべる
+              frequency:
+                type: integer
+                description: Rank in Nadeshiko's corpus (1 is the most frequent word).
+                example: 195
+              gloss:
+                type: string
+                nullable: true
+                example: to eat
+        sameRadical:
+          type: array
+          description: Other kanji filed under the same radical, school kanji first (12, or all with `related=all`).
+          items:
+            $ref: '#/components/schemas/DictionaryKanjiRelated'
+        sameRadicalCount:
+          type: integer
+          example: 92
+        containedIn:
+          type: array
+          description: Kanji with this one as a part and filed under another radical, school kanji first (12, or all with `related=all`).
+          items:
+            $ref: '#/components/schemas/DictionaryKanjiRelated'
+        containedInCount:
+          type: integer
+          example: 5
+    Error404:
+      type: object
+      description: Not Found error response
+      required:
+        - code
+        - title
+        - detail
+        - status
+      properties:
+        code:
+          type: string
+          description: Specific error code for programmatic handling
+          enum:
+            - NOT_FOUND
+        title:
+          type: string
+          minLength: 1
+          description: A short, human-readable summary of the problem
+        detail:
+          type: string
+          minLength: 1
+          description: A human-readable explanation specific to this occurrence
+        type:
+          type: string
+          format: uri
+          minLength: 1
+          description: A URI reference that identifies the problem type (`about:blank` when the problem has no further semantics beyond the HTTP status, per RFC 9457)
+        instance:
+          type: string
+          minLength: 1
+          description: A URI reference that identifies the specific occurrence (e.g., trace ID)
+        status:
+          type: integer
+          description: The HTTP status code
+          enum:
+            - 404
+        errors:
+          type: object
+          additionalProperties:
+            type: string
+          description: Optional map of field names to their error messages (for validation errors)
     WordCoverageTier:
       type: object
       description: Coverage statistics for a frequency tier
@@ -5845,6 +6506,7 @@ components:
             - ONA
             - SPECIAL
             - YOUTUBE
+            - AUDIOBOOK
           example: TV
         airingStatus:
           type: string
@@ -5953,47 +6615,6 @@ components:
           description: The HTTP status code
           enum:
             - 409
-        errors:
-          type: object
-          additionalProperties:
-            type: string
-          description: Optional map of field names to their error messages (for validation errors)
-    Error404:
-      type: object
-      description: Not Found error response
-      required:
-        - code
-        - title
-        - detail
-        - status
-      properties:
-        code:
-          type: string
-          description: Specific error code for programmatic handling
-          enum:
-            - NOT_FOUND
-        title:
-          type: string
-          minLength: 1
-          description: A short, human-readable summary of the problem
-        detail:
-          type: string
-          minLength: 1
-          description: A human-readable explanation specific to this occurrence
-        type:
-          type: string
-          format: uri
-          minLength: 1
-          description: A URI reference that identifies the problem type (`about:blank` when the problem has no further semantics beyond the HTTP status, per RFC 9457)
-        instance:
-          type: string
-          minLength: 1
-          description: A URI reference that identifies the specific occurrence (e.g., trace ID)
-        status:
-          type: integer
-          description: The HTTP status code
-          enum:
-            - 404
         errors:
           type: object
           additionalProperties:
@@ -6196,6 +6817,7 @@ components:
             - ONA
             - SPECIAL
             - YOUTUBE
+            - AUDIOBOOK
           example: TV
         airingStatus:
           type: string
@@ -6667,9 +7289,10 @@ components:
               type: object
               nullable: true
               description: |
-                The quota tier this account sits on. Null when the account is on none,
-                or when an override is in force and the tier no longer describes the
-                limit.
+                The quota tier that sets this account's limit: the assigned tier, or
+                the one a linked Patreon membership earns when that is higher. Null
+                when the account is on none, or when an override is in force and no
+                tier describes the limit.
               required:
                 - id
                 - displayName
@@ -6679,7 +7302,7 @@ components:
                   example: plus
                 displayName:
                   type: string
-                  example: Plus
+                  example: Seed
             burst:
               type: object
               description: |
@@ -6723,76 +7346,6 @@ components:
         - DELETE_COLLECTIONS
         - READ_ADMIN
       example: READ_MEDIA
-    ShirabeConnection:
-      type: object
-      description: |
-        A reader's linked Shirabe account, as the reader is shown it.
-
-        Never carries the stored tokens: nothing here can be used to act on their
-        Shirabe account.
-      required:
-        - needsUpgrade
-        - missingScopes
-        - disconnected
-        - linkedAt
-        - scopes
-        - dictionaries
-        - stackIsPrivate
-      properties:
-        needsUpgrade:
-          type: boolean
-          description: 'True when the link works but is missing a permission a newer feature needs -- granted before that feature existed. A re-consent, not a repair: what the account was linked for keeps working the whole time, and only the newer feature is unavailable.'
-          example: false
-        missingScopes:
-          type: array
-          description: The permissions a re-consent would add. Empty unless `needsUpgrade`.
-          items:
-            type: string
-          example: []
-        disconnected:
-          type: boolean
-          description: 'True when Shirabe refused this key outright -- the reader revoked it from their Shirabe access list, or it was swept for being idle. The link is over until they make a new one, and their own dictionaries are not being used until they do. Distinct from `needsUpgrade`, which is a link that still works: this one is a repair.'
-          example: false
-        linkedAt:
-          type: string
-          format: date-time
-        shirabeName:
-          type: string
-          nullable: true
-          description: Who they are on Shirabe, for the settings page to name the link.
-          example: Lumi
-        scopes:
-          type: array
-          description: What the reader granted. Today that is READ_ACCOUNT and nothing else.
-          items:
-            type: string
-          example:
-            - READ_ACCOUNT
-        dictionaries:
-          type: array
-          description: 'Their Shirabe dictionary stack: ordered `slug:lang` refs naming which dictionaries resolve, in which languages, in what order. This is what makes a word lookup here answer the way it does over there.'
-          items:
-            type: string
-          example:
-            - sanseido:ja
-            - jmdict:en
-        dictionaryNames:
-          type: object
-          additionalProperties:
-            type: string
-          description: What each dictionary above is CALLED, keyed by slug, as Shirabe names it. A reader's own uploads are filed under content hashes, so a client printing the stack without this prints a list of hashes. Empty for a link made before Shirabe published the names; fall back to the slug.
-          example:
-            jmdict: JMdict
-            yomitan-c89af12122021a8a: 三省堂国語辞典
-        stackIsPrivate:
-          type: boolean
-          description: True when their stack names one of their own uploads, which makes its answers theirs alone and stops a lookup being cached for anyone else.
-          example: false
-        syncedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: When the stack was last re-read from Shirabe.
     PatreonConnection:
       type: object
       required:
@@ -6826,6 +7379,131 @@ components:
         linkedAt:
           type: string
           format: date-time
+    UserDictionary:
+      type: object
+      description: One custom Yomitan dictionary attached to the user's account.
+      required:
+        - id
+        - stackId
+        - title
+        - revision
+        - author
+        - description
+        - url
+        - frequencyMode
+        - hasTerms
+        - hasFrequency
+        - hasPitch
+        - termCount
+        - frequencyCount
+        - pitchCount
+        - zipBytes
+        - sqliteBytes
+        - status
+        - errorMessage
+        - enabled
+        - sortOrder
+        - createdAt
+      properties:
+        id:
+          type: integer
+        stackId:
+          type: string
+          example: custom:42
+        title:
+          type: string
+        revision:
+          type: string
+        author:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        url:
+          type: string
+          nullable: true
+        frequencyMode:
+          type: string
+          nullable: true
+        hasTerms:
+          type: boolean
+        hasFrequency:
+          type: boolean
+        hasPitch:
+          type: boolean
+        termCount:
+          type: integer
+        frequencyCount:
+          type: integer
+        pitchCount:
+          type: integer
+        zipBytes:
+          type: integer
+        sqliteBytes:
+          type: integer
+        status:
+          type: string
+          enum:
+            - processing
+            - ready
+            - failed
+        errorMessage:
+          type: string
+          nullable: true
+        enabled:
+          type: boolean
+        sortOrder:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+    UserDictionaryListResponse:
+      type: object
+      description: The signed-in user's custom Yomitan dictionary stack, built-in JMdict placement, and account quota.
+      required:
+        - dictionaries
+        - builtin
+        - quota
+        - stackFingerprint
+      properties:
+        dictionaries:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserDictionary'
+        builtin:
+          type: object
+          required:
+            - id
+            - enabled
+            - position
+          properties:
+            id:
+              type: string
+              example: jmdict
+            enabled:
+              type: boolean
+            position:
+              type: integer
+        quota:
+          type: object
+          required:
+            - used
+            - max
+            - maxZipBytes
+            - isPatron
+          properties:
+            used:
+              type: integer
+            max:
+              type: integer
+            maxZipBytes:
+              type: integer
+            isPatron:
+              type: boolean
+        stackFingerprint:
+          type: string
+          nullable: true
     ReportTargetMedia:
       type: object
       required:
@@ -7191,6 +7869,7 @@ components:
             - ANIME
             - JDRAMA
             - YOUTUBE
+            - AUDIOBOOK
           description: |
             Category tab a search opens on when the URL names none. `ALL` -- the value
             assumed when unset -- searches every category the user still has visible.
@@ -7336,6 +8015,44 @@ components:
                 Releases and new features, including any request for support that
                 rides in one. Sent through Zoho Campaigns rather than from here, so
                 this governs the audience export. Absent means follow `enabled`.
+        customTheme:
+          type:
+            - object
+            - 'null'
+          description: |
+            A patron's custom theme: a light or dark base plus an accent and a page
+            background. Writing a non-null value needs an active Patreon membership
+            (any paid tier) or an admin account; `null` clears it. Kept when a
+            membership lapses, but left out of the response until it is active again,
+            so the site falls back to the dark theme.
+          required:
+            - base
+            - accent
+            - background
+          properties:
+            preset:
+              type: string
+              enum:
+                - sepia
+                - indigo
+                - midnight
+                - matcha
+                - ocean
+                - sunset
+                - lavender
+                - custom
+              description: The ready-made theme it started from, or `custom`.
+            base:
+              type: string
+              enum:
+                - dark
+                - light
+            accent:
+              type: string
+              pattern: ^#[0-9a-fA-F]{6}$
+            background:
+              type: string
+              pattern: ^#[0-9a-fA-F]{6}$
     ActivityType:
       type: string
       enum:
@@ -8138,11 +8855,11 @@ components:
           example: plus
         displayName:
           type: string
-          example: Plus
+          example: Seed
         monthlyQuotaLimit:
           type: integer
           description: API calls allowed per calendar month on this tier
-          example: 25000
+          example: 15000
         rateLimitMax:
           type: integer
           nullable: true
@@ -8155,6 +8872,14 @@ components:
           nullable: true
           description: Window for `rateLimitMax`, in milliseconds. Null inherits the default.
           example: null
+        patreonTierId:
+          type: string
+          nullable: true
+          description: |
+            The Patreon tier whose members earn this tier, matched against the
+            member's entitled tiers. Null when Patreon never grants it and only an
+            assignment reaches it.
+          example: '22710324'
         sortOrder:
           type: integer
           description: Display order; the id is a slug, not a rank
@@ -8164,6 +8889,7 @@ components:
       required:
         - userId
         - tierId
+        - effectiveTierId
         - quotaOverride
         - monthlyQuotaLimit
         - quotaSource
@@ -8176,8 +8902,16 @@ components:
         tierId:
           type: string
           nullable: true
-          description: The tier this account sits on, or null if it has none
+          description: The tier this account is assigned, or null if it has none
           example: plus
+        effectiveTierId:
+          type: string
+          nullable: true
+          description: |
+            The tier that produced `monthlyQuotaLimit`: the assigned tier, or the one
+            a Patreon membership earns when that is higher. Null when an override or
+            a fallback decided the limit.
+          example: pro
         quotaOverride:
           type: integer
           nullable: true
@@ -8186,19 +8920,23 @@ components:
         monthlyQuotaLimit:
           type: integer
           description: The limit actually in force, after applying the resolution order
-          example: 25000
+          example: 30000
         quotaSource:
           type: string
           enum:
             - override
             - tier
+            - patreon
             - legacy_column
             - default
           description: |
             Which step of the resolution order produced `monthlyQuotaLimit`.
+            `patreon` means a linked, active and recently checked Patreon membership
+            earns a higher tier than the assigned one; it is computed, never stored,
+            so it ends on its own when the membership does.
             `legacy_column` and `default` mean the tier did not resolve, and are worth
             investigating rather than displaying.
-          example: tier
+          example: patreon
         quotaUsed:
           type: integer
           description: Calls billed to this account in the current period
@@ -8384,6 +9122,15 @@ components:
         type: about:blank
         instance: trace-id-placeholder
         status: 503
+    NotFound:
+      summary: Not Found
+      value:
+        code: NOT_FOUND
+        title: Not Found
+        detail: The requested resource could not be found. Please check the URL and try again.
+        type: about:blank
+        instance: trace-id-placeholder
+        status: 404
     AccountConflict:
       summary: Account Conflict
       value:
@@ -8402,15 +9149,6 @@ components:
         type: about:blank
         instance: trace-id-placeholder
         status: 409
-    NotFound:
-      summary: Not Found
-      value:
-        code: NOT_FOUND
-        title: Not Found
-        detail: The requested resource could not be found. Please check the URL and try again.
-        type: about:blank
-        instance: trace-id-placeholder
-        status: 404
   responses:
     TooManyRequests:
       description: Too Many Requests. The response body indicates whether the request was rejected due to per-minute rate limiting or monthly quota exhaustion.
@@ -8480,6 +9218,15 @@ components:
           examples:
             ServiceOverloaded:
               $ref: '#/components/examples/ServiceOverloaded'
+    NotFound:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error404'
+          examples:
+            NotFound:
+              $ref: '#/components/examples/NotFound'
     Conflict:
       description: Conflict
       content:
@@ -8491,15 +9238,6 @@ components:
               $ref: '#/components/examples/AccountConflict'
             DuplicateKey:
               $ref: '#/components/examples/DuplicateKey'
-    NotFound:
-      description: Not Found
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error404'
-          examples:
-            NotFound:
-              $ref: '#/components/examples/NotFound'
     SegmentRevisionListResponse:
       description: OK
       content:

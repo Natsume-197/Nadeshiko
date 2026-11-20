@@ -58,13 +58,6 @@ env:
 
     - E2E_USER_PASSWORD
 
-    - SHIRABE_API_KEY
-
-     # Staging needs its own Shirabe registration and secret: the redirect is hostname-specific and separates decryption
-     # between environments.
-    - SHIRABE_CONNECTION_SECRET
-     # Confidential Shirabe client secret used for token exchange, renewal, and revocation; unset disables linking.
-    - SHIRABE_OAUTH_CLIENT_SECRET
     # Patreon linking (patron perks such as custom themes). The OAuth client belongs to the NadeshikoApp campaign;
     # PATREON_CONNECTION_SECRET encrypts the stored Patreon tokens. All four must exist in SSM before a deploy.
     - PATREON_OAUTH_CLIENT_ID
@@ -95,11 +88,6 @@ env:
      # testing it, require ONLY_TO and preview with email:test.
     LIFECYCLE_EMAILS_ENABLED: "false"
 
-    # Its own client on Shirabe, not production's: the redirect is exact-matched,
-    # so one registration cannot cover two hostnames.
-    SHIRABE_OAUTH_CLIENT_ID: nadeshiko-staging
-    SHIRABE_OAUTH_REDIRECT_URI: https://stg.nadeshiko.co/link/shirabe/callback
-
     POSTGRES_HOST: "nadeshiko-backend-prod-postgres"
     POSTGRES_PORT: 5432
 
@@ -108,10 +96,8 @@ env:
     ELASTICSEARCH_HOST: "http://nadeshiko-backend-prod-elasticsearch:9200"
     ELASTICSEARCH_INDEX: nadedb_dev
 
-    # Production's sidecar, shared like Postgres and Elasticsearch (see deploy.prod.yml). Staging runs our parser
-    # (task 46) before production does; its corpus is reparsed with `tokens:reparse -- --stale`.
+    # Production's Sudachi sidecar, shared like Postgres and Elasticsearch (see deploy.prod.yml).
     SUDACHI_URL: "http://nadeshiko-backend-prod-sudachi:8090"
-    SEGMENT_PARSER: nadeshiko
     # Custom Yomitan dictionaries (task 48), on in staging first. Needs the four USER_DICT_R2_* secrets above; with
     # them missing the backend refuses to boot.
     USER_DICTIONARIES_ENABLED: "true"
