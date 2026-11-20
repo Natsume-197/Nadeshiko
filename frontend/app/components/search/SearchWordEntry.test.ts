@@ -6,6 +6,8 @@ import { ref } from 'vue';
 const locale = ref('en');
 vi.stubGlobal('useI18n', () => ({ t: (key: string) => key, locale }));
 vi.stubGlobal('useLocalePath', () => (path: string) => path);
+const play = vi.fn();
+vi.stubGlobal('useHeadwordAudio', () => ({ playingUrl: ref(''), playHeadword: play, stopHeadword: vi.fn() }));
 
 import SearchWordEntry from './SearchWordEntry.vue';
 import type { DictionaryWord } from '~/utils/wordCard';
@@ -142,6 +144,18 @@ describe('the word entry above a word search', () => {
 
     expect(wrapper.find('[data-testid="word-entry-inflected"]').text()).toBe('negative · past');
     expect(render().find('[data-testid="word-entry-inflected"]').exists()).toBe(false);
+  });
+
+  test('a play button before each pitch pattern that has a recording, none without', async () => {
+    const url = 'https://cdn.example.com/pitch-audio/metan-v1/%E3%81%9F%E3%81%B9%E3%82%8B_2.opus';
+    const wrapper = render({ ...TABERU, pitch: [{ downstep: 2, audioUrl: url }, { downstep: 0 }] });
+    const buttons = wrapper.findAll('[data-testid="word-entry-audio"]');
+
+    expect(buttons).toHaveLength(1);
+    expect(buttons[0]?.attributes('aria-label')).toBe('tokenTooltip.playAudio');
+    await buttons[0]?.trigger('click');
+    expect(play).toHaveBeenCalledWith(url);
+    expect(render().find('[data-testid="word-entry-audio"]').exists()).toBe(false);
   });
 
   test('the pitch accent sits with the word, before the definitions', () => {

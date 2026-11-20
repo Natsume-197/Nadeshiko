@@ -138,14 +138,19 @@ const reading = computed(() => {
 
 const formatNumber = (value: number) => new Intl.NumberFormat(locale.value).format(value);
 
-/** In katakana, as the word card draws it. */
+/** In katakana, as the word card draws it, each with its recording when there is one. */
 const pitch = computed(() => {
   const read = shown.value.reading || shown.value.headword;
   return (shown.value.pitch ?? []).slice(0, 2).map((pattern) => ({
     downstep: pattern.downstep,
     morae: pitchMorae(read, pattern.downstep),
+    audioUrl: pattern.audioUrl ?? '',
   }));
 });
+
+const { playingUrl, playHeadword, stopHeadword } = useHeadwordAudio();
+// A clip belongs to the word shown: switching to a homograph stops it.
+watch(shown, stopHeadword);
 
 const byCategory = computed(() =>
   (shown.value.frequencyByCategory ?? []).flatMap((entry) => {
@@ -231,13 +236,25 @@ const kanjiPath = (character: string) => localePath(`/kanji/${encodeURIComponent
             :title="$t('tokenTooltip.pitchAccent')"
             data-testid="word-entry-pitch"
           >
-            <PitchGraph
-              v-for="(pattern, index) in pitch"
-              :key="index"
-              :morae="pattern.morae"
-              :downstep="pattern.downstep"
-              :scale="0.8"
-            />
+            <span v-for="(pattern, index) in pitch" :key="index" class="word-entry__pitch-pattern">
+              <button
+                v-if="pattern.audioUrl"
+                type="button"
+                class="word-entry__audio"
+                :class="{ 'is-playing': playingUrl === pattern.audioUrl }"
+                :aria-label="$t('tokenTooltip.playAudio')"
+                :title="$t('tokenTooltip.playAudio')"
+                data-testid="word-entry-audio"
+                @click="playHeadword(pattern.audioUrl)"
+              >
+                <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M8.5 2.75 4.9 5.75H2.4v4.5h2.5l3.6 3z" fill="currentColor" stroke="none" />
+                  <path d="M11 6a3 3 0 0 1 0 4" />
+                  <path d="M13 4a6 6 0 0 1 0 8" />
+                </svg>
+              </button>
+              <PitchGraph :morae="pattern.morae" :downstep="pattern.downstep" :scale="0.8" />
+            </span>
           </span>
         </div>
 
@@ -873,5 +890,38 @@ const kanjiPath = (character: string) => localePath(`/kanji/${encodeURIComponent
   flex-wrap: wrap;
   align-items: flex-end;
   gap: 2px 14px;
+}
+
+.word-entry__pitch-pattern {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+/* The word card's play button, in the page's theme. */
+.word-entry__audio {
+  flex: 0 0 auto;
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: var(--surface-lift);
+  color: var(--ink-muted);
+  cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.word-entry__audio:hover {
+  background: color-mix(in srgb, var(--ink) 12%, transparent);
+  color: var(--ink);
+}
+
+.word-entry__audio.is-playing {
+  color: var(--accent-soft);
 }
 </style>
