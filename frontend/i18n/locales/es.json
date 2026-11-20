@@ -477,9 +477,9 @@
     },
     "themes": {
       "title": "Temas",
-      "description": "Elige cómo se ve Nadeshiko. Los patrons también pueden crear su propio tema.",
+      "description": "Elige cómo se ve Nadeshiko. Los mecenas también pueden crear su propio tema.",
       "appearance": "Apariencia",
-      "patronThemes": "Temas de patron",
+      "patronThemes": "Temas para mecenas",
       "yourTheme": "Tu tema",
       "createOwn": "Crear el tuyo",
       "cancel": "Cancelar"
@@ -758,7 +758,7 @@
         "custom": "Personalizado"
       },
       "customTheme": {
-        "patronBadge": "Patrons",
+        "patronBadge": "Mecenas",
         "description": "Elige un tema ya hecho o tus propios colores. Los temas personalizados son un agradecimiento por apoyar a Nadeshiko en Patreon.",
         "presetNames": {
           "sepia": "Sepia",
@@ -776,7 +776,7 @@
         "previewButton": "Añadir a Anki",
         "warning_text": "El texto puede costar de leer sobre este fondo.",
         "warning_accent": "El texto blanco puede costar de leer sobre este acento.",
-        "needsPatron": "Los temas de patron son para los patrons de Nadeshiko. Vincula tu cuenta de Patreon en Ajustes → Conexiones; vale cualquier nivel de pago.",
+        "needsPatron": "Los temas para mecenas son para quienes apoyan a Nadeshiko en Patreon. Vincula tu cuenta de Patreon en Ajustes → Conexiones; vale cualquier nivel de pago.",
         "seeSupport": "Ver los niveles.",
         "apply": "Aplicar tema",
         "remove": "Quitar tema personalizado",

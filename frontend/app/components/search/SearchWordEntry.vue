@@ -544,18 +544,19 @@ const kanjiPath = (character: string) => localePath(`/kanji/${encodeURIComponent
   white-space: nowrap;
 }
 
+/* Tinted from the theme's own surface and ink, so the badges read in dark, light and the patron themes. */
 .word-entry__badge.is-common {
-  background: rgb(34 60 42);
-  color: rgb(150 219 170);
+  background: color-mix(in srgb, rgb(34 197 94) 16%, var(--surface));
+  color: color-mix(in srgb, rgb(34 197 94) 50%, var(--ink));
 }
 
 .word-entry__badge.is-jlpt {
-  background: rgb(38 52 66);
-  color: rgb(158 197 236);
+  background: color-mix(in srgb, rgb(59 130 246) 16%, var(--surface));
+  color: color-mix(in srgb, rgb(59 130 246) 50%, var(--ink));
 }
 
 .word-entry__badge.is-freq {
-  background: rgb(48 48 48);
+  background: color-mix(in srgb, var(--ink) 10%, var(--surface));
   color: var(--ink-muted);
   font-variant-numeric: tabular-nums;
 }
