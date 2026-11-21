@@ -42,7 +42,8 @@
       "collections": "例句集",
       "activity": "學習記錄",
       "language": "語言",
-      "logout": "登出"
+      "logout": "登出",
+      "requests": "請求"
     }
   },
   "announcementBanner": {
@@ -1055,7 +1056,9 @@
       "preferenceError": "無法儲存此設定，請重試。",
       "allDescription": "無論此處如何設定，登入連結和必要的賬戶郵件都會正常傳送。",
       "turnedOn": "{name}：已開啟",
-      "turnedOff": "{name}：已關閉"
+      "turnedOff": "{name}：已關閉",
+      "requestsTitle": "你的請求",
+      "requestsDescription": "你投票的作品消息：開始製作與正式上線。"
     },
     "dictionaries": {
       "title": "自訂辭典",
@@ -1164,7 +1167,8 @@
     "expanding": "正在延伸…",
     "playAudio": "播放音訊",
     "loading": "載入中",
-    "noResultsSupport": "沒有找到想要的內容？歡迎到我們的{link}建議下一批收錄的作品。"
+    "noResultsSupport": "沒有找到想要的內容？歡迎在我們的{link}請求或投票。",
+    "noResultsSupportLink": "請求頁面"
   },
   "wordEntry": {
     "label": "辭典條目",
@@ -1610,7 +1614,7 @@
     "title": "關聯賬戶",
     "patreon": {
       "name": "Patreon",
-      "description": "Link Patreon to verify your membership and propose shows",
+      "description": "連結 Patreon 以驗證你的會員身分：贊助者可獲得請求助推和自訂主題。",
       "connect": "Connect",
       "disconnect": "Disconnect",
       "active": "Linked as {name} — active member",
@@ -1631,9 +1635,9 @@
   },
   "roadmap": {
     "title": "路線圖",
-    "intro": "加入我們的 Patreon，申請你希望接下來加入 Nadeshiko 的作品和功能！",
+    "intro": "看看 Nadeshiko 即將加入的內容。任何人都可以請求作品，並為接下來的內容投票。",
     "support": "支持 Nadeshiko",
-    "proposeCta": "推薦作品",
+    "proposeCta": "請求作品",
     "filterLabel": "篩選路線圖",
     "filters": {
       "content": "作品",
@@ -1650,49 +1654,7 @@
     "emptyFeatures": "目前還沒有功能里程碑。",
     "viewSource": "查看來源",
     "loadError": "目前無法載入路線圖。",
-    "proposalTitle": "申請你最喜歡的作品！",
-    "proposalIntro": "Nadeshiko 的活躍贊助會員每月可以申請新增作品，可申請的數量取決於贊助方案。請在下方檢查你的資格！",
-    "proposalTiersLink": "查看贊助方案。",
-    "steps": {
-      "signIn": "登入 Nadeshiko",
-      "patreon": "連結或加入 Patreon",
-      "propose": "提交申請"
-    },
-    "states": {
-      "anonymousTitle": "登入後推薦作品",
-      "anonymousBody": "路線圖對所有人公開。已連結 Nadeshiko 帳號的贊助會員可以提交申請。",
-      "unlinkedTitle": "連結你的 Patreon 帳號",
-      "unlinkedBody": "我們會安全驗證你的 Nadeshiko 會員資格。Patreon 絕不會用於登入。",
-      "inactiveTitle": "成為活躍贊助會員",
-      "inactiveBody": "你的 Patreon 帳號已連結，但目前沒有有效的 Nadeshiko 付費會員資格。",
-      "activeTitle": "你的申請",
-      "submittedTitle": "已收到申請",
-      "submittedBody": "申請已進入非公開審核佇列。通過後會顯示在此時間軸上。"
-    },
-    "signIn": "登入",
-    "linkPatreon": "連結 Patreon",
-    "becomePatron": "在 Patreon 加入",
-    "checkAgain": "重新檢查",
-    "submitAnother": "繼續推薦",
-    "patreonMember": "Patreon 會員",
-    "activeBadge": "活躍贊助會員",
-    "form": {
-      "url": "作品連結",
-      "urlPlaceholder": "https://anilist.co/anime/…",
-      "title": "標題（選填）",
-      "titlePlaceholder": "我們會從連結中取得",
-      "credit": "公開署名（選填）",
-      "creditPlaceholder": "你的姓名或 Patreon 使用者名稱",
-      "creditHint": "留空將以匿名 Patreon 會員的身分署名。",
-      "note": "為什麼推薦它？（選填）",
-      "notePlaceholder": "請告訴我們它為什麼適合 Nadeshiko",
-      "submit": "提交審核"
-    },
     "features": {
-      "patreonProposals": {
-        "title": "Patreon 作品推薦",
-        "description": "贊助會員可以連結會員資格、推薦作品，並在公開路線圖中追蹤已核准的新增內容。"
-      },
       "searchFilters": {
         "title": "更好用的搜尋篩選",
         "description": "可直接按作品名稱、標籤及其他精確條件進行搜尋。"
@@ -1728,6 +1690,10 @@
       "apiKeys": {
         "title": "細緻權限的 API 金鑰",
         "description": "API 金鑰可設為唯讀、完整存取，或僅限明確選擇的權限。"
+      },
+      "contentRequests": {
+        "title": "內容請求",
+        "description": "任何人都可以請求動畫、日劇、有聲書和 YouTube 頻道並投票決定下一步；贊助者還能助推。"
       }
     },
     "callbackDeclined": "Patreon 連結未獲核准。",
@@ -1738,7 +1704,8 @@
     "admin": {
       "tab": "路線圖",
       "title": "路線圖佇列"
-    }
+    },
+    "requestsLink": "前往請求頁面。"
   },
   "feedback": {
     "open": "意見回饋",
@@ -1828,7 +1795,7 @@
     "tierText": {
       "seed": [
         "如果 Nadeshiko 在你學習日語的路上幫到了你，你也想表達感謝、幫助網站繼續運作，這個等級就是為你準備的。謝謝你！",
-        "作為回報，你可以申請把新作品加入 Nadeshiko，並獲得更高的 API 額度。"
+        "作為回報，你可以用助推把想要的作品推到請求列表前面，並獲得更高的 API 額度。"
       ],
       "flower": [
         "獻給真正相信這個專案的人。非常感謝你的支持！",
@@ -1836,7 +1803,7 @@
       ],
       "nadeshiko": [
         "我們的最高等級，獻給想給予 Nadeshiko 最大支持的人。正是這一級的支持，讓我們能不斷擴充片庫、開發新功能。",
-        "你將獲得 Flower 等級的全部福利，作品申請優先處理，並享有我們最高的 API 額度。"
+        "你將獲得 Flower 等級的全部福利、最多的助推次數讓你的選擇優先，以及我們最高的 API 額度。"
       ]
     },
     "tiersIntro": "選擇適合你的等級。你可以隨時在 Patreon 上變更或取消。",
@@ -1848,12 +1815,11 @@
       "nadeshiko": "Nadeshiko"
     },
     "perks": {
-      "titleRequests": "每月最多申請 {count} 部作品",
       "talkToDevs": "直接與開發者交流",
       "everythingIn": "包含 {tier} 的全部福利",
-      "priority": "作品申請優先處理",
       "apiRequests": "每月 {count} 次 API 請求",
-      "customThemes": "自訂主題"
+      "customThemes": "自訂主題",
+      "requestBoosts": "每月 {count} 次請求助推"
     },
     "faq": {
       "title": "常見問題",
@@ -1875,5 +1841,104 @@
         "a": "不可以。一個 Patreon 帳戶只能連結一個 Nadeshiko 帳戶。"
       }
     }
+  },
+  "requests": {
+    "seoTitle": "請求動畫、日劇、有聲書和 YouTube | Nadeshiko",
+    "seoDescription": "請求你想在 Nadeshiko 上看到的動畫、日劇、有聲書和 YouTube 頻道，並為接下來的內容投票。",
+    "title": "請求",
+    "intro": "請求你想用來學習的動畫、日劇、有聲書和 YouTube 頻道，並為別人的請求投票。最受期待的作品優先。",
+    "newRequest": "新增請求",
+    "boostWithPatreon": "透過 Patreon 助推",
+    "allowance": {
+      "open": "開放中的請求 {count} / {limit}",
+      "boosts": "本月剩餘助推 {remaining} / {total}（{date} 重置）"
+    },
+    "form": {
+      "heading": "請求作品",
+      "help": "動畫請貼上 AniList 連結，日劇請貼上 TMDB 或 MyDramaList 連結，有聲書請貼上 Audible 或 Amazon 連結（或只填 ASIN），頻道或影片請貼上 YouTube 連結。如果已經有人請求過，你的票會加到那個請求上。",
+      "url": "連結",
+      "urlPlaceholder": "https://anilist.co/anime/…",
+      "titleLabel": "標題",
+      "note": "備註（選填）",
+      "notePlaceholder": "哪一季、哪裡有字幕等有幫助的資訊。",
+      "submit": "送出請求",
+      "cancel": "取消",
+      "unsupported": "請使用 AniList、TMDB、MyDramaList、Audible、Amazon 或 YouTube 的連結。",
+      "needsTitle": "無法從該連結讀取標題。請填寫標題後再送出。",
+      "limit": "你已達到 {limit} 個開放請求的上限，或今天的請求上限。在此期間，請為現有的請求投票。"
+    },
+    "outcome": {
+      "created": "請求已送出：{title}",
+      "voted": "{title} 已經有人請求過，我們已加上你的票。",
+      "already_voted": "你已經為 {title} 投過票了。"
+    },
+    "tabs": {
+      "ACTIVE": "開放中",
+      "RELEASED": "已上線",
+      "DECLINED": "已拒絕"
+    },
+    "searchLabel": "搜尋請求",
+    "sortLabel": "排序",
+    "sort": {
+      "TOP": "最受期待",
+      "RECENT": "最新"
+    },
+    "categoryLabel": "分類",
+    "category": {
+      "ALL": "全部",
+      "ANIME": "動畫",
+      "JDRAMA": "日劇",
+      "AUDIOBOOK": "有聲書",
+      "YOUTUBE": "YouTube"
+    },
+    "loadError": "暫時無法載入請求。",
+    "emptySearch": "沒有符合該搜尋的請求。",
+    "empty": {
+      "ACTIVE": "還沒有開放中的請求。來當第一個吧！",
+      "RELEASED": "還沒有已上線的請求。",
+      "DECLINED": "沒有被拒絕的請求。"
+    },
+    "vote": "投票",
+    "unvote": "取消投票",
+    "kindUpdate": "Nadeshiko 已有作品的後續",
+    "status": {
+      "OPEN": "開放中",
+      "PLANNED": "已規劃",
+      "IN_PROGRESS": "製作中",
+      "RELEASED": "已上線",
+      "DECLINED": "已拒絕"
+    },
+    "declinedBecause": "已拒絕：{reason}",
+    "votes": "{count} 票",
+    "boosts": "{count} 次助推",
+    "viewSource": "查看來源",
+    "searchIt": "去搜尋",
+    "onNadeshiko": "在 Nadeshiko 上",
+    "boost": {
+      "action": "助推",
+      "boosted": "已助推",
+      "already": "你已助推過這個請求。",
+      "hint": "一次助推相當於五票，且無法撤回。",
+      "done": "你助推了 {title}。",
+      "failed": "無法助推。你本月的次數可能已用完。"
+    },
+    "withdraw": "撤回",
+    "withdrawConfirm": "撤回你對 {title} 的請求？",
+    "withdrawFailed": "無法撤回該請求。",
+    "pagination": "分頁",
+    "previous": "上一頁",
+    "next": "下一頁",
+    "how": {
+      "title": "請求如何運作",
+      "vote": "任何有帳號的人都可以請求作品和投票。每人每個請求只算一票，請求已被請求的作品會把你的票加到那個請求上。",
+      "boost": "贊助者每月獲得助推次數：Seed 3 次，Flower 5 次，Nadeshiko 10 次。一次助推相當於五票。",
+      "limits": "你最多可同時有 10 個開放請求（贊助者 30 個），每天最多送出 5 個。",
+      "news": "當你投票的作品開始製作和上線時，我們會寄信通知你。你可以在設定中關閉。"
+    },
+    "admin": {
+      "tab": "請求"
+    },
+    "noIngestYet": "暫不支援日劇",
+    "noIngestYetHint": "我們暫時還無法加入日劇。這裡的投票能告訴我們大家有多想要。"
   }
 }

@@ -4,7 +4,7 @@ import { createClient as createApiClient, createConfig, type Client } from './cl
 import type { Auth } from './core/auth.gen';
 import type { ClientOptions } from './types.gen';
 import type * as Types from './types.gen';
-import { search, getSearchStats, searchWords, searchMedia, getStatsOverview, listMedia, getSegment, getSegmentContext, getMedia, listEpisodes, getEpisode, getMe, createUserApiKey, listExcludedMedia, addExcludedMedia, removeExcludedMedia, listFavoriteMedia, addFavoriteMedia, removeFavoriteMedia, listFamiliarMedia, listUserActivity, getUserActivityHeatmap, getUserActivityStats, listCollections, createCollection, getCollection, deleteCollection, addSegmentToCollection, searchCollectionSegments, removeSegmentFromCollection, listRoadmap, createRoadmapProposal, identifyDictionaryWord, getDictionaryKanjiIndex, getDictionaryKanji, getCoveredWords, triggerCoveredWordsUpdate, createMedia, updateSegment, listSegmentRevisions, restoreSegmentRevision, updateMedia, deleteMedia, createEpisode, updateEpisode, deleteEpisode, listSegments, createSegment, createSegmentsBatch, moderateEpisodeSegments, getPatreonConnection, startPatreonLink, unlinkPatreon, completePatreonLink, listUserDictionaries, updateUserDictionaries, deleteUserDictionary, reserveUserDictionaryUpload, completeUserDictionaryUpload, clearFamiliarMedia, forgetFamiliarMedia, createUserReport, getUserPreferences, updateUserPreferences, trackUserActivity, deleteUserActivity, deleteUserActivityByDate, deleteUserActivityById, exportUserData, createFeedback, getFeedbackFormToken, unsubscribeFromEmail, getEmailPreferencesByToken, updateEmailPreferencesByToken, updateCollection, updateCollectionSegment, getCollectionStats, listAdminReports, batchUpdateAdminReports, bulkUpdateAdminReports, bulkDeleteAdminReports, updateAdminReport, deleteAdminReport, listAgentActivity, getAnnouncement, updateAnnouncement, getAdminUsersWithProviders, listTiers, getAdminUserQuota, updateAdminUserQuota, listAdminRoadmap, createAdminRoadmapItem, updateAdminRoadmapItem, getSession, getSessionPost, signOut, socialSignIn, signInWithMagicLink, signInWithEmailOtp, listUserSessions, authRevokeSession, authRevokeSessions, authRevokeOtherSessions, deleteUser, changeEmail, authApiKeyCreate, authApiKeyList, authApiKeyUpdate, banUser, unbanUser, impersonateUser, authAdminStopImpersonating, type Options } from './sdk.gen';
+import { search, getSearchStats, searchWords, searchMedia, getStatsOverview, listMedia, getSegment, getSegmentContext, getMedia, listEpisodes, getEpisode, getMe, createUserApiKey, listExcludedMedia, addExcludedMedia, removeExcludedMedia, listFavoriteMedia, addFavoriteMedia, removeFavoriteMedia, listFamiliarMedia, listUserActivity, getUserActivityHeatmap, getUserActivityStats, listCollections, createCollection, getCollection, deleteCollection, addSegmentToCollection, searchCollectionSegments, removeSegmentFromCollection, listRoadmap, listContentRequests, createContentRequest, getContentRequestAllowance, withdrawContentRequest, voteContentRequest, unvoteContentRequest, boostContentRequest, identifyDictionaryWord, getDictionaryKanjiIndex, getDictionaryKanji, getCoveredWords, triggerCoveredWordsUpdate, createMedia, updateSegment, listSegmentRevisions, restoreSegmentRevision, updateMedia, deleteMedia, createEpisode, updateEpisode, deleteEpisode, listSegments, createSegment, createSegmentsBatch, moderateEpisodeSegments, getPatreonConnection, startPatreonLink, unlinkPatreon, completePatreonLink, listUserDictionaries, updateUserDictionaries, deleteUserDictionary, reserveUserDictionaryUpload, completeUserDictionaryUpload, clearFamiliarMedia, forgetFamiliarMedia, createUserReport, getUserPreferences, updateUserPreferences, trackUserActivity, deleteUserActivity, deleteUserActivityByDate, deleteUserActivityById, exportUserData, createFeedback, getFeedbackFormToken, unsubscribeFromEmail, getEmailPreferencesByToken, updateEmailPreferencesByToken, updateCollection, updateCollectionSegment, getCollectionStats, listAdminReports, batchUpdateAdminReports, bulkUpdateAdminReports, bulkDeleteAdminReports, updateAdminReport, deleteAdminReport, listAgentActivity, getAnnouncement, updateAnnouncement, getAdminUsersWithProviders, listTiers, getAdminUserQuota, updateAdminUserQuota, listAdminRoadmap, createAdminRoadmapItem, updateAdminRoadmapItem, listAdminContentRequests, updateAdminContentRequest, mergeAdminContentRequest, getSession, getSessionPost, signOut, socialSignIn, signInWithMagicLink, signInWithEmailOtp, listUserSessions, authRevokeSession, authRevokeSessions, authRevokeOtherSessions, deleteUser, changeEmail, authApiKeyCreate, authApiKeyList, authApiKeyUpdate, banUser, unbanUser, impersonateUser, authAdminStopImpersonating, type Options } from './sdk.gen';
 import { withRetry, type RetryOptions } from './retry';
 import { NadeshikoError, buildNadeshikoError, isProblemDetails, type NadeshikoErrorCode, type RateLimitReason } from './errors';
 import { flatPaginate } from './paginate';
@@ -186,9 +186,37 @@ export type NadeshikoClient = {
       (params: { throwOnError: false }): Promise<{ data: Types.ListRoadmapResponse; response: Response; request: Request } | { error: Types.ListRoadmapErrors; response: Response; request: Request }>;
       (): Promise<Types.ListRoadmapResponse>;
     };
-    createRoadmapProposal: {
-      (params: NonNullable<Types.CreateRoadmapProposalData['body']> & { throwOnError: false }): Promise<{ data: Types.CreateRoadmapProposalResponse; response: Response; request: Request } | { error: Types.CreateRoadmapProposalErrors; response: Response; request: Request }>;
-      (params: NonNullable<Types.CreateRoadmapProposalData['body']>): Promise<Types.CreateRoadmapProposalResponse>;
+    listContentRequests: {
+      (params: NonNullable<Types.ListContentRequestsData['query']> & { throwOnError: false }): Promise<{ data: Types.ListContentRequestsResponse; response: Response; request: Request } | { error: Types.ListContentRequestsErrors; response: Response; request: Request }>;
+      (params?: NonNullable<Types.ListContentRequestsData['query']>): Promise<Types.ListContentRequestsResponse>;
+    };
+    createContentRequest: {
+      (params: NonNullable<Types.CreateContentRequestData['body']> & { throwOnError: false }): Promise<{ data: Types.CreateContentRequestResponse; response: Response; request: Request } | { error: Types.CreateContentRequestErrors; response: Response; request: Request }>;
+      (params: NonNullable<Types.CreateContentRequestData['body']>): Promise<Types.CreateContentRequestResponse>;
+    };
+    getContentRequestAllowance: {
+      (params: { throwOnError: false }): Promise<{ data: Types.GetContentRequestAllowanceResponse; response: Response; request: Request } | { error: Types.GetContentRequestAllowanceErrors; response: Response; request: Request }>;
+      (): Promise<Types.GetContentRequestAllowanceResponse>;
+    };
+    withdrawContentRequest: {
+      (id: string): Promise<Types.WithdrawContentRequestResponse>;
+      (params: Types.WithdrawContentRequestData['path'] & { throwOnError: false }): Promise<{ data: Types.WithdrawContentRequestResponse; response: Response; request: Request } | { error: Types.WithdrawContentRequestErrors; response: Response; request: Request }>;
+      (params: Types.WithdrawContentRequestData['path']): Promise<Types.WithdrawContentRequestResponse>;
+    };
+    voteContentRequest: {
+      (id: string): Promise<Types.VoteContentRequestResponse>;
+      (params: Types.VoteContentRequestData['path'] & { throwOnError: false }): Promise<{ data: Types.VoteContentRequestResponse; response: Response; request: Request } | { error: Types.VoteContentRequestErrors; response: Response; request: Request }>;
+      (params: Types.VoteContentRequestData['path']): Promise<Types.VoteContentRequestResponse>;
+    };
+    unvoteContentRequest: {
+      (id: string): Promise<Types.UnvoteContentRequestResponse>;
+      (params: Types.UnvoteContentRequestData['path'] & { throwOnError: false }): Promise<{ data: Types.UnvoteContentRequestResponse; response: Response; request: Request } | { error: Types.UnvoteContentRequestErrors; response: Response; request: Request }>;
+      (params: Types.UnvoteContentRequestData['path']): Promise<Types.UnvoteContentRequestResponse>;
+    };
+    boostContentRequest: {
+      (id: string): Promise<Types.BoostContentRequestResponse>;
+      (params: Types.BoostContentRequestData['path'] & { throwOnError: false }): Promise<{ data: Types.BoostContentRequestResponse; response: Response; request: Request } | { error: Types.BoostContentRequestErrors; response: Response; request: Request }>;
+      (params: Types.BoostContentRequestData['path']): Promise<Types.BoostContentRequestResponse>;
     };
     identifyDictionaryWord: {
       (params: NonNullable<Types.IdentifyDictionaryWordData['query']> & { throwOnError: false }): Promise<{ data: Types.IdentifyDictionaryWordResponse; response: Response; request: Request } | { error: Types.IdentifyDictionaryWordErrors; response: Response; request: Request }>;
@@ -453,6 +481,19 @@ export type NadeshikoClient = {
       (id: string): Promise<Types.UpdateAdminRoadmapItemResponse>;
       (params: Types.UpdateAdminRoadmapItemData['path'] & NonNullable<Types.UpdateAdminRoadmapItemData['body']> & { throwOnError: false }): Promise<{ data: Types.UpdateAdminRoadmapItemResponse; response: Response; request: Request } | { error: Types.UpdateAdminRoadmapItemErrors; response: Response; request: Request }>;
       (params: Types.UpdateAdminRoadmapItemData['path'] & NonNullable<Types.UpdateAdminRoadmapItemData['body']>): Promise<Types.UpdateAdminRoadmapItemResponse>;
+    };
+    listAdminContentRequests: {
+      (params: NonNullable<Types.ListAdminContentRequestsData['query']> & { throwOnError: false }): Promise<{ data: Types.ListAdminContentRequestsResponse; response: Response; request: Request } | { error: Types.ListAdminContentRequestsErrors; response: Response; request: Request }>;
+      (params?: NonNullable<Types.ListAdminContentRequestsData['query']>): Promise<Types.ListAdminContentRequestsResponse>;
+    };
+    updateAdminContentRequest: {
+      (id: string): Promise<Types.UpdateAdminContentRequestResponse>;
+      (params: Types.UpdateAdminContentRequestData['path'] & NonNullable<Types.UpdateAdminContentRequestData['body']> & { throwOnError: false }): Promise<{ data: Types.UpdateAdminContentRequestResponse; response: Response; request: Request } | { error: Types.UpdateAdminContentRequestErrors; response: Response; request: Request }>;
+      (params: Types.UpdateAdminContentRequestData['path'] & NonNullable<Types.UpdateAdminContentRequestData['body']>): Promise<Types.UpdateAdminContentRequestResponse>;
+    };
+    mergeAdminContentRequest: {
+      (params: Types.MergeAdminContentRequestData['path'] & NonNullable<Types.MergeAdminContentRequestData['body']> & { throwOnError: false }): Promise<{ data: Types.MergeAdminContentRequestResponse; response: Response; request: Request } | { error: Types.MergeAdminContentRequestErrors; response: Response; request: Request }>;
+      (params: Types.MergeAdminContentRequestData['path'] & NonNullable<Types.MergeAdminContentRequestData['body']>): Promise<Types.MergeAdminContentRequestResponse>;
     };
     getSession: {
       (params: NonNullable<Types.GetSessionData['query']> & { throwOnError: false }): Promise<{ data: Types.GetSessionResponse; response: Response; request: Request } | { error: Types.GetSessionErrors; response: Response; request: Request }>;
@@ -885,9 +926,61 @@ export function createNadeshikoClient(config: NadeshikoConfig): NadeshikoClient 
     return tOE === false ? p : p.then((r: any) => r.data);
   };
 
-  const _createRoadmapProposal = (params?: any) => {
+  const _listContentRequests = (params?: any) => {
+    const { throwOnError: tOE, ...query } = params ?? {};
+    const p = listContentRequests({ ...(Object.keys(query).length > 0 ? { query } : {}), client: clientInstance, throwOnError: tOE === false ? false : true } as any);
+    return tOE === false ? p : p.then((r: any) => r.data);
+  };
+
+  const _createContentRequest = (params?: any) => {
     const { throwOnError: tOE, ...body } = params ?? {};
-    const p = createRoadmapProposal({ body, client: clientInstance, throwOnError: tOE === false ? false : true } as any);
+    const p = createContentRequest({ body, client: clientInstance, throwOnError: tOE === false ? false : true } as any);
+    return tOE === false ? p : p.then((r: any) => r.data);
+  };
+
+  const _getContentRequestAllowance = (params?: any) => {
+    const tOE = params?.throwOnError;
+    const p = getContentRequestAllowance({ client: clientInstance, throwOnError: tOE === false ? false : true } as any);
+    return tOE === false ? p : p.then((r: any) => r.data);
+  };
+
+  const _withdrawContentRequest = (paramsOrId?: any) => {
+    if (typeof paramsOrId === 'string') {
+      return withdrawContentRequest({ throwOnError: true, path: { requestId: paramsOrId }, client: clientInstance } as any).then((r: any) => r.data);
+    }
+    const params = paramsOrId;
+    const { throwOnError: tOE, requestId } = params ?? {};
+    const p = withdrawContentRequest({ path: { requestId }, client: clientInstance, throwOnError: tOE === false ? false : true } as any);
+    return tOE === false ? p : p.then((r: any) => r.data);
+  };
+
+  const _voteContentRequest = (paramsOrId?: any) => {
+    if (typeof paramsOrId === 'string') {
+      return voteContentRequest({ throwOnError: true, path: { requestId: paramsOrId }, client: clientInstance } as any).then((r: any) => r.data);
+    }
+    const params = paramsOrId;
+    const { throwOnError: tOE, requestId } = params ?? {};
+    const p = voteContentRequest({ path: { requestId }, client: clientInstance, throwOnError: tOE === false ? false : true } as any);
+    return tOE === false ? p : p.then((r: any) => r.data);
+  };
+
+  const _unvoteContentRequest = (paramsOrId?: any) => {
+    if (typeof paramsOrId === 'string') {
+      return unvoteContentRequest({ throwOnError: true, path: { requestId: paramsOrId }, client: clientInstance } as any).then((r: any) => r.data);
+    }
+    const params = paramsOrId;
+    const { throwOnError: tOE, requestId } = params ?? {};
+    const p = unvoteContentRequest({ path: { requestId }, client: clientInstance, throwOnError: tOE === false ? false : true } as any);
+    return tOE === false ? p : p.then((r: any) => r.data);
+  };
+
+  const _boostContentRequest = (paramsOrId?: any) => {
+    if (typeof paramsOrId === 'string') {
+      return boostContentRequest({ throwOnError: true, path: { requestId: paramsOrId }, client: clientInstance } as any).then((r: any) => r.data);
+    }
+    const params = paramsOrId;
+    const { throwOnError: tOE, requestId } = params ?? {};
+    const p = boostContentRequest({ path: { requestId }, client: clientInstance, throwOnError: tOE === false ? false : true } as any);
     return tOE === false ? p : p.then((r: any) => r.data);
   };
 
@@ -1347,6 +1440,28 @@ export function createNadeshikoClient(config: NadeshikoConfig): NadeshikoClient 
     return tOE === false ? p : p.then((r: any) => r.data);
   };
 
+  const _listAdminContentRequests = (params?: any) => {
+    const { throwOnError: tOE, ...query } = params ?? {};
+    const p = listAdminContentRequests({ ...(Object.keys(query).length > 0 ? { query } : {}), client: clientInstance, throwOnError: tOE === false ? false : true } as any);
+    return tOE === false ? p : p.then((r: any) => r.data);
+  };
+
+  const _updateAdminContentRequest = (paramsOrId?: any) => {
+    if (typeof paramsOrId === 'string') {
+      return updateAdminContentRequest({ throwOnError: true, path: { requestId: paramsOrId }, client: clientInstance } as any).then((r: any) => r.data);
+    }
+    const params = paramsOrId;
+    const { throwOnError: tOE, requestId, ...body } = params ?? {};
+    const p = updateAdminContentRequest({ path: { requestId }, body, client: clientInstance, throwOnError: tOE === false ? false : true } as any);
+    return tOE === false ? p : p.then((r: any) => r.data);
+  };
+
+  const _mergeAdminContentRequest = (params?: any) => {
+    const { throwOnError: tOE, requestId, ...body } = params ?? {};
+    const p = mergeAdminContentRequest({ path: { requestId }, body, client: clientInstance, throwOnError: tOE === false ? false : true } as any);
+    return tOE === false ? p : p.then((r: any) => r.data);
+  };
+
   const _getSession = (params?: any) => {
     const { throwOnError: tOE, ...query } = params ?? {};
     const p = getSession({ ...(Object.keys(query).length > 0 ? { query } : {}), client: clientInstance, throwOnError: tOE === false ? false : true } as any);
@@ -1494,7 +1609,13 @@ export function createNadeshikoClient(config: NadeshikoConfig): NadeshikoClient 
     searchCollectionSegments: _searchCollectionSegments,
     removeSegmentFromCollection: _removeSegmentFromCollection,
     listRoadmap: _listRoadmap,
-    createRoadmapProposal: _createRoadmapProposal,
+    listContentRequests: _listContentRequests,
+    createContentRequest: _createContentRequest,
+    getContentRequestAllowance: _getContentRequestAllowance,
+    withdrawContentRequest: _withdrawContentRequest,
+    voteContentRequest: _voteContentRequest,
+    unvoteContentRequest: _unvoteContentRequest,
+    boostContentRequest: _boostContentRequest,
     identifyDictionaryWord: _identifyDictionaryWord,
     getDictionaryKanjiIndex: _getDictionaryKanjiIndex,
     getDictionaryKanji: _getDictionaryKanji,
@@ -1556,6 +1677,9 @@ export function createNadeshikoClient(config: NadeshikoConfig): NadeshikoClient 
     listAdminRoadmap: _listAdminRoadmap,
     createAdminRoadmapItem: _createAdminRoadmapItem,
     updateAdminRoadmapItem: _updateAdminRoadmapItem,
+    listAdminContentRequests: _listAdminContentRequests,
+    updateAdminContentRequest: _updateAdminContentRequest,
+    mergeAdminContentRequest: _mergeAdminContentRequest,
     getSession: _getSession,
     getSessionPost: _getSessionPost,
     signOut: _signOut,

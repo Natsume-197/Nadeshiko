@@ -18,6 +18,7 @@ export type ApiKeyScopeOutput = z.output<typeof schemas.s_ApiKeyScope>;
 export type CategoryOutput = z.output<typeof schemas.s_Category>;
 export type CollectionVisibilityOutput = z.output<typeof schemas.s_CollectionVisibility>;
 export type ContentRatingOutput = z.output<typeof schemas.s_ContentRating>;
+export type ContentRequestOutput = z.output<typeof schemas.s_ContentRequest>;
 export type CoveredWordOutput = z.output<typeof schemas.s_CoveredWord>;
 export type CoveredWordsUpdateRequestOutput = z.output<typeof schemas.s_CoveredWordsUpdateRequest>;
 export type CoveredWordsUpdateResponseOutput = z.output<typeof schemas.s_CoveredWordsUpdateResponse>;
@@ -73,6 +74,7 @@ export type UserDictionaryOutput = z.output<typeof schemas.s_UserDictionary>;
 export type UserMeOutput = z.output<typeof schemas.s_UserMe>;
 export type WordCoverageTierOutput = z.output<typeof schemas.s_WordCoverageTier>;
 export type WordMatchMediaOutput = z.output<typeof schemas.s_WordMatchMedia>;
+export type AdminContentRequestOutput = z.output<typeof schemas.s_AdminContentRequest>;
 export type AdminReportGroupItemOutput = z.output<typeof schemas.s_AdminReportGroupItem>;
 export type BatchUpdateReportsRequestOutput = z.output<typeof schemas.s_BatchUpdateReportsRequest>;
 export type BulkDeleteReportsRequestOutput = z.output<typeof schemas.s_BulkDeleteReportsRequest>;
@@ -123,7 +125,7 @@ export type SegmentListResponseOutput = z.output<typeof schemas.s_SegmentListRes
 export type UserExportCollectionOutput = z.output<typeof schemas.s_UserExportCollection>;
 export type AdminReportListResponseOutput = z.output<typeof schemas.s_AdminReportListResponse>;
 export type UserExportResponseOutput = z.output<typeof schemas.s_UserExportResponse>;
-export type CreateRoadmapProposalRequestBodyOutput = z.output<typeof schemas.s_CreateRoadmapProposalRequestBody>;
+export type CreateContentRequestRequestBodyOutput = z.output<typeof schemas.s_CreateContentRequestRequestBody>;
 export type CreateUserApiKeyRequestBodyOutput = z.output<typeof schemas.s_CreateUserApiKeyRequestBody>;
 export type CompletePatreonLinkRequestBodyOutput = z.output<typeof schemas.s_CompletePatreonLinkRequestBody>;
 export type UpdateUserDictionariesRequestBodyOutput = z.output<typeof schemas.s_UpdateUserDictionariesRequestBody>;
@@ -132,6 +134,8 @@ export type AddExcludedMediaRequestBodyOutput = z.output<typeof schemas.s_AddExc
 export type AddFavoriteMediaRequestBodyOutput = z.output<typeof schemas.s_AddFavoriteMediaRequestBody>;
 export type UpdateEmailPreferencesByTokenRequestBodyOutput = z.output<typeof schemas.s_UpdateEmailPreferencesByTokenRequestBody>;
 export type UpdateAdminRoadmapItemRequestBodyOutput = z.output<typeof schemas.s_UpdateAdminRoadmapItemRequestBody>;
+export type UpdateAdminContentRequestRequestBodyOutput = z.output<typeof schemas.s_UpdateAdminContentRequestRequestBody>;
+export type MergeAdminContentRequestRequestBodyOutput = z.output<typeof schemas.s_MergeAdminContentRequestRequestBody>;
 
 // ============================================
 // Inline query schemas and their output types
@@ -180,6 +184,16 @@ export const getAdminUsersWithProvidersQuerySchema = z.object({
   });
 export type GetAdminUsersWithProvidersQueryOutput = z.output<typeof getAdminUsersWithProvidersQuerySchema>;
 
+export const listAdminContentRequestsQuerySchema = z.object({
+    status: z.enum(['OPEN', 'PLANNED', 'IN_PROGRESS', 'RELEASED', 'DECLINED']).optional(),
+    category: z.enum(['ANIME', 'JDRAMA', 'YOUTUBE', 'AUDIOBOOK']).optional(),
+    flagged: schemas.PermissiveBoolean.optional(),
+    q: z.string().max(100).optional(),
+    page: z.coerce.number().min(1).max(1000).optional().default(1),
+    take: z.coerce.number().min(1).max(100).optional().default(50),
+  });
+export type ListAdminContentRequestsQueryOutput = z.output<typeof listAdminContentRequestsQuerySchema>;
+
 export const listCollectionsQuerySchema = z.object({
     visibility: schemas.s_CollectionVisibility.optional(),
     cursor: z.string().optional(),
@@ -224,6 +238,16 @@ export const listSegmentsQuerySchema = z.object({
     cursor: z.string().optional(),
   });
 export type ListSegmentsQueryOutput = z.output<typeof listSegmentsQuerySchema>;
+
+export const listContentRequestsQuerySchema = z.object({
+    status: z.enum(['ACTIVE', 'RELEASED', 'DECLINED']).optional().default('ACTIVE'),
+    category: z.enum(['ANIME', 'JDRAMA', 'YOUTUBE', 'AUDIOBOOK']).optional(),
+    sort: z.enum(['TOP', 'RECENT']).optional().default('TOP'),
+    q: z.string().max(100).optional(),
+    page: z.coerce.number().min(1).max(1000).optional().default(1),
+    take: z.coerce.number().min(1).max(50).optional().default(24),
+  });
+export type ListContentRequestsQueryOutput = z.output<typeof listContentRequestsQuerySchema>;
 
 export const identifyDictionaryWordQuerySchema = z.object({
     lemma: z.string().min(1).max(100),

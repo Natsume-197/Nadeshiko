@@ -32,6 +32,9 @@ export const INTENTIONALLY_PUBLIC_OPERATIONS = new Set<string>([
   // The roadmap is the public promise this feature exists to make: proposals
   // and requester identities are filtered out by its controller.
   'listRoadmap',
+  // The request list is public so anyone can see what is asked for before signing in to vote; requester identities
+  // are left out by its controller.
+  'listContentRequests',
   // Anonymous readers get word cards too, so no session is required; the route is server-only (the proxy refuses
   // browsers) and its controller refuses anything but our own frontend server's internal secret.
   'identifyDictionaryWord',

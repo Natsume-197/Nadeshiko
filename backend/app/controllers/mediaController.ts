@@ -1,3 +1,4 @@
+import { startRequestsForMedia } from '@app/services/requests/service';
 import type {
   ListMedia,
   ListMediaResponder,
@@ -130,6 +131,9 @@ export const createMedia: CreateMedia = async ({ body }, respond) => {
 
   Cache.invalidate(MEDIA_INFO_CACHE);
   Cache.invalidate(SegmentDocument.SEARCH_STATS_CACHE);
+
+  // Requests for this title are now being worked on; their voters hear so. Never fails the ingest.
+  await startRequestsForMedia(media.id);
 
   return respond.with201().body(toMediaDTO(media));
 };

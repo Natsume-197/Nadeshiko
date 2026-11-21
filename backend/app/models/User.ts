@@ -51,6 +51,8 @@ export interface UserPreferences {
     checkins?: boolean;
     /** Releases and new features, including any request for support that rides in one. */
     updates?: boolean;
+    /** News on the content requests they voted for or boosted: work started, title released. */
+    requests?: boolean;
   };
   ankiProfiles?: AnkiProfile[];
   /** Store hidden titles by id, but retain the object wrapper for old containers and browser tabs during rolling

@@ -14,7 +14,8 @@ export interface SupportTier {
   kanji: string;
   priceUsd: number;
   monthlyApiRequests: number;
-  titleRequestsPerMonth: number;
+  /** Content-request boosts a month; the backend `Tier.monthlyRequestBoosts` (task 49 migration) holds the same. */
+  requestBoostsPerMonth: number;
   talkToDevs: boolean;
   priorityRequests: boolean;
   customThemes: boolean;
@@ -30,7 +31,7 @@ export const SUPPORT_TIERS: readonly SupportTier[] = [
     kanji: '種',
     priceUsd: 5,
     monthlyApiRequests: 15_000,
-    titleRequestsPerMonth: 2,
+    requestBoostsPerMonth: 3,
     talkToDevs: false,
     priorityRequests: false,
     customThemes: true,
@@ -41,7 +42,7 @@ export const SUPPORT_TIERS: readonly SupportTier[] = [
     kanji: '花',
     priceUsd: 10,
     monthlyApiRequests: 30_000,
-    titleRequestsPerMonth: 4,
+    requestBoostsPerMonth: 5,
     talkToDevs: true,
     priorityRequests: false,
     customThemes: true,
@@ -52,7 +53,7 @@ export const SUPPORT_TIERS: readonly SupportTier[] = [
     kanji: '撫子',
     priceUsd: 20,
     monthlyApiRequests: 60_000,
-    titleRequestsPerMonth: 4,
+    requestBoostsPerMonth: 10,
     talkToDevs: true,
     priorityRequests: true,
     customThemes: true,

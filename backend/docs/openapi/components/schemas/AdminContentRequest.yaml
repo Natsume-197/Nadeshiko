@@ -1,0 +1,21 @@
+allOf:
+  - $ref: "./ContentRequest.yaml"
+  - type: object
+    required: [externalSource, externalId, requester, possibleDuplicateOf]
+    properties:
+      externalSource: { type: [string, "null"], enum: [ANILIST, IMDB, TVDB, TMDB, YOUTUBE, ASIN, null] }
+      externalId: { type: [string, "null"] }
+      requester:
+        type: [object, "null"]
+        required: [id, username]
+        properties:
+          id: { type: integer }
+          username: { type: string }
+      possibleDuplicateOf:
+        type: [object, "null"]
+        description: An active request with the same title, flagged for review; never merged automatically.
+        required: [id, title, status]
+        properties:
+          id: { type: string, format: uuid }
+          title: { type: string }
+          status: { type: string, enum: [OPEN, PLANNED, IN_PROGRESS, RELEASED, DECLINED] }

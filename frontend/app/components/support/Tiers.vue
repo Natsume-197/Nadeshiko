@@ -34,12 +34,12 @@ function perks(tier: SupportTier, index: number): string[] {
   if (tier.priorityRequests && previous) {
     return [
       t('support.perks.everythingIn', { tier: tierName(previous) }),
-      t('support.perks.priority'),
+      t('support.perks.requestBoosts', { count: tier.requestBoostsPerMonth }),
       t('support.perks.apiRequests', { count: formatNumber(tier.monthlyApiRequests) }),
     ];
   }
   return [
-    t('support.perks.titleRequests', { count: tier.titleRequestsPerMonth }),
+    t('support.perks.requestBoosts', { count: tier.requestBoostsPerMonth }),
     ...(tier.talkToDevs ? [t('support.perks.talkToDevs')] : []),
     t('support.perks.apiRequests', { count: formatNumber(tier.monthlyApiRequests) }),
     t('support.perks.customThemes'),

@@ -12,6 +12,7 @@ import {
   mdiShieldCrownOutline,
   mdiBullhornOutline,
   mdiRobotOutline,
+  mdiThumbUpOutline,
   mdiTimelineClockOutline,
   mdiPaletteOutline,
   mdiBookOpenVariantOutline,
@@ -48,6 +49,7 @@ const tabsAdmin = computed(() => [
   { name: t('accountSettings.tabs.agentActivity'), icon: mdiRobotOutline, route: '/user/admin/agent-activity' },
   { name: t('accountSettings.tabs.announcement'), icon: mdiBullhornOutline, route: '/user/admin/announcement' },
   { name: t('roadmap.admin.tab'), icon: mdiTimelineClockOutline, route: '/user/admin/roadmap' },
+  { name: t('requests.admin.tab'), icon: mdiThumbUpOutline, route: '/user/admin/requests' },
 ]);
 
 const allTabs = computed(() => [

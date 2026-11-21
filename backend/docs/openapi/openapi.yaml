@@ -66,6 +66,9 @@ tags:
       Statistics endpoints for corpus coverage and word frequency data.
   - name: Roadmap
     description: Public content queue and feature roadmap.
+  - name: Requests
+    x-internal: true
+    description: Content requests from readers, with votes and patron boosts.
 
   - name: Admin
     x-internal: true
@@ -100,8 +103,16 @@ x-tagGroups:
 paths:
   "/v1/roadmap":
     $ref: "./paths/roadmap/v1_roadmap.yaml"
-  "/v1/roadmap/proposals":
-    $ref: "./paths/roadmap/v1_roadmap_proposals.yaml"
+  "/v1/requests":
+    $ref: "./paths/requests/v1_requests.yaml"
+  "/v1/requests/me":
+    $ref: "./paths/requests/v1_requests_me.yaml"
+  "/v1/requests/{requestId}":
+    $ref: "./paths/requests/v1_requests_id.yaml"
+  "/v1/requests/{requestId}/vote":
+    $ref: "./paths/requests/v1_requests_id_vote.yaml"
+  "/v1/requests/{requestId}/boost":
+    $ref: "./paths/requests/v1_requests_id_boost.yaml"
   # Search endpoints
   "/v1/search":
     $ref: "./paths/search/v1_search.yaml"
@@ -251,6 +262,12 @@ paths:
     $ref: "./paths/admin/v1_admin_roadmap.yaml"
   "/v1/admin/roadmap/{itemId}":
     $ref: "./paths/admin/v1_admin_roadmap_id.yaml"
+  "/v1/admin/requests":
+    $ref: "./paths/admin/v1_admin_requests.yaml"
+  "/v1/admin/requests/{requestId}":
+    $ref: "./paths/admin/v1_admin_requests_id.yaml"
+  "/v1/admin/requests/{requestId}/merge":
+    $ref: "./paths/admin/v1_admin_requests_id_merge.yaml"
 
 components:
   securitySchemes:

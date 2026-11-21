@@ -87,6 +87,10 @@ const envSchema = z.object({
       message: 'PATREON_CONNECTION_SECRET must be at least 32 characters (or empty to disable linking)',
     }),
 
+  // TMDB v3 API key for J-drama request titles and posters. Optional: without it a drama request keeps the title the
+  // reader typed and shows no poster.
+  TMDB_API_KEY: z.string().default(''),
+
   API_KEY_RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(60000),
   API_KEY_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(150),
 

@@ -1,10 +1,8 @@
-import { In, Not } from 'typeorm';
-import type { CreateRoadmapProposal, ListRoadmap } from 'generated/routes/roadmap';
+import { In } from 'typeorm';
+import type { ListRoadmap } from 'generated/routes/roadmap';
 import type { CreateAdminRoadmapItem, ListAdminRoadmap, UpdateAdminRoadmapItem } from 'generated/routes/admin';
 import { RoadmapItem, RoadmapItemKind, RoadmapItemStatus } from '@app/models';
-import { AccessDeniedError, NotFoundError } from '@app/errors';
-import { assertUser } from '@app/middleware/authentication';
-import { getPatreonConnection } from '@app/services/patreon/connection';
+import { NotFoundError } from '@app/errors';
 import { getAniListMediaMetadata } from '@app/services/roadmap/anilist';
 import { config } from '@config/config';
 
@@ -14,7 +12,6 @@ const publicStatuses = [
   RoadmapItemStatus.IN_PROGRESS,
   RoadmapItemStatus.RELEASED,
 ];
-const PATREON_PROPOSALS_ENABLED = false;
 
 export const listRoadmap: ListRoadmap = async (_params, respond) => {
   const items = await RoadmapItem.find({
@@ -22,47 +19,9 @@ export const listRoadmap: ListRoadmap = async (_params, respond) => {
     order: { sortOrder: 'ASC', createdAt: 'ASC' },
   });
   return respond.with200().body({
-    items: items
-      .filter((item) => PATREON_PROPOSALS_ENABLED || item.title !== 'Patreon title proposals')
-      .map((item) => item.toJSON()),
+    items: items.map((item) => item.toJSON()),
     patreonUrl: config.PATREON_CAMPAIGN_URL,
   });
-};
-
-function inferredTitle(sourceUrl: string): string {
-  const url = new URL(sourceUrl);
-  const tail = decodeURIComponent(url.pathname.split('/').filter(Boolean).pop() ?? '').replace(/[-_]+/g, ' ');
-  return tail || url.hostname.replace(/^www\./, '');
-}
-
-export const createRoadmapProposal: CreateRoadmapProposal = async ({ body }, respond, req) => {
-  const user = assertUser(req);
-  const connection = await getPatreonConnection(user.id, true);
-  if (!connection?.active) {
-    throw new AccessDeniedError('An active Nadeshiko Patreon membership is required to propose a show.');
-  }
-
-  const duplicate = await RoadmapItem.findOneBy({
-    requesterUserId: user.id,
-    sourceUrl: body.sourceUrl,
-    status: Not(RoadmapItemStatus.DECLINED),
-  });
-  if (duplicate) return respond.with201().body(duplicate.toJSON());
-
-  const aniList = await getAniListMediaMetadata(body.sourceUrl);
-  const item = RoadmapItem.create({
-    kind: RoadmapItemKind.CONTENT,
-    status: RoadmapItemStatus.PROPOSED,
-    title: body.title?.trim() || aniList?.title || inferredTitle(body.sourceUrl),
-    description: body.note?.trim() ?? '',
-    sourceUrl: body.sourceUrl,
-    coverUrl: aniList?.coverUrl ?? null,
-    proposerName: body.proposerName?.trim() || null,
-    requesterUserId: user.id,
-    sortOrder: 0,
-  });
-  await item.save();
-  return respond.with201().body(item.toJSON());
 };
 
 export const listAdminRoadmap: ListAdminRoadmap = async (_params, respond) => {

@@ -337,6 +337,44 @@ export async function buildDormant30Email(input: {
   return { subject, html };
 }
 
+export interface RequestUpdateEmailInput {
+  username: string;
+  status: 'IN_PROGRESS' | 'RELEASED';
+  title: string;
+  coverUrl: string | null;
+  voteCount: number;
+  /** Site path the button opens: the media once released, the request list before. */
+  path: string;
+  unsubscribeUrl: string;
+}
+
+/** One email for both moments a voter hears about: work started, and the title released. */
+export async function buildRequestUpdateEmail(
+  input: RequestUpdateEmailInput,
+): Promise<{ subject: string; html: string; campaign: string }> {
+  const released = input.status === 'RELEASED';
+  const campaign = released ? 'request-released' : 'request-in-progress';
+  const subject = released ? `${input.title} is on Nadeshiko` : `We have started on ${input.title}`;
+
+  const html = await renderTemplate('request-update', {
+    ...(await loadCopy('request-update')),
+    subject,
+    username: input.username,
+    inProgress: released ? '' : 'yes',
+    released: released ? 'yes' : '',
+    title: input.title,
+    coverUrl: input.coverUrl ?? '',
+    votes: input.voteCount === 1 ? '1 vote' : `${input.voteCount} votes`,
+    ctaUrl: withCampaignTags(input.path, campaign, 'cta'),
+    ctaLabel: released ? 'Search its sentences' : 'See all requests',
+    unsubscribeUrl: input.unsubscribeUrl,
+    logoUrl: getLogoUrl(),
+    year: getCurrentYear(),
+  });
+
+  return { subject, html, campaign };
+}
+
 export async function renderTemplate(templateName: string, variables: Record<string, string>): Promise<string> {
   const templatePath = path.join(import.meta.dirname, 'templates', `${templateName}.html`);
 

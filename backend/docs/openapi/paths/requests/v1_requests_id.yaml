@@ -1,0 +1,21 @@
+delete:
+  tags: [Requests]
+  x-internal: true
+  operationId: withdrawContentRequest
+  summary: Withdraw your own request
+  description: The requester may withdraw an open request that nobody else has voted for or boosted.
+  security:
+    - SessionCookie: []
+  parameters:
+    - in: path
+      name: requestId
+      required: true
+      description: Public UUID of the request.
+      schema: { type: string, format: uuid }
+  responses:
+    "204": { description: Withdrawn }
+    "400": { $ref: "../../components/responses/BadRequest.yaml" }
+    "401": { $ref: "../../components/responses/Unauthorized.yaml" }
+    "404": { $ref: "../../components/responses/NotFound.yaml" }
+    "429": { $ref: "../../components/responses/TooManyRequests.yaml" }
+    "500": { $ref: "../../components/responses/InternalServerError.yaml" }

@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { mdiVolumeHigh, mdiTranslate, mdiEyeOff, mdiEye, mdiClose, mdiPatreon, mdiOpenInNew } from '@mdi/js';
+import { mdiVolumeHigh, mdiTranslate, mdiEyeOff, mdiEye, mdiClose, mdiThumbUpOutline, mdiArrowRight } from '@mdi/js';
 
-import { PATREON_URL } from '#shared/utils/socialLinks';
 import { SEARCH_FAILURE_MESSAGES, type SearchFailure } from '~/utils/searchFailure';
 import { usePlayerStore } from '~/stores/player';
 import type { SearchResult, SearchResponse } from '~/types/search';
@@ -711,45 +710,38 @@ watch(playingVideoId, (id) => {
             <!-- The whole card is the link, not just the brand word. At a dead end
                  the reader should have one obvious thing to press, and a four-word
                  target inside a paragraph is a small one. -->
-            <a
-              :href="PATREON_URL"
-              target="_blank"
-              rel="noopener noreferrer"
+            <NuxtLink
+              :to="localePath('/requests')"
+              data-testid="no-results-requests"
               class="mt-8 flex w-full items-center gap-3.5 rounded-xl bg-surface px-5 py-4 text-left transition-colors hover:bg-surface-hover"
             >
-              <!-- Patreon's own coral rather than the site accent, and bare rather
-                   than in a tinted badge. A brand mark is recognised by its colour
-                   before its shape, so tinting it to match the site turned the one
-                   element a reader identifies instantly into another red glyph.
-                   Hardcoded like the Google and Discord marks in `ModalLoginSignUp`:
-                   it belongs to Patreon, not to our palette. -->
+              <!-- Requests replaced the Patreon chat as the place to ask for a title (task 49), so the dead end now
+                   leads there: anyone can file or vote, no membership needed. -->
               <UiBaseIcon
-                :path="mdiPatreon"
+                :path="mdiThumbUpOutline"
                 :size="26"
                 w="w-[26px]"
                 h="h-[26px]"
-                class="shrink-0 text-[#FF424D]"
+                class="shrink-0 text-brand"
                 aria-hidden="true"
               />
               <p class="text-sm leading-relaxed text-ink-muted">
                 <i18n-t keypath="segment.noResultsSupport" tag="span">
-                  <!-- The support card is already an anchor; a nested link would be invalid and split the outer
-                       target.
-                       -->
+                  <!-- The card is already a link; a nested one would be invalid and split the target. -->
                   <template #link>
-                    <span class="text-brand underline underline-offset-4">Patreon</span>
+                    <span class="text-brand underline underline-offset-4">{{ $t('segment.noResultsSupportLink') }}</span>
                   </template>
                 </i18n-t>
               </p>
               <UiBaseIcon
-                :path="mdiOpenInNew"
+                :path="mdiArrowRight"
                 :size="16"
                 w="w-4"
                 h="h-4"
                 class="ms-auto shrink-0 text-ink-faint"
                 aria-hidden="true"
               />
-            </a>
+            </NuxtLink>
           </div>
         </div>
       </div>

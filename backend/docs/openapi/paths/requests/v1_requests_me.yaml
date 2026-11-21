@@ -1,0 +1,34 @@
+get:
+  tags: [Requests]
+  x-internal: true
+  operationId: getContentRequestAllowance
+  summary: The signed-in reader's request allowance and votes
+  description: Open requests against the limit, this month's boosts, and which active requests the reader voted for, boosted or filed.
+  security:
+    - SessionCookie: []
+  responses:
+    "200":
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [isPatron, openCount, openLimit, boosts, votedIds, boostedIds, ownIds]
+            properties:
+              isPatron: { type: boolean }
+              openCount: { type: integer }
+              openLimit: { type: [integer, "null"], description: Null for admins (no limit). }
+              boosts:
+                type: object
+                required: [perMonth, used, remaining, resetsAt]
+                properties:
+                  perMonth: { type: integer }
+                  used: { type: integer }
+                  remaining: { type: integer }
+                  resetsAt: { type: string, format: date-time }
+              votedIds: { type: array, items: { type: string, format: uuid } }
+              boostedIds: { type: array, items: { type: string, format: uuid } }
+              ownIds: { type: array, items: { type: string, format: uuid }, description: Active requests this reader filed. }
+    "401": { $ref: "../../components/responses/Unauthorized.yaml" }
+    "429": { $ref: "../../components/responses/TooManyRequests.yaml" }
+    "500": { $ref: "../../components/responses/InternalServerError.yaml" }

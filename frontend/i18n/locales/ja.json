@@ -42,7 +42,8 @@
       "collections": "コレクション",
       "activity": "利用履歴",
       "language": "言語",
-      "logout": "ログアウト"
+      "logout": "ログアウト",
+      "requests": "リクエスト"
     }
   },
   "announcementBanner": {
@@ -1055,7 +1056,9 @@
       "preferenceError": "設定を保存できませんでした。もう一度お試しください。",
       "allDescription": "ログインリンクとアカウント関連のメールは、ここでの設定にかかわらず必ず送信されます。",
       "turnedOn": "{name}：オン",
-      "turnedOff": "{name}：オフ"
+      "turnedOff": "{name}：オフ",
+      "requestsTitle": "あなたのリクエスト",
+      "requestsDescription": "投票した作品のお知らせ：作業開始と公開。"
     },
     "dictionaries": {
       "title": "カスタム辞書",
@@ -1164,7 +1167,8 @@
     "expanding": "字幕をつなげています…",
     "playAudio": "音声を再生",
     "loading": "読み込み中",
-    "noResultsSupport": "まだ収録されていない作品をお探しですか？次に追加する作品を {link} で提案できます。"
+    "noResultsSupport": "まだ収録されていない作品をお探しですか？{link}でリクエストや投票ができます。",
+    "noResultsSupportLink": "リクエストページ"
   },
   "wordEntry": {
     "label": "辞書の項目",
@@ -1610,7 +1614,7 @@
     "title": "外部サービスとの連携",
     "patreon": {
       "name": "Patreon",
-      "description": "Link Patreon to verify your membership and propose shows",
+      "description": "Patreonを連携してメンバーシップを確認しましょう。パトロンはリクエストのブーストとカスタムテーマを使えます。",
       "connect": "Connect",
       "disconnect": "Disconnect",
       "active": "Linked as {name} — active member",
@@ -1631,9 +1635,9 @@
   },
   "roadmap": {
     "title": "ロードマップ",
-    "intro": "Patreonに参加して、次にNadeshikoへ追加してほしい作品や機能をリクエストしよう！",
+    "intro": "Nadeshikoに追加予定の作品をチェック。誰でも作品をリクエストして、次に追加するものに投票できます。",
     "support": "Nadeshikoを支援する",
-    "proposeCta": "作品を提案する",
+    "proposeCta": "作品をリクエスト",
     "filterLabel": "ロードマップを絞り込む",
     "filters": {
       "content": "作品",
@@ -1650,49 +1654,7 @@
     "emptyFeatures": "機能のマイルストーンはまだありません。",
     "viewSource": "参照元を見る",
     "loadError": "現在ロードマップを読み込めません。",
-    "proposalTitle": "お気に入りの作品をリクエスト！",
-    "proposalIntro": "NadeshikoのアクティブなPatreonメンバーは、毎月作品を追加候補としてリクエストできます。リクエストできる数はティアによって異なります。以下で利用資格をご確認ください。",
-    "proposalTiersLink": "ティアを見る",
-    "steps": {
-      "signIn": "Nadeshikoにログイン",
-      "patreon": "Patreonを連携または参加",
-      "propose": "リクエストを送信"
-    },
-    "states": {
-      "anonymousTitle": "作品を提案するにはログインしてください",
-      "anonymousBody": "ロードマップは公開されています。Nadeshikoアカウントを連携したPatreonメンバーは作品を提案できます。",
-      "unlinkedTitle": "Patreonアカウントを連携",
-      "unlinkedBody": "Nadeshikoのメンバー資格を安全に確認します。Patreonをログインに使用することはありません。",
-      "inactiveTitle": "アクティブなPatreonメンバーになる",
-      "inactiveBody": "Patreonアカウントは連携されていますが、現在Nadeshikoの有効な有料メンバーシップがありません。",
-      "activeTitle": "あなたの提案",
-      "submittedTitle": "提案を受け付けました",
-      "submittedBody": "非公開の審査待ちリストに追加されました。承認されると、このタイムラインに表示されます。"
-    },
-    "signIn": "ログイン",
-    "linkPatreon": "Patreonを連携",
-    "becomePatron": "Patreonに参加",
-    "checkAgain": "再確認",
-    "submitAnother": "別の作品を提案",
-    "patreonMember": "Patreonメンバー",
-    "activeBadge": "有効なメンバー",
-    "form": {
-      "url": "作品のリンク",
-      "urlPlaceholder": "https://anilist.co/anime/…",
-      "title": "タイトル（任意）",
-      "titlePlaceholder": "リンクから自動取得します",
-      "credit": "公開するお名前（任意）",
-      "creditPlaceholder": "お名前またはPatreonのユーザー名",
-      "creditHint": "空欄の場合は匿名のPatreonメンバーとして表示されます。",
-      "note": "この作品を選んだ理由（任意）",
-      "notePlaceholder": "Nadeshikoに合うと思う理由を教えてください",
-      "submit": "審査に送る"
-    },
     "features": {
-      "patreonProposals": {
-        "title": "Patreonからの作品提案",
-        "description": "メンバーシップを連携して作品を提案し、承認された追加作品を公開ロードマップで確認できます。"
-      },
       "searchFilters": {
         "title": "検索フィルターの強化",
         "description": "作品名やタグなど、目的に合った条件で直接検索できます。"
@@ -1728,6 +1690,10 @@
       "apiKeys": {
         "title": "詳細な権限を設定できるAPIキー",
         "description": "APIキーを読み取り専用、フルアクセス、または明示的に選択した権限のみに制限できます。"
+      },
+      "contentRequests": {
+        "title": "コンテンツリクエスト",
+        "description": "誰でもアニメ、ドラマ、オーディオブック、YouTubeチャンネルをリクエストして投票できます。パトロンはブーストも可能です。"
       }
     },
     "callbackDeclined": "Patreonとの連携が承認されませんでした。",
@@ -1738,7 +1704,8 @@
     "admin": {
       "tab": "ロードマップ",
       "title": "ロードマップのキュー"
-    }
+    },
+    "requestsLink": "リクエストへ"
   },
   "feedback": {
     "open": "フィードバック",
@@ -1828,7 +1795,7 @@
     "tierText": {
       "seed": [
         "Nadeshikoが日本語学習の役に立っていて、感謝の気持ちを伝えたい、サイトの存続を応援したいという方へ。ありがとうございます！",
-        "お礼として、Nadeshikoに追加してほしい作品をリクエストでき、APIの上限も引き上げられます。"
+        "お礼として、見たい作品をリクエスト一覧の上位に押し上げるブーストと、引き上げられたAPI上限を受け取れます。"
       ],
       "flower": [
         "このプロジェクトを本当に信じてくださる方へ。ご支援に心から感謝します！",
@@ -1836,7 +1803,7 @@
       ],
       "nadeshiko": [
         "Nadeshikoを最も強く応援したい方のための最上位ティアです。このレベルのご支援が、ライブラリの拡充と新機能の開発を支えています。",
-        "Flowerの特典すべてに加え、作品リクエストが優先され、APIの上限も最大になります。"
+        "Flowerの特典すべてに加え、最も多いブーストで希望作品を優先でき、APIの上限も最大になります。"
       ]
     },
     "tiersIntro": "自分に合ったティアを選んでください。Patreonでいつでも変更、解約できます。",
@@ -1848,12 +1815,11 @@
       "nadeshiko": "Nadeshiko"
     },
     "perks": {
-      "titleRequests": "毎月 {count} 作品までリクエストできる",
       "talkToDevs": "開発者と直接話せる",
       "everythingIn": "{tier} の特典すべて",
-      "priority": "作品リクエストの優先対応",
       "apiRequests": "月 {count} 件の API リクエスト",
-      "customThemes": "カスタムテーマ"
+      "customThemes": "カスタムテーマ",
+      "requestBoosts": "毎月{count}回のリクエストブースト"
     },
     "faq": {
       "title": "よくある質問",
@@ -1875,5 +1841,104 @@
         "a": "いいえ。1 つの Patreon アカウントは 1 つの Nadeshiko アカウントにのみ連携できます。"
       }
     }
+  },
+  "requests": {
+    "seoTitle": "アニメ・ドラマ・オーディオブック・YouTubeをリクエスト | Nadeshiko",
+    "seoDescription": "Nadeshikoに追加してほしいアニメ、日本のドラマ、オーディオブック、YouTubeチャンネルをリクエストして、次の追加作品に投票しましょう。",
+    "title": "リクエスト",
+    "intro": "勉強に使いたいアニメ、ドラマ、オーディオブック、YouTubeチャンネルをリクエストし、ほかの人のリクエストに投票しましょう。希望の多い作品から追加します。",
+    "newRequest": "新しいリクエスト",
+    "boostWithPatreon": "Patreonでブースト",
+    "allowance": {
+      "open": "オープン中のリクエスト {count} / {limit}",
+      "boosts": "今月の残りブースト {remaining} / {total}（{date}に更新）"
+    },
+    "form": {
+      "heading": "作品をリクエスト",
+      "help": "アニメはAniList、ドラマはTMDBかMyDramaList、オーディオブックはAudibleかAmazon（ASINだけでも可）、チャンネルや動画はYouTubeのリンクを貼ってください。すでにリクエスト済みなら、そのリクエストにあなたの票が加わります。",
+      "url": "リンク",
+      "urlPlaceholder": "https://anilist.co/anime/…",
+      "titleLabel": "タイトル",
+      "note": "メモ（任意）",
+      "notePlaceholder": "シーズン、字幕のある場所など、参考になること。",
+      "submit": "リクエストを送信",
+      "cancel": "キャンセル",
+      "unsupported": "AniList、TMDB、MyDramaList、Audible、Amazon、YouTubeのリンクを使ってください。",
+      "needsTitle": "そのリンクからタイトルを読み取れませんでした。タイトルを入力してもう一度送信してください。",
+      "limit": "オープン中のリクエスト上限（{limit}件）か、1日のリクエスト上限に達しました。その間は既存のリクエストに投票してください。"
+    },
+    "outcome": {
+      "created": "リクエストを送信しました：{title}",
+      "voted": "{title}はすでにリクエストされていたので、あなたの票を追加しました。",
+      "already_voted": "{title}にはすでに投票済みです。"
+    },
+    "tabs": {
+      "ACTIVE": "オープン",
+      "RELEASED": "公開済み",
+      "DECLINED": "見送り"
+    },
+    "searchLabel": "リクエストを検索",
+    "sortLabel": "並び替え",
+    "sort": {
+      "TOP": "人気順",
+      "RECENT": "新着順"
+    },
+    "categoryLabel": "カテゴリー",
+    "category": {
+      "ALL": "すべて",
+      "ANIME": "アニメ",
+      "JDRAMA": "ドラマ",
+      "AUDIOBOOK": "オーディオブック",
+      "YOUTUBE": "YouTube"
+    },
+    "loadError": "現在リクエストを読み込めません。",
+    "emptySearch": "その検索に一致するリクエストはありません。",
+    "empty": {
+      "ACTIVE": "オープン中のリクエストはまだありません。最初のリクエストをどうぞ！",
+      "RELEASED": "公開されたリクエストはまだありません。",
+      "DECLINED": "見送られたリクエストはありません。"
+    },
+    "vote": "投票",
+    "unvote": "投票を取り消す",
+    "kindUpdate": "Nadeshikoにある作品の続き",
+    "status": {
+      "OPEN": "オープン",
+      "PLANNED": "予定",
+      "IN_PROGRESS": "作業中",
+      "RELEASED": "公開済み",
+      "DECLINED": "見送り"
+    },
+    "declinedBecause": "見送り：{reason}",
+    "votes": "{count}票",
+    "boosts": "{count}ブースト",
+    "viewSource": "ソースを見る",
+    "searchIt": "検索する",
+    "onNadeshiko": "Nadeshikoで見る",
+    "boost": {
+      "action": "ブースト",
+      "boosted": "ブースト済み",
+      "already": "このリクエストはブースト済みです。",
+      "hint": "ブーストは5票分で、取り消せません。",
+      "done": "{title}をブーストしました。",
+      "failed": "ブーストできませんでした。今月の残りがないかもしれません。"
+    },
+    "withdraw": "取り下げる",
+    "withdrawConfirm": "{title}のリクエストを取り下げますか？",
+    "withdrawFailed": "リクエストを取り下げられませんでした。",
+    "pagination": "ページ",
+    "previous": "前へ",
+    "next": "次へ",
+    "how": {
+      "title": "リクエストの仕組み",
+      "vote": "アカウントがあれば誰でも作品をリクエストして投票できます。票は1人1票で、リクエスト済みの作品を頼むとそのリクエストに票が加わります。",
+      "boost": "パトロンには毎月ブーストがあります：Seedは3、Flowerは5、Nadeshikoは10。ブーストは5票分です。",
+      "limits": "オープン中のリクエストは10件まで（パトロンは30件）、1日5件まで送信できます。",
+      "news": "投票した作品の作業が始まったときと公開されたときにメールでお知らせします。設定でオフにできます。"
+    },
+    "admin": {
+      "tab": "リクエスト"
+    },
+    "noIngestYet": "ドラマは未対応",
+    "noIngestYetHint": "ドラマはまだ追加できません。投票で需要を把握します。"
   }
 }

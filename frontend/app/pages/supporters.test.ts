@@ -56,6 +56,7 @@ async function render(page = SupportersPage) {
       stubs: {
         SupportTiers: { template: '<div data-testid="tiers-stub" />' },
         UiBaseIcon: true,
+        NuxtLink: { props: ['to'], template: '<a :href="to"><slot /></a>' },
       },
     },
   });
@@ -118,6 +119,14 @@ describe('Supporters page', () => {
 
     expect(isShown(panel(wrapper, 'support'))).toBe(true);
     expect(isShown(panel(wrapper, 'roadmap'))).toBe(false);
+  });
+});
+
+describe('content requests', () => {
+  test('the hero and the roadmap tab point to the requests page', async () => {
+    const wrapper = await render();
+    expect(wrapper.get('[data-testid="supporters-requests-cta"]').attributes('href')).toBe('/en/requests');
+    expect(panel(wrapper, 'roadmap').get('a[href="/en/requests"]').text()).toBe('roadmap.requestsLink');
   });
 });
 

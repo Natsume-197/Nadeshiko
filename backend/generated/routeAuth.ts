@@ -10,7 +10,12 @@ export interface RouteAuth {
 }
 
 export const routeAuth: RouteAuth[] = [
-  { method: 'post', path: '/v1/roadmap/proposals', middleware: requireSession() },
+  { method: 'post', path: '/v1/requests', middleware: requireSession() },
+  { method: 'get', path: '/v1/requests/me', middleware: requireSession() },
+  { method: 'delete', path: '/v1/requests/:requestId', middleware: requireSession() },
+  { method: 'post', path: '/v1/requests/:requestId/vote', middleware: requireSession() },
+  { method: 'delete', path: '/v1/requests/:requestId/vote', middleware: requireSession() },
+  { method: 'post', path: '/v1/requests/:requestId/boost', middleware: requireSession() },
   { method: 'post', path: '/v1/search', middleware: requireAuth(enforceApiKeyScope(ApiPermission.READ_MEDIA)) },
   { method: 'post', path: '/v1/search/stats', middleware: requireAuth(enforceApiKeyScope(ApiPermission.READ_MEDIA)) },
   { method: 'post', path: '/v1/search/words', middleware: requireAuth(enforceApiKeyScope(ApiPermission.READ_MEDIA)) },
@@ -93,4 +98,7 @@ export const routeAuth: RouteAuth[] = [
   { method: 'get', path: '/v1/admin/roadmap', middleware: requireSession(enforceAdminAccess) },
   { method: 'post', path: '/v1/admin/roadmap', middleware: requireSession(enforceAdminAccess) },
   { method: 'patch', path: '/v1/admin/roadmap/:itemId', middleware: requireSession(enforceAdminAccess) },
+  { method: 'get', path: '/v1/admin/requests', middleware: requireSession(enforceAdminAccess) },
+  { method: 'patch', path: '/v1/admin/requests/:requestId', middleware: requireSession(enforceAdminAccess) },
+  { method: 'post', path: '/v1/admin/requests/:requestId/merge', middleware: requireSession(enforceAdminAccess) },
 ];

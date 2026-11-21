@@ -17,6 +17,7 @@ import { type NextFunction, type Request, type RequestHandler, type Response, Ro
 import { z } from 'zod/v4';
 import type {
   t_AccountQuotaState,
+  t_AdminContentRequest,
   t_AdminReportListResponse,
   t_AdminUserWithProviders,
   t_AffectedCountResponse,
@@ -30,27 +31,34 @@ import type {
   t_Error401,
   t_Error403,
   t_Error404,
+  t_Error409,
   t_Error429,
   t_Error500,
   t_GetAdminUserQuotaParamSchema,
   t_GetAdminUsersWithProvidersQuerySchema,
+  t_ListAdminContentRequestsQuerySchema,
   t_ListAdminReportsQuerySchema,
   t_ListAgentActivityQuerySchema,
+  t_MergeAdminContentRequestParamSchema,
+  t_MergeAdminContentRequestRequestBody,
   t_Report,
   t_RoadmapItem,
   t_RoadmapItemWrite,
   t_Tier,
   t_UpdateAccountQuotaRequest,
+  t_UpdateAdminContentRequestParamSchema,
+  t_UpdateAdminContentRequestRequestBody,
   t_UpdateAdminReportParamSchema,
   t_UpdateAdminRoadmapItemParamSchema,
   t_UpdateAdminRoadmapItemRequestBody,
   t_UpdateAdminUserQuotaParamSchema,
   t_UpdateReportRequest,
 } from '../models.ts';
-import type { AnnouncementOutput, BatchUpdateReportsRequestOutput, BulkDeleteReportsRequestOutput, BulkUpdateReportsRequestOutput, GetAdminUsersWithProvidersQueryOutput, ListAdminReportsQueryOutput, ListAgentActivityQueryOutput, RoadmapItemWriteOutput, UpdateAccountQuotaRequestOutput, UpdateAdminRoadmapItemRequestBodyOutput, UpdateReportRequestOutput } from '../outputTypes.ts';
+import type { AnnouncementOutput, BatchUpdateReportsRequestOutput, BulkDeleteReportsRequestOutput, BulkUpdateReportsRequestOutput, GetAdminUsersWithProvidersQueryOutput, ListAdminContentRequestsQueryOutput, ListAdminReportsQueryOutput, ListAgentActivityQueryOutput, MergeAdminContentRequestRequestBodyOutput, RoadmapItemWriteOutput, UpdateAccountQuotaRequestOutput, UpdateAdminContentRequestRequestBodyOutput, UpdateAdminRoadmapItemRequestBodyOutput, UpdateReportRequestOutput } from '../outputTypes.ts';
 import {
   PermissiveBoolean,
   s_AccountQuotaState,
+  s_AdminContentRequest,
   s_AdminReportListResponse,
   s_AdminUserWithProviders,
   s_AffectedCountResponse,
@@ -63,8 +71,10 @@ import {
   s_Error401,
   s_Error403,
   s_Error404,
+  s_Error409,
   s_Error429,
   s_Error500,
+  s_MergeAdminContentRequestRequestBody,
   s_Report,
   s_ReportSource,
   s_ReportTargetType,
@@ -72,6 +82,7 @@ import {
   s_RoadmapItemWrite,
   s_Tier,
   s_UpdateAccountQuotaRequest,
+  s_UpdateAdminContentRequestRequestBody,
   s_UpdateAdminRoadmapItemRequestBody,
   s_UpdateReportRequest,
 } from '../schemas.ts';
@@ -349,6 +360,60 @@ export type UpdateAdminRoadmapItem = (
   next: NextFunction,
 ) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
 
+export type ListAdminContentRequestsResponder = {
+  with200(): ExpressRuntimeResponse<{
+    items: t_AdminContentRequest[];
+    total: number;
+  }>;
+  with400(): ExpressRuntimeResponse<t_Error400>;
+  with401(): ExpressRuntimeResponse<t_Error401>;
+  with403(): ExpressRuntimeResponse<t_Error403>;
+  with500(): ExpressRuntimeResponse<t_Error500>;
+} & ExpressRuntimeResponder;
+
+export type ListAdminContentRequests = (
+  params: Params<void, ListAdminContentRequestsQueryOutput, void, void>,
+  respond: ListAdminContentRequestsResponder,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
+
+export type UpdateAdminContentRequestResponder = {
+  with200(): ExpressRuntimeResponse<t_AdminContentRequest>;
+  with400(): ExpressRuntimeResponse<t_Error400>;
+  with401(): ExpressRuntimeResponse<t_Error401>;
+  with403(): ExpressRuntimeResponse<t_Error403>;
+  with404(): ExpressRuntimeResponse<t_Error404>;
+  with409(): ExpressRuntimeResponse<t_Error409>;
+  with500(): ExpressRuntimeResponse<t_Error500>;
+} & ExpressRuntimeResponder;
+
+export type UpdateAdminContentRequest = (
+  params: Params<t_UpdateAdminContentRequestParamSchema, void, UpdateAdminContentRequestRequestBodyOutput, void>,
+  respond: UpdateAdminContentRequestResponder,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
+
+export type MergeAdminContentRequestResponder = {
+  with200(): ExpressRuntimeResponse<t_AdminContentRequest>;
+  with400(): ExpressRuntimeResponse<t_Error400>;
+  with401(): ExpressRuntimeResponse<t_Error401>;
+  with403(): ExpressRuntimeResponse<t_Error403>;
+  with404(): ExpressRuntimeResponse<t_Error404>;
+  with500(): ExpressRuntimeResponse<t_Error500>;
+} & ExpressRuntimeResponder;
+
+export type MergeAdminContentRequest = (
+  params: Params<t_MergeAdminContentRequestParamSchema, void, MergeAdminContentRequestRequestBodyOutput, void>,
+  respond: MergeAdminContentRequestResponder,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
+
 export type AdminImplementation = {
   listAdminReports: ListAdminReports;
   batchUpdateAdminReports: BatchUpdateAdminReports;
@@ -366,6 +431,9 @@ export type AdminImplementation = {
   listAdminRoadmap: ListAdminRoadmap;
   createAdminRoadmapItem: CreateAdminRoadmapItem;
   updateAdminRoadmapItem: UpdateAdminRoadmapItem;
+  listAdminContentRequests: ListAdminContentRequests;
+  updateAdminContentRequest: UpdateAdminContentRequest;
+  mergeAdminContentRequest: MergeAdminContentRequest;
 };
 
 export function createAdminRouter(
@@ -1270,6 +1338,187 @@ export function createAdminRouter(
         .updateAdminRoadmapItem(input, responder, req, res, next)
         .catch(handleImplementationError)
         .then(handleResponse(res, updateAdminRoadmapItemResponseBodyValidator));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  const listAdminContentRequestsQuerySchema = z.object({
+    status: z.enum(['OPEN', 'PLANNED', 'IN_PROGRESS', 'RELEASED', 'DECLINED']).optional(),
+    category: z.enum(['ANIME', 'JDRAMA', 'YOUTUBE', 'AUDIOBOOK']).optional(),
+    flagged: PermissiveBoolean.optional(),
+    q: z.string().max(100).optional(),
+    page: z.coerce.number().min(1).max(1000).optional().default(1),
+    take: z.coerce.number().min(1).max(100).optional().default(50),
+  });
+
+  const listAdminContentRequestsResponseBodyValidator = responseValidationFactory(
+    [
+      ['200', z.object({ items: z.array(s_AdminContentRequest), total: z.coerce.number() })],
+      ['400', s_Error400],
+      ['401', s_Error401],
+      ['403', s_Error403],
+      ['500', s_Error500],
+    ],
+    undefined,
+  );
+
+  // listAdminContentRequests
+  router.get(`/v1/admin/requests`, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const input = {
+        params: undefined,
+        query: parseRequestInput(listAdminContentRequestsQuerySchema, req.query, RequestInputType.QueryString),
+        body: undefined,
+        headers: undefined,
+      };
+
+      const responder = {
+        with200() {
+          return new ExpressRuntimeResponse<{
+            items: t_AdminContentRequest[];
+            total: number;
+          }>(200);
+        },
+        with400() {
+          return new ExpressRuntimeResponse<t_Error400>(400);
+        },
+        with401() {
+          return new ExpressRuntimeResponse<t_Error401>(401);
+        },
+        with403() {
+          return new ExpressRuntimeResponse<t_Error403>(403);
+        },
+        with500() {
+          return new ExpressRuntimeResponse<t_Error500>(500);
+        },
+        withStatus(status: StatusCode) {
+          return new ExpressRuntimeResponse(status);
+        },
+      };
+
+      await implementation
+        .listAdminContentRequests(input, responder, req, res, next)
+        .catch(handleImplementationError)
+        .then(handleResponse(res, listAdminContentRequestsResponseBodyValidator));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  const updateAdminContentRequestParamSchema = z.object({ requestId: z.string() });
+
+  const updateAdminContentRequestResponseBodyValidator = responseValidationFactory(
+    [
+      ['200', s_AdminContentRequest],
+      ['400', s_Error400],
+      ['401', s_Error401],
+      ['403', s_Error403],
+      ['404', s_Error404],
+      ['409', s_Error409],
+      ['500', s_Error500],
+    ],
+    undefined,
+  );
+
+  // updateAdminContentRequest
+  router.patch(`/v1/admin/requests/:requestId`, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const input = {
+        params: parseRequestInput(updateAdminContentRequestParamSchema, req.params, RequestInputType.RouteParam),
+        query: undefined,
+        body: parseRequestInput(s_UpdateAdminContentRequestRequestBody, req.body, RequestInputType.RequestBody),
+        headers: undefined,
+      };
+
+      const responder = {
+        with200() {
+          return new ExpressRuntimeResponse<t_AdminContentRequest>(200);
+        },
+        with400() {
+          return new ExpressRuntimeResponse<t_Error400>(400);
+        },
+        with401() {
+          return new ExpressRuntimeResponse<t_Error401>(401);
+        },
+        with403() {
+          return new ExpressRuntimeResponse<t_Error403>(403);
+        },
+        with404() {
+          return new ExpressRuntimeResponse<t_Error404>(404);
+        },
+        with409() {
+          return new ExpressRuntimeResponse<t_Error409>(409);
+        },
+        with500() {
+          return new ExpressRuntimeResponse<t_Error500>(500);
+        },
+        withStatus(status: StatusCode) {
+          return new ExpressRuntimeResponse(status);
+        },
+      };
+
+      await implementation
+        .updateAdminContentRequest(input, responder, req, res, next)
+        .catch(handleImplementationError)
+        .then(handleResponse(res, updateAdminContentRequestResponseBodyValidator));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  const mergeAdminContentRequestParamSchema = z.object({ requestId: z.string() });
+
+  const mergeAdminContentRequestResponseBodyValidator = responseValidationFactory(
+    [
+      ['200', s_AdminContentRequest],
+      ['400', s_Error400],
+      ['401', s_Error401],
+      ['403', s_Error403],
+      ['404', s_Error404],
+      ['500', s_Error500],
+    ],
+    undefined,
+  );
+
+  // mergeAdminContentRequest
+  router.post(`/v1/admin/requests/:requestId/merge`, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const input = {
+        params: parseRequestInput(mergeAdminContentRequestParamSchema, req.params, RequestInputType.RouteParam),
+        query: undefined,
+        body: parseRequestInput(s_MergeAdminContentRequestRequestBody, req.body, RequestInputType.RequestBody),
+        headers: undefined,
+      };
+
+      const responder = {
+        with200() {
+          return new ExpressRuntimeResponse<t_AdminContentRequest>(200);
+        },
+        with400() {
+          return new ExpressRuntimeResponse<t_Error400>(400);
+        },
+        with401() {
+          return new ExpressRuntimeResponse<t_Error401>(401);
+        },
+        with403() {
+          return new ExpressRuntimeResponse<t_Error403>(403);
+        },
+        with404() {
+          return new ExpressRuntimeResponse<t_Error404>(404);
+        },
+        with500() {
+          return new ExpressRuntimeResponse<t_Error500>(500);
+        },
+        withStatus(status: StatusCode) {
+          return new ExpressRuntimeResponse(status);
+        },
+      };
+
+      await implementation
+        .mergeAdminContentRequest(input, responder, req, res, next)
+        .catch(handleImplementationError)
+        .then(handleResponse(res, mergeAdminContentRequestResponseBodyValidator));
     } catch (error) {
       next(error);
     }

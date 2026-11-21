@@ -2,7 +2,6 @@
 /* tslint:disable */
 /* eslint-disable */
 
-import { RequestInputType } from '@nahkies/typescript-express-runtime/errors';
 import {
   type ExpressRuntimeResponder,
   ExpressRuntimeResponse,
@@ -12,28 +11,11 @@ import {
   type SkipResponse,
   type StatusCode,
 } from '@nahkies/typescript-express-runtime/server';
-import { parseRequestInput, responseValidationFactory } from '@nahkies/typescript-express-runtime/zod-v4';
+import { responseValidationFactory } from '@nahkies/typescript-express-runtime/zod-v4';
 import { type NextFunction, type Request, type RequestHandler, type Response, Router } from 'express';
 import { z } from 'zod/v4';
-import type {
-  t_CreateRoadmapProposalRequestBody,
-  t_Error400,
-  t_Error401,
-  t_Error403,
-  t_Error429,
-  t_Error500,
-  t_RoadmapItem,
-} from '../models.ts';
-import type { CreateRoadmapProposalRequestBodyOutput } from '../outputTypes.ts';
-import {
-  s_CreateRoadmapProposalRequestBody,
-  s_Error400,
-  s_Error401,
-  s_Error403,
-  s_Error429,
-  s_Error500,
-  s_RoadmapItem,
-} from '../schemas.ts';
+import type { t_Error429, t_Error500, t_RoadmapItem } from '../models.ts';
+import { s_Error429, s_Error500, s_RoadmapItem } from '../schemas.ts';
 
 export type ListRoadmapResponder = {
   with200(): ExpressRuntimeResponse<{
@@ -52,26 +34,8 @@ export type ListRoadmap = (
   next: NextFunction,
 ) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
 
-export type CreateRoadmapProposalResponder = {
-  with201(): ExpressRuntimeResponse<t_RoadmapItem>;
-  with400(): ExpressRuntimeResponse<t_Error400>;
-  with401(): ExpressRuntimeResponse<t_Error401>;
-  with403(): ExpressRuntimeResponse<t_Error403>;
-  with429(): ExpressRuntimeResponse<t_Error429>;
-  with500(): ExpressRuntimeResponse<t_Error500>;
-} & ExpressRuntimeResponder;
-
-export type CreateRoadmapProposal = (
-  params: Params<void, void, CreateRoadmapProposalRequestBodyOutput, void>,
-  respond: CreateRoadmapProposalResponder,
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
-
 export type RoadmapImplementation = {
   listRoadmap: ListRoadmap;
-  createRoadmapProposal: CreateRoadmapProposal;
 };
 
 export function createRoadmapRouter(
@@ -125,61 +89,6 @@ export function createRoadmapRouter(
         .listRoadmap(input, responder, req, res, next)
         .catch(handleImplementationError)
         .then(handleResponse(res, listRoadmapResponseBodyValidator));
-    } catch (error) {
-      next(error);
-    }
-  });
-
-  const createRoadmapProposalResponseBodyValidator = responseValidationFactory(
-    [
-      ['201', s_RoadmapItem],
-      ['400', s_Error400],
-      ['401', s_Error401],
-      ['403', s_Error403],
-      ['429', s_Error429],
-      ['500', s_Error500],
-    ],
-    undefined,
-  );
-
-  // createRoadmapProposal
-  router.post(`/v1/roadmap/proposals`, async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const input = {
-        params: undefined,
-        query: undefined,
-        body: parseRequestInput(s_CreateRoadmapProposalRequestBody, req.body, RequestInputType.RequestBody),
-        headers: undefined,
-      };
-
-      const responder = {
-        with201() {
-          return new ExpressRuntimeResponse<t_RoadmapItem>(201);
-        },
-        with400() {
-          return new ExpressRuntimeResponse<t_Error400>(400);
-        },
-        with401() {
-          return new ExpressRuntimeResponse<t_Error401>(401);
-        },
-        with403() {
-          return new ExpressRuntimeResponse<t_Error403>(403);
-        },
-        with429() {
-          return new ExpressRuntimeResponse<t_Error429>(429);
-        },
-        with500() {
-          return new ExpressRuntimeResponse<t_Error500>(500);
-        },
-        withStatus(status: StatusCode) {
-          return new ExpressRuntimeResponse(status);
-        },
-      };
-
-      await implementation
-        .createRoadmapProposal(input, responder, req, res, next)
-        .catch(handleImplementationError)
-        .then(handleResponse(res, createRoadmapProposalResponseBodyValidator));
     } catch (error) {
       next(error);
     }

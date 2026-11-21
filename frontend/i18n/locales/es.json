@@ -42,7 +42,8 @@
       "collections": "Colecciones",
       "activity": "Actividad",
       "language": "Idioma",
-      "logout": "Cerrar sesión"
+      "logout": "Cerrar sesión",
+      "requests": "Pedidos"
     }
   },
   "announcementBanner": {
@@ -1055,7 +1056,9 @@
       "preferenceError": "No se pudo guardar esa preferencia. Inténtalo de nuevo.",
       "allDescription": "Los correos de acceso y los relacionados con tu cuenta se envían independientemente de estas preferencias.",
       "turnedOn": "Recibirás: {name}",
-      "turnedOff": "No recibirás: {name}"
+      "turnedOff": "No recibirás: {name}",
+      "requestsTitle": "Tus pedidos",
+      "requestsDescription": "Novedades de los títulos que votaste: cuando empezamos y cuando se publican."
     },
     "dictionaries": {
       "title": "Diccionarios personalizados",
@@ -1164,7 +1167,8 @@
     "expanding": "Uniendo subtítulos…",
     "playAudio": "Reproducir audio",
     "loading": "Cargando",
-    "noResultsSupport": "¿Buscas un título que aún no tenemos? Puedes proponerlo en {link}."
+    "noResultsSupport": "¿Buscas algo que aún no tenemos? Pídelo o vótalo en nuestra {link}.",
+    "noResultsSupportLink": "página de pedidos"
   },
   "wordEntry": {
     "label": "Entrada del diccionario",
@@ -1610,7 +1614,7 @@
     "title": "Servicios conectados",
     "patreon": {
       "name": "Patreon",
-      "description": "Link Patreon to verify your membership and propose shows",
+      "description": "Vincula Patreon para verificar tu membresía: los patrons tienen boosts para pedidos y temas personalizados.",
       "connect": "Connect",
       "disconnect": "Disconnect",
       "active": "Linked as {name} — active member",
@@ -1631,9 +1635,9 @@
   },
   "roadmap": {
     "title": "Roadmap",
-    "intro": "¡Únete a nuestro Patreon y solicita los próximos títulos y funciones de Nadeshiko!",
+    "intro": "Mira lo que llega a Nadeshiko. Cualquiera puede pedir un título y votar por lo que viene después.",
     "support": "Apoyar a Nadeshiko",
-    "proposeCta": "Proponer un anime",
+    "proposeCta": "Pedir un título",
     "filterLabel": "Filtrar el roadmap",
     "filters": {
       "content": "Títulos",
@@ -1650,49 +1654,7 @@
     "emptyFeatures": "Aún no hay hitos de funciones.",
     "viewSource": "Ver fuente",
     "loadError": "No se ha podido cargar el roadmap.",
-    "proposalTitle": "¡Solicita tu anime favorito!",
-    "proposalIntro": "Los mecenas activos de Nadeshiko pueden solicitar títulos cada mes; cuántos depende del nivel. ¡Comprueba tu acceso a continuación!",
-    "proposalTiersLink": "Ver los niveles.",
-    "steps": {
-      "signIn": "Inicia sesión en Nadeshiko",
-      "patreon": "Vincula tu cuenta o únete a Patreon",
-      "propose": "Envía tu propuesta"
-    },
-    "states": {
-      "anonymousTitle": "Inicia sesión para proponer un anime",
-      "anonymousBody": "El roadmap es público. Las propuestas están disponibles para los mecenas que hayan vinculado su cuenta de Nadeshiko.",
-      "unlinkedTitle": "Vincula tu cuenta de Patreon",
-      "unlinkedBody": "Verificaremos de forma segura tu membresía de Nadeshiko. Patreon nunca se utiliza para iniciar sesión.",
-      "inactiveTitle": "Hazte mecenas activo",
-      "inactiveBody": "Tu cuenta de Patreon está vinculada, pero ahora mismo no tiene una membresía de pago activa de Nadeshiko.",
-      "activeTitle": "Tu propuesta",
-      "submittedTitle": "Propuesta recibida",
-      "submittedBody": "Está en la cola privada de revisión. Si se aprueba, aparecerá en esta cronología."
-    },
-    "signIn": "Iniciar sesión",
-    "linkPatreon": "Vincular Patreon",
-    "becomePatron": "Unirse en Patreon",
-    "checkAgain": "Comprobar de nuevo",
-    "submitAnother": "Proponer otro",
-    "patreonMember": "Miembro de Patreon",
-    "activeBadge": "Mecenas activo",
-    "form": {
-      "url": "Enlace del anime",
-      "urlPlaceholder": "https://anilist.co/anime/…",
-      "title": "Título (opcional)",
-      "titlePlaceholder": "Lo deduciremos a partir del enlace",
-      "credit": "Crédito público (opcional)",
-      "creditPlaceholder": "Tu nombre o usuario de Patreon",
-      "creditHint": "Déjalo en blanco para aparecer como miembro anónimo de Patreon.",
-      "note": "¿Por qué este? (opcional)",
-      "notePlaceholder": "Cuéntanos por qué encaja bien en Nadeshiko",
-      "submit": "Enviar para revisión"
-    },
     "features": {
-      "patreonProposals": {
-        "title": "Propuestas de títulos en Patreon",
-        "description": "Los mecenas pueden vincular su membresía, proponer un título y seguir las incorporaciones aprobadas en el roadmap público."
-      },
       "searchFilters": {
         "title": "Mejores filtros de búsqueda",
         "description": "Busca directamente por nombre del contenido, etiquetas y otros filtros específicos."
@@ -1728,6 +1690,10 @@
       "apiKeys": {
         "title": "Claves de API con permisos detallados",
         "description": "Las claves de API pueden ser de solo lectura, de acceso completo o limitarse a permisos seleccionados expresamente."
+      },
+      "contentRequests": {
+        "title": "Pedidos de contenido",
+        "description": "Cualquiera puede pedir anime, dramas, audiolibros y canales de YouTube y votar por lo siguiente; los patrons dan boosts."
       }
     },
     "callbackDeclined": "No se ha aprobado la conexión con Patreon.",
@@ -1738,7 +1704,8 @@
     "admin": {
       "tab": "Roadmap",
       "title": "Cola del roadmap"
-    }
+    },
+    "requestsLink": "Ir a los pedidos."
   },
   "feedback": {
     "open": "Comentarios",
@@ -1828,7 +1795,7 @@
     "tierText": {
       "seed": [
         "Si Nadeshiko te ha sido útil en tu camino aprendiendo japonés y quieres mostrar tu aprecio y ayudar a mantener el sitio, este nivel es para ti. ¡Gracias!",
-        "A cambio, puedes pedir que se añadan nuevos títulos a Nadeshiko y tienes un límite de API más alto."
+        "A cambio, recibes boosts para subir en la lista de pedidos los títulos que quieres, y un límite de API más alto."
       ],
       "flower": [
         "Para quienes creen de verdad en el proyecto. ¡Agradecemos mucho tu aporte!",
@@ -1836,7 +1803,7 @@
       ],
       "nadeshiko": [
         "Nuestro nivel más alto, para quienes quieren darle a Nadeshiko el mayor apoyo. Los aportes de este nivel son los que nos permiten seguir ampliando la biblioteca y creando nuevas funciones.",
-        "Tienes todo lo de Flower, tus peticiones de títulos pasan al frente de la cola y tienes nuestro límite de API más alto."
+        "Tienes todo lo de Flower, la mayor cantidad de boosts para que tus elegidos vayan primero y nuestro límite de API más alto."
       ]
     },
     "tiersIntro": "Elige el que mejor te encaje. Puedes cambiarlo o cancelarlo en Patreon cuando quieras.",
@@ -1848,12 +1815,11 @@
       "nadeshiko": "Nadeshiko"
     },
     "perks": {
-      "titleRequests": "Pide hasta {count} títulos al mes",
       "talkToDevs": "Habla directamente con los desarrolladores",
       "everythingIn": "Todo lo de {tier}",
-      "priority": "Prioridad en las peticiones de títulos",
       "apiRequests": "{count} solicitudes a la API al mes",
-      "customThemes": "Temas personalizados"
+      "customThemes": "Temas personalizados",
+      "requestBoosts": "{count} boost de pedidos al mes | {count} boosts de pedidos al mes"
     },
     "faq": {
       "title": "Preguntas",
@@ -1875,5 +1841,104 @@
         "a": "No. Una cuenta de Patreon se vincula a una sola cuenta de Nadeshiko."
       }
     }
+  },
+  "requests": {
+    "seoTitle": "Pide anime, dramas, audiolibros y YouTube | Nadeshiko",
+    "seoDescription": "Pide el anime, los dramas japoneses, los audiolibros y los canales de YouTube que quieres en Nadeshiko, y vota por lo que viene después.",
+    "title": "Pedidos",
+    "intro": "Pide el anime, los dramas, los audiolibros y los canales de YouTube con los que quieres estudiar, y vota por los que pidieron otros. Los más pedidos van primero.",
+    "newRequest": "Nuevo pedido",
+    "boostWithPatreon": "Boostea con Patreon",
+    "allowance": {
+      "open": "{count} de {limit} pedidos abiertos",
+      "boosts": "Te quedan {remaining} de {total} boosts este mes (se renuevan el {date})"
+    },
+    "form": {
+      "heading": "Pide un título",
+      "help": "Pega un enlace de AniList para anime, de TMDB o MyDramaList para dramas, de Audible o Amazon (o solo el ASIN) para audiolibros, o de YouTube para un canal o un video. Si ya estaba pedido, tu voto se suma a ese pedido.",
+      "url": "Enlace",
+      "urlPlaceholder": "https://anilist.co/anime/…",
+      "titleLabel": "Título",
+      "note": "Nota (opcional)",
+      "notePlaceholder": "Qué temporada, dónde hay subtítulos, lo que ayude.",
+      "submit": "Enviar pedido",
+      "cancel": "Cancelar",
+      "unsupported": "Usa un enlace de AniList, TMDB, MyDramaList, Audible, Amazon o YouTube.",
+      "needsTitle": "No pudimos leer un título de ese enlace. Escribe uno y vuelve a enviarlo.",
+      "limit": "Llegaste a tu límite de {limit} pedidos abiertos, o al de pedidos por hoy. Mientras tanto, vota los que ya existen."
+    },
+    "outcome": {
+      "created": "Pedido enviado: {title}",
+      "voted": "{title} ya estaba pedido, así que sumamos tu voto.",
+      "already_voted": "Ya votaste por {title}."
+    },
+    "tabs": {
+      "ACTIVE": "Abiertos",
+      "RELEASED": "Publicados",
+      "DECLINED": "Rechazados"
+    },
+    "searchLabel": "Buscar pedidos",
+    "sortLabel": "Ordenar",
+    "sort": {
+      "TOP": "Más pedidos",
+      "RECENT": "Más nuevos"
+    },
+    "categoryLabel": "Categoría",
+    "category": {
+      "ALL": "Todos",
+      "ANIME": "Anime",
+      "JDRAMA": "Dramas",
+      "AUDIOBOOK": "Audiolibros",
+      "YOUTUBE": "YouTube"
+    },
+    "loadError": "No se pudieron cargar los pedidos ahora mismo.",
+    "emptySearch": "Ningún pedido coincide con esa búsqueda.",
+    "empty": {
+      "ACTIVE": "Todavía no hay pedidos abiertos. ¡Sé el primero!",
+      "RELEASED": "Todavía no se ha publicado ningún pedido.",
+      "DECLINED": "No se ha rechazado ningún pedido."
+    },
+    "vote": "Votar",
+    "unvote": "Quitar voto",
+    "kindUpdate": "Más de un título de Nadeshiko",
+    "status": {
+      "OPEN": "Abierto",
+      "PLANNED": "Planeado",
+      "IN_PROGRESS": "En progreso",
+      "RELEASED": "Publicado",
+      "DECLINED": "Rechazado"
+    },
+    "declinedBecause": "Rechazado: {reason}",
+    "votes": "{count} voto | {count} votos",
+    "boosts": "{count} boost | {count} boosts",
+    "viewSource": "Ver fuente",
+    "searchIt": "Buscar en él",
+    "onNadeshiko": "En Nadeshiko",
+    "boost": {
+      "action": "Boost",
+      "boosted": "Boosteado",
+      "already": "Ya diste boost a este pedido.",
+      "hint": "Un boost cuenta como cinco votos y no se puede retirar.",
+      "done": "Diste boost a {title}.",
+      "failed": "No se pudo dar ese boost. Puede que no te queden este mes."
+    },
+    "withdraw": "Retirar",
+    "withdrawConfirm": "¿Retirar tu pedido de {title}?",
+    "withdrawFailed": "No se pudo retirar ese pedido.",
+    "pagination": "Páginas",
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "how": {
+      "title": "Cómo funcionan los pedidos",
+      "vote": "Cualquiera con cuenta puede pedir títulos y votar. Cada voto cuenta una vez, y pedir un título que ya está pedido suma tu voto a ese pedido.",
+      "boost": "Los patrons reciben boosts cada mes: 3 en Seed, 5 en Flower y 10 en Nadeshiko. Un boost cuenta como cinco votos.",
+      "limits": "Puedes tener 10 pedidos abiertos a la vez (30 si eres patron) y enviar hasta 5 al día.",
+      "news": "Te avisamos por email cuando empezamos con un título que votaste y cuando se publica. Puedes desactivarlo en tus ajustes."
+    },
+    "admin": {
+      "tab": "Pedidos"
+    },
+    "noIngestYet": "Aún sin ingest de dramas",
+    "noIngestYetHint": "Todavía no podemos añadir dramas. Los votos nos dicen cuánto se quieren."
   }
 }

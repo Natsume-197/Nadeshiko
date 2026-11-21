@@ -57,14 +57,14 @@ describe('Support section', () => {
     });
   });
 
-  test('Seed and Flower state their title requests; Nadeshiko builds on Flower', () => {
+  test('each tier states its monthly request boosts; Nadeshiko builds on Flower', () => {
     const cards = render().findAll('[data-testid="support-tier-cards"] > li');
 
-    expect(cards[0]?.text()).toContain('support.perks.titleRequests({"count":2})');
-    expect(cards[1]?.text()).toContain('support.perks.titleRequests({"count":4})');
+    expect(cards[0]?.text()).toContain('support.perks.requestBoosts({"count":3})');
+    expect(cards[1]?.text()).toContain('support.perks.requestBoosts({"count":5})');
     expect(cards[1]?.text()).toContain('support.perks.talkToDevs');
     expect(cards[2]?.text()).toContain('support.perks.everythingIn({"tier":"support.tiers.flower"})');
-    expect(cards[2]?.text()).toContain('support.perks.priority');
+    expect(cards[2]?.text()).toContain('support.perks.requestBoosts({"count":10})');
   });
 
   test('sends readers to the existing Patreon campaign', () => {

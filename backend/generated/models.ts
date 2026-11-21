@@ -19,6 +19,20 @@ export type t_AddSegmentToCollectionRequest = {
   segmentPublicId: string;
 };
 
+export type t_AdminContentRequest = t_ContentRequest & {
+  externalId: string | null;
+  externalSource: 'ANILIST' | 'IMDB' | 'TVDB' | 'TMDB' | 'YOUTUBE' | 'ASIN' | null;
+  possibleDuplicateOf: {
+    id: string;
+    status: 'OPEN' | 'PLANNED' | 'IN_PROGRESS' | 'RELEASED' | 'DECLINED';
+    title: string;
+  } | null;
+  requester: {
+    id: number;
+    username: string;
+  } | null;
+};
+
 export type t_AdminReportGroup = {
   firstReportedAt: string;
   lastStatusChange: string | null;
@@ -166,6 +180,28 @@ export type t_CollectionUpdateRequest = {
 export type t_CollectionVisibility = 'PUBLIC' | 'PRIVATE';
 
 export type t_ContentRating = 'SAFE' | 'SUGGESTIVE' | 'QUESTIONABLE' | 'EXPLICIT';
+
+export type t_ContentRequest = {
+  boostCount: number;
+  category: 'ANIME' | 'JDRAMA' | 'YOUTUBE' | 'AUDIOBOOK';
+  coverUrl: string | null;
+  createdAt: string;
+  declineReason: string | null;
+  id: string;
+  kind: 'NEW' | 'UPDATE';
+  media: {
+    id: string;
+    name: string;
+    slug: string;
+  } | null;
+  note: string;
+  releasedAt: string | null;
+  score: number;
+  sourceUrl: string;
+  status: 'OPEN' | 'PLANNED' | 'IN_PROGRESS' | 'RELEASED' | 'DECLINED';
+  title: string;
+  voteCount: number;
+};
 
 export type t_CoveredWord = {
   matchCount: number;
@@ -1197,6 +1233,7 @@ export type t_UserPreferences = {
     checkins?: boolean;
     enabled?: boolean;
     recap?: boolean;
+    requests?: boolean;
     updates?: boolean;
   };
   searchHistory?: {
@@ -1246,6 +1283,10 @@ export type t_AddSegmentToCollectionParamSchema = {
   collectionPublicId: string;
 };
 
+export type t_BoostContentRequestParamSchema = {
+  requestId: string;
+};
+
 export type t_CompletePatreonLinkRequestBody = {
   code: string;
   state: string;
@@ -1255,15 +1296,14 @@ export type t_CompleteUserDictionaryUploadParamSchema = {
   id: string;
 };
 
-export type t_CreateEpisodeParamSchema = {
-  mediaPublicId: string;
-};
-
-export type t_CreateRoadmapProposalRequestBody = {
+export type t_CreateContentRequestRequestBody = {
   note?: string;
-  proposerName?: string;
   sourceUrl: string;
   title?: string;
+};
+
+export type t_CreateEpisodeParamSchema = {
+  mediaPublicId: string;
 };
 
 export type t_CreateSegmentParamSchema = {
@@ -1400,6 +1440,15 @@ export type t_IdentifyDictionaryWordQuerySchema = {
   surface?: string;
 };
 
+export type t_ListAdminContentRequestsQuerySchema = {
+  category?: 'ANIME' | 'JDRAMA' | 'YOUTUBE' | 'AUDIOBOOK';
+  flagged?: boolean;
+  page?: number;
+  q?: string;
+  status?: 'OPEN' | 'PLANNED' | 'IN_PROGRESS' | 'RELEASED' | 'DECLINED';
+  take?: number;
+};
+
 export type t_ListAdminReportsQuerySchema = {
   cursor?: string;
   orphaned?: boolean;
@@ -1422,6 +1471,15 @@ export type t_ListCollectionsQuerySchema = {
   cursor?: string;
   take?: number;
   visibility?: t_CollectionVisibility;
+};
+
+export type t_ListContentRequestsQuerySchema = {
+  category?: 'ANIME' | 'JDRAMA' | 'YOUTUBE' | 'AUDIOBOOK';
+  page?: number;
+  q?: string;
+  sort?: 'TOP' | 'RECENT';
+  status?: 'ACTIVE' | 'RELEASED' | 'DECLINED';
+  take?: number;
 };
 
 export type t_ListEpisodesParamSchema = {
@@ -1461,6 +1519,14 @@ export type t_ListUserActivityQuerySchema = {
   take?: number;
 };
 
+export type t_MergeAdminContentRequestParamSchema = {
+  requestId: string;
+};
+
+export type t_MergeAdminContentRequestRequestBody = {
+  intoId: string;
+};
+
 export type t_ModerateEpisodeSegmentsParamSchema = {
   episodeNumber: number;
   mediaPublicId: string;
@@ -1494,6 +1560,26 @@ export type t_SearchCollectionSegmentsParamSchema = {
 
 export type t_UnsubscribeFromEmailQuerySchema = {
   token: string;
+};
+
+export type t_UnvoteContentRequestParamSchema = {
+  requestId: string;
+};
+
+export type t_UpdateAdminContentRequestParamSchema = {
+  requestId: string;
+};
+
+export type t_UpdateAdminContentRequestRequestBody = {
+  category?: 'ANIME' | 'JDRAMA' | 'YOUTUBE' | 'AUDIOBOOK';
+  coverUrl?: string | null;
+  declineReason?: string | null;
+  dismissDuplicate?: boolean;
+  kind?: 'NEW' | 'UPDATE';
+  mediaId?: string | null;
+  note?: string;
+  status?: 'OPEN' | 'PLANNED' | 'IN_PROGRESS' | 'RELEASED' | 'DECLINED';
+  title?: string;
 };
 
 export type t_UpdateAdminReportParamSchema = {
@@ -1534,6 +1620,7 @@ export type t_UpdateEmailPreferencesByTokenRequestBody = {
   checkins?: boolean;
   enabled?: boolean;
   recap?: boolean;
+  requests?: boolean;
   token: string;
   updates?: boolean;
 };
@@ -1556,4 +1643,12 @@ export type t_UpdateUserDictionariesRequestBody = {
     enabled: boolean;
     id: string;
   }[];
+};
+
+export type t_VoteContentRequestParamSchema = {
+  requestId: string;
+};
+
+export type t_WithdrawContentRequestParamSchema = {
+  requestId: string;
 };

@@ -102,6 +102,43 @@ export type Error500 = {
 };
 
 /**
+ * A reader's request for content, shared by everyone who wants the same title.
+ */
+export type ContentRequest = {
+    id: string;
+    category: 'ANIME' | 'JDRAMA' | 'YOUTUBE' | 'AUDIOBOOK';
+    /**
+     * NEW asks for a title not on Nadeshiko; UPDATE asks for more of one that is.
+     */
+    kind: 'NEW' | 'UPDATE';
+    status: 'OPEN' | 'PLANNED' | 'IN_PROGRESS' | 'RELEASED' | 'DECLINED';
+    title: string;
+    note: string;
+    sourceUrl: string;
+    coverUrl: string | null;
+    /**
+     * Why a declined request was declined; null otherwise.
+     */
+    declineReason: string | null;
+    voteCount: number;
+    boostCount: number;
+    /**
+     * Votes plus five per boost.
+     */
+    score: number;
+    /**
+     * The published media this request is for (UPDATE) or produced (RELEASED).
+     */
+    media: {
+        id: string;
+        slug: string;
+        name: string;
+    } | null;
+    createdAt: string;
+    releasedAt: string | null;
+};
+
+/**
  * Bad Request error response
  */
 export type Error400 = {
@@ -201,6 +238,78 @@ export type Error403 = {
      * The HTTP status code
      */
     status: 403;
+    /**
+     * Optional map of field names to their error messages (for validation errors)
+     */
+    errors?: {
+        [key: string]: string;
+    };
+};
+
+/**
+ * Not Found error response
+ */
+export type Error404 = {
+    /**
+     * Specific error code for programmatic handling
+     */
+    code: 'NOT_FOUND';
+    /**
+     * A short, human-readable summary of the problem
+     */
+    title: string;
+    /**
+     * A human-readable explanation specific to this occurrence
+     */
+    detail: string;
+    /**
+     * A URI reference that identifies the problem type (`about:blank` when the problem has no further semantics beyond the HTTP status, per RFC 9457)
+     */
+    type?: string;
+    /**
+     * A URI reference that identifies the specific occurrence (e.g., trace ID)
+     */
+    instance?: string;
+    /**
+     * The HTTP status code
+     */
+    status: 404;
+    /**
+     * Optional map of field names to their error messages (for validation errors)
+     */
+    errors?: {
+        [key: string]: string;
+    };
+};
+
+/**
+ * Conflict error response
+ */
+export type Error409 = {
+    /**
+     * Specific error code for programmatic handling
+     */
+    code: 'ACCOUNT_CONFLICT' | 'DUPLICATE_KEY';
+    /**
+     * A short, human-readable summary of the problem
+     */
+    title: string;
+    /**
+     * A human-readable explanation specific to this occurrence
+     */
+    detail: string;
+    /**
+     * A URI reference that identifies the problem type (`about:blank` when the problem has no further semantics beyond the HTTP status, per RFC 9457)
+     */
+    type?: string;
+    /**
+     * A URI reference that identifies the specific occurrence (e.g., trace ID)
+     */
+    instance?: string;
+    /**
+     * The HTTP status code
+     */
+    status: 409;
     /**
      * Optional map of field names to their error messages (for validation errors)
      */
@@ -1267,42 +1376,6 @@ export type DictionaryKanji = {
 };
 
 /**
- * Not Found error response
- */
-export type Error404 = {
-    /**
-     * Specific error code for programmatic handling
-     */
-    code: 'NOT_FOUND';
-    /**
-     * A short, human-readable summary of the problem
-     */
-    title: string;
-    /**
-     * A human-readable explanation specific to this occurrence
-     */
-    detail: string;
-    /**
-     * A URI reference that identifies the problem type (`about:blank` when the problem has no further semantics beyond the HTTP status, per RFC 9457)
-     */
-    type?: string;
-    /**
-     * A URI reference that identifies the specific occurrence (e.g., trace ID)
-     */
-    instance?: string;
-    /**
-     * The HTTP status code
-     */
-    status: 404;
-    /**
-     * Optional map of field names to their error messages (for validation errors)
-     */
-    errors?: {
-        [key: string]: string;
-    };
-};
-
-/**
  * Coverage statistics for a frequency tier
  */
 export type WordCoverageTier = {
@@ -1539,42 +1612,6 @@ export type MediaCreateRequest = {
      * Base path for R2/CDN storage (e.g. "media/21459")
      */
     storageBasePath?: string;
-};
-
-/**
- * Conflict error response
- */
-export type Error409 = {
-    /**
-     * Specific error code for programmatic handling
-     */
-    code: 'ACCOUNT_CONFLICT' | 'DUPLICATE_KEY';
-    /**
-     * A short, human-readable summary of the problem
-     */
-    title: string;
-    /**
-     * A human-readable explanation specific to this occurrence
-     */
-    detail: string;
-    /**
-     * A URI reference that identifies the problem type (`about:blank` when the problem has no further semantics beyond the HTTP status, per RFC 9457)
-     */
-    type?: string;
-    /**
-     * A URI reference that identifies the specific occurrence (e.g., trace ID)
-     */
-    instance?: string;
-    /**
-     * The HTTP status code
-     */
-    status: 409;
-    /**
-     * Optional map of field names to their error messages (for validation errors)
-     */
-    errors?: {
-        [key: string]: string;
-    };
 };
 
 /**
@@ -2549,6 +2586,12 @@ export type UserPreferences = {
          *
          */
         updates?: boolean;
+        /**
+         * News on the content requests the reader voted for or boosted: work
+         * started, title released. Absent means follow `enabled`.
+         *
+         */
+        requests?: boolean;
     };
     /**
      * A patron's custom theme: a light or dark base plus an accent and a page
@@ -3210,6 +3253,23 @@ export type RoadmapItemWrite = {
     proposerName?: string | null;
 };
 
+export type AdminContentRequest = ContentRequest & {
+    externalSource: 'ANILIST' | 'IMDB' | 'TVDB' | 'TMDB' | 'YOUTUBE' | 'ASIN' | null;
+    externalId: string | null;
+    requester: {
+        id: number;
+        username: string;
+    } | null;
+    /**
+     * An active request with the same title, flagged for review; never merged automatically.
+     */
+    possibleDuplicateOf: {
+        id: string;
+        title: string;
+        status: 'OPEN' | 'PLANNED' | 'IN_PROGRESS' | 'RELEASED' | 'DECLINED';
+    } | null;
+};
+
 export type AuthUser = {
     readonly id: string;
     name: string;
@@ -3368,22 +3428,70 @@ export type ListRoadmapResponses = {
 
 export type ListRoadmapResponse = ListRoadmapResponses[keyof ListRoadmapResponses];
 
-export type CreateRoadmapProposalData = {
+export type ListContentRequestsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * ACTIVE (open, planned or in progress), RELEASED or DECLINED.
+         */
+        status?: 'ACTIVE' | 'RELEASED' | 'DECLINED';
+        category?: 'ANIME' | 'JDRAMA' | 'YOUTUBE' | 'AUDIOBOOK';
+        sort?: 'TOP' | 'RECENT';
+        /**
+         * Case-insensitive title filter.
+         */
+        q?: string;
+        page?: number;
+        take?: number;
+    };
+    url: '/v1/requests';
+};
+
+export type ListContentRequestsErrors = {
+    /**
+     * Bad Request
+     */
+    400: Error400;
+    /**
+     * Too Many Requests. The response body indicates whether the request was rejected due to per-minute rate limiting or monthly quota exhaustion.
+     */
+    429: Error429;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type ListContentRequestsError = ListContentRequestsErrors[keyof ListContentRequestsErrors];
+
+export type ListContentRequestsResponses = {
+    /**
+     * OK
+     */
+    200: {
+        items: Array<ContentRequest>;
+        total: number;
+    };
+};
+
+export type ListContentRequestsResponse = ListContentRequestsResponses[keyof ListContentRequestsResponses];
+
+export type CreateContentRequestData = {
     body: {
         sourceUrl: string;
+        /**
+         * Used when the link gives no title.
+         */
         title?: string;
         note?: string;
-        /**
-         * Optional name to show publicly if the proposal is approved.
-         */
-        proposerName?: string;
     };
     path?: never;
     query?: never;
-    url: '/v1/roadmap/proposals';
+    url: '/v1/requests';
 };
 
-export type CreateRoadmapProposalErrors = {
+export type CreateContentRequestErrors = {
     /**
      * Bad Request
      */
@@ -3406,16 +3514,270 @@ export type CreateRoadmapProposalErrors = {
     500: Error500;
 };
 
-export type CreateRoadmapProposalError = CreateRoadmapProposalErrors[keyof CreateRoadmapProposalErrors];
+export type CreateContentRequestError = CreateContentRequestErrors[keyof CreateContentRequestErrors];
 
-export type CreateRoadmapProposalResponses = {
+export type CreateContentRequestResponses = {
     /**
-     * Submitted for review
+     * The title was already requested; the reader's vote was added to that request.
      */
-    201: RoadmapItem;
+    200: {
+        request: ContentRequest;
+        outcome: 'voted' | 'already_voted';
+    };
+    /**
+     * Created
+     */
+    201: {
+        request: ContentRequest;
+        outcome: 'created';
+    };
 };
 
-export type CreateRoadmapProposalResponse = CreateRoadmapProposalResponses[keyof CreateRoadmapProposalResponses];
+export type CreateContentRequestResponse = CreateContentRequestResponses[keyof CreateContentRequestResponses];
+
+export type GetContentRequestAllowanceData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/requests/me';
+};
+
+export type GetContentRequestAllowanceErrors = {
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Too Many Requests. The response body indicates whether the request was rejected due to per-minute rate limiting or monthly quota exhaustion.
+     */
+    429: Error429;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type GetContentRequestAllowanceError = GetContentRequestAllowanceErrors[keyof GetContentRequestAllowanceErrors];
+
+export type GetContentRequestAllowanceResponses = {
+    /**
+     * OK
+     */
+    200: {
+        isPatron: boolean;
+        openCount: number;
+        /**
+         * Null for admins (no limit).
+         */
+        openLimit: number | null;
+        boosts: {
+            perMonth: number;
+            used: number;
+            remaining: number;
+            resetsAt: string;
+        };
+        votedIds: Array<string>;
+        boostedIds: Array<string>;
+        /**
+         * Active requests this reader filed.
+         */
+        ownIds: Array<string>;
+    };
+};
+
+export type GetContentRequestAllowanceResponse = GetContentRequestAllowanceResponses[keyof GetContentRequestAllowanceResponses];
+
+export type WithdrawContentRequestData = {
+    body?: never;
+    path: {
+        /**
+         * Public UUID of the request.
+         */
+        requestId: string;
+    };
+    query?: never;
+    url: '/v1/requests/{requestId}';
+};
+
+export type WithdrawContentRequestErrors = {
+    /**
+     * Bad Request
+     */
+    400: Error400;
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Not Found
+     */
+    404: Error404;
+    /**
+     * Too Many Requests. The response body indicates whether the request was rejected due to per-minute rate limiting or monthly quota exhaustion.
+     */
+    429: Error429;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type WithdrawContentRequestError = WithdrawContentRequestErrors[keyof WithdrawContentRequestErrors];
+
+export type WithdrawContentRequestResponses = {
+    /**
+     * Withdrawn
+     */
+    204: void;
+};
+
+export type WithdrawContentRequestResponse = WithdrawContentRequestResponses[keyof WithdrawContentRequestResponses];
+
+export type UnvoteContentRequestData = {
+    body?: never;
+    path: {
+        /**
+         * Public UUID of the request.
+         */
+        requestId: string;
+    };
+    query?: never;
+    url: '/v1/requests/{requestId}/vote';
+};
+
+export type UnvoteContentRequestErrors = {
+    /**
+     * Bad Request
+     */
+    400: Error400;
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Not Found
+     */
+    404: Error404;
+    /**
+     * Too Many Requests. The response body indicates whether the request was rejected due to per-minute rate limiting or monthly quota exhaustion.
+     */
+    429: Error429;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type UnvoteContentRequestError = UnvoteContentRequestErrors[keyof UnvoteContentRequestErrors];
+
+export type UnvoteContentRequestResponses = {
+    /**
+     * OK
+     */
+    200: ContentRequest;
+};
+
+export type UnvoteContentRequestResponse = UnvoteContentRequestResponses[keyof UnvoteContentRequestResponses];
+
+export type VoteContentRequestData = {
+    body?: never;
+    path: {
+        /**
+         * Public UUID of the request.
+         */
+        requestId: string;
+    };
+    query?: never;
+    url: '/v1/requests/{requestId}/vote';
+};
+
+export type VoteContentRequestErrors = {
+    /**
+     * Bad Request
+     */
+    400: Error400;
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Not Found
+     */
+    404: Error404;
+    /**
+     * Too Many Requests. The response body indicates whether the request was rejected due to per-minute rate limiting or monthly quota exhaustion.
+     */
+    429: Error429;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type VoteContentRequestError = VoteContentRequestErrors[keyof VoteContentRequestErrors];
+
+export type VoteContentRequestResponses = {
+    /**
+     * OK
+     */
+    200: ContentRequest;
+};
+
+export type VoteContentRequestResponse = VoteContentRequestResponses[keyof VoteContentRequestResponses];
+
+export type BoostContentRequestData = {
+    body?: never;
+    path: {
+        /**
+         * Public UUID of the request.
+         */
+        requestId: string;
+    };
+    query?: never;
+    url: '/v1/requests/{requestId}/boost';
+};
+
+export type BoostContentRequestErrors = {
+    /**
+     * Bad Request
+     */
+    400: Error400;
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Forbidden
+     */
+    403: Error403;
+    /**
+     * Not Found
+     */
+    404: Error404;
+    /**
+     * Conflict
+     */
+    409: Error409;
+    /**
+     * Too Many Requests. The response body indicates whether the request was rejected due to per-minute rate limiting or monthly quota exhaustion.
+     */
+    429: Error429;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type BoostContentRequestError = BoostContentRequestErrors[keyof BoostContentRequestErrors];
+
+export type BoostContentRequestResponses = {
+    /**
+     * OK
+     */
+    200: ContentRequest;
+};
+
+export type BoostContentRequestResponse = BoostContentRequestResponses[keyof BoostContentRequestResponses];
 
 export type SearchData = {
     body: SearchRequest;
@@ -6468,6 +6830,7 @@ export type GetEmailPreferencesByTokenResponses = {
             recap: boolean;
             checkins: boolean;
             updates: boolean;
+            requests: boolean;
         };
         /**
          * Which category the email carrying this token belonged to, when
@@ -6475,7 +6838,7 @@ export type GetEmailPreferencesByTokenResponses = {
          * the reader clicked about.
          *
          */
-        category?: 'recap' | 'checkins' | 'updates';
+        category?: 'recap' | 'checkins' | 'updates' | 'requests';
     };
 };
 
@@ -6495,6 +6858,7 @@ export type UpdateEmailPreferencesByTokenData = {
         recap?: boolean;
         checkins?: boolean;
         updates?: boolean;
+        requests?: boolean;
     };
     path?: never;
     query?: never;
@@ -6520,6 +6884,7 @@ export type UpdateEmailPreferencesByTokenResponses = {
             recap: boolean;
             checkins: boolean;
             updates: boolean;
+            requests: boolean;
         };
     };
 };
@@ -7770,6 +8135,173 @@ export type UpdateAdminRoadmapItemResponses = {
 };
 
 export type UpdateAdminRoadmapItemResponse = UpdateAdminRoadmapItemResponses[keyof UpdateAdminRoadmapItemResponses];
+
+export type ListAdminContentRequestsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        status?: 'OPEN' | 'PLANNED' | 'IN_PROGRESS' | 'RELEASED' | 'DECLINED';
+        category?: 'ANIME' | 'JDRAMA' | 'YOUTUBE' | 'AUDIOBOOK';
+        /**
+         * Only requests flagged as possible duplicates.
+         */
+        flagged?: boolean;
+        q?: string;
+        page?: number;
+        take?: number;
+    };
+    url: '/v1/admin/requests';
+};
+
+export type ListAdminContentRequestsErrors = {
+    /**
+     * Bad Request
+     */
+    400: Error400;
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Forbidden
+     */
+    403: Error403;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type ListAdminContentRequestsError = ListAdminContentRequestsErrors[keyof ListAdminContentRequestsErrors];
+
+export type ListAdminContentRequestsResponses = {
+    /**
+     * OK
+     */
+    200: {
+        items: Array<AdminContentRequest>;
+        total: number;
+    };
+};
+
+export type ListAdminContentRequestsResponse = ListAdminContentRequestsResponses[keyof ListAdminContentRequestsResponses];
+
+export type UpdateAdminContentRequestData = {
+    body: {
+        status?: 'OPEN' | 'PLANNED' | 'IN_PROGRESS' | 'RELEASED' | 'DECLINED';
+        title?: string;
+        note?: string;
+        category?: 'ANIME' | 'JDRAMA' | 'YOUTUBE' | 'AUDIOBOOK';
+        kind?: 'NEW' | 'UPDATE';
+        coverUrl?: string | null;
+        declineReason?: string | null;
+        /**
+         * Public id of the media the request is for or produced.
+         */
+        mediaId?: string | null;
+        /**
+         * Clear the possible-duplicate flag.
+         */
+        dismissDuplicate?: boolean;
+    };
+    path: {
+        /**
+         * Public UUID of the request.
+         */
+        requestId: string;
+    };
+    query?: never;
+    url: '/v1/admin/requests/{requestId}';
+};
+
+export type UpdateAdminContentRequestErrors = {
+    /**
+     * Bad Request
+     */
+    400: Error400;
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Forbidden
+     */
+    403: Error403;
+    /**
+     * Not Found
+     */
+    404: Error404;
+    /**
+     * Conflict
+     */
+    409: Error409;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type UpdateAdminContentRequestError = UpdateAdminContentRequestErrors[keyof UpdateAdminContentRequestErrors];
+
+export type UpdateAdminContentRequestResponses = {
+    /**
+     * Updated
+     */
+    200: AdminContentRequest;
+};
+
+export type UpdateAdminContentRequestResponse = UpdateAdminContentRequestResponses[keyof UpdateAdminContentRequestResponses];
+
+export type MergeAdminContentRequestData = {
+    body: {
+        /**
+         * The request to keep.
+         */
+        intoId: string;
+    };
+    path: {
+        /**
+         * Public UUID of the request.
+         */
+        requestId: string;
+    };
+    query?: never;
+    url: '/v1/admin/requests/{requestId}/merge';
+};
+
+export type MergeAdminContentRequestErrors = {
+    /**
+     * Bad Request
+     */
+    400: Error400;
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Forbidden
+     */
+    403: Error403;
+    /**
+     * Not Found
+     */
+    404: Error404;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type MergeAdminContentRequestError = MergeAdminContentRequestErrors[keyof MergeAdminContentRequestErrors];
+
+export type MergeAdminContentRequestResponses = {
+    /**
+     * The request that was kept, with the merged counts.
+     */
+    200: AdminContentRequest;
+};
+
+export type MergeAdminContentRequestResponse = MergeAdminContentRequestResponses[keyof MergeAdminContentRequestResponses];
 
 export type GetSessionData = {
     body?: never;

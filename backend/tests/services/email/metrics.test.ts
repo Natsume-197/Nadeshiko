@@ -58,6 +58,7 @@ describe('the email metric contract', () => {
       'feedback-ask',
       'magic-link',
       'recap',
+      'request-update',
       'unknown',
       'verify-new-email',
       'welcome',

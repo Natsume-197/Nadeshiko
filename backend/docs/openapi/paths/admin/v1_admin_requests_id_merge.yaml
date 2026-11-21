@@ -1,0 +1,34 @@
+post:
+  tags: [Admin]
+  x-internal: true
+  operationId: mergeAdminContentRequest
+  summary: Merge a duplicate request into another
+  description: Moves the duplicate's voters and boosters to the target (no one counts twice) and declines the duplicate with a pointer to it.
+  security:
+    - SessionCookie: [ADMIN]
+  parameters:
+    - in: path
+      name: requestId
+      required: true
+      description: Public UUID of the request.
+      schema: { type: string, format: uuid }
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required: [intoId]
+          properties:
+            intoId: { type: string, format: uuid, description: The request to keep. }
+  responses:
+    "200":
+      description: The request that was kept, with the merged counts.
+      content:
+        application/json:
+          schema: { $ref: "../../components/schemas/AdminContentRequest.yaml" }
+    "400": { $ref: "../../components/responses/BadRequest.yaml" }
+    "401": { $ref: "../../components/responses/Unauthorized.yaml" }
+    "403": { $ref: "../../components/responses/Forbidden.yaml" }
+    "404": { $ref: "../../components/responses/NotFound.yaml" }
+    "500": { $ref: "../../components/responses/InternalServerError.yaml" }

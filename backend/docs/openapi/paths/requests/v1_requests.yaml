@@ -1,0 +1,92 @@
+get:
+  tags: [Requests]
+  x-internal: true
+  operationId: listContentRequests
+  summary: List content requests
+  description: Public list of content requests, sorted by score (votes plus five per boost) or by date. Requester identities never appear.
+  security: []
+  parameters:
+    - name: status
+      in: query
+      description: ACTIVE (open, planned or in progress), RELEASED or DECLINED.
+      schema: { type: string, enum: [ACTIVE, RELEASED, DECLINED], default: ACTIVE }
+    - name: category
+      in: query
+      schema: { type: string, enum: [ANIME, JDRAMA, YOUTUBE, AUDIOBOOK] }
+    - name: sort
+      in: query
+      schema: { type: string, enum: [TOP, RECENT], default: TOP }
+    - name: q
+      in: query
+      description: Case-insensitive title filter.
+      schema: { type: string, maxLength: 100 }
+    - name: page
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 1000, default: 1 }
+    - name: take
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 50, default: 24 }
+  responses:
+    "200":
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [items, total]
+            properties:
+              items:
+                type: array
+                items: { $ref: "../../components/schemas/ContentRequest.yaml" }
+              total: { type: integer }
+    "400": { $ref: "../../components/responses/BadRequest.yaml" }
+    "429": { $ref: "../../components/responses/TooManyRequests.yaml" }
+    "500": { $ref: "../../components/responses/InternalServerError.yaml" }
+post:
+  tags: [Requests]
+  x-internal: true
+  operationId: createContentRequest
+  summary: Request content
+  description: |
+    Files a request from a link to AniList, TMDB, MyDramaList, Audible, Amazon or YouTube. When the same title is
+    already requested, adds the reader's vote to that request instead (200). A request for a title already on
+    Nadeshiko becomes an UPDATE request for it.
+  security:
+    - SessionCookie: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required: [sourceUrl]
+          properties:
+            sourceUrl: { type: string, format: uri, maxLength: 1000, pattern: "^https?://" }
+            title: { type: string, minLength: 1, maxLength: 180, description: Used when the link gives no title. }
+            note: { type: string, maxLength: 1000 }
+  responses:
+    "200":
+      description: The title was already requested; the reader's vote was added to that request.
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [request, outcome]
+            properties:
+              request: { $ref: "../../components/schemas/ContentRequest.yaml" }
+              outcome: { type: string, enum: [voted, already_voted] }
+    "201":
+      description: Created
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [request, outcome]
+            properties:
+              request: { $ref: "../../components/schemas/ContentRequest.yaml" }
+              outcome: { type: string, enum: [created] }
+    "400": { $ref: "../../components/responses/BadRequest.yaml" }
+    "401": { $ref: "../../components/responses/Unauthorized.yaml" }
+    "403": { $ref: "../../components/responses/Forbidden.yaml" }
+    "429": { $ref: "../../components/responses/TooManyRequests.yaml" }
+    "500": { $ref: "../../components/responses/InternalServerError.yaml" }

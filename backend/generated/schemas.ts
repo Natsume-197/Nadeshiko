@@ -90,6 +90,24 @@ export const s_CollectionVisibility = z.enum(['PUBLIC', 'PRIVATE']);
 
 export const s_ContentRating = z.enum(['SAFE', 'SUGGESTIVE', 'QUESTIONABLE', 'EXPLICIT']);
 
+export const s_ContentRequest = z.object({
+  id: z.string(),
+  category: z.enum(['ANIME', 'JDRAMA', 'YOUTUBE', 'AUDIOBOOK']),
+  kind: z.enum(['NEW', 'UPDATE']),
+  status: z.enum(['OPEN', 'PLANNED', 'IN_PROGRESS', 'RELEASED', 'DECLINED']),
+  title: z.string().max(180),
+  note: z.string().max(1000),
+  sourceUrl: z.string(),
+  coverUrl: z.string().nullable(),
+  declineReason: z.string().nullable(),
+  voteCount: z.coerce.number(),
+  boostCount: z.coerce.number(),
+  score: z.coerce.number(),
+  media: z.object({ id: z.string(), slug: z.string(), name: z.string() }).nullable(),
+  createdAt: z.iso.datetime({ offset: true }),
+  releasedAt: z.iso.datetime({ offset: true }).nullable(),
+});
+
 export const s_CoveredWord = z.object({ rank: z.coerce.number(), word: z.string(), matchCount: z.coerce.number() });
 
 export const s_CoveredWordsUpdateRequest = z.object({
@@ -604,6 +622,19 @@ export const s_WordMatchMedia = z.object({
   matchCount: z.coerce.number().min(0),
 });
 
+export const s_AdminContentRequest = s_ContentRequest.extend({
+  externalSource: z.enum(['ANILIST', 'IMDB', 'TVDB', 'TMDB', 'YOUTUBE', 'ASIN']).nullable(),
+  externalId: z.string().nullable(),
+  requester: z.object({ id: z.coerce.number(), username: z.string() }).nullable(),
+  possibleDuplicateOf: z
+    .object({
+      id: z.string(),
+      title: z.string(),
+      status: z.enum(['OPEN', 'PLANNED', 'IN_PROGRESS', 'RELEASED', 'DECLINED']),
+    })
+    .nullable(),
+});
+
 export const s_AdminReportGroupItem = z.object({
   id: z.coerce.number(),
   reason: s_ReportReason,
@@ -1015,6 +1046,7 @@ export const s_UserPreferences = z.object({
       recap: PermissiveBoolean.optional(),
       checkins: PermissiveBoolean.optional(),
       updates: PermissiveBoolean.optional(),
+      requests: PermissiveBoolean.optional(),
     })
     .optional(),
   customTheme: z
@@ -1197,11 +1229,10 @@ export const s_UserExportResponse = z.object({
   ),
 });
 
-export const s_CreateRoadmapProposalRequestBody = z.object({
+export const s_CreateContentRequestRequestBody = z.object({
   sourceUrl: z.string().max(1000).regex(new RegExp('^https?://')),
   title: z.string().min(1).max(180).optional(),
-  note: z.string().max(2000).optional(),
-  proposerName: z.string().max(80).optional(),
+  note: z.string().max(1000).optional(),
 });
 
 export const s_CreateUserApiKeyRequestBody = z.object({
@@ -1231,6 +1262,7 @@ export const s_UpdateEmailPreferencesByTokenRequestBody = z.object({
   recap: PermissiveBoolean.optional(),
   checkins: PermissiveBoolean.optional(),
   updates: PermissiveBoolean.optional(),
+  requests: PermissiveBoolean.optional(),
 });
 
 export const s_UpdateAdminRoadmapItemRequestBody = z.object({
@@ -1245,3 +1277,17 @@ export const s_UpdateAdminRoadmapItemRequestBody = z.object({
   sortOrder: z.coerce.number().optional(),
   proposerName: z.string().max(80).nullable().optional(),
 });
+
+export const s_UpdateAdminContentRequestRequestBody = z.object({
+  status: z.enum(['OPEN', 'PLANNED', 'IN_PROGRESS', 'RELEASED', 'DECLINED']).optional(),
+  title: z.string().min(1).max(180).optional(),
+  note: z.string().max(1000).optional(),
+  category: z.enum(['ANIME', 'JDRAMA', 'YOUTUBE', 'AUDIOBOOK']).optional(),
+  kind: z.enum(['NEW', 'UPDATE']).optional(),
+  coverUrl: z.string().max(1000).regex(new RegExp('^https://')).nullable().optional(),
+  declineReason: z.string().max(500).nullable().optional(),
+  mediaId: z.string().max(32).nullable().optional(),
+  dismissDuplicate: PermissiveBoolean.optional(),
+});
+
+export const s_MergeAdminContentRequestRequestBody = z.object({ intoId: z.string() });

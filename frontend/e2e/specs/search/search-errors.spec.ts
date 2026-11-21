@@ -23,7 +23,7 @@ for (const [locale, title, message] of [
     await expect(notice).toContainText(message);
     await expect(notice.locator('img')).toHaveAttribute('src', '/assets/no-results.gif');
     await expect(notice.locator('img')).toBeVisible();
-    await expect(notice.locator('a[href*="patreon.com"]')).toBeVisible();
+    await expect(notice.locator('a[href*="/requests"]')).toBeVisible();
     await expect(notice.getByRole('button')).toHaveCount(0);
     expect(clientSearchRequests).toHaveLength(0);
   });
@@ -76,7 +76,7 @@ test('shows a stats-only failure instead of zero-count category tabs', async ({ 
   await expect(page.locator('body')).not.toContainText('private-statistics-hostname');
 });
 
-test('missing content reuses the exact no-results view and keeps Patreon', async ({ page }) => {
+test('missing content reuses the exact no-results view and keeps the requests link', async ({ page }) => {
   await page.goto('/en/search');
   await page.route(
     (url) => url.pathname.endsWith('/v1/search'),
@@ -92,7 +92,7 @@ test('missing content reuses the exact no-results view and keeps Patreon', async
   await expect(view.locator('h1')).toHaveText('No results found...');
   await expect(view.locator('img')).toHaveAttribute('src', '/assets/no-results.gif');
   await expect(view.locator('a[href*="immersionkit.com"]')).toBeVisible();
-  await expect(view.locator('a[href*="patreon.com"]')).toBeVisible();
+  await expect(view.locator('a[href*="/requests"]')).toBeVisible();
   await expect(view).not.toContainText('Content not found');
   await expect(view).not.toContainText('Something went wrong');
 });

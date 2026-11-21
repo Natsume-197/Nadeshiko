@@ -27,6 +27,10 @@ export class Tier extends BaseEntity {
   @Column({ name: 'patreon_tier_id', type: 'text', nullable: true })
   patreonTierId!: string | null;
 
+  /** Content-request boosts a member of this tier gets each calendar month (UTC); 0 for tiers without any. */
+  @Column({ name: 'monthly_request_boosts', type: 'int', default: 0 })
+  monthlyRequestBoosts!: number;
+
   /** Display order for the admin picker; the id is a slug, not a rank. */
   @Column({ name: 'sort_order', type: 'int', default: 0 })
   sortOrder!: number;

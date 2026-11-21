@@ -17,7 +17,7 @@ export const AUTH_GATES = [
   'download_nudge',
   'add_nudge',
   'depth_nudge',
-  'roadmap_proposal',
+  'content_request',
 ] as const;
 
 export type AuthGate = (typeof AUTH_GATES)[number];

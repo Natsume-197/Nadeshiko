@@ -55,6 +55,7 @@ export type EmailKind =
   | 'feedback-ask'
   | 'dormant-30'
   | 'recap'
+  | 'request-update'
   | 'unknown';
 
 export const EMAIL_KINDS: readonly EmailKind[] = [
@@ -65,6 +66,7 @@ export const EMAIL_KINDS: readonly EmailKind[] = [
   'feedback-ask',
   'dormant-30',
   'recap',
+  'request-update',
   'unknown',
 ];
 

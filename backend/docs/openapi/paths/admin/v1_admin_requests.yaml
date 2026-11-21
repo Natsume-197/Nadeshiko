@@ -1,0 +1,44 @@
+get:
+  tags: [Admin]
+  x-internal: true
+  operationId: listAdminContentRequests
+  summary: List content requests with requester and duplicate flags
+  security:
+    - SessionCookie: [ADMIN]
+  parameters:
+    - name: status
+      in: query
+      schema: { type: string, enum: [OPEN, PLANNED, IN_PROGRESS, RELEASED, DECLINED] }
+    - name: category
+      in: query
+      schema: { type: string, enum: [ANIME, JDRAMA, YOUTUBE, AUDIOBOOK] }
+    - name: flagged
+      in: query
+      description: Only requests flagged as possible duplicates.
+      schema: { type: boolean }
+    - name: q
+      in: query
+      schema: { type: string, maxLength: 100 }
+    - name: page
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 1000, default: 1 }
+    - name: take
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
+  responses:
+    "200":
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [items, total]
+            properties:
+              items:
+                type: array
+                items: { $ref: "../../components/schemas/AdminContentRequest.yaml" }
+              total: { type: integer }
+    "400": { $ref: "../../components/responses/BadRequest.yaml" }
+    "401": { $ref: "../../components/responses/Unauthorized.yaml" }
+    "403": { $ref: "../../components/responses/Forbidden.yaml" }
+    "500": { $ref: "../../components/responses/InternalServerError.yaml" }

@@ -54,9 +54,10 @@ export type GetEmailPreferencesByTokenResponder = {
     categories: {
       checkins: boolean;
       recap: boolean;
+      requests: boolean;
       updates: boolean;
     };
-    category?: 'recap' | 'checkins' | 'updates' | null;
+    category?: 'recap' | 'checkins' | 'updates' | 'requests' | null;
     enabled: boolean;
   }>;
   with400(): ExpressRuntimeResponse<t_Error400>;
@@ -75,6 +76,7 @@ export type UpdateEmailPreferencesByTokenResponder = {
     categories: {
       checkins: boolean;
       recap: boolean;
+      requests: boolean;
       updates: boolean;
     };
     enabled: boolean;
@@ -163,8 +165,13 @@ export function createEmailRouter(
         '200',
         z.object({
           enabled: PermissiveBoolean,
-          categories: z.object({ recap: PermissiveBoolean, checkins: PermissiveBoolean, updates: PermissiveBoolean }),
-          category: z.enum(['recap', 'checkins', 'updates']).nullable().optional(),
+          categories: z.object({
+            recap: PermissiveBoolean,
+            checkins: PermissiveBoolean,
+            updates: PermissiveBoolean,
+            requests: PermissiveBoolean,
+          }),
+          category: z.enum(['recap', 'checkins', 'updates', 'requests']).nullable().optional(),
         }),
       ],
       ['400', s_Error400],
@@ -188,9 +195,10 @@ export function createEmailRouter(
             categories: {
               checkins: boolean;
               recap: boolean;
+              requests: boolean;
               updates: boolean;
             };
-            category?: 'recap' | 'checkins' | 'updates' | null;
+            category?: 'recap' | 'checkins' | 'updates' | 'requests' | null;
             enabled: boolean;
           }>(200);
         },
@@ -217,7 +225,12 @@ export function createEmailRouter(
         '200',
         z.object({
           enabled: PermissiveBoolean,
-          categories: z.object({ recap: PermissiveBoolean, checkins: PermissiveBoolean, updates: PermissiveBoolean }),
+          categories: z.object({
+            recap: PermissiveBoolean,
+            checkins: PermissiveBoolean,
+            updates: PermissiveBoolean,
+            requests: PermissiveBoolean,
+          }),
         }),
       ],
       ['400', s_Error400],
@@ -241,6 +254,7 @@ export function createEmailRouter(
             categories: {
               checkins: boolean;
               recap: boolean;
+              requests: boolean;
               updates: boolean;
             };
             enabled: boolean;

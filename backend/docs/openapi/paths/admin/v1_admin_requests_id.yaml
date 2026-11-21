@@ -1,0 +1,45 @@
+patch:
+  tags: [Admin]
+  x-internal: true
+  operationId: updateAdminContentRequest
+  summary: Change a content request
+  description: |
+    Edits a request or moves it between statuses. Declining needs a reason, which readers see. Moving a request to
+    IN_PROGRESS or RELEASED emails everyone who voted for or boosted it (unless they opted out of request news).
+  security:
+    - SessionCookie: [ADMIN]
+  parameters:
+    - in: path
+      name: requestId
+      required: true
+      description: Public UUID of the request.
+      schema: { type: string, format: uuid }
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          minProperties: 1
+          properties:
+            status: { type: string, enum: [OPEN, PLANNED, IN_PROGRESS, RELEASED, DECLINED] }
+            title: { type: string, minLength: 1, maxLength: 180 }
+            note: { type: string, maxLength: 1000 }
+            category: { type: string, enum: [ANIME, JDRAMA, YOUTUBE, AUDIOBOOK] }
+            kind: { type: string, enum: [NEW, UPDATE] }
+            coverUrl: { type: [string, "null"], format: uri, maxLength: 1000, pattern: "^https://" }
+            declineReason: { type: [string, "null"], maxLength: 500 }
+            mediaId: { type: [string, "null"], maxLength: 32, description: Public id of the media the request is for or produced. }
+            dismissDuplicate: { type: boolean, description: Clear the possible-duplicate flag. }
+  responses:
+    "200":
+      description: Updated
+      content:
+        application/json:
+          schema: { $ref: "../../components/schemas/AdminContentRequest.yaml" }
+    "400": { $ref: "../../components/responses/BadRequest.yaml" }
+    "401": { $ref: "../../components/responses/Unauthorized.yaml" }
+    "403": { $ref: "../../components/responses/Forbidden.yaml" }
+    "404": { $ref: "../../components/responses/NotFound.yaml" }
+    "409": { $ref: "../../components/responses/Conflict.yaml" }
+    "500": { $ref: "../../components/responses/InternalServerError.yaml" }

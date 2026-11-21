@@ -1,0 +1,29 @@
+type: object
+description: A reader's request for content, shared by everyone who wants the same title.
+required: [id, category, kind, status, title, note, sourceUrl, coverUrl, declineReason, voteCount, boostCount, score, media, createdAt, releasedAt]
+properties:
+  id: { type: string, format: uuid }
+  category: { type: string, enum: [ANIME, JDRAMA, YOUTUBE, AUDIOBOOK] }
+  kind:
+    type: string
+    enum: [NEW, UPDATE]
+    description: NEW asks for a title not on Nadeshiko; UPDATE asks for more of one that is.
+  status: { type: string, enum: [OPEN, PLANNED, IN_PROGRESS, RELEASED, DECLINED] }
+  title: { type: string, maxLength: 180 }
+  note: { type: string, maxLength: 1000 }
+  sourceUrl: { type: string }
+  coverUrl: { type: [string, "null"] }
+  declineReason: { type: [string, "null"], description: Why a declined request was declined; null otherwise. }
+  voteCount: { type: integer }
+  boostCount: { type: integer }
+  score: { type: integer, description: Votes plus five per boost. }
+  media:
+    type: [object, "null"]
+    description: The published media this request is for (UPDATE) or produced (RELEASED).
+    required: [id, slug, name]
+    properties:
+      id: { type: string }
+      slug: { type: string }
+      name: { type: string }
+  createdAt: { type: string, format: date-time }
+  releasedAt: { type: [string, "null"], format: date-time }

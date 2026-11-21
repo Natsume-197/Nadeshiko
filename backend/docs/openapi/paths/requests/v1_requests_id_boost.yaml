@@ -1,0 +1,29 @@
+post:
+  tags: [Requests]
+  x-internal: true
+  operationId: boostContentRequest
+  summary: Boost a request (patrons)
+  description: |
+    Spends one of this month's boosts on an active request. A boost counts as five votes, is permanent and can be
+    given once per request. Patrons get boosts each calendar month (UTC) by Patreon tier.
+  security:
+    - SessionCookie: []
+  parameters:
+    - in: path
+      name: requestId
+      required: true
+      description: Public UUID of the request.
+      schema: { type: string, format: uuid }
+  responses:
+    "200":
+      description: OK
+      content:
+        application/json:
+          schema: { $ref: "../../components/schemas/ContentRequest.yaml" }
+    "400": { $ref: "../../components/responses/BadRequest.yaml" }
+    "401": { $ref: "../../components/responses/Unauthorized.yaml" }
+    "403": { $ref: "../../components/responses/Forbidden.yaml" }
+    "404": { $ref: "../../components/responses/NotFound.yaml" }
+    "409": { $ref: "../../components/responses/Conflict.yaml" }
+    "429": { $ref: "../../components/responses/TooManyRequests.yaml" }
+    "500": { $ref: "../../components/responses/InternalServerError.yaml" }

@@ -42,7 +42,8 @@
       "collections": "Koleksi",
       "activity": "Aktivitas",
       "language": "Bahasa",
-      "logout": "Keluar"
+      "logout": "Keluar",
+      "requests": "Permintaan"
     }
   },
   "announcementBanner": {
@@ -1055,7 +1056,9 @@
       "preferenceError": "Gagal menyimpan preferensi ini. Silakan coba lagi.",
       "allDescription": "Email tautan masuk dan email terkait akun tetap dikirim, apa pun pilihan Anda di sini.",
       "turnedOn": "{name}: aktif",
-      "turnedOff": "{name}: nonaktif"
+      "turnedOff": "{name}: nonaktif",
+      "requestsTitle": "Permintaanmu",
+      "requestsDescription": "Kabar tentang judul yang kamu pilih: saat mulai dikerjakan dan saat dirilis."
     },
     "dictionaries": {
       "title": "Kamus Kustom",
@@ -1164,7 +1167,8 @@
     "expanding": "Menggabungkan…",
     "playAudio": "Putar audio",
     "loading": "Memuat",
-    "noResultsSupport": "Belum menemukan yang Anda cari? Usulkan konten untuk ditambahkan melalui {link} kami."
+    "noResultsSupport": "Belum menemukan yang kamu cari? Minta atau pilih di {link} kami.",
+    "noResultsSupportLink": "halaman permintaan"
   },
   "wordEntry": {
     "label": "Entri kamus",
@@ -1610,7 +1614,7 @@
     "title": "Akun terhubung",
     "patreon": {
       "name": "Patreon",
-      "description": "Link Patreon to verify your membership and propose shows",
+      "description": "Tautkan Patreon untuk memverifikasi keanggotaanmu: patron mendapat boost permintaan dan tema khusus.",
       "connect": "Connect",
       "disconnect": "Disconnect",
       "active": "Linked as {name} — active member",
@@ -1631,9 +1635,9 @@
   },
   "roadmap": {
     "title": "Peta Jalan",
-    "intro": "Bergabunglah dengan Patreon kami untuk mengusulkan judul dan fitur yang akan hadir berikutnya di Nadeshiko!",
+    "intro": "Lihat apa yang akan hadir di Nadeshiko. Siapa pun bisa meminta judul dan memilih apa yang datang berikutnya.",
     "support": "Dukung Nadeshiko",
-    "proposeCta": "Usulkan anime",
+    "proposeCta": "Minta judul",
     "filterLabel": "Saring peta jalan",
     "filters": {
       "content": "Judul",
@@ -1650,49 +1654,7 @@
     "emptyFeatures": "Belum ada pencapaian fitur.",
     "viewSource": "Lihat sumber",
     "loadError": "Peta jalan tidak dapat dimuat saat ini.",
-    "proposalTitle": "Minta anime favorit Anda!",
-    "proposalIntro": "Patron aktif Nadeshiko dapat meminta judul untuk ditambahkan setiap bulan; jumlahnya tergantung tingkatan. Periksa akses Anda di bawah ini!",
-    "proposalTiersLink": "Lihat tingkatannya.",
-    "steps": {
-      "signIn": "Masuk ke Nadeshiko",
-      "patreon": "Hubungkan atau bergabung di Patreon",
-      "propose": "Kirim usulan Anda"
-    },
-    "states": {
-      "anonymousTitle": "Masuk untuk mengusulkan anime",
-      "anonymousBody": "Peta jalan dapat dilihat oleh siapa saja. Patron dengan akun Nadeshiko yang terhubung dapat mengirim usulan.",
-      "unlinkedTitle": "Hubungkan akun Patreon Anda",
-      "unlinkedBody": "Kami akan memverifikasi keanggotaan Nadeshiko Anda dengan aman. Patreon tidak pernah digunakan untuk masuk.",
-      "inactiveTitle": "Jadilah patron aktif",
-      "inactiveBody": "Akun Patreon Anda sudah terhubung, tetapi saat ini tidak memiliki keanggotaan berbayar Nadeshiko yang aktif.",
-      "activeTitle": "Usulan Anda",
-      "submittedTitle": "Usulan diterima",
-      "submittedBody": "Usulan Anda berada dalam antrean tinjauan privat. Jika disetujui, usulan akan muncul di linimasa ini."
-    },
-    "signIn": "Masuk",
-    "linkPatreon": "Hubungkan Patreon",
-    "becomePatron": "Bergabung di Patreon",
-    "checkAgain": "Periksa lagi",
-    "submitAnother": "Usulkan yang lain",
-    "patreonMember": "Anggota Patreon",
-    "activeBadge": "Patron aktif",
-    "form": {
-      "url": "Tautan anime",
-      "urlPlaceholder": "https://anilist.co/anime/…",
-      "title": "Judul (opsional)",
-      "titlePlaceholder": "Kami akan mengambilnya dari tautan",
-      "credit": "Nama publik (opsional)",
-      "creditPlaceholder": "Nama atau akun Patreon Anda",
-      "creditHint": "Biarkan kosong agar dicantumkan sebagai anggota Patreon anonim.",
-      "note": "Mengapa memilih ini? (opsional)",
-      "notePlaceholder": "Ceritakan mengapa judul ini cocok untuk Nadeshiko",
-      "submit": "Kirim untuk ditinjau"
-    },
     "features": {
-      "patreonProposals": {
-        "title": "Usulan judul dari Patreon",
-        "description": "Patron dapat menghubungkan keanggotaan, mengusulkan judul, dan mengikuti penambahan yang disetujui di peta jalan publik."
-      },
       "searchFilters": {
         "title": "Filter pencarian yang lebih baik",
         "description": "Cari langsung berdasarkan nama media, tag, dan filter khusus lainnya."
@@ -1728,6 +1690,10 @@
       "apiKeys": {
         "title": "Kunci API dengan izin terperinci",
         "description": "Kunci API dapat bersifat hanya-baca, akses penuh, atau dibatasi pada izin yang dipilih secara khusus."
+      },
+      "contentRequests": {
+        "title": "Permintaan konten",
+        "description": "Siapa pun bisa meminta anime, drama, buku audio, dan kanal YouTube serta memilih yang berikutnya; patron bisa memberi boost."
       }
     },
     "callbackDeclined": "Koneksi Patreon tidak disetujui.",
@@ -1738,7 +1704,8 @@
     "admin": {
       "tab": "Peta Jalan",
       "title": "Antrean peta jalan"
-    }
+    },
+    "requestsLink": "Buka permintaan."
   },
   "feedback": {
     "open": "Masukan",
@@ -1828,7 +1795,7 @@
     "tierText": {
       "seed": [
         "Jika Nadeshiko berguna dalam perjalananmu belajar bahasa Jepang dan kamu ingin menunjukkan apresiasi serta membantu menjaga situs ini tetap hidup, tingkatan ini untukmu. Terima kasih!",
-        "Sebagai gantinya, kamu bisa meminta media baru ditambahkan ke Nadeshiko dan mendapat batas API yang lebih tinggi."
+        "Sebagai gantinya, kamu mendapat boost untuk menaikkan judul yang kamu mau di daftar permintaan, dan batas API yang lebih tinggi."
       ],
       "flower": [
         "Untuk mereka yang benar-benar percaya pada proyek ini. Kami sangat menghargai kontribusimu!",
@@ -1836,7 +1803,7 @@
       ],
       "nadeshiko": [
         "Tingkatan tertinggi kami, untuk mereka yang ingin memberi dukungan terkuat bagi Nadeshiko. Kontribusi di tingkat ini yang memungkinkan kami terus memperluas pustaka dan membangun fitur baru.",
-        "Kamu mendapat semua yang ada di tingkatan Flower, permintaan mediamu didahulukan, dan kamu mendapat batas API tertinggi kami."
+        "Kamu mendapat semua yang ada di tingkatan Flower, boost terbanyak agar pilihanmu didahulukan, dan batas API tertinggi kami."
       ]
     },
     "tiersIntro": "Pilih yang paling cocok. Kamu bisa mengubah atau membatalkannya di Patreon kapan saja.",
@@ -1848,12 +1815,11 @@
       "nadeshiko": "Nadeshiko"
     },
     "perks": {
-      "titleRequests": "Ajukan hingga {count} judul per bulan",
       "talkToDevs": "Bicara langsung dengan pengembang",
       "everythingIn": "Semua yang ada di {tier}",
-      "priority": "Prioritas untuk permintaan judul",
       "apiRequests": "{count} permintaan API per bulan",
-      "customThemes": "Tema kustom"
+      "customThemes": "Tema kustom",
+      "requestBoosts": "{count} boost permintaan per bulan"
     },
     "faq": {
       "title": "Pertanyaan",
@@ -1875,5 +1841,104 @@
         "a": "Tidak. Satu akun Patreon hanya bisa ditautkan ke satu akun Nadeshiko."
       }
     }
+  },
+  "requests": {
+    "seoTitle": "Minta anime, drama, buku audio, dan YouTube | Nadeshiko",
+    "seoDescription": "Minta anime, drama Jepang, buku audio, dan kanal YouTube yang kamu inginkan di Nadeshiko, lalu pilih apa yang datang berikutnya.",
+    "title": "Permintaan",
+    "intro": "Minta anime, drama, buku audio, dan kanal YouTube yang ingin kamu pakai belajar, dan pilih permintaan orang lain. Judul yang paling diminati didahulukan.",
+    "newRequest": "Permintaan baru",
+    "boostWithPatreon": "Boost lewat Patreon",
+    "allowance": {
+      "open": "{count} dari {limit} permintaan terbuka",
+      "boosts": "Sisa {remaining} dari {total} boost bulan ini (diperbarui {date})"
+    },
+    "form": {
+      "heading": "Minta judul",
+      "help": "Tempel tautan AniList untuk anime, TMDB atau MyDramaList untuk drama, Audible atau Amazon (atau ASIN saja) untuk buku audio, atau YouTube untuk kanal atau video. Jika sudah diminta, suaramu ditambahkan ke permintaan itu.",
+      "url": "Tautan",
+      "urlPlaceholder": "https://anilist.co/anime/…",
+      "titleLabel": "Judul",
+      "note": "Catatan (opsional)",
+      "notePlaceholder": "Musim yang mana, di mana ada subtitle, apa pun yang membantu.",
+      "submit": "Kirim permintaan",
+      "cancel": "Batal",
+      "unsupported": "Gunakan tautan AniList, TMDB, MyDramaList, Audible, Amazon, atau YouTube.",
+      "needsTitle": "Kami tidak bisa membaca judul dari tautan itu. Tulis judulnya lalu kirim lagi.",
+      "limit": "Kamu sudah mencapai batas {limit} permintaan terbuka, atau batas permintaan hari ini. Sementara itu, pilih permintaan yang sudah ada."
+    },
+    "outcome": {
+      "created": "Permintaan terkirim: {title}",
+      "voted": "{title} sudah diminta, jadi suaramu kami tambahkan.",
+      "already_voted": "Kamu sudah memilih {title}."
+    },
+    "tabs": {
+      "ACTIVE": "Terbuka",
+      "RELEASED": "Dirilis",
+      "DECLINED": "Ditolak"
+    },
+    "searchLabel": "Cari permintaan",
+    "sortLabel": "Urutkan",
+    "sort": {
+      "TOP": "Paling diminati",
+      "RECENT": "Terbaru"
+    },
+    "categoryLabel": "Kategori",
+    "category": {
+      "ALL": "Semua",
+      "ANIME": "Anime",
+      "JDRAMA": "Drama",
+      "AUDIOBOOK": "Buku audio",
+      "YOUTUBE": "YouTube"
+    },
+    "loadError": "Permintaan tidak dapat dimuat saat ini.",
+    "emptySearch": "Tidak ada permintaan yang cocok dengan pencarian itu.",
+    "empty": {
+      "ACTIVE": "Belum ada permintaan terbuka. Jadilah yang pertama!",
+      "RELEASED": "Belum ada permintaan yang dirilis.",
+      "DECLINED": "Belum ada permintaan yang ditolak."
+    },
+    "vote": "Pilih",
+    "unvote": "Batalkan pilihan",
+    "kindUpdate": "Lanjutan judul di Nadeshiko",
+    "status": {
+      "OPEN": "Terbuka",
+      "PLANNED": "Direncanakan",
+      "IN_PROGRESS": "Sedang dikerjakan",
+      "RELEASED": "Dirilis",
+      "DECLINED": "Ditolak"
+    },
+    "declinedBecause": "Ditolak: {reason}",
+    "votes": "{count} suara",
+    "boosts": "{count} boost",
+    "viewSource": "Lihat sumber",
+    "searchIt": "Cari di sini",
+    "onNadeshiko": "Di Nadeshiko",
+    "boost": {
+      "action": "Boost",
+      "boosted": "Sudah di-boost",
+      "already": "Kamu sudah memberi boost pada permintaan ini.",
+      "hint": "Satu boost bernilai lima suara dan tidak bisa dibatalkan.",
+      "done": "Kamu memberi boost pada {title}.",
+      "failed": "Boost tidak dapat diberikan. Mungkin jatahmu bulan ini sudah habis."
+    },
+    "withdraw": "Tarik",
+    "withdrawConfirm": "Tarik permintaanmu untuk {title}?",
+    "withdrawFailed": "Permintaan itu tidak dapat ditarik.",
+    "pagination": "Halaman",
+    "previous": "Sebelumnya",
+    "next": "Berikutnya",
+    "how": {
+      "title": "Cara kerja permintaan",
+      "vote": "Siapa pun yang punya akun bisa meminta judul dan memilih. Setiap suara dihitung sekali, dan meminta judul yang sudah diminta menambahkan suaramu ke permintaan itu.",
+      "boost": "Patron mendapat boost setiap bulan: 3 untuk Seed, 5 untuk Flower, dan 10 untuk Nadeshiko. Satu boost bernilai lima suara.",
+      "limits": "Kamu bisa punya 10 permintaan terbuka sekaligus (30 untuk patron) dan mengirim hingga 5 per hari.",
+      "news": "Kami mengirim email saat judul yang kamu pilih mulai dikerjakan dan saat dirilis. Kamu bisa mematikannya di pengaturan."
+    },
+    "admin": {
+      "tab": "Permintaan"
+    },
+    "noIngestYet": "Drama belum didukung",
+    "noIngestYetHint": "Kami belum bisa menambahkan drama. Suara di sini menunjukkan seberapa diminati."
   }
 }

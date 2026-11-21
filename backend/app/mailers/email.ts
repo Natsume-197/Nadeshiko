@@ -8,7 +8,9 @@ import {
   buildFeedbackEmail,
   buildFeedbackAskEmail,
   buildDormant30Email,
+  buildRequestUpdateEmail,
   type DormantTitle,
+  type RequestUpdateEmailInput,
   type FeedbackEmailInput,
 } from './emailTemplates';
 import { createLetterOpenerTransport, getPreviewUrl, LETTER_OPENER_DIR } from './letterOpener';
@@ -324,6 +326,30 @@ export async function sendDormant30Email(input: {
   captureEmailSent({ userId: input.userId, kind: 'dormant-30', campaign: input.campaign });
 }
 
+/** Tell one voter that a request they voted for or boosted is being worked on or has shipped. One job per voter and
+ * status, so a status flipped back and forth does not mail anyone twice for the same news. */
+export async function sendRequestUpdateEmail(
+  input: Omit<RequestUpdateEmailInput, 'unsubscribeUrl'> & { userId: number; email: string; requestId: number },
+): Promise<void> {
+  const { oneClick, page } = unsubscribeUrls(input.userId, 'requests');
+  const { subject, html, campaign } = await buildRequestUpdateEmail({ ...input, unsubscribeUrl: page });
+
+  await sendEmailJob(
+    {
+      to: input.email,
+      subject,
+      html,
+      kind: 'request-update',
+      campaign,
+      userId: input.userId,
+      unsubscribeUrl: oneClick,
+    },
+    `request-${input.requestId}-${input.status}-${input.userId}`,
+  );
+
+  captureEmailSent({ userId: input.userId, kind: 'request-update', campaign });
+}
+
 export const TEST_EMAIL_TEMPLATES = [
   'welcome',
   'verify-new-email',
@@ -333,6 +359,8 @@ export const TEST_EMAIL_TEMPLATES = [
   'feedback-ask-cold',
   'dormant-30',
   'dormant-30-quiet',
+  'request-in-progress',
+  'request-released',
 ] as const;
 
 export type TestEmailTemplate = (typeof TEST_EMAIL_TEMPLATES)[number];
@@ -345,6 +373,9 @@ function kindOfTestTemplate(template: TestEmailTemplate): EmailKind {
       return 'feedback-ask';
     case 'dormant-30-quiet':
       return 'dormant-30';
+    case 'request-in-progress':
+    case 'request-released':
+      return 'request-update';
     default:
       return template;
   }
@@ -414,6 +445,16 @@ export async function sendTestEmail(template: TestEmailTemplate, to: string): Pr
             ]
           : [],
       unsubscribeUrl: unsubscribeUrls(1).page,
+    }));
+  } else if (template === 'request-in-progress' || template === 'request-released') {
+    ({ subject, html } = await buildRequestUpdateEmail({
+      username,
+      status: template === 'request-released' ? 'RELEASED' : 'IN_PROGRESS',
+      title: 'Frieren: Beyond Journey’s End',
+      coverUrl: `${config.BASE_URL}/logo-38d6e06a.webp`,
+      voteCount: 42,
+      path: template === 'request-released' ? '/media/frieren' : '/requests',
+      unsubscribeUrl: unsubscribeUrls(1, 'requests').page,
     }));
   } else {
     ({ subject, html } = await buildMagicLinkEmail(`${config.BASE_URL}/v1/auth/magic-link/verify?token=test-token`));

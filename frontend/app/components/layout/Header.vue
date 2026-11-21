@@ -16,6 +16,7 @@ import {
   mdiLogout,
   mdiMessageTextOutline,
   mdiHandHeartOutline,
+  mdiThumbUpOutline,
 } from '@mdi/js';
 
 const store = userStore();
@@ -116,6 +117,10 @@ watch(() => route.fullPath, closeNavSidebar);
                     <NuxtLink :to="localePath('/supporters')" data-testid="nav-supporters"
                         class="text-sm font-semibold text-white transition-all duration-200 hover:text-opacity-80">
                         {{ $t("navbar.buttons.supporters") }}
+                    </NuxtLink>
+                    <NuxtLink :to="localePath('/requests')" data-testid="nav-requests"
+                        class="text-sm font-semibold text-white transition-all duration-200 hover:text-opacity-80">
+                        {{ $t("navbar.buttons.requests") }}
                     </NuxtLink>
                     <NuxtLink to="/docs/api/index.html" external
                         class="text-sm font-semibold text-white transition-all duration-200 hover:text-opacity-80">
@@ -256,6 +261,11 @@ watch(() => route.fullPath, closeNavSidebar);
                     class="nd-sidebar-link flex items-center gap-3 px-5 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-neutral-300 dark:hover:bg-neutral-700">
                     <UiBaseIcon :path="mdiHandHeartOutline" :size="18" />
                     {{ $t("navbar.buttons.supporters") }}
+                </NuxtLink>
+                <NuxtLink :to="localePath('/requests')"
+                    class="nd-sidebar-link flex items-center gap-3 px-5 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-neutral-300 dark:hover:bg-neutral-700">
+                    <UiBaseIcon :path="mdiThumbUpOutline" :size="18" />
+                    {{ $t("navbar.buttons.requests") }}
                 </NuxtLink>
                 <NuxtLink to="/docs/api/index.html" external
                     class="nd-sidebar-link flex items-center gap-3 px-5 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-neutral-300 dark:hover:bg-neutral-700">

@@ -129,7 +129,7 @@ describe('reading preferences from a token', () => {
     const response = await request(app).get('/v1/email/preferences').query({ token }).expect(200);
 
     expect(response.body.enabled).toBe(true);
-    expect(response.body.categories).toEqual({ recap: true, checkins: true, updates: true });
+    expect(response.body.categories).toEqual({ recap: true, checkins: true, updates: true, requests: true });
   });
 
   /** The page highlights it, because it is the one the reader clicked about. */
@@ -169,7 +169,7 @@ describe('changing preferences from a token', () => {
 
     const response = await request(app).patch('/v1/email/preferences').send({ token, recap: false }).expect(200);
 
-    expect(response.body.categories).toEqual({ recap: false, checkins: true, updates: true });
+    expect(response.body.categories).toEqual({ recap: false, checkins: true, updates: true, requests: true });
     expect(response.body.enabled).toBe(true);
   });
 
@@ -179,7 +179,7 @@ describe('changing preferences from a token', () => {
     const response = await request(app).patch('/v1/email/preferences').send({ token, enabled: false }).expect(200);
 
     expect(response.body.enabled).toBe(false);
-    expect(response.body.categories).toEqual({ recap: false, checkins: false, updates: false });
+    expect(response.body.categories).toEqual({ recap: false, checkins: false, updates: false, requests: false });
   });
 
   /** Use a partial patch so a stale page cannot overwrite a preference changed elsewhere. */
@@ -189,7 +189,7 @@ describe('changing preferences from a token', () => {
     await request(app).patch('/v1/email/preferences').send({ token, recap: false }).expect(200);
     const response = await request(app).patch('/v1/email/preferences').send({ token, updates: false }).expect(200);
 
-    expect(response.body.categories).toEqual({ recap: false, checkins: true, updates: false });
+    expect(response.body.categories).toEqual({ recap: false, checkins: true, updates: false, requests: true });
   });
 
   it('refuses a token it cannot read', async () => {

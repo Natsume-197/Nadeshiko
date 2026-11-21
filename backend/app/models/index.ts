@@ -12,6 +12,15 @@ export type { UserDictionaryArtifactStatus } from './UserDictionaryArtifact';
 export { UserDictionaryUpload } from './UserDictionaryUpload';
 export type { UserDictionaryUploadStatus } from './UserDictionaryUpload';
 export { RoadmapItem, RoadmapItemKind, RoadmapItemStatus } from './RoadmapItem';
+export {
+  ContentRequest,
+  ContentRequestKind,
+  ContentRequestStatus,
+  ACTIVE_REQUEST_STATUSES,
+  REQUEST_BOOST_WEIGHT,
+} from './ContentRequest';
+export { ContentRequestVote } from './ContentRequestVote';
+export { ContentRequestBoost } from './ContentRequestBoost';
 export { Tier } from './Tier';
 export { resolveQuotaLimit, patreonQuotaTier, unmatchedPatreonTierIds, PATREON_QUOTA_STALE_MS } from './quota';
 export type { QuotaSource, ResolvedQuota, PatreonMembership } from './quota';

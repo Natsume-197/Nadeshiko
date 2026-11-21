@@ -130,11 +130,22 @@ import {
 import { requireSessionAuth } from '@app/middleware/authentication';
 import {
   createAdminRoadmapItem,
-  createRoadmapProposal,
   listAdminRoadmap,
   listRoadmap,
   updateAdminRoadmapItem,
 } from '@app/controllers/roadmapController';
+import {
+  boostContentRequest,
+  createContentRequest,
+  getContentRequestAllowance,
+  listAdminContentRequests,
+  listContentRequests,
+  mergeAdminContentRequest,
+  unvoteContentRequest,
+  updateAdminContentRequest,
+  voteContentRequest,
+  withdrawContentRequest,
+} from '@app/controllers/contentRequestController';
 import { getStatsOverview, getCoveredWords, triggerCoveredWordsUpdate } from '@app/controllers/statsController';
 import { createRouter as createSearchRouter } from 'generated/routes/search';
 import { createRouter as createMediaRouter } from 'generated/routes/media';
@@ -146,6 +157,7 @@ import { createRouter as createFeedbackRouter } from 'generated/routes/feedback'
 import { createRouter as createEmailRouter } from 'generated/routes/email';
 import { createRouter as createStatsRouter } from 'generated/routes/stats';
 import { createRouter as createRoadmapRouter } from 'generated/routes/roadmap';
+import { createRouter as createRequestsRouter } from 'generated/routes/requests';
 
 export const noCache = (_req: Request, res: Response, next: NextFunction) => {
   res.setHeader('Cache-Control', 'no-store');
@@ -308,6 +320,9 @@ const AdminRoutes = createAdminRouter({
   listAdminRoadmap,
   createAdminRoadmapItem,
   updateAdminRoadmapItem,
+  listAdminContentRequests,
+  updateAdminContentRequest,
+  mergeAdminContentRequest,
 });
 
 const FeedbackRoutes = createFeedbackRouter({
@@ -327,7 +342,17 @@ const StatsRoutes = createStatsRouter({
   triggerCoveredWordsUpdate,
 });
 
-const RoadmapRoutes = createRoadmapRouter({ listRoadmap, createRoadmapProposal });
+const RoadmapRoutes = createRoadmapRouter({ listRoadmap });
+
+const RequestsRoutes = createRequestsRouter({
+  listContentRequests,
+  createContentRequest,
+  getContentRequestAllowance,
+  withdrawContentRequest,
+  voteContentRequest,
+  unvoteContentRequest,
+  boostContentRequest,
+});
 
 const UserRoutes = createUserRouter({
   getMe,
@@ -427,6 +452,7 @@ for (const { method, path, middleware } of routeAuth) {
 // frontend limiter.
 router.get('/v1/admin/announcement', setRouteTemplate('/v1/admin/announcement'));
 router.get('/v1/roadmap', setRouteTemplate('/v1/roadmap'));
+router.get('/v1/requests', setRouteTemplate('/v1/requests'));
 router.post('/v1/feedback', setRouteTemplate('/v1/feedback'), feedbackRateLimit);
 router.get('/v1/feedback/token', setRouteTemplate('/v1/feedback/token'), feedbackRateLimit);
 router.post('/v1/email/unsubscribe', setRouteTemplate('/v1/email/unsubscribe'), unsubscribeRateLimit);
@@ -442,6 +468,7 @@ router.post(['/v1/search', '/v1/search/stats'], searchInFlightLimit);
 router.use('/', SearchRoutes);
 router.use('/', StatsRoutes);
 router.use('/', RoadmapRoutes);
+router.use('/', RequestsRoutes);
 router.use('/', MediaRoutes);
 router.use('/', ActivityRoutes);
 router.use('/', CollectionsRoutes);
@@ -502,6 +529,7 @@ export {
   SearchRoutes,
   StatsRoutes,
   RoadmapRoutes,
+  RequestsRoutes,
   ActivityRoutes,
   CollectionsRoutes,
   AdminRoutes,

@@ -11,11 +11,11 @@ import {
   mdiMapOutline,
   mdiMovieOpenOutline,
   mdiPatreon,
+  mdiThumbUpOutline,
   mdiTools,
   mdiTranslate,
   mdiYoutube,
 } from '@mdi/js';
-import { handleApiError } from '~/utils/apiError';
 import { httpUrl } from '~/utils/strings';
 import { DEFAULT_OG_IMAGE_PATH } from '~/utils/metaTags';
 
@@ -34,18 +34,8 @@ interface RoadmapItem {
   createdAt: string;
   proposerName: string | null;
 }
-interface PatreonConnection {
-  linked: true;
-  fullName: string | null;
-  active: boolean;
-  patronStatus: string | null;
-  entitledAmountCents: number;
-}
-type ProposalState = 'anonymous' | 'unlinked' | 'inactive' | 'active' | 'submitted';
-
 const { t } = useI18n();
-const user = userStore();
-const { openLoginModal } = useLoginModal();
+const localePath = useLocalePath();
 
 useSeoMeta({
   title: () => t('supporters.seoTitle'),
@@ -56,20 +46,10 @@ useSeoMeta({
   twitterCard: 'summary_large_image',
 });
 
-const { data, error, refresh } = await useAsyncData('roadmap', () =>
+const { data, error } = await useAsyncData('roadmap', () =>
   $fetch<{ items: RoadmapItem[]; patreonUrl: string }>('/v1/roadmap'),
 );
 const items = computed(() => data.value?.items ?? []);
-const patreonUrl = computed(() => data.value?.patreonUrl ?? 'https://www.patreon.com/c/NadeshikoApp');
-const connection = ref<PatreonConnection | null>(null);
-const connectionLoading = ref(false);
-const connectionLoaded = ref(false);
-const working = ref(false);
-const submitted = ref(false);
-const sourceUrl = ref('');
-const proposalTitle = ref('');
-const proposalNote = ref('');
-const proposerName = ref('');
 const selectedKind = ref<'CONTENT' | 'FEATURE'>('CONTENT');
 
 /**
@@ -99,20 +79,6 @@ onMounted(() => {
   window.addEventListener('hashchange', syncTabFromHash);
 });
 onBeforeUnmount(() => window.removeEventListener('hashchange', syncTabFromHash));
-const PATREON_PROPOSALS_ENABLED = false;
-const isDev = import.meta.dev;
-const devProposalState = ref<'auto' | ProposalState>('auto');
-const isDevPreview = computed(() => isDev && devProposalState.value !== 'auto');
-const proposalState = computed<ProposalState | 'loading'>(() => {
-  if (isDevPreview.value) return devProposalState.value as ProposalState;
-  if (!user.isLoggedIn) return 'anonymous';
-  if (connectionLoading.value) return 'loading';
-  if (!connection.value) return 'unlinked';
-  if (!connection.value.active) return 'inactive';
-  if (submitted.value) return 'submitted';
-  return 'active';
-});
-
 const titleItems = computed(() =>
   items.value
     .filter((item) => item.kind === 'CONTENT')
@@ -128,7 +94,7 @@ const titleItems = computed(() =>
 const featureItems = computed(() =>
   items.value
     .filter(
-      (item) => item.kind === 'FEATURE' && (PATREON_PROPOSALS_ENABLED || item.title !== 'Patreon title proposals'),
+      (item) => item.kind === 'FEATURE',
     )
     .sort((a, b) => {
       const aReleased = a.status === 'RELEASED';
@@ -140,7 +106,7 @@ const featureItems = computed(() =>
 );
 
 const featureIcons: Record<string, string> = {
-  'Patreon title proposals': mdiPatreon,
+  'Content requests': mdiThumbUpOutline,
   'Better search filters': mdiFilterOutline,
   'Public roadmap': mdiMapOutline,
   'Seven interface languages': mdiTranslate,
@@ -153,7 +119,7 @@ const featureIcons: Record<string, string> = {
 };
 
 const featureTranslationKeys: Record<string, string> = {
-  'Patreon title proposals': 'patreonProposals',
+  'Content requests': 'contentRequests',
   'Better search filters': 'searchFilters',
   'Public roadmap': 'publicRoadmap',
   'Seven interface languages': 'interfaceLanguages',
@@ -177,95 +143,6 @@ function featureTitle(item: RoadmapItem) {
 function featureDescription(item: RoadmapItem) {
   const key = featureTranslationKeys[item.title];
   return key ? t(`roadmap.features.${key}.description`) : item.description;
-}
-
-async function loadConnection(force = false) {
-  if (!user.isLoggedIn || (connectionLoaded.value && !force)) return;
-  connectionLoading.value = true;
-  try {
-    const response = await $fetch<{ connection: PatreonConnection | null }>('/v1/user/connections/patreon');
-    connection.value = response.connection;
-    connectionLoaded.value = true;
-  } catch (caught) {
-    handleApiError('roadmap.patreon.load', caught, { toastKey: false });
-  } finally {
-    connectionLoading.value = false;
-  }
-}
-
-onMounted(loadConnection);
-watch(
-  () => user.isLoggedIn,
-  (signedIn) => signedIn && loadConnection(true),
-);
-
-async function connectPatreon() {
-  if (isDevPreview.value) {
-    devProposalState.value = 'active';
-    return;
-  }
-  working.value = true;
-  try {
-    const response = await $fetch<{ authorizeUrl: string }>('/v1/user/connections/patreon', { method: 'POST' });
-    window.location.href = response.authorizeUrl;
-  } catch (caught) {
-    handleApiError('roadmap.patreon.connect', caught);
-    working.value = false;
-  }
-}
-
-async function submitProposal() {
-  if (isDevPreview.value) {
-    devProposalState.value = 'submitted';
-    return;
-  }
-  working.value = true;
-  try {
-    await $fetch('/v1/roadmap/proposals', {
-      method: 'POST',
-      body: {
-        sourceUrl: sourceUrl.value,
-        title: proposalTitle.value || undefined,
-        note: proposalNote.value || undefined,
-        proposerName: proposerName.value || undefined,
-      },
-    });
-    submitted.value = true;
-    sourceUrl.value = '';
-    proposalTitle.value = '';
-    proposalNote.value = '';
-    proposerName.value = '';
-    await refresh();
-  } catch (caught) {
-    handleApiError('roadmap.proposal.submit', caught);
-  } finally {
-    working.value = false;
-  }
-}
-
-function signInForProposal() {
-  if (isDevPreview.value) {
-    devProposalState.value = 'unlinked';
-    return;
-  }
-  openLoginModal('roadmap_proposal');
-}
-
-function checkMembership() {
-  if (isDevPreview.value) {
-    devProposalState.value = 'active';
-    return;
-  }
-  loadConnection(true);
-}
-
-function submitAnother() {
-  if (isDevPreview.value) devProposalState.value = 'active';
-  else submitted.value = false;
-}
-
-function scrollToProposal() {
-  document.getElementById('propose')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function formatMonth(month: string) {
@@ -300,7 +177,7 @@ function featureDate(item: RoadmapItem) {
           <a href="#support" class="inline-flex h-11 items-center gap-2 rounded-lg bg-[#ff424d] px-5 font-semibold text-on-accent hover:bg-[#ff5962]">
             <UiBaseIcon :path="mdiPatreon" size="19" /> {{ t('roadmap.support') }}
           </a>
-          <a v-if="PATREON_PROPOSALS_ENABLED" href="#propose" class="nd-btn h-11 px-5" @click.prevent="scrollToProposal">{{ t('roadmap.proposeCta') }}</a>
+          <NuxtLink :to="localePath('/requests')" data-testid="supporters-requests-cta" class="nd-btn h-11 px-5">{{ t('roadmap.proposeCta') }}</NuxtLink>
         </div>
       </div>
     </section>
@@ -331,7 +208,10 @@ function featureDate(item: RoadmapItem) {
       </div>
 
       <section v-show="pageTab === 'roadmap'" id="panel-roadmap" role="tabpanel" aria-labelledby="tab-roadmap" class="pt-12">
-        <p class="text-center text-sm text-gray-400">{{ t('roadmap.intro') }}</p>
+        <p class="text-center text-sm text-gray-400">
+          {{ t('roadmap.intro') }}
+          <NuxtLink :to="localePath('/requests')" class="text-brand hover:underline">{{ t('roadmap.requestsLink') }}</NuxtLink>
+        </p>
       <section class="py-8 md:py-10" :aria-label="t('roadmap.filterLabel')">
         <div id="features" class="mb-8 flex justify-center gap-6 border-b border-white/10" role="tablist" :aria-label="t('roadmap.filterLabel')">
             <button v-for="kind in (['CONTENT', 'FEATURE'] as const)" :key="kind" type="button" role="tab" :aria-selected="selectedKind === kind"
@@ -388,78 +268,6 @@ function featureDate(item: RoadmapItem) {
       </section>
     </main>
 
-    <section v-if="PATREON_PROPOSALS_ENABLED" id="propose" class="proposal-panel border-y border-white/10 px-4 py-14 md:py-20">
-      <div class="nd-page">
-        <header class="mx-auto max-w-2xl text-center">
-          <h2 class="inline-flex items-center justify-center gap-3 text-3xl font-black underline decoration-[var(--accent)] decoration-4 underline-offset-8 md:text-4xl"><UiBaseIcon :path="mdiPatreon" size="32" class="text-[var(--accent)]" />{{ t('roadmap.proposalTitle') }}</h2>
-          <!-- How many titles each tier may request lives in the support section below, not repeated here. -->
-          <p class="mt-4 leading-relaxed text-white/55">
-            {{ t('roadmap.proposalIntro') }}
-            <a href="#support" class="text-brand hover:underline">{{ t('roadmap.proposalTiersLink') }}</a>
-          </p>
-        </header>
-
-        <ol class="mx-auto mt-8 grid max-w-3xl gap-3 text-center text-sm sm:grid-cols-3">
-          <li class="rounded-lg border border-[var(--line)] bg-[var(--background)] px-4 py-3"><span class="mr-2 font-bold text-[var(--accent-soft)]">1</span>{{ t('roadmap.steps.signIn') }}</li>
-          <li class="rounded-lg border border-[var(--line)] bg-[var(--background)] px-4 py-3"><span class="mr-2 font-bold text-[var(--accent-soft)]">2</span>{{ t('roadmap.steps.patreon') }}</li>
-          <li class="rounded-lg border border-[var(--line)] bg-[var(--background)] px-4 py-3"><span class="mr-2 font-bold text-[var(--accent-soft)]">3</span>{{ t('roadmap.steps.propose') }}</li>
-        </ol>
-
-        <label v-if="isDev" class="mx-auto mt-6 flex max-w-md items-center gap-3 rounded-lg border border-dashed border-[var(--accent-soft)] bg-[var(--surface)] px-4 py-3 text-xs text-white/55">
-          <span class="shrink-0 font-semibold text-[var(--accent-soft)]">Local preview</span>
-          <select v-model="devProposalState" class="nd-select min-w-0 flex-1" aria-label="Preview proposal state">
-            <option value="auto">Actual account state</option>
-            <option value="anonymous">Signed out</option>
-            <option value="unlinked">Patreon not linked</option>
-            <option value="inactive">No active membership</option>
-            <option value="active">Active patron</option>
-            <option value="submitted">Submitted</option>
-          </select>
-        </label>
-
-        <div class="mx-auto mt-8 max-w-2xl px-5 md:px-8">
-            <div v-if="proposalState === 'anonymous'" data-testid="roadmap-anonymous" class="py-5 text-center">
-              <h3 class="text-lg font-bold">{{ t('roadmap.states.anonymousTitle') }}</h3>
-              <p class="mt-2 text-sm text-white/50">{{ t('roadmap.states.anonymousBody') }}</p>
-              <button type="button" class="nd-btn-accent mt-5" @click="signInForProposal">{{ t('roadmap.signIn') }}</button>
-            </div>
-            <div v-else-if="proposalState === 'loading'" class="flex justify-center py-10"><span class="nd-spinner" /></div>
-            <div v-else-if="proposalState === 'unlinked'" data-testid="roadmap-unlinked" class="py-5 text-center">
-              <h3 class="text-lg font-bold">{{ t('roadmap.states.unlinkedTitle') }}</h3>
-              <p class="mt-2 text-sm text-white/50">{{ t('roadmap.states.unlinkedBody') }}</p>
-              <div class="mt-5 flex flex-wrap justify-center gap-3">
-                <button type="button" class="inline-flex items-center gap-2 rounded-lg bg-[#ff424d] px-4 py-2 font-semibold text-on-accent hover:bg-[#ff5962]" :disabled="working" @click="connectPatreon"><UiBaseIcon :path="mdiPatreon" size="18" />{{ t('roadmap.linkPatreon') }}</button>
-                <a :href="patreonUrl" target="_blank" rel="noopener" class="inline-flex items-center rounded-lg border border-white/15 bg-white/5 px-4 py-2 font-semibold text-white/75 hover:bg-white/10 hover:text-white">{{ t('roadmap.becomePatron') }}</a>
-              </div>
-            </div>
-            <div v-else-if="proposalState === 'inactive'" data-testid="roadmap-inactive" class="py-5 text-center">
-              <h3 class="text-lg font-bold">{{ t('roadmap.states.inactiveTitle') }}</h3>
-              <p class="mt-2 text-sm text-white/50">{{ t('roadmap.states.inactiveBody') }}</p>
-              <div class="mt-5 flex flex-wrap justify-center gap-2">
-                <a :href="patreonUrl" target="_blank" rel="noopener" class="inline-flex items-center gap-2 rounded-lg bg-[#ff424d] px-4 py-2 font-semibold text-on-accent hover:bg-[#ff5962]"><UiBaseIcon :path="mdiPatreon" size="18" />{{ t('roadmap.becomePatron') }}</a>
-                <button type="button" class="nd-btn" :disabled="connectionLoading" @click="checkMembership">{{ t('roadmap.checkAgain') }}</button>
-              </div>
-            </div>
-            <div v-else-if="proposalState === 'submitted'" data-testid="roadmap-submitted" class="py-5 text-center">
-              <div class="mx-auto flex size-11 items-center justify-center rounded-full bg-brand/15 text-brand-hover"><UiBaseIcon :path="mdiCheck" /></div>
-              <h3 class="mt-4 text-lg font-bold">{{ t('roadmap.states.submittedTitle') }}</h3>
-              <p class="mt-2 text-sm text-white/50">{{ t('roadmap.states.submittedBody') }}</p>
-              <button type="button" class="nd-btn mt-5" @click="submitAnother">{{ t('roadmap.submitAnother') }}</button>
-            </div>
-            <form v-else data-testid="roadmap-patron-form" class="space-y-4" @submit.prevent="submitProposal">
-              <div class="mb-5 flex items-center justify-between gap-3">
-                <div><p class="font-bold">{{ t('roadmap.states.activeTitle') }}</p><p class="text-xs text-white/40">{{ connection?.fullName || t('roadmap.patreonMember') }}</p></div>
-                <span class="rounded-full bg-brand/15 px-3 py-1 text-xs font-semibold text-brand-hover">{{ t('roadmap.activeBadge') }}</span>
-              </div>
-              <label class="block"><span class="mb-1.5 block text-sm text-white/65">{{ t('roadmap.form.url') }}</span><input v-model="sourceUrl" required type="url" class="nd-input w-full" :placeholder="t('roadmap.form.urlPlaceholder')"></label>
-              <label class="block"><span class="mb-1.5 block text-sm text-white/65">{{ t('roadmap.form.title') }}</span><input v-model="proposalTitle" maxlength="180" class="nd-input w-full" :placeholder="t('roadmap.form.titlePlaceholder')"></label>
-              <label class="block"><span class="mb-1.5 block text-sm text-white/65">{{ t('roadmap.form.credit') }}</span><input v-model="proposerName" maxlength="80" class="nd-input w-full" :placeholder="t('roadmap.form.creditPlaceholder')"><span class="mt-1 block text-xs text-white/35">{{ t('roadmap.form.creditHint') }}</span></label>
-              <label class="block"><span class="mb-1.5 block text-sm text-white/65">{{ t('roadmap.form.note') }}</span><textarea v-model="proposalNote" maxlength="2000" rows="3" class="nd-input w-full resize-y" :placeholder="t('roadmap.form.notePlaceholder')" /></label>
-              <button type="submit" class="nd-btn-accent w-full" :disabled="working">{{ t('roadmap.form.submit') }}</button>
-            </form>
-        </div>
-      </div>
-    </section>
   </div>
 </template>
 
@@ -508,5 +316,4 @@ function featureDate(item: RoadmapItem) {
   height: 1px;
   background: rgb(var(--c-white) / .1);
 }
-.proposal-panel { background:var(--surface); }
 </style>

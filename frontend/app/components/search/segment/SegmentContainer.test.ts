@@ -5,7 +5,6 @@ import { ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import { formatMs } from '~/utils/misc';
 import { youtubeWatchUrl } from '~/utils/media';
-import { PATREON_URL } from '#shared/utils/socialLinks';
 
 /** Spoiler reveals are per-card and per-language. Hidden translations must be absent, not blurred. */
 const englishMode = ref('visible');
@@ -372,7 +371,7 @@ describe('the existing no-results view', () => {
     expect(missingView.outerHTML).toBe(originalView.outerHTML);
     expect(missing.get('h1').text()).toBe('searchpage.main.labels.noresults');
     expect(missing.find('a[href="https://www.immersionkit.com"]').exists()).toBe(true);
-    expect(missing.find(`a[href="${PATREON_URL}"]`).exists()).toBe(true);
+    expect(missing.find('[data-testid="no-results-requests"]').exists()).toBe(true);
   });
 
   test.each([
@@ -380,7 +379,7 @@ describe('the existing no-results view', () => {
     ['rate-limited', 'rateLimited'],
     ['quota-exceeded', 'quotaExceeded'],
     ['unavailable', 'unavailable'],
-  ])('uses the new %s text without dropping Haruhi or Patreon', (kind, key) => {
+  ])('uses the new %s text without dropping Haruhi or the requests link', (kind, key) => {
     const wrapper = render([], { failure: { kind } });
     const view = wrapper.get('[data-testid="search-failure-notice"]');
     expect(view.attributes('class')).toBe('w-full py-10');
@@ -391,14 +390,14 @@ describe('the existing no-results view', () => {
     expect(view.get('h1').attributes('class')).toBe('text-2xl font-semibold text-gray-800 dark:text-white md:text-3xl');
     expect(view.get('h1').text()).toBe(`searchErrors.${key}.title`);
     expect(view.get('p').text()).toBe(`searchErrors.${key}.message`);
-    expect(view.find(`a[href="${PATREON_URL}"]`).exists()).toBe(true);
+    expect(view.find('[data-testid="no-results-requests"]').exists()).toBe(true);
     expect(view.find('h2').exists()).toBe(false);
   });
 
   test('keeps the existing failure view while retrying, rather than showing a loading skeleton', () => {
     const wrapper = render([], { failure: { kind: 'unavailable' }, isLoading: true });
     expect(wrapper.get('[data-testid="search-failure-notice"] img').attributes('src')).toBe('/assets/no-results.gif');
-    expect(wrapper.find(`a[href="${PATREON_URL}"]`).exists()).toBe(true);
+    expect(wrapper.find('[data-testid="no-results-requests"]').exists()).toBe(true);
   });
 
   test('does not render raw API details in the existing view', () => {

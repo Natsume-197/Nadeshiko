@@ -61,13 +61,6 @@ describe('GET /v1/roadmap', () => {
         description: '',
         sortOrder: 1,
       }),
-      RoadmapItem.create({
-        kind: RoadmapItemKind.FEATURE,
-        status: RoadmapItemStatus.PLANNED,
-        title: 'Patreon title proposals',
-        description: '',
-        sortOrder: 0,
-      }),
     ]);
 
     const res = await request(app).get('/v1/roadmap');
@@ -204,11 +197,6 @@ describe('the admin roadmap', () => {
 describe('roadmap source URLs', () => {
   // The source link is rendered as an anchor on the public roadmap, so a script URL would run in readers' browsers.
   const scriptUrl = 'javascript:alert(document.cookie)';
-
-  it('refuses a non-http source on a public proposal', async () => {
-    const res = await request(app).post('/v1/roadmap/proposals').send({ sourceUrl: scriptUrl });
-    expect(res.status).toBe(400);
-  });
 
   it('refuses a non-http source when an admin creates or edits an item', async () => {
     const created = await request(app)
