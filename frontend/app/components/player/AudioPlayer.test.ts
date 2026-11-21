@@ -1,3 +1,24 @@
+test('gives the sentence the left and keeps every control in one block on the right', () => {
+  playerStore.currentResult.value = result();
+  const wrapper = render();
+
+  const order = wrapper
+    .findAll('[data-testid="player-bar"] [data-testid^="player-"]')
+    .map((el) => el.attributes('data-testid'))
+    .filter((id) => id !== 'player-sentence');
+
+  // A line, not a song: no centred transport. Playing and moving, then the modes, then the view.
+  expect(order).toEqual([
+    'player-show-sentence',
+    'player-prev',
+    'player-play',
+    'player-next',
+    'player-autoplay',
+    'player-repeat',
+    'player-listening-mode',
+    'player-close',
+  ]);
+});
 // @vitest-environment happy-dom
 import { mount } from '@vue/test-utils';
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
@@ -10,6 +31,17 @@ const playerStore = {
   currentAudio: null as HTMLAudioElement | null,
   currentResult: ref<Record<string, unknown> | null>(null),
   isPlaying: ref(false),
+  isBuffering: ref(false),
+  playlist: ref<unknown[]>([]),
+  currentIndex: ref<number | null>(0),
+  shadowGap: ref<number | 'auto'>(0),
+  repeatTimes: ref(1),
+  timesPlayed: ref(0),
+  gap: ref<{ ms: number; startedAt: number } | null>(null),
+  setShadowGap: vi.fn(),
+  setRepeatTimes: vi.fn(),
+  skipGap: vi.fn(),
+  trackVolumeChange: vi.fn(),
   showPlayer: ref(true),
   volume: ref(1),
   playbackRate: ref(1),
@@ -65,6 +97,8 @@ vi.stubGlobal('useYoutubeSegmentPlayer', () => ({
   setPlaybackRate: vi.fn(),
   stop: vi.fn(),
 }));
+vi.stubGlobal('useTranslationVisibility', () => ({ englishMode: ref('show'), spanishMode: ref('show') }));
+vi.stubGlobal('useTranslationLanguages', () => ({ languages: ref(['EN']) }));
 vi.stubGlobal('useLocalePath', () => (p: unknown) => (typeof p === 'string' ? p : JSON.stringify(p)));
 
 import AudioPlayer from './AudioPlayer.vue';
@@ -90,6 +124,8 @@ function render() {
         NuxtLink: { props: ['to'], template: '<a><slot /></a>' },
         SearchSegmentTokenText: true,
         CommonBaseModal: true,
+        SearchDropdownContainer: true,
+        SearchTranslationVisibilityPreferences: true,
       },
     },
     attachTo: document.body,
@@ -213,7 +249,7 @@ describe('the displayed sentence', () => {
     };
     const wrapper = render();
 
-    const sentence = wrapper.find('p.font-bold');
+    const sentence = wrapper.find('[data-testid="player-sentence"]');
     expect(sentence.html()).toContain('&lt;script&gt;alert(1)&lt;/script&gt;');
     expect(sentence.find('em').text()).toBe('猫');
     expect(sentence.find('img').exists()).toBe(false);
@@ -226,7 +262,7 @@ describe('the displayed sentence', () => {
     };
     const wrapper = render();
 
-    const sentence = wrapper.find('p.font-bold');
+    const sentence = wrapper.find('[data-testid="player-sentence"]');
     expect(sentence.html()).toContain('&lt;em&gt;raw sentence&lt;/em&gt;');
     expect(sentence.find('em').exists()).toBe(false);
   });
@@ -359,5 +395,29 @@ describe('volume', () => {
       await slider.setValue('30');
       expect(playerStore.setVolume).toHaveBeenCalledWith(0.3);
     }
+  });
+});
+
+describe('the bar', () => {
+  test('gives the sentence the left and keeps every control in one block on the right', () => {
+    playerStore.currentResult.value = result();
+    const wrapper = render();
+
+    const order = wrapper
+      .findAll('[data-testid="player-bar"] [data-testid^="player-"]')
+      .map((el) => el.attributes('data-testid'))
+      .filter((id) => id !== 'player-sentence');
+
+    // A line, not a song: no centred transport. Playing and moving, then the modes, then the view.
+    expect(order).toEqual([
+      'player-show-sentence',
+      'player-prev',
+      'player-play',
+      'player-next',
+      'player-autoplay',
+      'player-repeat',
+      'player-listening-mode',
+      'player-close',
+    ]);
   });
 });

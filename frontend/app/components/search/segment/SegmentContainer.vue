@@ -288,6 +288,9 @@ const onEditSuccess = (updated: SearchResult) => {
 watch(resultList, (list) => {
   const expanded = concatenatedResult.value;
   if (expanded && !list.includes(expanded)) revertActiveConcatenation();
+  // The player holds the list it was handed on the click; an appended page has to reach it, or
+  // playing on past the first page stops dead at its end.
+  playerStore.syncPlaylist(list);
 });
 
 const localePath = useLocalePath();

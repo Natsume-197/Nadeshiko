@@ -1,17 +1,13 @@
 <script setup lang="ts">
 import {
-  mdiRewind,
   mdiSkipPrevious,
   mdiPause,
   mdiPlay,
   mdiSkipNext,
-  mdiFastForward,
-  mdiAnimationPlay,
-  mdiMotionPauseOutline,
+  mdiPlaylistPlay,
   mdiRepeat,
-  mdiFullscreenExit,
   mdiClose,
-  mdiFullscreen,
+  mdiHeadphones,
   mdiVolumeHigh,
   mdiVolumeMedium,
   mdiVolumeLow,
@@ -19,6 +15,9 @@ import {
 } from '@mdi/js';
 import { PLAYBACK_RATES, resolveClipWindow, usePlayerStore } from '~/stores/player';
 import { splitLocalePrefix } from '~/utils/routes';
+import { usePlayerAnchor } from '~/composables/usePlayerAnchor';
+import PlayerSeekIcon from './SeekIcon.vue';
+import PlayerListeningMode from './ListeningMode.vue';
 import { watch, ref, computed, nextTick, onMounted, onBeforeUnmount } from 'vue';
 import { onClickOutside, useMediaQuery } from '@vueuse/core';
 import { storeToRefs } from 'pinia';
@@ -33,13 +32,12 @@ const { mediaName } = useMediaName();
 const {
   currentResult,
   isPlaying,
+  isBuffering,
   showPlayer,
   autoplay,
   repeat,
   isImmersive,
   currentAudio,
-  playlist,
-  currentIndex,
   volume,
   playbackRate,
 } = storeToRefs(playerStore);
@@ -65,7 +63,9 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   // This window capture handler runs before menu buttons. Roles identify keys that must reach their own
   // controls. Keep Escape available for the player's innermost layer rather than returning early for every
   // key.
-  const inMenu = target.closest('[role="menu"]') !== null;
+  // `.nd-menu` too: listening mode's practice panel is a menu of toggle buttons, not of menu items, and
+  // its Escape must close the panel rather than leave listening mode under it.
+  const inMenu = target.closest('[role="menu"], .nd-menu') !== null;
   const opensMenu = target.closest('[aria-haspopup="menu"]') !== null;
 
   // Disable shortcuts inside menus except Escape for our open speed menu. Layout-changing shortcuts would
@@ -216,6 +216,97 @@ const seek = (delta: number) => {
 const seekBackward = () => seek(-SEEK_STEP);
 const seekForward = () => seek(SEEK_STEP);
 
+/** Bring the playing sentence back into view, for a reader who scrolled away from it. */
+const showCurrentSentence = () => {
+  scrollMainView();
+};
+
+/**
+ * A control's label with the key that does the same, for its tooltip. The key handler above is the
+ * source of truth; these only advertise it. `aria-keyshortcuts` carries the same for screen readers.
+ */
+const withKey = (label: string, key: string) => t('player.controls.withShortcut', { label, key });
+const spaceKey = computed(() => t('player.controls.spaceKey'));
+
+/** While the clip downloads the button says so, rather than offering a play that is already on its way. */
+const playLabel = computed(() => {
+  if (isBuffering.value) return t('player.controls.loading');
+  return isPlaying.value ? t('player.controls.pause') : t('player.controls.play');
+});
+
+/**
+ * Media Session: hardware media keys, headphone buttons and the OS media panel (lock screen,
+ * notification shade) drive the same store actions as the bar, and show the sentence and its cover.
+ *
+ * Only meaningful for our own `<audio>`: a YouTube clip plays inside its iframe, which owns its own
+ * session, so ours steps aside while one is on. Cleared when the player closes, or the OS keeps
+ * offering controls for a player that is gone.
+ */
+const hasMediaSession = () => import.meta.client && typeof navigator !== 'undefined' && 'mediaSession' in navigator;
+
+const MEDIA_SESSION_ACTIONS: [MediaSessionAction, MediaSessionActionHandler][] = [
+  ['play', () => playerStore.play()],
+  ['pause', () => playerStore.pause()],
+  ['previoustrack', () => playerStore.prev()],
+  ['nexttrack', () => playerStore.next()],
+  ['seekbackward', (details) => seek(-(details.seekOffset ?? SEEK_STEP))],
+  ['seekforward', (details) => seek(details.seekOffset ?? SEEK_STEP)],
+  ['stop', () => playerStore.hidePlayer()],
+];
+
+const setMediaSessionHandlers = (active: boolean) => {
+  for (const [action, handler] of MEDIA_SESSION_ACTIONS) {
+    // Browsers throw on actions they do not support rather than ignoring them.
+    try {
+      navigator.mediaSession.setActionHandler(action, active ? handler : null);
+    } catch {
+      // Unsupported action: nothing to register.
+    }
+  }
+};
+
+const clearMediaSession = () => {
+  navigator.mediaSession.metadata = null;
+  navigator.mediaSession.playbackState = 'none';
+  setMediaSessionHandlers(false);
+};
+
+const syncMediaSession = () => {
+  if (!hasMediaSession()) return;
+  const result = currentResult.value;
+  if (!showPlayer.value || !result || isYoutubeActive()) {
+    clearMediaSession();
+    return;
+  }
+
+  const imageUrl = getAnimeImage(result);
+  try {
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: result.segment.textJa.content,
+      artist: mediaName(result.media),
+      album: 'Nadeshiko',
+      artwork: imageUrl ? [{ src: imageUrl }] : [],
+    });
+  } catch {
+    // An artwork url the browser refuses must not take the controls down with it.
+    navigator.mediaSession.metadata = null;
+  }
+  setMediaSessionHandlers(true);
+};
+
+watch([currentResult, showPlayer], syncMediaSession);
+
+watch([isPlaying, showPlayer], () => {
+  if (!hasMediaSession() || !showPlayer.value || isYoutubeActive()) return;
+  navigator.mediaSession.playbackState = isPlaying.value ? 'playing' : 'paused';
+});
+
+onMounted(syncMediaSession);
+
+onBeforeUnmount(() => {
+  if (hasMediaSession()) clearMediaSession();
+});
+
 const seekToPercent = (percent: number) => {
   if (isYoutubeActive()) {
     ytPlayer.seekToClipFraction(percent);
@@ -264,36 +355,6 @@ watch(
   { immediate: false },
 );
 
-const getSentenceStyle = (index: number) => {
-  if (currentIndex.value === null) return { classes: '', style: {} };
-
-  const distance = Math.abs(index - currentIndex.value);
-  const threshold = 1;
-
-  if (distance > threshold) {
-    return { classes: 'hidden', style: {} };
-  }
-
-  let classes = 'transition-all duration-500 ease-out block text-xl md:text-3xl lg:text-4xl py-4 ';
-  let style = {};
-
-  if (distance === 0) {
-    classes += 'font-bold text-white leading-tight drop-shadow-lg';
-    style = {
-      opacity: 1,
-      transform: 'scale(1)',
-    };
-  } else {
-    classes += 'font-medium text-white/40 leading-normal';
-    style = {
-      opacity: 0.5,
-      transform: 'scale(1)',
-    };
-  }
-
-  return { classes, style };
-};
-
 const updateProgress = () => {
   if (playerStore.currentAudio) {
     const currentTime = playerStore.currentAudio.currentTime;
@@ -321,6 +382,18 @@ const getAnimeImage = (result: any) => {
   if (!result) return '';
   return result.segment.urls.imageUrl;
 };
+
+/**
+ * Where the bar lives. A page with a results column gives it a dock at the end of that column
+ * (`usePlayerAnchor`): a `position: sticky` box, so the browser keeps the bar at the window's bottom
+ * edge while there are results below, and stops it where the column ends -- where the title filter,
+ * sticky in the same row, stops too. It takes the column's width, and its own room in the flow, so it
+ * never covers the last result or runs over the footer. All of it is layout; nothing is measured on
+ * scroll.
+ *
+ * Without a dock the bar floats, fixed and centred.
+ */
+const playerDock = usePlayerAnchor();
 
 /** Use pointer capability, not viewport width: landscape phones still use hardware volume keys. */
 const hasFinePointer = useMediaQuery('(hover: hover) and (pointer: fine)');
@@ -357,55 +430,28 @@ const onVolumeInput = (event: Event) => {
   playerStore.setVolume(Number(target.value) / 100);
 };
 
-/** One open state, but two wrapper refs: both layouts coexist during the 400ms leave transition. A shared ref
- * can be overwritten or nulled by the leaving branch, leaving onClickOutside with no target.
- */
 const rateMenuOpen = ref(false);
 const rateMenuBarRef = ref<HTMLElement | null>(null);
-const rateMenuImmersiveRef = ref<HTMLElement | null>(null);
 
 // A hidden player takes its menu with it. Without this the flag survives the
 // close -- a route change or Escape hides the bar with the menu still open, and
 // the next clip the reader plays brings the player back up with a speed menu
-// hanging off it that nobody asked for.
-watch(showPlayer, (visible) => {
-  if (!visible) rateMenuOpen.value = false;
+// hanging off it that nobody asked for. Listening mode hides the bar too, and has
+// its own speed control.
+watch([showPlayer, isImmersive], ([visible, immersive]) => {
+  if (!visible || immersive) rateMenuOpen.value = false;
 });
 
-// Each wrapper ignores the other: for the same 400ms both are mounted, and a
-// bare pair of handlers would have each read a click inside its counterpart as
-// "outside" and close a menu the reader was in the middle of using.
-onClickOutside(
-  rateMenuBarRef,
-  () => {
-    rateMenuOpen.value = false;
-  },
-  { ignore: [rateMenuImmersiveRef] },
-);
-
-onClickOutside(
-  rateMenuImmersiveRef,
-  () => {
-    rateMenuOpen.value = false;
-  },
-  { ignore: [rateMenuBarRef] },
-);
-
-/**
- * The wrapper belonging to the layout currently on screen.
- *
- * Chosen by `isImmersive` rather than by whichever ref happens to be set: for
- * the 400ms a `zoom-fade` takes to leave, both are, and the leaving one is the
- * wrong place to be putting focus.
- */
-const activeRateWrapper = () => (isImmersive.value ? rateMenuImmersiveRef.value : rateMenuBarRef.value);
+onClickOutside(rateMenuBarRef, () => {
+  rateMenuOpen.value = false;
+});
 
 const rateMenuItems = () => {
-  const wrapper = activeRateWrapper();
+  const wrapper = rateMenuBarRef.value;
   return wrapper ? [...wrapper.querySelectorAll<HTMLElement>('[role="menuitemradio"]')] : [];
 };
 
-const rateMenuTrigger = () => activeRateWrapper()?.querySelector<HTMLElement>('[aria-haspopup="menu"]') ?? null;
+const rateMenuTrigger = () => rateMenuBarRef.value?.querySelector<HTMLElement>('[aria-haspopup="menu"]') ?? null;
 
 /** Move focus into the open menu. Restore it only if still inside on close, so outside clicks keep their chosen
  * focus.
@@ -420,8 +466,7 @@ watch(rateMenuOpen, async (open) => {
     return;
   }
 
-  const wrapper = activeRateWrapper();
-  if (wrapper?.contains(document.activeElement)) trigger?.focus();
+  if (rateMenuBarRef.value?.contains(document.activeElement)) trigger?.focus();
 });
 
 /** Wrap Arrow/Home/End navigation through speeds; leave Space/Enter activation to the buttons. */
@@ -468,204 +513,96 @@ const selectPlaybackRate = (rate: number) => {
         <div v-if="showPlayer && currentResult">
 
             <transition name="zoom-fade">
-                <div v-if="isImmersive"
-                    class="fixed inset-0 w-full h-[100dvh] text-white z-50 flex flex-col items-center justify-between overflow-hidden bg-neutral-950">
-
-                    <div class="relative z-20 w-full flex justify-between items-start p-6 md:p-8">
-                        <div class="flex flex-col gap-1 opacity-80">
-                            <span class="text-xs font-bold tracking-widest uppercase text-white/60">{{ t('player.nowPlaying') }}</span>
-                            <span lang="ja" class="text-sm font-semibold truncate max-w-[180px] md:max-w-sm">{{
-                                mediaName(currentResult.media) }}</span>
-                        </div>
-
-
-                    </div>
-
-                    <div
-                        class="relative z-10 w-full flex-grow min-h-0 flex flex-col items-center justify-center overflow-hidden max-w-4xl mx-auto px-6">
-
-                        <img
-                            :src="getAnimeImage(currentResult)"
-                            :alt="`Cover art for ${mediaName(currentResult.media)}`"
-                            class="block w-auto h-auto max-w-sm md:max-w-md max-h-[28vh] md:max-h-[40vh] object-contain rounded-lg shadow-2xl ring-1 ring-white/10 opacity-90 mb-6 md:mb-1 min-h-0 transition-opacity duration-700"
-                        />
-
-                        <div class="relative w-full flex-1 min-h-0 overflow-hidden flex flex-col items-center">
-
-                            <div
-                                class="w-full h-full overflow-hidden flex flex-col justify-center mask-gradient">
-                                <div
-                                    class="flex flex-col items-center justify-center w-full min-h-0 py-6 transition-all duration-500">
-                                    <p v-for="(sentence, index) in playlist" :key="sentence.segment.publicId"
-                                        :id="`sentence-${sentence.segment.publicId}`"
-                                        lang="ja"
-                                        :class="getSentenceStyle(index).classes" :style="getSentenceStyle(index).style"
-                                        v-html="getJapaneseContent(sentence)"
-                                        class="text-center cursor-default select-none max-w-4xl mx-auto px-4">
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="relative z-20 w-full max-w-2xl px-6 pb-12 pt-6">
-                        <!-- biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: preserve pointer-only seeking -->
-                        <div class="w-full flex items-center gap-3 mb-6 group cursor-pointer" @click="onProgressClick">
-                            <div
-                                class="relative flex-grow h-1.5 bg-white/10 rounded-full overflow-hidden group-hover:h-2.5 transition-all">
-                                <div class="absolute top-0 left-0 h-full bg-brand-solid rounded-full transition-all duration-100 ease-linear"
-                                    :style="{ width: `${progress}%` }"></div>
-                            </div>
-                        </div>
-
-                        <div class="flex items-center justify-center gap-8 md:gap-12">
-
-                            <button type="button" @click="seekBackward" class="group p-2" :aria-label="t('player.controls.rewind')">
-                                <UiBaseIcon :path="mdiRewind" :size="28"
-                                    class="text-white/50 group-hover:text-white transition-colors" />
-                            </button>
-
-                            <button type="button" @click="playerStore.prev()" class="group p-2" :aria-label="t('player.controls.previous')">
-                                <UiBaseIcon :path="mdiSkipPrevious" :size="36"
-                                    class="text-white/50 group-hover:text-white transition-colors" />
-                            </button>
-
-                            <button type="button" @click="playerStore.togglePlay()"
-                                class="w-16 h-16 flex items-center justify-center bg-white text-black rounded-full hover:scale-105 transition-all shadow-lg shadow-white/10"
-                                :aria-label="isPlaying ? t('player.controls.pause') : t('player.controls.play')">
-                                <UiBaseIcon :path="isPlaying ? mdiPause : mdiPlay" :size="40" />
-                            </button>
-
-                            <button type="button" @click="playerStore.next()" class="group p-2" :aria-label="t('player.controls.next')">
-                                <UiBaseIcon :path="mdiSkipNext" :size="36"
-                                    class="text-white/50 group-hover:text-white transition-colors" />
-                            </button>
-
-                            <button type="button" @click="seekForward" class="group p-2" :aria-label="t('player.controls.forward')">
-                                <UiBaseIcon :path="mdiFastForward" :size="28"
-                                    class="text-white/50 group-hover:text-white transition-colors" />
-                            </button>
-
-                        </div>
-
-                        <div class="flex items-center justify-center gap-2 mt-8">
-                            <div ref="rateMenuImmersiveRef" class="relative">
-                                <button type="button" @click="rateMenuOpen = !rateMenuOpen"
-                                    class="px-2 py-1 rounded-full hover:bg-white/10 transition-colors text-xs font-bold tabular-nums"
-                                    :class="playbackRate === 1 ? 'text-white/60' : 'text-brand'"
-                                    :aria-label="t('player.controls.speed', { rate: playbackRate })"
-                                    aria-haspopup="menu" :aria-expanded="rateMenuOpen">
-                                    {{ playbackRate }}×
-                                </button>
-                                <!-- Opens upward: the player is pinned to the bottom of the viewport, so
-                                     a menu below the button would be off-screen. -->
-                                <div v-if="rateMenuOpen" role="menu" :aria-label="t('player.controls.speedMenu')"
-                                    @keydown="onRateMenuKeydown"
-                                    class="absolute bottom-full right-0 mb-2 py-1 min-w-[4.5rem] rounded-lg bg-neutral-800 shadow-xl ring-1 ring-white/10 overflow-hidden">
-                                    <button type="button" v-for="rate in PLAYBACK_RATES" :key="rate" role="menuitemradio" tabindex="-1"
-                                        :aria-checked="playbackRate === rate" @click="selectPlaybackRate(rate)"
-                                        class="w-full px-3 py-1.5 text-left text-xs font-bold tabular-nums hover:bg-white/10 transition-colors"
-                                        :class="playbackRate === rate ? 'text-brand' : 'text-white/70'">
-                                        {{ rate }}×
-                                    </button>
-                                </div>
-                            </div>
-                            <div v-if="showVolumeSlider" class="flex items-center gap-2 px-1">
-                                <UiBaseIcon :path="volumeIcon" :size="20" class="text-white/50" />
-                                <input type="range" min="0" max="100" step="1" :value="volumePercent"
-                                    :style="{ '--volume-fill': `${volumePercent}%` }"
-                                    @input="onVolumeInput" @change="playerStore.trackVolumeChange()"
-                                    class="player-volume w-20"
-                                    :aria-label="t('player.controls.volume')" :aria-valuetext="`${volumePercent}%`" />
-                            </div>
-                            <button type="button" @click="playerStore.toggleAutoplay()"
-                                class="p-2 rounded-full hover:bg-white/10 transition-colors"
-                                :class="{ 'text-brand': autoplay, 'text-white/60': !autoplay }"
-                                :aria-label="t('player.controls.autoplay')" :aria-pressed="autoplay">
-                                <UiBaseIcon :path="autoplay ? mdiAnimationPlay : mdiMotionPauseOutline" :size="20" />
-                            </button>
-                            <button type="button" @click="playerStore.toggleRepeat()"
-                                class="p-2 rounded-full hover:bg-white/10 transition-colors"
-                                :class="{ 'text-brand': repeat, 'text-white/60': !repeat }"
-                                :aria-label="t('player.controls.repeat')" :aria-pressed="repeat">
-                                <UiBaseIcon :path="mdiRepeat" :size="20" />
-                            </button>
-                            <button type="button" @click="playerStore.toggleImmersive()"
-                                class="p-2 rounded-full hover:bg-white/10 transition-colors text-white/80"
-                                :aria-label="t('player.controls.exitFullscreen')">
-                                <UiBaseIcon :path="mdiFullscreenExit" :size="20" />
-                            </button>
-                            <button type="button" @click="playerStore.hidePlayer()"
-                                class="p-2 rounded-full hover:bg-white/10 transition-colors text-white/80"
-                                :aria-label="t('player.controls.close')">
-                                <UiBaseIcon :path="mdiClose" :size="20" />
-                            </button>
-                        </div>
-                    </div>
-
-                </div>
+                <PlayerListeningMode v-if="isImmersive" :progress="progress" :seek-step="SEEK_STEP"
+                    :show-volume="showVolumeSlider" @seek="seek" @seek-to="seekToPercent" />
             </transition>
 
-            <div v-if="!isImmersive"
-                class="fixed bottom-0 left-0 right-0 bg-neutral-900/90 backdrop-blur-md text-white shadow-lg z-[70] safe-pb border-t border-white/5">
-                <!-- biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: preserve pointer-only seeking -->
-                <div class="w-full bg-neutral-700/30 group cursor-pointer h-1.5 hover:h-2.5 transition-all" @click="onProgressClick">
-                    <div class="bg-brand-solid h-full transition-all ease-linear" :style="{ width: `${progress}%` }"></div>
-                </div>
-                <div class="flex flex-wrap items-center justify-between p-3 gap-3 md:px-6">
-                    <div class="flex items-center gap-4 flex-grow min-w-0">
-                        <img :src="getAnimeImage(currentResult)"
-                            :alt="`Cover art for ${mediaName(currentResult.media)}`"
-                            class="w-12 h-12 object-contain rounded-lg shadow-sm bg-neutral-950/40" />
-                        <div class="flex-grow min-w-0">
-                            <p lang="ja" class="font-bold text-base truncate pr-4" v-html="getJapaneseContent(currentResult)">
-                            </p>
-                            <p lang="ja" class="text-xs text-gray-400 truncate">{{ mediaName(currentResult.media) }}</p>
+            <!-- Into the results column's dock when the page has one; see `playerDock`. -->
+            <Teleport :to="playerDock" :disabled="!playerDock">
+            <transition name="player-float" appear>
+            <div v-if="!isImmersive" data-testid="player-bar"
+                class="player-surface z-[70] text-ink rounded-lg border"
+                :class="playerDock ? 'relative' : 'player-float fixed inset-x-2 md:inset-x-auto md:left-1/2 md:-translate-x-1/2 md:w-[min(56rem,calc(100vw-3rem))]'">
+                <!-- Clipped by a layer the card's own shape rather than `overflow-hidden` on the
+                     card: the speed menu opens upward out of the card and would be cut off. A
+                     `rounded-t` on the line itself does not work -- on an element 2px tall the
+                     browser scales the radius down to nothing and the corners poke out. -->
+                <div class="absolute inset-0 z-10 rounded-[inherit] overflow-hidden pointer-events-none">
+                    <!-- Taller than the line so it is easy to hit; the line grows on hover. -->
+                    <!-- biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: preserve pointer-only seeking -->
+                    <div class="pointer-events-auto absolute inset-x-0 top-0 h-2 group cursor-pointer" @click="onProgressClick">
+                        <div class="h-0.5 group-hover:h-1.5 bg-[var(--line-subtle)] transition-all">
+                            <div class="bg-brand-solid h-full transition-all ease-linear" :style="{ width: `${progress}%` }"></div>
                         </div>
                     </div>
-
-
-                    <!-- Full width below `md` so the two control groups each get
-                         their own centred row: the bar wraps at that size, and
-                         groups sized to their content wrap left-aligned, which
-                         reads as two ragged clusters rather than a transport. -->
-                    <div class="flex items-center justify-center gap-1 w-full md:w-auto md:gap-3">
-                        <button type="button" @click="seekBackward" class="p-2 text-white/70 hover:text-white transition-colors hidden sm:inline-block" :aria-label="t('player.controls.rewind')">
-                            <UiBaseIcon :path="mdiRewind" :size="24"
-                                class="text-white/70 group-hover:text-white transition-colors" />
-                        </button>
-                        <button type="button" @click="playerStore.prev()"
-                            class="p-2 text-white/70 hover:text-white transition-colors"
-                            :aria-label="t('player.controls.previous')">
-                            <UiBaseIcon :path="mdiSkipPrevious" :size="24" />
-                        </button>
-                        <button type="button" @click="playerStore.togglePlay()"
-                            class="p-2 text-white hover:text-brand transition-colors"
-                            :aria-label="isPlaying ? t('player.controls.pause') : t('player.controls.play')">
-                            <UiBaseIcon :path="isPlaying ? mdiPause : mdiPlay" :size="24" />
-                        </button>
-                        <button type="button" @click="playerStore.next()"
-                            class="p-2 text-white/70 hover:text-white transition-colors"
-                            :aria-label="t('player.controls.next')">
-                            <UiBaseIcon :path="mdiSkipNext" :size="24" />
-                        </button>
-                        <button type="button" @click="seekForward" class="p-2 text-white/70 hover:text-white transition-colors hidden sm:inline-block" :aria-label="t('player.controls.forward')">
-                            <UiBaseIcon :path="mdiFastForward" :size="24"
-                                class="text-white/70 group-hover:text-white transition-colors" />
-                        </button>
-
+                </div>
+                <!-- What plays here is a line, not a song, so there is no centred transport: the sentence
+                     has the left to itself, and every control sits in one block on the right, in three
+                     groups -- playing and moving between sentences (the 1s steps on the outside, past previous and next), the
+                     modes and speed, the view. -->
+                <div class="relative flex flex-wrap items-center gap-x-3 gap-y-1 px-3 pt-[9.6px] pb-[7.5px] md:px-2">
+                    <div class="flex min-w-0 flex-1 basis-60 items-center">
+                        <!-- One button for the cover and the text: clicking what is playing brings it back
+                         into view. Spans, not paragraphs -- a button only takes phrasing content. -->
+                    <button type="button" data-testid="player-show-sentence"
+                        class="flex items-center gap-2.5 min-w-0 -my-1 -ml-1 p-1 rounded-md text-left hover:bg-[color-mix(in_srgb,var(--ink)_8%,transparent)] transition-colors"
+                        :title="t('player.controls.showSentence')" @click="showCurrentSentence">
+                        <img :src="getAnimeImage(currentResult)"
+                            :alt="`Cover art for ${mediaName(currentResult.media)}`"
+                            class="w-[41px] h-[41px] shrink-0 object-cover rounded-md bg-surface-hover" />
+                        <span class="flex-grow min-w-0">
+                            <span lang="ja" data-testid="player-sentence" class="block font-bold text-[15.7px] leading-snug truncate pr-2" v-html="getJapaneseContent(currentResult)">
+                            </span>
+                            <span lang="ja" class="block text-[12.3px] leading-tight text-ink-muted truncate">{{ mediaName(currentResult.media) }}</span>
+                        </span>
+                    </button>
                     </div>
 
-                    <!-- The rule divides this group from the transport, so it is
-                         only drawn while the two share a row. Wrapped, it reads
-                         as a stray line hanging off the left edge. -->
-                    <div
-                        class="flex items-center justify-center gap-2 w-full md:w-auto md:pl-4 md:border-l md:border-white/10">
+                    <div class="flex w-full items-center justify-between gap-0.5 md:w-auto md:justify-end">
+                        <div class="flex items-center gap-0.5">
+                        <button type="button" @click="seekBackward" class="size-[36px] shrink-0 items-center justify-center rounded-full text-ink-muted hover:text-ink hover:bg-[color-mix(in_srgb,var(--ink)_8%,transparent)] transition-colors hidden sm:inline-flex" :aria-label="t('player.controls.rewind')" :title="t('player.controls.rewind')">
+                            <PlayerSeekIcon direction="back" :seconds="SEEK_STEP" :size="22.5" class="transition-colors" />
+                        </button>
+                        <button type="button" @click="playerStore.prev()" data-testid="player-prev"
+                            class="inline-flex size-[36px] shrink-0 items-center justify-center rounded-full text-ink-muted hover:text-ink hover:bg-[color-mix(in_srgb,var(--ink)_8%,transparent)] transition-colors"
+                            :aria-label="t('player.controls.previous')" :title="withKey(t('player.controls.previous'), '←')" aria-keyshortcuts="ArrowLeft">
+                            <UiBaseIcon :path="mdiSkipPrevious" :size="22.5" />
+                        </button>
+                        <button type="button" @click="playerStore.togglePlay()" data-testid="player-play"
+                            class="mx-0.5 inline-flex size-[36px] shrink-0 items-center justify-center rounded-full text-ink-muted hover:text-ink hover:bg-[color-mix(in_srgb,var(--ink)_8%,transparent)] transition-colors"
+                            :aria-label="playLabel" :title="withKey(playLabel, spaceKey)" aria-keyshortcuts="Space" :aria-busy="isBuffering">
+                            <span v-if="isBuffering" class="player-spinner w-[18px] h-[18px]" aria-hidden="true" />
+                            <!-- No fill behind it, the same colour as every other control; a size up. -->
+                            <UiBaseIcon v-else :path="isPlaying ? mdiPause : mdiPlay" :size="28" />
+                        </button>
+                        <button type="button" @click="playerStore.next()" data-testid="player-next"
+                            class="inline-flex size-[36px] shrink-0 items-center justify-center rounded-full text-ink-muted hover:text-ink hover:bg-[color-mix(in_srgb,var(--ink)_8%,transparent)] transition-colors"
+                            :aria-label="t('player.controls.next')" :title="withKey(t('player.controls.next'), '→')" aria-keyshortcuts="ArrowRight">
+                            <UiBaseIcon :path="mdiSkipNext" :size="22.5" />
+                        </button>
+                        <button type="button" @click="seekForward" class="size-[36px] shrink-0 items-center justify-center rounded-full text-ink-muted hover:text-ink hover:bg-[color-mix(in_srgb,var(--ink)_8%,transparent)] transition-colors hidden sm:inline-flex" :aria-label="t('player.controls.forward')" :title="t('player.controls.forward')">
+                            <PlayerSeekIcon direction="forward" :seconds="SEEK_STEP" :size="22.5" class="transition-colors" />
+                        </button>
+                        </div>
+                        <span class="mx-1 hidden h-5 w-px bg-[var(--line)] md:block" aria-hidden="true" />
+                        <div class="flex items-center gap-0.5">
+                        <button type="button" @click="playerStore.toggleAutoplay()" data-testid="player-autoplay"
+                            class="inline-flex size-[36px] shrink-0 items-center justify-center rounded-full hover:bg-[color-mix(in_srgb,var(--ink)_8%,transparent)] transition-colors"
+                            :class="{ 'text-brand': autoplay, 'text-ink-muted': !autoplay }"
+                            :aria-label="t('player.controls.autoplay')" :title="withKey(t('player.controls.autoplay'), 'L')" aria-keyshortcuts="L" :aria-pressed="autoplay">
+                            <UiBaseIcon :path="mdiPlaylistPlay" :size="22.5" />
+                        </button>
+                        <button type="button" @click="playerStore.toggleRepeat()" data-testid="player-repeat"
+                            class="inline-flex size-[36px] shrink-0 items-center justify-center rounded-full hover:bg-[color-mix(in_srgb,var(--ink)_8%,transparent)] transition-colors"
+                            :class="{ 'text-brand': repeat, 'text-ink-muted': !repeat }"
+                            :aria-label="t('player.controls.repeat')" :title="t('player.controls.repeat')" :aria-pressed="repeat">
+                            <UiBaseIcon :path="mdiRepeat" :size="22.5" />
+                        </button>
                         <div ref="rateMenuBarRef" class="relative">
                             <button type="button" @click="rateMenuOpen = !rateMenuOpen"
-                                class="px-2 py-1 rounded-full hover:bg-white/10 transition-colors text-xs font-bold tabular-nums"
-                                :class="playbackRate === 1 ? 'text-white/60' : 'text-brand'"
-                                :aria-label="t('player.controls.speed', { rate: playbackRate })"
+                                class="inline-flex h-[36px] items-center px-2 rounded-full hover:bg-[color-mix(in_srgb,var(--ink)_8%,transparent)] transition-colors text-xs font-bold tabular-nums"
+                                :class="playbackRate === 1 ? 'text-ink-muted' : 'text-brand'"
+                                :aria-label="t('player.controls.speed', { rate: playbackRate })" :title="t('player.controls.speed', { rate: playbackRate })"
                                 aria-haspopup="menu" :aria-expanded="rateMenuOpen">
                                 {{ playbackRate }}×
                             </button>
@@ -673,52 +610,95 @@ const selectPlaybackRate = (rate: number) => {
                                  a menu below the button would be off-screen. -->
                             <div v-if="rateMenuOpen" role="menu" :aria-label="t('player.controls.speedMenu')"
                                     @keydown="onRateMenuKeydown"
-                                class="absolute bottom-full right-0 mb-2 py-1 min-w-[4.5rem] rounded-lg bg-neutral-800 shadow-xl ring-1 ring-white/10 overflow-hidden">
+                                class="absolute bottom-full right-0 mb-2 py-1 min-w-[4.5rem] rounded-lg bg-button-primary-main text-ink border border-hairline shadow-xl overflow-hidden">
                                 <button type="button" v-for="rate in PLAYBACK_RATES" :key="rate" role="menuitemradio" tabindex="-1"
                                     :aria-checked="playbackRate === rate" @click="selectPlaybackRate(rate)"
-                                    class="w-full px-3 py-1.5 text-left text-xs font-bold tabular-nums hover:bg-white/10 transition-colors"
-                                    :class="playbackRate === rate ? 'text-brand' : 'text-white/70'">
+                                    class="w-full px-3 py-1.5 text-left text-xs font-bold tabular-nums hover:bg-surface-hover transition-colors"
+                                    :class="playbackRate === rate ? 'text-brand' : 'text-ink-muted'">
                                     {{ rate }}×
                                 </button>
                             </div>
                         </div>
                         <div v-if="showVolumeSlider" class="flex items-center gap-2 px-1">
-                            <UiBaseIcon :path="volumeIcon" :size="20" class="text-white/50" />
+                            <UiBaseIcon :path="volumeIcon" :size="22.5" class="text-ink-muted" />
                             <input type="range" min="0" max="100" step="1" :value="volumePercent"
                                 :style="{ '--volume-fill': `${volumePercent}%` }"
                                 @input="onVolumeInput" @change="playerStore.trackVolumeChange()"
-                                class="player-volume w-20"
+                                class="player-volume player-volume--themed w-[73px]"
                                 :aria-label="t('player.controls.volume')" :aria-valuetext="`${volumePercent}%`" />
                         </div>
-                        <button type="button" @click="playerStore.toggleAutoplay()"
-                            class="p-2 rounded-full hover:bg-white/10 transition-colors"
-                            :class="{ 'text-brand': autoplay, 'text-white/50': !autoplay }"
-                            :aria-label="t('player.controls.autoplay')" :aria-pressed="autoplay">
-                            <UiBaseIcon :path="autoplay ? mdiAnimationPlay : mdiMotionPauseOutline" :size="20" />
+                        </div>
+                        <span class="mx-1 hidden h-5 w-px bg-[var(--line)] md:block" aria-hidden="true" />
+                        <div class="flex items-center gap-0.5">
+                        <button type="button" @click="playerStore.toggleImmersive()" data-testid="player-listening-mode"
+                            class="inline-flex size-[36px] shrink-0 items-center justify-center rounded-full hover:bg-[color-mix(in_srgb,var(--ink)_8%,transparent)] transition-colors text-ink-muted hover:text-ink"
+                            :aria-label="t('player.listening.enter')" :title="withKey(t('player.listening.enter'), 'F')" aria-keyshortcuts="F">
+                            <UiBaseIcon :path="mdiHeadphones" :size="22.5" />
                         </button>
-                        <button type="button" @click="playerStore.toggleRepeat()"
-                            class="p-2 rounded-full hover:bg-white/10 transition-colors"
-                            :class="{ 'text-brand': repeat, 'text-white/60': !repeat }"
-                            :aria-label="t('player.controls.repeat')" :aria-pressed="repeat">
-                            <UiBaseIcon :path="mdiRepeat" :size="20" />
+                        <button type="button" @click="playerStore.hidePlayer()" data-testid="player-close"
+                            class="inline-flex size-[36px] shrink-0 items-center justify-center rounded-full hover:bg-[color-mix(in_srgb,var(--ink)_8%,transparent)] transition-colors text-ink-muted hover:text-ink"
+                            :aria-label="t('player.controls.close')" :title="withKey(t('player.controls.close'), 'Esc')" aria-keyshortcuts="Escape">
+                            <UiBaseIcon :path="mdiClose" :size="22.5" />
                         </button>
-                        <button type="button" @click="playerStore.toggleImmersive()"
-                            class="p-2 rounded-full hover:bg-white/10 transition-colors text-white/70"
-                            :aria-label="t('player.controls.enterFullscreen')">
-                            <UiBaseIcon :path="mdiFullscreen" :size="20" />
-                        </button>
-                        <button type="button" @click="playerStore.hidePlayer()"
-                            class="p-2 rounded-full hover:bg-white/10 transition-colors text-white/70"
-                            :aria-label="t('player.controls.close')">
-                            <UiBaseIcon :path="mdiClose" :size="20" />
-                        </button>
+                        </div>
                     </div>
                 </div>
             </div>
+            </transition>
+            </Teleport>
         </div>
 </template>
 
 <style scoped>
+/*
+ * A step below the page (`--background` darkened), where the title filter beside it is a step above:
+ * the two read as different pieces, the bar sunk rather than raised. Built from the theme's own
+ * background, so light and custom themes get a darker shade of theirs. Opaque, so the results
+ * scrolling underneath do not show through.
+ */
+.player-surface {
+  background: color-mix(in srgb, var(--background) 82%, black);
+  border-color: var(--line);
+}
+
+/* Floats clear of the bottom edge, and of the home indicator where there is one. */
+.player-float {
+  bottom: calc(env(safe-area-inset-bottom) + 0.5rem);
+}
+
+/* Lined up with the title filter's bottom edge beside it. */
+@media (min-width: 768px) {
+  .player-float {
+    bottom: calc(env(safe-area-inset-bottom) + var(--search-panel-gap));
+  }
+}
+
+/* `translate` rather than `transform`: the centred, unanchored bar uses `transform` to centre itself. */
+.player-float-enter-active,
+.player-float-leave-active {
+  transition:
+    opacity 200ms ease,
+    translate 250ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.player-float-enter-from,
+.player-float-leave-to {
+  opacity: 0;
+  translate: 0 1rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .player-float-enter-active,
+  .player-float-leave-active {
+    transition: opacity 150ms ease;
+  }
+
+  .player-float-enter-from,
+  .player-float-leave-to {
+    translate: none;
+  }
+}
+
 /* The gradient paints the filled track consistently across engines; native range styling does not. */
 .player-volume {
   -webkit-appearance: none;
@@ -764,6 +744,53 @@ const selectPlaybackRate = (rate: number) => {
   border: none;
   border-radius: 9999px;
   background: rgb(var(--c-white));
+}
+
+/* The bar follows the theme (it shares the title filter's card); the immersive view stays dark. */
+.player-volume--themed::-webkit-slider-runnable-track {
+  background: linear-gradient(
+    to right,
+    var(--ink) var(--volume-fill),
+    color-mix(in srgb, var(--ink) 20%, transparent) var(--volume-fill)
+  );
+}
+
+.player-volume--themed::-moz-range-track {
+  background: linear-gradient(
+    to right,
+    var(--ink) var(--volume-fill),
+    color-mix(in srgb, var(--ink) 20%, transparent) var(--volume-fill)
+  );
+}
+
+/* Separate rules: a selector list one engine does not recognise is dropped whole. */
+.player-volume--themed::-webkit-slider-thumb {
+  background: var(--ink);
+}
+
+.player-volume--themed::-moz-range-thumb {
+  background: var(--ink);
+}
+
+/* The play button while the clip downloads: the icon would offer a play that is already on its way. */
+.player-spinner {
+  display: inline-block;
+  border-radius: 9999px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  animation: player-spin 0.8s linear infinite;
+}
+
+@keyframes player-spin {
+  to {
+    rotate: 360deg;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .player-spinner {
+    animation-duration: 2.4s;
+  }
 }
 
 .player-volume:focus-visible {

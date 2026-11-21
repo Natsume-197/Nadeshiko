@@ -53,7 +53,6 @@
     }
   },
   "player": {
-    "nowPlaying": "正在播放",
     "controls": {
       "rewind": "倒轉",
       "forward": "快轉",
@@ -66,9 +65,29 @@
       "speed": "播放速度（{rate}×）",
       "speedMenu": "播放速度",
       "volume": "音量",
-      "enterFullscreen": "全螢幕",
-      "exitFullscreen": "退出全螢幕",
-      "close": "關閉播放器"
+      "close": "關閉播放器",
+      "withShortcut": "{label}（{key}）",
+      "spaceKey": "空白鍵",
+      "showSentence": "在結果中顯示此句",
+      "loading": "正在載入音訊"
+    },
+    "listening": {
+      "title": "聽力模式",
+      "enter": "聽力模式",
+      "exit": "離開聽力模式",
+      "position": "{current} / {total}",
+      "yourTurn": "輪到你了：大聲跟讀",
+      "playCount": "第 {current} / {total} 遍",
+      "speed": "速度",
+      "gap": "停頓",
+      "gapNone": "關",
+      "gapAuto": "自動",
+      "gapAutoHint": "與片段等長：適合跟讀的時間",
+      "seconds": "{n} 秒",
+      "repeat": "重複",
+      "repeatForever": "無限重複",
+      "practice": "練習",
+      "reveal": "顯示翻譯"
     }
   },
   "common": {
@@ -1431,7 +1450,7 @@
     "playPause": "播放 / 暫停",
     "restart": "從頭播放音訊",
     "toggleAutoplay": "開啟或關閉自動播放",
-    "toggleImmersive": "切換沉浸模式",
+    "toggleImmersive": "切換聽力模式",
     "actions": "操作",
     "openAnki": "新增到 Anki",
     "openContext": "檢視上下文",

@@ -53,7 +53,6 @@
     }
   },
   "player": {
-    "nowPlaying": "Reproduzindo agora",
     "controls": {
       "rewind": "Retroceder",
       "forward": "Avançar",
@@ -66,9 +65,29 @@
       "speed": "Velocidade de reprodução ({rate}×)",
       "speedMenu": "Velocidade de reprodução",
       "volume": "Volume",
-      "enterFullscreen": "Tela cheia",
-      "exitFullscreen": "Sair da tela cheia",
-      "close": "Fechar reprodutor"
+      "close": "Fechar reprodutor",
+      "withShortcut": "{label} ({key})",
+      "spaceKey": "Espaço",
+      "showSentence": "Mostrar esta frase nos resultados",
+      "loading": "Carregando áudio"
+    },
+    "listening": {
+      "title": "Modo escuta",
+      "enter": "Modo escuta",
+      "exit": "Sair do modo escuta",
+      "position": "{current} / {total}",
+      "yourTurn": "Sua vez: repita em voz alta",
+      "playCount": "Reprodução {current} de {total}",
+      "speed": "Velocidade",
+      "gap": "Pausa",
+      "gapNone": "Não",
+      "gapAuto": "Auto",
+      "gapAutoHint": "Do tamanho do clipe: o tempo usual para repetir",
+      "seconds": "{n} s",
+      "repeat": "Repetir",
+      "repeatForever": "Repetir sempre",
+      "practice": "Prática",
+      "reveal": "Mostrar tradução"
     }
   },
   "common": {
@@ -1431,7 +1450,7 @@
     "playPause": "Reproduzir / pausar",
     "restart": "Reiniciar áudio",
     "toggleAutoplay": "Ativar ou desativar reprodução automática",
-    "toggleImmersive": "Ativar ou desativar modo imersivo",
+    "toggleImmersive": "Alternar modo escuta",
     "actions": "Ações",
     "openAnki": "Adicionar ao Anki",
     "openContext": "Abrir contexto",

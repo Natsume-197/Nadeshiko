@@ -53,7 +53,6 @@
     }
   },
   "player": {
-    "nowPlaying": "再生中",
     "controls": {
       "rewind": "1秒戻る",
       "forward": "1秒進む",
@@ -66,9 +65,29 @@
       "speed": "再生速度（{rate}倍）",
       "speedMenu": "再生速度",
       "volume": "音量",
-      "enterFullscreen": "全画面表示",
-      "exitFullscreen": "全画面表示を終了",
-      "close": "プレーヤーを閉じる"
+      "close": "プレーヤーを閉じる",
+      "withShortcut": "{label}（{key}）",
+      "spaceKey": "スペース",
+      "showSentence": "結果でこの文を表示",
+      "loading": "音声を読み込み中"
+    },
+    "listening": {
+      "title": "リスニングモード",
+      "enter": "リスニングモード",
+      "exit": "リスニングモードを終了",
+      "position": "{current} / {total}",
+      "yourTurn": "あなたの番です。声に出して繰り返しましょう",
+      "playCount": "{current} / {total} 回目",
+      "speed": "速度",
+      "gap": "間",
+      "gapNone": "なし",
+      "gapAuto": "自動",
+      "gapAutoHint": "クリップと同じ長さ。復唱にちょうどいい時間です",
+      "seconds": "{n}秒",
+      "repeat": "リピート",
+      "repeatForever": "無限リピート",
+      "practice": "練習",
+      "reveal": "翻訳を表示"
     }
   },
   "common": {
@@ -1431,7 +1450,7 @@
     "playPause": "再生 / 一時停止",
     "restart": "音声を最初から再生",
     "toggleAutoplay": "自動再生の切り替え",
-    "toggleImmersive": "全画面表示の切り替え",
+    "toggleImmersive": "リスニングモードの切り替え",
     "actions": "操作",
     "openAnki": "Ankiに追加",
     "openContext": "前後の会話を表示",

@@ -227,6 +227,48 @@ function takeAudio(source: string): HTMLAudioElement {
 
 export const PLAYBACK_RATES = [0.5, 0.75, 1, 1.25, 1.5] as const;
 
+/**
+ * Listening mode's practice settings (shadowing). They only act while listening mode is open: the bar
+ * keeps playing back to back, so a gap set for practice never surprises someone mining from the list.
+ *
+ * - Gap: silence after a clip, for the reader to say it back. `auto` is the clip's own length at the
+ *   current speed, the usual shadowing rule of thumb.
+ * - Repeat times: plays of each sentence before moving on. Forever is the existing `repeat` flag.
+ *
+ * When the translation and furigana show is not a setting of its own: listening mode follows the same
+ * show / spoiler / hide preferences as the result cards.
+ */
+export const SHADOW_GAPS = [0, 2, 4, 'auto'] as const;
+export type ShadowGap = (typeof SHADOW_GAPS)[number];
+
+export const REPEAT_TIMES = [1, 2, 3] as const;
+export type RepeatTimes = (typeof REPEAT_TIMES)[number];
+
+/** The shortest `auto` gap: a 0.4s interjection still deserves a moment to answer. */
+const MIN_AUTO_GAP_MS = 1000;
+
+const normalizeShadowGap = (value: unknown): ShadowGap =>
+  (SHADOW_GAPS as readonly unknown[]).includes(value) ? (value as ShadowGap) : 0;
+
+const normalizeRepeatTimes = (value: unknown): RepeatTimes =>
+  (REPEAT_TIMES as readonly unknown[]).includes(value) ? (value as RepeatTimes) : 1;
+
+/**
+ * The pending step after a gap. Module scope like the playback token: a timer is a client-only handle,
+ * not state, and only one gap can be pending at a time.
+ */
+let gapTimer: ReturnType<typeof setTimeout> | null = null;
+let gapContinuation: (() => void) | null = null;
+
+/**
+ * Whether `playlist` is the start of `results`: the same list, or the same list with more pages
+ * appended. Compared by id, since every page builds a new array of new objects.
+ */
+export function isPlaylistPrefix(playlist: readonly SearchResult[], results: readonly SearchResult[]): boolean {
+  if (!playlist.length || results.length < playlist.length) return false;
+  return playlist.every((result, i) => results[i]?.segment.publicId === result.segment.publicId);
+}
+
 const DEFAULT_PLAYBACK_RATE = 1;
 const DEFAULT_VOLUME = 1;
 
@@ -270,6 +312,12 @@ interface PlayerState {
   playlist: SearchResult[];
   currentIndex: number | null;
   isPlaying: boolean;
+  /**
+   * A play was asked for and the clip is still downloading. The play button shows it, so a slow
+   * connection reads as loading rather than as a press that did nothing. Cleared by whatever
+   * supersedes the wait (`releaseAudio`, `pause`) as well as by the play settling.
+   */
+  isBuffering: boolean;
   showPlayer: boolean;
   currentAudio: HTMLAudioElement | null;
   /** The url `currentAudio` was built from, so a stale element can be spotted. */
@@ -281,6 +329,22 @@ interface PlayerState {
   volume: number;
   /** One of `PLAYBACK_RATES`. Remembered across sessions. */
   playbackRate: number;
+  /** Listening mode practice settings; see `SHADOW_GAPS`. Remembered across sessions. */
+  shadowGap: ShadowGap;
+  repeatTimes: RepeatTimes;
+  /** Times the current sentence has played to the end. Reset when another sentence starts. */
+  timesPlayed: number;
+  /**
+   * The gap in progress, for the "your turn" countdown: its length, and when it started (a fresh
+   * number per gap, so the countdown restarts even for two gaps of the same length).
+   */
+  gap: { ms: number; startedAt: number } | null;
+  /**
+   * The reader stepped past the last loaded sentence (by hand or by autoplay), and the step is held
+   * for the page that may follow. The search page sees it, loads that page, and settles it: taken if
+   * the page brought more, dropped if not. No timer: the load itself decides.
+   */
+  wantsMore: 'next' | 'autoplay' | null;
 }
 
 export const usePlayerStore = defineStore('player', {
@@ -288,6 +352,7 @@ export const usePlayerStore = defineStore('player', {
     playlist: [],
     currentIndex: null,
     isPlaying: false,
+    isBuffering: false,
     showPlayer: false,
     currentAudio: null,
     currentSource: null,
@@ -296,19 +361,26 @@ export const usePlayerStore = defineStore('player', {
     isImmersive: false,
     volume: DEFAULT_VOLUME,
     playbackRate: DEFAULT_PLAYBACK_RATE,
+    shadowGap: 0,
+    repeatTimes: 1,
+    timesPlayed: 0,
+    gap: null,
+    wantsMore: null,
   }),
 
-  // Persist only volume and speed, not a live playlist or element. Normalize again after
+  // Persist only preferences, not a live playlist or element. Normalize again after
   // hydration to tolerate edited or older storage.
   persist: import.meta.client
     ? {
         key: 'player-prefs',
         storage: piniaPluginPersistedstate.localStorage(),
-        pick: ['volume', 'playbackRate'],
+        pick: ['volume', 'playbackRate', 'shadowGap', 'repeatTimes'],
         afterHydrate: (ctx) => {
           const store = ctx.store as unknown as PlayerState;
           store.volume = clampVolume(store.volume);
           store.playbackRate = normalizePlaybackRate(store.playbackRate);
+          store.shadowGap = normalizeShadowGap(store.shadowGap);
+          store.repeatTimes = normalizeRepeatTimes(store.repeatTimes);
         },
       }
     : false,
@@ -362,13 +434,80 @@ export const usePlayerStore = defineStore('player', {
     },
 
     handleEnded() {
+      this.timesPlayed++;
+      // Practice settings act only in listening mode; outside it the gap is 0 and every branch
+      // below runs straight away, as it always has.
+      const practicing = this.isImmersive;
+      const replay = () => this.playCurrent({ repeat: true, trigger: 'repeat' });
+
       if (this.repeat) {
-        this.playCurrent({ repeat: true, trigger: 'repeat' });
+        this.afterGap(replay);
+      } else if (practicing && this.timesPlayed < this.repeatTimes) {
+        this.afterGap(replay);
       } else if (this.autoplay) {
-        this.next('autoplay');
+        this.afterGap(() => this.next('autoplay'));
       } else {
         this.isPlaying = false;
       }
+    },
+
+    /** The gap to leave after the current clip, in ms. 0 outside listening mode. */
+    gapMs(): number {
+      if (!this.isImmersive || this.shadowGap === 0) return 0;
+      if (this.shadowGap !== 'auto') return this.shadowGap * 1000;
+      const result = this.currentResult;
+      if (!result) return 0;
+      const clip = resolveClipWindow(result);
+      return Math.max(MIN_AUTO_GAP_MS, (clip.endMs - clip.startMs) / this.playbackRate);
+    },
+
+    /**
+     * Run `step` after the shadowing gap, or now when there is none. While waiting the player still
+     * counts as playing -- the session is running, and the button offers pause, which ends the gap.
+     */
+    afterGap(step: () => void) {
+      this.cancelGap();
+      const ms = this.gapMs();
+      if (ms <= 0) {
+        step();
+        return;
+      }
+      this.gap = { ms, startedAt: Date.now() };
+      gapContinuation = step;
+      gapTimer = setTimeout(() => {
+        gapTimer = null;
+        gapContinuation = null;
+        this.gap = null;
+        step();
+      }, ms);
+    },
+
+    /** Drop a pending gap without running what it was waiting to do. */
+    cancelGap() {
+      if (gapTimer) clearTimeout(gapTimer);
+      gapTimer = null;
+      gapContinuation = null;
+      this.gap = null;
+    },
+
+    /** End a pending gap now and run what it was waiting to do. */
+    skipGap() {
+      const step = gapContinuation;
+      this.cancelGap();
+      step?.();
+    },
+
+    setShadowGap(value: ShadowGap) {
+      this.shadowGap = normalizeShadowGap(value);
+    },
+
+    setRepeatTimes(value: RepeatTimes | 'forever') {
+      if (value === 'forever') {
+        this.repeat = true;
+        return;
+      }
+      this.repeat = false;
+      this.repeatTimes = normalizeRepeatTimes(value);
     },
 
     /**
@@ -402,6 +541,15 @@ export const usePlayerStore = defineStore('player', {
         is_autoplay: this.autoplay,
         is_repeat: isRepeat,
         trigger,
+        // Listening mode's use and settings ride on the play itself rather than on events of
+        // their own, which keeps PostHog under its free allowance (plans/posthog-event-budget.md).
+        listening_mode: this.isImmersive,
+        ...(this.isImmersive
+          ? {
+              shadow_gap: this.shadowGap,
+              repeat_times: this.repeat ? 'forever' : this.repeatTimes,
+            }
+          : {}),
       });
 
       // Deliberate plays only, where deliberate means the reader chose this
@@ -448,12 +596,14 @@ export const usePlayerStore = defineStore('player', {
 
       const started = () => {
         if (token !== playbackToken) return;
+        this.isBuffering = false;
         this.isPlaying = true;
         if (track !== 'none') this.trackPlay(track === 'repeat', trigger);
       };
 
       const failed = (error: unknown) => {
         if (token !== playbackToken) return;
+        this.isBuffering = false;
         this.isPlaying = false;
         // A click whose clip failed is still a click.
         flushPendingClick();
@@ -492,6 +642,7 @@ export const usePlayerStore = defineStore('player', {
       // Prime play/pause synchronously inside the iOS gesture before awaiting buffering.
       // Pausing keeps it inaudible without muted playback reaching ended or gesture-less
       // unmuting stopping autoplay.
+      this.isBuffering = true;
       const resumeAt = audio.currentTime;
       // Ignore the priming play's expected AbortError without changing isPlaying. The later,
       // token-guarded attempt reports the real outcome.
@@ -516,6 +667,7 @@ export const usePlayerStore = defineStore('player', {
      */
     releaseAudio() {
       this.currentSource = null;
+      this.isBuffering = false;
       const audio = this.currentAudio;
       if (!audio) return;
       audio.pause();
@@ -573,6 +725,11 @@ export const usePlayerStore = defineStore('player', {
      *               a loop rebuilds the element exactly as a fresh play does.
      */
     playCurrent({ repeat = false, trigger = 'resume' }: { repeat?: boolean; trigger?: PlayTrigger } = {}) {
+      // Whatever a gap or the end of the page was waiting to do, this play replaces it.
+      this.cancelGap();
+      this.wantsMore = null;
+      // A replay is the same sentence again; anything else is a sentence starting fresh.
+      if (!repeat) this.timesPlayed = 0;
       this.releaseAudio();
 
       const result = this.currentResult;
@@ -658,6 +815,8 @@ export const usePlayerStore = defineStore('player', {
     },
 
     play() {
+      // Replaying the sentence at hand drops a step held for the next page.
+      this.wantsMore = null;
       if (isYoutube(this.currentResult)) {
         const yt = useYoutubeSegmentPlayer();
         if (yt.activeSegmentId.value === this.currentResult?.segment.publicId) {
@@ -676,6 +835,9 @@ export const usePlayerStore = defineStore('player', {
     },
 
     pause() {
+      // Pausing in a gap stops the session there, rather than letting the next clip start.
+      this.cancelGap();
+      this.wantsMore = null;
       if (isYoutube(this.currentResult)) {
         bumpPlaybackToken();
         useYoutubeSegmentPlayer().pause();
@@ -683,6 +845,7 @@ export const usePlayerStore = defineStore('player', {
       } else if (this.currentAudio) {
         bumpPlaybackToken();
         this.currentAudio.pause();
+        this.isBuffering = false;
         this.isPlaying = false;
       }
     },
@@ -755,7 +918,13 @@ export const usePlayerStore = defineStore('player', {
     },
 
     toggleImmersive() {
-      this.isImmersive = !this.isImmersive;
+      // Gaps belong to listening mode. Leaving mid-gap carries on at once, as the bar would have.
+      if (this.isImmersive && this.gap) {
+        this.isImmersive = false;
+        this.skipGap();
+      } else {
+        this.isImmersive = !this.isImmersive;
+      }
       const posthog = usePostHog();
       posthog?.capture('immersive_mode_toggled', { enabled: this.isImmersive });
     },
@@ -767,7 +936,35 @@ export const usePlayerStore = defineStore('player', {
         this.playCurrent({ trigger });
       } else {
         this.isPlaying = false;
+        // The end of what is loaded, not necessarily of the results: hold the step for the next
+        // page, which the search page loads on seeing this.
+        if (this.currentIndex !== null) this.wantsMore = trigger;
       }
+    },
+
+    /**
+     * Take a longer result list without losing the place in it. Infinite scroll appends by building
+     * a new array, so the playlist handed over on the click went on ending where the first page did:
+     * "next" past it did nothing, and autoplay stopped there.
+     *
+     * Only an extension counts. A different search keeps the playlist the reader is listening to.
+     */
+    syncPlaylist(results: SearchResult[]) {
+      if (results === this.playlist || results.length <= this.playlist.length) return;
+      if (!isPlaylistPrefix(this.playlist, results)) return;
+      this.playlist = results;
+    },
+
+    /**
+     * Settle a held step once the page it waited for has loaded, or failed to: take it if the
+     * playlist now goes further, drop it otherwise. Anything the reader did in between (another
+     * sentence, a pause, closing) has already dropped it.
+     */
+    settleWantsMore() {
+      const trigger = this.wantsMore;
+      this.wantsMore = null;
+      if (!trigger || !this.showPlayer || this.currentIndex === null) return;
+      if (this.currentIndex < this.playlist.length - 1) this.next(trigger);
     },
 
     prev() {
@@ -778,6 +975,7 @@ export const usePlayerStore = defineStore('player', {
     },
 
     restart() {
+      this.cancelGap();
       if (isYoutube(this.currentResult)) {
         bumpPlaybackToken();
         useYoutubeSegmentPlayer().restart();
@@ -804,6 +1002,8 @@ export const usePlayerStore = defineStore('player', {
     },
 
     hidePlayer() {
+      this.cancelGap();
+      this.wantsMore = null;
       bumpPlaybackToken();
       this.releaseAudio();
       dropPrefetch();

@@ -33,7 +33,7 @@ vi.stubGlobal('useSignupNudge', () => ({ recordPlay: vi.fn() }));
 vi.stubGlobal('userStore', () => ({ isLoggedIn: false }));
 vi.stubGlobal('useNadeshikoSdk', () => ({ trackUserActivity: vi.fn().mockResolvedValue({}) }));
 
-import { usePlayerStore } from './player';
+import { isPlaylistPrefix, usePlayerStore } from './player';
 
 /** A media-backed result: an ordinary audio clip. */
 function audioResult(n: number, overrides: Record<string, unknown> = {}) {
@@ -895,5 +895,277 @@ describe('setPlaylist', () => {
 
     expect(store.showPlayer).toBe(true);
     expect(store.currentResult).toBeNull();
+  });
+});
+
+describe('isBuffering', () => {
+  /** An element still downloading: `whenPlayable` waits on its `canplaythrough`. */
+  function coldAudio() {
+    const listeners: Record<string, () => void> = {};
+    const audio = {
+      ...fakeAudio(),
+      readyState: 0,
+      error: null,
+      addEventListener: vi.fn((event: string, handler: () => void) => {
+        listeners[event] = handler;
+      }),
+    };
+    return { audio, ready: () => listeners.canplaythrough?.() };
+  }
+
+  test('is never set for a clip that is already buffered', () => {
+    const store = usePlayerStore();
+    store.startAudio(asAudio(fakeAudio()), 'play');
+    expect(store.isBuffering).toBe(false);
+  });
+
+  test('is set while a cold clip downloads, and cleared once it plays', async () => {
+    const store = usePlayerStore();
+    const { audio, ready } = coldAudio();
+    store.startAudio(asAudio(audio), 'play');
+    expect(store.isBuffering).toBe(true);
+
+    ready();
+    await settle();
+    await settle();
+    expect(store.isBuffering).toBe(false);
+    expect(store.isPlaying).toBe(true);
+  });
+
+  test('is cleared by a pause that supersedes the wait', () => {
+    const store = usePlayerStore();
+    const { audio } = coldAudio();
+    store.currentAudio = asAudio(audio);
+    store.startAudio(asAudio(audio), 'play');
+
+    store.pause();
+    expect(store.isBuffering).toBe(false);
+  });
+
+  test('is cleared when the player closes mid-download', () => {
+    const store = usePlayerStore();
+    const { audio } = coldAudio();
+    store.currentAudio = asAudio(audio);
+    store.startAudio(asAudio(audio), 'play');
+
+    store.hidePlayer();
+    expect(store.isBuffering).toBe(false);
+  });
+});
+
+describe('listening mode practice', () => {
+  function practicing(
+    overrides: Partial<{ shadowGap: 0 | 2 | 4 | 'auto'; repeatTimes: 1 | 2 | 3; autoplay: boolean }> = {},
+  ) {
+    const store = usePlayerStore();
+    store.playlist = [audioResult(1), audioResult(2), audioResult(3)].map(asResult);
+    store.currentIndex = 0;
+    store.isImmersive = true;
+    store.isPlaying = true;
+    store.shadowGap = overrides.shadowGap ?? 0;
+    store.repeatTimes = overrides.repeatTimes ?? 1;
+    store.autoplay = overrides.autoplay ?? true;
+    store.timesPlayed = 0;
+    return store;
+  }
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    return () => {
+      usePlayerStore().cancelGap();
+      vi.useRealTimers();
+    };
+  });
+
+  test('waits out the gap before moving on, and says so', () => {
+    const store = practicing({ shadowGap: 2 });
+
+    store.handleEnded();
+    expect(store.currentIndex).toBe(0);
+    expect(store.gap?.ms).toBe(2000);
+    expect(store.isPlaying).toBe(true);
+
+    vi.advanceTimersByTime(2000);
+    expect(store.currentIndex).toBe(1);
+    expect(store.gap).toBeNull();
+  });
+
+  test('an auto gap is the clip length at the current speed', () => {
+    // audioResult clips are 900ms: below the floor, so the floor applies.
+    const store = practicing({ shadowGap: 'auto' });
+    store.handleEnded();
+    expect(store.gap?.ms).toBe(1000);
+  });
+
+  test('plays each sentence the set number of times, then moves on', () => {
+    const store = practicing({ repeatTimes: 2 });
+
+    store.handleEnded();
+    expect(store.currentIndex).toBe(0);
+    expect(store.timesPlayed).toBe(1);
+
+    store.handleEnded();
+    expect(store.currentIndex).toBe(1);
+    expect(store.timesPlayed).toBe(0);
+  });
+
+  test('counts plays per sentence: a new one starts from zero', () => {
+    const store = practicing({ repeatTimes: 3 });
+    store.handleEnded();
+    store.next();
+    expect(store.timesPlayed).toBe(0);
+  });
+
+  test('none of it applies outside listening mode', () => {
+    const store = practicing({ shadowGap: 4, repeatTimes: 3 });
+    store.isImmersive = false;
+
+    store.handleEnded();
+    expect(store.gap).toBeNull();
+    expect(store.currentIndex).toBe(1);
+  });
+
+  test('pausing in a gap stops there', () => {
+    const store = practicing({ shadowGap: 2 });
+    store.handleEnded();
+
+    store.pause();
+    vi.advanceTimersByTime(5000);
+    expect(store.gap).toBeNull();
+    expect(store.currentIndex).toBe(0);
+  });
+
+  test('skipping a gap moves on at once', () => {
+    const store = practicing({ shadowGap: 4 });
+    store.handleEnded();
+
+    store.skipGap();
+    expect(store.gap).toBeNull();
+    expect(store.currentIndex).toBe(1);
+  });
+
+  test('picking another sentence mid-gap drops what the gap was waiting to do', () => {
+    const store = practicing({ shadowGap: 2 });
+    store.handleEnded();
+
+    store.prev();
+    store.next();
+    store.next();
+    vi.advanceTimersByTime(5000);
+    expect(store.currentIndex).toBe(2);
+  });
+
+  test('leaving listening mode mid-gap carries on straight away', () => {
+    const store = practicing({ shadowGap: 4 });
+    store.handleEnded();
+
+    store.toggleImmersive();
+    expect(store.isImmersive).toBe(false);
+    expect(store.gap).toBeNull();
+    expect(store.currentIndex).toBe(1);
+  });
+
+  test('forever is the repeat flag, and a count turns it off', () => {
+    const store = practicing();
+    store.setRepeatTimes('forever');
+    expect(store.repeat).toBe(true);
+    store.setRepeatTimes(2);
+    expect(store.repeat).toBe(false);
+    expect(store.repeatTimes).toBe(2);
+  });
+
+  test('the play reports listening mode and its settings, with no event of its own', async () => {
+    const store = practicing({ shadowGap: 'auto', repeatTimes: 2 });
+    store.playCurrent({ trigger: 'click' });
+    await settle();
+
+    expect(lastPlayed()).toMatchObject({
+      listening_mode: true,
+      shadow_gap: 'auto',
+      repeat_times: 2,
+    });
+  });
+});
+
+describe('syncPlaylist (infinite scroll)', () => {
+  const page = (from: number, to: number) =>
+    Array.from({ length: to - from + 1 }, (_, i) => asResult(audioResult(from + i)));
+
+  test('takes an appended page and keeps the place', () => {
+    const store = usePlayerStore();
+    store.setPlaylist(page(1, 3), 2);
+
+    store.syncPlaylist([...page(1, 3), ...page(4, 5)]);
+    expect(store.playlist).toHaveLength(5);
+    expect(store.currentIndex).toBe(2);
+
+    store.next();
+    expect(store.currentIndex).toBe(3);
+  });
+
+  test('leaves the playlist alone for a different search', () => {
+    const store = usePlayerStore();
+    store.setPlaylist(page(1, 3), 0);
+
+    store.syncPlaylist(page(7, 12));
+    expect(store.playlist).toHaveLength(3);
+    expect(store.playlist[0]?.segment.publicId).toBe('seg-1');
+  });
+
+  test('a step past the last loaded sentence is held for the next page', () => {
+    const store = usePlayerStore();
+    store.setPlaylist(page(1, 2), 1);
+    store.autoplay = true;
+
+    store.handleEnded();
+    expect(store.currentIndex).toBe(1);
+    expect(store.isPlaying).toBe(false);
+    expect(store.wantsMore).toBe('autoplay');
+  });
+
+  test('and taken once that page has loaded', () => {
+    const store = usePlayerStore();
+    store.setPlaylist(page(1, 2), 1);
+    store.next();
+
+    store.syncPlaylist([...page(1, 2), ...page(3, 4)]);
+    store.settleWantsMore();
+    expect(store.currentIndex).toBe(2);
+    expect(store.wantsMore).toBeNull();
+  });
+
+  test('or dropped when there was no more to load', () => {
+    const store = usePlayerStore();
+    store.setPlaylist(page(1, 2), 1);
+    store.next();
+
+    store.settleWantsMore();
+    expect(store.currentIndex).toBe(1);
+    expect(store.wantsMore).toBeNull();
+  });
+
+  test('anything the reader does in the meantime drops it', () => {
+    const store = usePlayerStore();
+    for (const act of [() => store.pause(), () => store.play(), () => store.prev(), () => store.hidePlayer()]) {
+      store.setPlaylist(page(1, 2), 1);
+      store.next();
+      act();
+      expect(store.wantsMore).toBeNull();
+    }
+  });
+});
+
+describe('isPlaylistPrefix', () => {
+  const ids = (...n: number[]) => n.map((i) => asResult(audioResult(i)));
+
+  test('is true for the same list and for the list with pages appended', () => {
+    expect(isPlaylistPrefix(ids(1, 2), ids(1, 2))).toBe(true);
+    expect(isPlaylistPrefix(ids(1, 2), ids(1, 2, 3))).toBe(true);
+  });
+
+  test('is false for other results, a shorter list, or no playlist', () => {
+    expect(isPlaylistPrefix(ids(1, 2), ids(2, 1, 3))).toBe(false);
+    expect(isPlaylistPrefix(ids(1, 2, 3), ids(1, 2))).toBe(false);
+    expect(isPlaylistPrefix([], ids(1))).toBe(false);
   });
 });

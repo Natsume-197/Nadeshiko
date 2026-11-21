@@ -53,7 +53,6 @@
     }
   },
   "player": {
-    "nowPlaying": "Sedang diputar",
     "controls": {
       "rewind": "Mundur",
       "forward": "Maju",
@@ -66,9 +65,29 @@
       "speed": "Kecepatan pemutaran ({rate}×)",
       "speedMenu": "Kecepatan pemutaran",
       "volume": "Volume",
-      "enterFullscreen": "Layar penuh",
-      "exitFullscreen": "Keluar dari layar penuh",
-      "close": "Tutup pemutar"
+      "close": "Tutup pemutar",
+      "withShortcut": "{label} ({key})",
+      "spaceKey": "Spasi",
+      "showSentence": "Tampilkan kalimat ini di hasil",
+      "loading": "Memuat audio"
+    },
+    "listening": {
+      "title": "Mode dengar",
+      "enter": "Mode dengar",
+      "exit": "Keluar dari mode dengar",
+      "position": "{current} / {total}",
+      "yourTurn": "Giliranmu: ucapkan dengan lantang",
+      "playCount": "Putaran {current} dari {total}",
+      "speed": "Kecepatan",
+      "gap": "Jeda",
+      "gapNone": "Mati",
+      "gapAuto": "Otomatis",
+      "gapAutoHint": "Sepanjang klipnya: waktu yang pas untuk menirukan",
+      "seconds": "{n} dtk",
+      "repeat": "Ulangi",
+      "repeatForever": "Ulangi terus",
+      "practice": "Latihan",
+      "reveal": "Tampilkan terjemahan"
     }
   },
   "common": {
@@ -1431,7 +1450,7 @@
     "playPause": "Putar / Jeda",
     "restart": "Putar audio dari awal",
     "toggleAutoplay": "Aktifkan / nonaktifkan pemutaran otomatis",
-    "toggleImmersive": "Aktifkan / nonaktifkan mode imersif",
+    "toggleImmersive": "Aktifkan/nonaktifkan mode dengar",
     "actions": "Tindakan",
     "openAnki": "Ekspor ke Anki",
     "openContext": "Buka konteks",

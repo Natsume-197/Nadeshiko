@@ -656,6 +656,10 @@
 
     /* Shared sticky-bar height for sidebar positioning: 69px with pb-3 and py-3 tabs. */
     --search-controls-height: 4.3125rem;
+    /* The gap between the sticky bar and the title filter -- the bar's own pb-3 -- kept below the
+       filter too, so a stuck panel stops short of the window's bottom edge by the same amount.
+       In rem: `syncSidebarHeight` converts it. */
+    --search-panel-gap: 0.75rem;
   }
 
   /*

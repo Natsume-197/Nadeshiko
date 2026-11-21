@@ -4,7 +4,9 @@ import { reportError } from '~/utils/reportError';
 import { mdiRefresh } from '@mdi/js';
 import type { RouteLocationNormalized } from 'vue-router';
 
-import { usePlayerStore } from '~/stores/player';
+import { isPlaylistPrefix, usePlayerStore } from '~/stores/player';
+import { until } from '@vueuse/core';
+import { usePlayerAnchor } from '~/composables/usePlayerAnchor';
 import { userStore } from '~/stores/auth';
 import { CATEGORY_API_MAPPING, CATEGORY_LABEL_KEYS, CATEGORY_SLUGS, discountHiddenMedia } from '~/utils/categories';
 import { buildHiddenBreakdown, countHiddenResults, type HiddenBreakdownRow } from '~/utils/hiddenResults';
@@ -686,6 +688,33 @@ const loadSentences = async ({ append }: { append: boolean }) => {
   isLoading.value = false;
 };
 
+/**
+ * The player stepped past the last loaded sentence of these results: fetch the next page for it, then
+ * let it settle the step -- taken if the page brought more, dropped if there was none or it failed.
+ * Driven by the load itself rather than a timer, so a slow connection waits exactly as long as the
+ * page takes, and the step never fires on its own later.
+ *
+ * A playlist from other results (an earlier search still playing) is not ours to page.
+ */
+watch(
+  () => playerStore.wantsMore,
+  async (want) => {
+    if (!want) return;
+    const results = () => sentenceData.value?.results ?? [];
+    if (!isPlaylistPrefix(playerStore.playlist, results())) return;
+
+    if (isLoading.value) {
+      // Infinite scroll is already fetching it; wait for that load rather than starting another.
+      await until(isLoading).toBe(false);
+    } else if (hasMoreResults.value && !endOfResults.value) {
+      await loadSentences({ append: true });
+    }
+
+    playerStore.syncPlaylist(results());
+    playerStore.settleWantsMore();
+  },
+);
+
 const loadMore = () => {
   posthog?.capture('search_load_more', {
     query: query.value,
@@ -859,7 +888,10 @@ const syncSidebarHeight = () => {
   // The column end is pushing the panel off: keep the stuck cap so we do
   // not grow it as it leaves.
   if (top + 1 < stickyTop) return;
-  sidebarMaxHeight.value = `${Math.max(0, window.innerHeight - top)}px`;
+  // The same gap below the panel as above it, rather than running it into the window's edge.
+  const rem = Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+  const gap = (Number.parseFloat(getComputedStyle(el).getPropertyValue('--search-panel-gap')) || 0) * rem;
+  sidebarMaxHeight.value = `${Math.max(0, window.innerHeight - top - gap)}px`;
 };
 
 useEventListener(window, 'scroll', syncSidebarHeight, { passive: true });
@@ -868,6 +900,25 @@ watch(
   () => searchData.value?.media?.length,
   () => nextTick(syncSidebarHeight),
 );
+
+/**
+ * The floating player's dock: a sticky box at the end of the results column, which the player
+ * teleports its bar into. Sticky, so the browser itself keeps the bar at the window's bottom edge
+ * and stops it where the column ends, level with the title filter beside it -- see `AudioPlayer`.
+ * Watched rather than set once: the column is behind a `v-if` (hidden media swaps it out), and the
+ * player should follow it in and out.
+ */
+const playerDockRef = ref<HTMLElement | null>(null);
+const playerDock = usePlayerAnchor();
+
+watch(playerDockRef, (el) => {
+  playerDock.value = el;
+});
+
+onBeforeUnmount(() => {
+  // Only clear our own: on a route change the next page's dock can register before this unmounts.
+  if (playerDock.value === playerDockRef.value) playerDock.value = null;
+});
 
 onMounted(async () => {
   syncSidebarHeight();
@@ -1129,6 +1180,10 @@ onBeforeRouteUpdate(async (to, from) => {
                         {{ $t('searchContainer.endOfResults') }}
                     </p>
                 </div>
+                <!-- The floating player's dock (see `playerDockRef`): the same gap from the window's
+                     edge as the title filter, a tighter one on a phone, where the column is full-bleed. -->
+                <div ref="playerDockRef" data-testid="player-dock"
+                    class="sticky bottom-[calc(env(safe-area-inset-bottom)+0.5rem)] z-[70] mx-2 md:mx-0 md:bottom-[calc(env(safe-area-inset-bottom)+var(--search-panel-gap))]" />
             </div>
             <div v-if="!isSingleSentenceView && (searchData?.media?.length > 0 || isLoading)" class="2xl:ml-6 2xl:min-w-[20rem] 2xl:max-w-[20rem] 3xl:min-w-[20rem] 3xl:max-w-[22rem] yomitan-ignore">
                 <!-- A cap rather than a fixed height (see `syncSidebarHeight`):
@@ -1137,7 +1192,7 @@ onBeforeRouteUpdate(async (to, from) => {
                 <div
                   v-if="searchData?.media?.length > 0"
                   ref="sidebarRef"
-                  class="w-full hidden 2xl:grid 2xl:grid-rows-[minmax(0,1fr)] 2xl:sticky 2xl:top-[var(--search-controls-height)] 2xl:max-h-[calc(100dvh-var(--search-controls-height))] 2xl:overflow-hidden"
+                  class="w-full hidden 2xl:grid 2xl:grid-rows-[minmax(0,1fr)] 2xl:sticky 2xl:top-[var(--search-controls-height)] 2xl:max-h-[calc(100dvh-var(--search-controls-height)-var(--search-panel-gap))] 2xl:overflow-hidden"
                   :style="sidebarMaxHeight ? { maxHeight: sidebarMaxHeight } : undefined"
                 >
                     <!-- Titles and episodes are one panel: the filter drills from a

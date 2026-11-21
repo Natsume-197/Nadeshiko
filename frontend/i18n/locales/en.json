@@ -53,7 +53,6 @@
     }
   },
   "player": {
-    "nowPlaying": "Now playing",
     "controls": {
       "rewind": "Rewind",
       "forward": "Forward",
@@ -66,9 +65,29 @@
       "speed": "Playback speed ({rate}×)",
       "speedMenu": "Playback speed",
       "volume": "Volume",
-      "enterFullscreen": "Full screen",
-      "exitFullscreen": "Exit full screen",
-      "close": "Close player"
+      "close": "Close player",
+      "withShortcut": "{label} ({key})",
+      "spaceKey": "Space",
+      "showSentence": "Show this sentence in the results",
+      "loading": "Loading audio"
+    },
+    "listening": {
+      "title": "Listening mode",
+      "enter": "Listening mode",
+      "exit": "Exit listening mode",
+      "position": "{current} / {total}",
+      "yourTurn": "Your turn — say it out loud",
+      "playCount": "Play {current} of {total}",
+      "speed": "Speed",
+      "gap": "Pause",
+      "gapNone": "Off",
+      "gapAuto": "Auto",
+      "gapAutoHint": "As long as the clip: the usual time to say it back",
+      "seconds": "{n} s",
+      "repeat": "Repeat",
+      "repeatForever": "Repeat forever",
+      "practice": "Practice",
+      "reveal": "Show translation"
     }
   },
   "common": {
@@ -1431,7 +1450,7 @@
     "playPause": "Play / Pause",
     "restart": "Restart audio",
     "toggleAutoplay": "Toggle autoplay",
-    "toggleImmersive": "Toggle immersive mode",
+    "toggleImmersive": "Toggle listening mode",
     "actions": "Actions",
     "openAnki": "Add to Anki",
     "openContext": "Open context",
