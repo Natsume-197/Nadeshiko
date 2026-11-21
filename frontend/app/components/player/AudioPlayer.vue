@@ -8,6 +8,8 @@ import {
   mdiRepeat,
   mdiClose,
   mdiHeadphones,
+  mdiCogOutline,
+  mdiCheck,
   mdiVolumeHigh,
   mdiVolumeMedium,
   mdiVolumeLow,
@@ -15,11 +17,11 @@ import {
 } from '@mdi/js';
 import { PLAYBACK_RATES, resolveClipWindow, usePlayerStore } from '~/stores/player';
 import { splitLocalePrefix } from '~/utils/routes';
-import { usePlayerAnchor } from '~/composables/usePlayerAnchor';
+import { usePlayerBarHeight } from '~/composables/usePlayerAnchor';
 import PlayerSeekIcon from './SeekIcon.vue';
 import PlayerListeningMode from './ListeningMode.vue';
 import { watch, ref, computed, nextTick, onMounted, onBeforeUnmount } from 'vue';
-import { onClickOutside, useMediaQuery } from '@vueuse/core';
+import { onClickOutside, useMediaQuery, useResizeObserver } from '@vueuse/core';
 import { storeToRefs } from 'pinia';
 import { escapeCorpusText, safeHighlight } from '~/utils/safeHighlight';
 
@@ -384,16 +386,26 @@ const getAnimeImage = (result: any) => {
 };
 
 /**
- * Where the bar lives. A page with a results column gives it a dock at the end of that column
- * (`usePlayerAnchor`): a `position: sticky` box, so the browser keeps the bar at the window's bottom
- * edge while there are results below, and stops it where the column ends -- where the title filter,
- * sticky in the same row, stops too. It takes the column's width, and its own room in the flow, so it
- * never covers the last result or runs over the footer. All of it is layout; nothing is measured on
- * scroll.
- *
- * Without a dock the bar floats, fixed and centred.
+ * Where the bar lives: fixed across the whole window at its bottom edge, a classic player bar. The page
+ * keeps room for it at its end (a spacer after the footer, in the layout), so the footer scrolls clear of
+ * it, and the title filter stops short of it (`usePlayerBarHeight`).
  */
-const playerDock = usePlayerAnchor();
+
+/** The bar's height for the title filter beside it (see `usePlayerBarHeight`): resize-driven, not scroll. */
+const barRef = ref<HTMLElement | null>(null);
+const playerBarHeight = usePlayerBarHeight();
+useResizeObserver(barRef, (entries) => {
+  const entry = entries[0];
+  if (!entry) return;
+  const box = entry.borderBoxSize?.[0];
+  playerBarHeight.value = box ? box.blockSize : (entry.target as HTMLElement).offsetHeight;
+});
+watch(barRef, (el) => {
+  if (!el) playerBarHeight.value = 0;
+});
+onBeforeUnmount(() => {
+  playerBarHeight.value = 0;
+});
 
 /** Use pointer capability, not viewport width: landscape phones still use hardware volume keys. */
 const hasFinePointer = useMediaQuery('(hover: hover) and (pointer: fine)');
@@ -517,12 +529,10 @@ const selectPlaybackRate = (rate: number) => {
                     :show-volume="showVolumeSlider" @seek="seek" @seek-to="seekToPercent" />
             </transition>
 
-            <!-- Into the results column's dock when the page has one; see `playerDock`. -->
-            <Teleport :to="playerDock" :disabled="!playerDock">
             <transition name="player-float" appear>
-            <div v-if="!isImmersive" data-testid="player-bar"
-                class="player-surface z-[70] text-ink rounded-lg border"
-                :class="playerDock ? 'relative' : 'player-float fixed inset-x-2 md:inset-x-auto md:left-1/2 md:-translate-x-1/2 md:w-[min(56rem,calc(100vw-3rem))]'">
+            <div v-if="!isImmersive" ref="barRef" data-testid="player-bar"
+                class="fixed inset-x-0 bottom-0 player-surface z-[70] text-ink border-t safe-pb"
+                >
                 <!-- Clipped by a layer the card's own shape rather than `overflow-hidden` on the
                      card: the speed menu opens upward out of the card and would be cut off. A
                      `rounded-t` on the line itself does not work -- on an element 2px tall the
@@ -540,7 +550,7 @@ const selectPlaybackRate = (rate: number) => {
                      has the left to itself, and every control sits in one block on the right, in three
                      groups -- playing and moving between sentences (the 1s steps on the outside, past previous and next), the
                      modes and speed, the view. -->
-                <div class="relative flex flex-wrap items-center gap-x-3 gap-y-1 px-3 pt-[9.6px] pb-[7.5px] md:px-2">
+                <div class="relative flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-3 md:px-6">
                     <div class="flex min-w-0 flex-1 basis-60 items-center">
                         <!-- One button for the cover and the text: clicking what is playing brings it back
                          into view. Spans, not paragraphs -- a button only takes phrasing content. -->
@@ -549,58 +559,70 @@ const selectPlaybackRate = (rate: number) => {
                         :title="t('player.controls.showSentence')" @click="showCurrentSentence">
                         <img :src="getAnimeImage(currentResult)"
                             :alt="`Cover art for ${mediaName(currentResult.media)}`"
-                            class="w-[41px] h-[41px] shrink-0 object-cover rounded-md bg-surface-hover" />
+                            class="w-[45px] h-[45px] shrink-0 object-cover rounded-md bg-surface-hover" />
                         <span class="flex-grow min-w-0">
-                            <span lang="ja" data-testid="player-sentence" class="block font-bold text-[15.7px] leading-snug truncate pr-2" v-html="getJapaneseContent(currentResult)">
+                            <span lang="ja" data-testid="player-sentence" class="block font-bold text-[17.3px] leading-snug truncate pr-2" v-html="getJapaneseContent(currentResult)">
                             </span>
-                            <span lang="ja" class="block text-[12.3px] leading-tight text-ink-muted truncate">{{ mediaName(currentResult.media) }}</span>
+                            <span lang="ja" class="block text-[13.5px] leading-tight text-ink-muted truncate">{{ mediaName(currentResult.media) }}</span>
                         </span>
                     </button>
+                        <!-- On a phone, close sits up here, away from the transport the thumb works:
+                             the one control that ends the session is the one not to hit by accident. -->
+                        <button type="button" @click="playerStore.hidePlayer()" data-testid="player-close-compact"
+                            class="ml-auto inline-flex size-[44px] shrink-0 items-center justify-center rounded-full text-ink-muted hover:text-ink hover:bg-[color-mix(in_srgb,var(--ink)_8%,transparent)] transition-colors md:hidden"
+                            :aria-label="t('player.controls.close')" :title="withKey(t('player.controls.close'), 'Esc')">
+                            <UiBaseIcon :path="mdiClose" :size="24.5" w="w-[24.5px]" h="h-[24.5px]" />
+                        </button>
                     </div>
 
-                    <div class="flex w-full items-center justify-between gap-0.5 md:w-auto md:justify-end">
-                        <div class="flex items-center gap-0.5">
-                        <button type="button" @click="seekBackward" class="size-[36px] shrink-0 items-center justify-center rounded-full text-ink-muted hover:text-ink hover:bg-[color-mix(in_srgb,var(--ink)_8%,transparent)] transition-colors hidden sm:inline-flex" :aria-label="t('player.controls.rewind')" :title="t('player.controls.rewind')">
-                            <PlayerSeekIcon direction="back" :seconds="SEEK_STEP" :size="22.5" class="transition-colors" />
+                    <!-- On a phone: the transport centred in the thumb's reach, "more" at the right end; the
+                         empty first cell keeps the transport centred. -->
+                    <div class="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-1.5 md:flex md:w-auto md:justify-end">
+                        <span class="md:hidden" aria-hidden="true" />
+                        <div class="flex items-center gap-3 md:gap-1.5">
+                        <button type="button" @click="seekBackward" class="size-[40px] shrink-0 items-center justify-center rounded-full text-ink-muted hover:text-ink hover:bg-[color-mix(in_srgb,var(--ink)_8%,transparent)] transition-colors hidden sm:inline-flex" :aria-label="t('player.controls.rewind')" :title="t('player.controls.rewind')">
+                            <PlayerSeekIcon direction="back" :seconds="SEEK_STEP" :size="24.5" class="transition-colors" />
                         </button>
                         <button type="button" @click="playerStore.prev()" data-testid="player-prev"
-                            class="inline-flex size-[36px] shrink-0 items-center justify-center rounded-full text-ink-muted hover:text-ink hover:bg-[color-mix(in_srgb,var(--ink)_8%,transparent)] transition-colors"
+                            class="inline-flex size-[44px] md:size-[40px] shrink-0 items-center justify-center rounded-full text-ink-muted hover:text-ink hover:bg-[color-mix(in_srgb,var(--ink)_8%,transparent)] transition-colors"
                             :aria-label="t('player.controls.previous')" :title="withKey(t('player.controls.previous'), '←')" aria-keyshortcuts="ArrowLeft">
-                            <UiBaseIcon :path="mdiSkipPrevious" :size="22.5" />
+                            <UiBaseIcon :path="mdiSkipPrevious" :size="24.5" w="w-[24.5px]" h="h-[24.5px]" />
                         </button>
                         <button type="button" @click="playerStore.togglePlay()" data-testid="player-play"
-                            class="mx-0.5 inline-flex size-[36px] shrink-0 items-center justify-center rounded-full text-ink-muted hover:text-ink hover:bg-[color-mix(in_srgb,var(--ink)_8%,transparent)] transition-colors"
+                            class="mx-0.5 inline-flex size-[52px] md:size-[40px] shrink-0 items-center justify-center rounded-full text-ink-muted hover:text-ink hover:bg-[color-mix(in_srgb,var(--ink)_8%,transparent)] transition-colors"
                             :aria-label="playLabel" :title="withKey(playLabel, spaceKey)" aria-keyshortcuts="Space" :aria-busy="isBuffering">
-                            <span v-if="isBuffering" class="player-spinner w-[18px] h-[18px]" aria-hidden="true" />
+                            <span v-if="isBuffering" class="player-spinner w-[20px] h-[20px]" aria-hidden="true" />
                             <!-- No fill behind it, the same colour as every other control; a size up. -->
-                            <UiBaseIcon v-else :path="isPlaying ? mdiPause : mdiPlay" :size="28" />
+                            <UiBaseIcon v-else :path="isPlaying ? mdiPause : mdiPlay" :size="31" w="w-[31px]" h="h-[31px]" />
                         </button>
                         <button type="button" @click="playerStore.next()" data-testid="player-next"
-                            class="inline-flex size-[36px] shrink-0 items-center justify-center rounded-full text-ink-muted hover:text-ink hover:bg-[color-mix(in_srgb,var(--ink)_8%,transparent)] transition-colors"
+                            class="inline-flex size-[44px] md:size-[40px] shrink-0 items-center justify-center rounded-full text-ink-muted hover:text-ink hover:bg-[color-mix(in_srgb,var(--ink)_8%,transparent)] transition-colors"
                             :aria-label="t('player.controls.next')" :title="withKey(t('player.controls.next'), '→')" aria-keyshortcuts="ArrowRight">
-                            <UiBaseIcon :path="mdiSkipNext" :size="22.5" />
+                            <UiBaseIcon :path="mdiSkipNext" :size="24.5" w="w-[24.5px]" h="h-[24.5px]" />
                         </button>
-                        <button type="button" @click="seekForward" class="size-[36px] shrink-0 items-center justify-center rounded-full text-ink-muted hover:text-ink hover:bg-[color-mix(in_srgb,var(--ink)_8%,transparent)] transition-colors hidden sm:inline-flex" :aria-label="t('player.controls.forward')" :title="t('player.controls.forward')">
-                            <PlayerSeekIcon direction="forward" :seconds="SEEK_STEP" :size="22.5" class="transition-colors" />
+                        <button type="button" @click="seekForward" class="size-[40px] shrink-0 items-center justify-center rounded-full text-ink-muted hover:text-ink hover:bg-[color-mix(in_srgb,var(--ink)_8%,transparent)] transition-colors hidden sm:inline-flex" :aria-label="t('player.controls.forward')" :title="t('player.controls.forward')">
+                            <PlayerSeekIcon direction="forward" :seconds="SEEK_STEP" :size="24.5" class="transition-colors" />
                         </button>
                         </div>
-                        <span class="mx-1 hidden h-5 w-px bg-[var(--line)] md:block" aria-hidden="true" />
-                        <div class="flex items-center gap-0.5">
+                        <span class="mx-2 hidden h-5 w-px bg-[var(--line)] md:block" aria-hidden="true" />
+                        <!-- Modes and speed: in the "more" menu below `md`, so a phone shows only what is used
+                             all the time. -->
+                        <div class="hidden items-center gap-1.5 md:flex">
                         <button type="button" @click="playerStore.toggleAutoplay()" data-testid="player-autoplay"
-                            class="inline-flex size-[36px] shrink-0 items-center justify-center rounded-full hover:bg-[color-mix(in_srgb,var(--ink)_8%,transparent)] transition-colors"
+                            class="inline-flex size-[40px] shrink-0 items-center justify-center rounded-full hover:bg-[color-mix(in_srgb,var(--ink)_8%,transparent)] transition-colors"
                             :class="{ 'text-brand': autoplay, 'text-ink-muted': !autoplay }"
                             :aria-label="t('player.controls.autoplay')" :title="withKey(t('player.controls.autoplay'), 'L')" aria-keyshortcuts="L" :aria-pressed="autoplay">
-                            <UiBaseIcon :path="mdiPlaylistPlay" :size="22.5" />
+                            <UiBaseIcon :path="mdiPlaylistPlay" :size="24.5" w="w-[24.5px]" h="h-[24.5px]" />
                         </button>
                         <button type="button" @click="playerStore.toggleRepeat()" data-testid="player-repeat"
-                            class="inline-flex size-[36px] shrink-0 items-center justify-center rounded-full hover:bg-[color-mix(in_srgb,var(--ink)_8%,transparent)] transition-colors"
+                            class="inline-flex size-[40px] shrink-0 items-center justify-center rounded-full hover:bg-[color-mix(in_srgb,var(--ink)_8%,transparent)] transition-colors"
                             :class="{ 'text-brand': repeat, 'text-ink-muted': !repeat }"
                             :aria-label="t('player.controls.repeat')" :title="t('player.controls.repeat')" :aria-pressed="repeat">
-                            <UiBaseIcon :path="mdiRepeat" :size="22.5" />
+                            <UiBaseIcon :path="mdiRepeat" :size="24.5" w="w-[24.5px]" h="h-[24.5px]" />
                         </button>
                         <div ref="rateMenuBarRef" class="relative">
                             <button type="button" @click="rateMenuOpen = !rateMenuOpen"
-                                class="inline-flex h-[36px] items-center px-2 rounded-full hover:bg-[color-mix(in_srgb,var(--ink)_8%,transparent)] transition-colors text-xs font-bold tabular-nums"
+                                class="inline-flex h-[40px] items-center px-2 rounded-full hover:bg-[color-mix(in_srgb,var(--ink)_8%,transparent)] transition-colors text-xs font-bold tabular-nums"
                                 :class="playbackRate === 1 ? 'text-ink-muted' : 'text-brand'"
                                 :aria-label="t('player.controls.speed', { rate: playbackRate })" :title="t('player.controls.speed', { rate: playbackRate })"
                                 aria-haspopup="menu" :aria-expanded="rateMenuOpen">
@@ -620,32 +642,72 @@ const selectPlaybackRate = (rate: number) => {
                             </div>
                         </div>
                         <div v-if="showVolumeSlider" class="flex items-center gap-2 px-1">
-                            <UiBaseIcon :path="volumeIcon" :size="22.5" class="text-ink-muted" />
+                            <UiBaseIcon :path="volumeIcon" :size="24.5" w="w-[24.5px]" h="h-[24.5px]" class="text-ink-muted" />
                             <input type="range" min="0" max="100" step="1" :value="volumePercent"
                                 :style="{ '--volume-fill': `${volumePercent}%` }"
                                 @input="onVolumeInput" @change="playerStore.trackVolumeChange()"
-                                class="player-volume player-volume--themed w-[73px]"
+                                class="player-volume player-volume--themed w-[81px]"
                                 :aria-label="t('player.controls.volume')" :aria-valuetext="`${volumePercent}%`" />
                         </div>
                         </div>
-                        <span class="mx-1 hidden h-5 w-px bg-[var(--line)] md:block" aria-hidden="true" />
-                        <div class="flex items-center gap-0.5">
+                        <span class="mx-2 hidden h-5 w-px bg-[var(--line)] md:block" aria-hidden="true" />
+                        <div class="flex items-center justify-end gap-1.5">
                         <button type="button" @click="playerStore.toggleImmersive()" data-testid="player-listening-mode"
-                            class="inline-flex size-[36px] shrink-0 items-center justify-center rounded-full hover:bg-[color-mix(in_srgb,var(--ink)_8%,transparent)] transition-colors text-ink-muted hover:text-ink"
+                            class="hidden md:inline-flex size-[40px] shrink-0 items-center justify-center rounded-full hover:bg-[color-mix(in_srgb,var(--ink)_8%,transparent)] transition-colors text-ink-muted hover:text-ink"
                             :aria-label="t('player.listening.enter')" :title="withKey(t('player.listening.enter'), 'F')" aria-keyshortcuts="F">
-                            <UiBaseIcon :path="mdiHeadphones" :size="22.5" />
+                            <UiBaseIcon :path="mdiHeadphones" :size="24.5" w="w-[24.5px]" h="h-[24.5px]" />
                         </button>
+                        <!-- Below `md`: the less-used controls, behind a settings button instead of a row of buttons. -->
+                        <SearchDropdownContainer class="md:hidden" dropdown-id="nd-player-settings" teleport teleport-align="end"
+                            dropdown-container-class="z-[80] w-60">
+                            <template #default="{ toggle, isOpen }">
+                                <button type="button" data-testid="player-settings" @click="toggle"
+                                    class="inline-flex size-[44px] shrink-0 items-center justify-center rounded-full text-ink-muted hover:text-ink hover:bg-[color-mix(in_srgb,var(--ink)_8%,transparent)] transition-colors"
+                                    :aria-label="t('player.controls.settings')" :title="t('player.controls.settings')"
+                                    aria-haspopup="menu" :aria-expanded="isOpen">
+                                    <UiBaseIcon :path="mdiCogOutline" :size="24.5" w="w-[24.5px]" h="h-[24.5px]" />
+                                </button>
+                            </template>
+                            <template #content>
+                                <div data-nd-keep-open data-testid="player-settings-menu" class="pb-1">
+                                    <button type="button" class="nd-menu-item" :aria-pressed="autoplay" @click="playerStore.toggleAutoplay()">
+                                        <UiBaseIcon :path="mdiPlaylistPlay" w="w-4" h="h-4" size="16" aria-hidden="true" />
+                                        <span class="flex-1 text-left">{{ t('player.controls.autoplay') }}</span>
+                                        <UiBaseIcon v-if="autoplay" :path="mdiCheck" w="w-3.5" h="h-3.5" size="14" class="text-accent-soft" aria-hidden="true" />
+                                    </button>
+                                    <button type="button" class="nd-menu-item" :aria-pressed="repeat" @click="playerStore.toggleRepeat()">
+                                        <UiBaseIcon :path="mdiRepeat" w="w-4" h="h-4" size="16" aria-hidden="true" />
+                                        <span class="flex-1 text-left">{{ t('player.controls.repeat') }}</span>
+                                        <UiBaseIcon v-if="repeat" :path="mdiCheck" w="w-3.5" h="h-3.5" size="14" class="text-accent-soft" aria-hidden="true" />
+                                    </button>
+                                    <p class="nd-menu-header">{{ t('player.controls.speedMenu') }}</p>
+                                    <fieldset class="mx-2 mb-1.5 flex gap-0.5 rounded-md border border-hairline p-0.5 text-xs">
+                                        <legend class="sr-only">{{ t('player.controls.speedMenu') }}</legend>
+                                        <button v-for="rate in PLAYBACK_RATES" :key="rate" type="button"
+                                            class="flex-1 rounded px-1.5 py-1 tabular-nums transition-colors motion-reduce:transition-none"
+                                            :class="playbackRate === rate ? 'bg-control-hover font-semibold text-ink shadow-sm' : 'text-ink-faint hover:text-ink'"
+                                            :aria-pressed="playbackRate === rate" @click="playerStore.setPlaybackRate(rate)">
+                                            {{ rate }}×
+                                        </button>
+                                    </fieldset>
+                                    <div class="nd-menu-divider" />
+                                    <button type="button" class="nd-menu-item" @click="playerStore.toggleImmersive()">
+                                        <UiBaseIcon :path="mdiHeadphones" w="w-4" h="h-4" size="16" aria-hidden="true" />
+                                        <span class="flex-1 text-left">{{ t('player.listening.enter') }}</span>
+                                    </button>
+                                </div>
+                            </template>
+                        </SearchDropdownContainer>
                         <button type="button" @click="playerStore.hidePlayer()" data-testid="player-close"
-                            class="inline-flex size-[36px] shrink-0 items-center justify-center rounded-full hover:bg-[color-mix(in_srgb,var(--ink)_8%,transparent)] transition-colors text-ink-muted hover:text-ink"
+                            class="hidden md:inline-flex size-[40px] shrink-0 items-center justify-center rounded-full hover:bg-[color-mix(in_srgb,var(--ink)_8%,transparent)] transition-colors text-ink-muted hover:text-ink"
                             :aria-label="t('player.controls.close')" :title="withKey(t('player.controls.close'), 'Esc')" aria-keyshortcuts="Escape">
-                            <UiBaseIcon :path="mdiClose" :size="22.5" />
+                            <UiBaseIcon :path="mdiClose" :size="24.5" w="w-[24.5px]" h="h-[24.5px]" />
                         </button>
                         </div>
                     </div>
                 </div>
             </div>
             </transition>
-            </Teleport>
         </div>
 </template>
 
@@ -661,19 +723,7 @@ const selectPlaybackRate = (rate: number) => {
   border-color: var(--line);
 }
 
-/* Floats clear of the bottom edge, and of the home indicator where there is one. */
-.player-float {
-  bottom: calc(env(safe-area-inset-bottom) + 0.5rem);
-}
-
-/* Lined up with the title filter's bottom edge beside it. */
-@media (min-width: 768px) {
-  .player-float {
-    bottom: calc(env(safe-area-inset-bottom) + var(--search-panel-gap));
-  }
-}
-
-/* `translate` rather than `transform`: the centred, unanchored bar uses `transform` to centre itself. */
+/* The bar slides up into place from the bottom edge. */
 .player-float-enter-active,
 .player-float-leave-active {
   transition:

@@ -69,7 +69,8 @@
       "withShortcut": "{label}（{key}）",
       "spaceKey": "空格",
       "showSentence": "在结果中显示此句",
-      "loading": "正在加载音频"
+      "loading": "正在加载音频",
+      "settings": "播放器设置"
     },
     "listening": {
       "title": "听力模式",

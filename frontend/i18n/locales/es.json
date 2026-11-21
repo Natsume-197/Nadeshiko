@@ -69,7 +69,8 @@
       "withShortcut": "{label} ({key})",
       "spaceKey": "Espacio",
       "showSentence": "Mostrar esta frase en los resultados",
-      "loading": "Cargando audio"
+      "loading": "Cargando audio",
+      "settings": "Ajustes del reproductor"
     },
     "listening": {
       "title": "Modo escucha",

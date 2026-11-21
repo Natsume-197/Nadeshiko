@@ -69,7 +69,8 @@
       "withShortcut": "{label} ({key})",
       "spaceKey": "Spasi",
       "showSentence": "Tampilkan kalimat ini di hasil",
-      "loading": "Memuat audio"
+      "loading": "Memuat audio",
+      "settings": "Pengaturan pemutar"
     },
     "listening": {
       "title": "Mode dengar",

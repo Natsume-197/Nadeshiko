@@ -69,7 +69,8 @@
       "withShortcut": "{label}（{key}）",
       "spaceKey": "スペース",
       "showSentence": "結果でこの文を表示",
-      "loading": "音声を読み込み中"
+      "loading": "音声を読み込み中",
+      "settings": "プレーヤー設定"
     },
     "listening": {
       "title": "リスニングモード",

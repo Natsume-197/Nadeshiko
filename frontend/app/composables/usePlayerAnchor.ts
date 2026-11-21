@@ -1,13 +1,11 @@
-import { shallowRef } from 'vue';
+import { ref } from 'vue';
 
 /**
- * The floating player's dock, when the page has one: a sticky box at the end of the results column
- * that the player teleports its bar into (see `SearchContainer` and `AudioPlayer`).
- *
- * Module-level rather than `useState`: it holds a DOM node, which is only ever set on the client and
- * must never be serialised into the SSR payload. A page registers its dock on mount and clears it on
- * unmount; with none registered the bar floats, fixed and centred.
+ * The player bar's height in px while it is on screen, 0 otherwise. The title filter takes it off its
+ * own height so the two never overlap, and the layout keeps that much room at the page's end (as
+ * `--player-bar-height`). Written by a ResizeObserver on the bar, so it changes when the bar does
+ * (shown, hidden, wrapped), never on scroll.
  */
-const dock = shallowRef<HTMLElement | null>(null);
+const barHeight = ref(0);
 
-export const usePlayerAnchor = () => dock;
+export const usePlayerBarHeight = () => barHeight;

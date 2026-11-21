@@ -388,8 +388,10 @@ describe('the bar', () => {
       .filter((id) => id !== 'player-sentence');
 
     // A line, not a song: no centred transport. Playing and moving, then the modes, then the view.
+    // On a phone close sits beside the sentence (`player-close-compact`), away from the thumb.
     expect(order).toEqual([
       'player-show-sentence',
+      'player-close-compact',
       'player-prev',
       'player-play',
       'player-next',

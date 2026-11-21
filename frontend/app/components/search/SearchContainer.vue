@@ -6,7 +6,7 @@ import type { RouteLocationNormalized } from 'vue-router';
 
 import { isPlaylistPrefix, usePlayerStore } from '~/stores/player';
 import { until } from '@vueuse/core';
-import { usePlayerAnchor } from '~/composables/usePlayerAnchor';
+import { usePlayerBarHeight } from '~/composables/usePlayerAnchor';
 import { userStore } from '~/stores/auth';
 import { CATEGORY_API_MAPPING, CATEGORY_LABEL_KEYS, CATEGORY_SLUGS, discountHiddenMedia } from '~/utils/categories';
 import { buildHiddenBreakdown, countHiddenResults, type HiddenBreakdownRow } from '~/utils/hiddenResults';
@@ -891,8 +891,16 @@ const syncSidebarHeight = () => {
   // The same gap below the panel as above it, rather than running it into the window's edge.
   const rem = Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
   const gap = (Number.parseFloat(getComputedStyle(el).getPropertyValue('--search-panel-gap')) || 0) * rem;
-  sidebarMaxHeight.value = `${Math.max(0, window.innerHeight - top - gap)}px`;
+  // And short of the player bar, fixed across the window's bottom edge.
+  sidebarMaxHeight.value = `${Math.max(0, window.innerHeight - top - gap - playerBarHeight.value)}px`;
 };
+
+const playerBarHeight = usePlayerBarHeight();
+// The bar appearing, going or wrapping changes the room without a scroll to notice it. Next frame
+// rather than at once: the click paints first, and the read does not force a layout mid-update.
+watch(playerBarHeight, () => {
+  if (import.meta.client) requestAnimationFrame(syncSidebarHeight);
+});
 
 useEventListener(window, 'scroll', syncSidebarHeight, { passive: true });
 useEventListener(window, 'resize', syncSidebarHeight);
@@ -900,25 +908,6 @@ watch(
   () => searchData.value?.media?.length,
   () => nextTick(syncSidebarHeight),
 );
-
-/**
- * The floating player's dock: a sticky box at the end of the results column, which the player
- * teleports its bar into. Sticky, so the browser itself keeps the bar at the window's bottom edge
- * and stops it where the column ends, level with the title filter beside it -- see `AudioPlayer`.
- * Watched rather than set once: the column is behind a `v-if` (hidden media swaps it out), and the
- * player should follow it in and out.
- */
-const playerDockRef = ref<HTMLElement | null>(null);
-const playerDock = usePlayerAnchor();
-
-watch(playerDockRef, (el) => {
-  playerDock.value = el;
-});
-
-onBeforeUnmount(() => {
-  // Only clear our own: on a route change the next page's dock can register before this unmounts.
-  if (playerDock.value === playerDockRef.value) playerDock.value = null;
-});
 
 onMounted(async () => {
   syncSidebarHeight();
@@ -1180,10 +1169,6 @@ onBeforeRouteUpdate(async (to, from) => {
                         {{ $t('searchContainer.endOfResults') }}
                     </p>
                 </div>
-                <!-- The floating player's dock (see `playerDockRef`): the same gap from the window's
-                     edge as the title filter, a tighter one on a phone, where the column is full-bleed. -->
-                <div ref="playerDockRef" data-testid="player-dock"
-                    class="sticky bottom-[calc(env(safe-area-inset-bottom)+0.5rem)] z-[70] mx-2 md:mx-0 md:bottom-[calc(env(safe-area-inset-bottom)+var(--search-panel-gap))]" />
             </div>
             <div v-if="!isSingleSentenceView && (searchData?.media?.length > 0 || isLoading)" class="2xl:ml-6 2xl:min-w-[20rem] 2xl:max-w-[20rem] 3xl:min-w-[20rem] 3xl:max-w-[22rem] yomitan-ignore">
                 <!-- A cap rather than a fixed height (see `syncSidebarHeight`):
