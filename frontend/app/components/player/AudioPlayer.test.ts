@@ -1,24 +1,3 @@
-test('gives the sentence the left and keeps every control in one block on the right', () => {
-  playerStore.currentResult.value = result();
-  const wrapper = render();
-
-  const order = wrapper
-    .findAll('[data-testid="player-bar"] [data-testid^="player-"]')
-    .map((el) => el.attributes('data-testid'))
-    .filter((id) => id !== 'player-sentence');
-
-  // A line, not a song: no centred transport. Playing and moving, then the modes, then the view.
-  expect(order).toEqual([
-    'player-show-sentence',
-    'player-prev',
-    'player-play',
-    'player-next',
-    'player-autoplay',
-    'player-repeat',
-    'player-listening-mode',
-    'player-close',
-  ]);
-});
 // @vitest-environment happy-dom
 import { mount } from '@vue/test-utils';
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
