@@ -272,18 +272,18 @@ function reportBotInstallClick(): void {
                                                     <div role="status" v-for="i in 10" :key="i"
                                                         class="animate-pulse relative">
                                                         <div
-                                                            class="w-full pb-[145%] rounded-lg items-center overflow-hidden relative bg-[rgb(var(--c-white) / 0.06)] block">
+                                                            class="w-full pb-[145%] rounded-lg items-center overflow-hidden relative bg-[rgb(var(--c-white)_/_0.06)] block">
                                                         </div>
                                                         <div
                                                             class="mt-2 text-center justify-center flex flex-col items-center">
                                                             <div
-                                                                class="h-2.5 bg-gray-200 rounded-full dark:bg-[rgb(var(--c-white) / 0.06)] w-36 mt-2 mb-4">
+                                                                class="h-2.5 bg-gray-200 rounded-full dark:bg-[rgb(var(--c-white)_/_0.06)] w-36 mt-2 mb-4">
                                                             </div>
                                                         </div>
                                                         <div
                                                             class="text-center mt-1 mb-4 justify-center flex flex-col items-center">
                                                             <div
-                                                                class="h-2.5 bg-gray-200 rounded-full dark:bg-[rgb(var(--c-white) / 0.06)] w-28 mb-4">
+                                                                class="h-2.5 bg-gray-200 rounded-full dark:bg-[rgb(var(--c-white)_/_0.06)] w-28 mb-4">
                                                             </div>
                                                         </div>
                                                     </div>
@@ -335,7 +335,7 @@ function reportBotInstallClick(): void {
                                                         class="w-full relative">
                                                         <div class="w-full">
                                                             <div
-                                                                class="border-none pb-[145%] rounded-lg overflow-hidden relative bg-[rgb(var(--c-white) / 0.06)] block">
+                                                                class="border-none pb-[145%] rounded-lg overflow-hidden relative bg-[rgb(var(--c-white)_/_0.06)] block">
                                                                 <MediaCover
                                                                     :media="media_info"
                                                                     :alt="mediaName(media_info) || media_info.nameEn || media_info.nameRomaji || media_info.nameJa || 'Media cover image'" />
