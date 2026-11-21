@@ -19,6 +19,7 @@ import {
   type AudioQuery,
   applyHaPlan,
   CLIP_SETTINGS,
+  lengthenFinal,
   lengthenVoiced,
   makeClip,
   METAN_LEVELS,
@@ -173,6 +174,14 @@ describe('shaping a clip', () => {
     const [ba, ka] = lengthenVoiced([{ ...mora('バ', 'a', 'b'), consonant_length: 0.03 }, mora('カ', 'a', 'k')]);
     expect(ba?.consonant_length).toBe(0.1);
     expect(ka?.consonant_length).toBe(0.06);
+  });
+
+  it('draws out the last vowel, unless it is voiceless', () => {
+    const [, ke] = lengthenFinal([mora('サ', 'a', 's'), { ...mora('ケ', 'e', 'k'), vowel_length: 0.1 }]);
+    expect(ke?.vowel_length).toBe(0.18);
+    const [, su] = lengthenFinal([mora('デ', 'e', 'd'), { ...mora('ス', 'U', 's'), pitch: 0, vowel_length: 0.05 }]);
+    expect(su?.vowel_length).toBe(0.05);
+    expect(lengthenFinal([mora('ア', 'a'), { ...mora('ッ', 'cl'), pitch: 0 }])[1]?.vowel_length).toBe(0.12);
   });
 
   it('turns a は VOICEVOX took for a particle back into ha', () => {

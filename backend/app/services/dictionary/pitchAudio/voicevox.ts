@@ -56,7 +56,9 @@ export function httpVoicevox(baseUrl: string, speaker: number, fetchImpl: typeof
 }
 
 /** Sample rate, padding and speed every clip is made with. */
-export const CLIP_SETTINGS = { outputSamplingRate: 24000, prePhonemeLength: 0.05, postPhonemeLength: 0.05 } as const;
+/** Sample rate and the silence around the word: enough that a player that is slow to start or quick to stop (a
+ * Bluetooth headset, a short clip in a browser) does not swallow the first or last sound. */
+export const CLIP_SETTINGS = { outputSamplingRate: 24000, prePhonemeLength: 0.1, postPhonemeLength: 0.2 } as const;
 
 /**
  * Pitch levels of a voice, in semitones above 100 Hz: `high` for the morae before the drop, `low` for a first mora
@@ -100,6 +102,21 @@ export function shapePitch(morae: VoicevoxMora[], downstep: number, levels: Pitc
 const VOICED = new Set(['b', 'd', 'g', 'z', 'j', 'dy', 'by', 'gy', 'zy']);
 const VOICED_FACTOR = 2;
 const VOICED_MIN_SECONDS = 0.1;
+
+/** The last vowel of a word said alone is drawn out; VOICEVOX's, made for running speech, stopped so soon that the
+ * word sounded cut off. */
+const FINAL_FACTOR = 1.5;
+const FINAL_MIN_SECONDS = 0.18;
+
+export function lengthenFinal(morae: VoicevoxMora[]): VoicevoxMora[] {
+  const last = morae[morae.length - 1];
+  // A devoiced vowel (す of です, capital U) stays short and voiceless, as it is said; っ has no vowel to draw out.
+  if (!last || last.pitch === 0 || last.vowel === 'cl' || /^[AIUEO]$/.test(last.vowel)) return morae;
+  return [
+    ...morae.slice(0, -1),
+    { ...last, vowel_length: Math.max(last.vowel_length * FINAL_FACTOR, FINAL_MIN_SECONDS) },
+  ];
+}
 
 export function lengthenVoiced(morae: VoicevoxMora[]): VoicevoxMora[] {
   return morae.map((mora) =>
@@ -158,7 +175,7 @@ export async function makeClip(
 
   const morae = applyHaPlan(raw, clip.reading, clip.ha);
   const final: AccentPhrase = {
-    moras: lengthenVoiced(shapePitch(morae, clip.downstep, levels)),
+    moras: lengthenFinal(lengthenVoiced(shapePitch(morae, clip.downstep, levels))),
     accent: accentFor(clip.downstep, morae.length),
     pause_mora: null,
     is_interrogative: false,
