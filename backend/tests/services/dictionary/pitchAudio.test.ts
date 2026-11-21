@@ -19,11 +19,9 @@ import {
   type AudioQuery,
   applyHaPlan,
   CLIP_SETTINGS,
-  lengthenFinal,
-  lengthenVoiced,
+  ACCENT_DROP_SEMITONES,
+  fitAccent,
   makeClip,
-  METAN_LEVELS,
-  shapePitch,
   type VoicevoxClient,
   type VoicevoxMora,
 } from '@app/services/dictionary/pitchAudio/voicevox';
@@ -91,6 +89,8 @@ function fakeEngine(words: Record<string, VoicevoxMora[][]>, follow = true): Voi
         outputSamplingRate: 24000,
       };
     },
+    // Like VOICEVOX on many words said alone: the contour it gives is flat, whatever the accent.
+    moraPitch: async (phrases) => phrases,
     synthesis: async (query) => fakeWav(query, follow),
   };
 }
@@ -154,34 +154,38 @@ describe('kana', () => {
 describe('shaping a clip', () => {
   const semitones = (morae: VoicevoxMora[]) =>
     morae.map((m) => (m.pitch === 0 ? 0 : Math.round(12 * Math.log2(Math.exp(m.pitch) / 100) * 10) / 10));
-  const four = [mora('イ', 'i'), mora('モ', 'o', 'm'), mora('ウ', 'o'), mora('ト', 'o', 't')];
 
-  it('sets each mora’s pitch from the downstep, low-high Tokyo style', () => {
-    const { high, low, fallen, slope } = METAN_LEVELS;
-    expect(semitones(shapePitch(four, 0, METAN_LEVELS))).toEqual([low, high, high - slope, high - 2 * slope]);
-    expect(semitones(shapePitch(four, 1, METAN_LEVELS))).toEqual([high, fallen, fallen - slope, fallen - 2 * slope]);
-    expect(semitones(shapePitch(four, 2, METAN_LEVELS))).toEqual([low, high, fallen, fallen - slope]);
-    // A drop after the last mora is flat said alone.
-    expect(shapePitch(four, 4, METAN_LEVELS)).toEqual(shapePitch(four, 0, METAN_LEVELS));
+  /** A natural contour, in semitones above 100 Hz, as morae. */
+  const contour = (values: Array<number | null>) =>
+    values.map((value, i) => ({
+      ...mora('ア', 'a'),
+      text: `m${i}`,
+      pitch: value === null ? 0 : Math.log(100 * 2 ** (value / 12)),
+    }));
+
+  it('keeps a contour that already follows the accent', () => {
+    // 橋 as VOICEVOX says it: low, high, and the next mora would fall.
+    const natural = contour([19, 24, 18.5]);
+    expect(semitones(fitAccent(natural, 2))).toEqual([19, 24, 18.5]);
+  });
+
+  it('moves only what contradicts the downstep, by the drop it asks for', () => {
+    // 雨 came out flat: the second mora goes down by the drop, the first stays.
+    expect(semitones(fitAccent(contour([21.4, 21.4]), 1))).toEqual([21.4, 21.4 - ACCENT_DROP_SEMITONES]);
+    // 心 fell too little: the third mora goes down, a first mora that did not rise goes under the high one.
+    expect(semitones(fitAccent(contour([23.9, 23.9, 22]), 2))).toEqual([22.4, 23.9, 18.9]);
+    // A high mora sagging more than a semitone under the others comes up.
+    expect(semitones(fitAccent(contour([18, 24, 20, 17]), 3, 4))).toEqual([18, 24, 23, 17]);
+  });
+
+  it('adds no drop to a flat word, nor to one that drops after its last mora', () => {
+    // 電車, flat, fell on its last mora: it is raised back to the high morae.
+    expect(semitones(fitAccent(contour([21.8, 24.7, 20.9]), 0))).toEqual([21.8, 24.7, 23.7]);
+    expect(fitAccent(contour([21.8, 24.7, 20.9]), 3)).toEqual(fitAccent(contour([21.8, 24.7, 20.9]), 0));
   });
 
   it('leaves voiceless morae voiceless', () => {
-    const kitte = [mora('キ', 'i', 'k'), { ...mora('ッ', 'cl'), pitch: 0 }, mora('テ', 'e', 't')];
-    expect(shapePitch(kitte, 0, METAN_LEVELS)[1]?.pitch).toBe(0);
-  });
-
-  it('lengthens voiced consonants', () => {
-    const [ba, ka] = lengthenVoiced([{ ...mora('バ', 'a', 'b'), consonant_length: 0.03 }, mora('カ', 'a', 'k')]);
-    expect(ba?.consonant_length).toBe(0.1);
-    expect(ka?.consonant_length).toBe(0.06);
-  });
-
-  it('draws out the last vowel, unless it is voiceless', () => {
-    const [, ke] = lengthenFinal([mora('サ', 'a', 's'), { ...mora('ケ', 'e', 'k'), vowel_length: 0.1 }]);
-    expect(ke?.vowel_length).toBe(0.18);
-    const [, su] = lengthenFinal([mora('デ', 'e', 'd'), { ...mora('ス', 'U', 's'), pitch: 0, vowel_length: 0.05 }]);
-    expect(su?.vowel_length).toBe(0.05);
-    expect(lengthenFinal([mora('ア', 'a'), { ...mora('ッ', 'cl'), pitch: 0 }])[1]?.vowel_length).toBe(0.12);
+    expect(fitAccent(contour([22, null, 23]), 0)[1]?.pitch).toBe(0);
   });
 
   it('turns a は VOICEVOX took for a particle back into ha', () => {
@@ -237,7 +241,7 @@ describe('the check', () => {
 
   it('reads the pitch of each mora from the audio', async () => {
     const query = await fakeEngine({ こころ: KOKORO }).audioQuery('こころ');
-    const shaped = shapePitch(query.accent_phrases[0]?.moras ?? [], 2, METAN_LEVELS);
+    const shaped = fitAccent(query.accent_phrases[0]?.moras ?? [], 2);
     const wav = fakeWav({
       ...query,
       ...CLIP_SETTINGS,
@@ -246,11 +250,8 @@ describe('the check', () => {
     const { samples, sampleRate } = decodeWav(wav);
     const pitches = moraPitches(pitchTrack(samples, sampleRate), shaped, CLIP_SETTINGS.prePhonemeLength);
 
-    expect(pitches.map((value) => Math.round(value ?? 0))).toEqual([
-      Math.round(METAN_LEVELS.low),
-      Math.round(METAN_LEVELS.high),
-      Math.round(METAN_LEVELS.fallen),
-    ]);
+    const asked = shaped.map((m) => Math.round(12 * Math.log2(Math.exp(m.pitch) / 100)));
+    expect(pitches.map((value) => Math.round(value ?? 0))).toEqual(asked);
   });
 });
 

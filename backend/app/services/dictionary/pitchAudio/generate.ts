@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import type { DataSource } from 'typeorm';
 import { pitchAudioFile, pitchAudioUrl } from './audioUrl';
 import type { SelectedClip } from './select';
-import { makeClip, type PitchLevels, type VoicevoxClient } from './voicevox';
+import { makeClip, type VoicevoxClient } from './voicevox';
 
 /**
  * Making, checking and registering the pitch-audio clips (task 40). `bin/generatePitchAudio.ts` drives it on the
@@ -68,7 +68,6 @@ export interface GenerateOptions {
   voice: string;
   client: VoicevoxClient;
   encode: Encoder;
-  levels?: PitchLevels;
   /** Clips made at once. */
   concurrency?: number;
   onProgress?: (done: number, total: number) => void;
@@ -82,7 +81,7 @@ export interface GenerateOptions {
  */
 export async function generateClips(
   clips: SelectedClip[],
-  { outDir, voice, client, encode, levels, concurrency = 3, onProgress }: GenerateOptions,
+  { outDir, voice, client, encode, concurrency = 3, onProgress }: GenerateOptions,
 ): Promise<{ manifest: Manifest; report: CheckReport; made: number; kept: number }> {
   await mkdir(outDir, { recursive: true });
   const manifest: Array<ManifestClip | undefined> = new Array(clips.length);
@@ -105,7 +104,7 @@ export async function generateClips(
         manifest[index] = { reading: clip.reading, downstep: clip.downstep, file, bytes: existing.size };
         kept++;
       } else {
-        const result = await makeClip(client, clip, levels);
+        const result = await makeClip(client, clip);
         checked++;
         if (result.wav && result.problems.length === 0) {
           const opus = await encode(result.wav);

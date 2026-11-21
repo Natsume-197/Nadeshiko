@@ -13,6 +13,7 @@ describe('httpVoicevox', () => {
   const fetchImpl = (async (url: string, init?: RequestInit) => {
     calls.push({ url, init });
     if (url.includes('/audio_query')) return Response.json({ accent_phrases: [], speedScale: 1 });
+    if (url.includes('/mora_pitch')) return Response.json(JSON.parse(String(init?.body)));
     if (url.includes('/synthesis')) return new Response(new Uint8Array([82, 73, 70, 70]));
     return new Response('nope', { status: 500 });
   }) as typeof fetch;
@@ -21,16 +22,19 @@ describe('httpVoicevox', () => {
     calls.length = 0;
   });
 
-  it('asks for the query of the text and the speaker, then posts it back to synthesise', async () => {
+  it('asks for the query of the text, the intonation of its accent and the audio, as the speaker', async () => {
     const client = httpVoicevox('http://127.0.0.1:50021/', 2, fetchImpl);
 
     const query = await client.audioQuery('はし');
+    const phrases = await client.moraPitch([{ moras: [], accent: 2, pause_mora: null, is_interrogative: false }]);
     const wav = await client.synthesis(query as AudioQuery);
 
     expect(calls[0]?.url).toBe(`http://127.0.0.1:50021/audio_query?text=${encodeURIComponent('はし')}&speaker=2`);
     expect(calls[0]?.init?.method).toBe('POST');
-    expect(calls[1]?.url).toBe('http://127.0.0.1:50021/synthesis?speaker=2');
-    expect(JSON.parse(String(calls[1]?.init?.body))).toEqual(query);
+    expect(calls[1]?.url).toBe('http://127.0.0.1:50021/mora_pitch?speaker=2');
+    expect(phrases[0]?.accent).toBe(2);
+    expect(calls[2]?.url).toBe('http://127.0.0.1:50021/synthesis?speaker=2');
+    expect(JSON.parse(String(calls[2]?.init?.body))).toEqual(query);
     expect(wav.toString('ascii')).toBe('RIFF');
   });
 

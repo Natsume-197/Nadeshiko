@@ -35,6 +35,8 @@ export interface AudioQuery {
 /** The two engine calls a clip needs, behind an interface so tests need no engine. */
 export interface VoicevoxClient {
   audioQuery(text: string): Promise<AudioQuery>;
+  /** VOICEVOX's own intonation for accent phrases whose `accent` is set. */
+  moraPitch(phrases: AccentPhrase[]): Promise<AccentPhrase[]>;
   synthesis(query: AudioQuery): Promise<Buffer>;
 }
 
@@ -51,82 +53,56 @@ export function httpVoicevox(baseUrl: string, speaker: number, fetchImpl: typeof
   return {
     audioQuery: async (text) =>
       (await (await call(`/audio_query?text=${encodeURIComponent(text)}`)).json()) as AudioQuery,
+    moraPitch: async (phrases) => (await (await call('/mora_pitch', phrases)).json()) as AccentPhrase[],
     synthesis: async (query) => Buffer.from(await (await call('/synthesis', query)).arrayBuffer()),
   };
 }
 
-/** Sample rate, padding and speed every clip is made with. */
-/** Sample rate and the silence around the word: enough that a player that is slow to start or quick to stop (a
- * Bluetooth headset, a short clip in a browser) does not swallow the first or last sound. */
-export const CLIP_SETTINGS = { outputSamplingRate: 24000, prePhonemeLength: 0.1, postPhonemeLength: 0.2 } as const;
+/** Sample rate and the silence around the word: enough that a player slow to start or quick to stop (a Bluetooth
+ * headset, a short clip in a browser) keeps the first and last sound. */
+export const CLIP_SETTINGS = { outputSamplingRate: 24000, prePhonemeLength: 0.1, postPhonemeLength: 0.15 } as const;
 
 /**
- * Pitch levels of a voice, in semitones above 100 Hz: `high` for the morae before the drop, `low` for a first mora
- * that rises, `fallen` for the morae after the drop, and `slope` lost per mora so a long word does not sound flat
- * and mechanical.
+ * Semitones the pitch must fall across the downstep. VOICEVOX's own contour for a word said alone often barely falls
+ * (median 0.1 st over the top 300 words), so the accent is not heard. Measured on those words: asking for 5 st makes
+ * 94% of clips pass the check with the fewest pitch dips, and more gains nothing. Real speech falls further (~9 st).
  */
-export interface PitchLevels {
-  high: number;
-  low: number;
-  fallen: number;
-  slope: number;
-}
+export const ACCENT_DROP_SEMITONES = 5;
 
-/** 四国めたん ノーマル, from the range VOICEVOX itself gives her (about 17 to 25 semitones above 100 Hz). */
-export const METAN_LEVELS: PitchLevels = { high: 23.5, low: 19.5, fallen: 18.5, slope: 0.3 };
+const toSemitones = (pitch: number) => 12 * Math.log2(Math.exp(pitch) / 100);
+const fromSemitones = (semitones: number) => Math.log(100 * 2 ** (semitones / 12));
 
 /**
- * Each mora's pitch from the downstep, Tokyo style: the first mora low and the rest high (flat, 0), the first high
- * and the rest fallen (1), or low, high up to mora d, then fallen. A drop after the last mora is flat said alone.
- * VOICEVOX's own intonation is not used: for words said alone it often misses the drop (雨 came out flat) or adds
- * one at the end (電車, flat, fell on its last mora). Morae VOICEVOX leaves voiceless (pitch 0: っ, a devoiced vowel)
- * stay voiceless.
+ * VOICEVOX's own pitch per mora, moved only where it contradicts the downstep, so the word keeps the engine's
+ * natural intonation: the high morae (the first for a drop after it, otherwise the second up to the downstep) no
+ * more than 1 semitone under the highest of them, a first mora that must rise at least 1.5 under them, and every
+ * mora after the downstep at least `drop` under the lowest high one. Flat (0) and a drop after the last mora (which
+ * sounds flat said alone) have no drop. Replacing the whole contour with fixed levels sounded mechanical, with dips
+ * and steps. Voiceless morae (pitch 0: っ, a devoiced vowel) stay voiceless.
  */
-export function shapePitch(morae: VoicevoxMora[], downstep: number, levels: PitchLevels): VoicevoxMora[] {
+export function fitAccent(
+  morae: VoicevoxMora[],
+  downstep: number,
+  drop: number = ACCENT_DROP_SEMITONES,
+): VoicevoxMora[] {
   const n = morae.length;
-  const drop = downstep <= 0 || downstep >= n ? n : downstep;
-  return morae.map((mora, index) => {
-    if (mora.pitch === 0) return mora;
-    const position = index + 1;
-    const semitones =
-      position > drop
-        ? levels.fallen - levels.slope * (position - drop - 1)
-        : position === 1 && drop !== 1
-          ? levels.low
-          : levels.high - levels.slope * (position - (drop === 1 ? 1 : 2));
-    return { ...mora, pitch: Math.log(100 * 2 ** (semitones / 12)) };
+  const d = downstep <= 0 || downstep >= n ? n : downstep;
+  const pitch = morae.map((mora) => (mora.pitch > 0 ? toSemitones(mora.pitch) : null));
+  const high = [...Array(n).keys()].filter((i) => (d === 1 ? i === 0 : i >= 1 && i < d) && pitch[i] !== null);
+  if (high.length === 0) return morae;
+  const top = Math.max(...high.map((i) => pitch[i] ?? -Infinity));
+  for (const i of high) pitch[i] = Math.max(pitch[i] ?? top, top - 1);
+  const floor = Math.min(...high.map((i) => pitch[i] ?? Infinity));
+  const first = pitch[0];
+  if (d !== 1 && first != null) pitch[0] = Math.min(first, floor - 1.5);
+  for (let i = d; i < n; i++) {
+    const value = pitch[i];
+    if (value != null) pitch[i] = Math.min(value, floor - drop);
+  }
+  return morae.map((mora, i) => {
+    const value = pitch[i];
+    return mora.pitch > 0 && value != null ? { ...mora, pitch: fromSemitones(value) } : mora;
   });
-}
-
-/** Voiced consonants, lengthened so they are not swallowed in a short word. */
-const VOICED = new Set(['b', 'd', 'g', 'z', 'j', 'dy', 'by', 'gy', 'zy']);
-const VOICED_FACTOR = 2;
-const VOICED_MIN_SECONDS = 0.1;
-
-/** The last vowel of a word said alone is drawn out; VOICEVOX's, made for running speech, stopped so soon that the
- * word sounded cut off. */
-const FINAL_FACTOR = 1.5;
-const FINAL_MIN_SECONDS = 0.18;
-
-export function lengthenFinal(morae: VoicevoxMora[]): VoicevoxMora[] {
-  const last = morae[morae.length - 1];
-  // A devoiced vowel (す of です, capital U) stays short and voiceless, as it is said; っ has no vowel to draw out.
-  if (!last || last.pitch === 0 || last.vowel === 'cl' || /^[AIUEO]$/.test(last.vowel)) return morae;
-  return [
-    ...morae.slice(0, -1),
-    { ...last, vowel_length: Math.max(last.vowel_length * FINAL_FACTOR, FINAL_MIN_SECONDS) },
-  ];
-}
-
-export function lengthenVoiced(morae: VoicevoxMora[]): VoicevoxMora[] {
-  return morae.map((mora) =>
-    mora.consonant && VOICED.has(mora.consonant)
-      ? {
-          ...mora,
-          consonant_length: Math.max((mora.consonant_length ?? 0) * VOICED_FACTOR, VOICED_MIN_SECONDS),
-        }
-      : mora,
-  );
 }
 
 /** Rewrites each は/へ mora to how the word says it ({@link HaPlan}); `either` keeps the engine's reading. */
@@ -157,15 +133,11 @@ export interface ClipResult {
 }
 
 /**
- * One clip: the hiragana reading through `audio_query` (for its morae and their lengths), its accent phrases joined
- * into one, は/へ fixed, each mora's pitch set from our downstep, voiced consonants lengthened, then synthesised and
- * checked.
+ * One clip: the hiragana reading through `audio_query` (morae and their lengths), its accent phrases joined into one,
+ * は/へ fixed, VOICEVOX's own intonation for our downstep (`mora_pitch`), fitted where it contradicts the accent, then
+ * synthesised and checked.
  */
-export async function makeClip(
-  client: VoicevoxClient,
-  clip: ClipRequest,
-  levels: PitchLevels = METAN_LEVELS,
-): Promise<ClipResult> {
+export async function makeClip(client: VoicevoxClient, clip: ClipRequest): Promise<ClipResult> {
   const query = await client.audioQuery(synthesisText(clip.reading));
   const raw = query.accent_phrases.flatMap((phrase) => phrase.moras);
   // Count first: with the wrong number of morae, the downstep cannot be placed.
@@ -174,19 +146,17 @@ export async function makeClip(
   }
 
   const morae = applyHaPlan(raw, clip.reading, clip.ha);
-  const final: AccentPhrase = {
-    moras: lengthenFinal(lengthenVoiced(shapePitch(morae, clip.downstep, levels))),
-    accent: accentFor(clip.downstep, morae.length),
-    pause_mora: null,
-    is_interrogative: false,
-  };
+  const accent = accentFor(clip.downstep, morae.length);
+  const [natural] = await client.moraPitch([{ moras: morae, accent, pause_mora: null, is_interrogative: false }]);
+  if (!natural) return { wav: null, problems: ['VOICEVOX returned no accent phrase'], pitches: [] };
+  const final: AccentPhrase = { ...natural, moras: fitAccent(natural.moras, clip.downstep) };
 
   const wav = await client.synthesis({ ...query, ...CLIP_SETTINGS, speedScale: 1, accent_phrases: [final] });
   const problems = checkMorae(clip.reading, final.moras, clip.ha);
   const { samples, sampleRate } = decodeWav(wav);
   const pitches = moraPitches(pitchTrack(samples, sampleRate), final.moras, CLIP_SETTINGS.prePhonemeLength);
-  const intended = final.moras.map((mora) => (mora.pitch > 0 ? 12 * Math.log2(Math.exp(mora.pitch) / 100) : null));
-  const accent = checkAccent(pitches, clip.downstep, splitMorae(clip.reading), intended);
-  if (accent) problems.push(accent);
+  const intended = final.moras.map((mora) => (mora.pitch > 0 ? toSemitones(mora.pitch) : null));
+  const accentProblem = checkAccent(pitches, clip.downstep, splitMorae(clip.reading), intended);
+  if (accentProblem) problems.push(accentProblem);
   return { wav, problems, pitches };
 }
