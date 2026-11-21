@@ -12,13 +12,13 @@
 
 import { HOUR_PINS, TEMPORAL_ANCHOR_TEXTS, TEMPORAL_DURATION_PINS } from '../data/numeralPins';
 import { PIN } from '../data/pins';
-import { deconj, hasSection, known, knownVerbOrAdjective, prepend } from '../group';
+import { deconj, hasSection, isNounClass, known, knownVerbOrAdjective, prepend } from '../group';
 import { recut } from '../recut';
 import { isNumeralChar, toKatakana, widenDigits } from '../kana';
 import type { CombineContext, Group } from '../types';
 import { isNumeralToken } from './rewrite';
 
-const isNounLike = (group: Group | undefined) => group?.cls === 'Noun' || group?.cls === 'CommonNoun';
+const isNounLike = (group: Group | undefined) => !!group && isNounClass(group.cls);
 
 /** The reading of a pinned JMdict form, in katakana. */
 function pinnedReading(ctx: CombineContext, wordId: number, formIdx?: number): string | undefined {
@@ -129,7 +129,7 @@ export function applyContextPins(groups: Group[], ctx: CombineContext): Group[] 
       chars.length >= 3 &&
       chars.at(-1) === '方' &&
       word.flags.pin === undefined &&
-      (word.cls === 'Noun' || word.cls === 'CommonNoun') &&
+      isNounClass(word.cls) &&
       !known(ctx, word.s)
         ? renyoukeiVerb(ctx, stem)
         : undefined;

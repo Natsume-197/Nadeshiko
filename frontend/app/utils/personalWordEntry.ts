@@ -24,15 +24,11 @@ export function hasOwnDictionaries(word: DictionaryWord): boolean {
  * (`pickEntries`), over candidates that carry the reader's dictionaries. Null when those dictionaries add nothing,
  * so the shared, server-rendered entry stays on screen.
  */
-export function personalEntryFrom(
-  candidates: readonly DictionaryWord[],
-  word: string,
-  locale: 'en' | 'es',
-): WordEntryAnswer | null {
+export function personalEntryFrom(candidates: readonly DictionaryWord[], word: string): WordEntryAnswer | null {
   if (!candidates.some(hasOwnDictionaries)) return null;
   const { entry, others, inflected } = pickEntries(candidates, word);
   if (!entry) return null;
-  return { entry, inflected, others: others.map((other) => ({ ...brief(other, locale), entry: other })) };
+  return { entry, inflected, others: others.map((other) => ({ ...brief(other), entry: other })) };
 }
 
 /**
@@ -50,7 +46,7 @@ export async function personalEntryFor(
       `/api/dictionary/words/candidates/${encodeURIComponent(word)}`,
       { query: { locale, stack } },
     );
-    return personalEntryFrom(answer?.candidates ?? [], word, locale);
+    return personalEntryFrom(answer?.candidates ?? [], word);
   } catch {
     return null;
   }

@@ -62,11 +62,6 @@ const SPANISH: Readonly<Record<string, string>> = {
   'representative (〜たり)': 'enumerativa (〜たり)',
 };
 
-/** The labels' language for a UI locale: Spanish pages get Spanish, the rest keep the parser's English. */
-export function inflectionLanguage(uiLocale: string): GlossLanguage {
-  return uiLocale.toLowerCase().startsWith('es') ? 'es' : 'en';
-}
-
 /** One inflection label in the given language. */
 export function inflectionLabel(label: string, language: GlossLanguage): string {
   return language === 'es' ? (SPANISH[label] ?? label) : label;

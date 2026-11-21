@@ -50,7 +50,7 @@ describe('readJsonArray', () => {
   it('refuses a file cut off mid-object', async () => {
     const path = file('cut.json', JSON.stringify(FURIGANA).slice(0, 40));
 
-    await expect(collect(readJsonArray(path))).rejects.toThrow(/middle of a JSON value/);
+    await expect(collect(readJsonArray(path))).rejects.toThrow(/Unterminated JSON array/);
   });
 });
 

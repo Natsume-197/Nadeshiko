@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { DEFAULT_OG_IMAGE_PATH } from '~/utils/metaTags';
+import { buildKanjiPath } from '~/utils/routes';
+import { glossLanguageFor } from '~/utils/wordCard';
 
 /**
  * The kanji index (task 44): every jōyō and JLPT kanji, one group at a time, by JLPT level (N5 first) or by school
@@ -25,7 +27,7 @@ const localePath = useLocalePath();
 
 const by = computed<'jlpt' | 'grade'>(() => (route.query.by === 'grade' ? 'grade' : 'jlpt'));
 const level = computed(() => (typeof route.query.level === 'string' ? route.query.level : ''));
-const glossLocale = computed<'en' | 'es'>(() => (locale.value === 'es' ? 'es' : 'en'));
+const glossLocale = computed(() => glossLanguageFor(locale.value));
 
 const { data, error } = await useAsyncData(
   () => `kanji-index-${glossLocale.value}-${by.value}-${level.value}`,
@@ -47,7 +49,7 @@ const groupLabel = (id: string) => {
 };
 
 const groupPath = (id: string) => ({ path: localePath('/kanji'), query: { by: by.value, level: id } });
-const kanjiPath = (character: string) => localePath(`/kanji/${encodeURIComponent(character)}`);
+const kanjiPath = (character: string) => localePath(buildKanjiPath(character));
 
 const currentLabel = computed(() => (data.value ? groupLabel(data.value.level) : ''));
 const title = computed(() => t('seo.kanjiIndex.title', { group: currentLabel.value }));

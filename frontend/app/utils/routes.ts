@@ -18,6 +18,11 @@ export function buildWordSearchPath(word: string): string {
   return `/search/${encodeURIComponent(word)}`;
 }
 
+/** A kanji's own page (`/kanji/食`). */
+export function buildKanjiPath(character: string): string {
+  return `/kanji/${encodeURIComponent(character)}`;
+}
+
 /**
  * Re-run a recent search with query and title scope only; episode, sort and cursor describe a previous
  * position, not the remembered search.

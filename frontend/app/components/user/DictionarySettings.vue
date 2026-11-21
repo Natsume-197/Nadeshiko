@@ -20,7 +20,7 @@ import { useToastError, useToastSuccess } from '~/utils/toast';
  * reorder them together with Nadeshiko's built-in JMdict, toggle them on/off, and delete them.
  */
 
-const { t, locale } = useI18n();
+const { t } = useI18n();
 const localePath = useLocalePath();
 const sdk = useNadeshikoSdk();
 const user = userStore();
@@ -46,7 +46,7 @@ const fileInputRef = ref<HTMLInputElement | null>(null);
 
 let pollTimer: ReturnType<typeof setInterval> | null = null;
 
-const formatNumber = (n: number) => new Intl.NumberFormat(locale.value).format(n);
+const { formatNumber } = useFormat();
 const formatMb = (bytes: number) => `${(bytes / (1024 * 1024)).toFixed(bytes >= 10 * 1024 * 1024 ? 0 : 1)} MB`;
 /** Indexed space, which can pass a gigabyte. */
 const formatSize = (bytes: number) =>
@@ -210,65 +210,15 @@ function uploadZipFile(file: File) {
   uploading.value = true;
   uploadProgress.value = 0;
 
-  if (data.value?.directUpload) {
-    void uploadDirect(file);
-    return;
-  }
+  const upload = data.value?.directUpload ? uploadDirect(file) : uploadThroughServer(file);
+  void upload.catch(failUpload);
+}
 
-  const xhr = new XMLHttpRequest();
-  xhr.open('POST', '/v1/user/dictionaries', true);
-  xhr.withCredentials = true;
-  xhr.setRequestHeader('Content-Type', 'application/zip');
-
-  xhr.upload.onprogress = (event) => {
-    if (event.lengthComputable && event.total > 0) {
-      uploadProgress.value = Math.min(100, Math.round((event.loaded / event.total) * 100));
-    }
-  };
-
-  xhr.onload = async () => {
-    uploading.value = false;
-    uploadProgress.value = 0;
-    if (fileInputRef.value) fileInputRef.value.value = '';
-
-    if (xhr.status >= 200 && xhr.status < 300) {
-      try {
-        const parsed = JSON.parse(xhr.responseText) as { dictionary?: UserDictionary };
-        const title = parsed.dictionary?.title ?? file.name;
-        useToastSuccess(
-          parsed.dictionary?.status === 'ready'
-            ? t('accountSettings.dictionaries.uploadedReadyToast', { title })
-            : t('accountSettings.dictionaries.uploadedProcessingToast', { title }),
-        );
-      } catch {
-        useToastSuccess(t('accountSettings.dictionaries.uploadedProcessingToast', { title: file.name }));
-      }
-      await fetchDictionaries(true);
-      return;
-    }
-
-    let detail = t('accountSettings.dictionaries.uploadError');
-    try {
-      const body = JSON.parse(xhr.responseText) as { detail?: string; message?: string; title?: string };
-      const message = body.detail || body.message || body.title;
-      // A reason we know is said in the reader's language; anything else is shown as the server put it.
-      const known = dictionaryImportError(message);
-      detail = known !== 'generic' ? t(`accountSettings.dictionaries.importErrors.${known}`) : message || detail;
-    } catch {
-      // keep fallback error
-    }
-    uploadError.value = detail;
-    useToastError(detail);
-  };
-
-  xhr.onerror = () => {
-    uploading.value = false;
-    uploadProgress.value = 0;
-    uploadError.value = t('accountSettings.dictionaries.uploadError');
-    useToastError(uploadError.value);
-  };
-
-  xhr.send(file);
+function failUpload(error: unknown) {
+  endUpload();
+  const message = (error as { detail?: string } | null)?.detail ?? (error instanceof Error ? error.message : '');
+  uploadError.value = uploadFailureText(message);
+  useToastError(uploadError.value);
 }
 
 /** The reader-facing reason for a refused upload: one we know in their language, anything else as the server said. */
@@ -284,21 +234,72 @@ function endUpload() {
   if (fileInputRef.value) fileInputRef.value.value = '';
 }
 
+/** A finished upload: says whether the dictionary is ready or still being indexed, then refreshes the list. */
+async function finishUpload(dictionary: UserDictionary | undefined, file: File) {
+  endUpload();
+  const title = dictionary?.title ?? file.name;
+  useToastSuccess(
+    dictionary?.status === 'ready'
+      ? t('accountSettings.dictionaries.uploadedReadyToast', { title })
+      : t('accountSettings.dictionaries.uploadedProcessingToast', { title }),
+  );
+  await fetchDictionaries(true);
+}
+
+/** Reports upload progress from an XHR into the bar, never past `cap`. */
+function trackProgress(xhr: XMLHttpRequest, cap: number) {
+  xhr.upload.onprogress = (event) => {
+    if (event.lengthComputable && event.total > 0) {
+      uploadProgress.value = Math.min(cap, Math.round((event.loaded / event.total) * 100));
+    }
+  };
+}
+
 /** PUTs the file to a presigned URL, reporting progress; resolves with the HTTP status. */
 function putWithProgress(url: string, headers: Record<string, string>, file: File): Promise<number> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open('PUT', url, true);
     for (const [name, value] of Object.entries(headers)) xhr.setRequestHeader(name, value);
-    xhr.upload.onprogress = (event) => {
-      if (event.lengthComputable && event.total > 0) {
-        uploadProgress.value = Math.min(99, Math.round((event.loaded / event.total) * 100));
-      }
-    };
+    // Held at 99: the upload is not done until `complete` answers.
+    trackProgress(xhr, 99);
     xhr.onload = () => resolve(xhr.status);
     xhr.onerror = () => reject(new Error('Upload to storage failed'));
     xhr.send(file);
   });
+}
+
+/** POSTs the zip to our own API with the session cookie, reporting progress; resolves with the status and body. */
+function postWithProgress(url: string, file: File): Promise<{ status: number; body: string }> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', url, true);
+    xhr.withCredentials = true;
+    xhr.setRequestHeader('Content-Type', 'application/zip');
+    trackProgress(xhr, 100);
+    xhr.onload = () => resolve({ status: xhr.status, body: xhr.responseText });
+    // No message: the reader gets the generic upload error, in their language.
+    xhr.onerror = () => reject(new Error(''));
+    xhr.send(file);
+  });
+}
+
+function parseJson<T>(text: string): T | null {
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    return null;
+  }
+}
+
+/** The older path, for servers without direct upload: the archive goes through Nadeshiko's API. */
+async function uploadThroughServer(file: File) {
+  const { status, body } = await postWithProgress('/v1/user/dictionaries', file);
+  if (status < 200 || status >= 300) {
+    const refusal = parseJson<{ detail?: string; message?: string; title?: string }>(body);
+    throw new Error(refusal?.detail || refusal?.message || refusal?.title || '');
+  }
+  await finishUpload(parseJson<{ dictionary?: UserDictionary }>(body)?.dictionary, file);
 }
 
 /**
@@ -306,26 +307,12 @@ function putWithProgress(url: string, headers: Record<string, string>, file: Fil
  * never goes through Nadeshiko's servers on the way in.
  */
 async function uploadDirect(file: File) {
-  try {
-    const reservation = await sdk.reserveUserDictionaryUpload({ sizeBytes: file.size });
-    const status = await putWithProgress(reservation.url, reservation.headers, file);
-    if (status < 200 || status >= 300) throw new Error(t('accountSettings.dictionaries.uploadError'));
-    uploadProgress.value = 100;
-    const result = await sdk.completeUserDictionaryUpload(reservation.uploadId);
-    endUpload();
-    const title = result.dictionary?.title ?? file.name;
-    useToastSuccess(
-      result.dictionary?.status === 'ready'
-        ? t('accountSettings.dictionaries.uploadedReadyToast', { title })
-        : t('accountSettings.dictionaries.uploadedProcessingToast', { title }),
-    );
-    await fetchDictionaries(true);
-  } catch (error) {
-    endUpload();
-    const message = (error as { detail?: string } | null)?.detail ?? (error instanceof Error ? error.message : '');
-    uploadError.value = uploadFailureText(message);
-    useToastError(uploadError.value);
-  }
+  const reservation = await sdk.reserveUserDictionaryUpload({ sizeBytes: file.size });
+  const status = await putWithProgress(reservation.url, reservation.headers, file);
+  if (status < 200 || status >= 300) throw new Error(t('accountSettings.dictionaries.uploadError'));
+  uploadProgress.value = 100;
+  const result = await sdk.completeUserDictionaryUpload(reservation.uploadId);
+  await finishUpload(result.dictionary, file);
 }
 
 function onFileChange(event: Event) {

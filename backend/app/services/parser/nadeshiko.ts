@@ -1,7 +1,7 @@
 import type { DataSource } from 'typeorm';
 import type { SlimToken, TokenPart } from '@app/models/Segment';
-import { toHiragana } from '@app/services/dictionary/import/entries';
 import { combine, type Group, loadLexicon } from './combine';
+import { toHiragana } from './combine/kana';
 import { deconjugate } from './deconjugator';
 import { type RubySegment, surfaceFurigana } from './furigana';
 import { inflectionLabels } from './labels';
@@ -67,7 +67,8 @@ function partsOf(group: Group): TokenPart[] | undefined {
 
 export function toSlimToken(
   group: Group,
-  sentence: string,
+  /** The sentence, or its code points (split once per sentence by the caller). */
+  sentence: string | readonly string[],
   rubies: Map<string, Array<{ reading: string; segments: RubySegment[] }>>,
 ): SlimToken {
   const pos = tokenPos(group.pos, group.kind, group.d);
@@ -89,7 +90,8 @@ export function toSlimToken(
 
   if (hasKanji(group.s)) {
     const candidates = [...(rubies.get(group.d) ?? []), ...(group.n !== group.d ? (rubies.get(group.n) ?? []) : [])];
-    const trailing = [...sentence].slice(group.e, group.e + 3).join('');
+    const chars = typeof sentence === 'string' ? [...sentence] : sentence;
+    const trailing = chars.slice(group.e, group.e + 3).join('');
     const f = surfaceFurigana(group.s, { rubies: byReading(candidates, group.r), reading: group.r, trailing });
     if (f) token.f = f;
   }
@@ -119,7 +121,8 @@ export async function parseWithNadeshiko(dataSource: DataSource, texts: string[]
   }
   const rubies = await rubiesFor(dataSource, [...spellings]);
 
-  return sentences.map((groups, index) =>
-    groups.filter((group) => group.s !== '').map((group) => toSlimToken(group, texts[index] ?? '', rubies)),
-  );
+  return sentences.map((groups, index) => {
+    const chars = [...(texts[index] ?? '')];
+    return groups.filter((group) => group.s !== '').map((group) => toSlimToken(group, chars, rubies));
+  });
 }

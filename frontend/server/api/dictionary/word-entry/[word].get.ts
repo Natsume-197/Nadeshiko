@@ -5,6 +5,7 @@ import { DictionaryError } from '~~/server/utils/dictionary';
 import { nadeshikoDictionary } from '~~/server/utils/dictionary/nadeshiko';
 import { kanjiBriefs } from '~~/server/utils/kanjiBriefs';
 import { logger } from '~~/server/utils/logger';
+import { DICTIONARY_CACHE_SECONDS, dictionaryUnavailable } from '~~/server/utils/dictionaryRoute';
 
 // The dictionary entry above a word search (`/search/食べる`), from Nadeshiko's own dictionary whatever card provider
 // the reader picked: it is the page's own content, server-rendered for every reader and for search engines alike.
@@ -12,9 +13,6 @@ import { logger } from '~~/server/utils/logger';
 // other words the query can be (はし: 箸, 端), `inflected` when the query is a conjugated form of the entry, and `kanji`,
 // each kanji's first reading and meaning. Same for every reader:
 // cached a day here and in the browser, like the kanji card.
-
-const CACHE_SECONDS = 60 * 60 * 24;
-const RETRY_AFTER_SECONDS = 5;
 
 type Locale = 'en' | 'es';
 
@@ -31,7 +29,7 @@ const handler = defineEventHandler(async (event) => {
 
   try {
     const { candidates } = await nadeshikoDictionary.identify({ lemma: query.word, locale: query.locale });
-    setResponseHeader(event, 'cache-control', `public, max-age=${CACHE_SECONDS}`);
+    setResponseHeader(event, 'cache-control', `public, max-age=${DICTIONARY_CACHE_SECONDS}`);
     const { entry, others, inflected } = pickEntries(candidates, query.word);
     // Each kanji's reading and meaning, for the entry's kanji rows, for every word the box can show.
     const kanji = await kanjiBriefs([entry, ...others].flatMap((word) => (word ? [word.headword] : [])));
@@ -39,22 +37,20 @@ const handler = defineEventHandler(async (event) => {
     return {
       entry,
       inflected,
-      others: others.map((other) => ({ ...brief(other, query.locale), entry: other })),
+      others: others.map((other) => ({ ...brief(other), entry: other })),
       kanji,
     };
   } catch (error: unknown) {
     const status = error instanceof DictionaryError ? error.status : undefined;
     logger.warn({ word: query.word, status, err: error }, 'Word entry lookup failed');
     // An outage is not an answer: never cache it.
-    setResponseHeader(event, 'cache-control', 'no-store');
-    setResponseHeader(event, 'retry-after', RETRY_AFTER_SECONDS);
-    throw createError({ statusCode: 503, statusMessage: 'Dictionary temporarily unavailable' });
+    throw dictionaryUnavailable(event, 'Dictionary temporarily unavailable');
   }
 });
 
 export default defineCachedEventHandler(handler, {
   swr: true,
-  maxAge: CACHE_SECONDS,
+  maxAge: DICTIONARY_CACHE_SECONDS,
   getKey: (event) => {
     const query = input(event);
     return query ? stableCacheKey('word-entry-v4', query.locale, query.word) : 'invalid-word';

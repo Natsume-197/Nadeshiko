@@ -2,7 +2,8 @@ import type { DataSource, EntityManager } from 'typeorm';
 import type { SlimToken } from '@app/models/Segment';
 import { collocationParticle, type Lexicon } from '@app/services/parser/combine/lexicon';
 import type { DeconjugatedForm } from '@app/services/parser/deconjugator';
-import { toHiragana } from './import/entries';
+import { insertChunks, recordSource } from './import/db';
+import { hasKanji, toHiragana } from './import/entries';
 
 /**
  * Noun + particle + verb collocations mined from our own corpus (task 45), for `dict.collocation`. A sentence that
@@ -16,7 +17,6 @@ export const MIN_TOTAL = 3;
 /** …and this share of them on one verb. */
 export const MIN_SHARE = 0.8;
 
-const HAS_KANJI = /\p{Script=Han}/u;
 const NOUNS = new Set(['noun', 'pron']);
 
 export interface CollocationRow {
@@ -59,7 +59,7 @@ export function countCollocations(
 ): void {
   for (let i = 2; i < tokens.length; i++) {
     const verb = tokens[i] as SlimToken;
-    if (verb.pt !== 'verb' || !HAS_KANJI.test(verb.s) || !HAS_KANJI.test(verb.d)) continue;
+    if (verb.pt !== 'verb' || !hasKanji(verb.s) || !hasKanji(verb.d)) continue;
     const particle = tokens[i - 1] as SlimToken;
     const noun = tokens[i - 2] as SlimToken;
     if (particle.pt !== 'prt' || !noun.pt || !NOUNS.has(noun.pt) || !noun.d) continue;
@@ -108,14 +108,15 @@ export async function writeCollocations(
   source: CollocationSource = 'corpus',
 ) {
   await manager.query(`DELETE FROM dict.collocation WHERE source = $1`, [source]);
-  for (let i = 0; i < rows.length; i += 10_000) {
-    await manager.query(
-      `INSERT INTO dict.collocation (noun, particle, verb_kana, verb, count, total, source)
-       SELECT x.noun, x.particle, x.verb_kana, x.verb, x.count, x.total, $2
-         FROM jsonb_to_recordset($1::jsonb) AS x(noun text, particle text, verb_kana text, verb text, count int, total int)`,
-      [JSON.stringify(rows.slice(i, i + 10_000)), source],
-    );
-  }
+  await insertChunks(
+    manager,
+    `INSERT INTO dict.collocation (noun, particle, verb_kana, verb, count, total, source)
+     SELECT x.noun, x.particle, x.verb_kana, x.verb, x.count, x.total, $2
+       FROM jsonb_to_recordset($1::jsonb) AS x(noun text, particle text, verb_kana text, verb text, count int, total int)`,
+    rows,
+    10_000,
+    source,
+  );
 }
 
 /** One row of an external noun + particle + verb collocation table, by JMdict id: after the noun and particle, a pick
@@ -222,11 +223,7 @@ export async function importCollocations(
   if (!dryRun) {
     await dataSource.transaction(async (manager) => {
       await writeCollocations(manager, rows, 'imported');
-      await manager.query(
-        `INSERT INTO dict.source (name, version, imported_at) VALUES ('collocations', $1, now())
-         ON CONFLICT (name) DO UPDATE SET version = EXCLUDED.version, imported_at = now()`,
-        [version],
-      );
+      await recordSource(manager, 'collocations', version);
     });
   }
   return { source: 'collocations', version, read: external.length, rows: rows.length, dryRun };

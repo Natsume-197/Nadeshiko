@@ -60,11 +60,6 @@ export function widenDigits(text: string): string {
   return text.replace(/[0-9]/g, (digit) => String.fromCharCode(digit.charCodeAt(0) + 0xfee0));
 }
 
-/** The last character (code point) of a string. */
-export function lastChar(text: string): string | undefined {
-  return text.length === 0 ? undefined : [...text].at(-1);
-}
-
 /** Hiragana ぁ-ゖ to katakana; everything else unchanged. Sudachi readings are katakana, so ours stay katakana too. */
 export function toKatakana(text: string): string {
   let out = '';
@@ -89,6 +84,42 @@ export function isKatakanaReading(text: string): boolean {
 export function isAllKana(text: string): boolean {
   for (const char of text) if (!isKana(char)) return false;
   return text.length > 0;
+}
+
+/** A character of the hiragana block (ぁ-ゟ). */
+export const isHiraganaChar = (char: string | undefined) => !!char && char >= 'ぁ' && char <= 'ゟ';
+/** A character of the katakana block (゠-ヿ, so also ・ ヽ ヾ ー). */
+export const isKatakanaChar = (char: string | undefined) => !!char && char >= '゠' && char <= 'ヿ';
+/** `JapaneseTextHelper.IsKatakanaWordChar`: a katakana letter (ァ-ヺ) or the long-vowel mark. */
+export const isKatakanaWordChar = (char: string | undefined) =>
+  !!char && ((char >= 'ァ' && char <= 'ヺ') || char === 'ー');
+
+function allOf(text: string, test: (char: string) => boolean): boolean {
+  for (const char of text) if (!test(char)) return false;
+  return text.length > 0;
+}
+
+/** Whether a text is all hiragana-block characters. */
+export const isAllHiragana = (text: string) => allOf(text, isHiraganaChar);
+/** Whether a text is all katakana-block characters ({@link isKatakanaChar}, punctuation like ・ included). */
+export const isAllKatakana = (text: string) => allOf(text, isKatakanaChar);
+/** Whether a text is all katakana letters and ー ({@link isKatakanaWordChar}). */
+export const isAllKatakanaWord = (text: string) => allOf(text, isKatakanaWordChar);
+
+const VOWEL_ROW = new Map<string, number>();
+for (const [row, kana] of [
+  'あかがさざただなはばぱまやらわゃぁアカガサザタダナハバパマヤラワャァ',
+  'いきぎしじちぢにひびぴみりぃイキギシジチヂニヒビピミリィ',
+  'うくぐすずつづぬふぶぷむゆるゅぅゔウクグスズツヅヌフブプムユルュゥヴ',
+  'えけげせぜてでねへべぺめれぇエケゲセゼテデネヘベペメレェ',
+  'おこごそぞとどのほぼぽもよろをょぉオコゴソゾトドノホボポモヨロヲョォ',
+].entries()) {
+  for (const char of kana) VOWEL_ROW.set(char, row);
+}
+
+/** The vowel row of a kana (0 あ, 1 い, 2 う, 3 え, 4 お; small kana and both scripts included), or -1. */
+export function vowelRow(char: string | undefined): number {
+  return (char === undefined ? undefined : VOWEL_ROW.get(char)) ?? -1;
 }
 
 /** `JapaneseTextHelper.IsNumeralChar`. */

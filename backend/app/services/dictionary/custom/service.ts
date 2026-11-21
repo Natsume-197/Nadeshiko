@@ -7,7 +7,13 @@ import { logger } from '@config/log';
 import { DuplicateKeyError, InvalidRequestError, NotFoundError } from '@app/errors';
 import { getPgBoss } from '@app/workers/pgBossClient';
 import { USER_DICTIONARY_IMPORT_QUEUE } from '@app/workers/queueNames';
-import { resolveCustomDictionaryQuota } from './quotas';
+import {
+  assertDictionarySlot,
+  assertIndexedSpace,
+  assertZipSize,
+  dictionaryLimitError,
+  resolveCustomDictionaryQuota,
+} from './quotas';
 import {
   artifactExistsInStorage,
   deleteArtifactFromR2,
@@ -98,6 +104,34 @@ export interface ActiveUserDictionaryStack {
   pendingCount: number;
 }
 
+function stackIdOf(userDictionaryId: number): string {
+  return `${CUSTOM_DICT_PREFIX}${userDictionaryId}`;
+}
+
+/** A reader's dictionaries with their artifacts, in stack order. */
+function userDictionaryRows(userId: number): Promise<UserDictionary[]> {
+  return UserDictionary.find({
+    where: { userId },
+    relations: { artifact: true },
+    order: { sortOrder: 'ASC', id: 'ASC' },
+  });
+}
+
+/** The artifact columns a dictionary's `index.json` sets. */
+function indexFields(
+  index: Pick<YomitanIndex, 'title' | 'revision' | 'author' | 'description' | 'url' | 'format' | 'frequencyMode'>,
+) {
+  return {
+    title: index.title,
+    revision: index.revision,
+    author: index.author,
+    description: index.description,
+    url: index.url,
+    format: index.format,
+    frequencyMode: index.frequencyMode,
+  };
+}
+
 function toDto(
   row: UserDictionary,
   artifact: UserDictionaryArtifact,
@@ -106,7 +140,7 @@ function toDto(
   const running = artifact.status === 'processing' && artifact.importStartedAt != null;
   return {
     id: row.id,
-    stackId: `${CUSTOM_DICT_PREFIX}${row.id}`,
+    stackId: stackIdOf(row.id),
     title: artifact.title,
     revision: artifact.revision,
     author: artifact.author ?? null,
@@ -217,11 +251,7 @@ export function loadActiveUserDictionaryStack(userId: number): Promise<ActiveUse
 async function readActiveUserDictionaryStack(userId: number): Promise<ActiveUserDictionaryStack> {
   const [user, rows] = await Promise.all([
     User.findOne({ where: { id: userId }, select: { id: true, preferences: true } }),
-    UserDictionary.find({
-      where: { userId },
-      relations: { artifact: true },
-      order: { sortOrder: 'ASC', id: 'ASC' },
-    }),
+    userDictionaryRows(userId),
   ]);
 
   const { builtinEnabled, builtinPosition } = builtinPlacement(user, rows.length);
@@ -232,7 +262,7 @@ async function readActiveUserDictionaryStack(userId: number): Promise<ActiveUser
     return [
       {
         userDictionaryId: row.id,
-        stackId: `${CUSTOM_DICT_PREFIX}${row.id}`,
+        stackId: stackIdOf(row.id),
         sortOrder: row.sortOrder,
         artifactId: a.id,
         sha256: a.sha256,
@@ -279,7 +309,6 @@ export async function getSessionCustomDictionaries(userId: number): Promise<Sess
   }
 }
 
-/** Longer than the import queue's 30-minute expiry: past it, no import job can still be running for the artifact. */
 /** A running import heartbeats every few seconds; one silent this long died with its container or thread. */
 export const STALLED_IMPORT_AFTER_MINUTES = 3;
 /** A queued import that never started this long after it was queued lost its job. Generous: a queue of large
@@ -324,11 +353,7 @@ export async function listUserDictionaries(user: Pick<User, 'id' | 'role'>): Pro
   const [quota, dbUser, rows] = await Promise.all([
     resolveCustomDictionaryQuota(user),
     User.findOne({ where: { id: user.id }, select: { id: true, preferences: true } }),
-    UserDictionary.find({
-      where: { userId: user.id },
-      relations: { artifact: true },
-      order: { sortOrder: 'ASC', id: 'ASC' },
-    }),
+    userDictionaryRows(user.id),
   ]);
 
   const { builtinEnabled, builtinPosition } = builtinPlacement(dbUser, rows.length);
@@ -402,13 +427,7 @@ export async function processArtifactImportJob(artifactId: number, tmpZipPath: s
     });
     await uploadArtifactToR2(artifact.storageKey, targetPath);
     void pruneLocalDictionaryCache().catch(() => {});
-    artifact.title = result.index.title;
-    artifact.revision = result.index.revision;
-    artifact.author = result.index.author;
-    artifact.description = result.index.description;
-    artifact.url = result.index.url;
-    artifact.format = result.index.format;
-    artifact.frequencyMode = result.index.frequencyMode;
+    Object.assign(artifact, indexFields(result.index));
     artifact.hasTerms = result.hasTerms;
     artifact.hasFrequency = result.hasFrequency;
     artifact.hasPitch = result.hasPitch;
@@ -462,12 +481,7 @@ export async function attachOrQueueUploadedDictionary(
     // duplicate / attached to an import that will never finish.
     await failInterruptedImports();
     const quota = await resolveCustomDictionaryQuota(user);
-
-    if (zipBytes > quota.maxZipBytes) {
-      throw new InvalidRequestError(
-        `Dictionary exceeds the ${Math.round(quota.maxZipBytes / (1024 * 1024))} MB limit for your account`,
-      );
-    }
+    assertZipSize(quota, zipBytes);
 
     let index: YomitanIndex;
     try {
@@ -483,11 +497,7 @@ export async function attachOrQueueUploadedDictionary(
       throw error;
     }
 
-    const existingRows = await UserDictionary.find({
-      where: { userId: user.id },
-      relations: { artifact: true },
-      order: { sortOrder: 'ASC', id: 'ASC' },
-    });
+    const existingRows = await userDictionaryRows(user.id);
 
     const alreadyLinked = existingRows.find((row) => row.artifact?.sha256 === sha256);
     if (alreadyLinked?.artifact) {
@@ -495,23 +505,13 @@ export async function attachOrQueueUploadedDictionary(
       if (alreadyLinked.artifact.status !== 'failed') {
         throw new DuplicateKeyError(`"${index.title}" is already in your dictionary list`);
       }
-    } else if (existingRows.length >= quota.maxDictionaries) {
-      throw new InvalidRequestError(
-        `You have reached the limit of ${quota.maxDictionaries} custom dictionaries for your account`,
-      );
+    } else {
+      assertDictionarySlot(quota, existingRows.length);
     }
 
-    // Space already indexed for this account; a new upload is refused once it is used up.
-    const indexedBytes = existingRows.reduce(
-      (sum, row) => (row === alreadyLinked ? sum : sum + Number(row.artifact?.sqliteBytes ?? 0)),
-      0,
-    );
-    if (indexedBytes >= quota.maxIndexedBytes) {
-      const gb = (bytes: number) => (bytes / (1024 * 1024 * 1024)).toFixed(1);
-      throw new InvalidRequestError(
-        `Your dictionaries already use ${gb(indexedBytes)} GB of the ${gb(quota.maxIndexedBytes)} GB indexed space for your account`,
-      );
-    }
+    // Space already indexed for this account (less the failed one being replaced); a new upload is refused once it is
+    // used up.
+    assertIndexedSpace(quota, existingRows, alreadyLinked);
 
     let artifact = await UserDictionaryArtifact.findOneBy({ sha256 });
     let deduplicated = false;
@@ -530,17 +530,9 @@ export async function attachOrQueueUploadedDictionary(
     } else if (artifact) {
       // Failed, built by an older importer, or its SQLite object is gone: re-index from this upload. Under a new storage
       // key, because other containers may hold the old file in their local cache under the old one.
-      const previousKey = artifact.storageKey;
-      await removeArtifactFile(config.USER_DICTIONARIES_DIR, previousKey);
-      await deleteArtifactFromR2(previousKey);
+      await purgeArtifactStorage(artifact.storageKey);
       artifact.storageKey = randomBytes(32).toString('hex');
-      artifact.title = index.title;
-      artifact.revision = index.revision;
-      artifact.author = index.author;
-      artifact.description = index.description;
-      artifact.url = index.url;
-      artifact.format = index.format;
-      artifact.frequencyMode = index.frequencyMode;
+      Object.assign(artifact, indexFields(index));
       artifact.zipBytes = String(zipBytes);
       artifact.status = 'processing';
       artifact.errorMessage = null;
@@ -556,13 +548,7 @@ export async function attachOrQueueUploadedDictionary(
       artifact = UserDictionaryArtifact.create({
         sha256,
         storageKey: randomBytes(32).toString('hex'),
-        title: index.title,
-        revision: index.revision,
-        author: index.author,
-        description: index.description,
-        url: index.url,
-        format: index.format,
-        frequencyMode: index.frequencyMode,
+        ...indexFields(index),
         hasTerms: false,
         hasFrequency: false,
         hasPitch: false,
@@ -614,28 +600,26 @@ export async function attachOrQueueUploadedDictionary(
       if (linked > quota.maxDictionaries) {
         await userDict.remove();
         await dropUnlinkedArtifact(needsImport ? artifact : null);
-        throw new InvalidRequestError(
-          `You have reached the limit of ${quota.maxDictionaries} custom dictionaries for your account`,
-        );
+        throw dictionaryLimitError(quota);
       }
     }
 
     if (needsImport) {
-      let boss = null;
-      try {
-        boss = getPgBoss();
-      } catch {
-        boss = null;
-      }
+      const boss = (() => {
+        try {
+          return getPgBoss();
+        } catch {
+          return null;
+        }
+      })();
+      keepTempZip = true;
       if (boss) {
-        keepTempZip = true;
         await boss.send(USER_DICTIONARY_IMPORT_QUEUE, {
           artifactId: artifact.id,
           tmpZipPath,
         });
       } else {
         // When workers are not running (e.g. direct tests / single-process scripts), run inline before returning.
-        keepTempZip = true;
         await processArtifactImportJob(artifact.id, tmpZipPath);
         artifact = await UserDictionaryArtifact.findOneByOrFail({ id: artifact.id });
       }
@@ -743,16 +727,8 @@ export async function deleteUserDictionary(
 
   // Delete unreferenced artifact from R2 and local cache immediately so storage is reclaimed right away.
   // Guarded like `gcOrphanArtifacts`: another account attaching the same file in the meantime keeps it.
-  const result: unknown = await UserDictionaryArtifact.query(
-    `DELETE FROM "UserDictionaryArtifact" a
-     WHERE a.id = $1 AND NOT EXISTS (SELECT 1 FROM "UserDictionary" ud WHERE ud.artifact_id = a.id)`,
-    [artifactId],
-  );
-  if (deletedRowCount(result) > 0) {
-    if (storageKey) {
-      await removeArtifactFile(config.USER_DICTIONARIES_DIR, storageKey);
-      await deleteArtifactFromR2(storageKey);
-    }
+  if ((await deleteArtifactIfUnlinked(artifactId)) && storageKey) {
+    await purgeArtifactStorage(storageKey);
   }
 
   invalidateUserDictionaryStack(user.id);
@@ -781,15 +757,8 @@ export async function gcOrphanArtifacts(): Promise<number> {
   );
   let deleted = 0;
   for (const orphan of orphans) {
-    // Delete the row only while it is still unlinked, so an upload that attached in the meantime keeps its artifact.
-    const result: unknown = await UserDictionaryArtifact.query(
-      `DELETE FROM "UserDictionaryArtifact" a
-       WHERE a.id = $1 AND NOT EXISTS (SELECT 1 FROM "UserDictionary" ud WHERE ud.artifact_id = a.id)`,
-      [orphan.id],
-    );
-    if (!deletedRowCount(result)) continue;
-    await removeArtifactFile(config.USER_DICTIONARIES_DIR, orphan.storage_key);
-    await deleteArtifactFromR2(orphan.storage_key);
+    if (!(await deleteArtifactIfUnlinked(orphan.id))) continue;
+    await purgeArtifactStorage(orphan.storage_key);
     deleted += 1;
   }
   if (deleted > 0) logger.info({ deleted }, 'Deleted orphaned custom dictionary artifacts');
@@ -799,12 +768,23 @@ export async function gcOrphanArtifacts(): Promise<number> {
 /** Deletes an artifact this upload created and then abandoned, unless another account has linked it since. Its file
  * was never built, so there is nothing to remove from disk or R2. */
 async function dropUnlinkedArtifact(artifact: UserDictionaryArtifact | null): Promise<void> {
-  if (!artifact) return;
-  await UserDictionaryArtifact.query(
+  if (artifact) await deleteArtifactIfUnlinked(artifact.id);
+}
+
+/** Deletes an artifact's row only while no account links it, so an upload that attached in the meantime keeps it.
+ * True when the row was deleted. */
+async function deleteArtifactIfUnlinked(artifactId: number): Promise<boolean> {
+  const result: unknown = await UserDictionaryArtifact.query(
     `DELETE FROM "UserDictionaryArtifact" a
      WHERE a.id = $1 AND NOT EXISTS (SELECT 1 FROM "UserDictionary" ud WHERE ud.artifact_id = a.id)`,
-    [artifact.id],
+    [artifactId],
   );
+  return deletedRowCount(result) > 0;
+}
+
+/** Removes an artifact's file from the local cache and from R2. Neither step throws (both log or ignore failures). */
+async function purgeArtifactStorage(storageKey: string): Promise<void> {
+  await Promise.all([removeArtifactFile(config.USER_DICTIONARIES_DIR, storageKey), deleteArtifactFromR2(storageKey)]);
 }
 
 /** TypeORM's Postgres driver answers a raw DELETE with `[rows, affectedCount]`. */

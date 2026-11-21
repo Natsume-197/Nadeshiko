@@ -1,3 +1,4 @@
+import { toHiragana, toKatakana } from '@app/services/parser/combine/kana';
 import type { JMdictWord, JMnedictWord, Xref } from '@scriptin/jmdict-simplified-types';
 
 /** Upstream entries reduced to what `dict.*` stores. Pure functions, so the import can be tested without a file
@@ -132,24 +133,15 @@ export function fromJmnedict(word: JMnedictWord): ImportEntry {
   return { id: entryId(word.id), source: 'jmnedict', common: false, forms, senses };
 }
 
-/** Katakana to hiragana; everything else (kanji, ー, ASCII) unchanged. ヴ becomes ゔ, ヵ/ヶ become ゕ/ゖ. */
-export function toHiragana(text: string): string {
-  let out = '';
-  for (const char of text) {
-    const code = char.codePointAt(0) ?? 0;
-    out += code >= 0x30a1 && code <= 0x30f6 ? String.fromCodePoint(code - 0x60) : char;
-  }
-  return out;
-}
+// The parser's kana helpers, re-exported: the dictionary code imports them from here.
+export { toHiragana, toKatakana };
 
-/** Hiragana to katakana, the inverse of {@link toHiragana}. */
-export function toKatakana(text: string): string {
-  let out = '';
-  for (const char of text) {
-    const code = char.codePointAt(0) ?? 0;
-    out += code >= 0x3041 && code <= 0x3096 ? String.fromCodePoint(code + 0x60) : char;
-  }
-  return out;
+const HAN = /\p{Script=Han}/u;
+
+/** Whether the text has a character of the Han script (々 and 〆 included). Kana are never Han, so a kana check is
+ * not needed alongside it. Not the parser's `hasKanji` (parser/combine/kana), which tests narrower code-point ranges. */
+export function hasKanji(text: string): boolean {
+  return HAN.test(text);
 }
 
 /** The keys a spelling is found under: itself and its hiragana, deduplicated. */

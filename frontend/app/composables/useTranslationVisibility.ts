@@ -156,10 +156,10 @@ export function useTranslationVisibility() {
 
   const englishMode = computed(() => modeOf(prefs.value, 'EN'));
   const spanishMode = computed(() => modeOf(prefs.value, 'ES'));
+  /** The mode for one language, for code that walks the reader's languages rather than naming one. Reactive. */
+  const modeFor = (language: LanguageCode): TranslationVisibilityMode => modeOf(prefs.value, language);
   const includedLanguages = computed<LanguageCode[] | undefined>(() => {
-    const included = translationLanguages.value.filter(
-      (language) => (language === 'EN' ? englishMode.value : spanishMode.value) !== 'hidden',
-    );
+    const included = translationLanguages.value.filter((language) => modeFor(language) !== 'hidden');
     // The absent API filter means both languages. Keep that compact default,
     // but always send a global one-language choice.
     return included.length === 2 ? undefined : included;
@@ -171,6 +171,7 @@ export function useTranslationVisibility() {
   return {
     englishMode,
     spanishMode,
+    modeFor,
     includedLanguages,
     setEnglishMode,
     setSpanishMode,

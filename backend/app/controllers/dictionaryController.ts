@@ -43,21 +43,21 @@ export const identifyDictionaryWord: IdentifyDictionaryWord = async ({ query }, 
     locale: query.locale ?? ('en' as const),
   };
 
-  const candidates = await identifyWord(AppDataSource, identifyQuery);
-  const userId = await resolveOptionalSessionUserId(req);
+  const [candidates, userId] = await Promise.all([
+    identifyWord(AppDataSource, identifyQuery),
+    resolveOptionalSessionUserId(req),
+  ]);
+  const enriched: Awaited<ReturnType<typeof enrichCandidatesWithCustomDictionaries>> = userId
+    ? await enrichCandidatesWithCustomDictionaries(userId, identifyQuery, candidates)
+    : { candidates, stackFingerprint: null, pending: false };
 
-  if (userId) {
-    const enriched = await enrichCandidatesWithCustomDictionaries(userId, identifyQuery, candidates);
-    return respond.with200().body({
-      // After the merge, so a pattern from the reader's own pitch dictionary gets our clip too.
-      candidates: await withPitchAudio(AppDataSource, config.R2_BASE_URL, enriched.candidates),
-      ...(enriched.stackFingerprint ? { stackFingerprint: enriched.stackFingerprint } : {}),
-      // Missing a dictionary that is indexing or still downloading: the frontend must not cache this answer.
-      ...(enriched.pending ? { customDictionariesPending: true } : {}),
-    });
-  }
-
-  return respond.with200().body({ candidates: await withPitchAudio(AppDataSource, config.R2_BASE_URL, candidates) });
+  return respond.with200().body({
+    // After the merge, so a pattern from the reader's own pitch dictionary gets our clip too.
+    candidates: await withPitchAudio(AppDataSource, config.R2_BASE_URL, enriched.candidates),
+    ...(enriched.stackFingerprint ? { stackFingerprint: enriched.stackFingerprint } : {}),
+    // Missing a dictionary that is indexing or still downloading: the frontend must not cache this answer.
+    ...(enriched.pending ? { customDictionariesPending: true } : {}),
+  });
 };
 
 /** One kanji's card (task 44), for the word card's kanji view. Server-only like the word lookup: the frontend server

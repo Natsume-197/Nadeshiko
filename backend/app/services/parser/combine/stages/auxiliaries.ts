@@ -9,6 +9,7 @@ import {
   deconj,
   hasSection,
   isImperative,
+  isNounClass,
   known,
   mergeAdjacentWhere,
   SECTION,
@@ -100,24 +101,14 @@ export function combineAuxiliaryVerbStem(groups: Group[], _ctx: CombineContext):
 
 /** て/で/ちゃ/ば after a verb, adjective or auxiliary. `CombineConjunctiveParticle`. */
 export function combineConjunctiveParticle(groups: Group[], _ctx: CombineContext): Group[] {
-  if (groups.length < 2) return groups;
-  const out: Group[] = [groups[0] as Group];
-  let changed = false;
-  for (let i = 1; i < groups.length; i++) {
-    const current = groups[i] as Group;
-    const previous = out.at(-1) as Group;
-    if (
+  return mergeAdjacentWhere(
+    groups,
+    (previous, current) =>
       hasSection(current, SECTION.ConjunctionParticle) &&
       ['て', 'で', 'ちゃ', 'ば'].includes(current.s) &&
-      (previous.cls === 'Verb' || previous.cls === 'IAdjective' || previous.cls === 'Auxiliary')
-    ) {
-      out[out.length - 1] = append(previous, current, inflected('CombineConjunctiveParticle'));
-      changed = true;
-    } else {
-      out.push(current);
-    }
-  }
-  return changed ? out : groups;
+      (previous.cls === 'Verb' || previous.cls === 'IAdjective' || previous.cls === 'Auxiliary'),
+    inflected('CombineConjunctiveParticle'),
+  );
 }
 
 // Keep in sync with ShouldStopMerging's list; kana lemmas included since Sudachi tags 言う as いう freely.
@@ -337,7 +328,7 @@ export function kanjiCompoundsWithPrevious(groups: readonly Group[], i: number, 
     !!previous &&
     [...current.s].length === 1 &&
     isKanji(current.s) &&
-    (previous.cls === 'Verb' || previous.cls === 'Noun' || previous.cls === 'CommonNoun') &&
+    (previous.cls === 'Verb' || isNounClass(previous.cls)) &&
     known(ctx, previous.s + current.s)
   );
 }

@@ -76,7 +76,11 @@ vi.stubGlobal('useYoutubeSegmentPlayer', () => ({
   setPlaybackRate: vi.fn(),
   stop: vi.fn(),
 }));
-vi.stubGlobal('useTranslationVisibility', () => ({ englishMode: ref('show'), spanishMode: ref('show') }));
+vi.stubGlobal('useTranslationVisibility', () => ({
+  englishMode: ref('show'),
+  spanishMode: ref('show'),
+  modeFor: () => 'show',
+}));
 vi.stubGlobal('useTranslationLanguages', () => ({ languages: ref(['EN']) }));
 vi.stubGlobal('useLocalePath', () => (p: unknown) => (typeof p === 'string' ? p : JSON.stringify(p)));
 

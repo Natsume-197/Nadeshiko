@@ -2,6 +2,7 @@ import '@config/boot';
 import { logger } from '@config/log';
 import { AppDataSource } from '@config/database';
 import { segmentParser } from '@app/services/parser';
+import { runWithDatabase } from './lib/runWithDatabase';
 
 /** Re-tokenizes the corpus in ordered, durable pages with the parser SEGMENT_PARSER selects. Await each page write
  * before advancing `--after`; parsing may parallelize inside a page but ordered results make the cursor resumable
@@ -141,13 +142,4 @@ async function main(): Promise<void> {
   logger.info({ written, lastId: cursor }, 'reparse finished');
 }
 
-main()
-  .then(async () => {
-    if (AppDataSource.isInitialized) await AppDataSource.destroy();
-    process.exit(0);
-  })
-  .catch(async (error) => {
-    logger.error({ err: error }, 'reparse failed');
-    if (AppDataSource.isInitialized) await AppDataSource.destroy();
-    process.exit(1);
-  });
+runWithDatabase('reparse', main);

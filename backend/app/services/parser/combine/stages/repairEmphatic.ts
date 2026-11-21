@@ -9,13 +9,11 @@
  */
 
 import { known, knownVerbOrAdjective } from '../group';
-import { isKana, normalizeLongVowels, toHiragana } from '../kana';
+import { deconjugationKey, isKana, isKatakanaChar } from '../kana';
 import { type Piece, recut, scanRewrite } from '../recut';
+import { chars, cpLength } from '../text';
 import type { CombineContext, Group } from '../types';
 
-const chars = (text: string) => [...text];
-const len = (text: string) => chars(text).length;
-const isKatakana = (char: string) => char >= '゠' && char <= 'ヿ';
 const isSmallTsu = (char: string | undefined) => char === 'っ' || char === 'ッ';
 const isEmphasisMark = (char: string | undefined) => isSmallTsu(char) || char === 'ー';
 
@@ -31,7 +29,7 @@ export function repairTeOkuRequest(groups: Group[], _ctx: CombineContext): Group
     if (
       !re ||
       (teOku.cls !== 'Verb' && teOku.cls !== 'Expression') ||
-      len(teOku.s) < 4 ||
+      cpLength(teOku.s) < 4 ||
       !(teOku.s.endsWith('ておく') || teOku.s.endsWith('でおく')) ||
       !teOku.r.endsWith('オク')
     )
@@ -69,8 +67,8 @@ export function repairSplitMimeticAdverb(groups: Group[], ctx: CombineContext): 
       !next ||
       head.flags.pin !== undefined ||
       next.flags.pin !== undefined ||
-      len(head.s) < 2 ||
-      len(head.s) > 6 ||
+      cpLength(head.s) < 2 ||
+      cpLength(head.s) > 6 ||
       !chars(head.s).every((char) => isKana(char))
     )
       return 0;
@@ -80,7 +78,7 @@ export function repairSplitMimeticAdverb(groups: Group[], ctx: CombineContext): 
     const prev = list[i - 1];
     const prev2 = list[i - 2];
     if (
-      !chars(stem).every(isKatakana) &&
+      !chars(stem).every(isKatakanaChar) &&
       ((prev && known(ctx, prev.s + stem)) || (prev && prev2 && known(ctx, prev2.s + prev.s + stem)))
     )
       return 0;
@@ -97,7 +95,7 @@ export function repairSplitMimeticAdverb(groups: Group[], ctx: CombineContext): 
     if (
       !headEndsInSokuon &&
       next.s === 'っと' &&
-      chars(head.s).every(isKatakana) &&
+      chars(head.s).every(isKatakanaChar) &&
       head.cls !== 'Particle' &&
       head.cls !== 'Auxiliary' &&
       head.cls !== 'Verb' &&
@@ -214,7 +212,7 @@ export function findPlainEmphaticSpelling(ctx: CombineContext, run: string): str
       candidate += char;
     }
     if (!valid) continue;
-    if (len(candidate) < EMPHATIC_PLAIN_MIN_LENGTH || !known(ctx, candidate)) continue;
+    if (cpLength(candidate) < EMPHATIC_PLAIN_MIN_LENGTH || !known(ctx, candidate)) continue;
     if (found !== null && found !== candidate) return null;
     found = candidate;
   }
@@ -251,7 +249,7 @@ export function repairEmphaticKanaSpelling(groups: Group[], ctx: CombineContext)
       else plain = findPlainEmphaticSpelling(ctx, run);
       if (plain === null || !known(ctx, plain)) continue;
       // Ours: the entry's own spelling (うっとーしい is listed as うっとうしい), which upstream reaches by word id.
-      const entry = ctx.lexicon.has(plain) ? plain : normalizeLongVowels(toHiragana(plain));
+      const entry = ctx.lexicon.has(plain) ? plain : deconjugationKey(plain);
 
       emit().push(
         ...recut(tokens, i, end - i + 1, [

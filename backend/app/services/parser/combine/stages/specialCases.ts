@@ -1,7 +1,26 @@
 import { SPECIAL_CASES_2, SPECIAL_CASES_3 } from '../data/ruleData';
-import { append, deconj, hasSection, knownVerbOrAdjective, SECTION } from '../group';
-import { isKanji, isNumeralChar, toHiragana, toKatakana } from '../kana';
+import {
+  append,
+  deconj,
+  hasSection,
+  isNominaliserBeforeCopula,
+  isNounClass,
+  isSymbolClass,
+  knownVerbOrAdjective,
+  SECTION,
+} from '../group';
+import {
+  isAllHiragana,
+  isAllKatakanaWord,
+  isHiraganaChar,
+  isKanji,
+  isKatakanaWordChar,
+  isNumeralChar,
+  toHiragana,
+  toKatakana,
+} from '../kana';
 import { type Piece, recut } from '../recut';
+import { cpLength, dropLast, firstChar, lastChars, tail } from '../text';
 import type { CombineContext, Group, WordClass } from '../types';
 
 /**
@@ -13,19 +32,6 @@ import type { CombineContext, Group, WordClass } from '../types';
  * Differences from upstream: our lexicon has no JMnedict names, so the "non-name" lookups are plain lookups; and it
  * has no frequency ranks, so the two rank gates (rank < 40000) use JMdict's common flag instead.
  */
-
-const chars = (text: string) => [...text];
-const len = (text: string) => chars(text).length;
-const tail = (text: string, n: number) => chars(text).slice(n).join('');
-const dropLast = (text: string, n = 1) => chars(text).slice(0, -n).join('');
-const lastChars = (text: string, n = 1) => chars(text).slice(-n).join('');
-const firstChar = (text: string) => chars(text)[0];
-
-const isNounish = (cls: WordClass) => cls === 'Noun' || cls === 'CommonNoun';
-const isHiraganaChar = (char: string | undefined) => !!char && char >= 'ぁ' && char <= 'ゟ';
-const isKatakanaWordChar = (char: string | undefined) => !!char && ((char >= 'ァ' && char <= 'ヺ') || char === 'ー');
-const isAllKatakana = (text: string) => text.length > 0 && chars(text).every(isKatakanaWordChar);
-const isAllHiragana = (text: string) => text.length > 0 && chars(text).every(isHiraganaChar);
 
 const CASE_PARTICLES = new Set(['に', 'を', 'が', 'へ', 'で', 'と', 'は', 'も', 'か', 'から', 'より', 'まで', 'の']);
 const DA_COMPOUND_SUFFIXES = new Set(['が', 'けど', 'けれど', 'けれども', 'から', 'し', 'って', 'の']);
@@ -78,7 +84,7 @@ const takesOrdinalMeAfterTsu = (char: string | undefined) =>
 
 /** `RenyokeiSurfaceToVerb`. */
 function renyokeiSurfaceToVerb(ctx: CombineContext, text: string): string | undefined {
-  if (len(text) < 2) return undefined;
+  if (cpLength(text) < 2) return undefined;
   if (has(ctx, `${text}る`)) return `${text}る`;
   const base = RENYOKEI_TO_GODAN_BASE[lastChars(text)];
   if (base && has(ctx, dropLast(text) + base)) return dropLast(text) + base;
@@ -105,14 +111,6 @@ const isNaAdjectiveToken = (group: Group) =>
   group.cls === 'NaAdjective' ||
   hasSection(group, SECTION.PossibleNaAdjective) ||
   hasSection(group, SECTION.NaAdjectiveLike);
-
-/** `IsNominaliserBeforeCopula`: の|で before は, も or ある is the nominaliser plus the copula, not ので. */
-function isNominaliserBeforeCopula(groups: readonly Group[], deIndex: number, beforeAru = true): boolean {
-  if (groups[deIndex]?.s !== 'で') return false;
-  const next = groups[deIndex + 1];
-  if (!next) return false;
-  return next.s === 'は' || next.s === 'も' || (beforeAru && (next.d === 'ある' || next.d === '有る'));
-}
 
 /** `IsBoundAuxiliaryNegative`: なく after a て-form + bound auxiliary stem (出て+こ+なく) is not a なくなった head. */
 function isBoundAuxiliaryNegative(w1: Group, emitted: readonly Group[]): boolean {
@@ -149,13 +147,13 @@ export function processSpecialCases(input: Group[], ctx: CombineContext): Group[
     const next = words[i + 1];
 
     // し straight after a suru-noun is する's 連用中止 (蒸発し大気に); the particle し needs a predicate before it.
-    if (w1.s === 'し' && w1.cls === 'Conjunction' && prev && isNounish(prev.cls) && isSuruVerb(ctx, prev.s)) {
+    if (w1.s === 'し' && w1.cls === 'Conjunction' && prev && isNounClass(prev.cls) && isSuruVerb(ctx, prev.s)) {
       w1 = patched(w1, { cls: 'Verb', sec: [SECTION.PossibleDependant, '*', '*'], d: 'する', n: '為る' });
       changed = true;
     }
 
     // Kana したんだ with dict form したむ is Sudachi's misread of した+んだ; the dated verb 湑む is written in kanji.
-    if (w1.d === 'したむ' && w1.s.startsWith('した') && len(w1.s) >= 3) {
+    if (w1.d === 'したむ' && w1.s.startsWith('した') && cpLength(w1.s) >= 3) {
       const rest = tail(w1.s, 2);
       out.push(
         ...cut(w1, [
@@ -175,7 +173,7 @@ export function processSpecialCases(input: Group[], ctx: CombineContext): Group[
     }
 
     // それっぽく → そ|れっぽく… blob; the OOV gate spares real そ+れX.
-    if (w1.s === 'そ' && next && len(next.s) >= 3 && firstChar(next.s) === 'れ' && !has(ctx, next.s)) {
+    if (w1.s === 'そ' && next && cpLength(next.s) >= 3 && firstChar(next.s) === 'れ' && !has(ctx, next.s)) {
       const rest = tail(next.s, 1);
       const [sore, remainder] = cut2(w1, next, [
         { s: 'それ', from: w1, d: 'それ', n: '其れ', cls: 'Pronoun', r: 'ソレ', flags: { ...w1.flags, pin: 1006970 } },
@@ -190,11 +188,11 @@ export function processSpecialCases(input: Group[], ctx: CombineContext): Group[
 
     // 募|るってもんじゃねえ: a colloquial tail blobs the る; the OOV gate spares genuine 名詞+る words.
     if (
-      len(w1.s) === 1 &&
+      cpLength(w1.s) === 1 &&
       isKanji(w1.s) &&
-      isNounish(w1.cls) &&
+      isNounClass(w1.cls) &&
       next &&
-      len(next.s) >= 3 &&
+      cpLength(next.s) >= 3 &&
       firstChar(next.s) === 'る' &&
       !has(ctx, next.s) &&
       has(ctx, `${w1.s}る`)
@@ -213,9 +211,9 @@ export function processSpecialCases(input: Group[], ctx: CombineContext): Group[
 
     // 四つ目 / みっつめ is numeral + ordinal 目, not "four-eyed" or 見詰める; kana numerals are a closed set.
     {
-      const kanjiTsuMe = len(w1.s) >= 3 && w1.s.endsWith('つ目') && takesOrdinalMeAfterTsu(firstChar(w1.s));
+      const kanjiTsuMe = cpLength(w1.s) >= 3 && w1.s.endsWith('つ目') && takesOrdinalMeAfterTsu(firstChar(w1.s));
       const kanaTsuMe = w1.s.endsWith('つめ') && KANA_TSU_NUMERALS.has(dropLast(w1.s));
-      if ((isNounish(w1.cls) || w1.cls === 'Verb') && (kanjiTsuMe || kanaTsuMe)) {
+      if ((isNounClass(w1.cls) || w1.cls === 'Verb') && (kanjiTsuMe || kanaTsuMe)) {
         const numPart = dropLast(w1.s);
         out.push(
           ...cut(w1, [
@@ -239,11 +237,11 @@ export function processSpecialCases(input: Group[], ctx: CombineContext): Group[
 
     // 部|下達 → 部下|達 needs a 1-char X (事実|上達 stays) and a common compound, not a coincidental lookup key.
     if (
-      isNounish(w1.cls) &&
-      len(w1.s) === 1 &&
+      isNounClass(w1.cls) &&
+      cpLength(w1.s) === 1 &&
       next &&
-      isNounish(next.cls) &&
-      len(next.s) >= 2 &&
+      isNounClass(next.cls) &&
+      cpLength(next.s) >= 2 &&
       next.s.endsWith('達') &&
       has(ctx, w1.s + dropLast(next.s)) &&
       isFrequent(ctx, w1.s + dropLast(next.s))
@@ -262,9 +260,9 @@ export function processSpecialCases(input: Group[], ctx: CombineContext): Group[
 
     // お|前山 → お前|山; ゼン compounds (前後), common ones (この|前髪) and 前+連用形 (前掛け) stay whole.
     if (
-      len(w1.s) >= 2 &&
+      cpLength(w1.s) >= 2 &&
       firstChar(w1.s) === '前' &&
-      isNounish(w1.cls) &&
+      isNounClass(w1.cls) &&
       !w1.r.startsWith('ゼン') &&
       !isFrequent(ctx, w1.s) &&
       prev &&
@@ -285,10 +283,16 @@ export function processSpecialCases(input: Group[], ctx: CombineContext): Group[
     }
 
     // OOV 親X: a 1-char rest is the "pro-" prefix (親ソ, 親米); a longer rest means parent (親ギツネ).
-    if (len(w1.s) >= 2 && firstChar(w1.s) === '親' && isNounish(w1.cls) && !has(ctx, w1.s) && has(ctx, tail(w1.s, 1))) {
+    if (
+      cpLength(w1.s) >= 2 &&
+      firstChar(w1.s) === '親' &&
+      isNounClass(w1.cls) &&
+      !has(ctx, w1.s) &&
+      has(ctx, tail(w1.s, 1))
+    ) {
       const rest = tail(w1.s, 1);
       // A hiragana rest is a colloquial fragment where 親 means parent.
-      const isProPrefix = len(rest) === 1 && !isHiraganaChar(rest);
+      const isProPrefix = cpLength(rest) === 1 && !isHiraganaChar(rest);
       out.push(
         ...cut(w1, [
           {
@@ -310,7 +314,7 @@ export function processSpecialCases(input: Group[], ctx: CombineContext): Group[
 
     // A single OOV 〜くも token (美しくも) is adverbial 〜く + も.
     if (
-      len(w1.s) >= 4 &&
+      cpLength(w1.s) >= 4 &&
       w1.s.endsWith('くも') &&
       !has(ctx, w1.s) &&
       deconj(ctx, toHiragana(dropLast(w1.s))).some((form) => form.tags.includes('adj-i') && has(ctx, form.text))
@@ -333,7 +337,7 @@ export function processSpecialCases(input: Group[], ctx: CombineContext): Group[
       w1.cls === 'Interjection' &&
       next &&
       next.cls === 'Noun' &&
-      len(next.s) >= 2 &&
+      cpLength(next.s) >= 2 &&
       deconjugatesToVerb(ctx, `あ${next.s}`)
     ) {
       const text = `あ${next.s}`;
@@ -344,7 +348,7 @@ export function processSpecialCases(input: Group[], ctx: CombineContext): Group[
     }
 
     // Causative stem tagged a noun before ない (やらせ|ない); plain 仕方|ない stays split.
-    if (isNounish(w1.cls) && next?.s === 'ない' && deconjugatesToCausativeOrPassive(ctx, `${w1.s}ない`)) {
+    if (isNounClass(w1.cls) && next?.s === 'ない' && deconjugatesToCausativeOrPassive(ctx, `${w1.s}ない`)) {
       const text = `${w1.s}ない`;
       out.push(append(w1, next, { d: text, n: text, cls: 'Verb' }));
       changed = true;
@@ -371,7 +375,7 @@ export function processSpecialCases(input: Group[], ctx: CombineContext): Group[
     // A hiragana-dict token steals a katakana name's last mora (カティア|の → カティ|アの, アの read as あの).
     if (
       (w1.cls === 'PrenounAdjectival' || w1.cls === 'Noun') &&
-      len(w1.s) >= 2 &&
+      cpLength(w1.s) >= 2 &&
       isKatakanaWordChar(firstChar(w1.s)) &&
       firstChar(w1.s) !== 'ー' &&
       isAllHiragana(tail(w1.s, 1)) &&
@@ -379,7 +383,7 @@ export function processSpecialCases(input: Group[], ctx: CombineContext): Group[
       toHiragana(w1.s) === w1.d &&
       prev &&
       (prev.cls === 'Noun' || prev.cls === 'Name') &&
-      isAllKatakana(prev.s)
+      isAllKatakanaWord(prev.s)
     ) {
       const stolen = firstChar(w1.s) as string;
       const remainder = tail(w1.s, 1);
@@ -454,7 +458,7 @@ export function processSpecialCases(input: Group[], ctx: CombineContext): Group[
     // X史|上 → X|史上: 史上 binds tighter than the 史 suffix (人類史上初).
     if (
       w1.cls === 'Noun' &&
-      len(w1.s) >= 3 &&
+      cpLength(w1.s) >= 3 &&
       w1.s.endsWith('史') &&
       next?.s === '上' &&
       next.cls === 'Suffix' &&
@@ -475,7 +479,7 @@ export function processSpecialCases(input: Group[], ctx: CombineContext): Group[
     // 使いで "usability" steals the で: 魔法|使いで|も|ない → 魔法使い|でもない.
     if (
       w1.cls === 'Noun' &&
-      len(w1.s) >= 3 &&
+      cpLength(w1.s) >= 3 &&
       w1.s.endsWith('で') &&
       next?.s === 'も' &&
       prev?.cls === 'Noun' &&
@@ -532,7 +536,7 @@ export function processSpecialCases(input: Group[], ctx: CombineContext): Group[
     // なん|て… read as an adjective (なん|てひどい): the て is the quotative particle.
     if (
       w1.cls === 'IAdjective' &&
-      len(w1.s) > 1 &&
+      cpLength(w1.s) > 1 &&
       firstChar(w1.s) === 'て' &&
       prev?.s === 'なん' &&
       prev.cls === 'Pronoun'
@@ -558,7 +562,7 @@ export function processSpecialCases(input: Group[], ctx: CombineContext): Group[
     }
 
     // Sudachi tags んで/んだ te-forms 表現 when an expression entry exists (飛んで → 2248530 "zero; flying").
-    if (w1.cls === 'Expression' && len(w1.s) >= 3 && (w1.s.endsWith('んで') || w1.s.endsWith('んだ'))) {
+    if (w1.cls === 'Expression' && cpLength(w1.s) >= 3 && (w1.s.endsWith('んで') || w1.s.endsWith('んだ'))) {
       const verbForm = deconj(ctx, toHiragana(w1.s)).find(
         (form) =>
           form.tags.some((tag) => ['v5b', 'v5m', 'v5n', 'v5g'].includes(tag)) &&
@@ -577,7 +581,7 @@ export function processSpecialCases(input: Group[], ctx: CombineContext): Group[
       w1.r === 'ギ' &&
       next &&
       (next.cls === 'Particle' || next.cls === 'Auxiliary') &&
-      !(prev && isNounish(prev.cls) && has(ctx, `${prev.s}着`))
+      !(prev && isNounClass(prev.cls) && has(ctx, `${prev.s}着`))
     ) {
       w1 = patched(w1, { cls: 'Verb', d: '着る', n: '着る', r: 'キ' });
       changed = true;
@@ -586,11 +590,11 @@ export function processSpecialCases(input: Group[], ctx: CombineContext): Group[
     // 殺し続ける → 殺(Prefix)|し続ける; split to 殺し|続ける.
     if (
       w1.cls === 'Prefix' &&
-      len(w1.s) === 1 &&
+      cpLength(w1.s) === 1 &&
       isKanji(w1.s) &&
       next &&
       next.cls === 'Verb' &&
-      len(next.s) >= 2 &&
+      cpLength(next.s) >= 2 &&
       firstChar(next.s) === 'し' &&
       has(ctx, `${w1.s}す`) &&
       has(ctx, tail(next.s, 1))
@@ -620,7 +624,7 @@ export function processSpecialCases(input: Group[], ctx: CombineContext): Group[
       prev?.cls === 'IAdjective' &&
       !prev.s.endsWith('い')
     ) {
-      out[out.length - 1] = append(prev, w1, { d: prev.d, n: prev.n });
+      out[out.length - 1] = append(prev, w1);
       changed = true;
       i += 1;
       continue;
@@ -674,7 +678,7 @@ export function processSpecialCases(input: Group[], ctx: CombineContext): Group[
           // RepairVowelElongation may have stripped the particle's trailing ー.
           const thirdMatch =
             w3.s === triple.third ||
-            (len(triple.third) > 1 && triple.third.endsWith('ー') && w3.s === dropLast(triple.third));
+            (cpLength(triple.third) > 1 && triple.third.endsWith('ー') && w3.s === dropLast(triple.third));
           if (
             w2.s === triple.second &&
             thirdMatch &&
@@ -891,7 +895,7 @@ export function processSpecialCases(input: Group[], ctx: CombineContext): Group[
         no.cls === 'Particle' &&
         !(last && isNaAdjectiveToken(last)) &&
         (!afterNo ||
-          ['SupplementarySymbol', 'Symbol', 'BlankSpace'].includes(afterNo.cls) ||
+          isSymbolClass(afterNo.cls) ||
           ((afterNo.s === 'で' || afterNo.s === 'に') && !isNominaliserBeforeCopula(words, i + 2)))
       ) {
         out.push({ ...append(w1, no), d: 'なの', n: 'なの', cls: 'Expression' });
@@ -931,7 +935,7 @@ export function processSpecialCases(input: Group[], ctx: CombineContext): Group[
 
       // 大切|な → 大切な; な stays separate after an aux stem (降りそうな) for learners.
       if (last && isNaAdjectiveToken(last) && !followedByN && !hasSection(last, SECTION.AuxiliaryVerbStem)) {
-        out[out.length - 1] = append(last, w1, { d: last.d, n: last.n });
+        out[out.length - 1] = append(last, w1);
         changed = true;
         i += 1;
         continue;

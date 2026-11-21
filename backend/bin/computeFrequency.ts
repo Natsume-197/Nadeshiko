@@ -3,6 +3,7 @@ import { parseArgs } from 'node:util';
 import { AppDataSource } from '@config/database';
 import { logger } from '@config/log';
 import { computeFrequency } from '@app/services/dictionary/frequency';
+import { runWithDatabase } from './lib/runWithDatabase';
 
 /**
  * Recount how often each JMdict word occurs in our corpus and replace `dict.frequency` (task 40). Needs SUDACHI_URL
@@ -24,13 +25,4 @@ async function main(): Promise<void> {
   logger.info({ ...report, seconds: Math.round((Date.now() - startedAt) / 1000) }, 'frequency computed');
 }
 
-main()
-  .then(async () => {
-    await AppDataSource.destroy();
-    process.exit(0);
-  })
-  .catch(async (error) => {
-    logger.error({ err: error }, 'frequency failed');
-    if (AppDataSource.isInitialized) await AppDataSource.destroy();
-    process.exit(1);
-  });
+runWithDatabase('frequency', main);

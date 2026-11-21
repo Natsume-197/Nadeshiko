@@ -4,7 +4,11 @@ import { User, type FavoriteMediaItem, type HiddenMediaItem, type UserPreference
 import { ALL_CATEGORIES } from '@app/models/Media';
 import { ValidationFailedError } from '@app/errors';
 import { deepMerge } from '@lib/utils/deepMerge';
-import { assertMayWriteCustomTheme, withUnlockedCustomTheme } from '@app/services/themes/customTheme';
+import {
+  assertMayWriteCustomTheme,
+  canUseCustomTheme,
+  withUnlockedCustomTheme,
+} from '@app/services/themes/customTheme';
 
 /**
  * The date a favourite gets when the stored entry has none. Sorts last in the
@@ -84,7 +88,10 @@ export const getUserPreferences: GetUserPreferences = async (_params, respond, r
 
 export const updateUserPreferences: UpdateUserPreferences = async ({ body }, respond, req) => {
   const user = assertUser(req);
-  await assertMayWriteCustomTheme(user, body as UserPreferences);
+  // Asked once: the write check and the response filter share the answer. Only a theme in the body needs it up
+  // front; otherwise the response filter asks, and only if a theme is stored.
+  const allowed = (body as UserPreferences).customTheme ? await canUseCustomTheme(user) : undefined;
+  await assertMayWriteCustomTheme(user, body as UserPreferences, allowed);
 
   const updated = await mutateUserPreferences(user.id, (current) => {
     const merged = deepMerge(current as Record<string, unknown>, body as Record<string, unknown>) as UserPreferences;
@@ -96,7 +103,7 @@ export const updateUserPreferences: UpdateUserPreferences = async ({ body }, res
   });
   user.preferences = updated;
 
-  return respond.with200().body(await withUnlockedCustomTheme(user, updated));
+  return respond.with200().body(await withUnlockedCustomTheme(user, updated, allowed));
 };
 
 /** Read and merge current preferences under a row lock; never merge the cached `req.user` copy, or concurrent tabs

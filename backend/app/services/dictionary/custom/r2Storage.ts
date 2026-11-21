@@ -55,13 +55,23 @@ export function getR2StorageConfig(): R2StorageConfig | null {
     bucket,
     accessKeyId,
     secretAccessKey,
-    prefix: config.USER_DICT_R2_PREFIX.replace(/^\/+|\/+$/g, ''),
+    prefix: stripSlashes(config.USER_DICT_R2_PREFIX),
   };
 }
 
+function stripSlashes(prefix: string): string {
+  return prefix.replace(/^\/+|\/+$/g, '');
+}
+
+/** `name` under `prefix`. The prefix is stripped again here because these key builders are exported and may be handed
+ * a raw one (the tests do); `getR2StorageConfig` already strips it for every app caller. */
+function prefixed(prefix: string, name: string): string {
+  const cleanPrefix = stripSlashes(prefix);
+  return cleanPrefix ? `${cleanPrefix}/${name}` : name;
+}
+
 export function r2ObjectKey(storageKey: string, prefix: string): string {
-  const cleanPrefix = prefix.replace(/^\/+|\/+$/g, '');
-  return cleanPrefix ? `${cleanPrefix}/${storageKey}.sqlite` : `${storageKey}.sqlite`;
+  return prefixed(prefix, `${storageKey}.sqlite`);
 }
 
 let cachedClient: { endpoint: string; accessKeyId: string; client: S3Client } | null = null;
@@ -97,8 +107,7 @@ function isNotFound(error: unknown): boolean {
 
 /** Object key for a direct `.zip` upload, kept apart from the indexed files under the same prefix. */
 export function r2UploadKey(uploadId: string, prefix: string): string {
-  const cleanPrefix = prefix.replace(/^\/+|\/+$/g, '');
-  return cleanPrefix ? `${cleanPrefix}/uploads/${uploadId}.zip` : `uploads/${uploadId}.zip`;
+  return prefixed(prefix, `uploads/${uploadId}.zip`);
 }
 
 /**
@@ -164,14 +173,14 @@ export async function downloadR2Object(
 }
 
 /** Deletes any object by key (a direct upload once read, or an abandoned one). A missing object counts as deleted. */
-export async function deleteR2Object(objectKey: string): Promise<void> {
+export async function deleteR2Object(objectKey: string, what = 'dictionary upload'): Promise<void> {
   const r2 = getR2StorageConfig();
   if (!r2) return;
   try {
     await r2Client(r2).send(new DeleteObjectCommand({ Bucket: r2.bucket, Key: objectKey }));
   } catch (error) {
     if (isNotFound(error)) return;
-    logger.warn({ err: error, key: objectKey }, 'Failed to delete dictionary upload from R2');
+    logger.warn({ err: error, key: objectKey }, `Failed to delete ${what} from R2`);
   }
 }
 
@@ -201,14 +210,7 @@ export async function uploadArtifactToR2(storageKey: string, localFilePath: stri
 export async function deleteArtifactFromR2(storageKey: string): Promise<void> {
   const r2 = getR2StorageConfig();
   if (!r2) return;
-
-  const key = r2ObjectKey(storageKey, r2.prefix);
-  try {
-    await r2Client(r2).send(new DeleteObjectCommand({ Bucket: r2.bucket, Key: key }));
-  } catch (error) {
-    if (isNotFound(error)) return;
-    logger.warn({ err: error, key }, 'Failed to delete dictionary artifact from R2');
-  }
+  await deleteR2Object(r2ObjectKey(storageKey, r2.prefix), 'dictionary artifact');
 }
 
 /**

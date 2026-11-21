@@ -11,6 +11,7 @@ import {
   registerManifest,
 } from '@app/services/dictionary/pitchAudio/generate';
 import { httpVoicevox } from '@app/services/dictionary/pitchAudio/voicevox';
+import { runWithDatabase } from './lib/runWithDatabase';
 
 /**
  * Pitch-audio clips for the word card's ▶ (task 40). Two modes:
@@ -89,13 +90,4 @@ async function main(): Promise<void> {
   else await generate();
 }
 
-main()
-  .then(async () => {
-    await AppDataSource.destroy();
-    process.exit(0);
-  })
-  .catch(async (error) => {
-    logger.error({ err: error }, 'pitch audio failed');
-    if (AppDataSource.isInitialized) await AppDataSource.destroy();
-    process.exit(1);
-  });
+runWithDatabase('pitch audio', main);

@@ -137,6 +137,16 @@ export async function inspectYomitanZip(zipPath: string): Promise<YomitanIndex> 
   }
 }
 
+/** A bank cell as trimmed text, '' when it is not a string. */
+function str(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+/** A bank cell as an integer (truncated), 0 when it is not a finite number. */
+function int(value: unknown): number {
+  return typeof value === 'number' && Number.isFinite(value) ? Math.trunc(value) : 0;
+}
+
 interface ParsedFreqMeta {
   reading: string;
   value: number | null;
@@ -195,7 +205,7 @@ function toNumberArray(raw: unknown): number[] | undefined {
 function parsePitchPayload(raw: unknown): ParsedPitchMeta | null {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
   const obj = raw as Record<string, unknown>;
-  const reading = typeof obj.reading === 'string' ? obj.reading.trim() : '';
+  const reading = str(obj.reading);
   if (!reading || !Array.isArray(obj.pitches)) return null;
 
   const pitches: ParsedPitchEntry[] = [];
@@ -402,11 +412,7 @@ export async function importYomitanZipToSqlite(
         if (!Array.isArray(row) || typeof row[0] !== 'string') return;
         const name = row[0].trim();
         if (!name) return;
-        const category = typeof row[1] === 'string' ? row[1].trim() : '';
-        const sortOrder = typeof row[2] === 'number' && Number.isFinite(row[2]) ? Math.trunc(row[2]) : 0;
-        const notes = typeof row[3] === 'string' ? row[3].trim().slice(0, 300) : '';
-        const score = typeof row[4] === 'number' && Number.isFinite(row[4]) ? Math.trunc(row[4]) : 0;
-        insertTag.run(name, category, sortOrder, notes, score);
+        insertTag.run(name, str(row[1]), int(row[2]), str(row[3]).slice(0, 300), int(row[4]));
       });
     }
 
@@ -424,30 +430,24 @@ export async function importYomitanZipToSqlite(
     for (const entry of termBanks) {
       await streamBank(entry, (row) => {
         if (!Array.isArray(row) || row.length < 6) return;
-        const expression = typeof row[0] === 'string' ? row[0].trim() : '';
+        const expression = str(row[0]);
         if (!expression) return;
-        const reading = typeof row[1] === 'string' ? row[1].trim() : '';
-        const defTags = typeof row[2] === 'string' ? row[2].trim() : '';
-        const rules = typeof row[3] === 'string' ? row[3].trim() : '';
-        const score = typeof row[4] === 'number' && Number.isFinite(row[4]) ? Math.trunc(row[4]) : 0;
         const glossary = normalizeGlossary(row[5]);
         if (glossary.length === 0) return;
-        const sequence = typeof row[6] === 'number' && Number.isFinite(row[6]) ? Math.trunc(row[6]) : 0;
-        const termTags = typeof row[7] === 'string' ? row[7].trim() : '';
 
         const at = blocks.add(glossaryJson(glossary));
         insertTerm.run(
           expression,
-          reading,
+          str(row[1]),
           toHiragana(expression),
-          defTags,
-          rules,
-          score,
+          str(row[2]),
+          str(row[3]),
+          int(row[4]),
           at.block,
           at.offset,
           at.length,
-          sequence,
-          termTags,
+          int(row[6]),
+          str(row[7]),
         );
         termCount += 1;
         countRow();
@@ -471,37 +471,32 @@ export async function importYomitanZipToSqlite(
     for (const entry of metaBanks) {
       await streamBank(entry, (row) => {
         if (!Array.isArray(row) || row.length < 3) return;
-        const expression = typeof row[0] === 'string' ? row[0].trim() : '';
-        const mode = typeof row[1] === 'string' ? row[1].trim() : '';
+        const expression = str(row[0]);
+        const mode = str(row[1]);
         if (!expression) return;
 
+        let meta: { reading: string; data: unknown } | null = null;
         if (mode === 'freq') {
           const parsed = parseFrequencyPayload(row[2]);
-          if (!parsed) return;
-          insertTermMeta.run(
-            expression,
-            toHiragana(expression),
-            'freq',
-            parsed.reading,
-            toHiragana(parsed.reading),
-            JSON.stringify({ value: parsed.value, displayValue: parsed.displayValue }),
-          );
-          frequencyCount += 1;
-          countRow();
+          if (parsed)
+            meta = { reading: parsed.reading, data: { value: parsed.value, displayValue: parsed.displayValue } };
         } else if (mode === 'pitch') {
           const parsed = parsePitchPayload(row[2]);
-          if (!parsed) return;
-          insertTermMeta.run(
-            expression,
-            toHiragana(expression),
-            'pitch',
-            parsed.reading,
-            toHiragana(parsed.reading),
-            JSON.stringify(parsed.pitches),
-          );
-          pitchCount += 1;
-          countRow();
+          if (parsed) meta = { reading: parsed.reading, data: parsed.pitches };
         }
+        if (!meta) return;
+
+        insertTermMeta.run(
+          expression,
+          toHiragana(expression),
+          mode,
+          meta.reading,
+          toHiragana(meta.reading),
+          JSON.stringify(meta.data),
+        );
+        if (mode === 'freq') frequencyCount += 1;
+        else pitchCount += 1;
+        countRow();
       });
     }
 

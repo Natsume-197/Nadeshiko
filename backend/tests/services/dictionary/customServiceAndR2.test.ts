@@ -68,7 +68,8 @@ vi.mock('@aws-sdk/client-s3', async (importOriginal) => {
   };
 });
 
-vi.mock('@app/services/dictionary/custom/quotas', () => ({
+vi.mock('@app/services/dictionary/custom/quotas', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@app/services/dictionary/custom/quotas')>()),
   resolveCustomDictionaryQuota: (...args: unknown[]) => mockResolveQuota(...args),
 }));
 

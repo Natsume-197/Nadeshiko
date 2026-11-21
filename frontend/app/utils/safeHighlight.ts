@@ -49,3 +49,15 @@ export function safeHighlight(content: unknown): string {
 
   return output + escapeCorpusText(input.slice(position));
 }
+
+/** One of a segment's texts (`textJa`, `textEn`, `textEs`): its content, and the search highlight when it has one. */
+export interface SegmentText {
+  content?: string | null;
+  highlight?: string | null;
+}
+
+/** A segment text as HTML: the highlighted version when the search marked one, the escaped plain text otherwise. */
+export const segmentTextHtml = (text: SegmentText | null | undefined): string => {
+  if (!text) return '';
+  return text.highlight ? safeHighlight(text.highlight) : escapeCorpusText(text.content);
+};

@@ -1,3 +1,4 @@
+import { InvalidRequestError } from '@app/errors';
 import type { User } from '@app/models/User';
 import { canUseCustomTheme } from '@app/services/themes/customTheme';
 
@@ -25,6 +26,49 @@ export interface CustomDictionaryQuota {
   maxZipBytes: number;
   maxIndexedBytes: number;
   isPatron: boolean;
+}
+
+const MB = 1024 * 1024;
+const GB = 1024 * MB;
+
+/** Refuses a `.zip` larger than the account may upload. */
+export function assertZipSize(quota: CustomDictionaryQuota, bytes: number): void {
+  if (bytes > quota.maxZipBytes) {
+    throw new InvalidRequestError(
+      `Dictionary exceeds the ${Math.round(quota.maxZipBytes / MB)} MB limit for your account`,
+    );
+  }
+}
+
+export function dictionaryLimitError(quota: CustomDictionaryQuota): InvalidRequestError {
+  return new InvalidRequestError(
+    `You have reached the limit of ${quota.maxDictionaries} custom dictionaries for your account`,
+  );
+}
+
+/** Refuses a new dictionary when the account already holds `rowCount`, its limit or more. Exceptions (re-uploading a
+ * failed one) are the caller's to decide. */
+export function assertDictionarySlot(quota: CustomDictionaryQuota, rowCount: number): void {
+  if (rowCount >= quota.maxDictionaries) throw dictionaryLimitError(quota);
+}
+
+/** Refuses a new upload once the account's indexed space is used up. `exclude` is left out of the sum (the row a
+ * re-upload replaces). */
+export function assertIndexedSpace<T extends { artifact?: { sqliteBytes: string } | null }>(
+  quota: CustomDictionaryQuota,
+  rows: readonly T[],
+  exclude?: T,
+): void {
+  const indexedBytes = rows.reduce(
+    (sum, row) => (row === exclude ? sum : sum + Number(row.artifact?.sqliteBytes ?? 0)),
+    0,
+  );
+  if (indexedBytes >= quota.maxIndexedBytes) {
+    const gb = (bytes: number) => (bytes / GB).toFixed(1);
+    throw new InvalidRequestError(
+      `Your dictionaries already use ${gb(indexedBytes)} GB of the ${gb(quota.maxIndexedBytes)} GB indexed space for your account`,
+    );
+  }
 }
 
 export async function resolveCustomDictionaryQuota(user: Pick<User, 'id' | 'role'>): Promise<CustomDictionaryQuota> {

@@ -12,8 +12,10 @@ import {
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import { PLAYBACK_RATES, REPEAT_TIMES, SHADOW_GAPS, usePlayerStore, type ShadowGap } from '~/stores/player';
-import { escapeCorpusText, safeHighlight } from '~/utils/safeHighlight';
+import { escapeCorpusText, segmentTextHtml } from '~/utils/safeHighlight';
+import { usePlayerLabels } from '~/composables/usePlayerLabels';
 import PlayerSeekIcon from './SeekIcon.vue';
+import PlayerVolumeSlider from './VolumeSlider.vue';
 
 /**
  * Listening mode: one sentence at a time, for shadowing. Built from the search page's own parts so it
@@ -51,14 +53,14 @@ const {
   autoplay,
   repeat,
   playbackRate,
-  volume,
   shadowGap,
   repeatTimes,
   timesPlayed,
   gap,
 } = storeToRefs(playerStore);
 
-const { englishMode, spanishMode } = useTranslationVisibility();
+const { modeFor } = useTranslationVisibility();
+const { withKey, playLabel } = usePlayerLabels();
 const { languages: translationLanguages } = useTranslationLanguages();
 
 const imageUrl = computed(() => currentResult.value?.segment.urls.imageUrl ?? '');
@@ -69,11 +71,7 @@ const position = computed(() =>
 
 const tokens = computed(() => (currentResult.value?.segment.textJa as { tokens?: unknown[] } | undefined)?.tokens);
 
-const japaneseHtml = computed(() => {
-  const text = currentResult.value?.segment.textJa;
-  if (!text) return '';
-  return text.highlight ? safeHighlight(text.highlight) : escapeCorpusText(text.content);
-});
+const japaneseHtml = computed(() => segmentTextHtml(currentResult.value?.segment.textJa));
 
 /**
  * The translation rows exactly as a result card has them: the reader's languages in their order,
@@ -87,7 +85,7 @@ const translations = computed(() => {
   if (!segment) return [];
   return translationLanguages.value
     .map((language) => {
-      const mode = language === 'EN' ? englishMode.value : spanishMode.value;
+      const mode = modeFor(language);
       const text = language === 'EN' ? segment.textEn : segment.textEs;
       const spoiler = mode === 'spoiler' && !revealed.value.has(language);
       return {
@@ -95,7 +93,7 @@ const translations = computed(() => {
         mode,
         spoiler,
         // A spoiler never shows the highlight, as on the card: the red would give the word away.
-        html: spoiler || !text?.highlight ? escapeCorpusText(text?.content ?? '') : safeHighlight(text.highlight),
+        html: spoiler ? escapeCorpusText(text?.content ?? '') : segmentTextHtml(text),
         empty: !text?.content,
       };
     })
@@ -141,23 +139,11 @@ onBeforeUnmount(() => {
   window.removeEventListener('keydown', onKeydown);
 });
 
-const playLabel = computed(() => {
-  if (isBuffering.value) return t('player.controls.loading');
-  return isPlaying.value ? t('player.controls.pause') : t('player.controls.play');
-});
-
-const withKey = (label: string, key: string) => t('player.controls.withShortcut', { label, key });
-
 const onProgressClick = (event: MouseEvent) => {
   const target = event.currentTarget as HTMLElement | null;
   if (!target) return;
   const rect = target.getBoundingClientRect();
   emit('seekTo', (event.clientX - rect.left) / rect.width);
-};
-
-const volumePercent = computed(() => Math.round(volume.value * 100));
-const onVolumeInput = (event: Event) => {
-  playerStore.setVolume(Number((event.target as HTMLInputElement).value) / 100);
 };
 
 /**
@@ -411,7 +397,7 @@ const isPracticeTuned = computed(() => shadowGap.value !== 0 || repeatTimes.valu
                 :aria-busy="isBuffering"
                 @click="playerStore.togglePlay()"
               >
-                <span v-if="isBuffering" class="listening-spinner size-5" aria-hidden="true" />
+                <span v-if="isBuffering" class="nd-ring-spinner size-5" aria-hidden="true" />
                 <UiBaseIcon v-else :path="isPlaying ? mdiPause : mdiPlay" :size="24" />
               </button>
             </div>
@@ -435,20 +421,7 @@ const isPracticeTuned = computed(() => shadowGap.value !== 0 || repeatTimes.valu
           </div>
 
           <div class="flex items-center justify-end">
-            <input
-              v-if="props.showVolume"
-              type="range"
-              min="0"
-              max="100"
-              step="1"
-              :value="volumePercent"
-              :style="{ '--volume-fill': `${volumePercent}%` }"
-              class="listening-volume hidden w-20 sm:block"
-              :aria-label="t('player.controls.volume')"
-              :aria-valuetext="`${volumePercent}%`"
-              @input="onVolumeInput"
-              @change="playerStore.trackVolumeChange()"
-            />
+            <PlayerVolumeSlider v-if="props.showVolume" class="hidden w-20 sm:block" />
           </div>
         </div>
       </div>
@@ -475,68 +448,5 @@ const isPracticeTuned = computed(() => shadowGap.value !== 0 || repeatTimes.valu
   to {
     stroke-dashoffset: 0;
   }
-}
-
-.listening-spinner {
-  display: inline-block;
-  border-radius: 9999px;
-  border: 2px solid currentColor;
-  border-top-color: transparent;
-  animation: listening-spin 0.8s linear infinite;
-}
-
-@keyframes listening-spin {
-  to {
-    rotate: 360deg;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .listening-spinner {
-    animation-duration: 2.4s;
-  }
-}
-
-/* Same track as the floating bar's, in the theme's ink. */
-.listening-volume {
-  -webkit-appearance: none;
-  appearance: none;
-  background: transparent;
-  cursor: pointer;
-}
-
-.listening-volume::-webkit-slider-runnable-track {
-  height: 0.25rem;
-  border-radius: 9999px;
-  background: linear-gradient(to right, var(--ink) var(--volume-fill), color-mix(in srgb, var(--ink) 20%, transparent) var(--volume-fill));
-}
-
-.listening-volume::-moz-range-track {
-  height: 0.25rem;
-  border-radius: 9999px;
-  background: linear-gradient(to right, var(--ink) var(--volume-fill), color-mix(in srgb, var(--ink) 20%, transparent) var(--volume-fill));
-}
-
-.listening-volume::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 0.75rem;
-  height: 0.75rem;
-  border-radius: 9999px;
-  background: var(--ink);
-  margin-top: -0.25rem;
-}
-
-.listening-volume::-moz-range-thumb {
-  width: 0.75rem;
-  height: 0.75rem;
-  border: none;
-  border-radius: 9999px;
-  background: var(--ink);
-}
-
-.listening-volume:focus-visible {
-  outline: 2px solid rgb(248 113 113);
-  outline-offset: 4px;
 }
 </style>

@@ -10,10 +10,8 @@
 import type { Morpheme } from '../sudachi';
 import { baseKind, classOf } from './group';
 import { isAllKana, isKana, toKatakana } from './kana';
+import { chars, cpLength, escapeRegExp } from './text';
 import type { Group, GroupFlags, WordClass } from './types';
-
-const chars = (text: string) => [...text];
-export const cpLength = (text: string) => chars(text).length;
 
 /** One run of a morpheme surface and the reading it aligns to: a kana is its own run, matched literally; consecutive
  * other characters (kanji, digits) form one run matched lazily. */
@@ -22,8 +20,6 @@ interface ReadingRun {
   to: number;
   reading: string;
 }
-
-const escapeRegExp = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 function alignRuns(surface: string, reading: string): ReadingRun[] | undefined {
   const cs = chars(surface);

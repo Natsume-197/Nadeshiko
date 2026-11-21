@@ -1,5 +1,6 @@
 import { open, readFile } from 'node:fs/promises';
 import type { DataSource } from 'typeorm';
+import { inTransaction, insertChunks, recordSource } from './db';
 import { toHiragana } from './entries';
 
 /**
@@ -112,6 +113,39 @@ export interface PitchReport {
   dryRun: boolean;
 }
 
+type PitchRow = { text: string; reading: string; downsteps: number[] };
+
+/** Add `found` under `key`, or add its downsteps the known row lacks, in the order they come. */
+function mergeInto(map: Map<string, PitchRow>, key: string, found: PitchRow): void {
+  const known = map.get(key);
+  if (!known) map.set(key, found);
+  else for (const step of found.downsteps) if (!known.downsteps.includes(step)) known.downsteps.push(step);
+}
+
+/** Replace one source's rows of `dict.pitch` and record its version, in one transaction (rolled back for a dry run). */
+async function writePitch(
+  dataSource: DataSource,
+  source: 'unidic' | 'kanjium',
+  sourceName: 'unidic-pitch' | 'kanjium-pitch',
+  version: string,
+  rows: PitchRow[],
+  dryRun: boolean,
+): Promise<void> {
+  await inTransaction(dataSource, dryRun, async (runner) => {
+    await runner.query(`DELETE FROM dict.pitch WHERE source = $1`, [source]);
+    await insertChunks(
+      runner,
+      `INSERT INTO dict.pitch (text, reading, downsteps, source)
+       SELECT text, reading, downsteps, $2 FROM jsonb_to_recordset($1::jsonb)
+         AS x(text varchar, reading varchar, downsteps smallint[])`,
+      rows,
+      BATCH,
+      source,
+    );
+    await recordSource(runner, sourceName, version);
+  });
+}
+
 /** Replace UniDic's rows of `dict.pitch` from a UniDic `sys.dic`, in one transaction. Accents several UniDic entries give the same
  * (spelling, reading) are merged, in the order UniDic lists them; a proper noun's only counts when no ordinary
  * entry has that spelling and reading (橋 the word is はし², 橋 the surname はし¹). */
@@ -121,51 +155,25 @@ export async function importPitch(
   version: string,
   options: { dryRun?: boolean } = {},
 ): Promise<PitchReport> {
-  type Row = { text: string; reading: string; downsteps: number[] };
-  const ordinary = new Map<string, Row>();
-  const proper = new Map<string, Row>();
+  const ordinary = new Map<string, PitchRow>();
+  const proper = new Map<string, PitchRow>();
   let lines = 0;
   for await (const line of readFeatures(path)) {
     lines += 1;
     const found = pitchOf(splitFeature(line));
     if (!found) continue;
-    const key = `${found.text}\u0000${found.reading}`;
-    const into = found.proper ? proper : ordinary;
-    const known = into.get(key);
-    if (!known) into.set(key, { text: found.text, reading: found.reading, downsteps: [...found.downsteps] });
-    else for (const step of found.downsteps) if (!known.downsteps.includes(step)) known.downsteps.push(step);
+    const { text, reading, downsteps } = found;
+    mergeInto(found.proper ? proper : ordinary, `${text}\u0000${reading}`, {
+      text,
+      reading,
+      downsteps: [...downsteps],
+    });
   }
   const pitch = new Map(ordinary);
   for (const [key, row] of proper) if (!pitch.has(key)) pitch.set(key, row);
 
   const report: PitchReport = { version, lines, pairs: pitch.size, dryRun: options.dryRun ?? false };
-  const runner = dataSource.createQueryRunner();
-  await runner.connect();
-  await runner.startTransaction();
-  try {
-    await runner.query(`DELETE FROM dict.pitch WHERE source = 'unidic'`);
-    const rows = [...pitch.values()];
-    for (let i = 0; i < rows.length; i += BATCH) {
-      await runner.query(
-        `INSERT INTO dict.pitch (text, reading, downsteps, source)
-         SELECT text, reading, downsteps, 'unidic' FROM jsonb_to_recordset($1::jsonb)
-           AS x(text varchar, reading varchar, downsteps smallint[])`,
-        [JSON.stringify(rows.slice(i, i + BATCH))],
-      );
-    }
-    await runner.query(
-      `INSERT INTO dict.source (name, version, imported_at) VALUES ('unidic-pitch', $1, now())
-       ON CONFLICT (name) DO UPDATE SET version = EXCLUDED.version, imported_at = now()`,
-      [version],
-    );
-    if (report.dryRun) await runner.rollbackTransaction();
-    else await runner.commitTransaction();
-  } catch (error) {
-    await runner.rollbackTransaction();
-    throw error;
-  } finally {
-    await runner.release();
-  }
+  await writePitch(dataSource, 'unidic', 'unidic-pitch', version, [...pitch.values()], report.dryRun);
   return report;
 }
 
@@ -196,46 +204,17 @@ export async function importKanjiumPitch(
   version: string,
   options: { dryRun?: boolean } = {},
 ): Promise<PitchReport> {
-  const pitch = new Map<string, { text: string; reading: string; downsteps: number[] }>();
+  const pitch = new Map<string, PitchRow>();
   let lines = 0;
   for (const line of (await readFile(path, 'utf8')).replace(/^\uFEFF/, '').split('\n')) {
     if (!line.trim()) continue;
     lines += 1;
     const found = kanjiumPitchOf(line);
     if (!found) continue;
-    const key = `${found.text}\u0000${found.reading}`;
-    const known = pitch.get(key);
-    if (!known) pitch.set(key, found);
-    else for (const step of found.downsteps) if (!known.downsteps.includes(step)) known.downsteps.push(step);
+    mergeInto(pitch, `${found.text}\u0000${found.reading}`, found);
   }
 
   const report: PitchReport = { version, lines, pairs: pitch.size, dryRun: options.dryRun ?? false };
-  const runner = dataSource.createQueryRunner();
-  await runner.connect();
-  await runner.startTransaction();
-  try {
-    await runner.query(`DELETE FROM dict.pitch WHERE source = 'kanjium'`);
-    const rows = [...pitch.values()];
-    for (let i = 0; i < rows.length; i += BATCH) {
-      await runner.query(
-        `INSERT INTO dict.pitch (text, reading, downsteps, source)
-         SELECT text, reading, downsteps, 'kanjium' FROM jsonb_to_recordset($1::jsonb)
-           AS x(text varchar, reading varchar, downsteps smallint[])`,
-        [JSON.stringify(rows.slice(i, i + BATCH))],
-      );
-    }
-    await runner.query(
-      `INSERT INTO dict.source (name, version, imported_at) VALUES ('kanjium-pitch', $1, now())
-       ON CONFLICT (name) DO UPDATE SET version = EXCLUDED.version, imported_at = now()`,
-      [version],
-    );
-    if (report.dryRun) await runner.rollbackTransaction();
-    else await runner.commitTransaction();
-  } catch (error) {
-    await runner.rollbackTransaction();
-    throw error;
-  } finally {
-    await runner.release();
-  }
+  await writePitch(dataSource, 'kanjium', 'kanjium-pitch', version, [...pitch.values()], report.dryRun);
   return report;
 }

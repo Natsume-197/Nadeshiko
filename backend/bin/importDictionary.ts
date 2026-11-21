@@ -19,6 +19,7 @@ import {
   importKanken,
   importRadicals,
 } from '@app/services/dictionary/import/importKanji';
+import { runWithDatabase } from './lib/runWithDatabase';
 
 /**
  * Load Nadeshiko's own dictionary (task 40) into `dict.*` from extracted upstream files:
@@ -28,7 +29,14 @@ import {
  *     --jmdict-furigana JmdictFurigana.json --jmnedict-furigana JmnedictFurigana.json \
  *     --furigana-version 2.3.1+2026-10-25 \
  *     --jlpt-dir <folder with n1.csv..n5.csv> --jlpt-version <stephenmk/yomitan-jlpt-vocab commit> \
- *     --unidic <unidic-cwj sys.dic> --unidic-version 202512  *     --kanjium <kanjium data/source_files/raw/accents.txt> --kanjium-version <kanjium commit>  *     --kanjidic2 kanjidic2-all-3.6.2.json --kradfile kradfile-3.6.2.json  *     --kanjivg <kanjivg-*-main.zip extracted>/kanji --kanjivg-version r20260714 \n *     --kanji-jlpt <davidluzgouveia/kanji-data kanji.json> --kanji-jlpt-version <its commit> \n *     --radicals <kanjialive language-data/japanese-radicals.csv> --radicals-version <its commit>  *     --kanken <mimneko/kanji-data 漢検漢字辞典漢字.csv> --kanken-version <its commit> \n *     --collocations <noun_verb_collocations.tsv> --collocations-version <its commit> [--dry-run]
+ *     --unidic <unidic-cwj sys.dic> --unidic-version 202512 \
+ *     --kanjium <kanjium data/source_files/raw/accents.txt> --kanjium-version <kanjium commit> \
+ *     --kanjidic2 kanjidic2-all-3.6.2.json --kradfile kradfile-3.6.2.json \
+ *     --kanjivg <kanjivg-*-main.zip extracted>/kanji --kanjivg-version r20260714 \
+ *     --kanji-jlpt <davidluzgouveia/kanji-data kanji.json> --kanji-jlpt-version <its commit> \
+ *     --radicals <kanjialive language-data/japanese-radicals.csv> --radicals-version <its commit> \
+ *     --kanken <mimneko/kanji-data 漢検漢字辞典漢字.csv> --kanken-version <its commit> \
+ *     --collocations <noun_verb_collocations.tsv> --collocations-version <its commit> [--dry-run]
  *
  * Any subset of the files can be given. Safe to rerun: forms keep their indexes, missing words are only flagged
  * inactive. `--dry-run` does all the work in one transaction, prints what would change, and rolls it back.
@@ -101,25 +109,25 @@ async function main(): Promise<void> {
     ? [1, 2, 3, 4, 5].map((level) => ({ level, path: requireFile(join(jlptDir, `n${level}.csv`), 'jlpt-dir') ?? '' }))
     : [];
 
-  if (
-    !jmdict &&
-    !jmnedict &&
-    !jmdictFurigana &&
-    !jmnedictFurigana &&
-    !jlptDir &&
-    !unidic &&
-    !kanjium &&
-    !kanjidic2 &&
-    !kradfile &&
-    !kanjivg &&
-    !kanjiJlpt &&
-    !radicals &&
-    !kanken &&
-    !collocations
-  ) {
-    throw new Error(
-      'Nothing to import: pass --jmdict, --jmnedict, --jmdict-furigana, --jmnedict-furigana, --jlpt-dir, --unidic, --kanjium, --kanjidic2, --kradfile, --kanjivg, --kanji-jlpt, --radicals, --kanken and/or --collocations',
-    );
+  const sources = {
+    jmdict,
+    jmnedict,
+    'jmdict-furigana': jmdictFurigana,
+    'jmnedict-furigana': jmnedictFurigana,
+    'jlpt-dir': jlptDir,
+    unidic,
+    kanjium,
+    kanjidic2,
+    kradfile,
+    kanjivg,
+    'kanji-jlpt': kanjiJlpt,
+    radicals,
+    kanken,
+    collocations,
+  };
+  if (Object.values(sources).every((path) => !path)) {
+    const flags = Object.keys(sources).map((flag) => `--${flag}`);
+    throw new Error(`Nothing to import: pass ${flags.slice(0, -1).join(', ')} and/or ${flags.at(-1)}`);
   }
   if ((jmdictFurigana || jmnedictFurigana) && !furiganaVersion) {
     throw new Error('--furigana-version is required with a furigana file (JmdictFurigana carries none itself)');
@@ -221,13 +229,4 @@ async function main(): Promise<void> {
   logger.info({ seconds: Math.round((Date.now() - startedAt) / 1000) }, 'dictionary import finished');
 }
 
-main()
-  .then(async () => {
-    if (AppDataSource.isInitialized) await AppDataSource.destroy();
-    process.exit(0);
-  })
-  .catch(async (error) => {
-    logger.error({ err: error }, 'dictionary import failed');
-    if (AppDataSource.isInitialized) await AppDataSource.destroy();
-    process.exit(1);
-  });
+runWithDatabase('dictionary import', main);

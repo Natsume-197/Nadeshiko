@@ -13,7 +13,7 @@ import {
   mediaBrowsePath,
   searchScopeQuery,
 } from '~/utils/routes';
-import { escapeCorpusText, safeHighlight } from '~/utils/safeHighlight';
+import { escapeCorpusText, segmentTextHtml } from '~/utils/safeHighlight';
 import { episodeLabel } from '~/utils/media';
 
 type Props = {
@@ -57,7 +57,7 @@ const { mediaName } = useMediaName();
 // tinguishable from the rest, which makes the filters look like they lapsed.
 const { isMediaHidden } = useHiddenMedia();
 const { shouldBlur } = useContentRating();
-const { englishMode, spanishMode } = useTranslationVisibility();
+const { modeFor } = useTranslationVisibility();
 const { languages: translationLanguages } = useTranslationLanguages();
 
 const { isAnyModalOpen } = useModalState();
@@ -209,7 +209,7 @@ const toggleTranslationReveal = (publicId: string, lang: string) => {
 
 type OrderedSegmentLang = 'textEn' | 'textEs';
 
-const segmentLanguageLabel: Record<OrderedSegmentLang, string> = {
+const segmentLanguageLabel: Record<OrderedSegmentLang, 'EN' | 'ES'> = {
   textEn: 'EN',
   textEs: 'ES',
 };
@@ -223,7 +223,7 @@ const orderedSegmentLangs = computed<OrderedSegmentLang[]>(() => {
 const segmentLangRows = computed(() =>
   orderedSegmentLangs.value
     .map((lang) => {
-      const mode = lang === 'textEn' ? englishMode.value : spanishMode.value;
+      const mode = modeFor(segmentLanguageLabel[lang]);
       return {
         lang,
         mode,
@@ -232,9 +232,6 @@ const segmentLangRows = computed(() =>
     })
     .filter((row) => row.mode !== 'hidden'),
 );
-
-const displaySegmentText = (content: unknown, highlight: unknown): string =>
-  highlight ? safeHighlight(highlight) : escapeCorpusText(content);
 
 const { revertActiveConcatenation, concatenatedResult, isConcatenated, isConcatenating, loadNextSegment } =
   useSegmentConcatenation();
@@ -500,7 +497,7 @@ watch(playingVideoId, (id) => {
                   class="leading-snug"
                   @token-click="handleTokenSearch"
                 />
-                <span v-else class="leading-snug" v-html="displaySegmentText(result.segment.textJa.content, result.segment.textJa.highlight)"></span>
+                <span v-else class="leading-snug" v-html="segmentTextHtml(result.segment.textJa)"></span>
               </h3>
               <span v-if="result.segment.contentRating?.toUpperCase() === 'QUESTIONABLE'"
                 class="relative inline-flex group/nsfw items-center justify-center rounded-lg border border-orange-700/50 bg-orange-100 px-2.5 py-1.5 font-semibold leading-none text-orange-800 dark:bg-orange-900/40 dark:text-orange-300 whitespace-nowrap shrink-0 self-center yomitan-ignore">
@@ -545,9 +542,9 @@ watch(playingVideoId, (id) => {
                     :class="row.isSpoiler && !isTranslationRevealed(result.segment.publicId, row.lang)
                       ? 'nd-translation-spoiler bg-neutral-700/85 text-transparent [@media(hover:hover)]:group-hover/translation:bg-transparent [@media(hover:hover)]:group-hover/translation:text-gray-400'
                       : 'bg-transparent text-gray-400'"
-                    v-html="row.isSpoiler || !result.segment[row.lang].highlight
+                    v-html="row.isSpoiler
                       ? escapeCorpusText(result.segment[row.lang].content)
-                      : safeHighlight(result.segment[row.lang].highlight)
+                      : segmentTextHtml(result.segment[row.lang])
                     "></span>
                   <div v-if="result.segment[row.lang].isMachineTranslated" class="relative inline-flex group/mt-tooltip align-middle ml-2"
                     :class="row.isSpoiler && !isTranslationRevealed(result.segment.publicId, row.lang)

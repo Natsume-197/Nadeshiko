@@ -191,8 +191,17 @@ export function scanFeatures(groups: readonly Group[]): Set<Feature> {
 /** Runs `stages` over `groups` in order, skipping a gated stage when no group has its feature. */
 export function runStages(groups: Group[], ctx: CombineContext, stages: readonly Stage[] = STAGES): Group[] {
   let current = groups;
+  // Stages return their input untouched when they change nothing, so a scan holds until a stage returns a new array.
+  let scanned: Group[] | null = null;
+  let features = new Set<Feature>();
   for (const stage of stages) {
-    if (stage.requires && !scanFeatures(current).has(stage.requires)) continue;
+    if (stage.requires) {
+      if (current !== scanned) {
+        features = scanFeatures(current);
+        scanned = current;
+      }
+      if (!features.has(stage.requires)) continue;
+    }
     current = stage.run(current, ctx);
     ctx.debug?.(stage.name, current);
   }

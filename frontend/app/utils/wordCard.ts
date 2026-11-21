@@ -1,5 +1,6 @@
 import type { TranslationVisibilityMode } from '~/composables/useTranslationVisibility';
 import { tagLabel, tagLanguage, type TagLanguage } from '~/utils/wordTagLabels';
+import { CATEGORY_LABEL_KEYS } from '~/utils/categories';
 
 /** Word-card response shapes and language selection, independent of tooltip layout. */
 
@@ -234,6 +235,12 @@ export type GlossLanguage = 'en' | 'es';
 
 const GLOSS_LANGUAGES: readonly GlossLanguage[] = ['en', 'es'];
 
+/** The gloss language for a UI locale: Spanish pages get Spanish, every other page English (the language JMdict
+ *  is written in, and the one every entry is most likely to have). */
+export function glossLanguageFor(uiLocale: string): GlossLanguage {
+  return uiLocale.toLowerCase().startsWith('es') ? 'es' : 'en';
+}
+
 /**
  * Japanese definitions from the reader's own monolingual dictionary stack are printable outside the EN/ES
  * translation preferences.
@@ -263,12 +270,12 @@ export interface GlossPreference {
 export function glossPreference(
   uiLocale: string,
   modes: Record<GlossLanguage, TranslationVisibilityMode>,
-  languageOrder: readonly GlossLanguage[] = homeFirst(uiLocale === 'es' ? 'es' : 'en'),
+  languageOrder: readonly GlossLanguage[] = homeFirst(glossLanguageFor(uiLocale)),
 ): GlossPreference {
   // Spanish for a Spanish reader; English for everyone else, including the
   // Japanese interface, because English is the language JMdict is written in
   // and the one every entry is most likely to have.
-  const home: GlossLanguage = uiLocale === 'es' ? 'es' : 'en';
+  const home = glossLanguageFor(uiLocale);
   // The saved global choice decides which dictionary languages matter and in
   // what order. The search control can still hide one on that surface.
   const enabled = languageOrder.filter((lang): lang is GlossLanguage => GLOSS_LANGUAGES.includes(lang));
@@ -646,6 +653,41 @@ export function pitchMorae(reading: string, downstep: number): PitchMora[] {
     downstep === 0 ? index > 0 : downstep === 1 ? index === 0 : index > 0 && index < downstep;
 
   return morae.map((text, index) => ({ text, high: high(index), drop: high(index) && !high(index + 1) }));
+}
+
+/** The rank in each kind of media (anime, drama, YouTube, audiobooks), behind the "#N" badge: a word can be
+ *  everyday speech in anime and rare in audiobooks. Kinds we do not label are left out; `labelKey` is an i18n key. */
+export function frequencySplit(
+  word: DictionaryWord | null | undefined,
+): Array<{ category: string; rank: number; labelKey: string }> {
+  return (word?.frequencyByCategory ?? []).flatMap((entry) => {
+    const labelKey = CATEGORY_LABEL_KEYS[entry.category as keyof typeof CATEGORY_LABEL_KEYS];
+    return labelKey ? [{ category: entry.category, rank: entry.rank, labelKey }] : [];
+  });
+}
+
+export interface PitchPatternView {
+  downstep: number;
+  /** A clip of the reading at this accent; empty when there is none. */
+  audioUrl: string;
+  /** The reader's pitch dictionary it came from; empty for the built-in one. */
+  source: string;
+  morae: PitchMora[];
+}
+
+/** The first `limit` pitch patterns drawn over `reading` (few, so the senses stay in view); none without a reading. */
+export function pitchPatterns(
+  word: DictionaryWord | null | undefined,
+  reading: string | null | undefined,
+  limit = 2,
+): PitchPatternView[] {
+  if (!reading) return [];
+  return (word?.pitch ?? []).slice(0, limit).map((pattern) => ({
+    downstep: pattern.downstep,
+    audioUrl: pattern.audioUrl ?? '',
+    source: pattern.source ?? '',
+    morae: pitchMorae(reading, pattern.downstep),
+  }));
 }
 
 const SHIRABE_SITE = 'https://shirabe.org';

@@ -5,10 +5,10 @@ import {
   type KanjiCardExample,
   type KanjiCardWordRef,
   kanjiBadges,
-  markKanji,
-  splitKunReading,
+  splitReading,
 } from '~/utils/kanjiLookup';
 import KanjiStrokes from './KanjiStrokes.vue';
+import MarkedKanji from './MarkedKanji.vue';
 import type { KanjiViewState } from '~/composables/useKanjiView';
 
 /**
@@ -97,20 +97,11 @@ interface ReadingRow {
 /** Whether the page found no sentences for a reading (the card itself never knows). */
 const noSentences = (row: ReadingRow) => props.readingCounts?.[row.key] === 0;
 
-/** On the page, each reading's share of the kanji's sentences, as a whole percent; null on the card. */
-const readingShare = (row: ReadingRow): number | null => {
-  const counts = props.readingCounts;
-  if (!counts) return null;
-  const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
-  if (total === 0) return null;
-  return Math.round(((counts[row.key] ?? 0) / total) * 100);
-};
-
 /** Readings grouped by kind, so the on/kun label is written once per group. */
 const readingGroups = computed(() => {
   const groups: Array<{ kind: 'on' | 'kun'; rows: ReadingRow[] }> = [];
   for (const entry of props.card?.readings ?? []) {
-    const split = entry.kind === 'kun' ? splitKunReading(entry.reading) : { stem: entry.reading, okurigana: '' };
+    const split = splitReading(entry, entry.reading);
     let group = groups.find((candidate) => candidate.kind === entry.kind);
     if (!group) {
       group = { kind: entry.kind, rows: [] };
@@ -119,6 +110,20 @@ const readingGroups = computed(() => {
     group.rows.push({ key: entry.reading, ...split, examples: entry.examples });
   }
   return groups;
+});
+
+/** On the page, each reading's share of the kanji's sentences as a whole percent, by row key; empty on the card
+ *  (and when no reading has a sentence). */
+const readingShares = computed(() => {
+  const counts = props.readingCounts;
+  const shares: Record<string, number> = {};
+  if (!counts) return shares;
+  const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
+  if (total === 0) return shares;
+  for (const group of readingGroups.value) {
+    for (const row of group.rows) shares[row.key] = Math.round(((counts[row.key] ?? 0) / total) * 100);
+  }
+  return shares;
 });
 
 /** The facts row: short, scannable badges. */
@@ -179,7 +184,7 @@ const relatedTitle = (kanji: { reading: string | null; meaning: string | null })
 <template>
   <div class="kanji-view" :class="{ 'kanji-view--full': full }">
     <p v-if="state === 'loading'" class="kanji-view__pending">
-      <span class="kanji-view__spinner" aria-hidden="true" />
+      <span class="nd-ring-spinner kanji-view__spinner" aria-hidden="true" />
       <span>{{ $t('tokenTooltip.loading') }}</span>
     </p>
     <p v-else-if="state === 'missing'" class="kanji-view__pending">{{ $t('tokenTooltip.kanjiMissing') }}</p>
@@ -229,13 +234,13 @@ const relatedTitle = (kanji: { reading: string | null; meaning: string | null })
                 <span
                   v-if="readingCounts && !noSentences(row)"
                   class="kanji-view__share"
-                  :title="$t('tokenTooltip.kanjiReadingShare', { percent: readingShare(row) ?? 0 })"
+                  :title="$t('tokenTooltip.kanjiReadingShare', { percent: readingShares[row.key] ?? 0 })"
                   data-testid="kanji-reading-share"
                 >
                   <span class="kanji-view__share-bar" aria-hidden="true">
-                    <span :style="{ width: `${Math.max(readingShare(row) ?? 0, 4)}%` }" />
+                    <span :style="{ width: `${Math.max(readingShares[row.key] ?? 0, 4)}%` }" />
                   </span>
-                  <span class="kanji-view__share-text">{{ readingShare(row) === 0 ? '<1' : readingShare(row) }}%</span>
+                  <span class="kanji-view__share-text">{{ readingShares[row.key] === 0 ? '<1' : readingShares[row.key] }}%</span>
                 </span>
                 <span v-if="noSentences(row)" class="kanji-view__no-sentences">{{
                   $t('tokenTooltip.kanjiReadingNoSentences')
@@ -249,7 +254,7 @@ const relatedTitle = (kanji: { reading: string | null; meaning: string | null })
                     class="kanji-view__example"
                     :aria-label="example.reading ? `${example.headword} (${example.reading})` : example.headword"
                     @click="emit('open-word', example)"
-                  ><template v-if="example.furigana.length > 0"><template v-for="(seg, si) in example.furigana" :key="si"><ruby v-if="seg.ruby"><template v-for="(part, pi) in markKanji(seg.text, kanji)" :key="pi"><span v-if="part.hit" class="kanji-view__mark">{{ part.text }}</span><template v-else>{{ part.text }}</template></template><rt>{{ seg.ruby }}</rt></ruby><template v-else><template v-for="(part, pi) in markKanji(seg.text, kanji)" :key="pi"><span v-if="part.hit" class="kanji-view__mark">{{ part.text }}</span><template v-else>{{ part.text }}</template></template></template></template></template><template v-else><template v-for="(part, pi) in markKanji(example.headword, kanji)" :key="pi"><span v-if="part.hit" class="kanji-view__mark">{{ part.text }}</span><template v-else>{{ part.text }}</template></template></template></button>
+                  ><template v-if="example.furigana.length > 0"><template v-for="(seg, si) in example.furigana" :key="si"><ruby v-if="seg.ruby"><MarkedKanji :text="seg.text" :kanji="kanji" /><rt>{{ seg.ruby }}</rt></ruby><MarkedKanji v-else :text="seg.text" :kanji="kanji" /></template></template><MarkedKanji v-else :text="example.headword" :kanji="kanji" /></button>
                 </template>
               </span>
             </template>
@@ -269,7 +274,7 @@ const relatedTitle = (kanji: { reading: string | null; meaning: string | null })
             data-testid="kanji-word"
             @click="emit('open-word', word)"
           >
-            <span class="kanji-view__word-text" lang="ja"><template v-for="(part, pi) in markKanji(word.headword, kanji)" :key="pi"><span v-if="part.hit" class="kanji-view__mark">{{ part.text }}</span><template v-else>{{ part.text }}</template></template></span>
+            <span class="kanji-view__word-text" lang="ja"><MarkedKanji :text="word.headword" :kanji="kanji" /></span>
             <span v-if="word.reading && word.reading !== word.headword" class="kanji-view__word-reading" lang="ja">{{ word.reading }}</span>
             <span v-if="word.gloss" class="kanji-view__word-gloss">{{ word.gloss }}</span>
           </button>
@@ -393,19 +398,10 @@ const relatedTitle = (kanji: { reading: string | null; meaning: string | null })
   color: var(--ink-muted);
 }
 
+/* The ring itself is the global `nd-ring-spinner`; only its size is the card's. */
 .kanji-view__spinner {
   width: 12px;
   height: 12px;
-  border: 2px solid currentColor;
-  border-top-color: transparent;
-  border-radius: 999px;
-  animation: kanji-view-spin 0.8s linear infinite;
-}
-
-@keyframes kanji-view-spin {
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 /* Blocks: one rhythm for all of them and a hairline between, so the eye can find each. */
@@ -653,11 +649,6 @@ const relatedTitle = (kanji: { reading: string | null; meaning: string | null })
 
 .kanji-view__word:hover {
   background: var(--surface-lift);
-}
-
-/* The kanji itself, inside the words that use it. */
-.kanji-view__mark {
-  color: var(--accent-soft);
 }
 
 .kanji-view__word-text {

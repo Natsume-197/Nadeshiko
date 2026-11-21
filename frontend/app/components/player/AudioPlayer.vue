@@ -20,10 +20,12 @@ import { splitLocalePrefix } from '~/utils/routes';
 import { usePlayerBarHeight } from '~/composables/usePlayerAnchor';
 import PlayerSeekIcon from './SeekIcon.vue';
 import PlayerListeningMode from './ListeningMode.vue';
+import PlayerVolumeSlider from './VolumeSlider.vue';
+import { usePlayerLabels } from '~/composables/usePlayerLabels';
 import { watch, ref, computed, nextTick, onMounted, onBeforeUnmount } from 'vue';
 import { onClickOutside, useMediaQuery, useResizeObserver } from '@vueuse/core';
 import { storeToRefs } from 'pinia';
-import { escapeCorpusText, safeHighlight } from '~/utils/safeHighlight';
+import { segmentTextHtml } from '~/utils/safeHighlight';
 
 const route = useRoute();
 
@@ -223,18 +225,8 @@ const showCurrentSentence = () => {
   scrollMainView();
 };
 
-/**
- * A control's label with the key that does the same, for its tooltip. The key handler above is the
- * source of truth; these only advertise it. `aria-keyshortcuts` carries the same for screen readers.
- */
-const withKey = (label: string, key: string) => t('player.controls.withShortcut', { label, key });
+const { withKey, playLabel } = usePlayerLabels();
 const spaceKey = computed(() => t('player.controls.spaceKey'));
-
-/** While the clip downloads the button says so, rather than offering a play that is already on its way. */
-const playLabel = computed(() => {
-  if (isBuffering.value) return t('player.controls.loading');
-  return isPlaying.value ? t('player.controls.pause') : t('player.controls.play');
-});
 
 /**
  * Media Session: hardware media keys, headphone buttons and the OS media panel (lock screen,
@@ -373,13 +365,6 @@ watch(ytPlayer.clipProgress, (p) => {
   }
 });
 
-const getJapaneseContent = (result: any) => {
-  if (!result) return '';
-  return result.segment.textJa.highlight
-    ? safeHighlight(result.segment.textJa.highlight)
-    : escapeCorpusText(result.segment.textJa.content);
-};
-
 const getAnimeImage = (result: any) => {
   if (!result) return '';
   return result.segment.urls.imageUrl;
@@ -428,19 +413,12 @@ onMounted(() => {
 /** Both halves have to hold: usable input, and a volume that actually moves. */
 const showVolumeSlider = computed(() => hasFinePointer.value && canSetVolume.value);
 
-const volumePercent = computed(() => Math.round(volume.value * 100));
-
 const volumeIcon = computed(() => {
   if (volume.value === 0) return mdiVolumeOff;
   if (volume.value < 0.34) return mdiVolumeLow;
   if (volume.value < 0.67) return mdiVolumeMedium;
   return mdiVolumeHigh;
 });
-
-const onVolumeInput = (event: Event) => {
-  const target = event.target as HTMLInputElement;
-  playerStore.setVolume(Number(target.value) / 100);
-};
 
 const rateMenuOpen = ref(false);
 const rateMenuBarRef = ref<HTMLElement | null>(null);
@@ -561,7 +539,7 @@ const selectPlaybackRate = (rate: number) => {
                             :alt="`Cover art for ${mediaName(currentResult.media)}`"
                             class="w-[45px] h-[45px] shrink-0 object-cover rounded-md bg-surface-hover" />
                         <span class="flex-grow min-w-0">
-                            <span lang="ja" data-testid="player-sentence" class="block font-bold text-[17.3px] leading-snug truncate pr-2" v-html="getJapaneseContent(currentResult)">
+                            <span lang="ja" data-testid="player-sentence" class="block font-bold text-[17.3px] leading-snug truncate pr-2" v-html="segmentTextHtml(currentResult.segment.textJa)">
                             </span>
                             <span lang="ja" class="block text-[13.5px] leading-tight text-ink-muted truncate">{{ mediaName(currentResult.media) }}</span>
                         </span>
@@ -591,7 +569,7 @@ const selectPlaybackRate = (rate: number) => {
                         <button type="button" @click="playerStore.togglePlay()" data-testid="player-play"
                             class="mx-0.5 inline-flex size-[52px] md:size-[40px] shrink-0 items-center justify-center rounded-full text-ink-muted hover:text-ink hover:bg-[color-mix(in_srgb,var(--ink)_8%,transparent)] transition-colors"
                             :aria-label="playLabel" :title="withKey(playLabel, spaceKey)" aria-keyshortcuts="Space" :aria-busy="isBuffering">
-                            <span v-if="isBuffering" class="player-spinner w-[20px] h-[20px]" aria-hidden="true" />
+                            <span v-if="isBuffering" class="nd-ring-spinner w-[20px] h-[20px]" aria-hidden="true" />
                             <!-- No fill behind it, the same colour as every other control; a size up. -->
                             <UiBaseIcon v-else :path="isPlaying ? mdiPause : mdiPlay" :size="31" w="w-[31px]" h="h-[31px]" />
                         </button>
@@ -643,11 +621,7 @@ const selectPlaybackRate = (rate: number) => {
                         </div>
                         <div v-if="showVolumeSlider" class="flex items-center gap-2 px-1">
                             <UiBaseIcon :path="volumeIcon" :size="24.5" w="w-[24.5px]" h="h-[24.5px]" class="text-ink-muted" />
-                            <input type="range" min="0" max="100" step="1" :value="volumePercent"
-                                :style="{ '--volume-fill': `${volumePercent}%` }"
-                                @input="onVolumeInput" @change="playerStore.trackVolumeChange()"
-                                class="player-volume player-volume--themed w-[81px]"
-                                :aria-label="t('player.controls.volume')" :aria-valuetext="`${volumePercent}%`" />
+                            <PlayerVolumeSlider class="w-[81px]" />
                         </div>
                         </div>
                         <span class="mx-2 hidden h-5 w-px bg-[var(--line)] md:block" aria-hidden="true" />
@@ -747,104 +721,5 @@ const selectPlaybackRate = (rate: number) => {
   .player-float-leave-to {
     translate: none;
   }
-}
-
-/* The gradient paints the filled track consistently across engines; native range styling does not. */
-.player-volume {
-  -webkit-appearance: none;
-  appearance: none;
-  background: transparent;
-  cursor: pointer;
-}
-
-.player-volume::-webkit-slider-runnable-track {
-  height: 0.25rem;
-  border-radius: 9999px;
-  background: linear-gradient(
-    to right,
-    rgb(var(--c-white) / 0.85) var(--volume-fill),
-    rgb(var(--c-white) / 0.2) var(--volume-fill)
-  );
-}
-
-.player-volume::-moz-range-track {
-  height: 0.25rem;
-  border-radius: 9999px;
-  background: linear-gradient(
-    to right,
-    rgb(var(--c-white) / 0.85) var(--volume-fill),
-    rgb(var(--c-white) / 0.2) var(--volume-fill)
-  );
-}
-
-.player-volume::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 0.75rem;
-  height: 0.75rem;
-  border-radius: 9999px;
-  background: rgb(var(--c-white));
-  /* Centres a 0.75rem thumb on the 0.25rem track. */
-  margin-top: -0.25rem;
-}
-
-.player-volume::-moz-range-thumb {
-  width: 0.75rem;
-  height: 0.75rem;
-  border: none;
-  border-radius: 9999px;
-  background: rgb(var(--c-white));
-}
-
-/* The bar follows the theme (it shares the title filter's card); the immersive view stays dark. */
-.player-volume--themed::-webkit-slider-runnable-track {
-  background: linear-gradient(
-    to right,
-    var(--ink) var(--volume-fill),
-    color-mix(in srgb, var(--ink) 20%, transparent) var(--volume-fill)
-  );
-}
-
-.player-volume--themed::-moz-range-track {
-  background: linear-gradient(
-    to right,
-    var(--ink) var(--volume-fill),
-    color-mix(in srgb, var(--ink) 20%, transparent) var(--volume-fill)
-  );
-}
-
-/* Separate rules: a selector list one engine does not recognise is dropped whole. */
-.player-volume--themed::-webkit-slider-thumb {
-  background: var(--ink);
-}
-
-.player-volume--themed::-moz-range-thumb {
-  background: var(--ink);
-}
-
-/* The play button while the clip downloads: the icon would offer a play that is already on its way. */
-.player-spinner {
-  display: inline-block;
-  border-radius: 9999px;
-  border: 2px solid currentColor;
-  border-top-color: transparent;
-  animation: player-spin 0.8s linear infinite;
-}
-
-@keyframes player-spin {
-  to {
-    rotate: 360deg;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .player-spinner {
-    animation-duration: 2.4s;
-  }
-}
-
-.player-volume:focus-visible {
-  outline: 2px solid rgb(248 113 113);
-  outline-offset: 4px;
 }
 </style>

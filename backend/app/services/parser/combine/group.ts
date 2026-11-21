@@ -1,6 +1,6 @@
 import type { DeconjugatedForm } from '../deconjugator';
 import type { Morpheme } from '../sudachi';
-import { deconjugationKey, normalizeLongVowels, toHiragana } from './kana';
+import { deconjugationKey } from './kana';
 import type { CombineContext, Group, GroupKind, WordClass } from './types';
 
 /** Sudachi's first POS field to the coarse `PartOfSpeech`, as `PosMapper.FromSudachi` maps it. */
@@ -102,6 +102,13 @@ export function baseKind(cls: WordClass): GroupKind {
   return 'word';
 }
 
+/** Punctuation, symbols and blanks. */
+export const isSymbolClass = (cls: WordClass) => baseKind(cls) === 'symbol';
+/** A plain noun (`Noun` or `CommonNoun`). */
+export const isNounClass = (cls: WordClass) => cls === 'Noun' || cls === 'CommonNoun';
+/** No neighbour, or a symbol: the edge of a clause. */
+export const isClauseBoundary = (neighbour: Group | undefined) => !neighbour || isSymbolClass(neighbour.cls);
+
 export function fromMorpheme(morpheme: Morpheme): Group {
   const cls = classOf(morpheme.pos[0]);
   return {
@@ -172,7 +179,7 @@ export function concatText(groups: readonly Group[], start: number, count: numbe
 /** `HasCompoundLookup`: a lookup that also tries the long-vowel-normalised hiragana. */
 export function known(ctx: CombineContext, text: string): boolean {
   if (!text) return false;
-  return ctx.lexicon.has(text) || ctx.lexicon.has(normalizeLongVowels(toHiragana(text)));
+  return ctx.lexicon.has(text) || ctx.lexicon.has(deconjugationKey(text));
 }
 
 /** `IsNonWordToken`: punctuation and blanks never host a returned mora or a suffix; judged on the text because
@@ -218,11 +225,13 @@ export function verbDictFormExists(ctx: CombineContext, dictForm: string, normal
   );
 }
 
-/** `MergeAdjacentWhere`: folds each group into the one before it while `shouldMerge` holds. */
+/** `MergeAdjacentWhere`: folds each group into the one before it while `shouldMerge` holds. `current` is the group
+ * built so far (it may already hold earlier merges), `index` is `next`'s index in `groups`. Returns `groups` itself
+ * when nothing merged. */
 export function mergeAdjacentWhere(
   groups: Group[],
-  shouldMerge: (current: Group, next: Group) => boolean,
-  patch: Partial<Group> = {},
+  shouldMerge: (current: Group, next: Group, index: number, groups: readonly Group[]) => boolean,
+  patch: Partial<Group> | ((current: Group, next: Group) => Partial<Group>) = {},
 ): Group[] {
   if (groups.length < 2) return groups;
   const out: Group[] = [];
@@ -230,8 +239,8 @@ export function mergeAdjacentWhere(
   let changed = false;
   for (let i = 1; i < groups.length; i++) {
     const next = groups[i] as Group;
-    if (shouldMerge(current, next)) {
-      current = append(current, next, patch);
+    if (shouldMerge(current, next, i, groups)) {
+      current = append(current, next, typeof patch === 'function' ? patch(current, next) : patch);
       changed = true;
     } else {
       out.push(current);
@@ -240,4 +249,13 @@ export function mergeAdjacentWhere(
   }
   out.push(current);
   return changed ? out : groups;
+}
+
+/** `IsNominaliserBeforeCopula`: の|で before は, も or ある is the nominaliser plus the copula, not ので "because";
+ * なのである is its own entry, hence `beforeAru`. */
+export function isNominaliserBeforeCopula(groups: readonly Group[], deIndex: number, beforeAru = true): boolean {
+  if (groups[deIndex]?.s !== 'で') return false;
+  const next = groups[deIndex + 1];
+  if (!next) return false;
+  return next.s === 'は' || next.s === 'も' || (beforeAru && (next.d === 'ある' || next.d === '有る'));
 }

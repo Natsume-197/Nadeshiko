@@ -96,13 +96,7 @@ export const uploadUserDictionary = async (req: Request, res: Response, next: Ne
     if (contentLengthHeader) {
       const declared = Number(contentLengthHeader);
       if (Number.isFinite(declared) && declared > quota.maxZipBytes) {
-        const limitMb = Math.round(quota.maxZipBytes / (1024 * 1024));
-        res.status(413).json({
-          code: 'PAYLOAD_TOO_LARGE',
-          title: 'File too large',
-          detail: `Dictionary exceeds the ${limitMb} MB limit for your account.`,
-          status: 413,
-        });
+        sendTooLarge(res, quota.maxZipBytes);
         req.resume();
         return;
       }
@@ -117,13 +111,7 @@ export const uploadUserDictionary = async (req: Request, res: Response, next: Ne
     if (tooLarge) {
       await unlink(tmpPath).catch(() => {});
       tmpPath = null;
-      const limitMb = Math.round(quota.maxZipBytes / (1024 * 1024));
-      res.status(413).json({
-        code: 'PAYLOAD_TOO_LARGE',
-        title: 'File too large',
-        detail: `Dictionary exceeds the ${limitMb} MB limit for your account.`,
-        status: 413,
-      });
+      sendTooLarge(res, quota.maxZipBytes);
       return;
     }
 
@@ -147,6 +135,16 @@ export const uploadUserDictionary = async (req: Request, res: Response, next: Ne
     next(error);
   }
 };
+
+function sendTooLarge(res: Response, maxBytes: number): void {
+  const limitMb = Math.round(maxBytes / (1024 * 1024));
+  res.status(413).json({
+    code: 'PAYLOAD_TOO_LARGE',
+    title: 'File too large',
+    detail: `Dictionary exceeds the ${limitMb} MB limit for your account.`,
+    status: 413,
+  });
+}
 
 function streamRequestToFile(
   req: Request,

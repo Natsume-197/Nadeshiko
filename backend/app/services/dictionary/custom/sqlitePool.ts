@@ -3,6 +3,7 @@ import { unlink } from 'node:fs/promises';
 import { join } from 'node:path';
 import { DatabaseSync, type StatementSync } from 'node:sqlite';
 import { logger } from '@config/log';
+import { toHiragana } from '@app/services/parser/combine/kana';
 import { decodeGlossary, inflateBlock, parseGlossaryJson } from './glossaryCodec';
 import type { NormalizedGlossaryItem } from './structuredContent';
 
@@ -124,7 +125,6 @@ function openHandle(filePath: string): PooledHandle | null {
   let handle: PooledHandle;
   try {
     handle = prepareHandle(filePath);
-    handle.filePath = filePath;
   } catch (error) {
     // One unreadable file must cost its own dictionary, not the whole word card. A corrupt cached copy is removed so
     // the next lookup fetches it again from R2.
@@ -138,11 +138,7 @@ function openHandle(filePath: string): PooledHandle | null {
     if (oldestKey) {
       const oldest = pool.get(oldestKey);
       pool.delete(oldestKey);
-      try {
-        oldest?.db.close();
-      } catch {
-        // ignore close error on eviction
-      }
+      if (oldest) closeQuietly(oldest.db);
     }
   }
 
@@ -155,16 +151,21 @@ function isCorruptFileError(error: unknown): boolean {
   return /not a database|malformed|SQLITE_CORRUPT|SQLITE_NOTADB/i.test(message);
 }
 
+/** Closes a handle that may already be unusable; a failure to close changes nothing for the caller. */
+function closeQuietly(db: DatabaseSync): void {
+  try {
+    db.close();
+  } catch {
+    // already closed or unusable
+  }
+}
+
 function prepareHandle(filePath: string): PooledHandle {
   const db = new DatabaseSync(filePath, { readOnly: true });
   try {
-    return buildHandle(db);
+    return buildHandle(db, filePath);
   } catch (error) {
-    try {
-      db.close();
-    } catch {
-      // already unusable
-    }
+    closeQuietly(db);
     throw error;
   }
 }
@@ -172,7 +173,7 @@ function prepareHandle(filePath: string): PooledHandle {
 /** Map the file instead of copying its pages into SQLite's own cache: the page cache already holds them. */
 const MMAP_BYTES = 256 * 1024 * 1024;
 
-function buildHandle(db: DatabaseSync): PooledHandle {
+function buildHandle(db: DatabaseSync, filePath: string): PooledHandle {
   db.exec(`PRAGMA mmap_size = ${MMAP_BYTES}`);
   const columns = new Set(
     (db.prepare('PRAGMA table_info(terms)').all() as Array<{ name: string }>).map((column) => column.name),
@@ -200,7 +201,7 @@ function buildHandle(db: DatabaseSync): PooledHandle {
 
   return {
     db,
-    filePath: '',
+    filePath,
     glossaryFormat,
     blockById: glossaryFormat === 'block' ? db.prepare('SELECT data FROM glossary_block WHERE id = ?') : null,
     byExpr: db.prepare(`
@@ -240,11 +241,7 @@ export function closeArtifactHandle(filePath: string): void {
   const existing = pool.get(filePath);
   if (!existing) return;
   pool.delete(filePath);
-  try {
-    existing.db.close();
-  } catch {
-    // ignore
-  }
+  closeQuietly(existing.db);
 }
 
 export async function removeArtifactFile(baseDir: string, sha256: string): Promise<void> {
@@ -254,13 +251,7 @@ export async function removeArtifactFile(baseDir: string, sha256: string): Promi
 }
 
 export function closeAllArtifactHandles(): void {
-  for (const [, handle] of pool) {
-    try {
-      handle.db.close();
-    } catch {
-      // ignore
-    }
-  }
+  for (const [, handle] of pool) closeQuietly(handle.db);
   pool.clear();
   blockCache.clear();
   blockCacheBytes = 0;
@@ -353,7 +344,7 @@ export function queryArtifactTerms(
   if (raw.length === 0) return { rows: [], tags: handle.tags };
 
   // The reading filter runs on the raw rows, before anything is decoded.
-  const kept = readingHira ? raw.filter((row) => !row.reading || toHira(row.reading) === readingHira) : raw;
+  const kept = readingHira ? raw.filter((row) => !row.reading || toHiragana(row.reading) === readingHira) : raw;
   return { rows: hydrateTermRows(handle, kept, maxSenses), tags: handle.tags };
 }
 
@@ -364,20 +355,29 @@ interface RawMetaRow {
   data_json: string;
 }
 
-function toHira(text: string): string {
-  let out = '';
-  for (const ch of text) {
-    const code = ch.codePointAt(0) ?? 0;
-    out += code >= 0x30a1 && code <= 0x30f6 ? String.fromCodePoint(code - 0x60) : ch;
-  }
-  return out;
-}
-
 /** Meta rows for `readingHira`, or with no reading; all of them when the lookup has no reading. No fallback to other
  * readings, as in `queryArtifactTerms`. */
 function matchingReading(rows: RawMetaRow[], readingHira: string | null): RawMetaRow[] {
   if (!readingHira) return rows;
   return rows.filter((row) => !row.reading_hira || row.reading_hira === readingHira);
+}
+
+/** One artifact's `mode` meta rows for `expression` (falling back to its hiragana form), kept to `readingHira`. */
+function metaRows(
+  filePath: string,
+  expression: string,
+  expressionHira: string,
+  readingHira: string | null,
+  mode: 'freq' | 'pitch',
+): RawMetaRow[] {
+  const handle = openHandle(filePath);
+  if (!handle) return [];
+
+  let raw = handle.metaByExpr.all(expression, mode) as unknown as RawMetaRow[];
+  if (raw.length === 0 && expressionHira && expressionHira !== expression) {
+    raw = handle.metaByExprHira.all(expressionHira, mode) as unknown as RawMetaRow[];
+  }
+  return matchingReading(raw, readingHira);
 }
 
 export function queryArtifactFrequencies(
@@ -386,19 +386,8 @@ export function queryArtifactFrequencies(
   expressionHira: string,
   readingHira: string | null,
 ): CustomFrequencyRow[] {
-  const handle = openHandle(filePath);
-  if (!handle) return [];
-
-  let raw = handle.metaByExpr.all(expression, 'freq') as unknown as RawMetaRow[];
-  if (raw.length === 0 && expressionHira && expressionHira !== expression) {
-    raw = handle.metaByExprHira.all(expressionHira, 'freq') as unknown as RawMetaRow[];
-  }
-  if (raw.length === 0) return [];
-
-  const chosen = matchingReading(raw, readingHira);
-
   const out: CustomFrequencyRow[] = [];
-  for (const row of chosen) {
+  for (const row of metaRows(filePath, expression, expressionHira, readingHira, 'freq')) {
     try {
       const parsed = JSON.parse(row.data_json) as { value: number | null; displayValue: string };
       if (parsed?.displayValue) {
@@ -420,19 +409,8 @@ export function queryArtifactPitches(
   expressionHira: string,
   readingHira: string | null,
 ): CustomPitchRow[] {
-  const handle = openHandle(filePath);
-  if (!handle) return [];
-
-  let raw = handle.metaByExpr.all(expression, 'pitch') as unknown as RawMetaRow[];
-  if (raw.length === 0 && expressionHira && expressionHira !== expression) {
-    raw = handle.metaByExprHira.all(expressionHira, 'pitch') as unknown as RawMetaRow[];
-  }
-  if (raw.length === 0) return [];
-
-  const chosen = matchingReading(raw, readingHira);
-
   const out: CustomPitchRow[] = [];
-  for (const row of chosen) {
+  for (const row of metaRows(filePath, expression, expressionHira, readingHira, 'pitch')) {
     try {
       const pitches = JSON.parse(row.data_json) as CustomPitchRow['pitches'];
       if (Array.isArray(pitches) && pitches.length > 0) {

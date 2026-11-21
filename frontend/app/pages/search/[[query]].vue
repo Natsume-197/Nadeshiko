@@ -11,7 +11,7 @@ import type { Media } from '@brigadasos/nadeshiko-sdk';
 import { reportError } from '~/utils/reportError';
 import { seoEpisodeLabel } from '~/utils/media';
 import { buildMediaPath, decodeSearchQuery, readSearchRouteFilters } from '~/utils/routes';
-import { cardSenses, pageGlossPreference } from '~/utils/wordCard';
+import { cardSenses, glossLanguageFor, pageGlossPreference } from '~/utils/wordCard';
 import { personalEntryFor, type WordEntryAnswer } from '~/utils/personalWordEntry';
 import { isWordQuery } from '#shared/utils/wordEntry';
 
@@ -141,7 +141,7 @@ const familiarMediaCacheKey = computed(() => `familiar-media-${userStore().userE
 
 // A search for one word is that word's page: its dictionary entry goes above the sentences. Only on the word's own
 // page (not scoped to a title or a single sentence), and only for a query that can be one word.
-const entryLocale = computed<'en' | 'es'>(() => (locale.value === 'es' ? 'es' : 'en'));
+const entryLocale = computed(() => glossLanguageFor(locale.value));
 const wantsWordEntry = computed(
   () =>
     isWordQuery(searchQuery.value) &&

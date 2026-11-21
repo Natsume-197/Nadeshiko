@@ -6,7 +6,8 @@ import { loadLexicon } from '@app/services/parser/combine/lexicon';
 import { deconjugate } from '@app/services/parser/deconjugator';
 import type { SlimToken } from '@app/models/Segment';
 import { ALL_CATEGORIES, type CategoryType } from '@app/models/Media';
-import { lookupKeys, toHiragana } from './import/entries';
+import { insertChunks, recordSource } from './import/db';
+import { hasKanji, lookupKeys, toHiragana } from './import/entries';
 import { type IdentifyQuery, loadWords, scoreWord, type StoredWord } from './identify';
 import { type CollocationCounts, collocationRows, countCollocations, writeCollocations } from './collocations';
 
@@ -29,6 +30,10 @@ import { type CollocationCounts, collocationRows, countCollocations, writeColloc
  */
 
 const PAGE = 2_000;
+/** Rows per INSERT when writing the tables. */
+const WRITE_BATCH = 10_000;
+/** Dictionary lookups run at once while attributing forms to words. */
+const LOOKUP_CONCURRENCY = 16;
 const NOT_WORDS = new Set(['補助記号', '記号', '空白']);
 
 export interface FrequencyReport {
@@ -130,8 +135,6 @@ export interface Triple {
   byCategory?: number[];
 }
 
-const hasKanji = (text: string) => /\p{Script=Han}/u.test(text);
-
 function tripleOf(m: Morpheme): Omit<Triple, 'count'> {
   const pt = tokenPos(m.pos, 'word', m.d).pt;
   // Met in kana, the dictionary form is the reading; the surface's own reading would be the inflection's (イタ).
@@ -155,8 +158,8 @@ export function tokenTripleOf(token: SlimToken): Omit<Triple, 'count'> | null {
 const tripleKey = (t: Omit<Triple, 'count' | 'byCategory'>) =>
   [t.n, t.kana ?? '', t.s ?? '', t.r ?? '', t.pt ?? ''].join('\u0000');
 
-/** Count every word morpheme of the served corpus. Exported for tests. */
-export async function countMorphemes(
+/** Count every word morpheme of the served corpus. */
+async function countMorphemes(
   dataSource: DataSource,
   onPage?: (done: number) => void,
 ): Promise<{
@@ -264,25 +267,34 @@ export async function computeFrequency(
     else byForm.set(triple.n, [triple]);
   }
 
+  // Looked up LOOKUP_CONCURRENCY forms at a time and attributed as each batch arrives, in `byForm`'s order, so only
+  // one batch of dictionary words is held at once.
+  const forms = [...byForm];
   const counts = new Map<number, number>();
   const byCategory = new Map<number, number[]>();
   let attributed = 0;
-  for (const [form, list] of byForm) {
-    const words = await loadWords(dataSource, lookupKeys(form));
-    for (const triple of list) {
-      const owners = attribute(triple, words);
-      if (owners.length > 0) attributed += triple.count;
-      for (const { id, share } of owners) {
-        counts.set(id, (counts.get(id) ?? 0) + share);
-        if (!triple.byCategory) continue;
-        // Shared between tied owners the same way as the total.
-        const part = share / triple.count;
-        let split = byCategory.get(id);
-        if (!split) {
-          split = CATEGORIES.map(() => 0);
-          byCategory.set(id, split);
+  for (let i = 0; i < forms.length; i += LOOKUP_CONCURRENCY) {
+    const slice = forms.slice(i, i + LOOKUP_CONCURRENCY);
+    const batch = await Promise.all(slice.map(([form]) => loadWords(dataSource, lookupKeys(form))));
+    for (const [index, [, list]] of slice.entries()) {
+      const words = batch[index] ?? [];
+      for (const triple of list) {
+        const owners = attribute(triple, words);
+        if (owners.length > 0) attributed += triple.count;
+        for (const { id, share } of owners) {
+          counts.set(id, (counts.get(id) ?? 0) + share);
+          if (!triple.byCategory) continue;
+          // Shared between tied owners the same way as the total.
+          const part = share / triple.count;
+          let split = byCategory.get(id);
+          if (!split) {
+            split = CATEGORIES.map(() => 0);
+            byCategory.set(id, split);
+          }
+          for (const [category, count] of triple.byCategory.entries()) {
+            split[category] = (split[category] ?? 0) + count * part;
+          }
         }
-        for (const [index, count] of triple.byCategory.entries()) split[index] = (split[index] ?? 0) + count * part;
       }
     }
   }
@@ -311,39 +323,35 @@ export async function computeFrequency(
 
   await dataSource.transaction(async (manager) => {
     await manager.query(`DELETE FROM dict.frequency`);
-    for (let i = 0; i < rows.length; i += 10_000) {
-      await manager.query(
-        `INSERT INTO dict.frequency (word_id, count, per_million, rank)
-         SELECT x.word_id, x.count, x.per_million, x.rank
-           FROM jsonb_to_recordset($1::jsonb) AS x(word_id int, count int, per_million real, rank int)`,
-        [JSON.stringify(rows.slice(i, i + 10_000))],
-      );
-    }
-    await manager.query(`DELETE FROM dict.frequency_category`);
-    for (let i = 0; i < categoryTable.length; i += 10_000) {
-      await manager.query(
-        `INSERT INTO dict.frequency_category (word_id, category, count, per_million, rank)
-         SELECT x.word_id, x.category, x.count, x.per_million, x.rank
-           FROM jsonb_to_recordset($1::jsonb)
-             AS x(word_id int, category text, count int, per_million real, rank int)`,
-        [JSON.stringify(categoryTable.slice(i, i + 10_000))],
-      );
-    }
-    await manager.query(`DELETE FROM dict.kanji_frequency`);
-    for (let i = 0; i < kanjiTable.length; i += 10_000) {
-      await manager.query(
-        `INSERT INTO dict.kanji_frequency (character, count, sentences, rank)
-         SELECT x.character, x.count, x.sentences, x.rank
-           FROM jsonb_to_recordset($1::jsonb) AS x(character text, count int, sentences int, rank int)`,
-        [JSON.stringify(kanjiTable.slice(i, i + 10_000))],
-      );
-    }
-    await writeCollocations(manager, collocationTable);
-    await manager.query(
-      `INSERT INTO dict.source (name, version, imported_at) VALUES ('corpus-frequency', $1, now())
-       ON CONFLICT (name) DO UPDATE SET version = EXCLUDED.version, imported_at = now()`,
-      [`${new Date().toISOString().slice(0, 10)}, ${segments} segments`],
+    await insertChunks(
+      manager,
+      `INSERT INTO dict.frequency (word_id, count, per_million, rank)
+       SELECT x.word_id, x.count, x.per_million, x.rank
+         FROM jsonb_to_recordset($1::jsonb) AS x(word_id int, count int, per_million real, rank int)`,
+      rows,
+      WRITE_BATCH,
     );
+    await manager.query(`DELETE FROM dict.frequency_category`);
+    await insertChunks(
+      manager,
+      `INSERT INTO dict.frequency_category (word_id, category, count, per_million, rank)
+       SELECT x.word_id, x.category, x.count, x.per_million, x.rank
+         FROM jsonb_to_recordset($1::jsonb)
+           AS x(word_id int, category text, count int, per_million real, rank int)`,
+      categoryTable,
+      WRITE_BATCH,
+    );
+    await manager.query(`DELETE FROM dict.kanji_frequency`);
+    await insertChunks(
+      manager,
+      `INSERT INTO dict.kanji_frequency (character, count, sentences, rank)
+       SELECT x.character, x.count, x.sentences, x.rank
+         FROM jsonb_to_recordset($1::jsonb) AS x(character text, count int, sentences int, rank int)`,
+      kanjiTable,
+      WRITE_BATCH,
+    );
+    await writeCollocations(manager, collocationTable);
+    await recordSource(manager, 'corpus-frequency', `${new Date().toISOString().slice(0, 10)}, ${segments} segments`);
   });
   return report;
 }

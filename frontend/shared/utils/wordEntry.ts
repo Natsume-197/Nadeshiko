@@ -63,12 +63,12 @@ export function pickEntry<T extends EntryCandidate>(candidates: readonly T[], qu
 export interface EntryBrief {
   headword: string;
   reading: string | null;
-  /** Its first meaning in the page's language, else English. */
+  /** Its first English meaning, else its first meaning in any language; the same on every page. */
   gloss: string | null;
 }
 
 /** A candidate cut down to an `EntryBrief` (English gloss). */
-export function brief(candidate: object, _locale: 'en' | 'es' = 'en'): EntryBrief {
+export function brief(candidate: object): EntryBrief {
   const word = candidate as {
     headword?: string;
     reading?: string | null;

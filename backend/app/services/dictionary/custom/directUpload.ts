@@ -5,7 +5,7 @@ import { config } from '@config/config';
 import { logger } from '@config/log';
 import { InvalidRequestError, NotFoundError } from '@app/errors';
 import { type User, UserDictionary, UserDictionaryUpload } from '@app/models';
-import { resolveCustomDictionaryQuota } from './quotas';
+import { assertDictionarySlot, assertIndexedSpace, assertZipSize, resolveCustomDictionaryQuota } from './quotas';
 import {
   deleteR2Object,
   downloadR2Object,
@@ -40,11 +40,6 @@ export interface DictionaryUploadReservation {
   expiresAt: string;
 }
 
-/** Whether this environment takes direct uploads: only with R2, which every deployed environment has. */
-export function directUploadsAvailable(): boolean {
-  return getR2StorageConfig() !== null;
-}
-
 export async function reserveDictionaryUpload(
   user: Pick<User, 'id' | 'role'>,
   sizeBytes: number,
@@ -56,28 +51,13 @@ export async function reserveDictionaryUpload(
   }
 
   const quota = await resolveCustomDictionaryQuota(user);
-  if (sizeBytes > quota.maxZipBytes) {
-    throw new InvalidRequestError(
-      `Dictionary exceeds the ${Math.round(quota.maxZipBytes / (1024 * 1024))} MB limit for your account`,
-    );
-  }
+  assertZipSize(quota, sizeBytes);
 
   const rows = await UserDictionary.find({ where: { userId: user.id }, relations: { artifact: true } });
   // A failed dictionary can be uploaded again without deleting it first, so an account at its limit with one may
   // still reserve; completing checks the limit again once the file is known.
-  const hasFailed = rows.some((row) => row.artifact?.status === 'failed');
-  if (rows.length >= quota.maxDictionaries && !hasFailed) {
-    throw new InvalidRequestError(
-      `You have reached the limit of ${quota.maxDictionaries} custom dictionaries for your account`,
-    );
-  }
-  const indexedBytes = rows.reduce((sum, row) => sum + Number(row.artifact?.sqliteBytes ?? 0), 0);
-  if (indexedBytes >= quota.maxIndexedBytes) {
-    const gb = (bytes: number) => (bytes / (1024 * 1024 * 1024)).toFixed(1);
-    throw new InvalidRequestError(
-      `Your dictionaries already use ${gb(indexedBytes)} GB of the ${gb(quota.maxIndexedBytes)} GB indexed space for your account`,
-    );
-  }
+  if (!rows.some((row) => row.artifact?.status === 'failed')) assertDictionarySlot(quota, rows.length);
+  assertIndexedSpace(quota, rows);
 
   const open = await UserDictionaryUpload.createQueryBuilder('u')
     .where('u.user_id = :userId', { userId: user.id })

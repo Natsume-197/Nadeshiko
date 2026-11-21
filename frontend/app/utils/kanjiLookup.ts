@@ -4,6 +4,8 @@
  * are deduplicated, answers (including "no card") are kept for the tab, failures stay retryable.
  */
 
+import { lruRecall, lruRemember } from '~/utils/lruMap';
+
 export interface KanjiCardComponent {
   character: string;
   /** Has a card of its own, so the view can open it. */
@@ -92,25 +94,17 @@ const CACHE_LIMIT = 200;
 
 const keyOf = (character: string, locale: string) => `${character}:${locale}`;
 
-function remember(key: string, answer: KanjiLookup): KanjiLookup {
-  resolved.delete(key);
-  resolved.set(key, answer);
-  if (resolved.size > CACHE_LIMIT) {
-    const oldest = resolved.keys().next().value;
-    if (oldest !== undefined) resolved.delete(oldest);
-  }
-  return answer;
-}
+const remember = (key: string, answer: KanjiLookup) => lruRemember(resolved, key, answer, CACHE_LIMIT);
 
 /** The answer if this tab already has it, so the view can open filled in. */
 export function peekKanji(character: string, locale: 'en' | 'es'): KanjiLookup | undefined {
-  return resolved.get(keyOf(character, locale));
+  return lruRecall(resolved, keyOf(character, locale));
 }
 
 /** Never rejects: a missing kanji and a failed request each come back with their reason. */
 export function fetchKanji(character: string, locale: 'en' | 'es'): Promise<KanjiLookup> {
   const key = keyOf(character, locale);
-  const answered = resolved.get(key);
+  const answered = lruRecall(resolved, key);
   if (answered) return Promise.resolve(answered);
   const pending = inFlight.get(key);
   if (pending) return pending;
@@ -141,6 +135,14 @@ export function splitKunReading(reading: string): { stem: string; okurigana: str
     : { stem: reading.slice(0, dot), okurigana: reading.slice(dot + 1) };
 }
 
+/** A reading of either kind split for display: kun readings set their okurigana apart, on readings are all stem. */
+export function splitReading(
+  entry: Pick<KanjiCardReading, 'kind'>,
+  reading: string,
+): { stem: string; okurigana: string } {
+  return entry.kind === 'kun' ? splitKunReading(reading) : { stem: reading, okurigana: '' };
+}
+
 export const __kanjiLookupTesting = { CACHE_LIMIT, clear: () => resolved.clear() };
 
 export interface KanjiBadge {
@@ -150,7 +152,6 @@ export interface KanjiBadge {
   strong?: boolean;
 }
 
-/** The facts row of a kanji (N5, 漢検 9級, grade, strokes, newspaper rank), in the order a learner scans them. */
 /** A word cut into runs, the given kanji marked, so a kanji's page and card can colour it inside its words (食 in
  *  食べる, 給食). */
 export function markKanji(text: string, kanji: string): Array<{ text: string; hit: boolean }> {
@@ -164,6 +165,7 @@ export function markKanji(text: string, kanji: string): Array<{ text: string; hi
   return runs;
 }
 
+/** The facts row of a kanji (N5, 漢検 9級, grade, strokes, newspaper rank), in the order a learner scans them. */
 export function kanjiBadges(
   card: KanjiCardData,
   t: (key: string, named?: Record<string, unknown>, plural?: number) => string,

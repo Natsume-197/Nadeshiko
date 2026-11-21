@@ -2,15 +2,15 @@ import { computed } from 'vue';
 import {
   cardForms,
   cardSenses,
+  frequencySplit as frequencySplitOf,
   headwordFurigana,
   kanjiIn,
-  pitchMorae,
+  pitchPatterns as pitchPatternsOf,
   type DictionaryWord,
   type GlossLanguage,
   type GlossPreference,
 } from '~/utils/wordCard';
 import type { EnrichedToken } from '~/utils/tokenEnrichment';
-import { CATEGORY_LABEL_KEYS } from '~/utils/categories';
 import { inflectionLine as joinInflection } from '~/utils/inflectionLabels';
 
 // Use gloss language, not UI locale, so the badge matches the definitions around it.
@@ -83,14 +83,8 @@ export function useWordCardContent(
     return items;
   });
 
-  /** The rank in each kind of media (anime, drama, YouTube, audiobooks), behind the "#N" badge: a word can be
-   *  everyday speech in anime and rare in audiobooks. Kinds we do not label are left out. */
-  const frequencySplit = computed(() =>
-    (word()?.frequencyByCategory ?? []).flatMap((entry) => {
-      const labelKey = CATEGORY_LABEL_KEYS[entry.category as keyof typeof CATEGORY_LABEL_KEYS];
-      return labelKey ? [{ category: entry.category, rank: entry.rank, labelKey }] : [];
-    }),
-  );
+  /** The rank in each kind of media, behind the "#N" badge (`frequencySplit` in wordCard). */
+  const frequencySplit = computed(() => frequencySplitOf(word()));
 
   const customFrequencies = computed(() => word()?.customFrequencies ?? []);
 
@@ -98,16 +92,7 @@ export function useWordCardContent(
    * Limit pitch to two patterns so senses stay visible. Audio is per reading/accent at a
    * public URL; show a button only when that pattern has a recording.
    */
-  const pitchPatterns = computed(() => {
-    const reading = word()?.reading;
-    if (!reading) return [];
-    return (word()?.pitch ?? []).slice(0, 2).map((pattern) => ({
-      downstep: pattern.downstep,
-      audioUrl: pattern.audioUrl ?? '',
-      source: pattern.source ?? '',
-      morae: pitchMorae(reading, pattern.downstep),
-    }));
-  });
+  const pitchPatterns = computed(() => pitchPatternsOf(word(), word()?.reading));
 
   // 5 and 6. The senses, and the kanji the headword is written with.
   const senses = computed(() => cardSenses(word(), glossLanguages()));

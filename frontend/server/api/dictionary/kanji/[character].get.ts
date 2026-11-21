@@ -2,13 +2,12 @@ import { createError, getQuery, getRouterParam, type H3Event, setResponseHeader 
 import { stableCacheKey } from '~~/server/utils/cacheKey';
 import { buildInternalBackendHeaders, internalBackendUrl } from '~~/server/utils/internalBackend';
 import { logger } from '~~/server/utils/logger';
+import { DICTIONARY_CACHE_SECONDS, dictionaryUnavailable } from '~~/server/utils/dictionaryRoute';
 
 // The word card's kanji view (task 44). The backend's kanji route is server-only, so the browser asks here and this
 // carries the request on with the internal secret. The answer is the same for every reader, so it is cached for a
 // day here and in the browser; it only changes with the weekly dictionary refresh.
 
-const CACHE_SECONDS = 60 * 60 * 24;
-const RETRY_AFTER_SECONDS = 5;
 const TIMEOUT_MS = 3000;
 
 type Locale = 'en' | 'es';
@@ -39,7 +38,7 @@ const handler = defineEventHandler(async (event) => {
         timeout: TIMEOUT_MS,
       },
     );
-    setResponseHeader(event, 'cache-control', `public, max-age=${CACHE_SECONDS}`);
+    setResponseHeader(event, 'cache-control', `public, max-age=${DICTIONARY_CACHE_SECONDS}`);
     return card;
   } catch (error: unknown) {
     const status = (error as { response?: { status?: number } })?.response?.status;
@@ -47,15 +46,13 @@ const handler = defineEventHandler(async (event) => {
 
     logger.warn({ character: query.character, status, err: error }, 'Kanji card lookup failed');
     // An outage is not an answer: never cache it.
-    setResponseHeader(event, 'cache-control', 'no-store');
-    setResponseHeader(event, 'retry-after', RETRY_AFTER_SECONDS);
-    throw createError({ statusCode: 503, statusMessage: 'Dictionary temporarily unavailable' });
+    throw dictionaryUnavailable(event, 'Dictionary temporarily unavailable');
   }
 });
 
 export default defineCachedEventHandler(handler, {
   swr: true,
-  maxAge: CACHE_SECONDS,
+  maxAge: DICTIONARY_CACHE_SECONDS,
   getKey: (event) => {
     const query = input(event);
     return query ? stableCacheKey('kanji', query.locale, query.character, query.related) : 'invalid-kanji';

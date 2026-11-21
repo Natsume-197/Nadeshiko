@@ -95,8 +95,8 @@ test('brief keeps the headword, reading and first English meaning', () => {
       },
     ],
   };
-  expect(brief(word, 'es')).toEqual({ headword: '箸', reading: 'ハシ', gloss: 'chopsticks' });
-  expect(brief({ ...word, entries: [] }, 'es')).toEqual({ headword: '箸', reading: 'ハシ', gloss: null });
+  expect(brief(word)).toEqual({ headword: '箸', reading: 'ハシ', gloss: 'chopsticks' });
+  expect(brief({ ...word, entries: [] })).toEqual({ headword: '箸', reading: 'ハシ', gloss: null });
 });
 
 test('toHiragana turns katakana into hiragana and leaves the rest', () => {

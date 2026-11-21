@@ -2,15 +2,17 @@
 import {
   cardForms,
   cardSenses,
+  frequencySplit,
+  glossLanguageFor,
   headwordFurigana,
   pageGlossPreference,
   kanjiIn,
-  pitchMorae,
+  pitchPatterns,
   type DictionaryWord,
 } from '~/utils/wordCard';
-import { CATEGORY_LABEL_KEYS } from '~/utils/categories';
-import { inflectionLanguage, inflectionLine as joinInflection } from '~/utils/inflectionLabels';
-import PitchGraph from '~/components/search/segment/PitchGraph.vue';
+import { inflectionLine as joinInflection } from '~/utils/inflectionLabels';
+import { buildKanjiPath, buildWordSearchPath } from '~/utils/routes';
+import PitchPattern from '~/components/search/segment/PitchPattern.vue';
 import YomitanContent from '~/components/search/segment/YomitanContent.vue';
 import { type EntryBrief, toHiragana } from '#shared/utils/wordEntry';
 
@@ -136,30 +138,18 @@ const reading = computed(() => {
   return value && value !== shown.value.headword ? value : '';
 });
 
-const formatNumber = (value: number) => new Intl.NumberFormat(locale.value).format(value);
+const { formatNumber } = useFormat();
 
 /** In katakana, as the word card draws it, each with its recording when there is one. */
-const pitch = computed(() => {
-  const read = shown.value.reading || shown.value.headword;
-  return (shown.value.pitch ?? []).slice(0, 2).map((pattern) => ({
-    downstep: pattern.downstep,
-    morae: pitchMorae(read, pattern.downstep),
-    audioUrl: pattern.audioUrl ?? '',
-  }));
-});
+const pitch = computed(() => pitchPatterns(shown.value, shown.value.reading || shown.value.headword));
 
 const { playingUrl, playHeadword, stopHeadword } = useHeadwordAudio();
 // A clip belongs to the word shown: switching to a homograph stops it.
 watch(shown, stopHeadword);
 
-const byCategory = computed(() =>
-  (shown.value.frequencyByCategory ?? []).flatMap((entry) => {
-    const labelKey = CATEGORY_LABEL_KEYS[entry.category as keyof typeof CATEGORY_LABEL_KEYS];
-    return labelKey ? [{ ...entry, label: t(labelKey) }] : [];
-  }),
-);
+const byCategory = computed(() => frequencySplit(shown.value));
 /** The card's inflection line (useWordCardContent): the labels outermost first, joined the same way. */
-const inflectionLine = computed(() => joinInflection(props.entry.inflection ?? [], inflectionLanguage(locale.value)));
+const inflectionLine = computed(() => joinInflection(props.entry.inflection ?? [], glossLanguageFor(locale.value)));
 
 /** The rank by kind of media, behind the "#N ▾" badge as on the card. */
 const frequencyOpen = ref(false);
@@ -169,8 +159,8 @@ const parts = computed(() => (shown.value.parts ?? []).filter((part) => part.lem
 const kanji = computed(() => kanjiIn(shown.value.headword));
 const hasSide = computed(() => otherForms.value.length > 0 || parts.value.length > 0 || kanji.value.length > 0);
 
-const wordPath = (word: string) => localePath(`/search/${encodeURIComponent(word)}`);
-const kanjiPath = (character: string) => localePath(`/kanji/${encodeURIComponent(character)}`);
+const wordPath = (word: string) => localePath(buildWordSearchPath(word));
+const kanjiPath = (character: string) => localePath(buildKanjiPath(character));
 </script>
 
 <template>
@@ -236,25 +226,15 @@ const kanjiPath = (character: string) => localePath(`/kanji/${encodeURIComponent
             :title="$t('tokenTooltip.pitchAccent')"
             data-testid="word-entry-pitch"
           >
-            <span v-for="(pattern, index) in pitch" :key="index" class="word-entry__pitch-pattern">
-              <button
-                v-if="pattern.audioUrl"
-                type="button"
-                class="word-entry__audio"
-                :class="{ 'is-playing': playingUrl === pattern.audioUrl }"
-                :aria-label="$t('tokenTooltip.playAudio')"
-                :title="$t('tokenTooltip.playAudio')"
-                data-testid="word-entry-audio"
-                @click="playHeadword(pattern.audioUrl)"
-              >
-                <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <path d="M8.5 2.75 4.9 5.75H2.4v4.5h2.5l3.6 3z" fill="currentColor" stroke="none" />
-                  <path d="M11 6a3 3 0 0 1 0 4" />
-                  <path d="M13 4a6 6 0 0 1 0 8" />
-                </svg>
-              </button>
-              <PitchGraph :morae="pattern.morae" :downstep="pattern.downstep" :scale="0.8" />
-            </span>
+            <PitchPattern
+              v-for="(pattern, index) in pitch"
+              :key="index"
+              class="word-entry__pitch-pattern"
+              :pattern="pattern"
+              :playing="playingUrl === pattern.audioUrl"
+              :scale="0.8"
+              @play="playHeadword"
+            />
           </span>
         </div>
 
@@ -271,7 +251,7 @@ const kanjiPath = (character: string) => localePath(`/kanji/${encodeURIComponent
           data-testid="word-entry-ranks"
         >
           <li v-for="split in byCategory" :key="split.category">
-            {{ split.label }} <strong>#{{ formatNumber(split.rank) }}</strong>
+            {{ t(split.labelKey) }} <strong>#{{ formatNumber(split.rank) }}</strong>
           </li>
         </ul>
 
@@ -896,32 +876,5 @@ const kanjiPath = (character: string) => localePath(`/kanji/${encodeURIComponent
   display: inline-flex;
   align-items: flex-end;
   gap: 6px;
-}
-
-/* The word card's play button, in the page's theme. */
-.word-entry__audio {
-  flex: 0 0 auto;
-  align-self: center;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  border: 0;
-  border-radius: 999px;
-  background: var(--surface-lift);
-  color: var(--ink-muted);
-  cursor: pointer;
-  transition: background-color 0.12s ease, color 0.12s ease;
-}
-
-.word-entry__audio:hover {
-  background: color-mix(in srgb, var(--ink) 12%, transparent);
-  color: var(--ink);
-}
-
-.word-entry__audio.is-playing {
-  color: var(--accent-soft);
 }
 </style>

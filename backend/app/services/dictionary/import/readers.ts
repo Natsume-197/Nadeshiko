@@ -1,6 +1,7 @@
 import { createReadStream } from 'node:fs';
 import { loadDictionary } from '@scriptin/jmdict-simplified-loader';
 import type { JMdictDictionaryMetadata, JMdictWord, JMnedictWord } from '@scriptin/jmdict-simplified-types';
+import { JsonArrayElementError, JsonArrayStream } from '../custom/jsonArrayStream';
 
 /** Streaming readers for the upstream files, so a 260 MB JMdict or a 170 MB JMnedict never sits in memory whole:
  * the server that runs the weekly refresh has little to spare. */
@@ -69,50 +70,53 @@ export interface FuriganaEntry {
   furigana: Array<{ ruby: string; rt?: string }>;
 }
 
+/** Largest single element `readJsonArray` accepts; a JmdictFurigana entry is a few hundred bytes. */
+const MAX_ELEMENT_BYTES = 16 * 1024 * 1024;
+const BOM = Buffer.from([0xef, 0xbb, 0xbf]);
+
 /**
- * The objects of a top-level JSON array, one at a time (JmdictFurigana ships a single array with a BOM). Tracks
- * strings and nesting by hand so only one object is held at once; each object is then handed to `JSON.parse`.
+ * The elements of a top-level JSON array, as the file is read (JmdictFurigana ships a single array with a BOM), so
+ * the whole file is never one string. Split by `JsonArrayStream`; a malformed or truncated file throws with the path.
  */
 export async function* readJsonArray<T>(path: string, options: { chunkSize?: number } = {}): AsyncGenerator<T> {
-  const stream = createReadStream(path, { encoding: 'utf8', highWaterMark: options.chunkSize });
-  let depth = 0;
-  let inString = false;
-  let escaped = false;
-  let pending = '';
-  let first = true;
+  const ready: T[] = [];
+  // Entries are objects or arrays; a stray scalar in the array is skipped, as the old reader did.
+  const splitter = new JsonArrayStream((value) => {
+    if (value !== null && typeof value === 'object') ready.push(value as T);
+  }, MAX_ELEMENT_BYTES);
+  const withPath = (error: unknown) =>
+    error instanceof JsonArrayElementError
+      ? new Error(`${path}: ${error.message.replace(/^Bank /, 'File ')}`, { cause: error })
+      : error;
 
-  for await (const raw of stream as AsyncIterable<string>) {
-    const chunk = first ? raw.replace(/^﻿/, '') : raw;
-    first = false;
-    // Inside an object carried over from the previous chunk, it continues from this chunk's start.
-    let start = depth >= 2 ? 0 : -1;
-
-    for (let i = 0; i < chunk.length; i++) {
-      const char = chunk[i];
-      if (inString) {
-        if (escaped) escaped = false;
-        else if (char === '\\') escaped = true;
-        else if (char === '"') inString = false;
-        continue;
-      }
-      if (char === '"') {
-        inString = true;
-      } else if (char === '[' || char === '{') {
-        depth += 1;
-        if (depth === 2) start = i;
-      } else if (char === ']' || char === '}') {
-        depth -= 1;
-        if (depth === 1 && start >= 0) {
-          const text = pending + chunk.slice(start, i + 1);
-          pending = '';
-          start = -1;
-          yield JSON.parse(text) as T;
-        }
-      }
+  const feed = (chunk: Buffer) => {
+    try {
+      splitter.write(chunk);
+    } catch (error) {
+      throw withPath(error);
     }
+  };
+  const feedHead = (bytes: Buffer) =>
+    feed(bytes.subarray(0, BOM.length).equals(BOM) ? bytes.subarray(BOM.length) : bytes);
 
-    if (start >= 0) pending += chunk.slice(start);
+  // The BOM can straddle chunks when they are tiny, so the first three bytes are gathered before deciding.
+  let head: Buffer | null = Buffer.alloc(0);
+  for await (const chunk of createReadStream(path, { highWaterMark: options.chunkSize }) as AsyncIterable<Buffer>) {
+    if (!head) feed(chunk);
+    else {
+      head = Buffer.concat([head, chunk]);
+      if (head.length < BOM.length) continue;
+      feedHead(head);
+      head = null;
+    }
+    yield* ready.splice(0);
   }
+  if (head) feedHead(head);
 
-  if (depth !== 0 || pending) throw new Error(`${path} ended in the middle of a JSON value`);
+  try {
+    splitter.end();
+  } catch (error) {
+    throw withPath(error);
+  }
+  yield* ready.splice(0);
 }

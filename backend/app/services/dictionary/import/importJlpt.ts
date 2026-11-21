@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import type { DataSource } from 'typeorm';
+import { inTransaction, recordSource } from './db';
 
 /** JLPT levels from stephenmk/yomitan-jlpt-vocab's `original_data/n1.csv`..`n5.csv` (columns
  * `jmdict_seq,kana,kanji,waller_definition`). The level belongs to the word its JMdict id names.
@@ -100,10 +101,7 @@ export async function importJlpt(
     dryRun: options.dryRun ?? false,
   };
 
-  const runner = dataSource.createQueryRunner();
-  await runner.connect();
-  await runner.startTransaction();
-  try {
+  await inTransaction(dataSource, report.dryRun, async (runner) => {
     const unknown: Array<{ word_id: number }> = await runner.query(
       `SELECT x.word_id FROM jsonb_to_recordset($1::jsonb) AS x(word_id int, level smallint)
         WHERE NOT EXISTS (SELECT 1 FROM dict.word w WHERE w.id = x.word_id)
@@ -156,20 +154,8 @@ export async function importJlpt(
     report.words = words;
     report.widenedByKana = widened;
 
-    await runner.query(
-      `INSERT INTO dict.source (name, version, imported_at) VALUES ('jlpt', $1, now())
-       ON CONFLICT (name) DO UPDATE SET version = EXCLUDED.version, imported_at = now()`,
-      [version],
-    );
-
-    if (report.dryRun) await runner.rollbackTransaction();
-    else await runner.commitTransaction();
-  } catch (error) {
-    await runner.rollbackTransaction();
-    throw error;
-  } finally {
-    await runner.release();
-  }
+    await recordSource(runner, 'jlpt', version);
+  });
 
   return report;
 }

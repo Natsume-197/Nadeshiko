@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { SUPPORTED_LOCALES } from './i18n';
 import {
   SEARCH_QUERY_MAX_LENGTH,
+  buildKanjiPath,
   buildMediaPath,
   buildMediaSearchPath,
   canonicalPath,
@@ -437,5 +438,11 @@ describe('readSearchRouteFilters', () => {
     { raw: ['7', '8'], expected: 7 },
   ])('accepts only non-negative integer seeds for $raw', ({ raw, expected }) => {
     expect(readSearchRouteFilters({ seed: raw })).toEqual({ ...empty, randomSeed: expected });
+  });
+});
+
+describe('buildKanjiPath', () => {
+  it('encodes the character into the kanji page path', () => {
+    expect(buildKanjiPath('食')).toBe(`/kanji/${encodeURIComponent('食')}`);
   });
 });

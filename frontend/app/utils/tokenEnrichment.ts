@@ -1,3 +1,5 @@
+import { toHiragana } from '#shared/utils/wordEntry';
+
 export interface SlimToken {
   s: string;
   d: string;
@@ -127,10 +129,6 @@ export function tokensToAnkiFurigana(content: string, tokens: SlimToken[]): stri
   return result;
 }
 
-function katakanaToHiragana(str: string): string {
-  return str.replace(/[\u30A1-\u30F6]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0x60));
-}
-
 /** Parse the `<em>` spans Elasticsearch marks a match with into character ranges
  *  over the plain text. */
 function highlightRanges(highlight: string): Array<{ start: number; end: number }> {
@@ -214,7 +212,7 @@ export function enrichTokens(tokens: SlimToken[], highlight?: string): EnrichedT
           })),
       displaySurface: token.s,
       dictForm: token.d,
-      readingHiragana: katakanaToHiragana(token.r),
+      readingHiragana: toHiragana(token.r),
       lookupRef: { lemma: token.d, surface: token.s, reading: token.r, pos: shortPos(token) },
       furigana: furiganaOf(token),
       inflectionLabels: token.inflection?.labels ?? [],

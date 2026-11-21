@@ -3,8 +3,11 @@ import { isJoyoKanji } from '#shared/data/joyoKanji';
 import KanjiStrokes from '~/components/search/segment/KanjiStrokes.vue';
 import WordCardKanji from '~/components/search/segment/WordCardKanji.vue';
 import { stripUnreadTokenFields } from '~/composables/useSearchFetch';
-import { type KanjiCardData, type KanjiCardWordRef, kanjiBadges, markKanji, splitKunReading } from '~/utils/kanjiLookup';
+import MarkedKanji from '~/components/search/segment/MarkedKanji.vue';
+import { type KanjiCardData, type KanjiCardWordRef, kanjiBadges, splitReading } from '~/utils/kanjiLookup';
 import { DEFAULT_OG_IMAGE_PATH } from '~/utils/metaTags';
+import { buildKanjiPath, buildWordSearchPath } from '~/utils/routes';
+import { glossLanguageFor } from '~/utils/wordCard';
 import { resolveSearchResponse } from '~/utils/resolvers';
 import type { SdkSearchResponse, SearchResponse } from '~/types/search';
 
@@ -24,7 +27,7 @@ const router = useRouter();
 const localePath = useLocalePath();
 
 const character = computed(() => String(route.params.character ?? ''));
-const glossLocale = computed<'en' | 'es'>(() => (locale.value === 'es' ? 'es' : 'en'));
+const glossLocale = computed(() => glossLanguageFor(locale.value));
 
 /** How many words show before "Show all". */
 const WORDS_SHOWN = 12;
@@ -98,7 +101,7 @@ const { data: wordCounts } = await useAsyncData(
 
 const allSentences = computed(() => sentenceData.value?.sentences ?? null);
 const totals = computed(() => sentenceData.value?.totals ?? null);
-const formatCount = (count: number) => new Intl.NumberFormat(locale.value).format(count);
+const { formatNumber } = useFormat();
 
 // Rare kanji stay reachable and followable, but out of the index.
 useRobotsRule(isJoyoKanji(character.value) ? undefined : 'noindex, follow');
@@ -133,7 +136,7 @@ const readingTabs = computed(() =>
     .filter((entry) => entry.examples.length > 0)
     .map((entry) => ({
       key: `${entry.kind}:${entry.reading}`,
-      ...(entry.kind === 'kun' ? splitKunReading(entry.reading) : { stem: entry.reading, okurigana: '' }),
+      ...splitReading(entry, entry.reading),
       words: entry.examples.map((example) => example.headword),
       count: readingCount(entry),
     }))
@@ -244,17 +247,17 @@ useSchemaOrg(
 );
 
 const openKanji = (other: string) => {
-  void router.push(localePath(`/kanji/${encodeURIComponent(other)}`));
+  void router.push(localePath(buildKanjiPath(other)));
 };
 
 /** A word goes to its sentences: on this site, that is the page for a word. */
-const wordPath = (word: KanjiCardWordRef) => localePath(`/search/${encodeURIComponent(word.headword)}`);
+const wordPath = (word: KanjiCardWordRef) => localePath(buildWordSearchPath(word.headword));
 const openWord = (word: KanjiCardWordRef) => {
   void router.push(wordPath(word));
 };
 
 const sentencesPath = computed(() => ({
-  path: localePath(`/search/${encodeURIComponent(character.value)}`),
+  path: localePath(buildWordSearchPath(character.value)),
   query: { match: 'contains' },
 }));
 </script>
@@ -300,10 +303,10 @@ const sentencesPath = computed(() => ({
             </NuxtLink>
             <!-- How much of the corpus uses it: the figure only Nadeshiko can give. -->
             <p v-if="totals && totals.sentences > 0" class="kanji-hero__totals" data-testid="kanji-page-totals">
-              <strong>{{ formatCount(totals.sentences) }}</strong>
+              <strong>{{ formatNumber(totals.sentences) }}</strong>
               {{ $t('tokenTooltip.kanjiSentenceCount', totals.sentences) }}
               <span class="kanji-hero__dot" aria-hidden="true">·</span>
-              <strong>{{ formatCount(totals.titles) }}</strong>
+              <strong>{{ formatNumber(totals.titles) }}</strong>
               {{ $t('tokenTooltip.kanjiTitleCount', totals.titles) }}
             </p>
           </div>
@@ -334,7 +337,7 @@ const sentencesPath = computed(() => ({
             <li v-for="word in shownWords" :key="word.id">
               <NuxtLink :to="wordPath(word)" class="kanji-page__word" data-testid="kanji-page-word">
                 <span class="kanji-page__word-head">
-                  <span class="kanji-page__word-text" lang="ja"><template v-for="(part, pi) in markKanji(word.headword, character)" :key="pi"><span v-if="part.hit" class="kanji-page__mark">{{ part.text }}</span><template v-else>{{ part.text }}</template></template></span>
+                  <span class="kanji-page__word-text" lang="ja"><MarkedKanji :text="word.headword" :kanji="character" /></span>
                   <!-- Its rank among the words of our sentences. -->
                   <span
                     v-if="word.frequency"
@@ -379,7 +382,7 @@ const sentencesPath = computed(() => ({
             :aria-selected="activeTab === tab.key"
             :title="tab.words.join('、')"
             @click="selectTab(tab.key)"
-          >{{ tab.stem }}<span v-if="tab.okurigana" class="kanji-page__tab-okurigana">{{ tab.okurigana }}</span><span v-if="tab.count !== null" class="kanji-page__tab-count">{{ formatCount(tab.count) }}</span></button>
+          >{{ tab.stem }}<span v-if="tab.okurigana" class="kanji-page__tab-okurigana">{{ tab.okurigana }}</span><span v-if="tab.count !== null" class="kanji-page__tab-count">{{ formatNumber(tab.count) }}</span></button>
         </div>
         <p v-if="tabLoading" class="kanji-page__empty">{{ $t('tokenTooltip.loading') }}</p>
         <template v-else-if="sentences && sentences.results.length > 0">
@@ -725,11 +728,6 @@ const sentencesPath = computed(() => ({
   font-weight: 600;
   opacity: 0.75;
   font-variant-numeric: tabular-nums;
-}
-
-/* The kanji itself, inside the words that use it. */
-.kanji-page__mark {
-  color: var(--accent-soft);
 }
 
 .kanji-page__empty {

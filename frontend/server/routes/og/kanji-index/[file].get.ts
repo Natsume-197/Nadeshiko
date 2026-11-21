@@ -1,7 +1,7 @@
 import { createError, getRouterParam, setResponseHeader } from 'h3';
 import { stableCacheKey } from '~~/server/utils/cacheKey';
-import { buildInternalBackendHeaders, internalBackendUrl } from '~~/server/utils/internalBackend';
-import { type KanjiIndexEntry, kanjiIndexGroups } from '~~/server/utils/kanjiIndex';
+import { kanjiIndexGroups } from '~~/server/utils/kanjiIndex';
+import { fetchKanjiIndexList } from '~~/server/utils/kanjiIndexList';
 import { kanjiIndexOgRequest, kanjiIndexOgTree, renderOgTree } from '~~/server/utils/kanjiOgImage';
 import { logger } from '~~/server/utils/logger';
 
@@ -9,17 +9,10 @@ import { logger } from '~~/server/utils/logger';
 // and kept a week.
 
 const CACHE_SECONDS = 60 * 60 * 24 * 7;
-const TIMEOUT_MS = 5000;
 
 const drawImage = defineCachedFunction(
   async (by: 'jlpt' | 'grade', level: string): Promise<string | null> => {
-    const config = useRuntimeConfig();
-    const answer = await $fetch<{ kanji: KanjiIndexEntry[] }>(internalBackendUrl(config, '/v1/dictionary/kanji'), {
-      query: { locale: 'en' },
-      headers: buildInternalBackendHeaders(config),
-      timeout: TIMEOUT_MS,
-    });
-    const group = kanjiIndexGroups(answer.kanji, by).find((candidate) => candidate.id === level);
+    const group = kanjiIndexGroups(await fetchKanjiIndexList('en'), by).find((candidate) => candidate.id === level);
     if (!group) return null;
     const png = await renderOgTree(kanjiIndexOgTree({ id: group.id, kanji: group.kanji.map((k) => k.character) }));
     // Kept as base64: the cache stores strings.

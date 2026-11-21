@@ -1,6 +1,7 @@
 import { createError, getRouterParam, type H3Event, setResponseHeader } from 'h3';
 import { stableCacheKey } from '~~/server/utils/cacheKey';
 import { logger } from '~~/server/utils/logger';
+import { DICTIONARY_CACHE_SECONDS, dictionaryUnavailable } from '~~/server/utils/dictionaryRoute';
 
 // Example sentences on a kanji's own page (task 44): the corpus searched in the "contains" mode for the kanji, so
 // every word written with it counts. Relevance order already comes in rounds by title, so the first few are spread
@@ -8,8 +9,6 @@ import { logger } from '~~/server/utils/logger';
 // indexed, so only SAFE and SUGGESTIVE sentences, as in the sitemap. Also how many sentences and titles have the
 // kanji in all, for the page's header: from the same search's stats, so the counts match what "see all" shows.
 
-const CACHE_SECONDS = 60 * 60 * 24;
-const RETRY_AFTER_SECONDS = 5;
 /** How many sentences the page shows. */
 const KANJI_SENTENCES = 8;
 
@@ -40,20 +39,18 @@ const handler = defineEventHandler(async (event) => {
           titles: stats.media.length,
         }
       : null;
-    setResponseHeader(event, 'cache-control', `public, max-age=${CACHE_SECONDS}`);
+    setResponseHeader(event, 'cache-control', `public, max-age=${DICTIONARY_CACHE_SECONDS}`);
     return { ...response, totals };
   } catch (error: unknown) {
     logger.warn({ kanji, err: error }, 'Kanji sentences lookup failed');
     // An outage is not an answer: never cache it. The page still renders without the sentences.
-    setResponseHeader(event, 'cache-control', 'no-store');
-    setResponseHeader(event, 'retry-after', RETRY_AFTER_SECONDS);
-    throw createError({ statusCode: 503, statusMessage: 'Sentences temporarily unavailable' });
+    throw dictionaryUnavailable(event, 'Sentences temporarily unavailable');
   }
 });
 
 export default defineCachedEventHandler(handler, {
   swr: true,
-  maxAge: CACHE_SECONDS,
+  maxAge: DICTIONARY_CACHE_SECONDS,
   getKey: (event) => {
     const kanji = character(event);
     return kanji ? stableCacheKey('kanji-sentences', kanji) : 'invalid-kanji';

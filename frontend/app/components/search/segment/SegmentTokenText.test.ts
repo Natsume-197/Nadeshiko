@@ -19,6 +19,7 @@ vi.mock('~/utils/kanjiLookup', async (importOriginal) => ({
 }));
 
 vi.stubGlobal('useI18n', () => ({ t: (k: string) => k, locale: ref('en') }));
+vi.stubGlobal('useFormat', () => ({ formatNumber: (n: number) => new Intl.NumberFormat('en').format(n) }));
 const routerPush = vi.fn();
 vi.stubGlobal('useRouter', () => ({ push: routerPush }));
 vi.stubGlobal('useLocalePath', () => (p: unknown) => (typeof p === 'string' ? p : JSON.stringify(p)));

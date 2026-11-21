@@ -2,6 +2,7 @@ import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { Kanjidic2, Kanjidic2Character, Kradfile } from '@scriptin/jmdict-simplified-types';
 import type { DataSource } from 'typeorm';
+import { inTransaction, recordSource } from './db';
 
 /**
  * The kanji card's data (task 44), one importer per upstream source. Each replaces its own table in one transaction
@@ -106,29 +107,15 @@ async function replaceTable(
   dictDate: string | null,
   dryRun: boolean,
 ): Promise<number> {
-  const runner = dataSource.createQueryRunner();
-  await runner.connect();
-  await runner.startTransaction();
-  try {
+  return inTransaction(dataSource, dryRun, async (runner) => {
     await runner.query(`DELETE FROM dict.${table}`);
     const [{ rows } = { rows: 0 }]: Array<{ rows: number }> = await runner.query(
       `WITH inserted AS (${insert} RETURNING 1) SELECT count(*)::int AS rows FROM inserted`,
       [JSON.stringify(payload)],
     );
-    await runner.query(
-      `INSERT INTO dict.source (name, version, dict_date, imported_at) VALUES ($1, $2, $3, now())
-       ON CONFLICT (name) DO UPDATE SET version = EXCLUDED.version, dict_date = EXCLUDED.dict_date, imported_at = now()`,
-      [source, version, dictDate],
-    );
-    if (dryRun) await runner.rollbackTransaction();
-    else await runner.commitTransaction();
+    await recordSource(runner, source, version, { dictDate });
     return rows;
-  } catch (error) {
-    await runner.rollbackTransaction();
-    throw error;
-  } finally {
-    await runner.release();
-  }
+  });
 }
 
 /** Replace `dict.kanji` from a KANJIDIC2 file. `versionLabel` overrides the file's own version (the refresh stores

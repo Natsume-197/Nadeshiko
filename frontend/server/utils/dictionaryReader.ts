@@ -38,7 +38,7 @@ export interface CustomDictionaryStack {
 const NO_CUSTOM_STACK: CustomDictionaryStack = { hasStack: false, fingerprint: null };
 
 async function fetchReaderSession(event: H3Event): Promise<SessionResponse | null> {
-  stashCookie(event);
+  const cookie = stashCookie(event);
 
   if (!hasSessionCookie(event)) return null;
 
@@ -50,7 +50,7 @@ async function fetchReaderSession(event: H3Event): Promise<SessionResponse | nul
       // Disable session refresh here: a shared-cacheable lookup cannot safely forward renewed session cookies.
       // Leave renewal to identity-auth on personal HTML.
       $fetch<SessionResponse>(internalBackendUrl(config, '/v1/auth/get-session?disableRefresh=true'), {
-        headers: buildInternalBackendHeaders(config, { cookie: getRequestHeader(event, 'cookie') || '' }, event),
+        headers: buildInternalBackendHeaders(config, { cookie }, event),
         timeout: 2000,
       }),
     'dictionary',

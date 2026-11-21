@@ -23,7 +23,7 @@ import type {
   WindowCond,
 } from '../data/rewriteRules';
 import { CONTEXT_SECTION_LABELS, REWRITE_RULES, SECTION_LABELS } from '../data/rewriteRules';
-import { deconj, hasSection, known, SECTION } from '../group';
+import { deconj, hasSection, isClauseBoundary, known, SECTION } from '../group';
 import { deconjugationKey, hasKanji, toKatakana } from '../kana';
 import { type Piece, recut } from '../recut';
 import type { CombineContext, Group } from '../types';
@@ -65,6 +65,10 @@ export function validateRewriteRules(rules: readonly RewriteRule[]): void {
  * order. */
 export function buildRewriteIndex(rules: readonly RewriteRule[], phase?: RewritePhase): RewriteIndex {
   validateRewriteRules(rules);
+  return indexRules(rules, phase);
+}
+
+function indexRules(rules: readonly RewriteRule[], phase?: RewritePhase): RewriteIndex {
   const index: RewriteIndex = { byFirstText: new Map(), residual: [] };
   const add = (key: string, rule: RewriteRule) => {
     const list = index.byFirstText.get(key) ?? [];
@@ -83,10 +87,6 @@ export function buildRewriteIndex(rules: readonly RewriteRule[], phase?: Rewrite
 
 /** `IsNumeralToken`. */
 export const isNumeralToken = (group: Group) => group.cls === 'Numeral' || hasSection(group, SECTION.Numeral);
-
-/** `IsClauseBoundary`: a symbol or blank neighbour, or the edge of the sentence. */
-export const isClauseBoundary = (neighbour: Group | undefined) =>
-  !neighbour || neighbour.cls === 'Symbol' || neighbour.cls === 'SupplementarySymbol' || neighbour.cls === 'BlankSpace';
 
 function matchesPattern(group: Group, p: TokenPattern): boolean {
   if ((p.requireUnpinned ?? true) && group.flags.pin !== undefined) return false;
@@ -244,11 +244,12 @@ export function runRewriteRules(groups: Group[], index: RewriteIndex, ctx: Combi
   return result ?? groups;
 }
 
+validateRewriteRules(REWRITE_RULES);
 const INDEX: Record<RewritePhase, RewriteIndex> = {
-  Early: buildRewriteIndex(REWRITE_RULES, 'Early'),
-  Late: buildRewriteIndex(REWRITE_RULES, 'Late'),
-  Cleanup: buildRewriteIndex(REWRITE_RULES, 'Cleanup'),
-  Reading: buildRewriteIndex(REWRITE_RULES, 'Reading'),
+  Early: indexRules(REWRITE_RULES, 'Early'),
+  Late: indexRules(REWRITE_RULES, 'Late'),
+  Cleanup: indexRules(REWRITE_RULES, 'Cleanup'),
+  Reading: indexRules(REWRITE_RULES, 'Reading'),
 };
 
 /** `ApplyTokenRewriteRulesEarly`. */

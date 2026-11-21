@@ -1,5 +1,5 @@
 import { request } from '../helpers/http';
-import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
 import { setupTestSuite, createTestApp, signInAs } from '../helpers/setup';
 import { seedCoreFixtures, type CoreFixtures } from '../fixtures/core';
 import { PatreonConnection } from '@app/models';
@@ -11,8 +11,9 @@ let fixtures: CoreFixtures;
 
 const THEME = { preset: 'sepia', base: 'light', accent: '#e05a8a', background: '#fff5f8' } as const;
 
-/** A Patreon link checked just now, so reading it never calls Patreon. */
-async function linkPatreon(userId: number, active: boolean) {
+/** A stored Patreon link, checked just now unless `checkedAt` says otherwise. The token is not a real one, so any
+ * attempt to refresh it against Patreon would fail. */
+async function linkPatreon(userId: number, active: boolean, checkedAt = new Date()) {
   await PatreonConnection.delete({ userId });
   await PatreonConnection.create({
     userId,
@@ -22,7 +23,7 @@ async function linkPatreon(userId: number, active: boolean) {
     accessTokenExpiresAt: new Date(Date.now() + 86_400_000),
     patronStatus: active ? 'active_patron' : 'former_patron',
     entitledAmountCents: active ? 300 : 0,
-    membershipCheckedAt: new Date(),
+    membershipCheckedAt: checkedAt,
   }).save();
 }
 
@@ -114,5 +115,24 @@ describe('custom themes are a patron perk', () => {
     expect(res.body.customTheme).toBeUndefined();
     await regular.reload();
     expect(regular.preferences.customTheme).toEqual(THEME);
+  });
+
+  it('reads a stale stored membership as it is, without refreshing it from Patreon', async () => {
+    const { regular } = fixtures.users;
+    regular.preferences = { customTheme: { ...THEME } };
+    await regular.save();
+    const dayAgo = new Date(Date.now() - 86_400_000);
+    await linkPatreon(regular.id, true, dayAgo);
+    signInAs(app, regular);
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+
+    const res = await request(app).get('/v1/user/preferences');
+
+    expect(res.status).toBe(200);
+    expect(res.body.customTheme).toEqual(THEME);
+    expect(fetchSpy).not.toHaveBeenCalled();
+    const stored = await PatreonConnection.findOneByOrFail({ userId: regular.id });
+    expect(stored.membershipCheckedAt.getTime()).toBe(dayAgo.getTime());
+    fetchSpy.mockRestore();
   });
 });

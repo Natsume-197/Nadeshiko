@@ -1,3 +1,5 @@
+import { vowelRow } from './combine/kana';
+import { escapeRegExp } from './combine/text';
 import { analyse, type Morpheme, type SplitMode } from './sudachi';
 
 /**
@@ -47,6 +49,9 @@ class UnitText {
       if (unit.n !== '') visible.push(index);
     });
     const text = visible.map((index) => (this.units[index] as Unit).n).join('');
+    // Most of the ~130 patterns match nothing: skip the position map for them.
+    pattern.lastIndex = 0;
+    if (!pattern.test(text)) return;
     const codeUnitToPoint: number[] = [];
     let point = 0;
     for (const char of text) {
@@ -87,11 +92,10 @@ class UnitText {
 
   /** `string.Replace(from, to)` for a literal. */
   replaceAll(from: string, to: string): void {
+    if (!this.text.includes(from)) return;
     this.replace(new RegExp(escapeRegExp(from), 'gu'), () => to);
   }
 }
-
-const escapeRegExp = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 /**
  * Aligns a replacement with the units it replaces: replacement characters equal to the next original ones keep them;
@@ -349,15 +353,6 @@ export function preprocess(text: string): UnitText {
   t.replace(LINE_END_ELLIPSIS, '。');
   return t;
 }
-
-const VOWEL_ROWS = [
-  'あかがさざただなはばぱまやらわゃぁアカガサザタダナハバパマヤラワャァ',
-  'いきぎしじちぢにひびぴみりぃイキギシジチヂニヒビピミリィ',
-  'うくぐすずつづぬふぶぷむゆるゅぅゔウクグスズツヅヌフブプムユルュゥヴ',
-  'えけげせぜてでねへべぺめれぇエケゲセゼテデネヘベペメレェ',
-  'おこごそぞとどのほぼぽもよろをょぉオコゴソゾトドノホボポモヨロヲョォ',
-];
-const vowelRow = (char: string) => VOWEL_ROWS.findIndex((row) => row.includes(char));
 
 /** A unit that ends a Sudachi chunk: the stop token, or a blank or line break upstream inserted. */
 const isBoundary = (unit: Unit) => unit.n === STOP || (unit.o === '' && /^\s$/u.test(unit.n));

@@ -1,17 +1,8 @@
 import { SPECIAL_CASES_2, SPECIAL_CASES_3 } from '../data/ruleData';
-import { append, span } from '../group';
+import { append, isNominaliserBeforeCopula, span } from '../group';
 import type { CombineContext, Group, WordClass } from '../types';
 
 const startsWithShire = (text: string) => ['しれ', 'しんな', 'しんね'].some((head) => text.startsWith(head));
-
-/** `IsNominaliserBeforeCopula`: の|で before は, も or ある is the nominaliser plus the copula, not ので "because";
- * なのである is its own entry, hence `beforeAru`. */
-function isNominaliserBeforeCopula(groups: readonly Group[], deIndex: number, beforeAru = true): boolean {
-  if (groups[deIndex]?.s !== 'で') return false;
-  const next = groups[deIndex + 1];
-  if (!next) return false;
-  return next.s === 'は' || next.s === 'も' || (beforeAru && (next.d === 'ある' || next.d === '有る'));
-}
 
 /**
  * Compound particles and the かもしれない / ではない(か) / じゃないか clusters (に|は → には, か|も|しれ|ない).

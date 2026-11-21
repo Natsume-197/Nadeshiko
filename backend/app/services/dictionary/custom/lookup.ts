@@ -140,6 +140,15 @@ interface Lookup {
   readingHira: string | null;
 }
 
+/** The lookup for `headword` read as `reading`; with no reading, `fallbackHira` (already in hiragana) stands in. */
+function lookupFor(headword: string, reading: string | null | undefined, fallbackHira: string | null = null): Lookup {
+  return {
+    headword,
+    headwordHira: toHiragana(headword),
+    readingHira: reading ? toHiragana(reading) : fallbackHira,
+  };
+}
+
 interface FoundEntry {
   order: number;
   entry: CardEntry;
@@ -248,11 +257,7 @@ export async function enrichCandidatesWithCustomDictionaries(
   const pitchDicts = located.filter(({ dict }) => dict.hasPitch);
 
   const enriched: EnrichedDictionaryCandidate[] = baseCandidates.map((candidate) => {
-    const lookup: Lookup = {
-      headword: candidate.headword,
-      headwordHira: toHiragana(candidate.headword),
-      readingHira: candidate.reading ? toHiragana(candidate.reading) : null,
-    };
+    const lookup = lookupFor(candidate.headword, candidate.reading);
 
     const ordered: Array<{ order: number; entry: CardEntry }> = [];
     if (stack.builtinEnabled) {
@@ -284,16 +289,12 @@ export async function enrichCandidatesWithCustomDictionaries(
     const readingHira = query.reading ? toHiragana(query.reading) : null;
     const keys = [query.lemma, query.surface].filter((v): v is string => Boolean(v?.trim()));
     for (const key of keys) {
-      const found = customEntriesFor(termDicts, { headword: key, headwordHira: toHiragana(key), readingHira });
+      const found = customEntriesFor(termDicts, lookupFor(key, null, readingHira));
       if (found.length === 0) continue;
       found.sort((a, b) => a.order - b.order);
       const [first] = found;
       if (!first) continue;
-      const resolved: Lookup = {
-        headword: first.expression,
-        headwordHira: toHiragana(first.expression),
-        readingHira: first.reading ? toHiragana(first.reading) : readingHira,
-      };
+      const resolved = lookupFor(first.expression, first.reading, readingHira);
       const customFrequencies = customFrequenciesFor(freqDicts, resolved);
       const pitch = mergedPitchFor(pitchDicts, resolved, undefined);
       finalCandidates = [

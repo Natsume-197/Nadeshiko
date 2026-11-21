@@ -31,7 +31,7 @@ export type PatreonMembership = Pick<PatreonConnection, 'patronStatus' | 'entitl
  *
  * By tier id only. The entitled amount is in the patron's own currency, so it cannot be compared with a US price; a
  * member whose tiers match no row earns nothing rather than a guess. Requires an active membership checked within the
- * staleness bound above, which applies to quota only: custom themes keep trusting the last stored answer.
+ * staleness bound above, which custom themes and custom-dictionary limits share (`canUseCustomTheme`).
  */
 export function patreonQuotaTier(
   tiers: Iterable<Tier>,

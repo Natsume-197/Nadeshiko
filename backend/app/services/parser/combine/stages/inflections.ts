@@ -9,6 +9,7 @@ import {
   isImperative,
   isInflectableBase,
   isInflectionPart,
+  isNounClass,
   known,
   SECTION,
 } from '../group';
@@ -75,8 +76,7 @@ function shouldStopMerging(current: Group, next: Group, groups: readonly Group[]
   if (isTte && after && QUOTE_VERBS.has(after.d)) return true;
 
   // って before a noun, punctuation or end (なくなった+って+話) is quotative; re-merging leaves an unresolvable blob.
-  if (isTte && (!after || after.cls === 'Noun' || after.cls === 'CommonNoun' || after.cls === 'SupplementarySymbol'))
-    return true;
+  if (isTte && (!after || isNounClass(after.cls) || after.cls === 'SupplementarySymbol')) return true;
 
   // って before a sentence-ending particle (待つ+って+さ) is quotative; re-merging leaves an unresolvable blob.
   if (isTte && after?.cls === 'Particle' && ['さ', 'よ', 'ね', 'わ', 'ぞ', 'ぜ'].includes(after.s)) return true;

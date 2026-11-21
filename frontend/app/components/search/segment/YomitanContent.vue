@@ -1,6 +1,7 @@
 <script lang="ts">
 import { defineComponent, h, type PropType, type VNodeChild } from 'vue';
 import type { YomitanElementNode, YomitanNode } from '~/utils/wordCard';
+import { buildWordSearchPath } from '~/utils/routes';
 
 /**
  * Renders a custom dictionary's Yomitan `structured-content` (task 48) as real elements, never `v-html`. The backend
@@ -40,15 +41,18 @@ function safeTag(node: YomitanElementNode): string {
   return ALLOWED_TAGS.has(lower) ? lower : 'span';
 }
 
+/** A word's search page in the page's locale (`/es/search/見る`): where a cross-reference leads. */
+type WordHref = (word: string) => string;
+
 /**
  * A web link opens in a new tab. Yomitan's own `?query=<word>` links, where one entry points at another (「→見る」),
  * search Nadeshiko for that word instead. Anything else gets no `href`.
  */
-function linkAttrs(href: string | undefined): Record<string, string> {
+function linkAttrs(href: string | undefined, wordHref: WordHref): Record<string, string> {
   if (!href) return {};
   if (href.startsWith('?query=')) {
     const term = new URLSearchParams(href.slice(1)).get('query')?.trim();
-    return term ? { href: `/search/${encodeURIComponent(term)}` } : {};
+    return term ? { href: wordHref(term) } : {};
   }
   if (href.startsWith('https://') || href.startsWith('http://')) {
     return { href, target: '_blank', rel: 'noopener noreferrer' };
@@ -116,23 +120,23 @@ function renderText(text: string, senseMarker: boolean): VNodeChild[] {
   return out;
 }
 
-function renderLines(lines: YomitanNode[][]): VNodeChild[] {
+function renderLines(lines: YomitanNode[][], wordHref: WordHref): VNodeChild[] {
   return lines.map((line, index) => {
     const kind = lineKind(line, index);
     const children = line.flatMap((node, position): VNodeChild[] =>
-      typeof node === 'string' ? renderText(node, kind === 'is-sense' && position === 0) : renderNodes(node),
+      typeof node === 'string' ? renderText(node, kind === 'is-sense' && position === 0) : renderNodes(node, wordHref),
     );
     return h('span', { class: ['yc-line', kind] }, children);
   });
 }
 
-function renderContent(content: YomitanNode | YomitanNode[]): VNodeChild[] {
+function renderContent(content: YomitanNode | YomitanNode[], wordHref: WordHref): VNodeChild[] {
   const nodes = Array.isArray(content) ? content : [content];
   const lines = splitLines(nodes);
-  return lines ? renderLines(lines) : renderNodes(content);
+  return lines ? renderLines(lines, wordHref) : renderNodes(content, wordHref);
 }
 
-function renderNodes(content: YomitanNode | YomitanNode[]): VNodeChild[] {
+function renderNodes(content: YomitanNode | YomitanNode[], wordHref: WordHref): VNodeChild[] {
   const nodes = Array.isArray(content) ? content : [content];
   return nodes.map((node): VNodeChild => {
     if (typeof node === 'string') return renderText(node, false);
@@ -146,12 +150,12 @@ function renderNodes(content: YomitanNode | YomitanNode[]): VNodeChild[] {
       title: node.title,
       colspan: node.colSpan,
       rowspan: node.rowSpan,
-      ...(tag === 'a' ? linkAttrs(node.href) : {}),
+      ...(tag === 'a' ? linkAttrs(node.href, wordHref) : {}),
       ...(tag === 'details' && node.open ? { open: true } : {}),
     };
     for (const [key, value] of Object.entries(node.data ?? {})) attrs[`data-${key}`] = value;
 
-    return h(tag, attrs, node.content !== undefined ? renderContent(node.content) : undefined);
+    return h(tag, attrs, node.content !== undefined ? renderContent(node.content, wordHref) : undefined);
   });
 }
 
@@ -164,7 +168,9 @@ export default defineComponent({
     },
   },
   setup(props) {
-    return () => h('span', { class: 'yomitan-content' }, renderContent(props.content));
+    const localePath = useLocalePath();
+    const wordHref: WordHref = (word) => localePath(buildWordSearchPath(word));
+    return () => h('span', { class: 'yomitan-content' }, renderContent(props.content, wordHref));
   },
 });
 </script>

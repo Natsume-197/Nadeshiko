@@ -173,7 +173,12 @@ export function kanjiOgTree(card: KanjiOgCard): OgNode {
     ],
   );
 
-  const brand = el(
+  return ogFrame([grid, details]);
+}
+
+/** The site's name in the bottom-right corner, as every share image signs it. */
+function brandMark(): OgNode {
+  return el(
     'div',
     {
       position: 'absolute',
@@ -186,7 +191,10 @@ export function kanjiOgTree(card: KanjiOgCard): OgNode {
     },
     'Nadeshiko',
   );
+}
 
+/** A whole share image: the page-coloured 1200×630 frame around `children`, signed with the brand mark. */
+function ogFrame(children: OgNode[]): OgNode {
   return el(
     'div',
     {
@@ -194,10 +202,10 @@ export function kanjiOgTree(card: KanjiOgCard): OgNode {
       display: 'flex',
       width: OG_WIDTH,
       height: OG_HEIGHT,
-      background: COLORS.page,
+      backgroundColor: COLORS.page,
       fontFamily: 'Noto Sans JP',
     },
-    [grid, details, brand],
+    [...children, brandMark()],
   );
 }
 
@@ -336,31 +344,5 @@ export function kanjiIndexOgTree(group: { id: string; kanji: string[] }): OgNode
     ],
   );
 
-  return el(
-    'div',
-    {
-      position: 'relative',
-      display: 'flex',
-      width: OG_WIDTH,
-      height: OG_HEIGHT,
-      backgroundColor: COLORS.page,
-      fontFamily: 'Noto Sans JP',
-    },
-    [
-      content,
-      el(
-        'div',
-        {
-          position: 'absolute',
-          right: SIDE_PADDING,
-          bottom: 44,
-          display: 'flex',
-          fontSize: 28,
-          fontWeight: 700,
-          color: COLORS.accent,
-        },
-        'Nadeshiko',
-      ),
-    ],
-  );
+  return ogFrame([content]);
 }

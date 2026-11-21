@@ -106,9 +106,10 @@ export class SegmentQuery {
       }
 
       must.push(
-        SegmentQuery.searchesInsideWords(positive, matchMode)
-          ? SegmentQuery.withLengthScoring(SegmentQuery.buildContains(positive), hasLengthConstraints)
-          : SegmentQuery.buildTextSearch(positive, exactMatch, hasLengthConstraints, parserMode, excludeLanguages),
+        SegmentQuery.withLengthScoring(
+          SegmentQuery.buildTermQuery(positive, matchMode, parserMode, excludeLanguages),
+          hasLengthConstraints,
+        ),
       );
     }
 
@@ -227,17 +228,6 @@ export class SegmentQuery {
     }
 
     return { sort: SegmentQuery.withStableSortTieBreakers(sort), randomScoreQuery };
-  }
-
-  static buildTextSearch(
-    query: string,
-    exactMatch: boolean,
-    hasLengthConstraints: boolean,
-    parserMode: QueryParserMode = 'strict',
-    excludeLanguages?: readonly SearchLanguage[],
-  ): estypes.QueryDslQueryContainer {
-    const baseQuery = SegmentQuery.buildMultiLanguage(query, exactMatch, parserMode, excludeLanguages);
-    return SegmentQuery.withLengthScoring(baseQuery, hasLengthConstraints);
   }
 
   /** Prefer sentences of ordinary length, unless the reader set a length range of their own. */

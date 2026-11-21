@@ -14,7 +14,11 @@ const translationLanguages = ref(['EN', 'ES']);
 const shouldBlur = vi.fn((_rating: string) => false);
 
 vi.stubGlobal('useI18n', () => ({ t: (k: string) => k, locale: ref('en') }));
-vi.stubGlobal('useTranslationVisibility', () => ({ englishMode, spanishMode }));
+vi.stubGlobal('useTranslationVisibility', () => ({
+  englishMode,
+  spanishMode,
+  modeFor: (language: 'EN' | 'ES') => (language === 'EN' ? englishMode.value : spanishMode.value),
+}));
 vi.stubGlobal('useTranslationLanguages', () => ({ languages: translationLanguages }));
 vi.stubGlobal('useMediaName', () => ({ mediaName: (m: Record<string, string>) => m.nameEn ?? '' }));
 vi.stubGlobal('useContentRating', () => ({ shouldBlur, isRestricted: () => false }));

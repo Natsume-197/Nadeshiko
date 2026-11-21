@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { inflectionLanguage } from '~/utils/inflectionLabels';
 import type { Token } from '@brigadasos/nadeshiko-sdk';
 import { enrichTokens, type SlimToken, type EnrichedToken } from '~/utils/tokenEnrichment';
 import { tabStop, tokenKeyAction } from '~/utils/tokenNavigation';
@@ -9,6 +8,7 @@ import {
   candidateName,
   candidateSummary,
   dictionaryKey,
+  glossLanguageFor,
   glossPreference,
   type DictionaryLinkSurface,
 } from '~/utils/wordCard';
@@ -16,10 +16,11 @@ import type { DictionaryId } from '~/composables/useDictionaryLinks';
 import { distinctSurface, minedWord } from '~/utils/ankiWord';
 import { createSegmentTaps } from '~/utils/segmentTaps';
 import { fetchWord, peekWord, type WordLookup } from '~/utils/wordLookup';
+import { buildKanjiPath } from '~/utils/routes';
 import { useKanjiView } from '~/composables/useKanjiView';
 import type { KanjiCardWordRef } from '~/utils/kanjiLookup';
 import WordCardKanji from './WordCardKanji.vue';
-import PitchGraph from './PitchGraph.vue';
+import PitchPattern from './PitchPattern.vue';
 import YomitanContent from './YomitanContent.vue';
 // Two different verbs, so two different shapes. These sit side by side at 16px,
 // where `mdiStarCheckOutline` and `mdiStarPlusOutline` -- the pair that was here
@@ -158,13 +159,13 @@ const {
   () => glossLanguages.value,
   () => hiddenDefinitionLanguages.value,
   () => userStore().customDictionariesCount > 0,
-  () => inflectionLanguage(locale.value),
+  () => glossLanguageFor(locale.value),
 );
 
 /** Whether the rank by kind of media is open under the badges. Kept from word to word: a reader who opened it
  *  once wants it on the next word too. */
 const frequencyOpen = ref(false);
-const formatRank = (rank: number) => new Intl.NumberFormat(locale.value).format(rank);
+const { formatNumber } = useFormat();
 
 /** Mining uses local AnkiConnect and stays hidden without a configured profile; see useWordMining for cache
  * constraints.
@@ -672,7 +673,7 @@ const openKanji = (character: string, from: 'chip' | 'part', position: number) =
 const openKanjiPage = (character: string) => {
   posthog.capture('kanji_page_opened', { kanji: character, from: 'word-card' });
   closeTooltip();
-  void router.push(localePath(`/kanji/${encodeURIComponent(character)}`));
+  void router.push(localePath(buildKanjiPath(character)));
 };
 
 /** A word from the kanji view's list, opened in the card the way a part is. */
@@ -1111,7 +1112,7 @@ function reportDictionaryClick(dictionary: DictionaryId, surface: DictionaryLink
             </div>
             <ul v-if="frequencyOpen && frequencySplit.length > 0" class="token-tooltip__freq-split" data-testid="word-card-frequency-split">
               <li v-for="entry in frequencySplit" :key="entry.category">
-                {{ $t(entry.labelKey) }} <strong>#{{ formatRank(entry.rank) }}</strong>
+                {{ $t(entry.labelKey) }} <strong>#{{ formatNumber(entry.rank) }}</strong>
               </li>
             </ul>
 
@@ -1257,25 +1258,16 @@ function reportDictionaryClick(dictionary: DictionaryId, surface: DictionaryLink
                  button per accent, in front of the graph that names the accent it plays. -->
             <div v-if="pitchPatterns.length > 0" class="token-tooltip__pitch">
               <span class="token-tooltip__pitch-label">{{ $t('tokenTooltip.pitchAccent') }}</span>
-              <span v-for="(pattern, pi) in pitchPatterns" :key="pi" class="token-tooltip__pitch-pattern">
-                <button
-                  v-if="pattern.audioUrl"
-                  type="button"
-                  class="token-tooltip__audio"
-                  :class="{ 'is-playing': playingUrl === pattern.audioUrl }"
-                  :aria-label="$t('tokenTooltip.playAudio')"
-                  :title="$t('tokenTooltip.playAudio')"
-                  @click="playHeadword(pattern.audioUrl)"
-                >
-                  <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M8.5 2.75 4.9 5.75H2.4v4.5h2.5l3.6 3z" fill="currentColor" stroke="none" />
-                    <path d="M11 6a3 3 0 0 1 0 4" />
-                    <path d="M13 4a6 6 0 0 1 0 8" />
-                  </svg>
-                </button>
-                <PitchGraph :morae="pattern.morae" :downstep="pattern.downstep" :title="pattern.source || undefined" />
+              <PitchPattern
+                v-for="(pattern, pi) in pitchPatterns"
+                :key="pi"
+                class="token-tooltip__pitch-pattern"
+                :pattern="pattern"
+                :playing="playingUrl === pattern.audioUrl"
+                @play="playHeadword"
+              >
                 <span v-if="pattern.source && pi === 0" class="token-tooltip__pitch-source">{{ pattern.source }}</span>
-              </span>
+              </PitchPattern>
             </div>
 
             <!-- The other spellings. The reader may well have met one of these
@@ -1329,122 +1321,125 @@ function reportDictionaryClick(dictionary: DictionaryId, surface: DictionaryLink
             >{{ $t('tokenTooltip.moreSentences') }}</button>
           </div>
 
-          <!-- Keep candidate choices outside scrolling definitions so they remain discoverable. Chips serve a
-               glance; expanding replaces them with gloss-bearing rows rather than duplicating the same
-               candidates.
-               -->
-          <div v-if="showCandidateRows && !kanjiShown" class="token-tooltip__others">
-            <!-- Chips. `pickerChips` keeps the picked one in the row however far
-                 down the ranking it is, so collapsing the list never leaves the
-                 card showing a word with no chip. -->
-            <div v-if="!othersOpen" class="token-tooltip__others-row">
-              <button
-                v-for="chip in visibleCandidates"
-                :key="chip.candidate.id"
-                type="button"
-                class="token-tooltip__chip-candidate"
-                :class="{ 'is-picked': chip.index === picked }"
-                :aria-current="chip.index === picked"
-                :tabindex="chip.index === picked ? 0 : -1"
-                :data-candidate="chip.index"
-                @click="pickCandidate(chip.index)"
-                @keydown="onCandidateKeydown(chip.index, $event)"
-              >
-                <!-- Spelling only. Every candidate here is one the token could
-                     be read as, so the reading is the one thing they have in
-                     common -- printing it on each chip spends the row's width
-                     repeating what the word above the card already says. It
-                     stays in the list below, where there is room for it to do
-                     the job it can still do: telling きみ's きび from the rest. -->
-                <span class="token-tooltip__candidate-word" lang="ja">{{ candidateName(chip.candidate) }}</span>
-                <!-- Only where the spelling alone cannot choose: see
-                     `duplicateHeadwords`. -->
-                <span
-                  v-if="duplicateHeadwords.has(candidateName(chip.candidate))"
-                  class="token-tooltip__candidate-kind"
-                  :title="candidatePartOfSpeech(chip.candidate, glossLanguages)"
-                >{{ posInitial(chip.candidate) }}</span>
-                <!-- Says WHY an unfamiliar spelling is here: it is somebody's
-                     name, not a word the reader has never met. -->
-                <span v-if="isNameCandidate(chip.candidate)" class="token-tooltip__candidate-kind">{{ $t('tokenTooltip.nameEntry') }}</span>
-              </button>
-
-              <button
-                v-if="hiddenCandidateCount > 0"
-                type="button"
-                class="token-tooltip__chip-candidate is-more"
-                :aria-expanded="false"
-                @click="othersOpen = true"
-              >{{ $t('tokenTooltip.otherMatches', { count: hiddenCandidateCount }) }}</button>
-            </div>
-
-            <!-- The list, where a row can say what its word means. -->
-            <template v-else>
-              <div class="token-tooltip__others-list">
+          <!-- The word's footer (other candidates, dictionary picks, links elsewhere): the kanji view has none. -->
+          <template v-if="!kanjiShown">
+            <!-- Keep candidate choices outside scrolling definitions so they remain discoverable. Chips serve a
+                 glance; expanding replaces them with gloss-bearing rows rather than duplicating the same
+                 candidates.
+                 -->
+            <div v-if="showCandidateRows" class="token-tooltip__others">
+              <!-- Chips. `pickerChips` keeps the picked one in the row however far
+                   down the ranking it is, so collapsing the list never leaves the
+                   card showing a word with no chip. -->
+              <div v-if="!othersOpen" class="token-tooltip__others-row">
                 <button
-                  v-for="(candidate, index) in candidates"
-                  :key="candidate.id"
+                  v-for="chip in visibleCandidates"
+                  :key="chip.candidate.id"
                   type="button"
-                  class="token-tooltip__candidate"
-                  :class="{ 'is-picked': index === picked }"
-                  :aria-current="index === picked"
-                  :tabindex="index === picked ? 0 : -1"
-                  :data-candidate="index"
-                  @click="pickFromList(index)"
-                  @keydown="onCandidateKeydown(index, $event)"
+                  class="token-tooltip__chip-candidate"
+                  :class="{ 'is-picked': chip.index === picked }"
+                  :aria-current="chip.index === picked"
+                  :tabindex="chip.index === picked ? 0 : -1"
+                  :data-candidate="chip.index"
+                  @click="pickCandidate(chip.index)"
+                  @keydown="onCandidateKeydown(chip.index, $event)"
                 >
-                  <span class="token-tooltip__candidate-word" lang="ja">{{ candidateName(candidate) }}</span>
-                  <span v-if="candidate.reading && candidate.reading !== candidateName(candidate)" class="token-tooltip__candidate-reading" lang="ja">{{ candidate.reading }}</span>
-                  <span v-if="isNameCandidate(candidate)" class="token-tooltip__candidate-kind">{{ $t('tokenTooltip.nameEntry') }}</span>
-                  <span class="token-tooltip__candidate-gloss">{{ candidateSummary(candidate, glossLanguages) }}</span>
+                  <!-- Spelling only. Every candidate here is one the token could
+                       be read as, so the reading is the one thing they have in
+                       common -- printing it on each chip spends the row's width
+                       repeating what the word above the card already says. It
+                       stays in the list below, where there is room for it to do
+                       the job it can still do: telling きみ's きび from the rest. -->
+                  <span class="token-tooltip__candidate-word" lang="ja">{{ candidateName(chip.candidate) }}</span>
+                  <!-- Only where the spelling alone cannot choose: see
+                       `duplicateHeadwords`. -->
+                  <span
+                    v-if="duplicateHeadwords.has(candidateName(chip.candidate))"
+                    class="token-tooltip__candidate-kind"
+                    :title="candidatePartOfSpeech(chip.candidate, glossLanguages)"
+                  >{{ posInitial(chip.candidate) }}</span>
+                  <!-- Says WHY an unfamiliar spelling is here: it is somebody's
+                       name, not a word the reader has never met. -->
+                  <span v-if="isNameCandidate(chip.candidate)" class="token-tooltip__candidate-kind">{{ $t('tokenTooltip.nameEntry') }}</span>
                 </button>
+
+                <button
+                  v-if="hiddenCandidateCount > 0"
+                  type="button"
+                  class="token-tooltip__chip-candidate is-more"
+                  :aria-expanded="false"
+                  @click="othersOpen = true"
+                >{{ $t('tokenTooltip.otherMatches', { count: hiddenCandidateCount }) }}</button>
               </div>
 
+              <!-- The list, where a row can say what its word means. -->
+              <template v-else>
+                <div class="token-tooltip__others-list">
+                  <button
+                    v-for="(candidate, index) in candidates"
+                    :key="candidate.id"
+                    type="button"
+                    class="token-tooltip__candidate"
+                    :class="{ 'is-picked': index === picked }"
+                    :aria-current="index === picked"
+                    :tabindex="index === picked ? 0 : -1"
+                    :data-candidate="index"
+                    @click="pickFromList(index)"
+                    @keydown="onCandidateKeydown(index, $event)"
+                  >
+                    <span class="token-tooltip__candidate-word" lang="ja">{{ candidateName(candidate) }}</span>
+                    <span v-if="candidate.reading && candidate.reading !== candidateName(candidate)" class="token-tooltip__candidate-reading" lang="ja">{{ candidate.reading }}</span>
+                    <span v-if="isNameCandidate(candidate)" class="token-tooltip__candidate-kind">{{ $t('tokenTooltip.nameEntry') }}</span>
+                    <span class="token-tooltip__candidate-gloss">{{ candidateSummary(candidate, glossLanguages) }}</span>
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  class="token-tooltip__others-less"
+                  :aria-expanded="true"
+                  @click="othersOpen = false"
+                >{{ $t('tokenTooltip.showLess') }}</button>
+              </template>
+            </div>
+
+            <!-- No picks exports all dictionaries. Place the pick summary in the footer, outside the senses'
+                 v-else-if chain.
+                 -->
+            <div
+              v-if="canPickDictionaries && pickedDictionaries.size > 0"
+              class="token-tooltip__pick"
+              data-testid="word-pick-summary"
+            >
+              <span class="token-tooltip__pick-text">{{ pickSummary }}</span>
+              <button
+                v-if="canSelectAllDictionaries"
+                type="button"
+                class="token-tooltip__pick-action"
+                data-testid="word-pick-select-all"
+                @click="selectAllDictionaries"
+              >{{ $t('tokenTooltip.pickSelectAll') }}</button>
               <button
                 type="button"
-                class="token-tooltip__others-less"
-                :aria-expanded="true"
-                @click="othersOpen = false"
-              >{{ $t('tokenTooltip.showLess') }}</button>
-            </template>
-          </div>
+                class="token-tooltip__pick-action"
+                data-testid="word-pick-deselect-all"
+                @click="deselectAllDictionaries"
+              >{{ $t('tokenTooltip.pickDeselectAll') }}</button>
+            </div>
 
-          <!-- No picks exports all dictionaries. Place the pick summary in the footer, outside the senses'
-               v-else-if chain.
-               -->
-          <div
-            v-if="canPickDictionaries && pickedDictionaries.size > 0 && !kanjiShown"
-            class="token-tooltip__pick"
-            data-testid="word-pick-summary"
-          >
-            <span class="token-tooltip__pick-text">{{ pickSummary }}</span>
-            <button
-              v-if="canSelectAllDictionaries"
-              type="button"
-              class="token-tooltip__pick-action"
-              data-testid="word-pick-select-all"
-              @click="selectAllDictionaries"
-            >{{ $t('tokenTooltip.pickSelectAll') }}</button>
-            <button
-              type="button"
-              class="token-tooltip__pick-action"
-              data-testid="word-pick-deselect-all"
-              @click="deselectAllDictionaries"
-            >{{ $t('tokenTooltip.pickDeselectAll') }}</button>
-          </div>
-
-          <div v-if="dictionaryLinks.length > 0 && !kanjiShown" class="token-tooltip__links">
-            <span class="token-tooltip__links-label">{{ $t('tokenTooltip.lookupIn') }}</span>
-            <a
-              v-for="(link, index) in dictionaryLinks"
-              :key="link.id"
-              :href="link.href"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="token-tooltip__link"
-              @click="reportDictionaryClick(link.id, 'word-card', index)"
-            >{{ link.label }}</a>
-          </div>
+            <div v-if="dictionaryLinks.length > 0" class="token-tooltip__links">
+              <span class="token-tooltip__links-label">{{ $t('tokenTooltip.lookupIn') }}</span>
+              <a
+                v-for="(link, index) in dictionaryLinks"
+                :key="link.id"
+                :href="link.href"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="token-tooltip__link"
+                @click="reportDictionaryClick(link.id, 'word-card', index)"
+              >{{ link.label }}</a>
+            </div>
+          </template>
         </div>
       </Transition>
     </Teleport>
@@ -2023,36 +2018,6 @@ a.token-tooltip__word:hover {
   color: var(--accent-soft);
 }
 
-/* Quiet beside the pitch until pointed at, and accented while a clip runs so a
-   second click reads as "again" rather than "did that do anything". Sized to a
-   comfortable tap target rather than to the 14px glyph inside it, which is why
-   it centres against a row of morae rather than sitting on their baseline. */
-.token-tooltip__audio {
-  flex: 0 0 auto;
-  align-self: center;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  border: 0;
-  border-radius: 999px;
-  background: var(--surface-lift);
-  color: var(--ink-muted);
-  cursor: pointer;
-  transition: background-color 0.12s ease, color 0.12s ease;
-}
-
-.token-tooltip__audio:hover {
-  background: color-mix(in srgb, white 14%, transparent);
-  color: var(--ink);
-}
-
-.token-tooltip__audio.is-playing {
-  color: var(--accent-soft);
-}
-
 .token-tooltip__inflection {
   flex: 0 0 auto;
   margin: 4px 0 0;
@@ -2175,13 +2140,14 @@ a.token-tooltip__word:hover {
 }
 
 .token-tooltip__pitch-pattern {
+  --pitch-audio-hover: color-mix(in srgb, white 14%, transparent);
   display: inline-flex;
   align-items: center;
 }
 
 /* Spaced off its own graph, but by less than the gap between two patterns: the button has to read as belonging
    to the accent on its right rather than floating between two of them. */
-.token-tooltip__pitch-pattern .token-tooltip__audio {
+.token-tooltip__pitch-pattern :deep(.pitch-pattern__audio) {
   margin-right: 6px;
 }
 

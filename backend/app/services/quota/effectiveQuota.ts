@@ -21,11 +21,14 @@ export function invalidateTierCache(): void {
   tierCache = null;
 }
 
+async function fetchTiers(): Promise<Map<string, Tier>> {
+  return new Map((await Tier.find()).map((row) => [row.id, row]));
+}
+
 async function loadTiers(cached: boolean): Promise<Map<string, Tier>> {
-  if (!cached) return new Map((await Tier.find()).map((row) => [row.id, row]));
+  if (!cached) return fetchTiers();
   if (!tierCache || Date.now() >= tierCacheExpiresAt) {
-    const rows = await Tier.find();
-    tierCache = new Map(rows.map((row) => [row.id, row]));
+    tierCache = await fetchTiers();
     tierCacheExpiresAt = Date.now() + TIER_CACHE_TTL_MS;
   }
   return tierCache;

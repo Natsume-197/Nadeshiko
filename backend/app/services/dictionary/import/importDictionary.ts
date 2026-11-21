@@ -1,6 +1,7 @@
 import type { DataSource, QueryRunner } from 'typeorm';
 import type { JMdictDictionaryMetadata } from '@scriptin/jmdict-simplified-types';
 import { assignFormIndexes, type DictionarySource, type ExistingForm, type ImportEntry, lookupKeys } from './entries';
+import { inTransaction, recordSource } from './db';
 import type { FuriganaEntry } from './readers';
 
 /** Writes upstream entries into `dict.*`. Each batch is its own transaction, so readers never wait on a whole
@@ -41,28 +42,6 @@ export interface ImportOptions {
 }
 
 type Json = Record<string, unknown>;
-
-/** Run `work` on one connection: inside a transaction that commits, or rolls back for a dry run. */
-async function inTransaction<T>(
-  dataSource: DataSource,
-  rollback: boolean,
-  work: (runner: QueryRunner) => Promise<T>,
-): Promise<T> {
-  const runner = dataSource.createQueryRunner();
-  await runner.connect();
-  await runner.startTransaction();
-  try {
-    const result = await work(runner);
-    if (rollback) await runner.rollbackTransaction();
-    else await runner.commitTransaction();
-    return result;
-  } catch (error) {
-    await runner.rollbackTransaction();
-    throw error;
-  } finally {
-    await runner.release();
-  }
-}
 
 async function writeBatch(runner: QueryRunner, batch: ImportEntry[], report: ImportReport): Promise<void> {
   const words: Array<{ id: number; active: boolean; source: DictionarySource }> = await runner.query(
@@ -238,21 +217,6 @@ async function deactivateMissing(
   report.wordsDeactivated = gone.length;
 }
 
-async function recordSource(
-  runner: QueryRunner,
-  name: string,
-  version: string,
-  dictDate: string | null,
-  tags: Record<string, string>,
-): Promise<void> {
-  await runner.query(
-    `INSERT INTO dict.source (name, version, dict_date, tags, imported_at) VALUES ($1, $2, $3, $4, now())
-     ON CONFLICT (name) DO UPDATE
-        SET version = EXCLUDED.version, dict_date = EXCLUDED.dict_date, tags = EXCLUDED.tags, imported_at = now()`,
-    [name, version, dictDate, JSON.stringify(tags)],
-  );
-}
-
 /**
  * Import one jmdict-simplified file. `entries` must come from `readDictionary`, which reports the file's metadata
  * through `metadata()` once the first entry has been read.
@@ -311,7 +275,7 @@ export async function importDictionary(
 
     await write(async (runner) => {
       await deactivateMissing(runner, source, seen, report);
-      await recordSource(runner, source, version, meta.dictDate ?? null, meta.tags);
+      await recordSource(runner, source, version, { dictDate: meta.dictDate ?? null, tags: meta.tags });
     });
   };
 
@@ -364,7 +328,7 @@ export async function importFurigana(
     }
     await flush();
 
-    await recordSource(runner, source, version, null, {});
+    await recordSource(runner, source, version, { dictDate: null, tags: {} });
   });
 
   return report;

@@ -1,5 +1,13 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
-import { __kanjiLookupTesting, fetchKanji, kanjiBadges, markKanji, peekKanji, splitKunReading } from './kanjiLookup';
+import {
+  __kanjiLookupTesting,
+  fetchKanji,
+  kanjiBadges,
+  markKanji,
+  peekKanji,
+  splitKunReading,
+  splitReading,
+} from './kanjiLookup';
 
 const $fetch = vi.fn();
 vi.stubGlobal('$fetch', $fetch);
@@ -38,6 +46,27 @@ describe('fetchKanji', () => {
     $fetch.mockRejectedValueOnce({ response: { status: 503 } });
     expect(await fetchKanji('本', 'en')).toEqual({ card: null, reason: 'failed' });
     expect(peekKanji('本', 'en')).toBeUndefined();
+  });
+
+  test('evicts the least recently used card, not the first one asked', async () => {
+    const { CACHE_LIMIT } = __kanjiLookupTesting;
+    $fetch.mockImplementation((url: string) =>
+      Promise.resolve({ character: decodeURIComponent(url.split('/').pop()!) }),
+    );
+    for (let i = 0; i < CACHE_LIMIT; i++) await fetchKanji(`k${i}`, 'en');
+    // Reading the oldest makes it fresh, so the next one in line goes instead.
+    expect(peekKanji('k0', 'en')).toBeDefined();
+    await fetchKanji('new', 'en');
+
+    expect(peekKanji('k0', 'en')).toBeDefined();
+    expect(peekKanji('k1', 'en')).toBeUndefined();
+  });
+});
+
+describe('splitReading', () => {
+  test('splits kun readings and leaves on readings whole', () => {
+    expect(splitReading({ kind: 'kun' }, 'た.べる')).toEqual({ stem: 'た', okurigana: 'べる' });
+    expect(splitReading({ kind: 'on' }, 'ショク.X')).toEqual({ stem: 'ショク.X', okurigana: '' });
   });
 });
 

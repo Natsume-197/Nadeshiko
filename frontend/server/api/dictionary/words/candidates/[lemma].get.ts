@@ -9,12 +9,10 @@ import {
 } from '~~/server/utils/dictionary';
 import { customDictionaryStack, readerCookie } from '~~/server/utils/dictionaryReader';
 import { distinctNameAnswers, withoutNameEntries } from '~~/server/utils/dictionaryNames';
+import { DICTIONARY_CACHE_SECONDS, dictionaryUnavailable } from '~~/server/utils/dictionaryRoute';
 
 // Identify with reading/POS hints: bare-lemma lookup ignores homograph context. Return ranked alternatives because
 // the reader may need to choose. This route owns caching, custom-dictionary bypass and HTTP statuses.
-
-const CACHE_SECONDS = 60 * 60 * 24;
-const RETRY_AFTER_SECONDS = 5;
 
 // Clamp label locales to supported values; definitions include all languages and callers select their own.
 const LABEL_LOCALES = new Set<WordQuery['locale']>(['en', 'es']);
@@ -98,8 +96,8 @@ const handler = defineEventHandler(async (event) => {
       answer.pending
         ? 'no-store'
         : custom.hasStack
-          ? `private, max-age=${CACHE_SECONDS}`
-          : `public, max-age=${CACHE_SECONDS}`,
+          ? `private, max-age=${DICTIONARY_CACHE_SECONDS}`
+          : `public, max-age=${DICTIONARY_CACHE_SECONDS}`,
     );
     return body;
   } catch (error: unknown) {
@@ -115,9 +113,7 @@ const handler = defineEventHandler(async (event) => {
 
     logger.warn({ lemma, status: failure?.status, err: failure?.upstream ?? error }, 'Dictionary identify failed');
     // Optional enrichment failures are retryable 503s, not missing words. no-store prevents caching an outage for a day.
-    setResponseHeader(event, 'cache-control', 'no-store');
-    setResponseHeader(event, 'retry-after', RETRY_AFTER_SECONDS);
-    throw createError({ statusCode: 503, statusMessage: 'Dictionary temporarily unavailable' });
+    throw dictionaryUnavailable(event, 'Dictionary temporarily unavailable');
   }
 });
 
@@ -125,7 +121,7 @@ const handler = defineEventHandler(async (event) => {
 // Browser-private caching covers repeated custom-stack lookups without risking cross-reader dictionary leakage.
 export default defineCachedEventHandler(handler, {
   swr: true,
-  maxAge: CACHE_SECONDS,
+  maxAge: DICTIONARY_CACHE_SECONDS,
   shouldBypassCache: usesReaderStack,
   getKey: lookupCacheKey,
 });

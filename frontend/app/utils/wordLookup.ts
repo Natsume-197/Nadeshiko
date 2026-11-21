@@ -1,3 +1,4 @@
+import { lruRecall, lruRemember } from '~/utils/lruMap';
 import type { DictionaryCandidate } from '~/utils/wordCard';
 import type { WordRef } from '~/utils/tokenEnrichment';
 
@@ -51,33 +52,14 @@ const resolved = new Map<string, WordLookup>();
  */
 const CACHE_LIMIT = 600;
 
-/** Look up an answer and mark it as freshly used. A `Map` iterates in insertion
- *  order, so re-inserting moves an entry to the back and leaves the least
- *  recently used at the front, where `remember` evicts from. */
-function recall<T>(store: Map<string, T>, key: string): T | undefined {
-  const answer = store.get(key);
-  if (answer === undefined) return undefined;
-  store.delete(key);
-  store.set(key, answer);
-  return answer;
-}
-
-function remember<T>(store: Map<string, T>, key: string, answer: T): T {
-  store.delete(key);
-  store.set(key, answer);
-
-  if (store.size > CACHE_LIMIT) {
-    const oldest = store.keys().next().value;
-    if (oldest !== undefined) store.delete(oldest);
-  }
-  return answer;
-}
+const recall = (key: string) => lruRecall(resolved, key);
+const remember = (key: string, answer: WordLookup) => lruRemember(resolved, key, answer, CACHE_LIMIT);
 
 /** The answer if it is already here, so a card can open filled in rather than
  *  flashing a loading state for a word the page has seen. `undefined` means it
  *  has not been asked. */
 export function peekWord(ref: WordRef, locale: string): WordLookup | undefined {
-  return recall(resolved, cacheKey(ref, locale, readerStack()));
+  return recall(cacheKey(ref, locale, readerStack()));
 }
 
 /**
@@ -87,7 +69,7 @@ export function fetchWord(ref: WordRef, locale: string): Promise<WordLookup> {
   const stack = readerStack();
   const key = cacheKey(ref, locale, stack);
 
-  const answered = recall(resolved, key);
+  const answered = recall(key);
   if (answered) return Promise.resolve(answered);
 
   const pending = inFlight.get(key);
@@ -133,7 +115,7 @@ export function fetchWord(ref: WordRef, locale: string): Promise<WordLookup> {
       // Missing one of the reader's uploaded dictionaries (indexing, or the server still fetching it): show it, but
       // ask again on the next hover instead of keeping it for the tab's life.
       if (answer?.pending) return lookup;
-      return remember(resolved, answerKey, lookup);
+      return remember(answerKey, lookup);
     })
     .catch((error: unknown): WordLookup => {
       // 404 means no entry; other failures describe the request. Support both status locations used by
@@ -143,7 +125,7 @@ export function fetchWord(ref: WordRef, locale: string): Promise<WordLookup> {
 
       // A 404 is an answer and is worth keeping: this word has no entry today
       // and will have none on the next hover either.
-      if (status === 404) return remember(resolved, key, { candidates: [], reason: 'missing' });
+      if (status === 404) return remember(key, { candidates: [], reason: 'missing' });
 
       // Do not cache transient failures: the next hover must be able to recover without a page reload.
       return { candidates: [], reason: 'failed' };

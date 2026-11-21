@@ -1,5 +1,4 @@
-import { buildInternalBackendHeaders, internalBackendUrl } from '~~/server/utils/internalBackend';
-import type { KanjiIndexEntry } from '~~/server/utils/kanjiIndex';
+import { fetchKanjiIndexList } from '~~/server/utils/kanjiIndexList';
 import { logger } from '~~/server/utils/logger';
 
 /**
@@ -13,20 +12,14 @@ export interface KanjiBrief {
 }
 
 const TTL_MS = 24 * 60 * 60 * 1000;
-const TIMEOUT_MS = 5000;
 
 let loaded: { at: number; briefs: Map<string, KanjiBrief> } | null = null;
 let loading: Promise<Map<string, KanjiBrief>> | null = null;
 
 async function load(): Promise<Map<string, KanjiBrief>> {
-  const config = useRuntimeConfig();
-  const answer = await $fetch<{ kanji: KanjiIndexEntry[] }>(internalBackendUrl(config, '/v1/dictionary/kanji'), {
-    query: { locale: 'en' },
-    headers: buildInternalBackendHeaders(config),
-    timeout: TIMEOUT_MS,
-  });
+  const list = await fetchKanjiIndexList('en');
   return new Map(
-    answer.kanji.map((entry) => [entry.character, { reading: entry.reading ?? null, meaning: entry.meaning ?? null }]),
+    list.map((entry) => [entry.character, { reading: entry.reading ?? null, meaning: entry.meaning ?? null }]),
   );
 }
 

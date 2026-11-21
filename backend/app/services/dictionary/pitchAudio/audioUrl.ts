@@ -12,11 +12,6 @@ export function pitchAudioFile(reading: string, downstep: number): string {
   return `${toHiragana(reading)}_${downstep}.opus`;
 }
 
-/** R2 key of a clip, under the bucket's root. */
-export function pitchAudioKey(voice: string, reading: string, downstep: number): string {
-  return `pitch-audio/${voice}/${pitchAudioFile(reading, downstep)}`;
-}
-
 export function pitchAudioUrl(baseUrl: string, voice: string, reading: string, downstep: number): string {
   return `${baseUrl.replace(/\/$/, '')}/pitch-audio/${encodeURIComponent(voice)}/${encodeURIComponent(
     pitchAudioFile(reading, downstep),

@@ -23,25 +23,26 @@
  */
 
 import { GODAN_VERB_ENDINGS, GODAN_VOLITIONAL_O_KANA, VERB_INDICATING_AUXILIARIES } from '../data/ruleData';
-import { deconj, isNonWordToken, known, knownVerbOrAdjective } from '../group';
-import { deconjugationKey, hasKanji, isKana, isKanji, isNumeralChar, toHiragana, toKatakana } from '../kana';
+import { deconj, isNonWordToken, isNounClass, isSymbolClass, known, knownVerbOrAdjective } from '../group';
+import {
+  deconjugationKey,
+  hasKanji,
+  isAllHiragana,
+  isAllKana,
+  isAllKatakana,
+  isHiraganaChar,
+  isKana,
+  isKanji,
+  isKatakanaWordChar,
+  isNumeralChar,
+  toHiragana,
+  toKatakana,
+  vowelRow,
+} from '../kana';
 import { type Piece, recut, scanRewrite } from '../recut';
+import { chars, cpLength, dropLast, lastChar } from '../text';
 import type { CombineContext, Group, WordClass } from '../types';
 import { pinnedDeconjugation } from './rewrite';
-
-const chars = (text: string) => [...text];
-const len = (text: string) => chars(text).length;
-const lastChar = (text: string) => chars(text).at(-1) ?? '';
-const dropLast = (text: string, n = 1) => chars(text).slice(0, -n).join('');
-const isHiraganaChar = (char: string | undefined) => !!char && char >= '぀' && char <= 'ゟ';
-const isKatakanaChar = (char: string | undefined) => !!char && char >= '゠' && char <= 'ヿ';
-const isAllHiragana = (text: string) => text.length > 0 && chars(text).every(isHiraganaChar);
-const isAllKatakana = (text: string) => text.length > 0 && chars(text).every(isKatakanaChar);
-/** `JapaneseTextHelper.IsKatakanaWordChar`: a katakana letter or the long-vowel mark. */
-const isKatakanaWordChar = (char: string | undefined) => !!char && ((char >= 'ァ' && char <= 'ヺ') || char === 'ー');
-const isAllKana = (text: string) => text.length > 0 && chars(text).every((char) => isKana(char));
-const SYMBOLS = new Set<WordClass>(['Symbol', 'SupplementarySymbol', 'BlankSpace']);
-const NOUNS = new Set<WordClass>(['Noun', 'CommonNoun']);
 
 /** `HasPrioritizedNonNameCompoundLookup`, as JMdict's common flag. */
 const prioritized = (ctx: CombineContext, text: string) =>
@@ -77,15 +78,7 @@ export function repairHasaNoun(groups: Group[], _ctx: CombineContext): Group[] {
   });
 }
 
-const VOWEL_ROWS = [
-  'あかさたなはまやらわがざだばぱぁゃ',
-  'いきしちにひみりぎじぢびぴぃ',
-  'うくすつぬふむゆるぐずづぶぷぅゅ',
-  'えけせてねへめれげぜでべぺぇ',
-  'おこそとのほもよろをごぞどぼぽぉょ',
-];
 const SMALL_VOWELS = 'ぁぃぅぇぉァィゥェォ';
-const vowelRowOf = (char: string) => VOWEL_ROWS.findIndex((row) => row.includes(toHiragana(char)));
 
 /** `TryStripTrailingSmallVowel`: a colloquial small-vowel stretch (ちょっとぉ, そんなぁ) reads as its dictionary
  * surface. We keep the surface and change only the dictionary form. */
@@ -93,8 +86,8 @@ function stripTrailingSmallVowel(w: Group, ctx: CombineContext): Group | undefin
   const cs = chars(w.s);
   if (cs.length < 3 || !SMALL_VOWELS.includes(cs.at(-1) as string)) return undefined;
   // A small vowel from a different row is a digraph (ファ, ティ), not a stretch.
-  const row = vowelRowOf(cs.at(-1) as string);
-  if (row < 0 || vowelRowOf(cs.at(-2) as string) !== row) return undefined;
+  const row = vowelRow(cs.at(-1));
+  if (row < 0 || vowelRow(cs.at(-2)) !== row) return undefined;
   if (cs.some((char) => !isKana(char) || char === 'ー')) return undefined;
   const stripped = cs.slice(0, -1).join('');
   // An attested surface is lexical (ねぇ, もぉ, すげぇ), however same-vowel it looks.
@@ -151,7 +144,7 @@ export function repairVowelElongation(groups: Group[], ctx: CombineContext): Gro
       changed = true;
     }
 
-    if (len(w.s) >= 2 && lastChar(w.s) === 'ー' && (w.cls === 'Particle' || w.cls === 'Conjunction')) {
+    if (cpLength(w.s) >= 2 && lastChar(w.s) === 'ー' && (w.cls === 'Particle' || w.cls === 'Conjunction')) {
       const stripped = dropLast(w.s);
       if (isAllHiragana(stripped)) {
         if (w.d === w.s) {
@@ -193,7 +186,7 @@ export function repairVowelElongation(groups: Group[], ctx: CombineContext): Gro
     }
 
     // ケドー otherwise matches the KEDO organisation instead of けど.
-    if (len(w.s) >= 2 && lastChar(w.s) === 'ー' && NOUNS.has(w.cls)) {
+    if (cpLength(w.s) >= 2 && lastChar(w.s) === 'ー' && isNounClass(w.cls)) {
       const body = dropLast(w.s);
       if (isAllKatakana(body) && KNOWN_PARTICLES_AND_CONJUNCTIONS.has(toHiragana(body))) {
         const hiragana = toHiragana(body);
@@ -230,8 +223,8 @@ export function repairVowelElongation(groups: Group[], ctx: CombineContext): Gro
       cs.length >= 2 &&
       cs[0] === 'ん' &&
       cs.slice(1).every((char) => char === 'ー') &&
-      NOUNS.has(prev.cls) &&
-      len(prev.s) <= 2 &&
+      isNounClass(prev.cls) &&
+      cpLength(prev.s) <= 2 &&
       !prev.s.endsWith('ん')
     ) {
       rebuild(
@@ -330,7 +323,7 @@ export function repairVowelElongation(groups: Group[], ctx: CombineContext): Gro
       before &&
       pcs.length === 1 &&
       GODAN_VOLITIONAL_O_KANA.has(prev.s) &&
-      NOUNS.has(prev.cls) &&
+      isNounClass(prev.cls) &&
       before.s.length >= 1 &&
       chars(before.s).every(isKanji)
     ) {
@@ -388,7 +381,7 @@ export function repairVowelElongation(groups: Group[], ctx: CombineContext): Gro
 
     // る-verb plus elongating う (ぶつ|かるう → ぶつかる|う).
     // (Departure, here and for たあ: a blank or symbol is no verb stem, though the deconjugator reads one.)
-    if (current.s.endsWith('るう') && cs.length >= 2 && !SYMBOLS.has(prev.cls)) {
+    if (current.s.endsWith('るう') && cs.length >= 2 && !isSymbolClass(prev.cls)) {
       const verb = prev.s + dropLast(current.s);
       const hira = deconjugationKey(verb);
       const isRuVerb = (probe: string) =>
@@ -409,7 +402,7 @@ export function repairVowelElongation(groups: Group[], ctx: CombineContext): Gro
     }
 
     // たあ is misread as the particle と (おき|たあ → おきた|あ).
-    if (current.s === 'たあ' && !SYMBOLS.has(prev.cls) && isVerbPast(ctx, `${prev.s}た`)) {
+    if (current.s === 'たあ' && !isSymbolClass(prev.cls) && isVerbPast(ctx, `${prev.s}た`)) {
       rebuild(
         result,
         1,
@@ -435,7 +428,7 @@ export function repairVowelElongation(groups: Group[], ctx: CombineContext): Gro
     // Small-vowel run fused onto a conjugation ending (来|やが|れぇぇぇ → やがれ); a noun stem (移|れぇぇぇ) is left.
     if (
       (prev.cls === 'Verb' || prev.cls === 'Auxiliary') &&
-      (NOUNS.has(current.cls) || current.cls === 'Interjection')
+      (isNounClass(current.cls) || current.cls === 'Interjection')
     ) {
       const coreLength = trailingSmallVowelRun(current.s);
       if (coreLength > 0) {
@@ -514,8 +507,8 @@ export function repairIntensifierKaeru(groups: Group[], ctx: CombineContext): Gr
     if (
       w.cls !== 'Verb' ||
       w.flags.pin !== undefined ||
-      len(w.n) < 4 ||
-      len(w.s) < 3 ||
+      cpLength(w.n) < 4 ||
+      cpLength(w.s) < 3 ||
       !w.n.endsWith('返る') ||
       known(ctx, w.n)
     )
@@ -524,8 +517,8 @@ export function repairIntensifierKaeru(groups: Group[], ctx: CombineContext): Gr
     const headStem = chars(w.n).slice(0, -2).join('');
     const headDict = ctx.deconjugate(headStem).find((form) => verbTagged(form.tags) && known(ctx, form.text))?.text;
     // Surface must open with the same kana head (のさばりかえっ).
-    if (!headDict || !w.s.startsWith(headStem) || len(w.s) <= len(headStem)) return 0;
-    const suffix = chars(w.s).slice(len(headStem)).join('');
+    if (!headDict || !w.s.startsWith(headStem) || cpLength(w.s) <= cpLength(headStem)) return 0;
+    const suffix = chars(w.s).slice(cpLength(headStem)).join('');
     const kaeru = (s: string): Piece => ({
       s,
       from: w,
@@ -696,6 +689,8 @@ function inflectedLemmaOf(
 /** `AddTte`: the thief's っ and the て after it as quotative って (a copy of the て token). */
 const tte = (te: Group): Piece => ({ s: 'って', from: te, d: 'って', n: 'って', cls: 'Particle', r: 'ッテ' });
 
+const QUOTATIVE_NOMINAL = new Set<WordClass>(['Noun', 'CommonNoun', 'Pronoun', 'Name', 'Suffix']);
+
 /**
  * `RepairQuotativeTte`: quotative って after a word Sudachi cut wrongly. The っ of って rides on the token
  * before it (寒|さっ|て, 読|むっ|て, それっ|て), which Sudachi then reads as some verb's te-form; the stolen mora goes
@@ -723,7 +718,7 @@ export function repairQuotativeTte(groups: Group[], ctx: CombineContext): Group[
       // Topic は stops too, except clause-initially where it can only be a word head (は|ずっ|て = はず).
       if (piece.cls === 'Particle' && piece.s === 'は') {
         const before = result[result.length - k - 1];
-        if (before && !SYMBOLS.has(before.cls)) break;
+        if (before && !isSymbolClass(before.cls)) break;
       }
       const t = piece.s;
       if (t.length === 0) break;
@@ -734,7 +729,8 @@ export function repairQuotativeTte(groups: Group[], ctx: CombineContext): Group[
       if (known(ctx, acc)) {
         // All-word kana pieces (どう+こう) are two words meeting; っ-final pieces (いっ) count as shreds regardless.
         // A lone stolen mora completing a common word (し|ばら|く → しばらく, おば|あさ|ん → おばあさん) is a shred.
-        let allPiecesAreWords = len(acc) >= 4 && /^[ぁ-ゖ]+$/.test(acc) && !(len(add) === 1 && prioritized(ctx, acc));
+        let allPiecesAreWords =
+          cpLength(acc) >= 4 && /^[ぁ-ゖ]+$/.test(acc) && !(cpLength(add) === 1 && prioritized(ctx, acc));
         for (let m = 1; m <= k && allPiecesAreWords; m++) {
           const other = result[result.length - m] as Group;
           allPiecesAreWords = !other.s.endsWith('っ') && known(ctx, other.s);
@@ -745,7 +741,8 @@ export function repairQuotativeTte(groups: Group[], ctx: CombineContext): Group[
     // A stranded lone kana before the run would be deleted by FilterOrphanedMisparses; range must match its set.
     if (best > 0 && result.length > best) {
       const lead = result[result.length - best - 1] as Group;
-      if (len(lead.s) === 1 && /[ぁ-ゟ゠-ヿ]/.test(lead.s) && (lead.cls === 'Noun' || lead.cls === 'Symbol')) return 0;
+      if (cpLength(lead.s) === 1 && /[ぁ-ゟ゠-ヿ]/.test(lead.s) && (lead.cls === 'Noun' || lead.cls === 'Symbol'))
+        return 0;
     }
     return best;
   };
@@ -755,7 +752,7 @@ export function repairQuotativeTte(groups: Group[], ctx: CombineContext): Group[
     const run = result.slice(result.length - runLen);
     const merged = run.map((group) => group.s).join('') + add;
     // An adverbial く reattached to its adjective stem (堅|くっ|て) is that adjective, not a noun.
-    const adjective = len(merged) >= 2 && lastChar(merged) === 'く' ? `${dropLast(merged)}い` : undefined;
+    const adjective = cpLength(merged) >= 2 && lastChar(merged) === 'く' ? `${dropLast(merged)}い` : undefined;
     const isAdjective = adjective !== undefined && knownVerbOrAdjective(ctx, adjective);
     rebuild(result, runLen, inputs, [
       {
@@ -773,13 +770,11 @@ export function repairQuotativeTte(groups: Group[], ctx: CombineContext): Group[
 
   // The う-row check rejects fragments the deconjugator over-tags as verb pasts (はだ, んだ).
   const isVerbReattachment = (s: string) =>
-    (len(s) >= 2 &&
+    (cpLength(s) >= 2 &&
       ['う', 'く', 'ぐ', 'す', 'つ', 'ぬ', 'ぶ', 'む', 'る'].includes(lastChar(s)) &&
       known(ctx, s) &&
       deconjugatesToVerb(ctx, s)) ||
     oneStepFinalFormBase(ctx, s, true) !== undefined;
-
-  const NOMINAL = new Set<WordClass>(['Noun', 'CommonNoun', 'Pronoun', 'Name', 'Suffix']);
 
   for (let i = 0; i < groups.length; i++) {
     const word = groups[i] as Group;
@@ -788,7 +783,7 @@ export function repairQuotativeTte(groups: Group[], ctx: CombineContext): Group[
     // past, so 2-3日じゃ もって would become " も|って"). Upstream also judges it on the text, since Sudachi tags
     // some punctuation as a noun.
     const last = result.at(-1);
-    const prev = last && !SYMBOLS.has(last.cls) && !isNonWordToken(last) ? last : undefined;
+    const prev = last && !isSymbolClass(last.cls) && !isNonWordToken(last) ? last : undefined;
 
     // Nominal + だって|ば is copula だ + emphatic ってば (ダルマザメだってば), not the conjunction だって.
     if (
@@ -797,7 +792,7 @@ export function repairQuotativeTte(groups: Group[], ctx: CombineContext): Group[
       (word.cls === 'Conjunction' || word.cls === 'Particle') &&
       next.s === 'ば' &&
       prev &&
-      NOMINAL.has(prev.cls)
+      QUOTATIVE_NOMINAL.has(prev.cls)
     ) {
       result.push(
         ...recut(groups, i, 2, [
@@ -811,7 +806,7 @@ export function repairQuotativeTte(groups: Group[], ctx: CombineContext): Group[
     }
 
     // 将校|だっ(だつ)|て is particle だって; SplitTatteParticle already ran, and the mora-theft block would fake 将校だ.
-    if (next && word.s === 'だっ' && word.d === 'だつ' && next.s === 'て' && prev && NOMINAL.has(prev.cls)) {
+    if (next && word.s === 'だっ' && word.d === 'だつ' && next.s === 'て' && prev && QUOTATIVE_NOMINAL.has(prev.cls)) {
       result.push(
         ...recut(groups, i, 2, [
           { s: 'だって', fresh: true, cls: 'Particle', r: 'ダッテ', sec: ['接続助詞', '*', '*'] },
@@ -871,7 +866,7 @@ export function repairQuotativeTte(groups: Group[], ctx: CombineContext): Group[
     if (
       next &&
       word.cls === 'Interjection' &&
-      len(word.s) >= 2 &&
+      cpLength(word.s) >= 2 &&
       lastChar(word.s) === 'っ' &&
       next.s === 'て' &&
       word.n === dropLast(word.s)
@@ -1138,7 +1133,13 @@ export function repairQuotativeTte(groups: Group[], ctx: CombineContext): Group[
     }
 
     // デー|トっ|て: a mid-katakana cut before って is never real, so shape alone suffices (OOV names too).
-    if (len(stripped) === 1 && stripped !== 'ー' && isKatakanaWordChar(stripped) && prev && isAllKatakana(prev.s)) {
+    if (
+      cpLength(stripped) === 1 &&
+      stripped !== 'ー' &&
+      isKatakanaWordChar(stripped) &&
+      prev &&
+      isAllKatakana(prev.s)
+    ) {
       const merged = prev.s + stripped;
       repair([{ s: merged, from: prev, d: merged, n: merged, cls: 'Noun' }], 1);
       continue;
@@ -1182,7 +1183,7 @@ export function repairQuotativeTte(groups: Group[], ctx: CombineContext): Group[
 
     // 繋|がりっ|て → 繋がり|って; bare う is a volitional (いこ|うっ|て) and いっ/だっ would hit particles (て+い=弟).
     if (
-      len(stripped) >= 1 &&
+      cpLength(stripped) >= 1 &&
       stripped !== 'う' &&
       !IU_IKU_DICT_FORMS.has(thief.d) &&
       thief.d !== 'だつ' &&
@@ -1287,7 +1288,7 @@ export function repairQuotativeTte(groups: Group[], ctx: CombineContext): Group[
         if (
           !quoteVerbFollows &&
           thief.cls === 'Verb' &&
-          len(thief.d) >= 2 &&
+          cpLength(thief.d) >= 2 &&
           thief.d !== thief.s &&
           known(ctx, thief.d)
         ) {
@@ -1352,7 +1353,7 @@ export function repairStolenUBeforeSsu(groups: Group[], ctx: CombineContext): Gr
       else return 0;
     }
     const prev = last() as Group;
-    if (prev.flags.pin !== undefined || prev.s.length === 0 || SYMBOLS.has(prev.cls) || prev.cls === 'Particle')
+    if (prev.flags.pin !== undefined || prev.s.length === 0 || isSymbolClass(prev.cls) || prev.cls === 'Particle')
       return 0;
     const completed = `${prev.s}う`;
     let lemma: string;
@@ -1392,25 +1393,27 @@ export function repairStolenUBeforeSsu(groups: Group[], ctx: CombineContext): Gr
   });
 }
 
+/** Classes a recombined hiragana run may not contain. */
+const RECOMBINE_BLOCKED_CLASSES = new Set<WordClass>([
+  'Verb',
+  'IAdjective',
+  'NaAdjective',
+  'Particle',
+  'Auxiliary',
+  'Prefix',
+  'Suffix',
+  'NounSuffix',
+  'SupplementarySymbol',
+  'Symbol',
+  'BlankSpace',
+  'Conjunction',
+]);
+
 /** RecombineHiraganaTokens: a run of 2-4 hiragana content tokens that spells one word (kana-appropriately,
  * or as an inflected verb or adjective) becomes that word (classical attributive き fused into the next noun:
  * 白|き尾 → 白き|尾). */
 export function recombineHiraganaTokens(groups: Group[], ctx: CombineContext): Group[] {
   if (groups.length < 2) return groups;
-  const blocked = new Set<WordClass>([
-    'Verb',
-    'IAdjective',
-    'NaAdjective',
-    'Particle',
-    'Auxiliary',
-    'Prefix',
-    'Suffix',
-    'NounSuffix',
-    'SupplementarySymbol',
-    'Symbol',
-    'BlankSpace',
-    'Conjunction',
-  ]);
   let result: Group[] | undefined;
   let i = 0;
   while (i < groups.length) {
@@ -1421,13 +1424,13 @@ export function recombineHiraganaTokens(groups: Group[], ctx: CombineContext): G
         span.some(
           (w) =>
             !isAllHiragana(w.s) ||
-            blocked.has(w.cls) ||
+            RECOMBINE_BLOCKED_CLASSES.has(w.cls) ||
             (w.cls === 'Expression' && (w.s === 'だった' || w.s === 'だったら')),
         )
       )
         continue;
       const text = span.map((w) => w.s).join('');
-      if (len(text) < 3 || len(text) > 12) continue;
+      if (cpLength(text) < 3 || cpLength(text) > 12) continue;
       const first = span[0] as Group;
       if (first.cls === 'Interjection' && span.every((w) => w.s === first.s && w.cls === 'Interjection')) continue;
       // えっ|そう is two utterances; neither えっそう nor its 得る deconjugation is valid.
@@ -1508,7 +1511,7 @@ export function collapseReduplicatedMimetic(groups: Group[], ctx: CombineContext
     let units = cs.length / 2;
     let allInterjections = first.cls === 'Interjection';
     while (j < list.length && isRepetitionOf((list[j] as Group).s, unit)) {
-      units += len((list[j] as Group).s) / 2;
+      units += cpLength((list[j] as Group).s) / 2;
       allInterjections &&= (list[j] as Group).cls === 'Interjection';
       j++;
     }
@@ -1549,7 +1552,7 @@ export function repairClippedAdjective(groups: Group[], ctx: CombineContext): Gr
     if (
       tsu < 0 ||
       current.s.length === 0 ||
-      len(current.s) > 4 ||
+      cpLength(current.s) > 4 ||
       current.flags.pin !== undefined ||
       ['Verb', 'Particle', 'Auxiliary', 'Symbol', 'SupplementarySymbol'].includes(current.cls) ||
       // A kana stem + い hits unrelated keys (がん+い = 含意) and resurrects SFX fragments.
@@ -1582,18 +1585,18 @@ export function repairClippedAdjective(groups: Group[], ctx: CombineContext): Gr
 }
 
 const SENTENCE_FINAL_PARTICLES = ['ね', 'ねえ', 'な', 'なあ', 'よ', 'よね', 'さ', 'わ', 'の', 'のよ', 'もの'].sort(
-  (a, b) => len(b) - len(a),
+  (a, b) => cpLength(b) - cpLength(a),
 );
 
 /** Splits an unmatched interjection that absorbed a sentence-final particle (ごめんなさいね). */
 export function repairFusedInterjectionParticle(groups: Group[], ctx: CombineContext): Group[] {
   return scanRewrite(groups, (list, i, emit) => {
     const word = list[i] as Group;
-    if (word.cls !== 'Interjection' || len(word.s) < 3 || known(ctx, word.s)) return 0;
+    if (word.cls !== 'Interjection' || cpLength(word.s) < 3 || known(ctx, word.s)) return 0;
     for (const particle of SENTENCE_FINAL_PARTICLES) {
       if (!word.s.endsWith(particle)) continue;
-      const base = chars(word.s).slice(0, -len(particle)).join('');
-      if (len(base) < 2 || !known(ctx, base)) continue;
+      const base = chars(word.s).slice(0, -cpLength(particle)).join('');
+      if (cpLength(base) < 2 || !known(ctx, base)) continue;
       emit().push(
         ...recut(list, i, 1, [
           { s: base, fresh: true, cls: 'Interjection', pos: word.pos },
@@ -1638,7 +1641,7 @@ export function repairOrphanedAuxiliary(groups: Group[], ctx: CombineContext): G
       word.cls === 'Auxiliary' &&
       (word.s === 'た' || word.s === 'て') &&
       prev.cls === 'Noun' &&
-      len(prev.s) >= 2 &&
+      cpLength(prev.s) >= 2 &&
       prev.d === prev.s
     ) {
       const end = RENYOU_TO_DICT_END[lastChar(prev.s)];
@@ -1660,8 +1663,8 @@ export function repairOrphanedAuxiliary(groups: Group[], ctx: CombineContext): G
     }
 
     const isOrphanedAuxiliary = word.cls === 'Auxiliary' && VERB_INDICATING_AUXILIARIES.has(word.d);
-    const isOrphanedVerbEnding = !isOrphanedAuxiliary && len(word.s) === 1 && GODAN_VERB_ENDINGS.includes(word.s);
-    if ((!isOrphanedAuxiliary && !isOrphanedVerbEnding) || prev.cls !== 'Noun' || len(prev.s) < 2) {
+    const isOrphanedVerbEnding = !isOrphanedAuxiliary && cpLength(word.s) === 1 && GODAN_VERB_ENDINGS.includes(word.s);
+    if ((!isOrphanedAuxiliary && !isOrphanedVerbEnding) || prev.cls !== 'Noun' || cpLength(prev.s) < 2) {
       result.push(word);
       continue;
     }
@@ -1730,7 +1733,7 @@ export function repairTankaToTaNKa(groups: Group[], ctx: CombineContext): Group[
       word.cls === 'Noun' &&
       word.s === 'たか' &&
       last &&
-      !SYMBOLS.has(last.cls) &&
+      !isSymbolClass(last.cls) &&
       !isNonWordToken(last) &&
       isVerbPast(ctx, `${last.s}た`)
     ) {

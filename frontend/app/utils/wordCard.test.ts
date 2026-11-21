@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  glossLanguageFor,
   pitchCategory,
   headwordFurigana,
   candidateName,
@@ -942,5 +943,13 @@ describe('cardSenses for a word with no definition in the reader’s languages',
     const hidAll = glossPreference('es', { en: 'hidden', es: 'hidden' }, ['es']);
 
     expect(cardSenses(englishOnly, hidAll)).toEqual([]);
+  });
+});
+
+describe('glossLanguageFor', () => {
+  it('follows the page: Spanish for es, English otherwise', () => {
+    expect(glossLanguageFor('es')).toBe('es');
+    expect(glossLanguageFor('en')).toBe('en');
+    expect(glossLanguageFor('ja')).toBe('en');
   });
 });

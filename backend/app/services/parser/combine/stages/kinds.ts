@@ -1,12 +1,11 @@
-import { deconj } from '../group';
+import { deconj, isSymbolClass } from '../group';
 import { deconjugationKey } from '../kana';
 import type { CombineContext, Group, GroupKind } from '../types';
 
-const SYMBOL_CLASSES = new Set(['SupplementarySymbol', 'BlankSpace', 'Symbol']);
 const DICTIONARY_WINDOWS = new Set(['CombineCompounds', 'CombineExpressions']);
 
 function kindOf(group: Group, ctx: CombineContext): GroupKind {
-  if (SYMBOL_CLASSES.has(group.cls)) return 'symbol';
+  if (isSymbolClass(group.cls)) return 'symbol';
   if (group.flags.kind) return group.flags.kind;
   const via = group.flags.via;
   if (via && DICTIONARY_WINDOWS.has(via)) return 'expression';

@@ -12,8 +12,10 @@ import {
   DICTIONARY_VERB_ENDINGS,
   deconj,
   isNameLike,
+  isNounClass,
   isNounForCompounding,
   isPrenominalModifier,
+  isSymbolClass,
   known,
   span,
 } from '../group';
@@ -226,7 +228,7 @@ function matchWindow(
     // is not 目する).
     if (
       beforeFirst &&
-      (first.cls === 'Noun' || first.cls === 'CommonNoun') &&
+      isNounClass(first.cls) &&
       isPrenominalModifier(beforeFirst) &&
       dictForm.endsWith('する') &&
       !isExpression &&
@@ -433,7 +435,7 @@ function matchPair(groups: readonly Group[], i: number, ctx: CombineContext): st
     let blockedMonoKa = false;
     if (pair === 'ものか' || pair === 'もんか') {
       let p = i - 1;
-      while (p >= 0 && ['SupplementarySymbol', 'Symbol', 'BlankSpace'].includes((groups[p] as Group).cls)) p--;
+      while (p >= 0 && isSymbolClass((groups[p] as Group).cls)) p--;
       blockedMonoKa = !(p >= 0 && PREDICATE_CLASSES.includes((groups[p] as Group).cls));
     }
     if (!blockedByNegation && !blockedNonInitial && !blockedMonoKa && !isBoundaryTheft(groups, i, 2, ctx)) return pair;
@@ -496,13 +498,18 @@ export function combineExpressions(groups: Group[], ctx: CombineContext): Group[
   const out: Group[] = [];
   let changed = false;
   let i = 0;
+  // The first symbol at or after i (groups.length when none): no window may reach it.
+  let symbolAt = -1;
 
   while (i < groups.length) {
     let best = 1;
     let matchedText: string | null = null;
 
-    for (let size = Math.min(8, groups.length - i); size >= 2; size--) {
-      if (groups.slice(i, i + size).some(isSymbol)) continue;
+    if (symbolAt < i) {
+      symbolAt = i;
+      while (symbolAt < groups.length && !isSymbol(groups[symbolAt] as Group)) symbolAt++;
+    }
+    for (let size = Math.min(8, symbolAt - i); size >= 2; size--) {
       const matched = size === 2 ? matchPair(groups, i, ctx) : matchLongWindow(groups, i, size, ctx);
       if (matched) {
         best = size;
@@ -584,9 +591,7 @@ export function combineLexicalAdverbs(groups: Group[], ctx: CombineContext): Gro
       const isSakiNiPair = next.s === '先に';
       const before = groups[i - 1];
       const isNiwaPair =
-        next.s === 'には' &&
-        next.cls === 'Particle' &&
-        (i === 0 || ['Symbol', 'SupplementarySymbol', 'BlankSpace'].includes((before as Group).cls));
+        next.s === 'には' && next.cls === 'Particle' && (i === 0 || isSymbolClass((before as Group).cls));
       if (
         (isNiPair || isCuratedPair || isHodoPair || isSakiNiPair || isNiwaPair) &&
         ctx.lexicon.hasClass(text, 'adv')

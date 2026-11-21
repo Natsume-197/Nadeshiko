@@ -5,7 +5,7 @@ import { analyse, type Morpheme } from '@app/services/parser/sudachi';
 import { tokenPos } from '@app/services/parser/pos';
 import { deconjugate } from '@app/services/parser/deconjugator';
 import { inflectionLabels } from '@app/services/parser/labels';
-import { lookupKeys, toHiragana, toKatakana } from './import/entries';
+import { hasKanji, lookupKeys, toHiragana, toKatakana } from './import/entries';
 
 /**
  * Nadeshiko's own answer to "which word is this token?" (task 40): ranked candidates from `dict.*`, in the same
@@ -183,8 +183,6 @@ export function stemReading(text: string, reading: string): string {
   return i === 0 ? '' : read.slice(0, j).join('');
 }
 
-const hasKanji = (text: string) => [...text].some((char) => !isKana(char) && /\p{Script=Han}/u.test(char));
-
 function appliesTo(kanaForm: StoredForm, kanjiText: string): boolean {
   return kanaForm.applies_to_kanji.includes('*') || kanaForm.applies_to_kanji.includes(kanjiText);
 }
@@ -344,8 +342,8 @@ function interleaved(forms: StoredForm[]): StoredForm[] {
 }
 
 /** One stored word in the card's shape. `furigana` maps "spelling\0reading" to its ruby and `pitch` to its
- * downsteps. Exported for tests. */
-export function toCandidate(
+ * downsteps. */
+function toCandidate(
   word: StoredWord,
   query: IdentifyQuery,
   tags: Record<string, string>,
@@ -442,12 +440,25 @@ export async function loadWords(dataSource: DataSource, keys: string[]): Promise
     ) as Promise<Array<StoredSense & { word_id: number }>>,
   ]);
 
+  const formsByWord = groupByWord(forms);
+  const sensesByWord = groupByWord(senses);
   return words.map(({ rank, per_million, ...word }) => ({
     ...word,
     frequency: rank === null ? null : { rank, perMillion: per_million ?? 0 },
-    forms: forms.filter((form) => form.word_id === word.id),
-    senses: senses.filter((sense) => sense.word_id === word.id),
+    forms: formsByWord.get(word.id) ?? [],
+    senses: sensesByWord.get(word.id) ?? [],
   }));
+}
+
+/** Rows grouped by `word_id`, each group in the rows' order. */
+function groupByWord<T extends { word_id: number }>(rows: T[]): Map<number, T[]> {
+  const out = new Map<number, T[]>();
+  for (const row of rows) {
+    const list = out.get(row.word_id);
+    if (list) list.push(row);
+    else out.set(row.word_id, [row]);
+  }
+  return out;
 }
 
 /** Parts of speech a word spelled like the whole surface may have, by the token's own: what JMdict files inflected
@@ -510,9 +521,11 @@ export function asciiVariants(text: string): string[] {
 
 /** Ranked candidates for one token, best first; empty when nothing matches. */
 export async function identifyWord(dataSource: DataSource, query: IdentifyQuery): Promise<DictionaryCandidate[]> {
-  let words = await loadWords(dataSource, lookupKeys(query.lemma));
-  const surfaceWords =
-    query.surface && query.surface !== query.lemma ? await loadWords(dataSource, lookupKeys(query.surface)) : [];
+  const [lemmaWords, surfaceWords] = await Promise.all([
+    loadWords(dataSource, lookupKeys(query.lemma)),
+    query.surface && query.surface !== query.lemma ? loadWords(dataSource, lookupKeys(query.surface)) : [],
+  ]);
+  let words = lemmaWords;
   // A lemma the dictionary does not know (Sudachi's lemma for a merged token, say) can still be found by surface.
   if (words.length === 0) words = surfaceWords;
   // Then by its full-width or kanji-numeral spelling, for tokens written in ASCII.
@@ -547,37 +560,36 @@ export async function identifyWord(dataSource: DataSource, query: IdentifyQuery)
   const others = await baseFormWords(dataSource, query, new Set(ranked.map((word) => word.id)));
   for (const word of others) if (ranked.length < MAX_CANDIDATES) ranked.push(word);
 
-  const tags = await tagLabels(dataSource);
-  const pairs = ranked.flatMap((word) => {
+  const picks = ranked.map((word) => {
     const headword = headwordOf(word, queryFor(word));
-    const reading = headword ? readingOf(word, headword, queryFor(word)) : undefined;
-    return headword && reading && !headword.kana ? [{ text: headword.text, reading: reading.text }] : [];
+    return { word, headword, reading: headword ? readingOf(word, headword, queryFor(word)) : undefined };
   });
-  const rubyRows: Array<{ text: string; reading: string; segments: Array<{ text: string; ruby?: string }> }> =
+  const pairs = picks.flatMap(({ headword, reading }) =>
+    headword && reading && !headword.kana ? [{ text: headword.text, reading: reading.text }] : [],
+  );
+  const pitchPairs = picks.flatMap(({ word, headword, reading }) =>
+    pitchKeys(word, headword, reading).map((key) => {
+      const [text, read] = key.split('\u0000');
+      return { text, reading: read };
+    }),
+  );
+  type RubyRow = { text: string; reading: string; segments: Array<{ text: string; ruby?: string }> };
+  type PitchRow = { text: string; reading: string; downsteps: number[] };
+  const [tags, rubyRows, pitchRows] = await Promise.all([
+    tagLabels(dataSource),
     pairs.length === 0
-      ? []
-      : await dataSource.query(
+      ? ([] as RubyRow[])
+      : (dataSource.query(
           `SELECT DISTINCT ON (f.text, f.reading) f.text, f.reading, f.segments
              FROM dict.furigana f
              JOIN jsonb_to_recordset($1::jsonb) AS x(text varchar, reading varchar)
                ON f.text = x.text AND f.reading = x.reading
             ORDER BY f.text, f.reading, f.source = 'jmdict-furigana' DESC`,
           [JSON.stringify(pairs)],
-        );
-  const furigana = new Map(rubyRows.map((row) => [pairKey(row.text, row.reading), row.segments]));
-
-  const pitchPairs = ranked.flatMap((word) => {
-    const headword = headwordOf(word, queryFor(word));
-    const reading = headword ? readingOf(word, headword, queryFor(word)) : undefined;
-    return pitchKeys(word, headword, reading).map((key) => {
-      const [text, read] = key.split('\u0000');
-      return { text, reading: read };
-    });
-  });
-  const pitchRows: Array<{ text: string; reading: string; downsteps: number[] }> =
+        ) as Promise<RubyRow[]>),
     pitchPairs.length === 0
-      ? []
-      : await dataSource.query(
+      ? ([] as PitchRow[])
+      : (dataSource.query(
           // UniDic last, so where both sources have a spelling and reading its accent is the one kept below.
           `SELECT p.text, p.reading, p.downsteps
              FROM dict.pitch p
@@ -585,7 +597,9 @@ export async function identifyWord(dataSource: DataSource, query: IdentifyQuery)
                ON p.text = x.text AND p.reading = x.reading
             ORDER BY p.source = 'unidic'`,
           [JSON.stringify(pitchPairs)],
-        );
+        ) as Promise<PitchRow[]>),
+  ]);
+  const furigana = new Map(rubyRows.map((row) => [pairKey(row.text, row.reading), row.segments]));
   const pitch = new Map(pitchRows.map((row) => [pairKey(row.text, row.reading), row.downsteps]));
 
   const candidates = ranked.map((word) => toCandidate(word, queryFor(word), tags, furigana, pitch));
@@ -611,9 +625,8 @@ export async function identifyWord(dataSource: DataSource, query: IdentifyQuery)
   });
 }
 
-/** Each word's rank per kind of media, most used kind first (by occurrences per million words of that kind).
- * Exported for tests. */
-export async function categoryFrequency(
+/** Each word's rank per kind of media, most used kind first (by occurrences per million words of that kind). */
+async function categoryFrequency(
   dataSource: DataSource,
   wordIds: number[],
 ): Promise<Map<number, NonNullable<DictionaryCandidate['frequencyByCategory']>>> {
@@ -656,9 +669,8 @@ function baseFormFields(
  * What a conjugation does to a word, in the word card's inflection labels (食べた → 食べる: past; 行かない → 行く:
  * negative): the shortest real deconjugation of `surface` that lands on one of the word's spellings with a part of
  * speech it has. The same labels the parser stores on tokens (./labels), so the entry and the card say the same.
- * Exported for tests.
  */
-export function baseFormLabels(surface: string, word: StoredWord): string[] {
+function baseFormLabels(surface: string, word: StoredWord): string[] {
   let best: readonly string[] | null = null;
   for (const form of deconjugate(surface)) {
     const tag = form.tags.at(-1);
@@ -689,13 +701,8 @@ export function rowFilter(ranked: StoredWord[]): StoredWord[] {
  * JMdict words the token's surface is an inflection of, other than the ones already ranked: every base form the
  * deconjugator reaches whose grammatical tag one of the word's senses carries (分かった: 分かつ v5t; 食べられない:
  * 食べられる v1; 初めて: 初める), the way Shirabe's candidate row offers them. Stems and made-up forms (分かう) find nothing.
- * Exported for tests.
  */
-export async function baseFormWords(
-  dataSource: DataSource,
-  query: IdentifyQuery,
-  ranked: Set<number>,
-): Promise<StoredWord[]> {
+async function baseFormWords(dataSource: DataSource, query: IdentifyQuery, ranked: Set<number>): Promise<StoredWord[]> {
   // The surface as met, or the lemma when the token is already a dictionary form: 初めて can still be 初める's
   // te-form, 本当に 本当 with に.
   const surface = query.surface || query.lemma;
@@ -742,6 +749,8 @@ function isContent(m: Morpheme): boolean {
  * headword that does not split into at least two such words. One sidecar call for all of them; without the sidecar
  * (SUDACHI_URL unset, or down) the card goes without parts rather than failing. Exported for tests.
  */
+const PARTS_CONCURRENCY = 4;
+
 export async function partsOf(
   dataSource: DataSource,
   headwords: string[],
@@ -760,38 +769,43 @@ export async function partsOf(
     return headwords.map(() => null);
   }
 
-  const resolved = new Map<string, { id: string } | null>();
-  const resolve = async (m: Morpheme) => {
-    const key = `${m.d}\u0000${m.s}\u0000${m.r}`;
-    if (!resolved.has(key)) {
-      const words = (await loadWords(dataSource, lookupKeys(m.d))).filter(
-        (word) => word.source === 'jmdict' && word.active,
-      );
-      const pos = tokenPos(m.pos, 'word', m.d).pt;
-      const query: IdentifyQuery = { lemma: m.d, surface: m.s, reading: m.r, pos, locale: 'en' };
-      const best = words
-        .map((word) => ({ word, score: scoreWord(word, query) }))
-        .sort((a, b) => b.score - a.score || a.word.id - b.word.id)[0]?.word;
-      resolved.set(key, best ? { id: `${best.source}:${best.id}` } : null);
-    }
-    return resolved.get(key) ?? null;
-  };
+  const keyOf = (m: Morpheme) => `${m.d}\u0000${m.s}\u0000${m.r}`;
+  const splits = Array.from(analysed, (morphemes, index) =>
+    wanted[index] && morphemes && morphemes.length >= 2 ? morphemes.filter(isContent) : null,
+  );
 
-  const out: Array<DictionaryCandidate['parts'] | null> = [];
-  for (const [index, morphemes] of analysed.entries()) {
-    if (!wanted[index] || !morphemes || morphemes.length < 2) {
-      out.push(null);
-      continue;
+  // Each distinct content morpheme gets its own lookup (one shared lookup would hit the MAX_FETCHED cap and change
+  // what each finds), PARTS_CONCURRENCY at a time so one word card cannot crowd the connection pool.
+  const unique = new Map<string, Morpheme>();
+  for (const m of splits.flatMap((content) => content ?? [])) if (!unique.has(keyOf(m))) unique.set(keyOf(m), m);
+  const resolveOne = async ([key, m]: [string, Morpheme]) => {
+    const words = (await loadWords(dataSource, lookupKeys(m.d))).filter(
+      (word) => word.source === 'jmdict' && word.active,
+    );
+    const pos = tokenPos(m.pos, 'word', m.d).pt;
+    const query: IdentifyQuery = { lemma: m.d, surface: m.s, reading: m.r, pos, locale: 'en' };
+    const best = words
+      .map((word) => ({ word, score: scoreWord(word, query) }))
+      .sort((a, b) => b.score - a.score || a.word.id - b.word.id)[0]?.word;
+    return [key, best ? `${best.source}:${best.id}` : null] as const;
+  };
+  const entries = [...unique];
+  const resolved = new Map<string, string | null>();
+  for (let i = 0; i < entries.length; i += PARTS_CONCURRENCY) {
+    for (const [key, id] of await Promise.all(entries.slice(i, i + PARTS_CONCURRENCY).map(resolveOne))) {
+      resolved.set(key, id);
     }
-    const parts: NonNullable<DictionaryCandidate['parts']> = [];
-    for (const m of morphemes) {
-      if (!isContent(m)) continue;
-      const word = await resolve(m);
-      if (word) parts.push({ text: m.s, lemma: m.d, reading: m.r, id: word.id });
-    }
-    out.push(parts.length >= 2 ? parts : null);
   }
-  return out;
+
+  return splits.map((content) => {
+    if (!content) return null;
+    const parts: NonNullable<DictionaryCandidate['parts']> = [];
+    for (const m of content) {
+      const id = resolved.get(keyOf(m));
+      if (id) parts.push({ text: m.s, lemma: m.d, reading: m.r, id });
+    }
+    return parts.length >= 2 ? parts : null;
+  });
 }
 
 export const __testing = { POS_FAMILIES, NAME_TYPES, resetTagCache: () => (tagCache = null) };

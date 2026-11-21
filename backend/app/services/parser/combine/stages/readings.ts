@@ -1,7 +1,18 @@
 import { align, guessRubyText } from '../../furigana';
 import { HOUR_PINS } from '../data/numeralPins';
 import type { WordReadings } from '../lexicon';
-import { hasKanji, isAllKana, isKana, isKanji, isKatakanaReading, toHiragana, toKatakana, widenDigits } from '../kana';
+import { isSymbolClass } from '../group';
+import {
+  hasKanji,
+  isAllKana,
+  isKana,
+  isKanji,
+  isKatakanaReading,
+  toHiragana,
+  toKatakana,
+  vowelRow,
+  widenDigits,
+} from '../kana';
 import type { CombineContext, Group } from '../types';
 
 /*
@@ -9,8 +20,6 @@ import type { CombineContext, Group } from '../types';
  * links to (`FormReading`: a kanji form reads as its ruby, which is its first kana
  * reading) and shows numbers without a reading, while our reading is Sudachi's until these settle it.
  */
-
-const SYMBOL_CLASSES = new Set(['SupplementarySymbol', 'BlankSpace', 'Symbol']);
 
 /** Up to three characters of the text after group `i`, which the alignment reads to pick 来 and 得's readings. */
 function trailingText(groups: readonly Group[], i: number): string {
@@ -102,7 +111,7 @@ export function linkReadings(groups: Group[], ctx: CombineContext): Group[] {
     out[i] = group;
   };
   groups.forEach((group, i) => {
-    if (SYMBOL_CLASSES.has(group.cls) || group.flags.pin !== undefined || /^[0-9０-９]/.test(group.s)) return;
+    if (isSymbolClass(group.cls) || group.flags.pin !== undefined || /^[0-9０-９]/.test(group.s)) return;
     const unread = !isKatakanaReading(group.r);
     if (!hasKanji(group.s)) {
       if (unread && isAllKana(group.s)) replace(i, { ...group, r: toKatakana(group.s) });
@@ -204,17 +213,6 @@ export function kanjiNumeral(value: bigint): string {
   return out;
 }
 
-const VOWELS: Record<string, string> = {};
-for (const [vowel, row] of [
-  ['a', 'あかさたなはまやらわがざだばぱぁゃ'],
-  ['i', 'いきしちにひみりぎじぢびぴぃ'],
-  ['u', 'うくすつぬふむゆるぐずづぶぷぅゅ'],
-  ['e', 'えけせてねへめれげぜでべぺぇ'],
-  ['o', 'おこそとのほもよろをごぞどぼぽぉょ'],
-] as const) {
-  for (const kana of row) VOWELS[kana] = vowel;
-}
-
 /** Whether a dictionary reading of a counted amount ends in the counter Sudachi read, allowing only the sound change
  * of the counter's first kana (ほん → ぽん, さい → さい): 三戦 is さんせん, not the karate kata さんちん. */
 function endsInCounter(reading: string, counter: string): boolean {
@@ -223,7 +221,7 @@ function endsInCounter(reading: string, counter: string): boolean {
   const tail = rest.join('');
   if (!reading.endsWith(tail)) return false;
   const changed = chars[chars.length - rest.length - 1];
-  return !!changed && VOWELS[changed] !== undefined && VOWELS[changed] === VOWELS[first];
+  return !!changed && vowelRow(changed) >= 0 && vowelRow(changed) === vowelRow(first);
 }
 
 /** The reading (katakana) JMdict gives a spelling of an amount: the first reading of its most common word, which
@@ -275,7 +273,7 @@ export function readAmounts(groups: Group[], ctx: CombineContext): Group[] {
   };
   groups.forEach((group, i) => {
     const match = /^([0-9０-９]+)([万億兆]?)(.*)$/u.exec(group.s);
-    if (!match || SYMBOL_CLASSES.has(group.cls)) return;
+    if (!match || isSymbolClass(group.cls)) return;
     const [, digits = '', unit = '', counter = ''] = match;
     if (/[0-9０-９]/.test(counter) || ![...counter].every((char) => isKanji(char) || isKana(char))) return;
     const plain = narrowDigits(digits);

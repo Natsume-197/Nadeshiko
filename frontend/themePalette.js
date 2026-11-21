@@ -181,9 +181,7 @@ export function lightFaintTextRules(selector) {
 const HEADER_KEYS = () =>
   Object.keys(paletteVariables('dark')).filter(
     (key) =>
-      !key.startsWith('--c-') ||
-      ['--c-white', '--c-black', '--c-border-default'].includes(key) ||
-      GREYS.some((g) => key.startsWith(`--c-${g}-`)),
+      ['--c-white', '--c-black', '--c-border-default'].includes(key) || GREYS.some((g) => key.startsWith(`--c-${g}-`)),
   );
 
 export function accentHeaderRules(root) {

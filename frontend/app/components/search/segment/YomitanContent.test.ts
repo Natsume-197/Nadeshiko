@@ -1,6 +1,9 @@
 // @vitest-environment happy-dom
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
+
+// The page's locale prefix, so the cross-references are seen to keep it.
+vi.stubGlobal('useLocalePath', () => (path: string) => `/es${path}`);
 import YomitanContent from './YomitanContent.vue';
 import { candidateSummary, cardSenses, glossPreference, type DictionaryWord } from '~/utils/wordCard';
 
@@ -32,7 +35,7 @@ describe('YomitanContent & custom dictionary card senses', () => {
     expect(links[1]?.attributes('href')).toBeUndefined();
   });
 
-  it("turns Yomitan's ?query= cross-references into searches on Nadeshiko", () => {
+  it("turns Yomitan's ?query= cross-references into searches on Nadeshiko, in the page's locale", () => {
     const wrapper = mount(YomitanContent, {
       props: {
         content: [
@@ -44,7 +47,7 @@ describe('YomitanContent & custom dictionary card senses', () => {
     });
 
     const links = wrapper.findAll('a');
-    expect(links[0]?.attributes('href')).toBe(`/search/${encodeURIComponent('見る')}`);
+    expect(links[0]?.attributes('href')).toBe(`/es/search/${encodeURIComponent('見る')}`);
     expect(links[0]?.attributes('target')).toBeUndefined();
     expect(links[1]?.attributes('href')).toBeUndefined();
   });
@@ -148,7 +151,7 @@ describe("a monolingual entry's structure kept in its text", () => {
       '〔俗〕',
     ]);
     // The cross-reference stays a search link on its line.
-    expect(lines[5]?.find('a').attributes('href')).toBe(`/search/${encodeURIComponent('彼氏')}`);
+    expect(lines[5]?.find('a').attributes('href')).toBe(`/es/search/${encodeURIComponent('彼氏')}`);
   });
 
   it('leaves content that is already in blocks as the dictionary built it', () => {

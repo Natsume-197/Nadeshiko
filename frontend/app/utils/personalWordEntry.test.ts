@@ -38,13 +38,12 @@ describe("the search entry with the reader's own dictionaries", () => {
     const answer = personalEntryFrom(
       [word('橋', ['custom:1', 'jmdict']), word('箸', ['jmdict'], { frequency: 900 })],
       'はし',
-      'en',
     );
     expect(answer).toBeNull();
 
     const kana = [word('はし', ['custom:1', 'jmdict']), word('はし', ['jmdict'], { id: 'jmdict:端', frequency: 900 })];
-    expect(personalEntryFrom(kana, 'はし', 'en')?.entry?.entries?.[0]?.dictionary).toBe('custom:1');
-    expect(personalEntryFrom([word('猫', ['jmdict'])], '猫', 'en')).toBeNull();
+    expect(personalEntryFrom(kana, 'はし')?.entry?.entries?.[0]?.dictionary).toBe('custom:1');
+    expect(personalEntryFrom([word('猫', ['jmdict'])], '猫')).toBeNull();
   });
 
   it("asks the reader's private word-card route and gives up quietly on failure", async () => {

@@ -11,16 +11,13 @@
  */
 
 import { AUXILIARY_VERB_STEMS, COMPOUND_VERB_SPLIT_SUFFIXES } from '../data/ruleData';
-import { deconj, hasSection, known, knownVerbOrAdjective, SECTION } from '../group';
+import { deconj, hasSection, isSymbolClass, known, knownVerbOrAdjective, SECTION } from '../group';
 import { deconjugationKey, hasKanji } from '../kana';
-import { cpLength, recut, scanRewrite } from '../recut';
+import { recut, scanRewrite } from '../recut';
+import { chars, cpLength, head, lastChar, tail } from '../text';
 import type { CombineContext, Group } from '../types';
 
 const SAHEN_SURU = 1157170;
-const chars = (text: string) => [...text];
-const head = (text: string, n: number) => chars(text).slice(0, n).join('');
-const tail = (text: string, n: number) => chars(text).slice(n).join('');
-const lastChar = (text: string) => chars(text).at(-1) ?? '';
 
 /** Splits Sudachi aux-verb compounds absent from JMDict into their parts (し終わっ → し + 終わっ). */
 export function splitCompoundAuxiliaryVerbs(groups: Group[], ctx: CombineContext): Group[] {
@@ -178,7 +175,7 @@ export function splitTanSuffix(groups: Group[], ctx: CombineContext): Group[] {
       return 0;
     const prev = list[i - 1] as Group;
     // Departure: a blank or symbol is no verb stem, though the deconjugator reads " た" as a past.
-    if (['Symbol', 'SupplementarySymbol', 'BlankSpace'].includes(prev.cls)) return 0;
+    if (isSymbolClass(prev.cls)) return 0;
     const ending = lastChar(prev.s);
     // The verb must exist, or a name + たん (るみたん) reads as a past tense.
     const isPastOfRealVerb = deconj(ctx, `${prev.s}た`).some(

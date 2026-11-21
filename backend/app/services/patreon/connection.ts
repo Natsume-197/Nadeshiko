@@ -56,15 +56,9 @@ export function isPatreonConfigured(): boolean {
 }
 
 function assertConfigured() {
-  if (
-    !config.PATREON_OAUTH_CLIENT_ID ||
-    !config.PATREON_OAUTH_CLIENT_SECRET ||
-    !config.PATREON_OAUTH_REDIRECT_URI ||
-    !config.PATREON_CAMPAIGN_ID
-  ) {
+  if (!isPatreonConfigured()) {
     throw new ValidationFailedError({ connection: 'Patreon linking is not configured on this server.' });
   }
-  secret();
 }
 
 export function startPatreonLink(userId: number) {
@@ -150,6 +144,7 @@ export function membershipFrom(response: IdentityResponse) {
 async function warnOnUnmatchedTiers(connection: PatreonConnection): Promise<void> {
   if (connection.patronStatus !== 'active_patron') return;
   try {
+    // Fresh, not the quota cache: a tier mapped minutes ago must count, and this runs once per refresh.
     const tiers = await Tier.find();
     const now = connection.membershipCheckedAt.getTime();
     if (patreonQuotaTier(tiers, connection, now)) return;
