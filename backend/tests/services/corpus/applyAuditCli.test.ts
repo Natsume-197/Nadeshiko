@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 import { mkdtemp, writeFile, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import type { DeepPartial } from 'typeorm';
 import { TestDataSource } from '../../helpers/setup';
 import { seedCoreFixtures, type CoreFixtures } from '../../fixtures/core';
@@ -139,7 +140,8 @@ it('CLI protects and verifies changed audio, restores selected offsets and repai
             '--import',
             'tsx',
             '--import',
-            preload,
+            // `--import` takes a URL; a bare `C:\...` path fails on Windows.
+            pathToFileURL(preload).href,
             'bin/applyCorpusAudit.ts',
             '--manifest',
             manifestPath,
@@ -207,7 +209,8 @@ it('CLI protects and verifies changed audio, restores selected offsets and repai
             '--import',
             'tsx',
             '--import',
-            preload,
+            // `--import` takes a URL; a bare `C:\...` path fails on Windows.
+            pathToFileURL(preload).href,
             'bin/verifyCorpusAuditReconciliation.ts',
             '--plan',
             planPath,
