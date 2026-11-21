@@ -7774,7 +7774,16 @@ export type UpdateAdminRoadmapItemResponse = UpdateAdminRoadmapItemResponses[key
 export type GetSessionData = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        /**
+         * Disable cookie cache and fetch session from database
+         */
+        disableCookieCache?: boolean;
+        /**
+         * Disable session refresh. Useful for checking session status, without updating the session
+         */
+        disableRefresh?: boolean;
+    };
     url: '/v1/auth/get-session';
 };
 
@@ -7836,7 +7845,16 @@ export type GetSessionPostData = {
         [key: string]: unknown;
     };
     path?: never;
-    query?: never;
+    query?: {
+        /**
+         * Disable cookie cache and fetch session from database
+         */
+        disableCookieCache?: boolean;
+        /**
+         * Disable session refresh. Useful for checking session status, without updating the session
+         */
+        disableRefresh?: boolean;
+    };
     url: '/v1/auth/get-session';
 };
 
@@ -8882,7 +8900,32 @@ export type AuthApiKeyCreateResponse = AuthApiKeyCreateResponses[keyof AuthApiKe
 export type AuthApiKeyListData = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        /**
+         * Filter by configuration ID. If not provided, returns keys from all configurations.
+         */
+        configId?: string;
+        /**
+         * Organization ID to list keys for. If provided, returns organization-owned keys. If not provided, returns user-owned keys.
+         */
+        organizationId?: string;
+        /**
+         * The number of API keys to return
+         */
+        limit?: number;
+        /**
+         * The offset to start from
+         */
+        offset?: number;
+        /**
+         * The field to sort by (e.g., createdAt, name, expiresAt)
+         */
+        sortBy?: string;
+        /**
+         * The direction to sort by
+         */
+        sortDirection?: 'asc' | 'desc';
+    };
     url: '/v1/auth/api-key/list';
 };
 

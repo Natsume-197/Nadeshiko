@@ -4699,7 +4699,18 @@ paths:
       operationId: getSession
       security:
         - bearerAuth: []
-      parameters: []
+      parameters:
+        - name: disableCookieCache
+          in: query
+          schema:
+            type: boolean
+            description: Disable cookie cache and fetch session from database
+        - name: disableRefresh
+          in: query
+          schema:
+            type: boolean
+            description: Disable session refresh. Useful for checking session status,
+              without updating the session
       responses:
         "200":
           description: Success
@@ -4786,7 +4797,18 @@ paths:
       operationId: getSessionPost
       security:
         - bearerAuth: []
-      parameters: []
+      parameters:
+        - name: disableCookieCache
+          in: query
+          schema:
+            type: boolean
+            description: Disable cookie cache and fetch session from database
+        - name: disableRefresh
+          in: query
+          schema:
+            type: boolean
+            description: Disable session refresh. Useful for checking session status,
+              without updating the session
       requestBody:
         content:
           application/json:
@@ -6237,7 +6259,42 @@ paths:
       operationId: authApiKeyList
       security:
         - bearerAuth: []
-      parameters: []
+      parameters:
+        - name: configId
+          in: query
+          schema:
+            type: string
+            description: Filter by configuration ID. If not provided, returns keys from all
+              configurations.
+        - name: organizationId
+          in: query
+          schema:
+            type: string
+            description: Organization ID to list keys for. If provided, returns
+              organization-owned keys. If not provided, returns user-owned keys.
+        - name: limit
+          in: query
+          schema:
+            type: number
+            description: The number of API keys to return
+        - name: offset
+          in: query
+          schema:
+            type: number
+            description: The offset to start from
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            description: The field to sort by (e.g., createdAt, name, expiresAt)
+        - name: sortDirection
+          in: query
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+            description: The direction to sort by
       responses:
         "200":
           description: API keys retrieved successfully

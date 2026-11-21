@@ -455,8 +455,8 @@ export type NadeshikoClient = {
       (params: Types.UpdateAdminRoadmapItemData['path'] & NonNullable<Types.UpdateAdminRoadmapItemData['body']>): Promise<Types.UpdateAdminRoadmapItemResponse>;
     };
     getSession: {
-      (params: { throwOnError: false }): Promise<{ data: Types.GetSessionResponse; response: Response; request: Request } | { error: Types.GetSessionErrors; response: Response; request: Request }>;
-      (): Promise<Types.GetSessionResponse>;
+      (params: NonNullable<Types.GetSessionData['query']> & { throwOnError: false }): Promise<{ data: Types.GetSessionResponse; response: Response; request: Request } | { error: Types.GetSessionErrors; response: Response; request: Request }>;
+      (params?: NonNullable<Types.GetSessionData['query']>): Promise<Types.GetSessionResponse>;
     };
     getSessionPost: {
       (params: NonNullable<Types.GetSessionPostData['body']> & { throwOnError: false }): Promise<{ data: Types.GetSessionPostResponse; response: Response; request: Request } | { error: Types.GetSessionPostErrors; response: Response; request: Request }>;
@@ -507,8 +507,8 @@ export type NadeshikoClient = {
       (params?: NonNullable<Types.AuthApiKeyCreateData['body']>): Promise<Types.AuthApiKeyCreateResponse>;
     };
     authApiKeyList: {
-      (params: { throwOnError: false }): Promise<{ data: Types.AuthApiKeyListResponse; response: Response; request: Request } | { error: Types.AuthApiKeyListErrors; response: Response; request: Request }>;
-      (): Promise<Types.AuthApiKeyListResponse>;
+      (params: NonNullable<Types.AuthApiKeyListData['query']> & { throwOnError: false }): Promise<{ data: Types.AuthApiKeyListResponse; response: Response; request: Request } | { error: Types.AuthApiKeyListErrors; response: Response; request: Request }>;
+      (params?: NonNullable<Types.AuthApiKeyListData['query']>): Promise<Types.AuthApiKeyListResponse>;
     };
     authApiKeyUpdate: {
       (params: NonNullable<Types.AuthApiKeyUpdateData['body']> & { throwOnError: false }): Promise<{ data: Types.AuthApiKeyUpdateResponse; response: Response; request: Request } | { error: Types.AuthApiKeyUpdateErrors; response: Response; request: Request }>;
@@ -1348,8 +1348,8 @@ export function createNadeshikoClient(config: NadeshikoConfig): NadeshikoClient 
   };
 
   const _getSession = (params?: any) => {
-    const tOE = params?.throwOnError;
-    const p = getSession({ client: clientInstance, throwOnError: tOE === false ? false : true } as any);
+    const { throwOnError: tOE, ...query } = params ?? {};
+    const p = getSession({ ...(Object.keys(query).length > 0 ? { query } : {}), client: clientInstance, throwOnError: tOE === false ? false : true } as any);
     return tOE === false ? p : p.then((r: any) => r.data);
   };
 
@@ -1426,8 +1426,8 @@ export function createNadeshikoClient(config: NadeshikoConfig): NadeshikoClient 
   };
 
   const _authApiKeyList = (params?: any) => {
-    const tOE = params?.throwOnError;
-    const p = authApiKeyList({ client: clientInstance, throwOnError: tOE === false ? false : true } as any);
+    const { throwOnError: tOE, ...query } = params ?? {};
+    const p = authApiKeyList({ ...(Object.keys(query).length > 0 ? { query } : {}), client: clientInstance, throwOnError: tOE === false ? false : true } as any);
     return tOE === false ? p : p.then((r: any) => r.data);
   };
 
