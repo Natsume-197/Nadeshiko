@@ -57,6 +57,8 @@ export function ffmpegOpus(ffmpeg = 'ffmpeg'): Encoder {
           ? resolve(Buffer.concat(out))
           : reject(new Error(`ffmpeg exited ${code}: ${Buffer.concat(err).toString().trim()}`)),
       );
+      // An ffmpeg that dies before reading its input makes the write fail (EPIPE); 'close' reports why.
+      child.stdin.on('error', () => undefined);
       child.stdin.end(wav);
     });
 }
