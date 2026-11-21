@@ -40,15 +40,48 @@ export interface VoicevoxClient {
   synthesis(query: AudioQuery): Promise<Buffer>;
 }
 
-export function httpVoicevox(baseUrl: string, speaker: number, fetchImpl: typeof fetch = fetch): VoicevoxClient {
+export interface RetryOptions {
+  /** Attempts per call, the first included. */
+  attempts?: number;
+  /** Wait before the first retry, doubled for each one after. */
+  firstWaitMs?: number;
+}
+
+/**
+ * A run makes over 100,000 clips for hours: a dropped connection or an engine restarting must not end it. A call
+ * that fails on the network or with a 5xx is retried with a doubling wait (1, 2, 4, 8, 16 s by default, about half a
+ * minute in all); a 4xx is the request's fault and fails at once. Still failing after that, the run stops, and a rerun
+ * makes only what is missing.
+ */
+export function httpVoicevox(
+  baseUrl: string,
+  speaker: number,
+  fetchImpl: typeof fetch = fetch,
+  { attempts = 6, firstWaitMs = 1000 }: RetryOptions = {},
+): VoicevoxClient {
   const base = baseUrl.replace(/\/$/, '');
   const call = async (path: string, body?: unknown): Promise<Response> => {
-    const response = await fetchImpl(`${base}${path}${path.includes('?') ? '&' : '?'}speaker=${speaker}`, {
-      method: 'POST',
-      ...(body === undefined ? {} : { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }),
-    });
-    if (!response.ok) throw new Error(`VOICEVOX ${path.split('?')[0]}: HTTP ${response.status}`);
-    return response;
+    const name = path.split('?')[0];
+    let failure: Error = new Error(`VOICEVOX ${name}: no attempt`);
+    for (let attempt = 1; attempt <= attempts; attempt++) {
+      if (attempt > 1) await new Promise((wake) => setTimeout(wake, firstWaitMs * 2 ** (attempt - 2)));
+      let response: Response;
+      try {
+        response = await fetchImpl(`${base}${path}${path.includes('?') ? '&' : '?'}speaker=${speaker}`, {
+          method: 'POST',
+          ...(body === undefined
+            ? {}
+            : { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }),
+        });
+      } catch (error) {
+        failure = new Error(`VOICEVOX ${name}: ${(error as Error).message}`, { cause: error });
+        continue;
+      }
+      if (response.ok) return response;
+      failure = new Error(`VOICEVOX ${name}: HTTP ${response.status}`);
+      if (response.status < 500) break;
+    }
+    throw failure;
   };
   return {
     audioQuery: async (text) =>

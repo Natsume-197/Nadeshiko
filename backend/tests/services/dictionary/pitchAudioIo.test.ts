@@ -38,14 +38,47 @@ describe('httpVoicevox', () => {
     expect(wav.toString('ascii')).toBe('RIFF');
   });
 
-  it('fails on an engine error', async () => {
-    const broken = httpVoicevox(
-      'http://127.0.0.1:50021',
-      2,
-      (async () => new Response('down', { status: 503 })) as unknown as typeof fetch,
-    );
+  /** A fetch that answers each call with the next of `replies` (an Error is thrown), counting the calls. */
+  const scripted = (replies: Array<Response | Error>) => {
+    let count = 0;
+    const fetchImpl = (async () => {
+      const reply = replies[Math.min(count++, replies.length - 1)];
+      if (reply instanceof Error) throw reply;
+      return reply;
+    }) as unknown as typeof fetch;
+    return { fetchImpl, calls: () => count };
+  };
+  const quick = { attempts: 3, firstWaitMs: 1 };
 
-    await expect(broken.audioQuery('はし')).rejects.toThrow('VOICEVOX /audio_query: HTTP 503');
+  it('retries a dropped connection or an engine error, and goes on when it answers', async () => {
+    const { fetchImpl, calls } = scripted([
+      new Error('read ECONNRESET'),
+      new Response('restarting', { status: 503 }),
+      Response.json({ accent_phrases: [] }),
+    ]);
+
+    await expect(httpVoicevox('http://127.0.0.1:50021', 2, fetchImpl, quick).audioQuery('はし')).resolves.toEqual({
+      accent_phrases: [],
+    });
+    expect(calls()).toBe(3);
+  });
+
+  it('gives up after the last attempt, saying why', async () => {
+    const { fetchImpl, calls } = scripted([new Response('down', { status: 503 })]);
+
+    await expect(httpVoicevox('http://127.0.0.1:50021', 2, fetchImpl, quick).audioQuery('はし')).rejects.toThrow(
+      'VOICEVOX /audio_query: HTTP 503',
+    );
+    expect(calls()).toBe(3);
+  });
+
+  it('does not retry a request the engine rejects', async () => {
+    const { fetchImpl, calls } = scripted([new Response('bad text', { status: 422 })]);
+
+    await expect(httpVoicevox('http://127.0.0.1:50021', 2, fetchImpl, quick).audioQuery('はし')).rejects.toThrow(
+      'HTTP 422',
+    );
+    expect(calls()).toBe(1);
   });
 });
 
