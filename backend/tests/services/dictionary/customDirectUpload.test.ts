@@ -17,7 +17,7 @@ import { seedCoreFixtures, type CoreFixtures } from '../../fixtures/core';
 import { buildZip } from '../../fixtures/yomitanZip';
 
 /**
- * Direct uploads of custom dictionaries (task 48, Shirabe lessons phase 2) against the test database: reserve, the
+ * Direct uploads of custom dictionaries (task 48) against the test database: reserve, the
  * browser's PUT (simulated: R2 is a map here), complete, and the sweep of expired reservations. Imports run for real.
  */
 

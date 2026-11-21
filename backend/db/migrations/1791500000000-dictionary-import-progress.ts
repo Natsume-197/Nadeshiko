@@ -1,7 +1,7 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 /**
- * Import progress for custom dictionaries (task 48, Shirabe lessons phase 1): when an import started, its last
+ * Import progress for custom dictionaries (task 48): when an import started, its last
  * heartbeat, and how far it got. A heartbeat older than a couple of minutes means the import died, and the row is
  * failed instead of staying "processing" until the queue's 30-minute expiry. A null start means it is still queued.
  */

@@ -1,7 +1,7 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 /**
- * Direct uploads of custom dictionaries to R2 (task 48, Shirabe lessons phase 2). The browser asks for a reservation,
+ * Direct uploads of custom dictionaries to R2 (task 48). The browser asks for a reservation,
  * gets a short-lived presigned PUT for one object of a declared size, uploads straight to R2, and completes it. A
  * reservation never completed expires; the nightly sweep deletes its object and row.
  */

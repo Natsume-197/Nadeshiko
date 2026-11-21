@@ -46,7 +46,7 @@ export const deleteUserDictionary: DeleteUserDictionary = async ({ params }, res
   return respond.with200().body(data);
 };
 
-/** Reserves a direct upload to R2 (Shirabe lessons, phase 2): the browser PUTs the file to the returned URL. */
+/** Reserves a direct upload to R2: the browser PUTs the file to the returned URL. */
 export const reserveUserDictionaryUpload: ReserveUserDictionaryUpload = async ({ body }, respond, req) => {
   assertCustomDictionariesEnabled();
   const user = assertUser(req);

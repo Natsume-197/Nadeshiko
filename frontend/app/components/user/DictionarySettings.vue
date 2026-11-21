@@ -302,7 +302,7 @@ function putWithProgress(url: string, headers: Record<string, string>, file: Fil
 }
 
 /**
- * Direct upload (Shirabe lessons, phase 2): reserve, PUT the file straight to storage, then complete. The archive
+ * Direct upload: reserve, PUT the file straight to storage, then complete. The archive
  * never goes through Nadeshiko's servers on the way in.
  */
 async function uploadDirect(file: File) {

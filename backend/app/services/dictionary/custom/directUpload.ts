@@ -17,7 +17,7 @@ import {
 import { attachOrQueueUploadedDictionary } from './service';
 
 /**
- * Direct uploads of custom dictionaries to R2 (task 48, Shirabe lessons phase 2).
+ * Direct uploads of custom dictionaries to R2 (task 48).
  *
  * The browser reserves an upload (`reserveDictionaryUpload`), PUTs the `.zip` straight to R2 with the presigned URL it
  * gets back, and completes it (`completeDictionaryUpload`). The archive never crosses the web app on the way in, so a

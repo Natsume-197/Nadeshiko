@@ -3,7 +3,7 @@ import { totalmem } from 'node:os';
 import { IMPORT_THREAD_HEAP_MB } from './importRunner';
 
 /**
- * Admits dictionary imports by memory rather than by a fixed count (Shirabe lessons, phase 1).
+ * Admits dictionary imports by memory rather than by a fixed count.
  *
  * The queue hands this container up to `USER_DICTIONARY_IMPORT_CONCURRENCY` jobs. The first one always runs; each
  * further one starts only while the container's anonymous memory (heap, buffers: what the kernel cannot drop) plus one
