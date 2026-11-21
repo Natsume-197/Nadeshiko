@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { unlink } from 'node:fs/promises';
 import { join } from 'node:path';
+import { In } from 'typeorm';
 import { config } from '@config/config';
 import { logger } from '@config/log';
 import { InvalidRequestError, NotFoundError } from '@app/errors';
@@ -10,6 +11,7 @@ import {
   deleteR2Object,
   downloadR2Object,
   getR2StorageConfig,
+  listStaleUploadObjects,
   presignDictionaryUpload,
   r2ObjectSize,
   r2UploadKey,
@@ -136,7 +138,17 @@ async function discardUpload(uploadId: string, objectKey: string): Promise<void>
   await UserDictionaryUpload.delete({ id: uploadId }).catch(() => {});
 }
 
-/** Deletes reservations that expired without being completed, with their objects. Returns how many. */
+/** An uploaded object with no reservation row this long after it was written is abandoned for certain: past any
+ * reservation's lifetime, with an hour to spare for a completion still reading it. */
+const ORPHAN_UPLOAD_AFTER_MS = UPLOAD_RESERVATION_SECONDS * 1000 + 60 * 60 * 1000;
+/** Orphaned upload objects one sweep deletes at most; the next run takes the rest. */
+const MAX_ORPHAN_UPLOADS_PER_SWEEP = 500;
+
+/**
+ * Deletes reservations that expired without being completed, with their objects, then uploaded objects no reservation
+ * row points to any more (deleting an account cascades its rows away, leaving their objects behind). Returns how many
+ * reservations and objects it removed.
+ */
 export async function sweepExpiredUploads(): Promise<number> {
   const expired = await UserDictionaryUpload.createQueryBuilder('u')
     .where("u.expires_at < now() - interval '5 minutes'")
@@ -144,5 +156,23 @@ export async function sweepExpiredUploads(): Promise<number> {
   for (const upload of expired) await discardUpload(upload.id, upload.objectKey);
   if (expired.length > 0)
     logger.info({ count: expired.length }, 'Removed expired custom dictionary upload reservations');
-  return expired.length;
+  const orphans = await sweepOrphanedUploadObjects().catch((error) => {
+    logger.warn({ err: error }, 'Could not sweep orphaned custom dictionary uploads');
+    return 0;
+  });
+  return expired.length + orphans;
+}
+
+async function sweepOrphanedUploadObjects(): Promise<number> {
+  const stale = await listStaleUploadObjects(
+    new Date(Date.now() - ORPHAN_UPLOAD_AFTER_MS),
+    MAX_ORPHAN_UPLOADS_PER_SWEEP,
+  );
+  if (stale.length === 0) return 0;
+  const held = await UserDictionaryUpload.find({ where: { objectKey: In(stale) }, select: { objectKey: true } });
+  const heldKeys = new Set(held.map((row) => row.objectKey));
+  const orphans = stale.filter((key) => !heldKeys.has(key));
+  for (const key of orphans) await deleteR2Object(key);
+  if (orphans.length > 0) logger.info({ count: orphans.length }, 'Removed orphaned custom dictionary uploads');
+  return orphans.length;
 }

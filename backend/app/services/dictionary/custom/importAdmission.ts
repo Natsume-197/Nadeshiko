@@ -7,7 +7,8 @@ import { IMPORT_THREAD_HEAP_MB } from './importRunner';
  *
  * The queue hands this container up to `USER_DICTIONARY_IMPORT_CONCURRENCY` jobs. The first one always runs; each
  * further one starts only while the container's anonymous memory (heap, buffers: what the kernel cannot drop) plus one
- * import's worth stays under a share of the container's limit, and waits otherwise. The page cache is left out on
+ * import's worth for each running import and for itself stays under a share of the container's limit, and waits
+ * otherwise. The page cache is left out on
  * purpose: SQLite files and zips fill it, and the kernel frees it under pressure.
  */
 
@@ -39,11 +40,18 @@ export async function readContainerMemory(): Promise<MemoryReading> {
   return { used: process.memoryUsage().rss, limit: totalmem() };
 }
 
-export function hasRoomForAnotherImport(reading: MemoryReading): boolean {
-  return reading.used + IMPORT_MEMORY_BYTES <= reading.limit * MAX_SHARE;
+/**
+ * Room for one more import on top of `admitted` already running. Those are counted at a full budget each even though
+ * the reading may already include some of what they use: one admitted a moment ago has not allocated yet, and the
+ * reading cannot tell the two apart, so this errs on the side of waiting.
+ */
+export function hasRoomForAnotherImport(reading: MemoryReading, admitted = 0): boolean {
+  return reading.used + (admitted + 1) * IMPORT_MEMORY_BYTES <= reading.limit * MAX_SHARE;
 }
 
 let running = 0;
+/** Admission decisions run one at a time, in arrival order, so two waiters cannot both pass on the same reading. */
+let admissionTail: Promise<void> = Promise.resolve();
 
 /** Number of imports running in this process right now. */
 export function runningImports(): number {
@@ -54,17 +62,21 @@ export function runningImports(): number {
  * Waits until this import may start, then counts it as running. Pair every call with `releaseImportSlot`.
  * `read` and `sleep` are injectable for tests.
  */
-export async function acquireImportSlot(
+export function acquireImportSlot(
   read: () => Promise<MemoryReading> = readContainerMemory,
   sleep: (ms: number) => Promise<void> = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
 ): Promise<void> {
-  for (;;) {
-    if (running === 0 || hasRoomForAnotherImport(await read())) {
-      running += 1;
-      return;
+  const turn = admissionTail.then(async () => {
+    for (;;) {
+      if (running === 0 || hasRoomForAnotherImport(await read(), running)) {
+        running += 1;
+        return;
+      }
+      await sleep(RECHECK_MS);
     }
-    await sleep(RECHECK_MS);
-  }
+  });
+  admissionTail = turn.catch(() => {});
+  return turn;
 }
 
 export function releaseImportSlot(): void {

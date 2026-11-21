@@ -7,6 +7,7 @@ import { pipeline } from 'node:stream/promises';
 import type { JMdictDictionaryMetadata, JMdictWord, JMnedictWord } from '@scriptin/jmdict-simplified-types';
 import type { DataSource } from 'typeorm';
 import { logger } from '@config/log';
+import { invalidateLexicon } from '@app/services/parser/combine/lexicon';
 import { type DictionarySource, fromJmdict, fromJmnedict, type ImportEntry } from './import/entries';
 import { importDictionary, importFurigana } from './import/importDictionary';
 import { importKanjidic, importKradfile } from './import/importKanji';
@@ -128,6 +129,8 @@ export async function refreshDictionary(dataSource: DataSource): Promise<Refresh
     }
   } finally {
     await rm(dir, { recursive: true, force: true });
+    // The parser reads JMdict from `dict.*` once into memory; a new release must reach it without a restart.
+    if (outcomes.some((outcome) => outcome.result === 'imported')) invalidateLexicon(dataSource);
   }
 
   return outcomes;

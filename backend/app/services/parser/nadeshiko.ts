@@ -58,40 +58,59 @@ function byReading(candidates: Array<{ reading: string; segments: RubySegment[] 
     .map((candidate) => candidate.segments);
 }
 
+/**
+ * A sentence split once for its tokens. The parser counts offsets in code points (Sudachi and `preprocess` both do),
+ * but every reader of a token's `b`/`e` slices the JavaScript string, which counts UTF-16 units: 𠮟 or an emoji is one
+ * code point and two units. `utf16[i]` is where code point `i` starts, so offsets are converted once, here.
+ */
+export interface SentenceText {
+  chars: readonly string[];
+  utf16: readonly number[];
+}
+
+export function sentenceText(text: string): SentenceText {
+  const chars = [...text];
+  const utf16 = [0];
+  for (const char of chars) utf16.push((utf16.at(-1) as number) + char.length);
+  return { chars, utf16 };
+}
+
 /** The finer pieces inside a token: its Sudachi morphemes when it groups several, else that morpheme's A units. */
-function partsOf(group: Group): TokenPart[] | undefined {
-  if (group.members.length > 1) return group.members.map((member) => ({ s: member.s, b: member.b, e: member.e }));
-  const pieces = group.members[0]?.a ?? [];
-  return pieces.length > 1 ? pieces.map((piece) => ({ s: piece.s, b: piece.b, e: piece.e })) : undefined;
+function partsOf(group: Group, at: (point: number) => number): TokenPart[] | undefined {
+  const pieces = group.members.length > 1 ? group.members : (group.members[0]?.a ?? []);
+  if (pieces.length <= 1) return undefined;
+  return pieces.map((piece) => ({ s: piece.s, b: at(piece.b), e: at(piece.e) }));
 }
 
 export function toSlimToken(
   group: Group,
-  /** The sentence, or its code points (split once per sentence by the caller). */
-  sentence: string | readonly string[],
+  /** The sentence, or {@link sentenceText} of it (split once per sentence by the caller). */
+  sentence: string | SentenceText,
   rubies: Map<string, Array<{ reading: string; segments: RubySegment[] }>>,
 ): SlimToken {
+  const text = typeof sentence === 'string' ? sentenceText(sentence) : sentence;
+  // Offsets past the sentence (never expected) are kept as they are rather than turned into NaN.
+  const at = (point: number) => text.utf16[point] ?? point;
   const pos = tokenPos(group.pos, group.kind, group.d);
   const token: SlimToken = {
     s: group.s,
     d: group.d || group.s,
     // Symbols read as themselves, as the current parser stores them.
     r: pos.posLabel === 'Symbol' || !group.r ? group.s : group.r,
-    b: group.b,
-    e: group.e,
+    b: at(group.b),
+    e: at(group.e),
     p: pos.p,
     kind: group.kind,
     posLabel: pos.posLabel,
   };
   if (pos.pt) token.pt = pos.pt;
 
-  const parts = partsOf(group);
+  const parts = partsOf(group, at);
   if (parts) token.parts = parts;
 
   if (hasKanji(group.s)) {
     const candidates = [...(rubies.get(group.d) ?? []), ...(group.n !== group.d ? (rubies.get(group.n) ?? []) : [])];
-    const chars = typeof sentence === 'string' ? [...sentence] : sentence;
-    const trailing = chars.slice(group.e, group.e + 3).join('');
+    const trailing = text.chars.slice(group.e, group.e + 3).join('');
     const f = surfaceFurigana(group.s, { rubies: byReading(candidates, group.r), reading: group.r, trailing });
     if (f) token.f = f;
   }
@@ -122,7 +141,7 @@ export async function parseWithNadeshiko(dataSource: DataSource, texts: string[]
   const rubies = await rubiesFor(dataSource, [...spellings]);
 
   return sentences.map((groups, index) => {
-    const chars = [...(texts[index] ?? '')];
-    return groups.filter((group) => group.s !== '').map((group) => toSlimToken(group, chars, rubies));
+    const text = sentenceText(texts[index] ?? '');
+    return groups.filter((group) => group.s !== '').map((group) => toSlimToken(group, text, rubies));
   });
 }

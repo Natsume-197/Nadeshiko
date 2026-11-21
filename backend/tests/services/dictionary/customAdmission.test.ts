@@ -56,6 +56,28 @@ describe('import admission', () => {
     expect(runningImports()).toBe(2);
   });
 
+  it('counts running imports against the budget', () => {
+    const reading = { used: 0.4 * GB, limit: 1.5 * GB };
+    expect(hasRoomForAnotherImport(reading, 1)).toBe(true);
+    expect(hasRoomForAnotherImport(reading, 2)).toBe(false);
+  });
+
+  it('decides concurrent admissions one at a time, so two waiters cannot pass on the same reading', async () => {
+    await acquireImportSlot();
+    // Room for one more import beside the running one, not for two.
+    const read = async () => ({ used: 0.4 * GB, limit: 1.5 * GB });
+    let sleeps = 0;
+    const sleep = async () => {
+      sleeps += 1;
+      // Frees the first import's slot while the third waits.
+      if (sleeps === 1) releaseImportSlot();
+    };
+    await Promise.all([acquireImportSlot(read, sleep), acquireImportSlot(read, sleep)]);
+    // The third waited for the first to finish instead of starting on the reading the second passed.
+    expect(sleeps).toBe(1);
+    expect(runningImports()).toBe(2);
+  });
+
   it('never counts below zero', () => {
     releaseImportSlot();
     expect(runningImports()).toBe(0);

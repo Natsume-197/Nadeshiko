@@ -61,8 +61,10 @@ const quotaPercent = computed(() => {
   return Math.min(100, Math.round((data.value.quota.used / data.value.quota.max) * 100));
 });
 
+// At the limit, a failed dictionary can still be uploaded again (the server allows it), so the picker stays open.
 const atQuotaLimit = computed(() => {
   if (!data.value) return false;
+  if (data.value.dictionaries.some((dict) => dict.status === 'failed')) return false;
   return data.value.quota.used >= data.value.quota.max;
 });
 

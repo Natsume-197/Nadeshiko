@@ -9,6 +9,7 @@ import {
   DeleteObjectCommand,
   GetObjectCommand,
   HeadObjectCommand,
+  ListObjectsV2Command,
   NotFound,
   NoSuchKey,
   PutObjectCommand,
@@ -108,6 +109,37 @@ function isNotFound(error: unknown): boolean {
 /** Object key for a direct `.zip` upload, kept apart from the indexed files under the same prefix. */
 export function r2UploadKey(uploadId: string, prefix: string): string {
   return prefixed(prefix, `uploads/${uploadId}.zip`);
+}
+
+/** Pages one listing of the uploads prefix reads at most (1000 keys each), so a sweep stays bounded. */
+const MAX_UPLOAD_LIST_PAGES = 10;
+
+/**
+ * Keys of direct-upload objects (`<prefix>/uploads/`) last written before `before`, at most `limit` of them. Empty
+ * when R2 is not configured.
+ */
+export async function listStaleUploadObjects(before: Date, limit: number): Promise<string[]> {
+  const r2 = getR2StorageConfig();
+  if (!r2) return [];
+  const keys: string[] = [];
+  let token: string | undefined;
+  for (let page = 0; page < MAX_UPLOAD_LIST_PAGES; page += 1) {
+    const listed = await r2Client(r2).send(
+      new ListObjectsV2Command({
+        Bucket: r2.bucket,
+        Prefix: prefixed(r2.prefix, 'uploads/'),
+        ContinuationToken: token,
+      }),
+    );
+    for (const object of listed.Contents ?? []) {
+      if (!object.Key || !object.LastModified || object.LastModified >= before) continue;
+      keys.push(object.Key);
+      if (keys.length >= limit) return keys;
+    }
+    if (!listed.IsTruncated || !listed.NextContinuationToken) break;
+    token = listed.NextContinuationToken;
+  }
+  return keys;
 }
 
 /**
@@ -215,6 +247,8 @@ export async function deleteArtifactFromR2(storageKey: string): Promise<void> {
 
 /**
  * Checks whether an artifact exists either locally or in R2 (used for instant SHA-256 deduplication across deploys).
+ * Only a 404 means missing; any other R2 failure throws, because a caller treats "missing" as licence to purge and
+ * rebuild a shared artifact.
  */
 export async function artifactExistsInStorage(storageKey: string): Promise<boolean> {
   const localPath = artifactSqlitePath(config.USER_DICTIONARIES_DIR, storageKey);
@@ -226,8 +260,9 @@ export async function artifactExistsInStorage(storageKey: string): Promise<boole
   try {
     await r2Client(r2).send(new HeadObjectCommand({ Bucket: r2.bucket, Key: r2ObjectKey(storageKey, r2.prefix) }));
     return true;
-  } catch {
-    return false;
+  } catch (error) {
+    if (isNotFound(error)) return false;
+    throw error;
   }
 }
 

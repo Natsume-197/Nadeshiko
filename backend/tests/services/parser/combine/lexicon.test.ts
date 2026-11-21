@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { DataSource } from 'typeorm';
 import { InMemoryLexicon, loadLexicon } from '@app/services/parser/combine';
+import { invalidateLexicon } from '@app/services/parser/combine/lexicon';
 import { classMask, readingOfForm } from '@app/services/parser/combine/lexicon';
 
 describe('InMemoryLexicon', () => {
@@ -133,5 +134,29 @@ describe('loadLexicon', () => {
     expect(lexicon.hasClass('する', 'usual-kana')).toBe(true);
     expect(lexicon.hasClass('ひく', 'usual-kana')).toBe(false);
     expect(query.mock.calls.some(([sql]) => String(sql).includes("source = 'corpus' DESC"))).toBe(true);
+  });
+});
+
+describe('invalidateLexicon', () => {
+  it('re-reads the lexicon in the background after an import, serving the old copy until the new one lands', async () => {
+    let round = 0;
+    const query = vi.fn(async (sql: string) =>
+      sql.includes('json_agg') ||
+      sql.includes('dict.collocation') ||
+      sql.includes('dict.frequency') ||
+      sql.includes("'uk'")
+        ? []
+        : [{ key: round === 0 ? '古い' : '新しい', pos: ['n'] }],
+    );
+    const dataSource = { query } as unknown as DataSource;
+    const first = await loadLexicon(dataSource);
+    expect(first.has('古い')).toBe(true);
+
+    round = 1;
+    invalidateLexicon(dataSource);
+    // The call that notices the invalidation still gets the old copy, and starts the re-read.
+    expect(await loadLexicon(dataSource)).toBe(first);
+    await vi.waitFor(async () => expect((await loadLexicon(dataSource)).has('新しい')).toBe(true));
+    expect(query).toHaveBeenCalledTimes(10);
   });
 });

@@ -66,6 +66,8 @@ vi.mock('@app/services/dictionary/custom/r2Storage', async (importOriginal) => {
     deleteR2Object: vi.fn(async (key: string) => {
       bucket.delete(key);
     }),
+    // Every object counts as old here; the age cut-off is r2Storage's own (tested with it).
+    listStaleUploadObjects: vi.fn(async () => [...bucket.keys()].filter((key) => key.includes('/uploads/'))),
   };
 });
 
@@ -222,5 +224,17 @@ describe('direct uploads', () => {
     expect(await sweepExpiredUploads()).toBe(1);
     expect(bucket.has(forgotten.key)).toBe(false);
     expect(await UserDictionaryUpload.count()).toBe(0);
+  });
+
+  it('sweeps uploaded objects whose reservation row is gone (account deleted), and keeps held ones', async () => {
+    const held = await reserveAndPut(dictionaryZip('保持'));
+    const orphaned = await reserveAndPut(dictionaryZip('孤児'));
+    // What deleting the account does to its reservations: ON DELETE CASCADE, objects left behind.
+    await UserDictionaryUpload.delete({ id: orphaned.uploadId });
+
+    expect(await sweepExpiredUploads()).toBe(1);
+    expect(bucket.has(orphaned.key)).toBe(false);
+    expect(bucket.has(held.key)).toBe(true);
+    expect(await UserDictionaryUpload.count()).toBe(1);
   });
 });

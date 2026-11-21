@@ -183,20 +183,56 @@ export function classMask(tags: readonly string[]): number {
   return mask;
 }
 
-const loaded = new WeakMap<DataSource, Promise<Lexicon>>();
+/** The weekly dictionary refresh invalidates the process that ran it; this bounds how stale the others can be. */
+const LEXICON_TTL_MS = 24 * 60 * 60 * 1000;
+
+interface LoadedLexicon {
+  /** The lexicon being served. */
+  current: Promise<Lexicon>;
+  loadedAt: number;
+  /** A reload under way; `current` keeps serving until it lands. */
+  reloading?: Promise<Lexicon>;
+  stale?: boolean;
+}
+
+const loaded = new WeakMap<DataSource, LoadedLexicon>();
 
 /**
  * Every spelling of an active JMdict word (`dict.lookup` holds each form and its hiragana), with the POS classes of
- * the word's senses. Read once per data source; about 600k keys.
+ * the word's senses. About 600k keys, read once per data source and re-read after a dictionary import or a day, in
+ * the background: parsing keeps the previous copy until the new one is ready.
  */
 export function loadLexicon(dataSource: DataSource): Promise<Lexicon> {
-  let pending = loaded.get(dataSource);
-  if (!pending) {
-    pending = readLexicon(dataSource);
-    loaded.set(dataSource, pending);
-    pending.catch(() => loaded.delete(dataSource));
+  const entry = loaded.get(dataSource);
+  if (!entry) {
+    const current = readLexicon(dataSource);
+    loaded.set(dataSource, { current, loadedAt: Date.now() });
+    current.catch(() => loaded.delete(dataSource));
+    return current;
   }
-  return pending;
+  if (!entry.reloading && (entry.stale || Date.now() - entry.loadedAt > LEXICON_TTL_MS)) {
+    const reloading = readLexicon(dataSource);
+    entry.reloading = reloading;
+    reloading.then(
+      () => {
+        entry.current = reloading;
+        entry.loadedAt = Date.now();
+        entry.stale = false;
+        entry.reloading = undefined;
+      },
+      () => {
+        // Keep serving the old copy; the next call tries again.
+        entry.reloading = undefined;
+      },
+    );
+  }
+  return entry.current;
+}
+
+/** Re-read the lexicon on next use, after an import changed `dict.*`. */
+export function invalidateLexicon(dataSource: DataSource): void {
+  const entry = loaded.get(dataSource);
+  if (entry) entry.stale = true;
 }
 
 async function readLexicon(dataSource: DataSource): Promise<Lexicon> {

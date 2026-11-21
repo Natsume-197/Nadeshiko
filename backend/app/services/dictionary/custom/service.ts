@@ -395,17 +395,28 @@ export async function processArtifactImportJob(artifactId: number, tmpZipPath: s
     return;
   }
 
-  const targetPath = artifactSqlitePath(config.USER_DICTIONARIES_DIR, artifact.storageKey);
+  // Every write below is conditional on the row still being this job's: the reader may delete the dictionary while it
+  // indexes (the row is deleted), or a stalled import may be re-queued under a new storage key. A plain `save()` would
+  // re-insert a deleted row or overwrite the newer key.
+  const storageKey = artifact.storageKey;
+  const ours = { id: artifact.id, storageKey, status: 'processing' as const };
+  const targetPath = artifactSqlitePath(config.USER_DICTIONARIES_DIR, storageKey);
   try {
     // The `.zip` lives on the disk of the container that took the upload; a job picked up by another container (rolling
     // deploy) or after a restart finds nothing to import.
     if (!existsSync(tmpZipPath)) {
       throw new Error(INTERRUPTED_IMPORT_MESSAGE);
     }
-    artifact.importStartedAt = new Date();
-    artifact.importHeartbeatAt = artifact.importStartedAt;
-    artifact.importProgress = 0;
-    await artifact.save();
+    const startedAt = new Date();
+    const started = await UserDictionaryArtifact.update(ours, {
+      importStartedAt: startedAt,
+      importHeartbeatAt: startedAt,
+      importProgress: 0,
+    });
+    if (!started.affected) {
+      logger.info({ artifactId: artifact.id }, 'Custom dictionary import is no longer wanted; skipped it');
+      return;
+    }
     // Its own thread and heap: see `importRunner.ts`. Its heartbeats reach the row every few seconds, so a reader sees
     // the progress and `failInterruptedImports` can tell a live import from a dead one.
     let lastWrite = 0;
@@ -417,29 +428,55 @@ export async function processArtifactImportJob(artifactId: number, tmpZipPath: s
         // A failed heartbeat write must never fail the import itself.
         void Promise.resolve()
           .then(() =>
-            UserDictionaryArtifact.update(
-              { id: artifact.id, status: 'processing' },
-              { importHeartbeatAt: new Date(now), importProgress: Math.min(99, Math.floor(fraction * 100)) },
-            ),
+            UserDictionaryArtifact.update(ours, {
+              importHeartbeatAt: new Date(now),
+              importProgress: Math.min(99, Math.floor(fraction * 100)),
+            }),
           )
           .catch(() => {});
       },
     });
-    await uploadArtifactToR2(artifact.storageKey, targetPath);
+
+    // Deleted (or re-queued) while indexing: nothing will ever read this file, so do not upload it.
+    if (!(await UserDictionaryArtifact.existsBy(ours))) {
+      await discardImportOutput(artifact.id, storageKey);
+      logger.info({ artifactId: artifact.id }, 'Custom dictionary was removed while indexing; discarded its file');
+      return;
+    }
+
+    // A large upload can take minutes; keep heartbeating so `failInterruptedImports` does not take it for dead.
+    const heartbeat = setInterval(() => {
+      void UserDictionaryArtifact.update(ours, { importHeartbeatAt: new Date() }).catch(() => {});
+    }, HEARTBEAT_WRITE_MS);
+    try {
+      await uploadArtifactToR2(storageKey, targetPath);
+    } finally {
+      clearInterval(heartbeat);
+    }
     void pruneLocalDictionaryCache().catch(() => {});
-    Object.assign(artifact, indexFields(result.index));
-    artifact.hasTerms = result.hasTerms;
-    artifact.hasFrequency = result.hasFrequency;
-    artifact.hasPitch = result.hasPitch;
-    artifact.termCount = result.termCount;
-    artifact.frequencyCount = result.frequencyCount;
-    artifact.pitchCount = result.pitchCount;
-    artifact.sqliteBytes = String(result.sqliteBytes);
-    artifact.status = 'ready';
-    artifact.errorMessage = null;
-    artifact.importerVersion = IMPORTER_VERSION;
-    artifact.importProgress = null;
-    await artifact.save();
+
+    const fields = {
+      ...indexFields(result.index),
+      hasTerms: result.hasTerms,
+      hasFrequency: result.hasFrequency,
+      hasPitch: result.hasPitch,
+      termCount: result.termCount,
+      frequencyCount: result.frequencyCount,
+      pitchCount: result.pitchCount,
+      sqliteBytes: String(result.sqliteBytes),
+      status: 'ready' as const,
+      errorMessage: null,
+      importerVersion: IMPORTER_VERSION,
+      importProgress: null,
+    };
+    const finished = await UserDictionaryArtifact.update(ours, fields);
+    if (!finished.affected) {
+      // Removed or re-queued during the upload: what this job built and uploaded belongs to no row.
+      await discardImportOutput(artifact.id, storageKey);
+      logger.info({ artifactId: artifact.id }, 'Custom dictionary was removed while indexing; discarded its file');
+      return;
+    }
+    Object.assign(artifact, fields);
 
     logger.info(
       {
@@ -454,10 +491,14 @@ export async function processArtifactImportJob(artifactId: number, tmpZipPath: s
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Dictionary indexing failed';
-    artifact.status = 'failed';
-    artifact.errorMessage = message.slice(0, 500);
-    artifact.importProgress = null;
-    await artifact.save().catch(() => {});
+    const failed = { status: 'failed' as const, errorMessage: message.slice(0, 500), importProgress: null };
+    const marked = await UserDictionaryArtifact.update(ours, failed).catch(() => null);
+    if (marked?.affected) {
+      Object.assign(artifact, failed);
+    } else if (marked) {
+      // No longer this job's row (removed or re-queued): drop whatever it built or uploaded.
+      await discardImportOutput(artifact.id, storageKey).catch(() => {});
+    }
     logger.warn({ err: error, artifactId: artifact.id }, 'Failed to index custom Yomitan dictionary');
   } finally {
     invalidateUserDictionaryStack();
@@ -780,6 +821,13 @@ async function deleteArtifactIfUnlinked(artifactId: number): Promise<boolean> {
     [artifactId],
   );
   return deletedRowCount(result) > 0;
+}
+
+/** Removes what an import job built under `storageKey` once it is no longer its row's: unless the row is ready under
+ * that same key (a duplicate run of a job that already finished), nothing serves that file. */
+async function discardImportOutput(artifactId: number, storageKey: string): Promise<void> {
+  if (await UserDictionaryArtifact.existsBy({ id: artifactId, storageKey, status: 'ready' })) return;
+  await purgeArtifactStorage(storageKey);
 }
 
 /** Removes an artifact's file from the local cache and from R2. Neither step throws (both log or ignore failures). */

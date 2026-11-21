@@ -25,6 +25,8 @@ const {
   mockArtifactCreate,
   mockArtifactCreateQueryBuilder,
   mockArtifactQuery,
+  mockArtifactUpdate,
+  mockArtifactExistsBy,
 } = vi.hoisted(() => ({
   mockConfig: {
     USER_DICTIONARIES_ENABLED: true,
@@ -51,6 +53,8 @@ const {
   mockArtifactCreate: vi.fn(),
   mockArtifactCreateQueryBuilder: vi.fn(),
   mockArtifactQuery: vi.fn(),
+  mockArtifactUpdate: vi.fn(),
+  mockArtifactExistsBy: vi.fn(),
 }));
 
 vi.mock('@config/config', () => ({ config: mockConfig }));
@@ -96,6 +100,8 @@ vi.mock('@app/models', () => ({
     create: (...args: unknown[]) => mockArtifactCreate(...args),
     createQueryBuilder: (...args: unknown[]) => mockArtifactCreateQueryBuilder(...args),
     query: (...args: unknown[]) => mockArtifactQuery(...args),
+    update: (...args: unknown[]) => mockArtifactUpdate(...args),
+    existsBy: (...args: unknown[]) => mockArtifactExistsBy(...args),
   },
 }));
 
@@ -104,6 +110,7 @@ import {
   deleteArtifactFromR2,
   ensureArtifactCachedLocally,
   getR2StorageConfig,
+  listStaleUploadObjects,
   pruneLocalDictionaryCache,
   r2Client,
   resolveArtifactsWithin,
@@ -214,6 +221,10 @@ beforeEach(() => {
   mockConfig.USER_DICT_R2_PREFIX = 'user-dicts/test';
 
   mockArtifactCreateQueryBuilder.mockReturnValue(makeQueryBuilder(0));
+  mockS3Send.mockReset();
+  // The import job's conditional writes find their row unless a test says otherwise.
+  mockArtifactUpdate.mockResolvedValue({ affected: 1 });
+  mockArtifactExistsBy.mockImplementation(async (where: { status?: string }) => where.status !== 'ready');
   mockResolveQuota.mockResolvedValue({ maxDictionaries: 2, maxZipBytes: 60 * 1024 * 1024, isPatron: false });
 });
 
@@ -259,8 +270,11 @@ describe('r2Storage operations', () => {
 
     // Exists via HEAD in R2.
     expect(await artifactExistsInStorage('k-remote')).toBe(true);
-    mockS3Send.mockRejectedValueOnce(new Error('not found'));
+    mockS3Send.mockRejectedValueOnce({ $metadata: { httpStatusCode: 404 } });
     expect(await artifactExistsInStorage('k-remote-miss')).toBe(false);
+    // Anything but a 404 is not "missing": the caller would purge and rebuild a shared artifact on it.
+    mockS3Send.mockRejectedValueOnce(new Error('r2 down'));
+    await expect(artifactExistsInStorage('k-remote-flaky')).rejects.toThrow('r2 down');
 
     // Download via GET from R2 into local cache.
     mockS3Send.mockResolvedValueOnce({ Body: Readable.from([Buffer.from('downloaded-sqlite')]) });
@@ -299,6 +313,38 @@ describe('r2Storage operations', () => {
     await pruneLocalDictionaryCache();
     expect(existsSync(oldFile)).toBe(false);
     expect(existsSync(newFile)).toBe(true);
+  });
+
+  it('lists upload objects older than a cutoff, paging through the prefix and stopping at the cap', async () => {
+    expect(await listStaleUploadObjects(new Date(), 10)).toEqual([]);
+    enableR2();
+    const cutoff = new Date('2026-11-20T00:00:00Z');
+    const old = new Date('2026-11-19T00:00:00Z');
+    const fresh = new Date('2026-11-21T00:00:00Z');
+    mockS3Send
+      .mockResolvedValueOnce({
+        Contents: [
+          { Key: 'user-dicts/test/uploads/a.zip', LastModified: old },
+          { Key: 'user-dicts/test/uploads/b.zip', LastModified: fresh },
+        ],
+        IsTruncated: true,
+        NextContinuationToken: 'next',
+      })
+      .mockResolvedValueOnce({
+        Contents: [
+          { Key: 'user-dicts/test/uploads/c.zip', LastModified: old },
+          { Key: 'user-dicts/test/uploads/d.zip', LastModified: old },
+        ],
+        IsTruncated: false,
+      });
+
+    expect(await listStaleUploadObjects(cutoff, 2)).toEqual([
+      'user-dicts/test/uploads/a.zip',
+      'user-dicts/test/uploads/c.zip',
+    ]);
+    const inputs = mockS3Send.mock.calls.map(([command]) => (command as { input: Record<string, unknown> }).input);
+    expect(inputs[0]).toMatchObject({ Bucket: 'nadeshiko-production', Prefix: 'user-dicts/test/uploads/' });
+    expect(inputs[1]).toMatchObject({ ContinuationToken: 'next' });
   });
 });
 
@@ -404,7 +450,11 @@ describe('custom dictionary service', () => {
     mockArtifactFindOneBy.mockResolvedValueOnce(artMissing);
     await processArtifactImportJob(100, join(tempDir, 'gone.zip'));
     expect(artMissing.status).toBe('failed');
-    expect(artMissing.save).toHaveBeenCalled();
+    expect(mockArtifactUpdate).toHaveBeenCalledWith(
+      { id: 100, storageKey: artMissing.storageKey, status: 'processing' },
+      expect.objectContaining({ status: 'failed' }),
+    );
+    expect(artMissing.save).not.toHaveBeenCalled();
 
     // Success path
     const tmpZip2 = join(tempDir, 'upload2.zip');
@@ -433,6 +483,110 @@ describe('custom dictionary service', () => {
     expect(artOk.status).toBe('ready');
     expect(artOk.termCount).toBe(10);
     expect(existsSync(tmpZip2)).toBe(false);
+    expect(artOk.save).not.toHaveBeenCalled();
+    expect(mockArtifactUpdate).toHaveBeenLastCalledWith(
+      { id: 100, storageKey: 'okkey', status: 'processing' },
+      expect.objectContaining({ status: 'ready', termCount: 10 }),
+    );
+  });
+
+  const importResult = {
+    index: { title: 'TestDict', revision: '2.0', format: 3, author: null, description: null, url: null },
+    hasTerms: true,
+    hasFrequency: false,
+    hasPitch: false,
+    termCount: 10,
+    frequencyCount: 0,
+    pitchCount: 0,
+    sqliteBytes: 2048,
+  };
+
+  it('discards what it built, without uploading or re-creating the row, when the dictionary is deleted mid-import', async () => {
+    enableR2();
+    const tmpZip = join(tempDir, 'deleted.zip');
+    writeFileSync(tmpZip, buildMinimalZip());
+    const art = sampleArtifact({ status: 'processing', storageKey: 'gonekey' });
+    mockArtifactFindOneBy.mockResolvedValueOnce(art);
+    mockRunImportInThread.mockImplementationOnce(async (_zip: string, target: string) => {
+      writeFileSync(target, 'built');
+      return importResult;
+    });
+    // The row is gone once the thread finishes.
+    mockArtifactExistsBy.mockResolvedValue(false);
+    mockS3Send.mockResolvedValue({});
+
+    await processArtifactImportJob(100, tmpZip);
+
+    expect(existsSync(join(tempDir, 'gonekey.sqlite'))).toBe(false);
+    const sent = mockS3Send.mock.calls.map(([command]) => (command as object).constructor.name);
+    expect(sent).not.toContain('PutObjectCommand');
+    expect(mockArtifactUpdate).not.toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ status: 'ready' }),
+    );
+    expect(art.save).not.toHaveBeenCalled();
+    expect(existsSync(tmpZip)).toBe(false);
+  });
+
+  it('heartbeats through a slow upload, and purges its upload when the row moved on meanwhile', async () => {
+    enableR2();
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+    try {
+      const tmpZip = join(tempDir, 'slow.zip');
+      writeFileSync(tmpZip, buildMinimalZip());
+      const art = sampleArtifact({ status: 'processing', storageKey: 'slowkey' });
+      mockArtifactFindOneBy.mockResolvedValueOnce(art);
+      mockRunImportInThread.mockImplementationOnce(async (_zip: string, target: string) => {
+        writeFileSync(target, 'built');
+        return importResult;
+      });
+      mockS3Send.mockImplementation(async (command: object) => {
+        // The PUT takes a while: three heartbeat periods pass during it.
+        if (command.constructor.name === 'PutObjectCommand') vi.advanceTimersByTime(15_000);
+        return {};
+      });
+      // The final write finds the row re-queued under another key (or deleted).
+      mockArtifactUpdate.mockImplementation(async (_where: unknown, set: { status?: string }) => ({
+        affected: set.status === 'ready' ? 0 : 1,
+      }));
+
+      await processArtifactImportJob(100, tmpZip);
+
+      const heartbeats = mockArtifactUpdate.mock.calls.filter(
+        ([where, set]) =>
+          (where as { storageKey: string }).storageKey === 'slowkey' &&
+          Object.keys(set as object).join() === 'importHeartbeatAt',
+      );
+      expect(heartbeats).toHaveLength(3);
+      const sent = mockS3Send.mock.calls.map(
+        ([command]) => command as { constructor: { name: string }; input: { Key: string } },
+      );
+      expect(sent.map((c) => c.constructor.name)).toEqual(['PutObjectCommand', 'DeleteObjectCommand']);
+      expect(sent[1]?.input.Key).toBe('user-dicts/test/slowkey.sqlite');
+      expect(existsSync(join(tempDir, 'slowkey.sqlite'))).toBe(false);
+      expect(art.save).not.toHaveBeenCalled();
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('fails an upload, rather than rebuilding a ready shared artifact, when R2 cannot be reached', async () => {
+    enableR2();
+    const zipPath = join(tempDir, 'flaky.zip');
+    writeFileSync(zipPath, buildMinimalZip());
+    const shared = sampleArtifact({ sha256: '7'.repeat(64), storageKey: 'sharedkey', status: 'ready' });
+    mockUdFind.mockResolvedValueOnce([]);
+    mockArtifactFindOneBy.mockResolvedValueOnce(shared);
+    mockS3Send.mockRejectedValue(new Error('r2 down'));
+
+    await expect(attachOrQueueUploadedDictionary(user, zipPath, '7'.repeat(64), 200)).rejects.toThrow('r2 down');
+
+    expect(shared.storageKey).toBe('sharedkey');
+    expect(shared.save).not.toHaveBeenCalled();
+    const sent = mockS3Send.mock.calls.map(([command]) => (command as object).constructor.name);
+    expect(sent).toEqual(['HeadObjectCommand']);
+    expect(existsSync(zipPath)).toBe(false);
   });
 
   it('handles upload validation, quota, dedup, and queueing cleanly', async () => {

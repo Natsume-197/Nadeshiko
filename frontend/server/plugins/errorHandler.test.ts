@@ -162,13 +162,15 @@ describe('what gets reported to PostHog', () => {
     expect(captureException).not.toHaveBeenCalled();
   });
 
-  test('a handled dictionary outage stays in metrics and logs without becoming a PostHog issue', async () => {
+  test.each([
+    '/api/dictionary/words/candidates/%E5%85%84',
+    '/api/dictionary/word-entry/%E9%A3%9F%E3%81%B9%E3%82%8B',
+    '/api/dictionary/kanji-sentences/%E9%A3%9F',
+    '/api/dictionary/word-counts?words=x',
+  ])('a handled dictionary outage (%s) stays in metrics and logs without becoming a PostHog issue', async (url) => {
     const fire = await loadPlugin();
 
-    await fire('error', httpError(503), {
-      event: makeEvent({ url: '/api/dictionary/words/candidates/%E5%85%84' }),
-      tags: ['request'],
-    });
+    await fire('error', httpError(503), { event: makeEvent({ url }), tags: ['request'] });
 
     expect(counterAdds).toHaveLength(1);
     expect(logLines.some((line) => line.level === 'error')).toBe(true);

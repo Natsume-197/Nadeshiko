@@ -108,13 +108,13 @@ export default defineNitroPlugin((nitroApp) => {
         })
       : null;
 
-  const OPTIONAL_503_PREFIXES = ['/api/dictionary/words/candidates/', '/api/dictionary/kanji/'];
   // Capture reader 5xx failures, not crawler/4xx noise. Event-less process faults always matter.
   const shouldCapture = (event: any, statusCode: number, url: string): boolean => {
     if (!event) return true;
     if (statusCode < 500) return false;
-    // Word-card and kanji 503s recover as optional enrichment; keep logs/metrics but avoid manufacturing a PostHog issue.
-    if (statusCode === 503 && OPTIONAL_503_PREFIXES.some((prefix) => url.startsWith(prefix))) return false;
+    // Dictionary 503s (word card, word entry, kanji, sentences, counts) are optional enrichment the page recovers from;
+    // keep logs/metrics but avoid manufacturing a PostHog issue.
+    if (statusCode === 503 && url.startsWith('/api/dictionary/')) return false;
     return resolveEventTraffic(event).traffic === 'reader';
   };
 
