@@ -28,8 +28,23 @@ import { PATREON_URL } from '#shared/utils/socialLinks';
 import SupportersPage from './supporters.vue';
 import RoadmapRedirect from './roadmap.vue';
 
-const roadmapItem = {
+const featureRoadmapItem = {
   id: 'r1',
+  kind: 'FEATURE',
+  status: 'PLANNED',
+  title: 'Custom themes',
+  description: 'Personalize the palette.',
+  sourceUrl: null,
+  coverUrl: null,
+  targetDate: '2026-12-01',
+  introducedInVersion: null,
+  sortOrder: 0,
+  createdAt: '2026-11-01',
+  proposerName: null,
+};
+
+const contentRoadmapItem = {
+  id: 'r2',
   kind: 'CONTENT',
   status: 'PLANNED',
   title: 'Frieren',
@@ -71,7 +86,10 @@ const isShown = (el: ReturnType<typeof panel>) => (el.element as HTMLElement).st
 
 beforeEach(() => {
   $fetch.mockReset();
-  $fetch.mockResolvedValue({ items: [roadmapItem], patreonUrl: 'https://www.patreon.com/NadeshikoApp' });
+  $fetch.mockResolvedValue({
+    items: [featureRoadmapItem, contentRoadmapItem],
+    patreonUrl: 'https://www.patreon.com/NadeshikoApp',
+  });
   navigateTo.mockReset();
   history.replaceState(null, '', '/en/supporters');
 });
@@ -87,7 +105,8 @@ describe('Supporters page', () => {
     expect(isShown(panel(wrapper, 'support'))).toBe(true);
     expect(panel(wrapper, 'support').find('[data-testid="tiers-stub"]').exists()).toBe(true);
     expect(isShown(panel(wrapper, 'roadmap'))).toBe(false);
-    expect(panel(wrapper, 'roadmap').text()).toContain('Frieren');
+    expect(panel(wrapper, 'roadmap').text()).toContain('Custom themes');
+    expect(panel(wrapper, 'roadmap').text()).not.toContain('Frieren');
     expect(wrapper.get('[data-testid="supporters-tab-support"]').attributes('aria-selected')).toBe('true');
   });
 

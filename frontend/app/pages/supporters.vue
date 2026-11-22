@@ -9,7 +9,6 @@ import {
   mdiHistory,
   mdiKeyOutline,
   mdiMapOutline,
-  mdiMovieOpenOutline,
   mdiPatreon,
   mdiThumbUpOutline,
   mdiTools,
@@ -51,7 +50,6 @@ const { data, error } = await useAsyncData('roadmap', () =>
   $fetch<{ items: RoadmapItem[]; patreonUrl: string }>('/v1/roadmap'),
 );
 const items = computed(() => data.value?.items ?? []);
-const selectedKind = ref<'CONTENT' | 'FEATURE'>('CONTENT');
 
 /**
  * The page's two views, as tabs under the hero. The hash names the open one (`#support`, `#roadmap`), so links from
@@ -81,18 +79,7 @@ onMounted(() => {
 });
 onBeforeUnmount(() => window.removeEventListener('hashchange', syncTabFromHash));
 
-const titleItems = computed(() =>
-  items.value
-    .filter((item) => item.kind === 'CONTENT')
-    .sort((a, b) => {
-      const aDone = a.status === 'RELEASED';
-      const bDone = b.status === 'RELEASED';
-      if (aDone !== bDone) return aDone ? 1 : -1;
-      if (aDone) return (b.targetDate ?? '').localeCompare(a.targetDate ?? '') || a.sortOrder - b.sortOrder;
-      return (a.targetDate ?? '9999-12-31').localeCompare(b.targetDate ?? '9999-12-31') || a.sortOrder - b.sortOrder;
-    }),
-);
-
+/** Only feature roadmap entries live here; title requests moved to `/requests`. */
 const featureItems = computed(() =>
   items.value
     .filter((item) => item.kind === 'FEATURE')
@@ -145,13 +132,6 @@ function featureDescription(item: RoadmapItem) {
   return key ? t(`roadmap.features.${key}.description`) : item.description;
 }
 
-function formatMonth(month: string) {
-  if (month === 'unscheduled') return t('roadmap.dateFlexible');
-  return new Intl.DateTimeFormat(locale.value, { year: 'numeric', month: 'long', timeZone: 'UTC' }).format(
-    new Date(`${month}-01T00:00:00Z`),
-  );
-}
-
 function featureDate(item: RoadmapItem) {
   if (item.status !== 'RELEASED') return t('roadmap.featureSoon');
   if (!item.targetDate) return t('roadmap.featureReleased');
@@ -171,10 +151,7 @@ function featureDate(item: RoadmapItem) {
       class="roadmap-banner relative flex min-h-[16rem] items-center overflow-hidden border-b border-hairline bg-[#161214] px-4 py-10 text-white md:min-h-[17.5rem] md:py-12"
     >
       <div class="roadmap-banner-image absolute inset-0" aria-hidden="true" />
-      <div
-        class="absolute inset-0 bg-gradient-to-r from-black/75 via-black/50 to-black/25"
-        aria-hidden="true"
-      />
+      <div class="absolute inset-0 bg-gradient-to-r from-black/75 via-black/50 to-black/25" aria-hidden="true" />
       <div class="nd-page relative">
         <h1 class="max-w-3xl text-4xl font-black leading-[1.04] tracking-tight text-white md:text-5xl">
           {{ t('supporters.title') }}
@@ -240,110 +217,10 @@ function featureDate(item: RoadmapItem) {
           }}</NuxtLink>
         </p>
 
-        <section class="py-8 md:py-10" :aria-label="t('roadmap.filterLabel')">
-          <div
-            id="features"
-            class="mb-8 flex justify-center gap-6 border-b border-hairline"
-            role="tablist"
-            :aria-label="t('roadmap.filterLabel')"
-          >
-            <button
-              v-for="kind in (['CONTENT', 'FEATURE'] as const)"
-              :key="kind"
-              type="button"
-              role="tab"
-              :aria-selected="selectedKind === kind"
-              class="-mb-px inline-flex items-center gap-2.5 border-b-2 px-6 py-3 text-lg font-bold transition"
-              :class="
-                selectedKind === kind
-                  ? 'border-brand text-ink'
-                  : 'border-transparent text-ink-faint hover:text-ink'
-              "
-              @click="selectedKind = kind"
-            >
-              <UiBaseIcon :path="kind === 'CONTENT' ? mdiMovieOpenOutline : mdiTools" size="22" />
-              {{ t(`roadmap.filters.${kind.toLowerCase()}`) }}
-            </button>
-          </div>
-
-          <div
-            v-if="error"
-            class="rounded-xl border border-red-500/30 bg-red-500/10 p-5 text-red-400"
-          >
+        <div id="features" class="py-8 md:py-10">
+          <div v-if="error" class="rounded-xl border border-red-500/30 bg-red-500/10 p-5 text-red-400">
             {{ t('roadmap.loadError') }}
           </div>
-          <ol v-else-if="selectedKind === 'CONTENT'" class="roadmap-timeline relative mx-auto max-w-4xl">
-            <li
-              v-for="item in titleItems"
-              :key="item.id"
-              class="roadmap-timeline-item relative grid gap-3 pb-8 pl-8 md:grid-cols-[10rem_2rem_1fr] md:gap-x-3 md:gap-y-0 md:pl-0"
-            >
-              <span
-                class="roadmap-timeline-dot absolute left-0 top-0 z-10 flex size-5 items-center justify-center overflow-hidden rounded-full border-[3px] md:left-[11.125rem] md:top-[calc(50%-1rem)] md:-translate-y-1/2"
-                :class="
-                  item.status === 'RELEASED'
-                    ? 'border-transparent bg-ink-faint text-background'
-                    : 'border-[var(--accent)] bg-background'
-                "
-              >
-                <UiBaseIcon v-if="item.status === 'RELEASED'" :path="mdiCheck" w="w-3" h="h-3" size="12" />
-              </span>
-              <div
-                class="flex self-stretch flex-col justify-center gap-1 whitespace-nowrap text-sm font-semibold md:translate-y-2.5 md:text-right"
-                :class="item.status === 'RELEASED' ? 'text-ink-faint' : 'text-brand'"
-              >
-                <time>{{ formatMonth(item.targetDate?.slice(0, 7) ?? 'unscheduled') }}</time>
-                <span class="text-xs">{{
-                  item.status === 'RELEASED' ? t('roadmap.titleDone') : t('roadmap.titleInProgress')
-                }}</span>
-              </div>
-              <span class="hidden md:block" aria-hidden="true" />
-              <article
-                class="grid grid-cols-[auto_1fr] items-start overflow-hidden rounded-lg border border-hairline bg-card-background"
-              >
-                <div
-                  v-if="item.coverUrl"
-                  class="flex w-28 shrink-0 self-start items-start justify-center bg-surface sm:w-32"
-                >
-                  <img
-                    :src="item.coverUrl"
-                    :alt="item.title"
-                    class="block h-auto max-h-none w-auto max-w-full object-contain object-top"
-                    loading="lazy"
-                  />
-                </div>
-                <div
-                  v-else
-                  class="flex aspect-[46/65] w-28 items-center justify-center border-r border-hairline bg-surface-hover text-ink-faint sm:w-32"
-                >
-                  <UiBaseIcon :path="mdiMovieOpenOutline" size="34" />
-                </div>
-                <div class="flex min-h-full min-w-0 flex-col p-5">
-                  <h2 class="text-xl font-bold leading-tight text-ink">{{ item.title }}</h2>
-                  <p class="mt-3 flex items-center gap-1.5 text-sm text-ink-faint">
-                    <UiBaseIcon :path="mdiPatreon" size="15" />{{
-                      t('roadmap.proposedBy', { name: t('roadmap.patronCommunity') })
-                    }}
-                  </p>
-                  <a
-                    v-if="httpUrl(item.sourceUrl)"
-                    :href="httpUrl(item.sourceUrl) ?? undefined"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="mt-auto inline-flex items-center gap-1 pt-4 text-xs font-semibold text-brand hover:text-brand-hover"
-                  >
-                    {{ t('roadmap.viewSource') }} <UiBaseIcon :path="mdiArrowRight" size="14" />
-                  </a>
-                </div>
-              </article>
-            </li>
-            <li
-              v-if="!titleItems.length"
-              class="rounded-lg border border-dashed border-hairline p-8 text-center text-sm text-ink-faint"
-            >
-              {{ t('roadmap.emptyTitles') }}
-            </li>
-          </ol>
           <ol v-else class="roadmap-timeline relative mx-auto max-w-4xl">
             <li
               v-for="item in featureItems"
@@ -397,7 +274,7 @@ function featureDate(item: RoadmapItem) {
               {{ t('roadmap.emptyFeatures') }}
             </li>
           </ol>
-        </section>
+        </div>
       </section>
     </main>
   </div>
@@ -411,8 +288,6 @@ function featureDate(item: RoadmapItem) {
   filter: grayscale(12%) saturate(72%) brightness(58%);
   opacity: 0.45;
 }
-.roadmap-timeline-item::before,
-.roadmap-timeline-item::after,
 .feature-roadmap-item::before,
 .feature-roadmap-item::after {
   content: '';
@@ -421,34 +296,26 @@ function featureDate(item: RoadmapItem) {
   width: 2px;
   background: var(--line);
 }
-.roadmap-timeline-item::before,
 .feature-roadmap-item::before {
   top: 0;
   height: 0.625rem;
 }
-.roadmap-timeline-item::after,
 .feature-roadmap-item::after {
   top: 0.625rem;
   bottom: 0;
 }
-.roadmap-timeline-item:first-child::before,
 .feature-roadmap-item:first-child::before,
-.roadmap-timeline-item:last-child::after,
 .feature-roadmap-item:last-child::after {
   display: none;
 }
 @media (min-width: 768px) {
-  .roadmap-timeline-item::before,
-  .roadmap-timeline-item::after,
   .feature-roadmap-item::before,
   .feature-roadmap-item::after {
     left: 11.6875rem;
   }
-  .roadmap-timeline-item::before,
   .feature-roadmap-item::before {
     height: calc(50% - 1rem);
   }
-  .roadmap-timeline-item::after,
   .feature-roadmap-item::after {
     top: calc(50% - 1rem);
   }
