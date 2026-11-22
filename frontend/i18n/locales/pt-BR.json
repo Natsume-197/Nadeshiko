@@ -1834,6 +1834,10 @@
       "loggedInCta": "Vincular Patreon em Configurações",
       "loggedOutBody": "Entre e vincule sua conta do Patreon em Configurações para ativar seus benefícios de apoiador.",
       "loggedOutCta": "Entrar para vincular"
+    },
+    "specs": {
+      "boosts": "{count} boosts / mês",
+      "api": "{count} API / mês"
     }
   },
   "requests": {

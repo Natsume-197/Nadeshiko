@@ -1834,6 +1834,10 @@
       "loggedInCta": "前往设置绑定 Patreon",
       "loggedOutBody": "登录并在设置中绑定 Patreon 账号即可激活您的赞助者权益。",
       "loggedOutCta": "登录并绑定"
+    },
+    "specs": {
+      "boosts": "{count} 次加速/月",
+      "api": "{count} 次 API/月"
     }
   },
   "requests": {

@@ -32,7 +32,10 @@ async function render() {
       stubs: {
         NuxtLink: { props: ['to'], template: '<a :href="to"><slot /></a>' },
         UiBaseIcon: true,
-        'i18n-t': { props: ['keypath'], template: '<span>{{ keypath }}<slot name="terms" /></span>' },
+        'i18n-t': {
+          props: ['keypath'],
+          template: '<span>{{ keypath }}<slot name="terms" /><slot name="price" /></span>',
+        },
       },
     },
   });

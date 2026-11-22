@@ -1834,6 +1834,10 @@
       "loggedInCta": "Vincular Patreon en Ajustes",
       "loggedOutBody": "Inicia sesión y vincula tu cuenta de Patreon en Ajustes para activar tus beneficios de mecenas.",
       "loggedOutCta": "Iniciar sesión para vincular"
+    },
+    "specs": {
+      "boosts": "{count} boosts / mes",
+      "api": "{count} API / mes"
     }
   },
   "requests": {

@@ -1834,6 +1834,10 @@
       "loggedInCta": "Tautkan Patreon di Pengaturan",
       "loggedOutBody": "Masuk dan tautkan akun Patreon Anda di Pengaturan untuk mengaktifkan manfaat pendukung.",
       "loggedOutCta": "Masuk untuk menautkan"
+    },
+    "specs": {
+      "boosts": "{count} boost / bln",
+      "api": "{count} API / bln"
     }
   },
   "requests": {

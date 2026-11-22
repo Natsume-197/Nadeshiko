@@ -1834,6 +1834,10 @@
       "loggedInCta": "Link Patreon in Settings",
       "loggedOutBody": "Sign in and link your Patreon account in Settings to unlock your supporter benefits.",
       "loggedOutCta": "Sign in to link"
+    },
+    "specs": {
+      "boosts": "{count} boosts / mo",
+      "api": "{count} API / mo"
     }
   },
   "requests": {

@@ -1834,6 +1834,10 @@
       "loggedInCta": "前往設定綁定 Patreon",
       "loggedOutBody": "登入並在設定中綁定 Patreon 帳號即可啟用您的贊助者權益。",
       "loggedOutCta": "登入並綁定"
+    },
+    "specs": {
+      "boosts": "{count} 次加速/月",
+      "api": "{count} 次 API/月"
     }
   },
   "requests": {

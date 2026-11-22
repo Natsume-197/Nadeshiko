@@ -1834,6 +1834,10 @@
       "loggedInCta": "設定で Patreon を連携",
       "loggedOutBody": "ログインして設定から Patreon アカウントを連携すると、支援者特典が有効になります。",
       "loggedOutCta": "ログインして連携"
+    },
+    "specs": {
+      "boosts": "ブースト {count}回/月",
+      "api": "API {count}件/月"
     }
   },
   "requests": {
