@@ -1609,11 +1609,10 @@
     "seoTitle": "Pendukung | Nadeshiko",
     "seoDescription": "Dukung Nadeshiko di Patreon, lihat apa yang diberikan setiap tingkatan, dan judul serta fitur apa yang akan datang.",
     "title": "Pendukung",
-    "intro": "Para pendukung menjaga Nadeshiko tetap berjalan dan ikut menentukan apa yang berikutnya. Pilih tingkatan di bawah, lalu lihat apa yang sedang kami bangun.",
+    "intro": "Pencarian, audio, kartu kata, dan ekspor Anki gratis selamanya. Pendukung menjaga server tetap hidup dan membantu Nadeshiko berkembang.",
     "tabs": {
       "tiers": "Tingkatan"
-    },
-    "freePromise": "Pencarian kalimat, klip audio, kartu kata, dan ekspor Anki tetap gratis selamanya."
+    }
   },
   "roadmap": {
     "title": "Peta Jalan",
@@ -1764,18 +1763,9 @@
     "whatsIncluded": "Yang termasuk",
     "discord": "Termasuk manfaat Discord",
     "tierText": {
-      "seed": [
-        "Jika Nadeshiko berguna dalam perjalananmu belajar bahasa Jepang dan kamu ingin menunjukkan apresiasi serta membantu menjaga situs ini tetap hidup, tingkatan ini untukmu. Terima kasih!",
-        "Sebagai gantinya, kamu mendapat boost untuk menaikkan judul yang kamu mau di daftar permintaan, dan batas API yang lebih tinggi."
-      ],
-      "flower": [
-        "Untuk mereka yang benar-benar percaya pada proyek ini. Kami sangat menghargai kontribusimu!",
-        "Selain manfaat tingkatan Seed, kamu bisa mengusulkan fitur baru dan memengaruhi langsung pengembangan Nadeshiko."
-      ],
-      "nadeshiko": [
-        "Tingkatan tertinggi kami, untuk mereka yang ingin memberi dukungan terkuat bagi Nadeshiko. Kontribusi di tingkat ini yang memungkinkan kami terus memperluas pustaka dan membangun fitur baru.",
-        "Kamu mendapat semua yang ada di tingkatan Flower, boost terbanyak agar pilihanmu didahulukan, dan batas API tertinggi kami."
-      ]
+      "seed": "Bantu Nadeshiko tetap berjalan dan dapatkan bonus terima kasih.",
+      "flower": "Untuk Anda yang percaya pada proyek ini dan ingin ikut menentukan arahnya.",
+      "nadeshiko": "Tingkat dukungan tertinggi untuk katalog lebih luas dan batas terbesar."
     },
     "tiersIntro": "Pilih yang paling cocok. Kamu bisa mengubah atau membatalkannya di Patreon kapan saja.",
     "everythingBadge": "Semua termasuk",
@@ -1825,25 +1815,9 @@
       "loggedOutBody": "Masuk dan tautkan akun Patreon Anda di Pengaturan untuk mengaktifkan manfaat pendukung.",
       "loggedOutCta": "Masuk untuk menautkan"
     },
-    "showcase": {
-      "title": "Yang dibuka oleh pendukung",
-      "themes": {
-        "title": "Tema kustom",
-        "body": "Jadikan Nadeshiko milik Anda — pilih warna aksen atau rancang palet sendiri.",
-        "sampleGloss": "Janji ya.",
-        "tryIt": "Coba warna"
-      },
-      "boosts": {
-        "title": "Dorong judul berikutnya",
-        "body": "Gunakan boost bulanan untuk anime, drama, atau kanal YouTube yang ingin diindeks lebih dulu.",
-        "badge": "+{count} boost",
-        "cta": "Lihat permintaan"
-      }
-    },
     "story": {
-      "title": "Dibangun dan dirawat oleh satu orang",
-      "p1": "Nadeshiko dimulai untuk mempermudah belajar bahasa Jepang dari anime, drama, dan YouTube nyata — tanpa iklan dan tanpa paywall pada pencarian utama.",
-      "p2": "Setiap dukungan langsung dipakai untuk server, hosting media, serta waktu mengindeks judul baru dan membangun fitur belajar yang lebih baik. Terima kasih telah menjaganya tetap hidup.",
+      "title": "Dibuat oleh satu orang",
+      "body": "Nadeshiko adalah proyek independen tanpa iklan dan tanpa paywall pada pencarian. Setiap dukungan langsung dipakai untuk server, hosting media, dan waktu mengindeks judul baru.",
       "role": "Pembuat Nadeshiko"
     },
     "compare": {

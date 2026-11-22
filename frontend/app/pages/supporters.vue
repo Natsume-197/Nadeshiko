@@ -146,21 +146,18 @@ function featureDate(item: RoadmapItem) {
 
 <template>
   <div class="roadmap-page -mt-3 pb-20 text-ink">
-    <!-- Nadeshiko's Haruhi banner with a clean scrim so light and dark themes keep crisp text contrast. -->
+    <!-- Nadeshiko's Haruhi banner: crisp artwork with only a gentle left-side scrim for text legibility. -->
     <section
-      class="roadmap-banner relative flex min-h-[16.5rem] items-center overflow-hidden border-b border-hairline bg-[#161214] px-4 py-10 text-white md:min-h-[18rem] md:py-12"
+      class="roadmap-banner relative flex min-h-[16rem] items-center overflow-hidden border-b border-hairline bg-[#161214] px-4 py-10 text-white md:min-h-[17.5rem] md:py-12"
     >
       <div class="roadmap-banner-image absolute inset-0" aria-hidden="true" />
-      <div class="absolute inset-0 bg-gradient-to-r from-black/80 via-black/55 to-black/25" aria-hidden="true" />
+      <div class="absolute inset-0 bg-gradient-to-r from-black/55 via-black/20 to-transparent" aria-hidden="true" />
       <div class="nd-page relative">
-        <h1 class="max-w-3xl text-4xl font-black leading-[1.04] tracking-tight text-white md:text-5xl">
+        <h1 class="max-w-3xl text-4xl font-black leading-[1.04] tracking-tight text-white drop-shadow-sm md:text-5xl">
           {{ t('supporters.title') }}
         </h1>
-        <p class="mt-4 max-w-2xl text-base leading-relaxed text-white/80 md:text-lg">
+        <p class="mt-4 max-w-xl text-base leading-relaxed text-white/90 drop-shadow-sm md:text-lg">
           {{ t('supporters.intro') }}
-        </p>
-        <p data-testid="supporters-free-promise" class="mt-2 max-w-2xl text-sm text-white/60">
-          {{ t('supporters.freePromise') }}
         </p>
         <div class="mt-6 flex flex-wrap gap-3">
           <a
@@ -290,8 +287,8 @@ function featureDate(item: RoadmapItem) {
   background-image: url('/assets/roadmap-haruhi.webp');
   background-position: center 82%;
   background-size: cover;
-  filter: grayscale(12%) saturate(72%) brightness(58%);
-  opacity: 0.45;
+  filter: brightness(82%);
+  opacity: 0.78;
 }
 .feature-roadmap-item::before,
 .feature-roadmap-item::after {

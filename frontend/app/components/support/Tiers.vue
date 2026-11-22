@@ -1,22 +1,13 @@
 <script setup lang="ts">
-import {
-  mdiArrowRight,
-  mdiCheck,
-  mdiCheckCircleOutline,
-  mdiChevronDown,
-  mdiLinkVariant,
-  mdiPatreon,
-  mdiPlay,
-} from '@mdi/js';
+import { mdiCheck, mdiCheckCircleOutline, mdiChevronDown, mdiLinkVariant, mdiPatreon } from '@mdi/js';
 import { FREE_MONTHLY_API_REQUESTS, SUPPORT_TIERS, tierCheckoutUrl, type SupportTier } from '~/utils/supportTiers';
 
 /**
  * The support tab of the Supporters page (`/supporters#support`):
  * 1. Three clean, subgrid-aligned Patreon tier cards + supporter status / link strip
- * 2. Two concrete product previews (interactive custom theme card + content request boosts)
- * 3. Unboxed, direct personal note from the creator
- * 4. Minimal Free vs Supporters comparison table (reinforcing what stays free forever)
- * 5. Unified FAQ accordion
+ * 2. Short, unboxed personal note from the creator
+ * 3. Minimal Free vs Supporters comparison table (reinforcing what stays free forever)
+ * 4. Unified FAQ accordion
  */
 
 const { t, locale } = useI18n();
@@ -54,19 +45,6 @@ async function loadAccountTier() {
 
 onMounted(loadAccountTier);
 watch(() => store.isLoggedIn, loadAccountTier);
-
-/** Interactive sample palettes for the Custom Themes preview. */
-const PREVIEW_PALETTES = [
-  { id: 'nadeshiko', label: 'Nadeshiko', accent: '#f43f5e', soft: 'rgba(244, 63, 94, 0.16)' },
-  { id: 'sakura', label: 'Sakura', accent: '#ec4899', soft: 'rgba(236, 72, 153, 0.16)' },
-  { id: 'matcha', label: 'Matcha', accent: '#10b981', soft: 'rgba(16, 185, 129, 0.16)' },
-  { id: 'aizome', label: 'Aizome', accent: '#6366f1', soft: 'rgba(99, 102, 241, 0.16)' },
-] as const;
-
-const selectedPaletteId = ref<(typeof PREVIEW_PALETTES)[number]['id']>('nadeshiko');
-const activePalette = computed(
-  () => PREVIEW_PALETTES.find((p) => p.id === selectedPaletteId.value) ?? PREVIEW_PALETTES[0],
-);
 
 const usd = (amount: number) =>
   new Intl.NumberFormat(locale.value, {
@@ -144,7 +122,7 @@ const faq = computed(() => [
 <template>
   <section
     id="support"
-    class="scroll-mt-20 space-y-20 text-ink"
+    class="scroll-mt-20 space-y-16 text-ink"
     aria-labelledby="support-title"
     data-testid="support-section"
   >
@@ -178,7 +156,7 @@ const faq = computed(() => [
       </div>
 
       <!-- Tiers: 4 aligned internal sections via CSS subgrid on lg+. -->
-      <ul class="tier-cards-grid mt-8 grid gap-5 lg:grid-cols-3" data-testid="support-tier-cards">
+      <ul class="tier-cards-grid mt-7 grid gap-5 lg:grid-cols-3" data-testid="support-tier-cards">
         <li
           v-for="(tier, index) in SUPPORT_TIERS"
           :key="tier.key"
@@ -212,18 +190,17 @@ const faq = computed(() => [
             </p>
 
             <!-- biome-ignore lint/a11y/noHeaderScope: vue-i18n scope, not a table header -->
-            <i18n-t keypath="support.perMonth" tag="p" scope="global" class="mt-2.5 flex items-baseline gap-1 text-sm font-medium text-ink-faint">
+            <i18n-t keypath="support.perMonth" tag="p" scope="global" class="mt-2 flex items-baseline gap-1 text-sm font-medium text-ink-faint">
               <template #price>
                 <span class="text-3xl font-black tracking-tight tabular-nums text-ink">{{ usd(tier.priceUsd) }}</span>
               </template>
             </i18n-t>
           </div>
 
-          <!-- Row 2: Description paragraphs + aligned hairline divider -->
-          <div class="mt-5 space-y-3 border-b border-hairline pb-5 text-sm leading-relaxed text-ink-muted">
-            <p>{{ t(`support.tierText.${tier.key}.0`) }}</p>
-            <p>{{ t(`support.tierText.${tier.key}.1`) }}</p>
-          </div>
+          <!-- Row 2: One concise summary line + aligned hairline divider -->
+          <p class="mt-4 border-b border-hairline pb-5 text-sm leading-relaxed text-ink-muted">
+            {{ t(`support.tierText.${tier.key}`) }}
+          </p>
 
           <!-- Row 3: Perks + Discord -->
           <div class="flex flex-1 flex-col pt-5">
@@ -306,132 +283,24 @@ const faq = computed(() => [
       </div>
     </div>
 
-    <!-- 2. Unboxed, direct personal note -->
-    <div data-testid="support-story" class="mx-auto max-w-2xl py-2 text-center">
-      <h3 class="text-2xl font-bold tracking-tight text-ink">
+    <!-- 2. Short, unboxed personal note -->
+    <div data-testid="support-story" class="mx-auto max-w-2xl text-center">
+      <h3 class="text-xl font-bold tracking-tight text-ink">
         {{ t('support.story.title') }}
       </h3>
-      <div class="mt-4 space-y-4 text-[15px] leading-relaxed text-ink-muted">
-        <p>{{ t('support.story.p1') }}</p>
-        <p>{{ t('support.story.p2') }}</p>
-      </div>
-      <p class="mt-6 text-sm font-semibold text-ink">
+      <p class="mt-3 text-sm leading-relaxed text-ink-muted sm:text-[15px]">
+        {{ t('support.story.body') }}
+      </p>
+      <p class="mt-4 text-sm font-semibold text-ink">
         — Natsume <span class="font-normal text-ink-faint">· {{ t('support.story.role') }}</span>
       </p>
     </div>
 
-    <!-- 3. Two genuine Nadeshiko previews (no nested boxes, no filler 3rd chart) -->
-    <div data-testid="support-showcase" class="mx-auto max-w-4xl">
-      <h3 class="text-center text-2xl font-bold tracking-tight text-ink">
-        {{ t('support.showcase.title') }}
-      </h3>
-
-      <div class="mt-7 grid gap-5 md:grid-cols-2">
-        <!-- Preview A: Interactive Custom Themes -->
-        <article class="flex flex-col justify-between rounded-xl border border-hairline bg-card-background p-6">
-          <div>
-            <h4 class="text-base font-bold text-ink">{{ t('support.showcase.themes.title') }}</h4>
-            <p class="mt-1.5 text-sm leading-relaxed text-ink-muted">
-              {{ t('support.showcase.themes.body') }}
-            </p>
-          </div>
-
-          <div
-            data-testid="theme-preview-card"
-            class="mt-5 rounded-lg border bg-surface p-4 transition-colors"
-            :style="{ borderColor: activePalette.accent }"
-          >
-            <div class="flex items-center justify-between gap-3">
-              <div>
-                <p lang="ja" class="text-base font-semibold text-ink">
-                  <span
-                    class="rounded px-1 py-0.5 transition-colors"
-                    :style="{ backgroundColor: activePalette.soft, color: activePalette.accent }"
-                    >約束</span
-                  >だよ。
-                </p>
-                <p class="mt-1 text-xs text-ink-muted">{{ t('support.showcase.themes.sampleGloss') }}</p>
-              </div>
-              <span
-                class="flex size-8 shrink-0 items-center justify-center rounded-full text-white transition-colors"
-                :style="{ backgroundColor: activePalette.accent }"
-                aria-hidden="true"
-              >
-                <UiBaseIcon :path="mdiPlay" :size="16" />
-              </span>
-            </div>
-
-            <div class="mt-4 flex items-center justify-between border-t border-hairline pt-3">
-              <span class="text-xs text-ink-faint">{{ t('support.showcase.themes.tryIt') }}</span>
-              <div class="flex items-center gap-2">
-                <button
-                  v-for="palette in PREVIEW_PALETTES"
-                  :key="palette.id"
-                  type="button"
-                  :data-testid="`theme-swatch-${palette.id}`"
-                  :aria-label="palette.label"
-                  :aria-pressed="selectedPaletteId === palette.id"
-                  class="size-5 rounded-full transition-transform hover:scale-110"
-                  :class="selectedPaletteId === palette.id ? 'ring-2 ring-ink ring-offset-2 ring-offset-surface' : ''"
-                  :style="{ backgroundColor: palette.accent }"
-                  @click="selectedPaletteId = palette.id"
-                />
-              </div>
-            </div>
-          </div>
-        </article>
-
-        <!-- Preview B: Content Request Boosts -->
-        <article class="flex flex-col justify-between rounded-xl border border-hairline bg-card-background p-6">
-          <div>
-            <h4 class="text-base font-bold text-ink">{{ t('support.showcase.boosts.title') }}</h4>
-            <p class="mt-1.5 text-sm leading-relaxed text-ink-muted">
-              {{ t('support.showcase.boosts.body') }}
-            </p>
-          </div>
-
-          <div class="mt-5 rounded-lg border border-hairline bg-surface p-4">
-            <div class="divide-y divide-hairline">
-              <div class="flex items-center justify-between gap-2 pb-3">
-                <div class="flex min-w-0 items-center gap-2">
-                  <span class="font-mono text-xs font-bold text-brand">#1</span>
-                  <span lang="ja" class="truncate text-sm font-semibold text-ink">葬送のフリーレン</span>
-                </div>
-                <span class="shrink-0 text-xs font-semibold text-brand">
-                  {{ t('support.showcase.boosts.badge', { count: 5 }) }}
-                </span>
-              </div>
-
-              <div class="flex items-center justify-between gap-2 pt-3">
-                <div class="flex min-w-0 items-center gap-2">
-                  <span class="font-mono text-xs text-ink-faint">#2</span>
-                  <span lang="ja" class="truncate text-sm text-ink-muted">薬屋のひとりごと</span>
-                </div>
-                <span class="shrink-0 text-xs text-ink-faint">
-                  {{ t('support.showcase.boosts.badge', { count: 3 }) }}
-                </span>
-              </div>
-            </div>
-
-            <div class="mt-4 border-t border-hairline pt-3">
-              <NuxtLink
-                :to="localePath('/requests')"
-                class="inline-flex items-center gap-1 text-xs font-semibold text-brand hover:underline"
-              >
-                <span>{{ t('support.showcase.boosts.cta') }}</span>
-                <UiBaseIcon :path="mdiArrowRight" :size="14" />
-              </NuxtLink>
-            </div>
-          </div>
-        </article>
-      </div>
-    </div>
-
-    <!-- 4. Understated Free vs Supporters Comparison -->
+    <!-- 3. Understated Free vs Supporters Comparison -->
     <div data-testid="support-compare-table" class="mx-auto max-w-4xl">
       <div class="text-center">
-        <h3 class="text-2xl font-bold tracking-tight text-ink">{{ t('support.compare.title') }}</h3>
-        <p class="mt-2 text-sm text-ink-muted">{{ t('support.compare.subtitle') }}</p>
+        <h3 class="text-xl font-bold tracking-tight text-ink">{{ t('support.compare.title') }}</h3>
+        <p class="mt-1.5 text-sm text-ink-muted">{{ t('support.compare.subtitle') }}</p>
       </div>
 
       <div class="mt-6 overflow-x-auto">
@@ -473,10 +342,10 @@ const faq = computed(() => [
       </div>
     </div>
 
-    <!-- 5. Questions: unified card with hairline dividers -->
+    <!-- 4. Questions: unified card with hairline dividers -->
     <div class="mx-auto max-w-3xl">
-      <h3 class="text-center text-2xl font-bold tracking-tight text-ink">{{ t('support.faq.title') }}</h3>
-      <div class="mt-6 divide-y divide-hairline overflow-hidden rounded-xl border border-hairline bg-card-background">
+      <h3 class="text-center text-xl font-bold tracking-tight text-ink">{{ t('support.faq.title') }}</h3>
+      <div class="mt-5 divide-y divide-hairline overflow-hidden rounded-xl border border-hairline bg-card-background">
         <details
           v-for="item in faq"
           :key="item.key"

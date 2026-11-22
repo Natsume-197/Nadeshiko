@@ -1609,11 +1609,10 @@
     "seoTitle": "Mecenas | Nadeshiko",
     "seoDescription": "Apoya a Nadeshiko en Patreon, mira lo que da cada nivel y qué títulos y funciones llegan pronto.",
     "title": "Mecenas",
-    "intro": "Los mecenas mantienen Nadeshiko en marcha y ayudan a decidir qué viene después. Elige un nivel aquí abajo y mira lo que estamos construyendo.",
+    "intro": "Buscar frases, audio, tarjetas y Anki son gratis para siempre. Los mecenas mantienen los servidores vivos y ayudan a que Nadeshiko crezca.",
     "tabs": {
       "tiers": "Niveles"
-    },
-    "freePromise": "Buscar frases, clips de audio, tarjetas de palabras y exportar a Anki son gratis para siempre."
+    }
   },
   "roadmap": {
     "title": "Roadmap",
@@ -1764,18 +1763,9 @@
     "whatsIncluded": "Qué incluye",
     "discord": "Incluye beneficios en Discord",
     "tierText": {
-      "seed": [
-        "Si Nadeshiko te ha sido útil en tu camino aprendiendo japonés y quieres mostrar tu aprecio y ayudar a mantener el sitio, este nivel es para ti. ¡Gracias!",
-        "A cambio, recibes boosts para subir en la lista de pedidos los títulos que quieres, y un límite de API más alto."
-      ],
-      "flower": [
-        "Para quienes creen de verdad en el proyecto. ¡Agradecemos mucho tu aporte!",
-        "Además de lo que incluye Seed, puedes proponer nuevas funciones e influir directamente en el desarrollo de Nadeshiko."
-      ],
-      "nadeshiko": [
-        "Nuestro nivel más alto, para quienes quieren darle a Nadeshiko el mayor apoyo. Los aportes de este nivel son los que nos permiten seguir ampliando la biblioteca y creando nuevas funciones.",
-        "Tienes todo lo de Flower, la mayor cantidad de boosts para que tus elegidos vayan primero y nuestro límite de API más alto."
-      ]
+      "seed": "Ayuda a mantener Nadeshiko en marcha y recibe extras de agradecimiento.",
+      "flower": "Para quienes creen en el proyecto y quieren influir en lo que viene después.",
+      "nadeshiko": "Nuestro mayor nivel de apoyo para seguir sumando catálogo y mejores límites."
     },
     "tiersIntro": "Elige el que mejor te encaje. Puedes cambiarlo o cancelarlo en Patreon cuando quieras.",
     "everythingBadge": "Todo incluido",
@@ -1825,25 +1815,9 @@
       "loggedOutBody": "Inicia sesión y vincula tu cuenta de Patreon en Ajustes para activar tus beneficios de mecenas.",
       "loggedOutCta": "Iniciar sesión para vincular"
     },
-    "showcase": {
-      "title": "Lo que desbloqueas al apoyar",
-      "themes": {
-        "title": "Temas personalizados",
-        "body": "Haz Nadeshiko tuyo: elige un color de acento o diseña tu propia paleta.",
-        "sampleGloss": "Es una promesa.",
-        "tryIt": "Prueba un color"
-      },
-      "boosts": {
-        "title": "Impulsa qué títulos llegan",
-        "body": "Usa tus boosts mensuales en los anime, doramas o canales de YouTube que quieras ver indexados primero.",
-        "badge": "+{count} boosts",
-        "cta": "Ver pedidos"
-      }
-    },
     "story": {
-      "title": "Hecho y mantenido por una sola persona",
-      "p1": "Nadeshiko nació para hacer más fácil aprender japonés con escenas reales de anime, series y YouTube — sin anuncios ni muros de pago en el buscador.",
-      "p2": "Cada aporte va directo a pagar servidores, alojamiento multimedia y el tiempo necesario para indexar nuevos títulos y construir mejores funciones. Gracias por mantenerlo vivo.",
+      "title": "Hecho por una sola persona",
+      "body": "Nadeshiko es un proyecto independiente, sin anuncios ni muros de pago en el buscador. Cada aporte va directo a servidores, alojamiento multimedia y tiempo para indexar nuevos títulos y mejoras.",
       "role": "Creador de Nadeshiko"
     },
     "compare": {
