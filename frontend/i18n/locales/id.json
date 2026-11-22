@@ -1935,13 +1935,11 @@
     "nav": {
       "home": "Dasbor",
       "openDashboard": "Dasbor Admin",
-      "reviewQueue": "Antrean Laporan",
       "refresh": "Muat ulang hitungan"
     },
     "status": {
       "bannerActive": "Banner aktif",
       "failedJobs": "{count} job gagal",
-      "queuesHealthy": "Antrean OK",
       "soon": "Fase 2"
     },
     "pulse": {
@@ -1955,23 +1953,6 @@
       "community": "Komunitas",
       "site": "Situs & Pengguna",
       "catalogue": "Katalog & Data"
-    },
-    "cards": {
-      "moderationTitle": "Laporan & Moderasi",
-      "moderationDesc": "Tinjau, filter, dan selesaikan laporan segmen dan media yang terbuka.",
-      "openCount": "{count} terbuka",
-      "requestsDesc": "Prioritaskan permintaan konten, boost patron, dan penggabungan duplikat.",
-      "boostedCount": "{count} di-boost",
-      "inProgressCount": "{count} diproses",
-      "usersDesc": "Cari akun, penyedia login, peran, pemblokiran, dan kuota API.",
-      "newUsers7d": "+{count} (7h)",
-      "bannedCount": "{count} diblokir",
-      "commsTitle": "Roadmap & Banner",
-      "commsDesc": "Perbarui roadmap publik dan kelola pengumuman seluruh situs.",
-      "opsTitle": "Sistem & Antrean",
-      "opsDesc": "Ringkasan langsung antrean latar, masukan baru, dan supresi email.",
-      "feedbackUnhandled": "{count} masukan",
-      "emailSuppressed": "{count} dibatasi"
     },
     "items": {
       "reportsDesc": "Tinjau, filter, dan selesaikan laporan secara massal.",

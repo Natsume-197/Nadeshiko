@@ -56,13 +56,10 @@ afterEach(() => {
 });
 
 describe('AdminDashboardHome', () => {
-  test('renders the 5 top action cards and all 4 categorized directory columns', () => {
+  test('renders the pulse strip and all 4 categorized directory columns', () => {
     const wrapper = render();
 
     expect(wrapper.find('[data-testid="admin-pulse-strip"]').exists()).toBe(true);
-    for (const card of ['moderation', 'requests', 'users', 'comms', 'ops']) {
-      expect(wrapper.find(`[data-testid="admin-card-${card}"]`).exists()).toBe(true);
-    }
     for (const sec of ['moderation', 'community', 'site', 'catalogue']) {
       expect(wrapper.find(`[data-testid="admin-section-${sec}"]`).exists()).toBe(true);
     }

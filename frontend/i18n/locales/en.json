@@ -1935,13 +1935,11 @@
     "nav": {
       "home": "Dashboard",
       "openDashboard": "Admin Dashboard",
-      "reviewQueue": "Review Queue",
       "refresh": "Refresh counts"
     },
     "status": {
       "bannerActive": "Banner live",
       "failedJobs": "{count} failed jobs",
-      "queuesHealthy": "Queues OK",
       "soon": "Phase 2"
     },
     "pulse": {
@@ -1955,23 +1953,6 @@
       "community": "Community",
       "site": "Site & Users",
       "catalogue": "Catalogue & Data"
-    },
-    "cards": {
-      "moderationTitle": "Reports & Moderation",
-      "moderationDesc": "Review, filter and bulk-resolve open segment and media reports.",
-      "openCount": "{count} open",
-      "requestsDesc": "Prioritise reader requests, patron boosts and duplicate merges.",
-      "boostedCount": "{count} boosted",
-      "inProgressCount": "{count} in progress",
-      "usersDesc": "Search accounts, linked providers, roles, bans and API quotas.",
-      "newUsers7d": "+{count} (7d)",
-      "bannedCount": "{count} banned",
-      "commsTitle": "Roadmap & Banner",
-      "commsDesc": "Update the public roadmap and toggle site-wide announcements.",
-      "opsTitle": "System & Queues",
-      "opsDesc": "Live snapshot of background queues, feedback inbox and email suppressions.",
-      "feedbackUnhandled": "{count} feedback",
-      "emailSuppressed": "{count} suppressed"
     },
     "items": {
       "reportsDesc": "Review, filter and bulk-resolve open reports.",

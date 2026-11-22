@@ -1935,13 +1935,11 @@
     "nav": {
       "home": "ダッシュボード",
       "openDashboard": "管理ダッシュボード",
-      "reviewQueue": "レビュー待ち",
       "refresh": "件数を更新"
     },
     "status": {
       "bannerActive": "お知らせ表示中",
       "failedJobs": "失敗ジョブ {count}件",
-      "queuesHealthy": "キュー正常",
       "soon": "フェーズ2"
     },
     "pulse": {
@@ -1955,23 +1953,6 @@
       "community": "コミュニティ",
       "site": "サイトとユーザー",
       "catalogue": "カタログとデータ"
-    },
-    "cards": {
-      "moderationTitle": "報告とモデレーション",
-      "moderationDesc": "未処理のセグメント・作品報告を確認し、絞り込みや一括処理を行います。",
-      "openCount": "未処理 {count}",
-      "requestsDesc": "ユーザーリクエスト、パトロンブースト、重複統合を管理します。",
-      "boostedCount": "ブースト {count}",
-      "inProgressCount": "進行中 {count}",
-      "usersDesc": "アカウント、連携プロバイダ、権限、BAN、API上限を検索・管理します。",
-      "newUsers7d": "+{count} (7日)",
-      "bannedCount": "BAN {count}",
-      "commsTitle": "ロードマップとお知らせ",
-      "commsDesc": "公開ロードマップの更新やサイト全体バナーの切り替えを行います。",
-      "opsTitle": "システムとキュー",
-      "opsDesc": "バックグラウンドキュー、未確認フィードバック、メール抑制の状態を確認します。",
-      "feedbackUnhandled": "フィードバック {count}",
-      "emailSuppressed": "送信停止 {count}"
     },
     "items": {
       "reportsDesc": "報告の絞り込みや一括処理を行います。",

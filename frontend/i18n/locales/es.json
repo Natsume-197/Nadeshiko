@@ -1935,13 +1935,11 @@
     "nav": {
       "home": "Inicio",
       "openDashboard": "Panel de administración",
-      "reviewQueue": "Cola de reportes",
       "refresh": "Actualizar contadores"
     },
     "status": {
       "bannerActive": "Banner activo",
       "failedJobs": "{count} jobs fallidos",
-      "queuesHealthy": "Colas OK",
       "soon": "Fase 2"
     },
     "pulse": {
@@ -1955,23 +1953,6 @@
       "community": "Comunidad",
       "site": "Sitio y usuarios",
       "catalogue": "Catálogo y datos"
-    },
-    "cards": {
-      "moderationTitle": "Reportes y moderación",
-      "moderationDesc": "Revisa, filtra y resuelve reportes abiertos de segmentos y títulos.",
-      "openCount": "{count} abiertos",
-      "requestsDesc": "Prioriza pedidos de la comunidad, boosts de patrons y duplicados.",
-      "boostedCount": "{count} con boost",
-      "inProgressCount": "{count} en progreso",
-      "usersDesc": "Busca cuentas, proveedores vinculados, roles, baneos y cuotas de API.",
-      "newUsers7d": "+{count} (7d)",
-      "bannedCount": "{count} baneados",
-      "commsTitle": "Roadmap y banner",
-      "commsDesc": "Actualiza el roadmap público y activa avisos globales en el sitio.",
-      "opsTitle": "Sistema y colas",
-      "opsDesc": "Pulso en vivo de colas en segundo plano, feedback pendiente y supresiones SES.",
-      "feedbackUnhandled": "{count} feedback",
-      "emailSuppressed": "{count} suprimidos"
     },
     "items": {
       "reportsDesc": "Revisa, filtra y resuelve reportes abiertos en lote.",

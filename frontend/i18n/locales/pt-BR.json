@@ -1935,13 +1935,11 @@
     "nav": {
       "home": "Painel",
       "openDashboard": "Painel Admin",
-      "reviewQueue": "Fila de revisão",
       "refresh": "Atualizar contagens"
     },
     "status": {
       "bannerActive": "Banner ativo",
       "failedJobs": "{count} jobs com erro",
-      "queuesHealthy": "Filas OK",
       "soon": "Fase 2"
     },
     "pulse": {
@@ -1955,23 +1953,6 @@
       "community": "Comunidade",
       "site": "Site e usuários",
       "catalogue": "Catálogo e dados"
-    },
-    "cards": {
-      "moderationTitle": "Denúncias e moderação",
-      "moderationDesc": "Revise, filtre e resolva denúncias abertas de segmentos e títulos.",
-      "openCount": "{count} abertas",
-      "requestsDesc": "Priorize pedidos de conteúdo, boosts de apoiadores e duplicatas.",
-      "boostedCount": "{count} com boost",
-      "inProgressCount": "{count} em andamento",
-      "usersDesc": "Busque contas, provedores vinculados, cargos, banimentos e cotas da API.",
-      "newUsers7d": "+{count} (7d)",
-      "bannedCount": "{count} banidos",
-      "commsTitle": "Roadmap e banner",
-      "commsDesc": "Atualize o roadmap público e ative avisos globais no site.",
-      "opsTitle": "Sistema e filas",
-      "opsDesc": "Visão rápida das filas em segundo plano, feedback pendente e supressões de email.",
-      "feedbackUnhandled": "{count} feedbacks",
-      "emailSuppressed": "{count} suprimidos"
     },
     "items": {
       "reportsDesc": "Revise, filtre e resolva denúncias abertas em lote.",

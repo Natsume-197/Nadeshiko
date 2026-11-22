@@ -1935,13 +1935,11 @@
     "nav": {
       "home": "控制台",
       "openDashboard": "管理控制台",
-      "reviewQueue": "審核佇列",
       "refresh": "重新整理統計"
     },
     "status": {
       "bannerActive": "公告啟用中",
       "failedJobs": "{count} 個失敗工作",
-      "queuesHealthy": "佇列正常",
       "soon": "第 2 階段"
     },
     "pulse": {
@@ -1955,23 +1953,6 @@
       "community": "社群",
       "site": "網站與使用者",
       "catalogue": "目錄與資料"
-    },
-    "cards": {
-      "moderationTitle": "檢舉與審核",
-      "moderationDesc": "篩選並批次處理待審核的片段與作品檢舉。",
-      "openCount": "{count} 待處理",
-      "requestsDesc": "管理讀者內容請求、贊助者加速與重複合併。",
-      "boostedCount": "{count} 已加速",
-      "inProgressCount": "{count} 進行中",
-      "usersDesc": "搜尋帳號、登入方式、角色、停權狀態與 API 配額。",
-      "newUsers7d": "+{count} (7天)",
-      "bannedCount": "{count} 已停權",
-      "commsTitle": "路線圖與公告欄",
-      "commsDesc": "更新公開路線圖並切換全站公告橫幅。",
-      "opsTitle": "系統與佇列",
-      "opsDesc": "即時檢視背景佇列、未處理回饋與郵件封鎖狀態。",
-      "feedbackUnhandled": "{count} 則回饋",
-      "emailSuppressed": "{count} 筆封鎖"
     },
     "items": {
       "reportsDesc": "篩選並批次處理待審核的檢舉。",

@@ -1935,13 +1935,11 @@
     "nav": {
       "home": "控制台",
       "openDashboard": "管理控制台",
-      "reviewQueue": "审核队列",
       "refresh": "刷新计数"
     },
     "status": {
       "bannerActive": "公告生效中",
       "failedJobs": "{count} 个失败任务",
-      "queuesHealthy": "队列正常",
       "soon": "第 2 阶段"
     },
     "pulse": {
@@ -1955,23 +1953,6 @@
       "community": "社区",
       "site": "站点与用户",
       "catalogue": "目录与数据"
-    },
-    "cards": {
-      "moderationTitle": "举报与审核",
-      "moderationDesc": "筛选并批量处理待审核的片段与作品举报。",
-      "openCount": "{count} 待处理",
-      "requestsDesc": "管理读者内容请求、赞助者加速与重复合并。",
-      "boostedCount": "{count} 已加速",
-      "inProgressCount": "{count} 进行中",
-      "usersDesc": "搜索账号、登录方式、角色、封禁状态与 API 配额。",
-      "newUsers7d": "+{count} (7天)",
-      "bannedCount": "{count} 已封禁",
-      "commsTitle": "路线图与公告栏",
-      "commsDesc": "更新公开路线图并切换全站公告横幅。",
-      "opsTitle": "系统与队列",
-      "opsDesc": "实时查看后台队列、待处理反馈与邮件拦截状态。",
-      "feedbackUnhandled": "{count} 条反馈",
-      "emailSuppressed": "{count} 条拦截"
     },
     "items": {
       "reportsDesc": "筛选并批量处理待审核的举报。",
