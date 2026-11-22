@@ -18,6 +18,7 @@ import { z } from 'zod/v4';
 import type {
   t_AccountQuotaState,
   t_AdminContentRequest,
+  t_AdminOverview,
   t_AdminReportListResponse,
   t_AdminUserWithProviders,
   t_AffectedCountResponse,
@@ -59,6 +60,7 @@ import {
   PermissiveBoolean,
   s_AccountQuotaState,
   s_AdminContentRequest,
+  s_AdminOverview,
   s_AdminReportListResponse,
   s_AdminUserWithProviders,
   s_AffectedCountResponse,
@@ -86,6 +88,22 @@ import {
   s_UpdateAdminRoadmapItemRequestBody,
   s_UpdateReportRequest,
 } from '../schemas.ts';
+
+export type GetAdminOverviewResponder = {
+  with200(): ExpressRuntimeResponse<t_AdminOverview>;
+  with401(): ExpressRuntimeResponse<t_Error401>;
+  with403(): ExpressRuntimeResponse<t_Error403>;
+  with429(): ExpressRuntimeResponse<t_Error429>;
+  with500(): ExpressRuntimeResponse<t_Error500>;
+} & ExpressRuntimeResponder;
+
+export type GetAdminOverview = (
+  params: Params<void, void, void, void>,
+  respond: GetAdminOverviewResponder,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
 
 export type ListAdminReportsResponder = {
   with200(): ExpressRuntimeResponse<t_AdminReportListResponse>;
@@ -415,6 +433,7 @@ export type MergeAdminContentRequest = (
 ) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
 
 export type AdminImplementation = {
+  getAdminOverview: GetAdminOverview;
   listAdminReports: ListAdminReports;
   batchUpdateAdminReports: BatchUpdateAdminReports;
   bulkUpdateAdminReports: BulkUpdateAdminReports;
@@ -445,6 +464,57 @@ export function createAdminRouter(
   if (options.middleware?.length) {
     router.use(...options.middleware);
   }
+
+  const getAdminOverviewResponseBodyValidator = responseValidationFactory(
+    [
+      ['200', s_AdminOverview],
+      ['401', s_Error401],
+      ['403', s_Error403],
+      ['429', s_Error429],
+      ['500', s_Error500],
+    ],
+    undefined,
+  );
+
+  // getAdminOverview
+  router.get(`/v1/admin/overview`, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const input = {
+        params: undefined,
+        query: undefined,
+        body: undefined,
+        headers: undefined,
+      };
+
+      const responder = {
+        with200() {
+          return new ExpressRuntimeResponse<t_AdminOverview>(200);
+        },
+        with401() {
+          return new ExpressRuntimeResponse<t_Error401>(401);
+        },
+        with403() {
+          return new ExpressRuntimeResponse<t_Error403>(403);
+        },
+        with429() {
+          return new ExpressRuntimeResponse<t_Error429>(429);
+        },
+        with500() {
+          return new ExpressRuntimeResponse<t_Error500>(500);
+        },
+        withStatus(status: StatusCode) {
+          return new ExpressRuntimeResponse(status);
+        },
+      };
+
+      await implementation
+        .getAdminOverview(input, responder, req, res, next)
+        .catch(handleImplementationError)
+        .then(handleResponse(res, getAdminOverviewResponseBodyValidator));
+    } catch (error) {
+      next(error);
+    }
+  });
 
   const listAdminReportsQuerySchema = z.object({
     cursor: z.string().optional(),

@@ -242,6 +242,8 @@ paths:
     $ref: "./paths/collections/v1_collections_id_stats.yaml"
 
   # Admin endpoints
+  "/v1/admin/overview":
+    $ref: "./paths/admin/v1_admin_overview.yaml"
   "/v1/admin/reports":
     $ref: "./paths/admin/v1_admin_reports.yaml"
   "/v1/admin/reports/batch":

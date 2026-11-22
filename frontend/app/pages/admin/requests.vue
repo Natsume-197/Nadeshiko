@@ -2,4 +2,6 @@
 import RequestsManager from '~/components/admin/RequestsManager.vue';
 </script>
 
-<template><RequestsManager /></template>
+<template>
+  <RequestsManager />
+</template>

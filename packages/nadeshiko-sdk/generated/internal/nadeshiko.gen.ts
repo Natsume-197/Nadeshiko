@@ -4,7 +4,7 @@ import { createClient as createApiClient, createConfig, type Client } from './cl
 import type { Auth } from './core/auth.gen';
 import type { ClientOptions } from './types.gen';
 import type * as Types from './types.gen';
-import { search, getSearchStats, searchWords, searchMedia, getStatsOverview, listMedia, getSegment, getSegmentContext, getMedia, listEpisodes, getEpisode, getMe, createUserApiKey, listExcludedMedia, addExcludedMedia, removeExcludedMedia, listFavoriteMedia, addFavoriteMedia, removeFavoriteMedia, listFamiliarMedia, listUserActivity, getUserActivityHeatmap, getUserActivityStats, listCollections, createCollection, getCollection, deleteCollection, addSegmentToCollection, searchCollectionSegments, removeSegmentFromCollection, listRoadmap, listContentRequests, createContentRequest, getContentRequestAllowance, withdrawContentRequest, voteContentRequest, unvoteContentRequest, boostContentRequest, identifyDictionaryWord, getDictionaryKanjiIndex, getDictionaryKanji, getCoveredWords, triggerCoveredWordsUpdate, createMedia, updateSegment, listSegmentRevisions, restoreSegmentRevision, updateMedia, deleteMedia, createEpisode, updateEpisode, deleteEpisode, listSegments, createSegment, createSegmentsBatch, moderateEpisodeSegments, getPatreonConnection, startPatreonLink, unlinkPatreon, completePatreonLink, listUserDictionaries, updateUserDictionaries, deleteUserDictionary, reserveUserDictionaryUpload, completeUserDictionaryUpload, clearFamiliarMedia, forgetFamiliarMedia, createUserReport, getUserPreferences, updateUserPreferences, trackUserActivity, deleteUserActivity, deleteUserActivityByDate, deleteUserActivityById, exportUserData, createFeedback, getFeedbackFormToken, unsubscribeFromEmail, getEmailPreferencesByToken, updateEmailPreferencesByToken, updateCollection, updateCollectionSegment, getCollectionStats, listAdminReports, batchUpdateAdminReports, bulkUpdateAdminReports, bulkDeleteAdminReports, updateAdminReport, deleteAdminReport, listAgentActivity, getAnnouncement, updateAnnouncement, getAdminUsersWithProviders, listTiers, getAdminUserQuota, updateAdminUserQuota, listAdminRoadmap, createAdminRoadmapItem, updateAdminRoadmapItem, listAdminContentRequests, updateAdminContentRequest, mergeAdminContentRequest, getSession, getSessionPost, signOut, socialSignIn, signInWithMagicLink, signInWithEmailOtp, listUserSessions, authRevokeSession, authRevokeSessions, authRevokeOtherSessions, deleteUser, changeEmail, authApiKeyCreate, authApiKeyList, authApiKeyUpdate, banUser, unbanUser, impersonateUser, authAdminStopImpersonating, type Options } from './sdk.gen';
+import { search, getSearchStats, searchWords, searchMedia, getStatsOverview, listMedia, getSegment, getSegmentContext, getMedia, listEpisodes, getEpisode, getMe, createUserApiKey, listExcludedMedia, addExcludedMedia, removeExcludedMedia, listFavoriteMedia, addFavoriteMedia, removeFavoriteMedia, listFamiliarMedia, listUserActivity, getUserActivityHeatmap, getUserActivityStats, listCollections, createCollection, getCollection, deleteCollection, addSegmentToCollection, searchCollectionSegments, removeSegmentFromCollection, listRoadmap, listContentRequests, createContentRequest, getContentRequestAllowance, listMyContentRequests, withdrawContentRequest, voteContentRequest, unvoteContentRequest, boostContentRequest, identifyDictionaryWord, getDictionaryKanjiIndex, getDictionaryKanji, getCoveredWords, triggerCoveredWordsUpdate, createMedia, updateSegment, listSegmentRevisions, restoreSegmentRevision, updateMedia, deleteMedia, createEpisode, updateEpisode, deleteEpisode, listSegments, createSegment, createSegmentsBatch, moderateEpisodeSegments, getPatreonConnection, startPatreonLink, unlinkPatreon, completePatreonLink, listUserDictionaries, updateUserDictionaries, deleteUserDictionary, reserveUserDictionaryUpload, completeUserDictionaryUpload, clearFamiliarMedia, forgetFamiliarMedia, createUserReport, getUserPreferences, updateUserPreferences, trackUserActivity, deleteUserActivity, deleteUserActivityByDate, deleteUserActivityById, exportUserData, createFeedback, getFeedbackFormToken, unsubscribeFromEmail, getEmailPreferencesByToken, updateEmailPreferencesByToken, updateCollection, updateCollectionSegment, getCollectionStats, getAdminOverview, listAdminReports, batchUpdateAdminReports, bulkUpdateAdminReports, bulkDeleteAdminReports, updateAdminReport, deleteAdminReport, listAgentActivity, getAnnouncement, updateAnnouncement, getAdminUsersWithProviders, listTiers, getAdminUserQuota, updateAdminUserQuota, listAdminRoadmap, createAdminRoadmapItem, updateAdminRoadmapItem, listAdminContentRequests, updateAdminContentRequest, mergeAdminContentRequest, getSession, getSessionPost, signOut, socialSignIn, signInWithMagicLink, signInWithEmailOtp, listUserSessions, authRevokeSession, authRevokeSessions, authRevokeOtherSessions, deleteUser, changeEmail, authApiKeyCreate, authApiKeyList, authApiKeyUpdate, banUser, unbanUser, impersonateUser, authAdminStopImpersonating, type Options } from './sdk.gen';
 import { withRetry, type RetryOptions } from './retry';
 import { NadeshikoError, buildNadeshikoError, isProblemDetails, type NadeshikoErrorCode, type RateLimitReason } from './errors';
 import { flatPaginate } from './paginate';
@@ -197,6 +197,10 @@ export type NadeshikoClient = {
     getContentRequestAllowance: {
       (params: { throwOnError: false }): Promise<{ data: Types.GetContentRequestAllowanceResponse; response: Response; request: Request } | { error: Types.GetContentRequestAllowanceErrors; response: Response; request: Request }>;
       (): Promise<Types.GetContentRequestAllowanceResponse>;
+    };
+    listMyContentRequests: {
+      (params: NonNullable<Types.ListMyContentRequestsData['query']> & { throwOnError: false }): Promise<{ data: Types.ListMyContentRequestsResponse; response: Response; request: Request } | { error: Types.ListMyContentRequestsErrors; response: Response; request: Request }>;
+      (params?: NonNullable<Types.ListMyContentRequestsData['query']>): Promise<Types.ListMyContentRequestsResponse>;
     };
     withdrawContentRequest: {
       (id: string): Promise<Types.WithdrawContentRequestResponse>;
@@ -411,6 +415,10 @@ export type NadeshikoClient = {
       (id: string): Promise<Types.GetCollectionStatsResponse>;
       (params: Types.GetCollectionStatsData['path'] & { throwOnError: false }): Promise<{ data: Types.GetCollectionStatsResponse; response: Response; request: Request } | { error: Types.GetCollectionStatsErrors; response: Response; request: Request }>;
       (params: Types.GetCollectionStatsData['path']): Promise<Types.GetCollectionStatsResponse>;
+    };
+    getAdminOverview: {
+      (params: { throwOnError: false }): Promise<{ data: Types.GetAdminOverviewResponse; response: Response; request: Request } | { error: Types.GetAdminOverviewErrors; response: Response; request: Request }>;
+      (): Promise<Types.GetAdminOverviewResponse>;
     };
     listAdminReports: {
       (params: NonNullable<Types.ListAdminReportsData['query']> & { throwOnError: false }): Promise<{ data: Types.ListAdminReportsResponse; response: Response; request: Request } | { error: Types.ListAdminReportsErrors; response: Response; request: Request }>;
@@ -944,6 +952,12 @@ export function createNadeshikoClient(config: NadeshikoConfig): NadeshikoClient 
     return tOE === false ? p : p.then((r: any) => r.data);
   };
 
+  const _listMyContentRequests = (params?: any) => {
+    const { throwOnError: tOE, ...query } = params ?? {};
+    const p = listMyContentRequests({ ...(Object.keys(query).length > 0 ? { query } : {}), client: clientInstance, throwOnError: tOE === false ? false : true } as any);
+    return tOE === false ? p : p.then((r: any) => r.data);
+  };
+
   const _withdrawContentRequest = (paramsOrId?: any) => {
     if (typeof paramsOrId === 'string') {
       return withdrawContentRequest({ throwOnError: true, path: { requestId: paramsOrId }, client: clientInstance } as any).then((r: any) => r.data);
@@ -1317,6 +1331,12 @@ export function createNadeshikoClient(config: NadeshikoConfig): NadeshikoClient 
     return tOE === false ? p : p.then((r: any) => r.data);
   };
 
+  const _getAdminOverview = (params?: any) => {
+    const tOE = params?.throwOnError;
+    const p = getAdminOverview({ client: clientInstance, throwOnError: tOE === false ? false : true } as any);
+    return tOE === false ? p : p.then((r: any) => r.data);
+  };
+
   const _listAdminReports = (params?: any) => {
     const { throwOnError: tOE, ...query } = params ?? {};
     const p = listAdminReports({ ...(Object.keys(query).length > 0 ? { query } : {}), client: clientInstance, throwOnError: tOE === false ? false : true } as any);
@@ -1612,6 +1632,7 @@ export function createNadeshikoClient(config: NadeshikoConfig): NadeshikoClient 
     listContentRequests: _listContentRequests,
     createContentRequest: _createContentRequest,
     getContentRequestAllowance: _getContentRequestAllowance,
+    listMyContentRequests: _listMyContentRequests,
     withdrawContentRequest: _withdrawContentRequest,
     voteContentRequest: _voteContentRequest,
     unvoteContentRequest: _unvoteContentRequest,
@@ -1661,6 +1682,7 @@ export function createNadeshikoClient(config: NadeshikoConfig): NadeshikoClient 
     updateCollection: _updateCollection,
     updateCollectionSegment: _updateCollectionSegment,
     getCollectionStats: _getCollectionStats,
+    getAdminOverview: _getAdminOverview,
     listAdminReports: _listAdminReports,
     batchUpdateAdminReports: _batchUpdateAdminReports,
     bulkUpdateAdminReports: _bulkUpdateAdminReports,

@@ -10,6 +10,7 @@ import * as schemas from './schemas';
 export type AccountQuotaStateOutput = z.output<typeof schemas.s_AccountQuotaState>;
 export type ActivityTypeOutput = z.output<typeof schemas.s_ActivityType>;
 export type AddSegmentToCollectionRequestOutput = z.output<typeof schemas.s_AddSegmentToCollectionRequest>;
+export type AdminOverviewOutput = z.output<typeof schemas.s_AdminOverview>;
 export type AdminUserWithProvidersOutput = z.output<typeof schemas.s_AdminUserWithProviders>;
 export type AffectedCountResponseOutput = z.output<typeof schemas.s_AffectedCountResponse>;
 export type AgentActivityResponseOutput = z.output<typeof schemas.s_AgentActivityResponse>;

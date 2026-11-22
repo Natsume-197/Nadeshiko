@@ -43,7 +43,8 @@
       "activity": "Aktivitas",
       "language": "Bahasa",
       "logout": "Keluar",
-      "requests": "Permintaan"
+      "requests": "Permintaan",
+      "admin": "Admin"
     }
   },
   "announcementBanner": {
@@ -1958,6 +1959,77 @@
     },
     "admin": {
       "tab": "Permintaan"
+    }
+  },
+  "adminDashboard": {
+    "title": "Dasbor Admin",
+    "subtitle": "Moderasi, komunitas, akun, dan kesehatan sistem dalam satu tempat.",
+    "loading": "Memuat data langsung…",
+    "nav": {
+      "home": "Dasbor",
+      "openDashboard": "Dasbor Admin",
+      "jumpLabel": "Buka tampilan admin",
+      "jumpPlaceholder": "Buka tampilan ({count})…",
+      "reviewQueue": "Antrean Laporan",
+      "refresh": "Muat ulang hitungan",
+      "showAll": "Tampilkan semua"
+    },
+    "status": {
+      "bannerActive": "Banner aktif",
+      "failedJobs": "{count} job gagal",
+      "queuesHealthy": "Antrean OK",
+      "soon": "Fase 2"
+    },
+    "pulse": {
+      "users": "{count} pengguna",
+      "patrons": "{count} patron",
+      "media": "{count} judul",
+      "segments": "{count} segmen"
+    },
+    "categories": {
+      "moderation": "Moderasi & Kualitas",
+      "community": "Komunitas",
+      "site": "Situs & Pengguna",
+      "catalogue": "Katalog & Data"
+    },
+    "cards": {
+      "moderationTitle": "Laporan & Moderasi",
+      "moderationDesc": "Tinjau laporan segmen terbuka dan periksa suntingan agen moderasi.",
+      "openCount": "{count} terbuka",
+      "requestsDesc": "Prioritaskan permintaan konten, boost patron, dan penggabungan duplikat.",
+      "boostedCount": "{count} di-boost",
+      "inProgressCount": "{count} diproses",
+      "usersDesc": "Cari akun, penyedia login, peran, pemblokiran, dan kuota API.",
+      "newUsers7d": "+{count} (7h)",
+      "bannedCount": "{count} diblokir",
+      "commsTitle": "Roadmap & Banner",
+      "commsDesc": "Perbarui roadmap publik dan kelola pengumuman seluruh situs.",
+      "opsTitle": "Sistem & Antrean",
+      "opsDesc": "Ringkasan langsung antrean latar, masukan baru, dan supresi email.",
+      "feedbackUnhandled": "{count} masukan",
+      "emailSuppressed": "{count} dibatasi"
+    },
+    "items": {
+      "reportsDesc": "Tinjau, filter, dan selesaikan laporan secara massal.",
+      "agentActivityDesc": "Periksa perubahan agen moderasi dan pulihkan dalam satu klik.",
+      "feedbackTitle": "Kotak Masukan",
+      "feedbackDesc": "Baca pesan widget masukan beserta konteks halaman dan sesi PostHog.",
+      "requestsDesc": "Kelola permintaan konten, boost patron, dan notifikasi rilis.",
+      "roadmapDesc": "Buat, urutkan, dan perbarui item roadmap publik.",
+      "announcementDesc": "Tampilkan banner info, peringatan, atau pemeliharaan situs.",
+      "usersDesc": "Kelola akun, peran, pemblokiran, dan kuota API bulanan.",
+      "patreonTitle": "Patreon & Tier",
+      "patreonDesc": "Periksa keanggotaan Patreon tertaut, batas tier, dan status sinkronisasi.",
+      "emailTitle": "Email & Supresi",
+      "emailDesc": "Periksa daftar supresi bounce SES dan log pengiriman email.",
+      "queuesTitle": "Manajemen Data & Antrean",
+      "queuesDesc": "Pantau antrean pg-boss, coba ulang job gagal, dan picu pembaruan data.",
+      "catalogueTitle": "Katalog Media",
+      "catalogueDesc": "Jelajahi anime, J-drama, kanal YouTube, dan buku audio terbit.",
+      "statsTitle": "Statistik & Cakupan Korpus",
+      "statsDesc": "Lihat cakupan kosakata, rincian terjemahan, dan jam dialog.",
+      "statusTitle": "Halaman Status Publik",
+      "statusDesc": "Buka status.nadeshiko.co di tab baru."
     }
   }
 }

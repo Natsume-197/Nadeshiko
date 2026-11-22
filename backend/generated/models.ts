@@ -33,6 +33,49 @@ export type t_AdminContentRequest = t_ContentRequest & {
   } | null;
 };
 
+export type t_AdminOverview = {
+  agentActivity: {
+    editsLast24h: number;
+  };
+  announcement: {
+    active: boolean;
+  };
+  catalogue: {
+    episodes: number;
+    media: number;
+    segments: number;
+  };
+  email: {
+    suppressed: number;
+  };
+  feedback: {
+    total: number;
+    unhandled: number;
+  };
+  generatedAt: string;
+  queues: {
+    active: number;
+    failed: number;
+    queued: number;
+  };
+  reports: {
+    open: number;
+    processing: number;
+  };
+  requests: {
+    boostedOpen: number;
+    inProgress: number;
+    open: number;
+    planned: number;
+  };
+  users: {
+    activePatrons: number;
+    banned: number;
+    newLast7d: number;
+    total: number;
+  };
+};
+
 export type t_AdminReportGroup = {
   firstReportedAt: string;
   lastStatusChange: string | null;

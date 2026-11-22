@@ -43,7 +43,8 @@
       "activity": "利用履歴",
       "language": "言語",
       "logout": "ログアウト",
-      "requests": "リクエスト"
+      "requests": "リクエスト",
+      "admin": "管理"
     }
   },
   "announcementBanner": {
@@ -1958,6 +1959,77 @@
     },
     "admin": {
       "tab": "リクエスト"
+    }
+  },
+  "adminDashboard": {
+    "title": "管理ダッシュボード",
+    "subtitle": "モデレーション、コミュニティ、アカウント、システム状態を一元管理します。",
+    "loading": "最新データを読み込み中…",
+    "nav": {
+      "home": "ダッシュボード",
+      "openDashboard": "管理ダッシュボード",
+      "jumpLabel": "管理画面へ移動",
+      "jumpPlaceholder": "画面へ移動 ({count})…",
+      "reviewQueue": "レビュー待ち",
+      "refresh": "件数を更新",
+      "showAll": "すべて表示"
+    },
+    "status": {
+      "bannerActive": "お知らせ表示中",
+      "failedJobs": "失敗ジョブ {count}件",
+      "queuesHealthy": "キュー正常",
+      "soon": "フェーズ2"
+    },
+    "pulse": {
+      "users": "ユーザー {count}",
+      "patrons": "パトロン {count}",
+      "media": "作品 {count}",
+      "segments": "セグメント {count}"
+    },
+    "categories": {
+      "moderation": "モデレーションと品質",
+      "community": "コミュニティ",
+      "site": "サイトとユーザー",
+      "catalogue": "カタログとデータ"
+    },
+    "cards": {
+      "moderationTitle": "報告とモデレーション",
+      "moderationDesc": "未処理の報告を確認し、自動モデレーションの変更を点検します。",
+      "openCount": "未処理 {count}",
+      "requestsDesc": "ユーザーリクエスト、パトロンブースト、重複統合を管理します。",
+      "boostedCount": "ブースト {count}",
+      "inProgressCount": "進行中 {count}",
+      "usersDesc": "アカウント、連携プロバイダ、権限、BAN、API上限を検索・管理します。",
+      "newUsers7d": "+{count} (7日)",
+      "bannedCount": "BAN {count}",
+      "commsTitle": "ロードマップとお知らせ",
+      "commsDesc": "公開ロードマップの更新やサイト全体バナーの切り替えを行います。",
+      "opsTitle": "システムとキュー",
+      "opsDesc": "バックグラウンドキュー、未確認フィードバック、メール抑制の状態を確認します。",
+      "feedbackUnhandled": "フィードバック {count}",
+      "emailSuppressed": "送信停止 {count}"
+    },
+    "items": {
+      "reportsDesc": "報告の絞り込みや一括処理を行います。",
+      "agentActivityDesc": "モデレーションエージェントの差分を確認し、ワンクリックで復元します。",
+      "feedbackTitle": "フィードバック受信箱",
+      "feedbackDesc": "フィードバック本文とページ情報・PostHogセッションを確認します。",
+      "requestsDesc": "コンテンツリクエスト、ブースト、公開通知を管理します。",
+      "roadmapDesc": "公開ロードマップの項目を作成・並び替え・更新します。",
+      "announcementDesc": "サイト全体にお知らせやメンテナンスバナーを表示します。",
+      "usersDesc": "アカウント、ロール、BAN、月間API上限オーバーライドを管理します。",
+      "patreonTitle": "Patreonとティア",
+      "patreonDesc": "連携済みPatreon会員、ティア上限、同期状態を確認します。",
+      "emailTitle": "メールと送信停止",
+      "emailDesc": "SESバウンスによる送信停止リストと送信履歴を確認します。",
+      "queuesTitle": "データ管理とキュー",
+      "queuesDesc": "pg-bossキュー監視、失敗ジョブ再実行、各種更新を実行します。",
+      "catalogueTitle": "メディアカタログ",
+      "catalogueDesc": "公開中のアニメ・ドラマ・YouTube・オーディオブックを閲覧します。",
+      "statsTitle": "コーパス統計とカバー率",
+      "statsDesc": "語彙カバー率、翻訳内訳、収録時間を確認します。",
+      "statusTitle": "ステータスページ",
+      "statusDesc": "status.nadeshiko.co を新しいタブで開きます。"
     }
   }
 }

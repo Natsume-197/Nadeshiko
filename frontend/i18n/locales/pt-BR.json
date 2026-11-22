@@ -43,7 +43,8 @@
       "activity": "Atividade",
       "language": "Idioma",
       "logout": "Sair",
-      "requests": "Pedidos"
+      "requests": "Pedidos",
+      "admin": "Admin"
     }
   },
   "announcementBanner": {
@@ -1958,6 +1959,77 @@
     },
     "admin": {
       "tab": "Pedidos"
+    }
+  },
+  "adminDashboard": {
+    "title": "Painel Admin",
+    "subtitle": "Moderação, comunidade, contas e saúde do sistema em um só lugar.",
+    "loading": "Carregando contagens…",
+    "nav": {
+      "home": "Painel",
+      "openDashboard": "Painel Admin",
+      "jumpLabel": "Ir para uma tela admin",
+      "jumpPlaceholder": "Ir para tela ({count})…",
+      "reviewQueue": "Fila de revisão",
+      "refresh": "Atualizar contagens",
+      "showAll": "Mostrar tudo"
+    },
+    "status": {
+      "bannerActive": "Banner ativo",
+      "failedJobs": "{count} jobs com erro",
+      "queuesHealthy": "Filas OK",
+      "soon": "Fase 2"
+    },
+    "pulse": {
+      "users": "{count} usuários",
+      "patrons": "{count} apoiadores",
+      "media": "{count} títulos",
+      "segments": "{count} segmentos"
+    },
+    "categories": {
+      "moderation": "Moderação e qualidade",
+      "community": "Comunidade",
+      "site": "Site e usuários",
+      "catalogue": "Catálogo e dados"
+    },
+    "cards": {
+      "moderationTitle": "Denúncias e moderação",
+      "moderationDesc": "Revise denúncias abertas e confira edições do agente de moderação.",
+      "openCount": "{count} abertas",
+      "requestsDesc": "Priorize pedidos de conteúdo, boosts de apoiadores e duplicatas.",
+      "boostedCount": "{count} com boost",
+      "inProgressCount": "{count} em andamento",
+      "usersDesc": "Busque contas, provedores vinculados, cargos, banimentos e cotas da API.",
+      "newUsers7d": "+{count} (7d)",
+      "bannedCount": "{count} banidos",
+      "commsTitle": "Roadmap e banner",
+      "commsDesc": "Atualize o roadmap público e ative avisos globais no site.",
+      "opsTitle": "Sistema e filas",
+      "opsDesc": "Visão rápida das filas em segundo plano, feedback pendente e supressões de email.",
+      "feedbackUnhandled": "{count} feedbacks",
+      "emailSuppressed": "{count} suprimidos"
+    },
+    "items": {
+      "reportsDesc": "Revise, filtre e resolva denúncias abertas em lote.",
+      "agentActivityDesc": "Inspecione diffs do agente de moderação e reverta com um clique.",
+      "feedbackTitle": "Caixa de feedback",
+      "feedbackDesc": "Leia mensagens do widget com contexto da página e link do PostHog.",
+      "requestsDesc": "Gerencie pedidos de conteúdo, boosts de apoiadores e avisos de lançamento.",
+      "roadmapDesc": "Crie, ordene e atualize itens do roadmap público.",
+      "announcementDesc": "Exiba um banner global de aviso, alerta ou manutenção.",
+      "usersDesc": "Gerencie contas, cargos, banimentos e limites mensais da API.",
+      "patreonTitle": "Patreon e tiers",
+      "patreonDesc": "Confira assinaturas Patreon vinculadas, limites por tier e sincronização.",
+      "emailTitle": "Emails e supressões",
+      "emailDesc": "Verifique bloqueios de bounce no SES e registros de envio.",
+      "queuesTitle": "Dados e filas (pg-boss)",
+      "queuesDesc": "Monitore filas pg-boss, tente novamente jobs com erro e dispare atualizações.",
+      "catalogueTitle": "Catálogo de mídia",
+      "catalogueDesc": "Explore animes, J-dramas, canais do YouTube e audiolivros publicados.",
+      "statsTitle": "Estatísticas e cobertura",
+      "statsDesc": "Veja cobertura de vocabulário, traduções e horas de diálogo.",
+      "statusTitle": "Página de status",
+      "statusDesc": "Abre status.nadeshiko.co em uma nova aba."
     }
   }
 }

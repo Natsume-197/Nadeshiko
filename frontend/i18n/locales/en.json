@@ -43,7 +43,8 @@
       "activity": "Activity",
       "language": "Language",
       "logout": "Sign out",
-      "requests": "Requests"
+      "requests": "Requests",
+      "admin": "Admin"
     }
   },
   "announcementBanner": {
@@ -1958,6 +1959,77 @@
     },
     "admin": {
       "tab": "Requests"
+    }
+  },
+  "adminDashboard": {
+    "title": "Admin Dashboard",
+    "subtitle": "Moderation, community, accounts and system health in one place.",
+    "loading": "Loading live counts…",
+    "nav": {
+      "home": "Dashboard",
+      "openDashboard": "Admin Dashboard",
+      "jumpLabel": "Jump to an admin view",
+      "jumpPlaceholder": "Jump to view ({count})…",
+      "reviewQueue": "Review Queue",
+      "refresh": "Refresh counts",
+      "showAll": "Show all"
+    },
+    "status": {
+      "bannerActive": "Banner live",
+      "failedJobs": "{count} failed jobs",
+      "queuesHealthy": "Queues OK",
+      "soon": "Phase 2"
+    },
+    "pulse": {
+      "users": "{count} users",
+      "patrons": "{count} patrons",
+      "media": "{count} titles",
+      "segments": "{count} segments"
+    },
+    "categories": {
+      "moderation": "Moderation & Quality",
+      "community": "Community",
+      "site": "Site & Users",
+      "catalogue": "Catalogue & Data"
+    },
+    "cards": {
+      "moderationTitle": "Reports & Moderation",
+      "moderationDesc": "Review open segment reports and spot-check moderation agent edits.",
+      "openCount": "{count} open",
+      "requestsDesc": "Prioritise reader requests, patron boosts and duplicate merges.",
+      "boostedCount": "{count} boosted",
+      "inProgressCount": "{count} in progress",
+      "usersDesc": "Search accounts, linked providers, roles, bans and API quotas.",
+      "newUsers7d": "+{count} (7d)",
+      "bannedCount": "{count} banned",
+      "commsTitle": "Roadmap & Banner",
+      "commsDesc": "Update the public roadmap and toggle site-wide announcements.",
+      "opsTitle": "System & Queues",
+      "opsDesc": "Live snapshot of background queues, feedback inbox and email suppressions.",
+      "feedbackUnhandled": "{count} feedback",
+      "emailSuppressed": "{count} suppressed"
+    },
+    "items": {
+      "reportsDesc": "Review, filter and bulk-resolve open reports.",
+      "agentActivityDesc": "Inspect automated moderation diffs and revert edits in one click.",
+      "feedbackTitle": "Feedback Inbox",
+      "feedbackDesc": "Read feedback widget messages with page context and PostHog session links.",
+      "requestsDesc": "Manage content requests, patron boosts and release notifications.",
+      "roadmapDesc": "Create, order and update public roadmap items.",
+      "announcementDesc": "Display a site-wide info, warning or maintenance banner.",
+      "usersDesc": "Manage accounts, roles, bans and monthly API quota overrides.",
+      "patreonTitle": "Patreon & Tiers",
+      "patreonDesc": "Inspect linked Patreon memberships, tier limits and sync status.",
+      "emailTitle": "Emails & Suppressions",
+      "emailDesc": "Check SES bounce suppressions and lifecycle email logs.",
+      "queuesTitle": "Data Management & Queues",
+      "queuesDesc": "Monitor pg-boss queues, retry failed jobs and trigger corpus refreshes.",
+      "catalogueTitle": "Media Catalogue",
+      "catalogueDesc": "Browse published anime, J-dramas, YouTube channels and audiobooks.",
+      "statsTitle": "Corpus Stats & Coverage",
+      "statsDesc": "View word frequency coverage, translation breakdown and dialogue hours.",
+      "statusTitle": "Public Status Page",
+      "statusDesc": "Open status.nadeshiko.co in a new tab."
     }
   }
 }

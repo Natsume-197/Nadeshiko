@@ -8,12 +8,7 @@ import {
   mdiMovieOpenOutline,
   mdiHistory,
   mdiFormatListBulletedSquare,
-  mdiAccountGroupOutline,
-  mdiShieldCrownOutline,
-  mdiBullhornOutline,
-  mdiRobotOutline,
-  mdiThumbUpOutline,
-  mdiTimelineClockOutline,
+  mdiViewDashboardOutline,
   mdiPaletteOutline,
   mdiBookOpenVariantOutline,
 } from '@mdi/js';
@@ -44,12 +39,7 @@ const tabsAdvanced = computed(() => [
 ]);
 
 const tabsAdmin = computed(() => [
-  { name: t('accountSettings.tabs.users'), icon: mdiAccountGroupOutline, route: '/user/admin/users' },
-  { name: t('accountSettings.tabs.reports'), icon: mdiShieldCrownOutline, route: '/user/admin/reports' },
-  { name: t('accountSettings.tabs.agentActivity'), icon: mdiRobotOutline, route: '/user/admin/agent-activity' },
-  { name: t('accountSettings.tabs.announcement'), icon: mdiBullhornOutline, route: '/user/admin/announcement' },
-  { name: t('roadmap.admin.tab'), icon: mdiTimelineClockOutline, route: '/user/admin/roadmap' },
-  { name: t('requests.admin.tab'), icon: mdiThumbUpOutline, route: '/user/admin/requests' },
+  { name: t('adminDashboard.nav.openDashboard'), icon: mdiViewDashboardOutline, route: '/admin' },
 ]);
 
 const allTabs = computed(() => [

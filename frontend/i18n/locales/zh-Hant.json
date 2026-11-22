@@ -43,7 +43,8 @@
       "activity": "學習記錄",
       "language": "語言",
       "logout": "登出",
-      "requests": "請求"
+      "requests": "請求",
+      "admin": "管理"
     }
   },
   "announcementBanner": {
@@ -1958,6 +1959,77 @@
     },
     "admin": {
       "tab": "請求"
+    }
+  },
+  "adminDashboard": {
+    "title": "管理控制台",
+    "subtitle": "在同一個介面集中處理審核、社群、帳號與系統健康狀態。",
+    "loading": "正在載入即時統計…",
+    "nav": {
+      "home": "控制台",
+      "openDashboard": "管理控制台",
+      "jumpLabel": "前往管理頁面",
+      "jumpPlaceholder": "前往頁面 ({count})…",
+      "reviewQueue": "審核佇列",
+      "refresh": "重新整理統計",
+      "showAll": "顯示全部"
+    },
+    "status": {
+      "bannerActive": "公告啟用中",
+      "failedJobs": "{count} 個失敗工作",
+      "queuesHealthy": "佇列正常",
+      "soon": "第 2 階段"
+    },
+    "pulse": {
+      "users": "{count} 位使用者",
+      "patrons": "{count} 位贊助者",
+      "media": "{count} 部作品",
+      "segments": "{count} 筆片段"
+    },
+    "categories": {
+      "moderation": "審核與品質",
+      "community": "社群",
+      "site": "網站與使用者",
+      "catalogue": "目錄與資料"
+    },
+    "cards": {
+      "moderationTitle": "檢舉與審核",
+      "moderationDesc": "處理待審片段檢舉並抽查審核代理的修改紀錄。",
+      "openCount": "{count} 待處理",
+      "requestsDesc": "管理讀者內容請求、贊助者加速與重複合併。",
+      "boostedCount": "{count} 已加速",
+      "inProgressCount": "{count} 進行中",
+      "usersDesc": "搜尋帳號、登入方式、角色、停權狀態與 API 配額。",
+      "newUsers7d": "+{count} (7天)",
+      "bannedCount": "{count} 已停權",
+      "commsTitle": "路線圖與公告欄",
+      "commsDesc": "更新公開路線圖並切換全站公告橫幅。",
+      "opsTitle": "系統與佇列",
+      "opsDesc": "即時檢視背景佇列、未處理回饋與郵件封鎖狀態。",
+      "feedbackUnhandled": "{count} 則回饋",
+      "emailSuppressed": "{count} 筆封鎖"
+    },
+    "items": {
+      "reportsDesc": "篩選並批次處理待審核的檢舉。",
+      "agentActivityDesc": "檢視自動審核差異並一鍵還原修改。",
+      "feedbackTitle": "回饋收件匣",
+      "feedbackDesc": "檢視回饋訊息、頁面資訊與 PostHog 工作階段連結。",
+      "requestsDesc": "管理內容請求、贊助者加速與上線通知。",
+      "roadmapDesc": "建立、排序並更新公開路線圖項目。",
+      "announcementDesc": "顯示全站通知、警告或維護橫幅。",
+      "usersDesc": "管理帳號、角色、停權與每月 API 配額覆寫。",
+      "patreonTitle": "Patreon 與等級",
+      "patreonDesc": "檢視已連結的 Patreon 會員、等級限額與同步狀態。",
+      "emailTitle": "郵件與退信封鎖",
+      "emailDesc": "檢視 SES 退信封鎖名單與郵件寄送紀錄。",
+      "queuesTitle": "資料管理與佇列",
+      "queuesDesc": "監控 pg-boss 佇列、重試失敗工作並觸發資料重新整理。",
+      "catalogueTitle": "媒體目錄",
+      "catalogueDesc": "瀏覽已發布的動畫、日劇、YouTube 頻道與有聲書。",
+      "statsTitle": "語料統計與覆蓋率",
+      "statsDesc": "檢視詞頻覆蓋率、翻譯分布與對話時數。",
+      "statusTitle": "服務狀態頁",
+      "statusDesc": "在新分頁開啟 status.nadeshiko.co。"
     }
   }
 }

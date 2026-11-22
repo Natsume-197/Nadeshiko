@@ -5,6 +5,7 @@ import { nextTick, reactive, ref } from 'vue';
 
 /** Route changes close the drawer automatically; controls opening panels must close it explicitly. */
 const isLoggedIn = ref(false);
+const isAdmin = ref(false);
 const logout = vi.fn();
 const openFeedback = vi.fn();
 const showLoginModal = vi.fn();
@@ -24,6 +25,9 @@ vi.stubGlobal('navigateTo', navigateTo);
 vi.stubGlobal('userStore', () => ({
   get isLoggedIn() {
     return isLoggedIn.value;
+  },
+  get isAdmin() {
+    return isAdmin.value;
   },
   logout,
   user: { id: 'u1', name: 'Reader' },
@@ -78,6 +82,7 @@ async function openDrawer(w: ReturnType<typeof render>) {
 beforeEach(() => {
   vi.clearAllMocks();
   isLoggedIn.value = false;
+  isAdmin.value = false;
   route.fullPath = '/';
 });
 
@@ -139,6 +144,25 @@ describe('what a signed-IN reader is offered', () => {
     await openDrawer(wrapper);
 
     expect(has(wrapper, 'nav-login')).toBe(false);
+  });
+
+  test('and not the admin links for a regular reader', async () => {
+    const wrapper = render();
+    await openDrawer(wrapper);
+
+    expect(has(wrapper, 'nav-admin-top')).toBe(false);
+    expect(has(wrapper, 'nav-admin')).toBe(false);
+    expect(has(wrapper, 'nav-admin-mobile')).toBe(false);
+  });
+
+  test('admins get direct links to the admin dashboard', async () => {
+    isAdmin.value = true;
+    const wrapper = render();
+    await openDrawer(wrapper);
+
+    expect(has(wrapper, 'nav-admin-top')).toBe(true);
+    expect(has(wrapper, 'nav-admin')).toBe(true);
+    expect(has(wrapper, 'nav-admin-mobile')).toBe(true);
   });
 
   test('signing out closes the drawer as it goes', async () => {

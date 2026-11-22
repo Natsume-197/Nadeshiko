@@ -84,6 +84,7 @@ export const routeAuth: RouteAuth[] = [
   { method: 'patch', path: '/v1/collections/:collectionPublicId/segments/:segmentPublicId', middleware: requireAuth(enforceApiKeyScope(ApiPermission.UPDATE_COLLECTIONS)) },
   { method: 'delete', path: '/v1/collections/:collectionPublicId/segments/:segmentPublicId', middleware: requireAuth(enforceApiKeyScope(ApiPermission.DELETE_COLLECTIONS)) },
   { method: 'get', path: '/v1/collections/:collectionPublicId/stats', middleware: requireAuth(enforceApiKeyScope(ApiPermission.READ_COLLECTIONS)) },
+  { method: 'get', path: '/v1/admin/overview', middleware: requireAuth(enforceSessionAdmin, enforceApiKeyScope(ApiPermission.READ_ADMIN)) },
   { method: 'get', path: '/v1/admin/reports', middleware: requireAuth(enforceSessionAdmin, enforceApiKeyScope(ApiPermission.READ_ADMIN)) },
   { method: 'patch', path: '/v1/admin/reports/batch', middleware: requireSession(enforceAdminAccess) },
   { method: 'patch', path: '/v1/admin/reports/bulk', middleware: requireSession(enforceAdminAccess) },

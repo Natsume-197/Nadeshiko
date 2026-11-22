@@ -1,0 +1,29 @@
+get:
+  tags:
+    - Admin
+  x-internal: true
+  operationId: getAdminOverview
+  summary: Get live summary counts for the admin dashboard
+  description: |
+    Returns lightweight aggregate counts across moderation queues, community requests,
+    feedback, users, catalogue totals, background job queues, email suppressions and
+    the global announcement banner for the admin launcher and navigation badges.
+
+  security:
+    - ApiKey: [READ_ADMIN]
+    - SessionCookie: [ADMIN]
+  responses:
+    "200":
+      description: OK
+      content:
+        application/json:
+          schema:
+            $ref: "../../components/schemas/AdminOverview.yaml"
+    "401":
+      $ref: "../../components/responses/Unauthorized.yaml"
+    "403":
+      $ref: "../../components/responses/Forbidden.yaml"
+    "429":
+      $ref: "../../components/responses/TooManyRequests.yaml"
+    "500":
+      $ref: "../../components/responses/InternalServerError.yaml"

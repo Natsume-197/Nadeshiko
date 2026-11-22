@@ -30,6 +30,29 @@ export const s_AddSegmentToCollectionRequest = z.object({
   segmentPublicId: z.string().regex(new RegExp('^[A-Za-z0-9_-]{12}$')),
 });
 
+export const s_AdminOverview = z.object({
+  reports: z.object({ open: z.coerce.number(), processing: z.coerce.number() }),
+  requests: z.object({
+    open: z.coerce.number(),
+    planned: z.coerce.number(),
+    inProgress: z.coerce.number(),
+    boostedOpen: z.coerce.number(),
+  }),
+  feedback: z.object({ unhandled: z.coerce.number(), total: z.coerce.number() }),
+  agentActivity: z.object({ editsLast24h: z.coerce.number() }),
+  users: z.object({
+    total: z.coerce.number(),
+    newLast7d: z.coerce.number(),
+    activePatrons: z.coerce.number(),
+    banned: z.coerce.number(),
+  }),
+  catalogue: z.object({ media: z.coerce.number(), episodes: z.coerce.number(), segments: z.coerce.number() }),
+  queues: z.object({ queued: z.coerce.number(), active: z.coerce.number(), failed: z.coerce.number() }),
+  email: z.object({ suppressed: z.coerce.number() }),
+  announcement: z.object({ active: PermissiveBoolean }),
+  generatedAt: z.iso.datetime({ offset: true }),
+});
+
 export const s_AdminUserWithProviders = z.object({
   id: z.coerce.number(),
   name: z.string(),

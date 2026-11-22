@@ -17,10 +17,12 @@ import {
   mdiMessageTextOutline,
   mdiHandHeartOutline,
   mdiThumbUpOutline,
+  mdiShieldCrownOutline,
 } from '@mdi/js';
 
 const store = userStore();
 const isAuth = computed(() => store.isLoggedIn);
+const isAdmin = computed(() => store.isAdmin);
 const localePath = useLocalePath();
 
 const { openLoginModal: showLoginModal } = useLoginModal();
@@ -126,6 +128,13 @@ watch(() => route.fullPath, closeNavSidebar);
                         class="text-sm font-semibold text-white transition-all duration-200 hover:text-opacity-80">
                         {{ $t("navbar.buttons.api") }}
                     </NuxtLink>
+                    <ClientOnly>
+                        <NuxtLink v-if="isAdmin" :to="localePath('/admin')" data-testid="nav-admin-top"
+                            class="inline-flex items-center gap-1 text-sm font-semibold text-white transition-all duration-200 hover:text-opacity-80">
+                            <UiBaseIcon :path="mdiShieldCrownOutline" :size="16" />
+                            <span>{{ $t("navbar.buttons.admin") }}</span>
+                        </NuxtLink>
+                    </ClientOnly>
                 </div>
                 <div class="gap-2 flex flex-row">
                     <div class="flex items-center">
@@ -182,6 +191,9 @@ watch(() => route.fullPath, closeNavSidebar);
                                     </NuxtLink>
                                     <NuxtLink v-if="isAuth" :to="localePath('/user/media')" data-testid="nav-media" :prefetch="false">
                                         <SearchDropdownItem :text="$t('accountSettings.tabs.media')" :icon-path="mdiMovieOpenOutline" />
+                                    </NuxtLink>
+                                    <NuxtLink v-if="isAdmin" :to="localePath('/admin')" data-testid="nav-admin" :prefetch="false">
+                                        <SearchDropdownItem :text="$t('navbar.buttons.admin')" :icon-path="mdiShieldCrownOutline" />
                                     </NuxtLink>
                                     <SearchDropdownItem v-if="!isAuth || isAuth == null" data-testid="nav-login" :icon-path="mdiLogin" @click="openLoginModal" :text="$t('navbar.buttons.login')" />
                                     <div v-if="isAuth" class="nd-menu-divider" />
@@ -309,6 +321,11 @@ watch(() => route.fullPath, closeNavSidebar);
                             class="nd-sidebar-link flex items-center gap-3 px-5 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-neutral-300 dark:hover:bg-neutral-700">
                             <UiBaseIcon :path="mdiMovieOpenOutline" :size="18" />
                             {{ $t('accountSettings.tabs.media') }}
+                        </NuxtLink>
+                        <NuxtLink v-if="isAdmin" :to="localePath('/admin')" data-testid="nav-admin-mobile"
+                            class="nd-sidebar-link flex items-center gap-3 px-5 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-neutral-300 dark:hover:bg-neutral-700">
+                            <UiBaseIcon :path="mdiShieldCrownOutline" :size="18" />
+                            {{ $t('navbar.buttons.admin') }}
                         </NuxtLink>
                     </template>
                     <button type="button" v-if="!isAuth" @click="openLoginModal"

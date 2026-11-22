@@ -575,7 +575,7 @@ function rankOf(index: number): number | null {
           <NuxtLink
             v-if="user.isAdmin"
             data-testid="requests-admin-link"
-            :to="localePath('/user/admin/requests')"
+            :to="localePath('/admin/requests')"
             class="inline-flex h-10 flex-1 min-w-fit items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-hairline bg-surface px-3.5 text-sm font-semibold text-ink-muted transition hover:border-line-hover hover:bg-surface-hover hover:text-ink sm:flex-none"
           >
             <UiBaseIcon :path="mdiViewColumnOutline" w="w-4" h="h-4" size="16" />

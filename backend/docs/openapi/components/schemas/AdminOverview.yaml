@@ -1,0 +1,159 @@
+type: object
+required:
+  - reports
+  - requests
+  - feedback
+  - agentActivity
+  - users
+  - catalogue
+  - queues
+  - email
+  - announcement
+  - generatedAt
+properties:
+  reports:
+    type: object
+    required:
+      - open
+      - processing
+    properties:
+      open:
+        type: integer
+        description: Reports currently open and waiting for review.
+        example: 4
+      processing:
+        type: integer
+        description: Reports currently being processed.
+        example: 1
+  requests:
+    type: object
+    required:
+      - open
+      - planned
+      - inProgress
+      - boostedOpen
+    properties:
+      open:
+        type: integer
+        description: Content requests waiting in OPEN status.
+        example: 12
+      planned:
+        type: integer
+        description: Content requests accepted as PLANNED.
+        example: 5
+      inProgress:
+        type: integer
+        description: Content requests currently IN_PROGRESS.
+        example: 2
+      boostedOpen:
+        type: integer
+        description: Open content requests that have at least one patron boost.
+        example: 3
+  feedback:
+    type: object
+    required:
+      - unhandled
+      - total
+    properties:
+      unhandled:
+        type: integer
+        description: Feedback submissions not yet marked handled.
+        example: 6
+      total:
+        type: integer
+        description: Total stored feedback submissions.
+        example: 42
+  agentActivity:
+    type: object
+    required:
+      - editsLast24h
+    properties:
+      editsLast24h:
+        type: integer
+        description: Segment revisions written by the moderation agent in the last 24 hours.
+        example: 9
+  users:
+    type: object
+    required:
+      - total
+      - newLast7d
+      - activePatrons
+      - banned
+    properties:
+      total:
+        type: integer
+        description: Active (non-deleted) user accounts.
+        example: 1420
+      newLast7d:
+        type: integer
+        description: Active user accounts created in the last 7 days.
+        example: 38
+      activePatrons:
+        type: integer
+        description: Linked Patreon accounts with an active paid membership.
+        example: 7
+      banned:
+        type: integer
+        description: Active user accounts currently banned.
+        example: 2
+  catalogue:
+    type: object
+    required:
+      - media
+      - episodes
+      - segments
+    properties:
+      media:
+        type: integer
+        description: Total titles in the catalogue.
+        example: 420
+      episodes:
+        type: integer
+        description: Total episodes across all titles.
+        example: 5300
+      segments:
+        type: integer
+        description: Total dialogue segments across all titles.
+        example: 1580000
+  queues:
+    type: object
+    required:
+      - queued
+      - active
+      - failed
+    properties:
+      queued:
+        type: integer
+        description: Background jobs waiting to run or retry in pg-boss.
+        example: 3
+      active:
+        type: integer
+        description: Background jobs currently running in pg-boss.
+        example: 1
+      failed:
+        type: integer
+        description: Background jobs in failed state in pg-boss.
+        example: 0
+  email:
+    type: object
+    required:
+      - suppressed
+    properties:
+      suppressed:
+        type: integer
+        description: Email addresses currently on the SES suppression list.
+        example: 2
+  announcement:
+    type: object
+    required:
+      - active
+    properties:
+      active:
+        type: boolean
+        description: Whether a site-wide announcement banner is currently enabled.
+        example: false
+  generatedAt:
+    type: string
+    format: date-time
+    description: Timestamp when this snapshot was computed.
+    example: "2026-11-21T21:50:00.000Z"

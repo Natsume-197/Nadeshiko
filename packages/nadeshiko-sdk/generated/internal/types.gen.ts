@@ -2884,6 +2884,115 @@ export type UpdateCollectionSegmentRequest = {
     position?: number;
 };
 
+export type AdminOverview = {
+    reports: {
+        /**
+         * Reports currently open and waiting for review.
+         */
+        open: number;
+        /**
+         * Reports currently being processed.
+         */
+        processing: number;
+    };
+    requests: {
+        /**
+         * Content requests waiting in OPEN status.
+         */
+        open: number;
+        /**
+         * Content requests accepted as PLANNED.
+         */
+        planned: number;
+        /**
+         * Content requests currently IN_PROGRESS.
+         */
+        inProgress: number;
+        /**
+         * Open content requests that have at least one patron boost.
+         */
+        boostedOpen: number;
+    };
+    feedback: {
+        /**
+         * Feedback submissions not yet marked handled.
+         */
+        unhandled: number;
+        /**
+         * Total stored feedback submissions.
+         */
+        total: number;
+    };
+    agentActivity: {
+        /**
+         * Segment revisions written by the moderation agent in the last 24 hours.
+         */
+        editsLast24h: number;
+    };
+    users: {
+        /**
+         * Active (non-deleted) user accounts.
+         */
+        total: number;
+        /**
+         * Active user accounts created in the last 7 days.
+         */
+        newLast7d: number;
+        /**
+         * Linked Patreon accounts with an active paid membership.
+         */
+        activePatrons: number;
+        /**
+         * Active user accounts currently banned.
+         */
+        banned: number;
+    };
+    catalogue: {
+        /**
+         * Total titles in the catalogue.
+         */
+        media: number;
+        /**
+         * Total episodes across all titles.
+         */
+        episodes: number;
+        /**
+         * Total dialogue segments across all titles.
+         */
+        segments: number;
+    };
+    queues: {
+        /**
+         * Background jobs waiting to run or retry in pg-boss.
+         */
+        queued: number;
+        /**
+         * Background jobs currently running in pg-boss.
+         */
+        active: number;
+        /**
+         * Background jobs in failed state in pg-boss.
+         */
+        failed: number;
+    };
+    email: {
+        /**
+         * Email addresses currently on the SES suppression list.
+         */
+        suppressed: number;
+    };
+    announcement: {
+        /**
+         * Whether a site-wide announcement banner is currently enabled.
+         */
+        active: boolean;
+    };
+    /**
+     * Timestamp when this snapshot was computed.
+     */
+    generatedAt: string;
+};
+
 /**
  * Kind of entity a report is about
  */
@@ -3433,9 +3542,9 @@ export type ListContentRequestsData = {
     path?: never;
     query?: {
         /**
-         * ACTIVE (open, planned or in progress), RELEASED or DECLINED.
+         * ACTIVE (open or planned), IN_PROGRESS, RELEASED or DECLINED.
          */
-        status?: 'ACTIVE' | 'RELEASED' | 'DECLINED';
+        status?: 'ACTIVE' | 'IN_PROGRESS' | 'RELEASED' | 'DECLINED';
         category?: 'ANIME' | 'JDRAMA' | 'YOUTUBE' | 'AUDIOBOOK';
         sort?: 'TOP' | 'RECENT';
         /**
@@ -3570,6 +3679,14 @@ export type GetContentRequestAllowanceResponses = {
          * Null for admins (no limit).
          */
         openLimit: number | null;
+        /**
+         * Total requests filed by this reader across all statuses.
+         */
+        ownCount: number;
+        /**
+         * Total requests this reader voted for or boosted across all statuses.
+         */
+        votedCount: number;
         boosts: {
             perMonth: number;
             used: number;
@@ -3586,6 +3703,63 @@ export type GetContentRequestAllowanceResponses = {
 };
 
 export type GetContentRequestAllowanceResponse = GetContentRequestAllowanceResponses[keyof GetContentRequestAllowanceResponses];
+
+export type ListMyContentRequestsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * OWN (requests filed by the signed-in reader) or VOTED (requests they voted for or boosted).
+         */
+        scope?: 'OWN' | 'VOTED';
+        /**
+         * ALL (every status), ACTIVE (open or planned), IN_PROGRESS, RELEASED or DECLINED.
+         */
+        status?: 'ALL' | 'ACTIVE' | 'IN_PROGRESS' | 'RELEASED' | 'DECLINED';
+        category?: 'ANIME' | 'JDRAMA' | 'YOUTUBE' | 'AUDIOBOOK';
+        sort?: 'TOP' | 'RECENT';
+        /**
+         * Case-insensitive title filter.
+         */
+        q?: string;
+        page?: number;
+        take?: number;
+    };
+    url: '/v1/requests/mine';
+};
+
+export type ListMyContentRequestsErrors = {
+    /**
+     * Bad Request
+     */
+    400: Error400;
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Too Many Requests. The response body indicates whether the request was rejected due to per-minute rate limiting or monthly quota exhaustion.
+     */
+    429: Error429;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type ListMyContentRequestsError = ListMyContentRequestsErrors[keyof ListMyContentRequestsErrors];
+
+export type ListMyContentRequestsResponses = {
+    /**
+     * OK
+     */
+    200: {
+        items: Array<ContentRequest>;
+        total: number;
+    };
+};
+
+export type ListMyContentRequestsResponse = ListMyContentRequestsResponses[keyof ListMyContentRequestsResponses];
 
 export type WithdrawContentRequestData = {
     body?: never;
@@ -7393,6 +7567,43 @@ export type GetCollectionStatsResponses = {
 };
 
 export type GetCollectionStatsResponse = GetCollectionStatsResponses[keyof GetCollectionStatsResponses];
+
+export type GetAdminOverviewData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/admin/overview';
+};
+
+export type GetAdminOverviewErrors = {
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Forbidden
+     */
+    403: Error403;
+    /**
+     * Too Many Requests. The response body indicates whether the request was rejected due to per-minute rate limiting or monthly quota exhaustion.
+     */
+    429: Error429;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type GetAdminOverviewError = GetAdminOverviewErrors[keyof GetAdminOverviewErrors];
+
+export type GetAdminOverviewResponses = {
+    /**
+     * OK
+     */
+    200: AdminOverview;
+};
+
+export type GetAdminOverviewResponse = GetAdminOverviewResponses[keyof GetAdminOverviewResponses];
 
 export type ListAdminReportsData = {
     body?: never;

@@ -2,4 +2,6 @@
 import RoadmapManager from '~/components/admin/RoadmapManager.vue';
 </script>
 
-<template><RoadmapManager /></template>
+<template>
+  <RoadmapManager />
+</template>

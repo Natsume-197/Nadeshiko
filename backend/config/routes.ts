@@ -30,7 +30,7 @@ import {
   getDictionaryKanjiIndex,
   identifyDictionaryWord,
 } from '@app/controllers/dictionaryController';
-import { getAdminUsersWithProviders } from '@app/controllers/adminDashboardController';
+import { getAdminOverview, getAdminUsersWithProviders } from '@app/controllers/adminDashboardController';
 import { handleSesWebhook, WEBHOOK_SES_PATH } from '@app/controllers/webhooks/sesController';
 import { listTiers, getAdminUserQuota, updateAdminUserQuota } from '@app/controllers/adminQuotaController';
 import { getAnnouncement, updateAnnouncement } from '@app/controllers/announcementController';
@@ -305,6 +305,7 @@ const CollectionsRoutes = createCollectionsRouter({
 });
 
 const AdminRoutes = createAdminRouter({
+  getAdminOverview,
   listAdminReports,
   batchUpdateAdminReports,
   bulkUpdateAdminReports,
