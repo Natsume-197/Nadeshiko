@@ -2008,7 +2008,6 @@
     "title": "Patreon & Tiers",
     "configured": "Configured · Campaign {campaignId}",
     "notConfigured": "Not configured in this environment",
-    "summaryLine": "{campaignActive} active on Patreon ({unlinked} not linked) · {linked} linked in Nadeshiko · {issues} issues",
     "syncAll": "Sync all now",
     "syncingAll": "Syncing…",
     "searchPlaceholder": "Search user, email or Patreon…",
@@ -2055,10 +2054,11 @@
       "title": "Tier mapping",
       "subtitle": "Read-only view of configured Patreon tier IDs, monthly API quotas and request boosts.",
       "tier": "Tier",
-      "patreonId": "Patreon ID",
       "quota": "API / mo",
-      "boosts": "Boosts / mo",
-      "active": "Active"
+      "patreon": "Patreon",
+      "linked": "Linked",
+      "monthly": "Monthly",
+      "perks": "API / boosts"
     },
     "manualGrants": {
       "title": "Manual tiers & overrides",
@@ -2069,7 +2069,6 @@
       "empty": "No manual overrides or non-free tier assignments."
     },
     "campaign": {
-      "title": "Patreon campaign members",
       "subtitle": "Live list from Patreon.com cross-referenced with Nadeshiko accounts.",
       "fetchedAt": "Fetched {when}",
       "unconfigured": "PATREON_CREATOR_ACCESS_TOKEN is not set on this server.",
@@ -2079,14 +2078,17 @@
       "member": "Member",
       "since": "Pledge start",
       "nadeshikoLink": "Nadeshiko account",
-      "notLinked": "Not linked yet",
       "empty": "No campaign members match this filter.",
       "paidFilter": "Ever paid ({count})",
       "monthly": "Monthly",
-      "lifetime": "All-time"
+      "lifetime": "All-time",
+      "lastCharge": "Charged {date}",
+      "matchedAccount": "Account found",
+      "noOauthYet": "No OAuth link",
+      "noAccount": "No account",
+      "subtotal": "Subtotal ({count})"
     },
     "linkedSection": {
-      "title": "Linked Nadeshiko accounts",
       "subtitle": "Users who connected Patreon via OAuth and receive automatic perks."
     },
     "pledgePerMonth": "{amount}/mo",
@@ -2099,6 +2101,10 @@
       "unlinkedSub": "of {count} active on Patreon",
       "issuesLabel": "Account issues",
       "issuesSub": "of {count} linked in Nadeshiko"
+    },
+    "tabs": {
+      "campaign": "Patreon campaign ({count})",
+      "linked": "Linked accounts ({count})"
     }
   }
 }

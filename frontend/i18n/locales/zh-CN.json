@@ -2008,7 +2008,6 @@
     "title": "Patreon 与等级",
     "configured": "已配置 · 活动 {campaignId}",
     "notConfigured": "当前环境未配置",
-    "summaryLine": "Patreon 有效 {campaignActive}（未绑定 {unlinked}）· Nadeshiko 已绑定 {linked} · 异常 {issues}",
     "syncAll": "全部同步",
     "syncingAll": "正在同步…",
     "searchPlaceholder": "搜索用户、邮箱或 Patreon…",
@@ -2055,10 +2054,11 @@
       "title": "等级映射",
       "subtitle": "当前配置的 Patreon 等级 ID、每月 API 配额与请求加速次数（只读）。",
       "tier": "等级",
-      "patreonId": "Patreon ID",
       "quota": "API / 月",
-      "boosts": "加速 / 月",
-      "active": "有效人数"
+      "patreon": "Patreon",
+      "linked": "已绑定",
+      "monthly": "每月",
+      "perks": "API / 加速"
     },
     "manualGrants": {
       "title": "手动等级与配额覆盖",
@@ -2069,7 +2069,6 @@
       "empty": "暂无手动配额或非免费等级分配。"
     },
     "campaign": {
-      "title": "Patreon 活动赞助者",
       "subtitle": "直接拉取自 Patreon.com 并与 Nadeshiko 账号自动匹配。",
       "fetchedAt": "获取于 {when}",
       "unconfigured": "当前服务器未配置 PATREON_CREATOR_ACCESS_TOKEN。",
@@ -2079,14 +2078,17 @@
       "member": "赞助者",
       "since": "开始日期",
       "nadeshikoLink": "Nadeshiko 账号",
-      "notLinked": "尚未绑定",
       "empty": "没有符合条件的活动赞助者。",
       "paidFilter": "有付费记录 ({count})",
       "monthly": "每月",
-      "lifetime": "历史总计"
+      "lifetime": "历史总计",
+      "lastCharge": "扣款：{date}",
+      "matchedAccount": "检测到账号",
+      "noOauthYet": "未绑定 OAuth",
+      "noAccount": "无账号",
+      "subtotal": "小计 ({count})"
     },
     "linkedSection": {
-      "title": "已绑定的 Nadeshiko 账号",
       "subtitle": "通过 OAuth 绑定 Patreon 并自动享受权益的用户。"
     },
     "pledgePerMonth": "{amount}/月",
@@ -2099,6 +2101,10 @@
       "unlinkedSub": "Patreon 活跃共 {count} 位",
       "issuesLabel": "异常账号",
       "issuesSub": "Nadeshiko 已绑定共 {count} 个"
+    },
+    "tabs": {
+      "campaign": "Patreon 赞助者 ({count})",
+      "linked": "已绑定账号 ({count})"
     }
   }
 }

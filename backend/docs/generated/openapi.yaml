@@ -10235,6 +10235,8 @@ components:
         - linkedUserId
         - linkedUsername
         - linkedEmail
+        - matchedUserId
+        - matchedUsername
       properties:
         memberId:
           type: string
@@ -10292,6 +10294,13 @@ components:
           type: string
           nullable: true
         linkedEmail:
+          type: string
+          nullable: true
+        matchedUserId:
+          type: integer
+          nullable: true
+          description: Existing Nadeshiko user matched by lowercase email when the patron has not linked Patreon OAuth yet.
+        matchedUsername:
           type: string
           nullable: true
     AdminPatreonConnection:
@@ -10478,6 +10487,8 @@ components:
               - monthlyQuotaLimit
               - monthlyRequestBoosts
               - activePatronCount
+              - campaignPatronCount
+              - campaignMonthlyCents
             properties:
               id:
                 type: string
@@ -10492,6 +10503,13 @@ components:
                 type: integer
               activePatronCount:
                 type: integer
+                description: Count of active linked Nadeshiko OAuth connections resolved to this tier.
+              campaignPatronCount:
+                type: integer
+                description: Count of active Patreon.com campaign members resolved to this tier.
+              campaignMonthlyCents:
+                type: integer
+                description: Normalized monthly USD cents from active Patreon.com campaign members in this tier.
         connections:
           type: array
           items:

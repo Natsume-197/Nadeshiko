@@ -94,8 +94,30 @@ export const getAdminPatreonOverview: GetAdminPatreonOverview = async ({ query }
     }
   }
 
+  const unlinkedCampaignEmails = [
+    ...new Set(
+      campaignSnapshot.members
+        .filter((member) => !(member.patreonUserId && connectionByPatreonUserId.has(member.patreonUserId)))
+        .map((member) => member.email?.trim().toLowerCase())
+        .filter((email): email is string => Boolean(email)),
+    ),
+  ];
+  const matchedUsers =
+    unlinkedCampaignEmails.length > 0
+      ? await User.createQueryBuilder('u')
+          .select(['u.id', 'u.username', 'u.email'])
+          .where('LOWER(u.email) IN (:...emails)', { emails: unlinkedCampaignEmails })
+          .getMany()
+      : [];
+  const matchedUserByEmail = new Map(matchedUsers.map((u) => [u.email.toLowerCase(), u]));
+
+  const campaignCountByTier = new Map<string, number>();
+  const campaignMonthlyByTier = new Map<string, number>();
+
   const campaignMembers = campaignSnapshot.members.map((member) => {
     const linked = member.patreonUserId ? (connectionByPatreonUserId.get(member.patreonUserId) ?? null) : null;
+    const matched =
+      !linked && member.email ? (matchedUserByEmail.get(member.email.trim().toLowerCase()) ?? null) : null;
     const earned = patreonQuotaTier(
       tiers,
       {
@@ -108,6 +130,11 @@ export const getAdminPatreonOverview: GetAdminPatreonOverview = async ({ query }
     const unmatchedTierIds =
       member.patronStatus === 'active_patron' ? unmatchedPatreonTierIds(tiers, member.entitledTierIds) : [];
 
+    if (member.patronStatus === 'active_patron' && earned) {
+      campaignCountByTier.set(earned.id, (campaignCountByTier.get(earned.id) ?? 0) + 1);
+      campaignMonthlyByTier.set(earned.id, (campaignMonthlyByTier.get(earned.id) ?? 0) + member.monthlyAmountCents);
+    }
+
     return {
       ...member,
       resolvedTierId: earned?.id ?? null,
@@ -116,6 +143,8 @@ export const getAdminPatreonOverview: GetAdminPatreonOverview = async ({ query }
       linkedUserId: linked?.userId ?? null,
       linkedUsername: linked?.username ?? null,
       linkedEmail: linked?.email ?? null,
+      matchedUserId: matched?.id ?? null,
+      matchedUsername: matched?.username ?? null,
     };
   });
 
@@ -181,6 +210,8 @@ export const getAdminPatreonOverview: GetAdminPatreonOverview = async ({ query }
       monthlyQuotaLimit: tier.monthlyQuotaLimit,
       monthlyRequestBoosts: tier.monthlyRequestBoosts,
       activePatronCount: activeCountByTier.get(tier.id) ?? 0,
+      campaignPatronCount: campaignCountByTier.get(tier.id) ?? 0,
+      campaignMonthlyCents: campaignMonthlyByTier.get(tier.id) ?? 0,
     })),
     connections,
     manualGrants,

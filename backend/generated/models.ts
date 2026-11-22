@@ -84,6 +84,8 @@ export type t_AdminPatreonCampaignMember = {
   linkedEmail: string | null;
   linkedUserId: number | null;
   linkedUsername: string | null;
+  matchedUserId: number | null;
+  matchedUsername: string | null;
   memberId: string;
   monthlyAmountCents: number;
   patreonTierTitles: string[];
@@ -150,6 +152,8 @@ export type t_AdminPatreonOverview = {
   };
   tiers: {
     activePatronCount: number;
+    campaignMonthlyCents: number;
+    campaignPatronCount: number;
     displayName: string;
     id: string;
     monthlyQuotaLimit: number;

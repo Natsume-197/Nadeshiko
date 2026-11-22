@@ -89,6 +89,8 @@ properties:
         - monthlyQuotaLimit
         - monthlyRequestBoosts
         - activePatronCount
+        - campaignPatronCount
+        - campaignMonthlyCents
       properties:
         id:
           type: string
@@ -103,6 +105,13 @@ properties:
           type: integer
         activePatronCount:
           type: integer
+          description: Count of active linked Nadeshiko OAuth connections resolved to this tier.
+        campaignPatronCount:
+          type: integer
+          description: Count of active Patreon.com campaign members resolved to this tier.
+        campaignMonthlyCents:
+          type: integer
+          description: Normalized monthly USD cents from active Patreon.com campaign members in this tier.
   connections:
     type: array
     items:

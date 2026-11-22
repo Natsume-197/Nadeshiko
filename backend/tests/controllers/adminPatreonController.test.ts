@@ -170,6 +170,16 @@ describe('GET /v1/admin/patreon', () => {
       }),
     );
 
+    // Existing Nadeshiko user who paid on Patreon with the same email (different casing) but hasn't linked OAuth yet
+    const emailMatchedUser = await User.save(
+      User.create({
+        username: 'unlinked-by-email',
+        email: 'unlinked@patreon.test',
+        isActive: true,
+        isVerified: true,
+      }),
+    );
+
     mockFetchCampaignMembers.mockResolvedValue({
       configured: true,
       status: 'ok',
@@ -195,7 +205,7 @@ describe('GET /v1/admin/patreon', () => {
           memberId: 'mem-2',
           patreonUserId: 'p-unlinked-99',
           fullName: 'Unlinked Patron',
-          email: 'unlinked@patreon.test',
+          email: 'UNLINKED@patreon.test',
           patronStatus: 'active_patron',
           entitledAmountCents: 1000,
           monthlyAmountCents: 1000,
@@ -259,11 +269,15 @@ describe('GET /v1/admin/patreon', () => {
         expect.objectContaining({
           memberId: 'mem-1',
           linkedUserId: core.users.regular.id,
+          matchedUserId: null,
+          matchedUsername: null,
           resolvedTierName: 'Flower',
         }),
         expect.objectContaining({
           memberId: 'mem-2',
           linkedUserId: null,
+          matchedUserId: emailMatchedUser.id,
+          matchedUsername: 'unlinked-by-email',
           resolvedTierName: 'Flower',
         }),
       ]),
@@ -276,6 +290,8 @@ describe('GET /v1/admin/patreon', () => {
       monthlyQuotaLimit: 30000,
       monthlyRequestBoosts: 5,
       activePatronCount: 1,
+      campaignPatronCount: 2,
+      campaignMonthlyCents: 2000,
     });
 
     const activeRow = res.body.connections.find((c: { userId: number }) => c.userId === core.users.regular.id);

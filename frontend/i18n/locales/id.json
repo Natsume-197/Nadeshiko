@@ -2008,7 +2008,6 @@
     "title": "Patreon & Tier",
     "configured": "Terkonfigurasi · Kampanye {campaignId}",
     "notConfigured": "Belum dikonfigurasi di lingkungan ini",
-    "summaryLine": "{campaignActive} aktif di Patreon ({unlinked} belum tertaut) · {linked} tertaut di Nadeshiko · {issues} bermasalah",
     "syncAll": "Sinkronkan semua",
     "syncingAll": "Menyinkronkan…",
     "searchPlaceholder": "Cari pengguna, email, atau Patreon…",
@@ -2055,10 +2054,11 @@
       "title": "Pemetaan tier",
       "subtitle": "Referensi baca-saja ID tier Patreon, kuota API bulanan, dan boost permintaan.",
       "tier": "Tier",
-      "patreonId": "ID Patreon",
       "quota": "API / bln",
-      "boosts": "Boost / bln",
-      "active": "Aktif"
+      "patreon": "Patreon",
+      "linked": "Tertaut",
+      "monthly": "Bulanan",
+      "perks": "API / boost"
     },
     "manualGrants": {
       "title": "Tier & override manual",
@@ -2069,7 +2069,6 @@
       "empty": "Tidak ada override manual atau penetapan tier non-gratis."
     },
     "campaign": {
-      "title": "Anggota kampanye Patreon",
       "subtitle": "Daftar langsung dari Patreon.com yang dicocokkan dengan akun Nadeshiko.",
       "fetchedAt": "Diambil {when}",
       "unconfigured": "PATREON_CREATOR_ACCESS_TOKEN belum diatur di server ini.",
@@ -2079,14 +2078,17 @@
       "member": "Anggota",
       "since": "Sejak",
       "nadeshikoLink": "Akun Nadeshiko",
-      "notLinked": "Belum tertaut",
       "empty": "Tidak ada anggota kampanye yang cocok dengan filter ini.",
       "paidFilter": "Pernah bayar ({count})",
       "monthly": "Bulanan",
-      "lifetime": "Historis"
+      "lifetime": "Historis",
+      "lastCharge": "Ditagih: {date}",
+      "matchedAccount": "Akun ditemukan",
+      "noOauthYet": "Belum taut OAuth",
+      "noAccount": "Belum ada akun",
+      "subtotal": "Subtotal ({count})"
     },
     "linkedSection": {
-      "title": "Akun Nadeshiko tertaut",
       "subtitle": "Pengguna yang menautkan Patreon lewat OAuth untuk manfaat otomatis."
     },
     "pledgePerMonth": "{amount}/bln",
@@ -2099,6 +2101,10 @@
       "unlinkedSub": "dari {count} aktif di Patreon",
       "issuesLabel": "Masalah akun",
       "issuesSub": "dari {count} tertaut di Nadeshiko"
+    },
+    "tabs": {
+      "campaign": "Anggota Patreon ({count})",
+      "linked": "Akun tertaut ({count})"
     }
   }
 }

@@ -19,6 +19,8 @@ required:
   - linkedUserId
   - linkedUsername
   - linkedEmail
+  - matchedUserId
+  - matchedUsername
 properties:
   memberId:
     type: string
@@ -76,5 +78,12 @@ properties:
     type: string
     nullable: true
   linkedEmail:
+    type: string
+    nullable: true
+  matchedUserId:
+    type: integer
+    nullable: true
+    description: Existing Nadeshiko user matched by lowercase email when the patron has not linked Patreon OAuth yet.
+  matchedUsername:
     type: string
     nullable: true

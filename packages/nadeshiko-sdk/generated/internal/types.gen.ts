@@ -3345,6 +3345,11 @@ export type AdminPatreonCampaignMember = {
     linkedUserId: number;
     linkedUsername: string;
     linkedEmail: string;
+    /**
+     * Existing Nadeshiko user matched by lowercase email when the patron has not linked Patreon OAuth yet.
+     */
+    matchedUserId: number;
+    matchedUsername: string;
 };
 
 export type AdminPatreonConnection = {
@@ -3422,7 +3427,18 @@ export type AdminPatreonOverview = {
         patreonTierId: string;
         monthlyQuotaLimit: number;
         monthlyRequestBoosts: number;
+        /**
+         * Count of active linked Nadeshiko OAuth connections resolved to this tier.
+         */
         activePatronCount: number;
+        /**
+         * Count of active Patreon.com campaign members resolved to this tier.
+         */
+        campaignPatronCount: number;
+        /**
+         * Normalized monthly USD cents from active Patreon.com campaign members in this tier.
+         */
+        campaignMonthlyCents: number;
     }>;
     connections: Array<AdminPatreonConnection>;
     manualGrants: Array<{

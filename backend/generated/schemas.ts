@@ -72,6 +72,8 @@ export const s_AdminPatreonCampaignMember = z.object({
   linkedUserId: z.coerce.number().nullable(),
   linkedUsername: z.string().nullable(),
   linkedEmail: z.string().nullable(),
+  matchedUserId: z.coerce.number().nullable(),
+  matchedUsername: z.string().nullable(),
 });
 
 export const s_AdminPatreonConnection = z.object({
@@ -712,6 +714,8 @@ export const s_AdminPatreonOverview = z.object({
       monthlyQuotaLimit: z.coerce.number(),
       monthlyRequestBoosts: z.coerce.number(),
       activePatronCount: z.coerce.number(),
+      campaignPatronCount: z.coerce.number(),
+      campaignMonthlyCents: z.coerce.number(),
     }),
   ),
   connections: z.array(s_AdminPatreonConnection),

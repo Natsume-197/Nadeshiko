@@ -75,6 +75,8 @@ function makePayload() {
           linkedUserId: 10,
           linkedUsername: 'hanako',
           linkedEmail: 'hanako@example.com',
+          matchedUserId: null,
+          matchedUsername: null,
         },
         {
           memberId: 'mem-2',
@@ -86,7 +88,7 @@ function makePayload() {
           monthlyAmountCents: 1000,
           lifetimeSupportCents: 1000,
           pledgeStart: '2026-11-15T00:00:00.000Z',
-          lastChargeStatus: 'Paid',
+          lastChargeStatus: 'Declined',
           lastChargeDate: '2026-11-15T00:00:00.000Z',
           entitledTierIds: ['28118736'],
           patreonTierTitles: ['Flower'],
@@ -96,6 +98,8 @@ function makePayload() {
           linkedUserId: null,
           linkedUsername: null,
           linkedEmail: null,
+          matchedUserId: 42,
+          matchedUsername: 'newbie_jp',
         },
         {
           memberId: 'mem-3',
@@ -117,6 +121,8 @@ function makePayload() {
           linkedUserId: null,
           linkedUsername: null,
           linkedEmail: null,
+          matchedUserId: null,
+          matchedUsername: null,
         },
         {
           memberId: 'mem-4',
@@ -138,6 +144,8 @@ function makePayload() {
           linkedUserId: null,
           linkedUsername: null,
           linkedEmail: null,
+          matchedUserId: null,
+          matchedUsername: null,
         },
       ],
     },
@@ -149,6 +157,8 @@ function makePayload() {
         monthlyQuotaLimit: 30000,
         monthlyRequestBoosts: 5,
         activePatronCount: 1,
+        campaignPatronCount: 2,
+        campaignMonthlyCents: 2000,
       },
     ],
     connections: [
@@ -232,34 +242,42 @@ afterEach(() => {
 });
 
 describe('PatreonManager', () => {
-  test('renders campaign members, connections, tiers mapping and manual grants', async () => {
+  test('renders KPI strip, email-matched accounts, sorting, subtotals, tiers breakdown, and manual grants', async () => {
     const wrapper = await render();
 
     expect(wrapper.get('[data-testid="kpi-monthly"]').text()).toBe('$20.00');
     expect(wrapper.get('[data-testid="kpi-lifetime"]').text()).toBe('$85.00');
+    expect(wrapper.get('[data-testid="tab-linked-issues-badge"]').text()).toBe('1');
+
+    // Campaign tab active by default
     expect(wrapper.find('[data-testid="campaign-row-mem-1"]').exists()).toBe(true);
     expect(wrapper.get('[data-testid="campaign-row-mem-1"]').text()).toContain('$10.00');
     expect(wrapper.get('[data-testid="campaign-row-mem-1"]').text()).toContain('$30.00');
-    expect(wrapper.find('[data-testid="campaign-row-mem-2"]').exists()).toBe(true);
-    expect(wrapper.find('[data-testid="campaign-row-mem-3"]').exists()).toBe(false);
-    expect(wrapper.find('[data-testid="patreon-row-10"]').exists()).toBe(true);
-    expect(wrapper.find('[data-testid="patreon-row-11"]').exists()).toBe(true);
-    expect(wrapper.get('[data-testid="patreon-tiers-card"]').text()).toContain('Flower');
+    expect(wrapper.get('[data-testid="campaign-matched-mem-2"]').text()).toContain('newbie_jp');
+    expect(wrapper.get('[data-testid="charge-status-mem-2"]').text()).toBe('Declined');
+    expect(wrapper.get('[data-testid="campaign-subtotal-row"]').text()).toContain('$20.00');
+    expect(wrapper.get('[data-testid="campaign-subtotal-row"]').text()).toContain('$40.00');
+
+    // Tiers breakdown shows live campaign count and monthly total
+    const flowerRow = wrapper.get('[data-testid="tier-row-pro"]').text();
+    expect(flowerRow).toContain('Flower');
+    expect(flowerRow).toContain('$20.00');
     expect(wrapper.get('[data-testid="patreon-manual-grants-card"]').text()).toContain('kobo');
 
+    // Paid filter + sort by lifetime puts Former Supporter ($45) first
     await wrapper.get('[data-testid="campaign-filter-paid"]').trigger('click');
-    expect(wrapper.find('[data-testid="campaign-row-mem-1"]').exists()).toBe(true);
-    expect(wrapper.find('[data-testid="campaign-row-mem-3"]').exists()).toBe(true);
-    expect(wrapper.get('[data-testid="campaign-row-mem-3"]').text()).toContain('$45.00');
-    expect(wrapper.find('[data-testid="campaign-row-mem-4"]').exists()).toBe(false);
-
-    await wrapper.get('[data-testid="campaign-filter-unlinked"]').trigger('click');
-    expect(wrapper.find('[data-testid="campaign-row-mem-1"]').exists()).toBe(false);
-    expect(wrapper.find('[data-testid="campaign-row-mem-2"]').exists()).toBe(true);
+    await wrapper.get('[data-testid="sort-lifetime"]').trigger('click');
+    const rowIds = wrapper.findAll('tbody tr[data-testid^="campaign-row-"]').map((r) => r.attributes('data-testid'));
+    expect(rowIds).toEqual(['campaign-row-mem-3', 'campaign-row-mem-1', 'campaign-row-mem-2']);
+    expect(wrapper.get('[data-testid="campaign-subtotal-row"]').text()).toContain('$85.00');
   });
 
-  test('filters by issues and search query', async () => {
+  test('switches to linked accounts tab and filters by issues and search query', async () => {
     const wrapper = await render();
+
+    await wrapper.get('[data-testid="tab-linked"]').trigger('click');
+    expect(wrapper.find('[data-testid="patreon-row-10"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="patreon-row-11"]').exists()).toBe(true);
 
     await wrapper.get('[data-testid="patreon-filter-issues"]').trigger('click');
     expect(wrapper.find('[data-testid="patreon-row-10"]').exists()).toBe(false);
@@ -271,7 +289,7 @@ describe('PatreonManager', () => {
     expect(wrapper.find('[data-testid="patreon-row-11"]').exists()).toBe(false);
   });
 
-  test('triggers single refresh, two-step unlink, and sync-all', async () => {
+  test('triggers inline refresh from campaign tab, unlink from linked tab, and sync-all', async () => {
     const payload = makePayload();
     refreshAdminPatreonConnection.mockResolvedValue(payload.connections[0]);
     unlinkAdminPatreonConnection.mockResolvedValue(undefined);
@@ -279,10 +297,13 @@ describe('PatreonManager', () => {
 
     const wrapper = await render();
 
-    await wrapper.get('[data-testid="patreon-refresh-10"]').trigger('click');
+    // Inline re-sync directly from Campaign tab
+    await wrapper.get('[data-testid="campaign-refresh-10"]').trigger('click');
     await flushPromises();
     expect(refreshAdminPatreonConnection).toHaveBeenCalledWith({ userId: 10 });
 
+    // Switch to Linked tab to unlink taro
+    await wrapper.get('[data-testid="tab-linked"]').trigger('click');
     await wrapper.get('[data-testid="patreon-unlink-11"]').trigger('click');
     await wrapper.get('[data-testid="patreon-confirm-unlink-11"]').trigger('click');
     await flushPromises();

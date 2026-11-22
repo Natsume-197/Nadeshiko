@@ -6,12 +6,13 @@ import { handleApiError } from '~/utils/apiError';
 
 const { t } = useI18n();
 const { formatNumber, formatDate, formatRelativeTime } = useFormat();
+const route = useRoute();
 const store = userStore();
 
 const users = ref<AdminUser[]>([]);
 const total = ref(0);
 const isLoading = ref(false);
-const searchQuery = ref('');
+const searchQuery = ref(typeof route.query.q === 'string' ? route.query.q : '');
 const currentOffset = ref(0);
 const limit = 20;
 

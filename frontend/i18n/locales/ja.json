@@ -2008,7 +2008,6 @@
     "title": "Patreonとティア",
     "configured": "設定済み · キャンペーン {campaignId}",
     "notConfigured": "この環境では未設定",
-    "summaryLine": "Patreon有効 {campaignActive}（未連携 {unlinked}）· Nadeshiko連携済み {linked} · 問題 {issues}",
     "syncAll": "すべて同期",
     "syncingAll": "同期中…",
     "searchPlaceholder": "ユーザー・メール・Patreon名で検索…",
@@ -2055,10 +2054,11 @@
       "title": "ティア対応表",
       "subtitle": "設定済みのPatreonティアID、月間API上限、リクエストブーストの一覧です。",
       "tier": "ティア",
-      "patreonId": "Patreon ID",
       "quota": "API / 月",
-      "boosts": "ブースト / 月",
-      "active": "有効"
+      "patreon": "Patreon",
+      "linked": "連携",
+      "monthly": "月額",
+      "perks": "API / ブースト"
     },
     "manualGrants": {
       "title": "手動ティア・上限オーバーライド",
@@ -2069,7 +2069,6 @@
       "empty": "手動設定されているアカウントはありません。"
     },
     "campaign": {
-      "title": "Patreonキャンペーン会員",
       "subtitle": "Patreon.comから取得した最新リストとNadeshikoアカウントの照合結果です。",
       "fetchedAt": "取得: {when}",
       "unconfigured": "このサーバーに PATREON_CREATOR_ACCESS_TOKEN が設定されていません。",
@@ -2079,14 +2078,17 @@
       "member": "会員",
       "since": "開始日",
       "nadeshikoLink": "Nadeshikoアカウント",
-      "notLinked": "未連携",
       "empty": "条件に一致するキャンペーン会員はいません。",
       "paidFilter": "支援履歴あり ({count})",
       "monthly": "月額",
-      "lifetime": "累計"
+      "lifetime": "累計",
+      "lastCharge": "最終課金: {date}",
+      "matchedAccount": "アカウント一致",
+      "noOauthYet": "OAuth 未連携",
+      "noAccount": "アカウントなし",
+      "subtotal": "小計 ({count})"
     },
     "linkedSection": {
-      "title": "Nadeshiko連携済みアカウント",
       "subtitle": "OAuthでPatreonを連携し、特典を受け取っているユーザー一覧です。"
     },
     "pledgePerMonth": "{amount}/月",
@@ -2099,6 +2101,10 @@
       "unlinkedSub": "Patreon 有効 {count} 名中",
       "issuesLabel": "問題のあるアカウント",
       "issuesSub": "Nadeshiko 連携 {count} 件中"
+    },
+    "tabs": {
+      "campaign": "Patreon 支援者 ({count})",
+      "linked": "連携済みアカウント ({count})"
     }
   }
 }

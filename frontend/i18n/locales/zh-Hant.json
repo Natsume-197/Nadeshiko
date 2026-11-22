@@ -2008,7 +2008,6 @@
     "title": "Patreon 與等級",
     "configured": "已設定 · 活動 {campaignId}",
     "notConfigured": "此環境尚未設定",
-    "summaryLine": "Patreon 有效 {campaignActive}（未連結 {unlinked}）· Nadeshiko 已連結 {linked} · 異常 {issues}",
     "syncAll": "全部同步",
     "syncingAll": "同步中…",
     "searchPlaceholder": "搜尋使用者、信箱或 Patreon…",
@@ -2055,10 +2054,11 @@
       "title": "等級對應",
       "subtitle": "已設定的 Patreon 等級 ID、每月 API 配額與請求加速次數（唯讀）。",
       "tier": "等級",
-      "patreonId": "Patreon ID",
       "quota": "API / 月",
-      "boosts": "加速 / 月",
-      "active": "有效人數"
+      "patreon": "Patreon",
+      "linked": "已綁定",
+      "monthly": "每月",
+      "perks": "API / 加速"
     },
     "manualGrants": {
       "title": "手動等級與配額覆寫",
@@ -2069,7 +2069,6 @@
       "empty": "目前沒有手動配額或非免費等級指派。"
     },
     "campaign": {
-      "title": "Patreon 活動贊助者",
       "subtitle": "直接取自 Patreon.com 並與 Nadeshiko 帳號自動比對。",
       "fetchedAt": "更新於 {when}",
       "unconfigured": "此伺服器尚未設定 PATREON_CREATOR_ACCESS_TOKEN。",
@@ -2079,14 +2078,17 @@
       "member": "贊助者",
       "since": "開始日期",
       "nadeshikoLink": "Nadeshiko 帳號",
-      "notLinked": "尚未連結",
       "empty": "沒有符合條件的活動贊助者。",
       "paidFilter": "有付費紀錄 ({count})",
       "monthly": "每月",
-      "lifetime": "歷史總計"
+      "lifetime": "歷史總計",
+      "lastCharge": "扣款：{date}",
+      "matchedAccount": "偵測到帳號",
+      "noOauthYet": "未綁定 OAuth",
+      "noAccount": "無帳號",
+      "subtotal": "小計 ({count})"
     },
     "linkedSection": {
-      "title": "已連結的 Nadeshiko 帳號",
       "subtitle": "透過 OAuth 連結 Patreon 並自動享有權益的使用者。"
     },
     "pledgePerMonth": "{amount}/月",
@@ -2099,6 +2101,10 @@
       "unlinkedSub": "Patreon 活躍共 {count} 位",
       "issuesLabel": "異常帳號",
       "issuesSub": "Nadeshiko 已綁定共 {count} 個"
+    },
+    "tabs": {
+      "campaign": "Patreon 贊助者 ({count})",
+      "linked": "已綁定帳號 ({count})"
     }
   }
 }
