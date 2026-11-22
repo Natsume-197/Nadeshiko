@@ -1612,7 +1612,8 @@
     "intro": "Os apoiadores mantêm o Nadeshiko funcionando e ajudam a decidir o que vem a seguir. Escolha um nível abaixo e veja o que estamos construindo.",
     "tabs": {
       "tiers": "Níveis"
-    }
+    },
+    "freePromise": "Busca de frases, clipes de áudio, cartões de palavras e exportação para o Anki são grátis para sempre."
   },
   "roadmap": {
     "title": "Roadmap",
@@ -1824,9 +1825,41 @@
       "loggedOutBody": "Entre e vincule sua conta do Patreon em Configurações para ativar seus benefícios de apoiador.",
       "loggedOutCta": "Entrar para vincular"
     },
-    "specs": {
-      "boosts": "{count} boosts / mês",
-      "api": "{count} API / mês"
+    "showcase": {
+      "title": "O que você desbloqueia ao apoiar",
+      "themes": {
+        "title": "Temas personalizados",
+        "body": "Deixe o Nadeshiko com a sua cara — escolha um destaque ou crie sua própria paleta.",
+        "sampleGloss": "É uma promessa.",
+        "tryIt": "Teste uma cor"
+      },
+      "boosts": {
+        "title": "Impulsione o que entra no catálogo",
+        "body": "Use seus boosts mensais nos animes, doramas ou canais do YouTube que quer ver indexados primeiro.",
+        "badge": "+{count} boosts",
+        "cta": "Ver pedidos"
+      }
+    },
+    "story": {
+      "title": "Feito e mantido por uma só pessoa",
+      "p1": "O Nadeshiko nasceu para facilitar o aprendizado de japonês com cenas reais de anime, séries e YouTube — sem anúncios nem paywall na busca principal.",
+      "p2": "Cada contribuição vai direto para servidores, hospedagem de mídia e o tempo necessário para indexar novos títulos e criar recursos melhores. Obrigado por mantê-lo vivo.",
+      "role": "Criador do Nadeshiko"
+    },
+    "compare": {
+      "title": "Sempre grátis no essencial",
+      "subtitle": "Todo mundo tem acesso completo à busca. Apoiar adiciona mais capacidade e extras de agradecimento.",
+      "feature": "Recurso",
+      "free": "Grátis",
+      "rows": {
+        "search": "Busca de frases, áudio e capturas",
+        "anki": "Cartões de palavras e exportação Anki",
+        "votes": "Votar em pedidos de conteúdo",
+        "boosts": "Boosts mensais em pedidos",
+        "api": "Solicitações de API por mês",
+        "themes": "Temas personalizados",
+        "discord": "Cargo e canais de apoiador no Discord"
+      }
     }
   },
   "requests": {

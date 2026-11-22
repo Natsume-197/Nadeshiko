@@ -136,6 +136,21 @@ describe('Support section', () => {
     expect(cards[0]?.find('[data-testid="support-current-tier-badge"]').exists()).toBe(false);
   });
 
+  test('renders interactive theme preview, personal note, and Free vs Supporter comparison table', async () => {
+    const wrapper = await render();
+
+    expect(wrapper.find('[data-testid="support-showcase"]').exists()).toBe(true);
+    const matchaSwatch = wrapper.get('[data-testid="theme-swatch-matcha"]');
+    expect(matchaSwatch.attributes('aria-pressed')).toBe('false');
+    await matchaSwatch.trigger('click');
+    expect(matchaSwatch.attributes('aria-pressed')).toBe('true');
+
+    expect(wrapper.get('[data-testid="support-story"]').text()).toContain('Natsume');
+    const compareText = wrapper.get('[data-testid="support-compare-table"]').text();
+    expect(compareText).toContain('support.compare.free');
+    expect(compareText).toContain('60000');
+  });
+
   test('the app question points at the Terms', async () => {
     const answer = (await render()).get('[data-testid="support-faq-apps"]');
 

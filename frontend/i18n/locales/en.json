@@ -1612,7 +1612,8 @@
     "intro": "Supporters keep Nadeshiko running and help decide what comes next. Pick a tier below, then see what we're building.",
     "tabs": {
       "tiers": "Tiers"
-    }
+    },
+    "freePromise": "Search, audio clips, word cards, and Anki export stay free forever."
   },
   "roadmap": {
     "title": "Roadmap",
@@ -1824,9 +1825,41 @@
       "loggedOutBody": "Sign in and link your Patreon account in Settings to unlock your supporter benefits.",
       "loggedOutCta": "Sign in to link"
     },
-    "specs": {
-      "boosts": "{count} boosts / mo",
-      "api": "{count} API / mo"
+    "showcase": {
+      "title": "What supporters unlock",
+      "themes": {
+        "title": "Custom themes",
+        "body": "Make Nadeshiko feel like yours — pick an accent or craft your own palette.",
+        "sampleGloss": "It's a promise.",
+        "tryIt": "Try a palette"
+      },
+      "boosts": {
+        "title": "Boost what gets added",
+        "body": "Put monthly boosts behind the anime, dramas, or YouTube channels you want indexed next.",
+        "badge": "+{count} boosts",
+        "cta": "Browse requests"
+      }
+    },
+    "story": {
+      "title": "Built and maintained by one person",
+      "p1": "Nadeshiko started as a tool to make learning Japanese from real anime, dramas, and YouTube easier — without ads or putting the search engine behind a paywall.",
+      "p2": "Every contribution goes straight into servers, media hosting, and the time it takes to index new titles and build better study features. Thank you for helping keep it alive.",
+      "role": "Creator of Nadeshiko"
+    },
+    "compare": {
+      "title": "Always free at its core",
+      "subtitle": "Every reader gets the full search experience. Supporting adds extra capacity and thank-you perks.",
+      "feature": "Feature",
+      "free": "Free",
+      "rows": {
+        "search": "Sentence search, audio & screenshots",
+        "anki": "Word cards & Anki export",
+        "votes": "Vote on content requests",
+        "boosts": "Monthly request boosts",
+        "api": "Monthly API requests",
+        "themes": "Custom themes",
+        "discord": "Supporter role & Discord channels"
+      }
     }
   },
   "requests": {

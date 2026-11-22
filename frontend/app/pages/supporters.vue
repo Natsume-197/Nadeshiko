@@ -145,32 +145,37 @@ function featureDate(item: RoadmapItem) {
 </script>
 
 <template>
-  <div class="roadmap-page -mt-3 pb-16 text-ink">
-    <!-- Hero keeps a dedicated dark backdrop + scrim behind the Haruhi banner so contrast holds on every theme. -->
+  <div class="roadmap-page -mt-3 pb-20 text-ink">
+    <!-- Nadeshiko's Haruhi banner with a clean scrim so light and dark themes keep crisp text contrast. -->
     <section
-      class="roadmap-banner relative flex min-h-[16rem] items-center overflow-hidden border-b border-hairline bg-[#161214] px-4 py-10 text-white md:min-h-[17.5rem] md:py-12"
+      class="roadmap-banner relative flex min-h-[16.5rem] items-center overflow-hidden border-b border-hairline bg-[#161214] px-4 py-10 text-white md:min-h-[18rem] md:py-12"
     >
       <div class="roadmap-banner-image absolute inset-0" aria-hidden="true" />
-      <div class="absolute inset-0 bg-gradient-to-r from-black/75 via-black/50 to-black/25" aria-hidden="true" />
+      <div class="absolute inset-0 bg-gradient-to-r from-black/80 via-black/55 to-black/25" aria-hidden="true" />
       <div class="nd-page relative">
         <h1 class="max-w-3xl text-4xl font-black leading-[1.04] tracking-tight text-white md:text-5xl">
           {{ t('supporters.title') }}
         </h1>
-        <p class="mt-4 max-w-2xl text-base leading-relaxed text-white/80 md:text-lg">{{ t('supporters.intro') }}</p>
+        <p class="mt-4 max-w-2xl text-base leading-relaxed text-white/80 md:text-lg">
+          {{ t('supporters.intro') }}
+        </p>
+        <p data-testid="supporters-free-promise" class="mt-2 max-w-2xl text-sm text-white/60">
+          {{ t('supporters.freePromise') }}
+        </p>
         <div class="mt-6 flex flex-wrap gap-3">
           <a
             :href="PATREON_URL"
             target="_blank"
             rel="noopener"
             data-testid="supporters-hero-patreon-cta"
-            class="inline-flex h-11 items-center gap-2 rounded-lg bg-[#ff424d] px-5 font-semibold text-white transition-colors hover:bg-[#ff5962]"
+            class="inline-flex h-10 items-center gap-2 rounded-lg bg-[#ff424d] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#ff5962]"
           >
-            <UiBaseIcon :path="mdiPatreon" size="19" /> {{ t('roadmap.support') }}
+            <UiBaseIcon :path="mdiPatreon" size="18" /> {{ t('roadmap.support') }}
           </a>
           <NuxtLink
             :to="localePath('/requests')"
             data-testid="supporters-requests-cta"
-            class="inline-flex h-11 items-center justify-center rounded-lg border border-white/25 bg-white/10 px-5 text-sm font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/20"
+            class="inline-flex h-10 items-center justify-center rounded-lg border border-white/25 bg-white/10 px-5 text-sm font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/20"
           >
             {{ t('roadmap.proposeCta') }}
           </NuxtLink>

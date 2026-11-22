@@ -1612,7 +1612,8 @@
     "intro": "Para pendukung menjaga Nadeshiko tetap berjalan dan ikut menentukan apa yang berikutnya. Pilih tingkatan di bawah, lalu lihat apa yang sedang kami bangun.",
     "tabs": {
       "tiers": "Tingkatan"
-    }
+    },
+    "freePromise": "Pencarian kalimat, klip audio, kartu kata, dan ekspor Anki tetap gratis selamanya."
   },
   "roadmap": {
     "title": "Peta Jalan",
@@ -1824,9 +1825,41 @@
       "loggedOutBody": "Masuk dan tautkan akun Patreon Anda di Pengaturan untuk mengaktifkan manfaat pendukung.",
       "loggedOutCta": "Masuk untuk menautkan"
     },
-    "specs": {
-      "boosts": "{count} boost / bln",
-      "api": "{count} API / bln"
+    "showcase": {
+      "title": "Yang dibuka oleh pendukung",
+      "themes": {
+        "title": "Tema kustom",
+        "body": "Jadikan Nadeshiko milik Anda — pilih warna aksen atau rancang palet sendiri.",
+        "sampleGloss": "Janji ya.",
+        "tryIt": "Coba warna"
+      },
+      "boosts": {
+        "title": "Dorong judul berikutnya",
+        "body": "Gunakan boost bulanan untuk anime, drama, atau kanal YouTube yang ingin diindeks lebih dulu.",
+        "badge": "+{count} boost",
+        "cta": "Lihat permintaan"
+      }
+    },
+    "story": {
+      "title": "Dibangun dan dirawat oleh satu orang",
+      "p1": "Nadeshiko dimulai untuk mempermudah belajar bahasa Jepang dari anime, drama, dan YouTube nyata — tanpa iklan dan tanpa paywall pada pencarian utama.",
+      "p2": "Setiap dukungan langsung dipakai untuk server, hosting media, serta waktu mengindeks judul baru dan membangun fitur belajar yang lebih baik. Terima kasih telah menjaganya tetap hidup.",
+      "role": "Pembuat Nadeshiko"
+    },
+    "compare": {
+      "title": "Selalu gratis untuk fitur inti",
+      "subtitle": "Semua pengguna mendapat pengalaman pencarian penuh. Dukungan memberi kapasitas ekstra dan bonus terima kasih.",
+      "feature": "Fitur",
+      "free": "Gratis",
+      "rows": {
+        "search": "Pencarian kalimat, audio & tangkapan layar",
+        "anki": "Kartu kata & ekspor Anki",
+        "votes": "Vote permintaan konten",
+        "boosts": "Boost permintaan bulanan",
+        "api": "Permintaan API bulanan",
+        "themes": "Tema kustom",
+        "discord": "Peran & kanal pendukung di Discord"
+      }
     }
   },
   "requests": {

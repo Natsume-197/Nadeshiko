@@ -1612,7 +1612,8 @@
     "intro": "支持者让 Nadeshiko 持续运行，并一起决定接下来做什么。在下方选择档位，再看看我们正在开发的内容。",
     "tabs": {
       "tiers": "档位"
-    }
+    },
+    "freePromise": "句子搜索、音频片段、词卡和 Anki 导出永久免费。"
   },
   "roadmap": {
     "title": "路线图",
@@ -1824,9 +1825,41 @@
       "loggedOutBody": "登录并在设置中绑定 Patreon 账号即可激活您的赞助者权益。",
       "loggedOutCta": "登录并绑定"
     },
-    "specs": {
-      "boosts": "{count} 次加速/月",
-      "api": "{count} 次 API/月"
+    "showcase": {
+      "title": "赞助者可解锁的内容",
+      "themes": {
+        "title": "自定义主题",
+        "body": "按喜好定制 Nadeshiko——挑选强调色或打造专属配色方案。",
+        "sampleGloss": "说好了哦。",
+        "tryIt": "试选配色"
+      },
+      "boosts": {
+        "title": "助力心仪作品优先收录",
+        "body": "将每月的加速次数投给您最想优先收录的动漫、日剧或 YouTube 频道。",
+        "badge": "+{count} 加速",
+        "cta": "查看请求列表"
+      }
+    },
+    "story": {
+      "title": "由一人开发并持续维护",
+      "p1": "Nadeshiko 最初是为了让通过真实动漫、日剧和 YouTube 学习日语变得更轻松——没有广告，也不会把核心搜索锁在付费墙后。",
+      "p2": "每一份支持都会直接用于服务器、媒体托管，以及收录新作品和开发新功能所需的时间。感谢您让这个项目持续运转。",
+      "role": "Nadeshiko 开发者"
+    },
+    "compare": {
+      "title": "核心体验永久免费",
+      "subtitle": "每位学习者都能免费使用完整搜索功能。赞助可获得更高额度与感谢福利。",
+      "feature": "功能",
+      "free": "免费",
+      "rows": {
+        "search": "例句搜索、音频与截图",
+        "anki": "词卡与 Anki 导出",
+        "votes": "为内容请求投票",
+        "boosts": "每月请求加速次数",
+        "api": "每月 API 请求额度",
+        "themes": "自定义主题",
+        "discord": "Discord 赞助者身份组与频道"
+      }
     }
   },
   "requests": {
