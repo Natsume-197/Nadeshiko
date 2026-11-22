@@ -1616,7 +1616,6 @@
   },
   "roadmap": {
     "title": "Peta Jalan",
-    "intro": "Lihat apa yang akan hadir di Nadeshiko. Siapa pun bisa meminta judul dan memilih apa yang datang berikutnya.",
     "support": "Dukung Nadeshiko",
     "proposeCta": "Minta judul",
     "featureSoon": "Segera™",
@@ -1674,8 +1673,7 @@
     "admin": {
       "tab": "Peta Jalan",
       "title": "Antrean peta jalan"
-    },
-    "requestsLink": "Buka permintaan."
+    }
   },
   "feedback": {
     "open": "Masukan",

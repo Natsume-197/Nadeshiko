@@ -1616,7 +1616,6 @@
   },
   "roadmap": {
     "title": "Roadmap",
-    "intro": "See what is coming to Nadeshiko. Anyone can request a title and vote for what comes next.",
     "support": "Support Nadeshiko",
     "proposeCta": "Request a title",
     "featureSoon": "Soon™",
@@ -1674,8 +1673,7 @@
     "admin": {
       "tab": "Roadmap",
       "title": "Roadmap queue"
-    },
-    "requestsLink": "Go to requests."
+    }
   },
   "feedback": {
     "open": "Feedback",

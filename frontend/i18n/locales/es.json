@@ -1616,7 +1616,6 @@
   },
   "roadmap": {
     "title": "Roadmap",
-    "intro": "Mira lo que llega a Nadeshiko. Cualquiera puede pedir un título y votar por lo que viene después.",
     "support": "Apoyar a Nadeshiko",
     "proposeCta": "Pedir un título",
     "featureSoon": "Próximamente™",
@@ -1674,8 +1673,7 @@
     "admin": {
       "tab": "Roadmap",
       "title": "Cola del roadmap"
-    },
-    "requestsLink": "Ir a los pedidos."
+    }
   },
   "feedback": {
     "open": "Comentarios",

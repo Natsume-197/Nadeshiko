@@ -143,11 +143,10 @@ describe('Supporters page', () => {
 });
 
 describe('content requests', () => {
-  test('the hero points to Patreon and requests, and the roadmap tab points to requests', async () => {
+  test('the hero points to Patreon and the requests page', async () => {
     const wrapper = await render();
     expect(wrapper.get('[data-testid="supporters-hero-patreon-cta"]').attributes('href')).toBe(PATREON_URL);
     expect(wrapper.get('[data-testid="supporters-requests-cta"]').attributes('href')).toBe('/en/requests');
-    expect(panel(wrapper, 'roadmap').get('a[href="/en/requests"]').text()).toBe('roadmap.requestsLink');
   });
 });
 

@@ -1616,7 +1616,6 @@
   },
   "roadmap": {
     "title": "路线图",
-    "intro": "看看 Nadeshiko 即将加入的内容。任何人都可以请求作品，并为接下来的内容投票。",
     "support": "支持 Nadeshiko",
     "proposeCta": "请求作品",
     "featureSoon": "即将推出™",
@@ -1674,8 +1673,7 @@
     "admin": {
       "tab": "路线图",
       "title": "路线图队列"
-    },
-    "requestsLink": "前往请求页面。"
+    }
   },
   "feedback": {
     "open": "意见反馈",

@@ -1616,7 +1616,6 @@
   },
   "roadmap": {
     "title": "ロードマップ",
-    "intro": "Nadeshikoに追加予定の作品をチェック。誰でも作品をリクエストして、次に追加するものに投票できます。",
     "support": "Nadeshikoを支援する",
     "proposeCta": "作品をリクエスト",
     "featureSoon": "近日公開™",
@@ -1674,8 +1673,7 @@
     "admin": {
       "tab": "ロードマップ",
       "title": "ロードマップのキュー"
-    },
-    "requestsLink": "リクエストへ"
+    }
   },
   "feedback": {
     "open": "フィードバック",

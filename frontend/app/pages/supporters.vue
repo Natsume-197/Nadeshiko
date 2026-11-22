@@ -210,16 +210,9 @@ function featureDate(item: RoadmapItem) {
         id="panel-roadmap"
         role="tabpanel"
         aria-labelledby="tab-roadmap"
-        class="pt-8"
+        class="pt-4"
       >
-        <p class="text-center text-sm text-ink-muted">
-          {{ t('roadmap.intro') }}
-          <NuxtLink :to="localePath('/requests')" class="text-brand hover:underline">{{
-            t('roadmap.requestsLink')
-          }}</NuxtLink>
-        </p>
-
-        <div id="features" class="py-8 md:py-10">
+        <div id="features" class="py-6 md:py-8">
           <div v-if="error" class="rounded-xl border border-red-500/30 bg-red-500/10 p-5 text-red-400">
             {{ t('roadmap.loadError') }}
           </div>
