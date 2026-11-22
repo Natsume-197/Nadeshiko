@@ -1819,21 +1819,6 @@
       "title": "Hecho por una sola persona",
       "body": "Nadeshiko es un proyecto independiente, sin anuncios ni muros de pago en el buscador. Cada aporte va directo a servidores, alojamiento multimedia y tiempo para indexar nuevos títulos y mejoras.",
       "role": "Creador de Nadeshiko"
-    },
-    "compare": {
-      "title": "Gratis en lo esencial, siempre",
-      "subtitle": "Todo el mundo tiene acceso completo al buscador. Apoyar suma más capacidad y extras de agradecimiento.",
-      "feature": "Función",
-      "free": "Gratis",
-      "rows": {
-        "search": "Búsqueda de frases, audio y capturas",
-        "anki": "Tarjetas de palabras y exportación a Anki",
-        "votes": "Votar en pedidos de contenido",
-        "boosts": "Boosts mensuales en pedidos",
-        "api": "Solicitudes a la API al mes",
-        "themes": "Temas personalizados",
-        "discord": "Rol y canales de mecenas en Discord"
-      }
     }
   },
   "requests": {

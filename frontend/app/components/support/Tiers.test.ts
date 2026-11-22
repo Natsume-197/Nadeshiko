@@ -135,13 +135,10 @@ describe('Support section', () => {
     expect(cards[0]?.find('[data-testid="support-current-tier-badge"]').exists()).toBe(false);
   });
 
-  test('renders personal note and Free vs Supporter comparison table', async () => {
+  test('renders the personal note from the creator', async () => {
     const wrapper = await render();
 
     expect(wrapper.get('[data-testid="support-story"]').text()).toContain('Natsume');
-    const compareText = wrapper.get('[data-testid="support-compare-table"]').text();
-    expect(compareText).toContain('support.compare.free');
-    expect(compareText).toContain('60000');
   });
 
   test('the app question points at the Terms', async () => {

@@ -1819,21 +1819,6 @@
       "title": "Made by one person",
       "body": "Nadeshiko is an independent project with no ads and no paywall on search. Every contribution goes straight into servers, media hosting, and time to index new titles and build better features.",
       "role": "Creator of Nadeshiko"
-    },
-    "compare": {
-      "title": "Always free at its core",
-      "subtitle": "Every reader gets the full search experience. Supporting adds extra capacity and thank-you perks.",
-      "feature": "Feature",
-      "free": "Free",
-      "rows": {
-        "search": "Sentence search, audio & screenshots",
-        "anki": "Word cards & Anki export",
-        "votes": "Vote on content requests",
-        "boosts": "Monthly request boosts",
-        "api": "Monthly API requests",
-        "themes": "Custom themes",
-        "discord": "Supporter role & Discord channels"
-      }
     }
   },
   "requests": {

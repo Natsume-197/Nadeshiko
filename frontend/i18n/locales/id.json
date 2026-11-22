@@ -1819,21 +1819,6 @@
       "title": "Dibuat oleh satu orang",
       "body": "Nadeshiko adalah proyek independen tanpa iklan dan tanpa paywall pada pencarian. Setiap dukungan langsung dipakai untuk server, hosting media, dan waktu mengindeks judul baru.",
       "role": "Pembuat Nadeshiko"
-    },
-    "compare": {
-      "title": "Selalu gratis untuk fitur inti",
-      "subtitle": "Semua pengguna mendapat pengalaman pencarian penuh. Dukungan memberi kapasitas ekstra dan bonus terima kasih.",
-      "feature": "Fitur",
-      "free": "Gratis",
-      "rows": {
-        "search": "Pencarian kalimat, audio & tangkapan layar",
-        "anki": "Kartu kata & ekspor Anki",
-        "votes": "Vote permintaan konten",
-        "boosts": "Boost permintaan bulanan",
-        "api": "Permintaan API bulanan",
-        "themes": "Tema kustom",
-        "discord": "Peran & kanal pendukung di Discord"
-      }
     }
   },
   "requests": {

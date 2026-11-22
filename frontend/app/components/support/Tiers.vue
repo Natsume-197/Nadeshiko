@@ -6,8 +6,7 @@ import { FREE_MONTHLY_API_REQUESTS, SUPPORT_TIERS, tierCheckoutUrl, type Support
  * The support tab of the Supporters page (`/supporters#support`):
  * 1. Three clean, subgrid-aligned Patreon tier cards + supporter status / link strip
  * 2. Short, unboxed personal note from the creator
- * 3. Minimal Free vs Supporters comparison table (reinforcing what stays free forever)
- * 4. Unified FAQ accordion
+ * 3. Unified FAQ accordion
  */
 
 const { t, locale } = useI18n();
@@ -78,34 +77,6 @@ function perks(tier: SupportTier, index: number): string[] {
     t('support.perks.customThemes'),
   ];
 }
-
-type CompareCell = boolean | string;
-interface CompareRow {
-  key: string;
-  label: string;
-  free: CompareCell;
-  tiers: CompareCell[];
-}
-
-const compareRows = computed<CompareRow[]>(() => [
-  { key: 'search', label: t('support.compare.rows.search'), free: true, tiers: [true, true, true] },
-  { key: 'anki', label: t('support.compare.rows.anki'), free: true, tiers: [true, true, true] },
-  { key: 'votes', label: t('support.compare.rows.votes'), free: true, tiers: [true, true, true] },
-  {
-    key: 'boosts',
-    label: t('support.compare.rows.boosts'),
-    free: false,
-    tiers: SUPPORT_TIERS.map((tier) => String(tier.requestBoostsPerMonth)),
-  },
-  {
-    key: 'api',
-    label: t('support.compare.rows.api'),
-    free: formatNumber(FREE_MONTHLY_API_REQUESTS),
-    tiers: SUPPORT_TIERS.map((tier) => formatNumber(tier.monthlyApiRequests)),
-  },
-  { key: 'themes', label: t('support.compare.rows.themes'), free: false, tiers: [true, true, true] },
-  { key: 'discord', label: t('support.compare.rows.discord'), free: false, tiers: [true, true, true] },
-]);
 
 const faq = computed(() => [
   {
@@ -296,53 +267,7 @@ const faq = computed(() => [
       </p>
     </div>
 
-    <!-- 3. Understated Free vs Supporters Comparison -->
-    <div data-testid="support-compare-table" class="mx-auto max-w-4xl">
-      <div class="text-center">
-        <h3 class="text-xl font-bold tracking-tight text-ink">{{ t('support.compare.title') }}</h3>
-        <p class="mt-1.5 text-sm text-ink-muted">{{ t('support.compare.subtitle') }}</p>
-      </div>
-
-      <div class="mt-6 overflow-x-auto">
-        <table class="w-full min-w-[34rem] text-left text-sm">
-          <thead class="border-b border-hairline text-xs text-ink-faint">
-            <tr>
-              <th class="py-3 pr-4 font-medium">{{ t('support.compare.feature') }}</th>
-              <th class="px-3 py-3 text-center font-semibold text-ink">{{ t('support.compare.free') }}</th>
-              <th
-                v-for="tier in SUPPORT_TIERS"
-                :key="tier.key"
-                class="px-3 py-3 text-center font-semibold"
-                :class="tier.priorityRequests ? 'text-brand' : 'text-ink'"
-              >
-                {{ tierName(tier) }}
-              </th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-hairline">
-            <tr v-for="row in compareRows" :key="row.key">
-              <td class="py-3 pr-4 text-ink-muted">{{ row.label }}</td>
-              <td class="px-3 py-3 text-center tabular-nums">
-                <UiBaseIcon v-if="row.free === true" :path="mdiCheck" :size="16" class="inline text-emerald-400" />
-                <span v-else-if="row.free === false" class="text-ink-faint">—</span>
-                <span v-else class="text-ink-muted">{{ row.free }}</span>
-              </td>
-              <td
-                v-for="(val, idx) in row.tiers"
-                :key="`${row.key}-${idx}`"
-                class="px-3 py-3 text-center tabular-nums"
-              >
-                <UiBaseIcon v-if="val === true" :path="mdiCheck" :size="16" class="inline text-brand" />
-                <span v-else-if="val === false" class="text-ink-faint">—</span>
-                <span v-else class="font-semibold text-ink">{{ val }}</span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- 4. Questions: unified card with hairline dividers -->
+    <!-- 3. Questions: unified card with hairline dividers -->
     <div class="mx-auto max-w-3xl">
       <h3 class="text-center text-xl font-bold tracking-tight text-ink">{{ t('support.faq.title') }}</h3>
       <div class="mt-5 divide-y divide-hairline overflow-hidden rounded-xl border border-hairline bg-card-background">
