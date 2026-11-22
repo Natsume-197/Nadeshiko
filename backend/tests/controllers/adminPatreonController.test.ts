@@ -204,6 +204,34 @@ describe('GET /v1/admin/patreon', () => {
           entitledTierIds: ['tier-flower'],
           patreonTierTitles: ['Flower'],
         },
+        {
+          memberId: 'mem-3',
+          patreonUserId: 'p-former-50',
+          fullName: 'Former Patron',
+          email: 'former@patreon.test',
+          patronStatus: 'former_patron',
+          entitledAmountCents: 0,
+          lifetimeSupportCents: 4500,
+          pledgeStart: '2026-01-01T00:00:00.000Z',
+          lastChargeStatus: 'Paid',
+          lastChargeDate: '2026-05-01T00:00:00.000Z',
+          entitledTierIds: [],
+          patreonTierTitles: [],
+        },
+        {
+          memberId: 'mem-4',
+          patreonUserId: 'p-free-1',
+          fullName: 'Free Follower',
+          email: 'free@patreon.test',
+          patronStatus: null,
+          entitledAmountCents: 0,
+          lifetimeSupportCents: 0,
+          pledgeStart: null,
+          lastChargeStatus: null,
+          lastChargeDate: null,
+          entitledTierIds: [],
+          patreonTierTitles: [],
+        },
       ],
     });
 
@@ -217,6 +245,9 @@ describe('GET /v1/admin/patreon', () => {
       issues: 2,
       campaignActive: 2,
       campaignUnlinkedActive: 1,
+      campaignMonthlyCents: 2000,
+      campaignLifetimeCents: 8500,
+      campaignPayingEver: 3,
     });
     expect(res.body.campaign.status).toBe('ok');
     expect(res.body.campaign.members).toEqual(

@@ -2080,11 +2080,25 @@
       "since": "开始日期",
       "nadeshikoLink": "Nadeshiko 账号",
       "notLinked": "尚未绑定",
-      "empty": "没有符合条件的活动赞助者。"
+      "empty": "没有符合条件的活动赞助者。",
+      "paidFilter": "有付费记录 ({count})",
+      "monthly": "每月",
+      "lifetime": "历史总计"
     },
     "linkedSection": {
       "title": "已绑定的 Nadeshiko 账号",
       "subtitle": "通过 OAuth 绑定 Patreon 并自动享受权益的用户。"
+    },
+    "pledgePerMonth": "{amount}/月",
+    "kpi": {
+      "monthlyLabel": "每月收入",
+      "monthlySub": "{count} 位活跃赞助者 · 税前 USD",
+      "lifetimeLabel": "历史总计",
+      "lifetimeSub": "共 {count} 位赞助者支持过",
+      "unlinkedLabel": "未绑定的活跃赞助者",
+      "unlinkedSub": "Patreon 活跃共 {count} 位",
+      "issuesLabel": "异常账号",
+      "issuesSub": "Nadeshiko 已绑定共 {count} 个"
     }
   }
 }

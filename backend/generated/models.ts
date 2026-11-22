@@ -139,6 +139,9 @@ export type t_AdminPatreonOverview = {
   summary: {
     active: number;
     campaignActive: number;
+    campaignLifetimeCents: number;
+    campaignMonthlyCents: number;
+    campaignPayingEver: number;
     campaignUnlinkedActive: number;
     issues: number;
     stale: number;

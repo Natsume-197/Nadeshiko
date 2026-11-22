@@ -13659,6 +13659,9 @@ components:
             - issues
             - campaignActive
             - campaignUnlinkedActive
+            - campaignMonthlyCents
+            - campaignLifetimeCents
+            - campaignPayingEver
           properties:
             totalLinked:
               type: integer
@@ -13672,6 +13675,18 @@ components:
               type: integer
             campaignUnlinkedActive:
               type: integer
+            campaignMonthlyCents:
+              type: integer
+              description: Gross monthly pledge total in campaign currency cents across active
+                Patreon campaign members.
+            campaignLifetimeCents:
+              type: integer
+              description: Gross all-time support total in campaign currency cents across all
+                Patreon campaign members.
+            campaignPayingEver:
+              type: integer
+              description: Count of campaign members with non-zero historical or active
+                support.
         campaign:
           type: object
           required:

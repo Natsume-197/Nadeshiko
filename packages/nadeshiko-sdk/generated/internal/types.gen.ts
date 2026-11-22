@@ -3392,6 +3392,18 @@ export type AdminPatreonOverview = {
         issues: number;
         campaignActive: number;
         campaignUnlinkedActive: number;
+        /**
+         * Gross monthly pledge total in campaign currency cents across active Patreon campaign members.
+         */
+        campaignMonthlyCents: number;
+        /**
+         * Gross all-time support total in campaign currency cents across all Patreon campaign members.
+         */
+        campaignLifetimeCents: number;
+        /**
+         * Count of campaign members with non-zero historical or active support.
+         */
+        campaignPayingEver: number;
     };
     campaign: {
         configured: boolean;

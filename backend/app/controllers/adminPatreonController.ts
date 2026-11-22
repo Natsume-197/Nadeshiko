@@ -121,6 +121,11 @@ export const getAdminPatreonOverview: GetAdminPatreonOverview = async ({ query }
 
   const campaignActiveMembers = campaignMembers.filter((m) => m.patronStatus === 'active_patron');
   const campaignUnlinkedActive = campaignActiveMembers.filter((m) => m.linkedUserId === null).length;
+  const campaignMonthlyCents = campaignActiveMembers.reduce((sum, m) => sum + m.entitledAmountCents, 0);
+  const campaignLifetimeCents = campaignMembers.reduce((sum, m) => sum + m.lifetimeSupportCents, 0);
+  const campaignPayingEver = campaignMembers.filter(
+    (m) => m.lifetimeSupportCents > 0 || (m.patronStatus === 'active_patron' && m.entitledAmountCents > 0),
+  ).length;
 
   const manualUsers = await User.createQueryBuilder('u')
     .where('u.is_active = true')
@@ -158,6 +163,9 @@ export const getAdminPatreonOverview: GetAdminPatreonOverview = async ({ query }
       issues: connections.filter((c) => c.hasIssue).length,
       campaignActive: campaignActiveMembers.length,
       campaignUnlinkedActive,
+      campaignMonthlyCents,
+      campaignLifetimeCents,
+      campaignPayingEver,
     },
     campaign: {
       configured: campaignSnapshot.configured,

@@ -16,6 +16,7 @@ vi.stubGlobal('useI18n', () => ({
 }));
 vi.stubGlobal('useFormat', () => ({
   formatNumber: (n: number) => String(n),
+  formatUsdCents: (cents: number) => `$${(cents / 100).toFixed(2)}`,
   formatDate: (s: string) => s,
   formatRelativeTime: (s: string) => s,
 }));
@@ -37,7 +38,17 @@ function makePayload() {
   return {
     configured: true,
     campaignId: '999999',
-    summary: { totalLinked: 2, active: 1, stale: 1, issues: 1, campaignActive: 2, campaignUnlinkedActive: 1 },
+    summary: {
+      totalLinked: 2,
+      active: 1,
+      stale: 1,
+      issues: 1,
+      campaignActive: 2,
+      campaignUnlinkedActive: 1,
+      campaignMonthlyCents: 2000,
+      campaignLifetimeCents: 8500,
+      campaignPayingEver: 3,
+    },
     campaign: {
       configured: true,
       status: 'ok',
@@ -79,6 +90,46 @@ function makePayload() {
           patreonTierTitles: ['Flower'],
           resolvedTierId: 'pro',
           resolvedTierName: 'Flower',
+          unmatchedTierIds: [],
+          linkedUserId: null,
+          linkedUsername: null,
+          linkedEmail: null,
+        },
+        {
+          memberId: 'mem-3',
+          patreonUserId: 'p-50',
+          fullName: 'Former Supporter',
+          email: 'former@patreon.test',
+          patronStatus: 'former_patron',
+          entitledAmountCents: 0,
+          lifetimeSupportCents: 4500,
+          pledgeStart: '2026-01-10T00:00:00.000Z',
+          lastChargeStatus: 'Paid',
+          lastChargeDate: '2026-05-10T00:00:00.000Z',
+          entitledTierIds: [],
+          patreonTierTitles: [],
+          resolvedTierId: null,
+          resolvedTierName: null,
+          unmatchedTierIds: [],
+          linkedUserId: null,
+          linkedUsername: null,
+          linkedEmail: null,
+        },
+        {
+          memberId: 'mem-4',
+          patreonUserId: 'p-1',
+          fullName: 'Free Follower',
+          email: 'free@patreon.test',
+          patronStatus: null,
+          entitledAmountCents: 0,
+          lifetimeSupportCents: 0,
+          pledgeStart: null,
+          lastChargeStatus: null,
+          lastChargeDate: null,
+          entitledTierIds: [],
+          patreonTierTitles: [],
+          resolvedTierId: null,
+          resolvedTierName: null,
           unmatchedTierIds: [],
           linkedUserId: null,
           linkedUsername: null,
@@ -180,12 +231,23 @@ describe('PatreonManager', () => {
   test('renders campaign members, connections, tiers mapping and manual grants', async () => {
     const wrapper = await render();
 
+    expect(wrapper.get('[data-testid="kpi-monthly"]').text()).toBe('$20.00');
+    expect(wrapper.get('[data-testid="kpi-lifetime"]').text()).toBe('$85.00');
     expect(wrapper.find('[data-testid="campaign-row-mem-1"]').exists()).toBe(true);
+    expect(wrapper.get('[data-testid="campaign-row-mem-1"]').text()).toContain('$10.00');
+    expect(wrapper.get('[data-testid="campaign-row-mem-1"]').text()).toContain('$30.00');
     expect(wrapper.find('[data-testid="campaign-row-mem-2"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="campaign-row-mem-3"]').exists()).toBe(false);
     expect(wrapper.find('[data-testid="patreon-row-10"]').exists()).toBe(true);
     expect(wrapper.find('[data-testid="patreon-row-11"]').exists()).toBe(true);
     expect(wrapper.get('[data-testid="patreon-tiers-card"]').text()).toContain('Flower');
     expect(wrapper.get('[data-testid="patreon-manual-grants-card"]').text()).toContain('kobo');
+
+    await wrapper.get('[data-testid="campaign-filter-paid"]').trigger('click');
+    expect(wrapper.find('[data-testid="campaign-row-mem-1"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="campaign-row-mem-3"]').exists()).toBe(true);
+    expect(wrapper.get('[data-testid="campaign-row-mem-3"]').text()).toContain('$45.00');
+    expect(wrapper.find('[data-testid="campaign-row-mem-4"]').exists()).toBe(false);
 
     await wrapper.get('[data-testid="campaign-filter-unlinked"]').trigger('click');
     expect(wrapper.find('[data-testid="campaign-row-mem-1"]').exists()).toBe(false);

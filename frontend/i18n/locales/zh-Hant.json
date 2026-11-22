@@ -2080,11 +2080,25 @@
       "since": "開始日期",
       "nadeshikoLink": "Nadeshiko 帳號",
       "notLinked": "尚未連結",
-      "empty": "沒有符合條件的活動贊助者。"
+      "empty": "沒有符合條件的活動贊助者。",
+      "paidFilter": "有付費紀錄 ({count})",
+      "monthly": "每月",
+      "lifetime": "歷史總計"
     },
     "linkedSection": {
       "title": "已連結的 Nadeshiko 帳號",
       "subtitle": "透過 OAuth 連結 Patreon 並自動享有權益的使用者。"
+    },
+    "pledgePerMonth": "{amount}/月",
+    "kpi": {
+      "monthlyLabel": "每月收入",
+      "monthlySub": "{count} 位活躍贊助者 · 稅前 USD",
+      "lifetimeLabel": "歷史總計",
+      "lifetimeSub": "共 {count} 位贊助者支持過",
+      "unlinkedLabel": "未綁定的活躍贊助者",
+      "unlinkedSub": "Patreon 活躍共 {count} 位",
+      "issuesLabel": "異常帳號",
+      "issuesSub": "Nadeshiko 已綁定共 {count} 個"
     }
   }
 }

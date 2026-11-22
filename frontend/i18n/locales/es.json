@@ -2080,11 +2080,25 @@
       "since": "Desde",
       "nadeshikoLink": "Cuenta Nadeshiko",
       "notLinked": "Sin vincular",
-      "empty": "No hay mecenas en la campaña que coincidan con este filtro."
+      "empty": "No hay mecenas en la campaña que coincidan con este filtro.",
+      "paidFilter": "Con pagos ({count})",
+      "monthly": "Mensual",
+      "lifetime": "Histórico"
     },
     "linkedSection": {
       "title": "Cuentas vinculadas en Nadeshiko",
       "subtitle": "Usuarios que conectaron su Patreon por OAuth para recibir beneficios automáticos."
+    },
+    "pledgePerMonth": "{amount}/mes",
+    "kpi": {
+      "monthlyLabel": "Ingreso mensual",
+      "monthlySub": "{count} activos · bruto USD",
+      "lifetimeLabel": "Total histórico",
+      "lifetimeSub": "{count} personas han aportado",
+      "unlinkedLabel": "Activos sin vincular",
+      "unlinkedSub": "de {count} activos en Patreon",
+      "issuesLabel": "Cuentas con problemas",
+      "issuesSub": "de {count} vinculadas en Nadeshiko"
     }
   }
 }

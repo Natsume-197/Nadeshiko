@@ -54,7 +54,7 @@ function buildMembersUrl(campaignId: string): string {
   url.searchParams.set('include', 'currently_entitled_tiers,user');
   url.searchParams.set(
     'fields[member]',
-    'full_name,email,patron_status,currently_entitled_amount_cents,lifetime_support_cents,pledge_relationship_start,last_charge_status,last_charge_date',
+    'full_name,email,patron_status,currently_entitled_amount_cents,campaign_lifetime_support_cents,lifetime_support_cents,pledge_relationship_start,last_charge_status,last_charge_date',
   );
   url.searchParams.set('fields[tier]', 'title');
   url.searchParams.set('fields[user]', 'full_name');
@@ -87,7 +87,12 @@ function parseMember(
     patronStatus: typeof attrs.patron_status === 'string' ? attrs.patron_status : null,
     entitledAmountCents:
       typeof attrs.currently_entitled_amount_cents === 'number' ? attrs.currently_entitled_amount_cents : 0,
-    lifetimeSupportCents: typeof attrs.lifetime_support_cents === 'number' ? attrs.lifetime_support_cents : 0,
+    lifetimeSupportCents:
+      typeof attrs.campaign_lifetime_support_cents === 'number'
+        ? attrs.campaign_lifetime_support_cents
+        : typeof attrs.lifetime_support_cents === 'number'
+          ? attrs.lifetime_support_cents
+          : 0,
     pledgeStart: typeof attrs.pledge_relationship_start === 'string' ? attrs.pledge_relationship_start : null,
     lastChargeStatus: typeof attrs.last_charge_status === 'string' ? attrs.last_charge_status : null,
     lastChargeDate: typeof attrs.last_charge_date === 'string' ? attrs.last_charge_date : null,
@@ -180,13 +185,14 @@ export async function fetchCampaignMembers(force = false): Promise<CampaignMembe
   }
 
   const members = rawMembers.map((item) => parseMember(item, tierTitlesById, userNamesById));
-  // Active patrons first, then declined, then former, sorted by highest pledge / newest start.
+  // Active patrons first, then declined, then former, sorted by highest pledge / lifetime support / newest start.
   const statusRank = (s: string | null) =>
     s === 'active_patron' ? 0 : s === 'declined_patron' ? 1 : s === 'former_patron' ? 2 : 3;
   members.sort((a, b) => {
     const rankDiff = statusRank(a.patronStatus) - statusRank(b.patronStatus);
     if (rankDiff !== 0) return rankDiff;
     if (b.entitledAmountCents !== a.entitledAmountCents) return b.entitledAmountCents - a.entitledAmountCents;
+    if (b.lifetimeSupportCents !== a.lifetimeSupportCents) return b.lifetimeSupportCents - a.lifetimeSupportCents;
     return (b.pledgeStart ?? '').localeCompare(a.pledgeStart ?? '');
   });
 

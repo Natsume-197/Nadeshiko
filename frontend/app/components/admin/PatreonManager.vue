@@ -8,7 +8,7 @@ import { mdiAlertOutline, mdiCheckCircleOutline, mdiLinkOff, mdiMagnify, mdiRefr
 import { handleApiError } from '~/utils/apiError';
 
 const { t } = useI18n();
-const { formatDate, formatNumber, formatRelativeTime } = useFormat();
+const { formatDate, formatNumber, formatRelativeTime, formatUsdCents } = useFormat();
 const localePath = useLocalePath();
 const { refresh: refreshAdminOverview } = useAdminOverview();
 
@@ -20,7 +20,7 @@ const unlinkingUserId = ref<number | null>(null);
 const confirmingUnlinkUserId = ref<number | null>(null);
 
 const campaignSearch = ref('');
-const campaignFilter = ref<'active' | 'unlinked' | 'all'>('active');
+const campaignFilter = ref<'active' | 'unlinked' | 'paid' | 'all'>('active');
 
 const searchQuery = ref('');
 const statusFilter = ref<'all' | 'active' | 'issues'>('all');
@@ -47,6 +47,13 @@ const filteredCampaignMembers = computed<AdminPatreonCampaignMember[]>(() => {
     if (
       campaignFilter.value === 'unlinked' &&
       (member.patronStatus !== 'active_patron' || member.linkedUserId !== null)
+    ) {
+      return false;
+    }
+    if (
+      campaignFilter.value === 'paid' &&
+      member.lifetimeSupportCents <= 0 &&
+      !(member.patronStatus === 'active_patron' && member.entitledAmountCents > 0)
     ) {
       return false;
     }
@@ -212,6 +219,78 @@ onMounted(() => fetchPatreon(false));
       </div>
     </div>
 
+    <!-- Financial & health summary strip -->
+    <div
+      v-if="data"
+      data-testid="patreon-kpi-strip"
+      class="grid grid-cols-2 gap-3 lg:grid-cols-4"
+    >
+      <div class="rounded-xl border border-hairline bg-card-background px-4 py-3">
+        <div class="text-[11px] font-medium text-ink-faint">{{ t('adminPatreon.kpi.monthlyLabel') }}</div>
+        <div
+          data-testid="kpi-monthly"
+          :class="[
+            'mt-1 text-2xl font-bold tracking-tight tabular-nums',
+            data.campaign.status === 'ok' && data.summary.campaignMonthlyCents > 0 ? 'text-emerald-300' : 'text-ink',
+          ]"
+        >
+          {{ data.campaign.status === 'ok' ? formatUsdCents(data.summary.campaignMonthlyCents) : '—' }}
+        </div>
+        <div class="mt-0.5 text-[11px] text-ink-faint">
+          {{ t('adminPatreon.kpi.monthlySub', { count: data.summary.campaignActive }) }}
+        </div>
+      </div>
+
+      <div class="rounded-xl border border-hairline bg-card-background px-4 py-3">
+        <div class="text-[11px] font-medium text-ink-faint">{{ t('adminPatreon.kpi.lifetimeLabel') }}</div>
+        <div
+          data-testid="kpi-lifetime"
+          class="mt-1 text-2xl font-bold tracking-tight tabular-nums text-ink"
+        >
+          {{ data.campaign.status === 'ok' ? formatUsdCents(data.summary.campaignLifetimeCents) : '—' }}
+        </div>
+        <div class="mt-0.5 text-[11px] text-ink-faint">
+          {{ t('adminPatreon.kpi.lifetimeSub', { count: data.summary.campaignPayingEver }) }}
+        </div>
+      </div>
+
+      <div class="rounded-xl border border-hairline bg-card-background px-4 py-3">
+        <div class="text-[11px] font-medium text-ink-faint">{{ t('adminPatreon.kpi.unlinkedLabel') }}</div>
+        <div
+          data-testid="kpi-unlinked"
+          :class="[
+            'mt-1 text-2xl font-bold tracking-tight tabular-nums',
+            data.campaign.status !== 'ok'
+              ? 'text-ink-faint'
+              : data.summary.campaignUnlinkedActive > 0
+                ? 'text-amber-300'
+                : 'text-emerald-300',
+          ]"
+        >
+          {{ data.campaign.status === 'ok' ? formatNumber(data.summary.campaignUnlinkedActive) : '—' }}
+        </div>
+        <div class="mt-0.5 text-[11px] text-ink-faint">
+          {{ t('adminPatreon.kpi.unlinkedSub', { count: data.summary.campaignActive }) }}
+        </div>
+      </div>
+
+      <div class="rounded-xl border border-hairline bg-card-background px-4 py-3">
+        <div class="text-[11px] font-medium text-ink-faint">{{ t('adminPatreon.kpi.issuesLabel') }}</div>
+        <div
+          data-testid="kpi-issues"
+          :class="[
+            'mt-1 text-2xl font-bold tracking-tight tabular-nums',
+            data.summary.issues > 0 ? 'text-red-300' : 'text-ink',
+          ]"
+        >
+          {{ formatNumber(data.summary.issues) }}
+        </div>
+        <div class="mt-0.5 text-[11px] text-ink-faint">
+          {{ t('adminPatreon.kpi.issuesSub', { count: data.summary.totalLinked }) }}
+        </div>
+      </div>
+    </div>
+
     <!-- Live Patreon.com campaign members (Creator API) -->
     <section
       data-testid="patreon-campaign-section"
@@ -285,6 +364,19 @@ onMounted(() => fetchPatreon(false));
             </button>
             <button
               type="button"
+              data-testid="campaign-filter-paid"
+              :class="[
+                'rounded-lg border px-2.5 py-1 text-xs font-medium transition-colors',
+                campaignFilter === 'paid'
+                  ? 'border-brand-solid bg-brand/15 text-brand font-semibold'
+                  : 'border-hairline bg-surface text-ink-muted hover:bg-surface-hover hover:text-ink',
+              ]"
+              @click="campaignFilter = 'paid'"
+            >
+              {{ t('adminPatreon.campaign.paidFilter', { count: data.summary.campaignPayingEver }) }}
+            </button>
+            <button
+              type="button"
               data-testid="campaign-filter-all"
               :class="[
                 'rounded-lg border px-2.5 py-1 text-xs font-medium transition-colors',
@@ -321,13 +413,15 @@ onMounted(() => fetchPatreon(false));
                 <th class="px-3 py-2.5">{{ t('adminPatreon.campaign.member') }}</th>
                 <th class="px-3 py-2.5">{{ t('adminPatreon.table.status') }}</th>
                 <th class="px-3 py-2.5">{{ t('adminPatreon.tiers.tier') }}</th>
+                <th class="px-3 py-2.5 text-right">{{ t('adminPatreon.campaign.monthly') }}</th>
+                <th class="px-3 py-2.5 text-right">{{ t('adminPatreon.campaign.lifetime') }}</th>
                 <th class="px-3 py-2.5">{{ t('adminPatreon.campaign.since') }}</th>
                 <th class="px-3 py-2.5">{{ t('adminPatreon.campaign.nadeshikoLink') }}</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-hairline">
               <tr v-if="filteredCampaignMembers.length === 0">
-                <td colspan="5" class="px-4 py-6 text-center text-ink-faint">
+                <td colspan="7" class="px-4 py-6 text-center text-ink-faint">
                   {{ t('adminPatreon.campaign.empty') }}
                 </td>
               </tr>
@@ -389,6 +483,23 @@ onMounted(() => fetchPatreon(false));
                       —
                     </span>
                   </div>
+                </td>
+
+                <td class="px-3 py-2.5 text-right whitespace-nowrap tabular-nums">
+                  <span
+                    v-if="member.entitledAmountCents > 0"
+                    :class="member.patronStatus === 'active_patron' ? 'font-semibold text-emerald-300' : 'text-ink-muted'"
+                  >
+                    {{ formatUsdCents(member.entitledAmountCents) }}
+                  </span>
+                  <span v-else class="text-ink-faint">—</span>
+                </td>
+
+                <td class="px-3 py-2.5 text-right whitespace-nowrap tabular-nums">
+                  <span v-if="member.lifetimeSupportCents > 0" class="font-medium text-ink">
+                    {{ formatUsdCents(member.lifetimeSupportCents) }}
+                  </span>
+                  <span v-else class="text-ink-faint">—</span>
                 </td>
 
                 <td class="px-3 py-2.5 whitespace-nowrap text-ink-faint">
@@ -556,6 +667,12 @@ onMounted(() => fetchPatreon(false));
                   </span>
                   <span v-if="!conn.resolvedTierName && conn.unmatchedTierIds.length === 0" class="text-ink-faint">
                     —
+                  </span>
+                  <span
+                    v-if="conn.entitledAmountCents > 0"
+                    class="tabular-nums text-[11px] font-medium text-emerald-300/90"
+                  >
+                    {{ t('adminPatreon.pledgePerMonth', { amount: formatUsdCents(conn.entitledAmountCents) }) }}
                   </span>
                 </div>
                 <div class="mt-0.5 text-[11px] text-ink-faint">

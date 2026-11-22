@@ -2080,11 +2080,25 @@
       "since": "開始日",
       "nadeshikoLink": "Nadeshikoアカウント",
       "notLinked": "未連携",
-      "empty": "条件に一致するキャンペーン会員はいません。"
+      "empty": "条件に一致するキャンペーン会員はいません。",
+      "paidFilter": "支援履歴あり ({count})",
+      "monthly": "月額",
+      "lifetime": "累計"
     },
     "linkedSection": {
       "title": "Nadeshiko連携済みアカウント",
       "subtitle": "OAuthでPatreonを連携し、特典を受け取っているユーザー一覧です。"
+    },
+    "pledgePerMonth": "{amount}/月",
+    "kpi": {
+      "monthlyLabel": "月間収益",
+      "monthlySub": "有効な支援者 {count} 名・総額 USD",
+      "lifetimeLabel": "累計収益",
+      "lifetimeSub": "累計 {count} 名が支援",
+      "unlinkedLabel": "未連携の有効支援者",
+      "unlinkedSub": "Patreon 有効 {count} 名中",
+      "issuesLabel": "問題のあるアカウント",
+      "issuesSub": "Nadeshiko 連携 {count} 件中"
     }
   }
 }

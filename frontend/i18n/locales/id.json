@@ -2080,11 +2080,25 @@
       "since": "Sejak",
       "nadeshikoLink": "Akun Nadeshiko",
       "notLinked": "Belum tertaut",
-      "empty": "Tidak ada anggota kampanye yang cocok dengan filter ini."
+      "empty": "Tidak ada anggota kampanye yang cocok dengan filter ini.",
+      "paidFilter": "Pernah bayar ({count})",
+      "monthly": "Bulanan",
+      "lifetime": "Historis"
     },
     "linkedSection": {
       "title": "Akun Nadeshiko tertaut",
       "subtitle": "Pengguna yang menautkan Patreon lewat OAuth untuk manfaat otomatis."
+    },
+    "pledgePerMonth": "{amount}/bln",
+    "kpi": {
+      "monthlyLabel": "Pendapatan bulanan",
+      "monthlySub": "{count} patron aktif · bruto USD",
+      "lifetimeLabel": "Total historis",
+      "lifetimeSub": "{count} pendukung pernah berdonasi",
+      "unlinkedLabel": "Aktif, belum tertaut",
+      "unlinkedSub": "dari {count} aktif di Patreon",
+      "issuesLabel": "Masalah akun",
+      "issuesSub": "dari {count} tertaut di Nadeshiko"
     }
   }
 }

@@ -2080,11 +2080,25 @@
       "since": "Pledge start",
       "nadeshikoLink": "Nadeshiko account",
       "notLinked": "Not linked yet",
-      "empty": "No campaign members match this filter."
+      "empty": "No campaign members match this filter.",
+      "paidFilter": "Ever paid ({count})",
+      "monthly": "Monthly",
+      "lifetime": "All-time"
     },
     "linkedSection": {
       "title": "Linked Nadeshiko accounts",
       "subtitle": "Users who connected Patreon via OAuth and receive automatic perks."
+    },
+    "pledgePerMonth": "{amount}/mo",
+    "kpi": {
+      "monthlyLabel": "Monthly revenue",
+      "monthlySub": "{count} active patrons · gross USD",
+      "lifetimeLabel": "All-time total",
+      "lifetimeSub": "{count} supporters contributed",
+      "unlinkedLabel": "Active, not linked",
+      "unlinkedSub": "of {count} active on Patreon",
+      "issuesLabel": "Account issues",
+      "issuesSub": "of {count} linked in Nadeshiko"
     }
   }
 }

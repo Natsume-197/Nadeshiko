@@ -692,6 +692,9 @@ export const s_AdminPatreonOverview = z.object({
     issues: z.coerce.number(),
     campaignActive: z.coerce.number(),
     campaignUnlinkedActive: z.coerce.number(),
+    campaignMonthlyCents: z.coerce.number(),
+    campaignLifetimeCents: z.coerce.number(),
+    campaignPayingEver: z.coerce.number(),
   }),
   campaign: z.object({
     configured: PermissiveBoolean,

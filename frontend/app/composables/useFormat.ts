@@ -8,6 +8,10 @@ export function useFormat() {
   /** Ratio as a percentage: 0.42 -> "42%". Pass a 0-1 ratio, not 0-100. */
   const formatPercent = (ratio: number | null | undefined): string => (ratio == null ? '-' : n(ratio, 'percent'));
 
+  /** USD amount from integer cents: 1467 -> "$14.67". */
+  const formatUsdCents = (cents: number | null | undefined): string =>
+    cents == null ? '-' : n(cents / 100, 'currencyUsd');
+
   const toDate = (value: Date | string | number | null | undefined): Date | null => {
     if (value == null) return null;
     const date = value instanceof Date ? value : new Date(value);
@@ -58,5 +62,5 @@ export function useFormat() {
     return formatDate(date, 'short');
   };
 
-  return { formatNumber, formatPercent, formatDate, formatRelativeTime };
+  return { formatNumber, formatPercent, formatUsdCents, formatDate, formatRelativeTime };
 }
