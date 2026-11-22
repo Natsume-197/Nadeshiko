@@ -4,6 +4,7 @@ import type {
   CreateContentRequest,
   GetContentRequestAllowance,
   ListContentRequests,
+  ListMyContentRequests,
   UnvoteContentRequest,
   VoteContentRequest,
   WithdrawContentRequest,
@@ -36,9 +37,22 @@ import {
   withdrawRequest,
 } from '@app/services/requests/service';
 
+/** Statuses shown in the Open tab (every active request not yet actively in progress). */
+const OPEN_TAB_STATUSES: readonly ContentRequestStatus[] = [ContentRequestStatus.OPEN, ContentRequestStatus.PLANNED];
+
 /** `%` and `_` typed by a reader are text, not wildcards. */
 function titleLike(q: string): string {
   return `%${q.trim().replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
+}
+
+function applyRequestFilters(
+  qb: ReturnType<typeof ContentRequest.createQueryBuilder>,
+  filters: { status?: string; category?: string; q?: string },
+): void {
+  if (filters.status === 'ACTIVE') qb.andWhere('r.status IN (:...statuses)', { statuses: OPEN_TAB_STATUSES });
+  else if (filters.status && filters.status !== 'ALL') qb.andWhere('r.status = :status', { status: filters.status });
+  if (filters.category) qb.andWhere('r.category = :category', { category: filters.category });
+  if (filters.q?.trim()) qb.andWhere('r.title ILIKE :q', { q: titleLike(filters.q) });
 }
 
 export const listContentRequests: ListContentRequests = async ({ query }, respond) => {
@@ -46,14 +60,54 @@ export const listContentRequests: ListContentRequests = async ({ query }, respon
   const page = query.page ?? 1;
   const status = query.status ?? 'ACTIVE';
 
-  const qb = ContentRequest.createQueryBuilder('r').leftJoinAndSelect('r.media', 'media');
-  if (status === 'ACTIVE') qb.where('r.status IN (:...statuses)', { statuses: ACTIVE_REQUEST_STATUSES });
-  else qb.where('r.status = :status', { status });
-  if (query.category) qb.andWhere('r.category = :category', { category: query.category });
-  if (query.q?.trim()) qb.andWhere('r.title ILIKE :q', { q: titleLike(query.q) });
+  const qb = ContentRequest.createQueryBuilder('r').leftJoinAndSelect('r.media', 'media').where('1 = 1');
+  applyRequestFilters(qb, { status, category: query.category, q: query.q });
 
   if (status === 'RELEASED') qb.orderBy('r.releasedAt', 'DESC', 'NULLS LAST');
   else if ((query.sort ?? 'TOP') === 'TOP') qb.orderBy('r.score', 'DESC').addOrderBy('r.createdAt', 'ASC');
+  else qb.orderBy('r.createdAt', 'DESC');
+  qb.addOrderBy('r.id', 'DESC');
+
+  const [items, total] = await qb
+    .skip((page - 1) * take)
+    .take(take)
+    .getManyAndCount();
+  return respond.with200().body({ items: items.map(toRequestJSON), total });
+};
+
+/** Filter a `ContentRequest` query (`r`) to requests the user voted for or boosted. */
+function applyVotedOrBoostedFilter(
+  qb: ReturnType<typeof ContentRequest.createQueryBuilder>,
+  userId: number,
+): ReturnType<typeof ContentRequest.createQueryBuilder> {
+  const hasVote = qb
+    .subQuery()
+    .select('1')
+    .from(ContentRequestVote, 'v')
+    .where('v.requestId = r.id AND v.userId = :userId')
+    .getQuery();
+  const hasBoost = qb
+    .subQuery()
+    .select('1')
+    .from(ContentRequestBoost, 'b')
+    .where('b.requestId = r.id AND b.userId = :userId')
+    .getQuery();
+  return qb.where(`(EXISTS (${hasVote}) OR EXISTS (${hasBoost}))`, { userId });
+}
+
+export const listMyContentRequests: ListMyContentRequests = async ({ query }, respond, req) => {
+  const user = assertUser(req);
+  const take = query.take ?? 24;
+  const page = query.page ?? 1;
+  const scope = query.scope ?? 'OWN';
+
+  const qb = ContentRequest.createQueryBuilder('r').leftJoinAndSelect('r.media', 'media');
+  if (scope === 'OWN') qb.where('r.requesterUserId = :userId', { userId: user.id });
+  else applyVotedOrBoostedFilter(qb, user.id);
+
+  applyRequestFilters(qb, { status: query.status ?? 'ALL', category: query.category, q: query.q });
+
+  if ((query.sort ?? 'RECENT') === 'TOP') qb.orderBy('r.score', 'DESC').addOrderBy('r.createdAt', 'DESC');
   else qb.orderBy('r.createdAt', 'DESC');
   qb.addOrderBy('r.id', 'DESC');
 
@@ -75,13 +129,25 @@ export const getContentRequestAllowance: GetContentRequestAllowance = async (_pa
   const user = assertUser(req);
   const allowance = await requestAllowance(user);
   const active = In([...ACTIVE_REQUEST_STATUSES]);
-  const [votes, boosts, own] = await Promise.all([
-    ContentRequestVote.find({ where: { userId: user.id, request: { status: active } }, relations: { request: true } }),
-    ContentRequestBoost.find({ where: { userId: user.id, request: { status: active } }, relations: { request: true } }),
+  const [votes, boosts, own, ownCount, votedCount] = await Promise.all([
+    ContentRequestVote.find({
+      where: { userId: user.id, request: { status: active } },
+      relations: { request: true },
+      select: { requestId: true, request: { id: true, publicId: true } },
+    }),
+    ContentRequestBoost.find({
+      where: { userId: user.id, request: { status: active } },
+      relations: { request: true },
+      select: { requestId: true, request: { id: true, publicId: true } },
+    }),
     ContentRequest.find({ where: { requesterUserId: user.id, status: active }, select: { id: true, publicId: true } }),
+    ContentRequest.countBy({ requesterUserId: user.id }),
+    applyVotedOrBoostedFilter(ContentRequest.createQueryBuilder('r'), user.id).getCount(),
   ]);
   return respond.with200().body({
     ...allowance,
+    ownCount,
+    votedCount,
     votedIds: votes.flatMap((vote) => (vote.request ? [vote.request.publicId] : [])),
     boostedIds: boosts.flatMap((boost) => (boost.request ? [boost.request.publicId] : [])),
     ownIds: own.map((request) => request.publicId),

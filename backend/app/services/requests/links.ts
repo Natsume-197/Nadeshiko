@@ -12,7 +12,7 @@ export interface ParsedRequestLink {
   /** How the metadata is looked up. */
   lookup:
     | { type: 'anilist'; id: string }
-    | { type: 'tmdb'; mediaType: 'tv' | 'movie'; id: string }
+    | { type: 'tmdb'; mediaType: 'tv' | 'movie'; id: string; fallbackTitle?: string | null }
     | { type: 'audible'; asin: string; host: string }
     | { type: 'youtube-video'; videoId: string }
     | { type: 'youtube-channel'; url: string }
@@ -61,12 +61,13 @@ export function parseRequestLink(raw: string): ParsedRequestLink | null {
     const mediaType = parts[0] === 'tv' || parts[0] === 'movie' ? parts[0] : null;
     const id = /^(\d+)/.exec(parts[1] ?? '')?.[1];
     if (!mediaType || !id) return null;
+    const fallbackTitle = /^\d+-.+/.test(parts[1] ?? '') ? slugTitle(parts[1]) : null;
     return {
       category: CategoryType.JDRAMA,
       externalSource: ExternalSourceType.TMDB,
       // Ingest stores a drama's TMDB TV id as is; a movie id gets a prefix so the two id spaces cannot collide.
       externalId: mediaType === 'tv' ? id : `movie:${id}`,
-      lookup: { type: 'tmdb', mediaType, id },
+      lookup: { type: 'tmdb', mediaType, id, ...(fallbackTitle ? { fallbackTitle } : {}) },
     };
   }
 

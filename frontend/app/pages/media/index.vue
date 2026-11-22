@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { mdiGrid, mdiFormatListBulletedSquare, mdiArrowRight, mdiPencilOutline, mdiEyeOff } from '@mdi/js';
+import { mdiGrid, mdiFormatListBulletedSquare, mdiArrowRight, mdiPencilOutline, mdiEyeOff, mdiPlus } from '@mdi/js';
 import { useTimeoutFn } from '@vueuse/core';
 import type { Category, Media } from '@brigadasos/nadeshiko-sdk';
 import { userStore } from '@/stores/auth';
@@ -380,6 +380,24 @@ watch([searchQuery, filterCategory], () => {
         >
           {{ t('searchContainer.retryButton') }}
         </button>
+      </div>
+      <div
+        v-else-if="!loading && filteredMedia.length === 0"
+        data-testid="media-empty"
+        class="mt-4 flex flex-col items-center gap-3 rounded-xl border border-dashed border-hairline bg-surface/50 px-6 py-14 text-center"
+      >
+        <p class="text-base font-semibold text-ink">
+          {{ searchQuery ? t('mediaBrowse.emptySearch', { query: searchQuery }) : t('mediaBrowse.empty') }}
+        </p>
+        <p class="max-w-md text-sm text-ink-muted">{{ t('mediaBrowse.requestHint') }}</p>
+        <NuxtLink
+          data-testid="media-empty-request-cta"
+          :to="localePath(searchQuery ? { path: '/requests', query: { q: searchQuery } } : '/requests')"
+          class="nd-btn-accent mt-1 inline-flex h-10 items-center gap-1.5 px-4"
+        >
+          <UiBaseIcon :path="mdiPlus" w="w-4" h="h-4" size="18" />
+          <span>{{ t('mediaBrowse.requestCta') }}</span>
+        </NuxtLink>
       </div>
       <div
         v-else-if="currentView === 'grid'"

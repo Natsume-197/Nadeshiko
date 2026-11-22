@@ -216,7 +216,11 @@
     "showHiddenMedia": "显示已隐藏的作品",
     "hideHiddenMedia": "不显示已隐藏的作品",
     "loadError": "无法加载作品列表。",
-    "loadMoreError": "无法加载更多作品。"
+    "loadMoreError": "无法加载更多作品。",
+    "empty": "未找到任何作品。",
+    "emptySearch": "没有与“{query}”匹配的作品。",
+    "requestHint": "缺少你想找的动画、日剧、有声书或 YouTube 频道？去请求页面提交吧。",
+    "requestCta": "请求作品"
   },
   "searchSettingsModal": {
     "exactMatchTitle": "精确匹配",
@@ -1849,6 +1853,8 @@
     "intro": "请求你想用来学习的动画、日剧、有声书和 YouTube 频道，并为别人的请求投票。最受期待的作品优先。",
     "newRequest": "新建请求",
     "boostWithPatreon": "通过 Patreon 助推",
+    "manageAdmin": "管理",
+    "yours": "我的",
     "allowance": {
       "open": "开放中的请求 {count} / {limit}",
       "boosts": "本月剩余助推 {remaining} / {total}（{date} 重置）"
@@ -1874,8 +1880,11 @@
     },
     "tabs": {
       "ACTIVE": "开放中",
+      "IN_PROGRESS": "制作中",
       "RELEASED": "已上线",
-      "DECLINED": "已拒绝"
+      "DECLINED": "已拒绝",
+      "MINE": "我的请求",
+      "VOTED": "已投票"
     },
     "searchLabel": "搜索请求",
     "sortLabel": "排序",
@@ -1895,8 +1904,11 @@
     "emptySearch": "没有符合该搜索的请求。",
     "empty": {
       "ACTIVE": "还没有开放中的请求。来做第一个吧！",
+      "IN_PROGRESS": "目前没有正在制作中的请求。",
       "RELEASED": "还没有已上线的请求。",
-      "DECLINED": "没有被拒绝的请求。"
+      "DECLINED": "没有被拒绝的请求。",
+      "MINE": "你还没有请求过任何作品。",
+      "VOTED": "你还没有为任何请求投票。"
     },
     "vote": "投票",
     "unvote": "取消投票",
@@ -1914,13 +1926,22 @@
     "viewSource": "查看来源",
     "searchIt": "去搜索",
     "onNadeshiko": "在 Nadeshiko 上",
+    "releasedOn": "上线于 {date}",
     "boost": {
       "action": "助推",
       "boosted": "已助推",
       "already": "你已助推过这个请求。",
       "hint": "一次助推相当于五票，且无法撤回。",
+      "patronsOnly": "仅限赞助者 — 助推等同于 5 票",
+      "confirmHeading": "确认助推此请求？",
+      "confirmBody": "为 {title} 使用一次助推（+5 票）？助推永久生效，无法撤回。",
+      "remainingAfter": "本月将剩余 {remaining} / {total} 次助推。",
+      "nudge": "想更快看到 {title}？赞助者可以使用 +5 票助推。",
       "done": "你助推了 {title}。",
-      "failed": "无法助推。你本月的次数可能已用完。"
+      "failed": "无法助推。你本月的次数可能已用完。",
+      "unlockHeading": "通过 Patreon 解锁助推",
+      "unlockBody": "想更快看到《{title}》？赞助者每月可获得 3 至 10 次助推，每次助推等同于 5 票。",
+      "alreadyPatronSignIn": "已是赞助者？登录"
     },
     "withdraw": "撤回",
     "withdrawConfirm": "撤回你对 {title} 的请求？",
@@ -1937,8 +1958,6 @@
     },
     "admin": {
       "tab": "请求"
-    },
-    "noIngestYet": "暂不支持日剧",
-    "noIngestYetHint": "我们暂时还无法加入日剧。这里的投票能告诉我们大家有多想要。"
+    }
   }
 }

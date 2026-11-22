@@ -1,0 +1,50 @@
+get:
+  tags: [Requests]
+  x-internal: true
+  operationId: listMyContentRequests
+  summary: List the signed-in reader's own or voted content requests
+  description: Returns requests filed by the signed-in reader (`OWN`) or requests they voted for or boosted (`VOTED`), across all statuses.
+  security:
+    - SessionCookie: []
+  parameters:
+    - name: scope
+      in: query
+      description: OWN (requests filed by the signed-in reader) or VOTED (requests they voted for or boosted).
+      schema: { type: string, enum: [OWN, VOTED], default: OWN }
+    - name: status
+      in: query
+      description: ALL (every status), ACTIVE (open or planned), IN_PROGRESS, RELEASED or DECLINED.
+      schema: { type: string, enum: [ALL, ACTIVE, IN_PROGRESS, RELEASED, DECLINED], default: ALL }
+    - name: category
+      in: query
+      schema: { type: string, enum: [ANIME, JDRAMA, YOUTUBE, AUDIOBOOK] }
+    - name: sort
+      in: query
+      schema: { type: string, enum: [TOP, RECENT], default: RECENT }
+    - name: q
+      in: query
+      description: Case-insensitive title filter.
+      schema: { type: string, maxLength: 100 }
+    - name: page
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 1000, default: 1 }
+    - name: take
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 50, default: 24 }
+  responses:
+    "200":
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [items, total]
+            properties:
+              items:
+                type: array
+                items: { $ref: "../../components/schemas/ContentRequest.yaml" }
+              total: { type: integer }
+    "400": { $ref: "../../components/responses/BadRequest.yaml" }
+    "401": { $ref: "../../components/responses/Unauthorized.yaml" }
+    "429": { $ref: "../../components/responses/TooManyRequests.yaml" }
+    "500": { $ref: "../../components/responses/InternalServerError.yaml" }

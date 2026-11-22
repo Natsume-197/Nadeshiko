@@ -140,6 +140,7 @@ import {
   getContentRequestAllowance,
   listAdminContentRequests,
   listContentRequests,
+  listMyContentRequests,
   mergeAdminContentRequest,
   unvoteContentRequest,
   updateAdminContentRequest,
@@ -346,6 +347,7 @@ const RoadmapRoutes = createRoadmapRouter({ listRoadmap });
 
 const RequestsRoutes = createRequestsRouter({
   listContentRequests,
+  listMyContentRequests,
   createContentRequest,
   getContentRequestAllowance,
   withdrawContentRequest,

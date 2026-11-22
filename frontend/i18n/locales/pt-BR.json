@@ -216,7 +216,11 @@
     "showHiddenMedia": "Mostrar títulos ocultos",
     "hideHiddenMedia": "Não mostrar títulos ocultos",
     "loadError": "Não foi possível carregar o catálogo.",
-    "loadMoreError": "Não foi possível carregar mais títulos."
+    "loadMoreError": "Não foi possível carregar mais títulos.",
+    "empty": "Nenhum título encontrado.",
+    "emptySearch": "Nenhum título corresponde a \"{query}\".",
+    "requestHint": "Falta algum anime, dorama, audiolivro ou canal do YouTube? Peça na página de pedidos.",
+    "requestCta": "Pedir um título"
   },
   "searchSettingsModal": {
     "exactMatchTitle": "Busca exata",
@@ -1849,6 +1853,8 @@
     "intro": "Peça os animes, doramas, audiolivros e canais do YouTube com os quais você quer estudar e vote nos que outras pessoas pediram. Os mais pedidos vêm primeiro.",
     "newRequest": "Novo pedido",
     "boostWithPatreon": "Dê boost com o Patreon",
+    "manageAdmin": "Gerenciar",
+    "yours": "Seu",
     "allowance": {
       "open": "{count} de {limit} pedidos abertos",
       "boosts": "Restam {remaining} de {total} boosts este mês (renova em {date})"
@@ -1874,8 +1880,11 @@
     },
     "tabs": {
       "ACTIVE": "Abertos",
+      "IN_PROGRESS": "Em andamento",
       "RELEASED": "Publicados",
-      "DECLINED": "Recusados"
+      "DECLINED": "Recusados",
+      "MINE": "Meus pedidos",
+      "VOTED": "Votados"
     },
     "searchLabel": "Buscar pedidos",
     "sortLabel": "Ordenar",
@@ -1895,8 +1904,11 @@
     "emptySearch": "Nenhum pedido corresponde a essa busca.",
     "empty": {
       "ACTIVE": "Ainda não há pedidos abertos. Seja o primeiro!",
+      "IN_PROGRESS": "Nenhum pedido está em andamento no momento.",
       "RELEASED": "Nenhum pedido foi publicado ainda.",
-      "DECLINED": "Nenhum pedido foi recusado."
+      "DECLINED": "Nenhum pedido foi recusado.",
+      "MINE": "Você ainda não enviou nenhum pedido.",
+      "VOTED": "Você ainda não votou em nenhum pedido."
     },
     "vote": "Votar",
     "unvote": "Remover voto",
@@ -1914,13 +1926,22 @@
     "viewSource": "Ver fonte",
     "searchIt": "Buscar nele",
     "onNadeshiko": "No Nadeshiko",
+    "releasedOn": "Publicado em {date}",
     "boost": {
       "action": "Boost",
       "boosted": "Com boost",
       "already": "Você deu boost neste pedido.",
       "hint": "Um boost vale cinco votos e não pode ser desfeito.",
+      "patronsOnly": "Apenas para patrons — o boost vale 5 votos",
+      "confirmHeading": "Dar boost neste pedido?",
+      "confirmBody": "Dar um boost (+5 votos) em {title}? Os boosts são permanentes e não podem ser desfeitos.",
+      "remainingAfter": "Restarão {remaining} de {total} boosts este mês.",
+      "nudge": "Quer {title} mais rápido? Patrons podem impulsionar um título com +5 votos.",
       "done": "Você deu boost em {title}.",
-      "failed": "Não foi possível dar esse boost. Talvez não reste nenhum este mês."
+      "failed": "Não foi possível dar esse boost. Talvez não reste nenhum este mês.",
+      "unlockHeading": "Desbloqueie boosts com o Patreon",
+      "unlockBody": "Quer “{title}” mais cedo? Patrons recebem de 3 a 10 boosts por mês, e cada boost vale 5 votos.",
+      "alreadyPatronSignIn": "Já é patron? Entrar"
     },
     "withdraw": "Retirar",
     "withdrawConfirm": "Retirar seu pedido de {title}?",
@@ -1937,8 +1958,6 @@
     },
     "admin": {
       "tab": "Pedidos"
-    },
-    "noIngestYet": "Doramas ainda sem suporte",
-    "noIngestYetHint": "Ainda não conseguimos adicionar doramas. Os votos mostram o quanto são desejados."
+    }
   }
 }

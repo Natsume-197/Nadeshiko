@@ -27,11 +27,12 @@ import type {
   t_Error429,
   t_Error500,
   t_ListContentRequestsQuerySchema,
+  t_ListMyContentRequestsQuerySchema,
   t_UnvoteContentRequestParamSchema,
   t_VoteContentRequestParamSchema,
   t_WithdrawContentRequestParamSchema,
 } from '../models.ts';
-import type { CreateContentRequestRequestBodyOutput, ListContentRequestsQueryOutput } from '../outputTypes.ts';
+import type { CreateContentRequestRequestBodyOutput, ListContentRequestsQueryOutput, ListMyContentRequestsQueryOutput } from '../outputTypes.ts';
 import {
   PermissiveBoolean,
   s_ContentRequest,
@@ -99,7 +100,9 @@ export type GetContentRequestAllowanceResponder = {
     isPatron: boolean;
     openCount: number;
     openLimit: number | null;
+    ownCount: number;
     ownIds: string[];
+    votedCount: number;
     votedIds: string[];
   }>;
   with401(): ExpressRuntimeResponse<t_Error401>;
@@ -110,6 +113,25 @@ export type GetContentRequestAllowanceResponder = {
 export type GetContentRequestAllowance = (
   params: Params<void, void, void, void>,
   respond: GetContentRequestAllowanceResponder,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
+
+export type ListMyContentRequestsResponder = {
+  with200(): ExpressRuntimeResponse<{
+    items: t_ContentRequest[];
+    total: number;
+  }>;
+  with400(): ExpressRuntimeResponse<t_Error400>;
+  with401(): ExpressRuntimeResponse<t_Error401>;
+  with429(): ExpressRuntimeResponse<t_Error429>;
+  with500(): ExpressRuntimeResponse<t_Error500>;
+} & ExpressRuntimeResponder;
+
+export type ListMyContentRequests = (
+  params: Params<void, ListMyContentRequestsQueryOutput, void, void>,
+  respond: ListMyContentRequestsResponder,
   req: Request,
   res: Response,
   next: NextFunction,
@@ -189,6 +211,7 @@ export type RequestsImplementation = {
   listContentRequests: ListContentRequests;
   createContentRequest: CreateContentRequest;
   getContentRequestAllowance: GetContentRequestAllowance;
+  listMyContentRequests: ListMyContentRequests;
   withdrawContentRequest: WithdrawContentRequest;
   voteContentRequest: VoteContentRequest;
   unvoteContentRequest: UnvoteContentRequest;
@@ -206,7 +229,7 @@ export function createRequestsRouter(
   }
 
   const listContentRequestsQuerySchema = z.object({
-    status: z.enum(['ACTIVE', 'RELEASED', 'DECLINED']).optional().default('ACTIVE'),
+    status: z.enum(['ACTIVE', 'IN_PROGRESS', 'RELEASED', 'DECLINED']).optional().default('ACTIVE'),
     category: z.enum(['ANIME', 'JDRAMA', 'YOUTUBE', 'AUDIOBOOK']).optional(),
     sort: z.enum(['TOP', 'RECENT']).optional().default('TOP'),
     q: z.string().max(100).optional(),
@@ -337,6 +360,8 @@ export function createRequestsRouter(
           isPatron: PermissiveBoolean,
           openCount: z.coerce.number(),
           openLimit: z.coerce.number().nullable(),
+          ownCount: z.coerce.number(),
+          votedCount: z.coerce.number(),
           boosts: z.object({
             perMonth: z.coerce.number(),
             used: z.coerce.number(),
@@ -378,7 +403,9 @@ export function createRequestsRouter(
             isPatron: boolean;
             openCount: number;
             openLimit: number | null;
+            ownCount: number;
             ownIds: string[];
+            votedCount: number;
             votedIds: string[];
           }>(200);
         },
@@ -400,6 +427,70 @@ export function createRequestsRouter(
         .getContentRequestAllowance(input, responder, req, res, next)
         .catch(handleImplementationError)
         .then(handleResponse(res, getContentRequestAllowanceResponseBodyValidator));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  const listMyContentRequestsQuerySchema = z.object({
+    scope: z.enum(['OWN', 'VOTED']).optional().default('OWN'),
+    status: z.enum(['ALL', 'ACTIVE', 'IN_PROGRESS', 'RELEASED', 'DECLINED']).optional().default('ALL'),
+    category: z.enum(['ANIME', 'JDRAMA', 'YOUTUBE', 'AUDIOBOOK']).optional(),
+    sort: z.enum(['TOP', 'RECENT']).optional().default('RECENT'),
+    q: z.string().max(100).optional(),
+    page: z.coerce.number().min(1).max(1000).optional().default(1),
+    take: z.coerce.number().min(1).max(50).optional().default(24),
+  });
+
+  const listMyContentRequestsResponseBodyValidator = responseValidationFactory(
+    [
+      ['200', z.object({ items: z.array(s_ContentRequest), total: z.coerce.number() })],
+      ['400', s_Error400],
+      ['401', s_Error401],
+      ['429', s_Error429],
+      ['500', s_Error500],
+    ],
+    undefined,
+  );
+
+  // listMyContentRequests
+  router.get(`/v1/requests/mine`, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const input = {
+        params: undefined,
+        query: parseRequestInput(listMyContentRequestsQuerySchema, req.query, RequestInputType.QueryString),
+        body: undefined,
+        headers: undefined,
+      };
+
+      const responder = {
+        with200() {
+          return new ExpressRuntimeResponse<{
+            items: t_ContentRequest[];
+            total: number;
+          }>(200);
+        },
+        with400() {
+          return new ExpressRuntimeResponse<t_Error400>(400);
+        },
+        with401() {
+          return new ExpressRuntimeResponse<t_Error401>(401);
+        },
+        with429() {
+          return new ExpressRuntimeResponse<t_Error429>(429);
+        },
+        with500() {
+          return new ExpressRuntimeResponse<t_Error500>(500);
+        },
+        withStatus(status: StatusCode) {
+          return new ExpressRuntimeResponse(status);
+        },
+      };
+
+      await implementation
+        .listMyContentRequests(input, responder, req, res, next)
+        .catch(handleImplementationError)
+        .then(handleResponse(res, listMyContentRequestsResponseBodyValidator));
     } catch (error) {
       next(error);
     }

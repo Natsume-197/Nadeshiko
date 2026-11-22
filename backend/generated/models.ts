@@ -1478,7 +1478,7 @@ export type t_ListContentRequestsQuerySchema = {
   page?: number;
   q?: string;
   sort?: 'TOP' | 'RECENT';
-  status?: 'ACTIVE' | 'RELEASED' | 'DECLINED';
+  status?: 'ACTIVE' | 'IN_PROGRESS' | 'RELEASED' | 'DECLINED';
   take?: number;
 };
 
@@ -1495,6 +1495,16 @@ export type t_ListMediaQuerySchema = {
   category?: 'ANIME' | 'JDRAMA' | 'YOUTUBE' | 'AUDIOBOOK';
   cursor?: string;
   query?: string;
+  take?: number;
+};
+
+export type t_ListMyContentRequestsQuerySchema = {
+  category?: 'ANIME' | 'JDRAMA' | 'YOUTUBE' | 'AUDIOBOOK';
+  page?: number;
+  q?: string;
+  scope?: 'OWN' | 'VOTED';
+  sort?: 'TOP' | 'RECENT';
+  status?: 'ALL' | 'ACTIVE' | 'IN_PROGRESS' | 'RELEASED' | 'DECLINED';
   take?: number;
 };
 

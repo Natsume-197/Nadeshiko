@@ -240,7 +240,7 @@ export const listSegmentsQuerySchema = z.object({
 export type ListSegmentsQueryOutput = z.output<typeof listSegmentsQuerySchema>;
 
 export const listContentRequestsQuerySchema = z.object({
-    status: z.enum(['ACTIVE', 'RELEASED', 'DECLINED']).optional().default('ACTIVE'),
+    status: z.enum(['ACTIVE', 'IN_PROGRESS', 'RELEASED', 'DECLINED']).optional().default('ACTIVE'),
     category: z.enum(['ANIME', 'JDRAMA', 'YOUTUBE', 'AUDIOBOOK']).optional(),
     sort: z.enum(['TOP', 'RECENT']).optional().default('TOP'),
     q: z.string().max(100).optional(),
@@ -248,6 +248,17 @@ export const listContentRequestsQuerySchema = z.object({
     take: z.coerce.number().min(1).max(50).optional().default(24),
   });
 export type ListContentRequestsQueryOutput = z.output<typeof listContentRequestsQuerySchema>;
+
+export const listMyContentRequestsQuerySchema = z.object({
+    scope: z.enum(['OWN', 'VOTED']).optional().default('OWN'),
+    status: z.enum(['ALL', 'ACTIVE', 'IN_PROGRESS', 'RELEASED', 'DECLINED']).optional().default('ALL'),
+    category: z.enum(['ANIME', 'JDRAMA', 'YOUTUBE', 'AUDIOBOOK']).optional(),
+    sort: z.enum(['TOP', 'RECENT']).optional().default('RECENT'),
+    q: z.string().max(100).optional(),
+    page: z.coerce.number().min(1).max(1000).optional().default(1),
+    take: z.coerce.number().min(1).max(50).optional().default(24),
+  });
+export type ListMyContentRequestsQueryOutput = z.output<typeof listMyContentRequestsQuerySchema>;
 
 export const identifyDictionaryWordQuerySchema = z.object({
     lemma: z.string().min(1).max(100),

@@ -13,11 +13,13 @@ get:
         application/json:
           schema:
             type: object
-            required: [isPatron, openCount, openLimit, boosts, votedIds, boostedIds, ownIds]
+            required: [isPatron, openCount, openLimit, ownCount, votedCount, boosts, votedIds, boostedIds, ownIds]
             properties:
               isPatron: { type: boolean }
               openCount: { type: integer }
               openLimit: { type: [integer, "null"], description: Null for admins (no limit). }
+              ownCount: { type: integer, description: Total requests filed by this reader across all statuses. }
+              votedCount: { type: integer, description: Total requests this reader voted for or boosted across all statuses. }
               boosts:
                 type: object
                 required: [perMonth, used, remaining, resetsAt]

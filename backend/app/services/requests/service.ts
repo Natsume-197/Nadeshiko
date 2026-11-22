@@ -151,7 +151,7 @@ export async function createRequest(
     );
   }
 
-  const metadata = await lookupRequestMetadata(link);
+  const metadata = await lookupRequestMetadata(link, input.title);
   const resolvedId = link.externalId ?? metadata.externalId ?? null;
   // The identity a request is matched on: the same pair `MediaExternalId` stores for published media.
   const identity = resolvedId && link.externalSource ? { source: link.externalSource, id: resolvedId } : null;
@@ -253,6 +253,9 @@ export async function removeVote(userId: number, publicId: string): Promise<Cont
 /** Spend one of this month's boosts on a request: permanent, once per request. */
 export async function boostRequest(user: Pick<User, 'id' | 'role'>, publicId: string): Promise<ContentRequest> {
   const request = await activeRequest(publicId);
+  if (request.status === ContentRequestStatus.IN_PROGRESS) {
+    throw new InvalidRequestError('This request is already in progress.');
+  }
   const { isPatron, boosts } = await patronBenefits(user);
   if (!isPatron) throw new AccessDeniedError('Boosts are for Nadeshiko patrons. Link an active Patreon membership.');
 

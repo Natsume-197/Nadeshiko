@@ -34,7 +34,10 @@ function testAuthMiddleware(req: Request, _res: Response, next: NextFunction) {
     req.user = user;
     req.auth = {
       type: AuthType.API_KEY,
-      apiKey: { kind: ApiKeyKind.SERVICE, permissions: Object.values(ApiPermission) },
+      apiKey: {
+        kind: ApiKeyKind.SERVICE,
+        permissions: Object.values(ApiPermission),
+      },
     };
   }
   next();
@@ -55,7 +58,9 @@ const ANILIST = {
     data: {
       Media: {
         title: { english: 'Frieren', romaji: 'Sousou no Frieren' },
-        coverImage: { extraLarge: 'https://s4.anilist.co/file/anilistcdn/media/anime/cover/x.jpg' },
+        coverImage: {
+          extraLarge: 'https://s4.anilist.co/file/anilistcdn/media/anime/cover/x.jpg',
+        },
         siteUrl: 'https://anilist.co/anime/154587',
       },
     },
@@ -115,9 +120,10 @@ afterEach(() => {
 describe('filing a request', () => {
   it('creates a request with metadata from the link and counts the requester as its first vote', async () => {
     mockFetch(ANILIST);
-    const res = await request(app)
-      .post('/v1/requests')
-      .send({ sourceUrl: 'https://anilist.co/anime/154587', note: 'Season 1 please' });
+    const res = await request(app).post('/v1/requests').send({
+      sourceUrl: 'https://anilist.co/anime/154587',
+      note: 'Season 1 please',
+    });
 
     expect(res.status).toBe(201);
     expect(res.body.outcome).toBe('created');
@@ -155,10 +161,17 @@ describe('filing a request', () => {
     mockFetch(ANILIST);
     const { media } = await loadFixtures(['singleMedia']);
     const published = Object.values(media)[0]!;
-    await MediaExternalId.save({ mediaId: published.id, source: ExternalSourceType.ANILIST, externalId: '154587' });
+    await MediaExternalId.save({
+      mediaId: published.id,
+      source: ExternalSourceType.ANILIST,
+      externalId: '154587',
+    });
 
     const res = await request(app).post('/v1/requests').send({ sourceUrl: 'https://anilist.co/anime/154587' });
-    expect(res.body.request).toMatchObject({ kind: 'UPDATE', media: { id: published.publicId } });
+    expect(res.body.request).toMatchObject({
+      kind: 'UPDATE',
+      media: { id: published.publicId },
+    });
   });
 
   it('moves open requests to in progress when ingest creates their media', async () => {
@@ -166,11 +179,20 @@ describe('filing a request', () => {
     const created = await request(app).post('/v1/requests').send({ sourceUrl: 'https://anilist.co/anime/154587' });
     const { media } = await loadFixtures(['singleMedia']);
     const published = Object.values(media)[0]!;
-    await MediaExternalId.save({ mediaId: published.id, source: ExternalSourceType.ANILIST, externalId: '154587' });
+    await MediaExternalId.save({
+      mediaId: published.id,
+      source: ExternalSourceType.ANILIST,
+      externalId: '154587',
+    });
 
     expect(await startRequestsForMedia(published.id)).toBe(1);
-    const started = await ContentRequest.findOneByOrFail({ publicId: created.body.request.id });
-    expect(started).toMatchObject({ status: 'IN_PROGRESS', mediaId: published.id });
+    const started = await ContentRequest.findOneByOrFail({
+      publicId: created.body.request.id,
+    });
+    expect(started).toMatchObject({
+      status: 'IN_PROGRESS',
+      mediaId: published.id,
+    });
     await vi.waitFor(() => expect(emails).toHaveLength(1));
   });
 
@@ -179,11 +201,16 @@ describe('filing a request', () => {
     const missing = await request(app).post('/v1/requests').send({ sourceUrl: 'https://www.themoviedb.org/tv/94796' });
     expect(missing.status).toBe(400);
 
-    const typed = await request(app)
-      .post('/v1/requests')
-      .send({ sourceUrl: 'https://www.themoviedb.org/tv/94796', title: 'Hanzawa Naoki' });
+    const typed = await request(app).post('/v1/requests').send({
+      sourceUrl: 'https://www.themoviedb.org/tv/94796',
+      title: 'Hanzawa Naoki',
+    });
     expect(typed.status).toBe(201);
-    expect(typed.body.request).toMatchObject({ category: 'JDRAMA', title: 'Hanzawa Naoki', coverUrl: null });
+    expect(typed.body.request).toMatchObject({
+      category: 'JDRAMA',
+      title: 'Hanzawa Naoki',
+      coverUrl: null,
+    });
   });
 
   it('refuses links from sites requests do not accept', async () => {
@@ -193,19 +220,23 @@ describe('filing a request', () => {
 
   it('flags a request whose title matches another open one', async () => {
     mockFetch({});
-    const first = await request(app)
-      .post('/v1/requests')
-      .send({ sourceUrl: 'https://mydramalist.com/1-first-love', title: 'First Love' });
+    const first = await request(app).post('/v1/requests').send({
+      sourceUrl: 'https://mydramalist.com/1-first-love',
+      title: 'First Love',
+    });
     app.locals.testUser = await makeUser('lookalike');
-    const second = await request(app)
-      .post('/v1/requests')
-      .send({ sourceUrl: 'https://www.themoviedb.org/tv/1', title: 'first love' });
+    const second = await request(app).post('/v1/requests').send({
+      sourceUrl: 'https://www.themoviedb.org/tv/1',
+      title: 'first love',
+    });
     expect(second.status).toBe(201);
 
     app.locals.testUser = core.users.kevin;
     const admin = await request(app).get('/v1/admin/requests?flagged=true');
     expect(admin.body.items).toHaveLength(1);
-    expect(admin.body.items[0].possibleDuplicateOf).toMatchObject({ id: first.body.request.id });
+    expect(admin.body.items[0].possibleDuplicateOf).toMatchObject({
+      id: first.body.request.id,
+    });
   });
 
   it('caps open requests per account and filings per day', async () => {
@@ -215,7 +246,10 @@ describe('filing a request', () => {
     for (let i = 1; i <= 5; i++) {
       const res = await request(app)
         .post('/v1/requests')
-        .send({ sourceUrl: `https://www.themoviedb.org/tv/${i}`, title: `Drama ${i}` });
+        .send({
+          sourceUrl: `https://www.themoviedb.org/tv/${i}`,
+          title: `Drama ${i}`,
+        });
       expect(res.status).toBe(201);
     }
     const sixth = await request(app)
@@ -230,12 +264,16 @@ describe('filing a request', () => {
       await ContentRequest.query(`UPDATE "ContentRequest" SET "created_at" = now() - interval '2 days'`);
       await request(app)
         .post('/v1/requests')
-        .send({ sourceUrl: `https://www.themoviedb.org/tv/${i}`, title: `Drama ${i}` });
+        .send({
+          sourceUrl: `https://www.themoviedb.org/tv/${i}`,
+          title: `Drama ${i}`,
+        });
     }
     await ContentRequest.query(`UPDATE "ContentRequest" SET "created_at" = now() - interval '2 days'`);
-    const eleventh = await request(app)
-      .post('/v1/requests')
-      .send({ sourceUrl: 'https://www.themoviedb.org/tv/11', title: 'Drama 11' });
+    const eleventh = await request(app).post('/v1/requests').send({
+      sourceUrl: 'https://www.themoviedb.org/tv/11',
+      title: 'Drama 11',
+    });
     expect(eleventh.status).toBe(403);
     expect(eleventh.body.detail).toMatch(/10 open requests/);
   });
@@ -264,6 +302,17 @@ describe('voting and the public list', () => {
 
     const recent = await request(app).get('/v1/requests?sort=RECENT&category=JDRAMA&q=a');
     expect(recent.body.items.map((item: { title: string }) => item.title)).toEqual(['A']);
+
+    // Moving a request to IN_PROGRESS separates it from Open (ACTIVE) into the IN_PROGRESS tab.
+    app.locals.testUser = core.users.kevin;
+    await request(app).patch(`/v1/admin/requests/${a.body.request.id}`).send({ status: 'IN_PROGRESS' });
+    app.locals.testUser = null;
+    const openOnly = await request(app).get('/v1/requests?status=ACTIVE');
+    expect(openOnly.body.items.map((item: { title: string }) => item.title)).toEqual(['B']);
+    const inProgressOnly = await request(app).get('/v1/requests?status=IN_PROGRESS');
+    expect(inProgressOnly.body.items.map((item: { title: string }) => item.title)).toEqual(['A']);
+    app.locals.testUser = core.users.kevin;
+    await request(app).patch(`/v1/admin/requests/${a.body.request.id}`).send({ status: 'OPEN' });
 
     app.locals.testUser = await User.findOneByOrFail({ username: 'voter' });
     const unvoted = await request(app).delete(`/v1/requests/${b.body.request.id}/vote`);
@@ -345,7 +394,10 @@ describe('boosts', () => {
     for (let i = 1; i <= 3; i++) {
       const res = await request(app)
         .post('/v1/requests')
-        .send({ sourceUrl: `https://www.themoviedb.org/tv/${i}`, title: `D${i}` });
+        .send({
+          sourceUrl: `https://www.themoviedb.org/tv/${i}`,
+          title: `D${i}`,
+        });
       ids.push(res.body.request.id);
     }
 
@@ -360,11 +412,26 @@ describe('boosts', () => {
     expect(third.body.detail).toMatch(/this month/);
 
     const me = await request(app).get('/v1/requests/me');
-    expect(me.body).toMatchObject({ isPatron: true, openLimit: 30, boosts: { perMonth: 2, used: 2, remaining: 0 } });
+    expect(me.body).toMatchObject({
+      isPatron: true,
+      openLimit: 30,
+      boosts: { perMonth: 2, used: 2, remaining: 0 },
+    });
 
     // Last month's boosts do not count against this month.
     await ContentRequestBoost.query(`UPDATE "ContentRequestBoost" SET "created_at" = now() - interval '40 days'`);
     expect((await request(app).post(`/v1/requests/${ids[2]}/boost`)).status).toBe(200);
+
+    // Requests already in progress cannot receive new boosts.
+    const inProgressId = (
+      await request(app)
+        .post('/v1/requests')
+        .send({ sourceUrl: 'https://www.themoviedb.org/tv/50', title: 'Already Started' })
+    ).body.request.id;
+    app.locals.testUser = core.users.kevin;
+    await request(app).patch(`/v1/admin/requests/${inProgressId}`).send({ status: 'IN_PROGRESS' });
+    app.locals.testUser = patron;
+    expect((await request(app).post(`/v1/requests/${inProgressId}/boost`)).status).toBe(400);
   });
 });
 
@@ -380,14 +447,20 @@ describe('the admin side', () => {
     app.locals.testUser = core.users.kevin;
 
     expect((await request(app).patch(`/v1/admin/requests/${id}`).send({ status: 'DECLINED' })).status).toBe(400);
-    const declined = await request(app)
-      .patch(`/v1/admin/requests/${id}`)
-      .send({ status: 'DECLINED', declineReason: 'No Japanese subtitles exist.' });
+    const declined = await request(app).patch(`/v1/admin/requests/${id}`).send({
+      status: 'DECLINED',
+      declineReason: 'No Japanese subtitles exist.',
+    });
     expect(declined.status).toBe(200);
-    expect(declined.body.requester).toMatchObject({ id: core.users.regular.id });
+    expect(declined.body.requester).toMatchObject({
+      id: core.users.regular.id,
+    });
 
     const list = await request(app).get('/v1/requests?status=DECLINED');
-    expect(list.body.items[0]).toMatchObject({ status: 'DECLINED', declineReason: 'No Japanese subtitles exist.' });
+    expect(list.body.items[0]).toMatchObject({
+      status: 'DECLINED',
+      declineReason: 'No Japanese subtitles exist.',
+    });
     expect(emails).toHaveLength(0);
   });
 
@@ -395,14 +468,19 @@ describe('the admin side', () => {
     mockFetch({});
     const id = await fileRequest('A', 'https://www.themoviedb.org/tv/1');
     const optedOut = await makeUser('quiet');
-    await User.update(optedOut.id, { preferences: { productEmails: { enabled: true, requests: false } } });
+    await User.update(optedOut.id, {
+      preferences: { productEmails: { enabled: true, requests: false } },
+    });
     app.locals.testUser = optedOut;
     await request(app).post(`/v1/requests/${id}/vote`);
 
     app.locals.testUser = core.users.kevin;
     await request(app).patch(`/v1/admin/requests/${id}`).send({ status: 'IN_PROGRESS' });
     await vi.waitFor(() => expect(emails).toHaveLength(1));
-    expect(emails[0]!.data).toMatchObject({ to: core.users.regular.email, kind: 'request-update' });
+    expect(emails[0]!.data).toMatchObject({
+      to: core.users.regular.email,
+      kind: 'request-update',
+    });
     expect(emails[0]!.data.subject).toMatch(/started/);
     expect(emails[0]!.key).toMatch(/-IN_PROGRESS-/);
 
@@ -433,5 +511,67 @@ describe('the admin side', () => {
     const declined = await ContentRequest.findOneByOrFail({ publicId: dup });
     expect(declined.status).toBe(ContentRequestStatus.DECLINED);
     expect(declined.declineReason).toMatch(/Merged into/);
+  });
+});
+
+describe('listing my own and voted requests', () => {
+  it('lists own requests across all statuses and voted or boosted requests separately', async () => {
+    mockFetch({});
+    const other = await makeUser('other');
+
+    // Regular files two requests: one stays open, one is declined later.
+    app.locals.testUser = core.users.regular;
+    const ownOpen = (
+      await request(app).post('/v1/requests').send({
+        sourceUrl: 'https://www.themoviedb.org/tv/101',
+        title: 'Own Open',
+      })
+    ).body.request.id;
+    const ownDeclined = (
+      await request(app).post('/v1/requests').send({
+        sourceUrl: 'https://www.themoviedb.org/tv/102',
+        title: 'Own Declined',
+      })
+    ).body.request.id;
+
+    // Another user files two requests: regular votes on the first and ignores the second.
+    app.locals.testUser = other;
+    const otherVoted = (
+      await request(app).post('/v1/requests').send({
+        sourceUrl: 'https://www.themoviedb.org/tv/103',
+        title: 'Other Voted',
+      })
+    ).body.request.id;
+    await request(app).post('/v1/requests').send({
+      sourceUrl: 'https://www.themoviedb.org/tv/104',
+      title: 'Other Untouched',
+    });
+
+    app.locals.testUser = core.users.regular;
+    await request(app).post(`/v1/requests/${otherVoted}/vote`);
+
+    // Admin declines ownDeclined; it should still appear in regular's own requests.
+    app.locals.testUser = core.users.kevin;
+    await request(app)
+      .patch(`/v1/admin/requests/${ownDeclined}`)
+      .send({ status: 'DECLINED', declineReason: 'No subs' });
+
+    app.locals.testUser = core.users.regular;
+    const ownRes = await request(app).get('/v1/requests/mine?scope=OWN');
+    expect(ownRes.status).toBe(200);
+    expect(ownRes.body.total).toBe(2);
+    expect(ownRes.body.items.map((r: { id: string }) => r.id).sort()).toEqual([ownOpen, ownDeclined].sort());
+
+    const votedRes = await request(app).get('/v1/requests/mine?scope=VOTED');
+    expect(votedRes.status).toBe(200);
+    expect(votedRes.body.total).toBe(3);
+    expect(votedRes.body.items.map((r: { id: string }) => r.id).sort()).toEqual(
+      [ownOpen, ownDeclined, otherVoted].sort(),
+    );
+
+    const meRes = await request(app).get('/v1/requests/me');
+    expect(meRes.status).toBe(200);
+    expect(meRes.body.ownCount).toBe(2);
+    expect(meRes.body.votedCount).toBe(3);
   });
 });

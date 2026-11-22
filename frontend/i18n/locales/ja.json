@@ -216,7 +216,11 @@
     "showHiddenMedia": "非表示の作品を表示",
     "hideHiddenMedia": "非表示の作品を隠す",
     "loadError": "作品一覧を読み込めませんでした。",
-    "loadMoreError": "続きの作品を読み込めませんでした。"
+    "loadMoreError": "続きの作品を読み込めませんでした。",
+    "empty": "作品が見つかりませんでした。",
+    "emptySearch": "「{query}」に一致する作品はありません。",
+    "requestHint": "お探しのアニメ・ドラマ・オーディオブック・YouTubeチャンネルがない場合は、リクエストから依頼できます。",
+    "requestCta": "作品をリクエスト"
   },
   "searchSettingsModal": {
     "exactMatchTitle": "完全一致検索",
@@ -1849,6 +1853,8 @@
     "intro": "勉強に使いたいアニメ、ドラマ、オーディオブック、YouTubeチャンネルをリクエストし、ほかの人のリクエストに投票しましょう。希望の多い作品から追加します。",
     "newRequest": "新しいリクエスト",
     "boostWithPatreon": "Patreonでブースト",
+    "manageAdmin": "管理",
+    "yours": "自分",
     "allowance": {
       "open": "オープン中のリクエスト {count} / {limit}",
       "boosts": "今月の残りブースト {remaining} / {total}（{date}に更新）"
@@ -1874,8 +1880,11 @@
     },
     "tabs": {
       "ACTIVE": "オープン",
+      "IN_PROGRESS": "作業中",
       "RELEASED": "公開済み",
-      "DECLINED": "見送り"
+      "DECLINED": "見送り",
+      "MINE": "自分のリクエスト",
+      "VOTED": "投票済み"
     },
     "searchLabel": "リクエストを検索",
     "sortLabel": "並び替え",
@@ -1895,8 +1904,11 @@
     "emptySearch": "その検索に一致するリクエストはありません。",
     "empty": {
       "ACTIVE": "オープン中のリクエストはまだありません。最初のリクエストをどうぞ！",
+      "IN_PROGRESS": "現在作業中のリクエストはありません。",
       "RELEASED": "公開されたリクエストはまだありません。",
-      "DECLINED": "見送られたリクエストはありません。"
+      "DECLINED": "見送られたリクエストはありません。",
+      "MINE": "まだリクエストした作品はありません。",
+      "VOTED": "まだ投票したリクエストはありません。"
     },
     "vote": "投票",
     "unvote": "投票を取り消す",
@@ -1914,13 +1926,22 @@
     "viewSource": "ソースを見る",
     "searchIt": "検索する",
     "onNadeshiko": "Nadeshikoで見る",
+    "releasedOn": "{date}に公開",
     "boost": {
       "action": "ブースト",
       "boosted": "ブースト済み",
       "already": "このリクエストはブースト済みです。",
       "hint": "ブーストは5票分で、取り消せません。",
+      "patronsOnly": "パトロン限定 — ブーストは5票分になります",
+      "confirmHeading": "このリクエストをブーストしますか？",
+      "confirmBody": "{title}にブースト（+5票）を使いますか？ブーストは取り消せません。",
+      "remainingAfter": "今月の残りブーストは{remaining}/{total}になります。",
+      "nudge": "{title}を早く追加してほしいですか？パトロンは+5票分のブーストを使えます。",
       "done": "{title}をブーストしました。",
-      "failed": "ブーストできませんでした。今月の残りがないかもしれません。"
+      "failed": "ブーストできませんでした。今月の残りがないかもしれません。",
+      "unlockHeading": "Patreonでブーストを解放",
+      "unlockBody": "「{title}」を早く追加してほしいですか？パトロンは毎月3〜10回のブーストが使え、1回で5票分になります。",
+      "alreadyPatronSignIn": "すでにパトロンですか？ログイン"
     },
     "withdraw": "取り下げる",
     "withdrawConfirm": "{title}のリクエストを取り下げますか？",
@@ -1937,8 +1958,6 @@
     },
     "admin": {
       "tab": "リクエスト"
-    },
-    "noIngestYet": "ドラマは未対応",
-    "noIngestYetHint": "ドラマはまだ追加できません。投票で需要を把握します。"
+    }
   }
 }

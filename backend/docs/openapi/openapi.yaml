@@ -107,6 +107,8 @@ paths:
     $ref: "./paths/requests/v1_requests.yaml"
   "/v1/requests/me":
     $ref: "./paths/requests/v1_requests_me.yaml"
+  "/v1/requests/mine":
+    $ref: "./paths/requests/v1_requests_mine.yaml"
   "/v1/requests/{requestId}":
     $ref: "./paths/requests/v1_requests_id.yaml"
   "/v1/requests/{requestId}/vote":

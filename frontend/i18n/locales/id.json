@@ -216,7 +216,11 @@
     "showHiddenMedia": "Tampilkan judul tersembunyi",
     "hideHiddenMedia": "Sembunyikan kembali judul",
     "loadError": "Gagal memuat katalog.",
-    "loadMoreError": "Gagal memuat judul lainnya."
+    "loadMoreError": "Gagal memuat judul lainnya.",
+    "empty": "Tidak ada judul yang ditemukan.",
+    "emptySearch": "Tidak ada judul yang cocok dengan \"{query}\".",
+    "requestHint": "Tidak menemukan anime, drama, buku audio, atau kanal YouTube? Minta di halaman permintaan.",
+    "requestCta": "Minta judul"
   },
   "searchSettingsModal": {
     "exactMatchTitle": "Kecocokan persis",
@@ -1849,6 +1853,8 @@
     "intro": "Minta anime, drama, buku audio, dan kanal YouTube yang ingin kamu pakai belajar, dan pilih permintaan orang lain. Judul yang paling diminati didahulukan.",
     "newRequest": "Permintaan baru",
     "boostWithPatreon": "Boost lewat Patreon",
+    "manageAdmin": "Kelola",
+    "yours": "Milikmu",
     "allowance": {
       "open": "{count} dari {limit} permintaan terbuka",
       "boosts": "Sisa {remaining} dari {total} boost bulan ini (diperbarui {date})"
@@ -1874,8 +1880,11 @@
     },
     "tabs": {
       "ACTIVE": "Terbuka",
+      "IN_PROGRESS": "Sedang dikerjakan",
       "RELEASED": "Dirilis",
-      "DECLINED": "Ditolak"
+      "DECLINED": "Ditolak",
+      "MINE": "Permintaanku",
+      "VOTED": "Dipilih"
     },
     "searchLabel": "Cari permintaan",
     "sortLabel": "Urutkan",
@@ -1895,8 +1904,11 @@
     "emptySearch": "Tidak ada permintaan yang cocok dengan pencarian itu.",
     "empty": {
       "ACTIVE": "Belum ada permintaan terbuka. Jadilah yang pertama!",
+      "IN_PROGRESS": "Belum ada permintaan yang sedang dikerjakan saat ini.",
       "RELEASED": "Belum ada permintaan yang dirilis.",
-      "DECLINED": "Belum ada permintaan yang ditolak."
+      "DECLINED": "Belum ada permintaan yang ditolak.",
+      "MINE": "Kamu belum mengirim permintaan apa pun.",
+      "VOTED": "Kamu belum memilih permintaan apa pun."
     },
     "vote": "Pilih",
     "unvote": "Batalkan pilihan",
@@ -1914,13 +1926,22 @@
     "viewSource": "Lihat sumber",
     "searchIt": "Cari di sini",
     "onNadeshiko": "Di Nadeshiko",
+    "releasedOn": "Dirilis {date}",
     "boost": {
       "action": "Boost",
       "boosted": "Sudah di-boost",
       "already": "Kamu sudah memberi boost pada permintaan ini.",
       "hint": "Satu boost bernilai lima suara dan tidak bisa dibatalkan.",
+      "patronsOnly": "Khusus patron — boost bernilai 5 suara",
+      "confirmHeading": "Beri boost pada permintaan ini?",
+      "confirmBody": "Beri boost (+5 suara) untuk {title}? Boost bersifat permanen dan tidak bisa dibatalkan.",
+      "remainingAfter": "Sisa boost bulan ini akan menjadi {remaining} dari {total}.",
+      "nudge": "Ingin {title} lebih cepat? Patron bisa memberi boost +5 suara.",
       "done": "Kamu memberi boost pada {title}.",
-      "failed": "Boost tidak dapat diberikan. Mungkin jatahmu bulan ini sudah habis."
+      "failed": "Boost tidak dapat diberikan. Mungkin jatahmu bulan ini sudah habis.",
+      "unlockHeading": "Buka boost dengan Patreon",
+      "unlockBody": "Ingin “{title}” lebih cepat? Patron mendapat 3 hingga 10 boost setiap bulan, dan setiap boost bernilai 5 suara.",
+      "alreadyPatronSignIn": "Sudah jadi patron? Masuk"
     },
     "withdraw": "Tarik",
     "withdrawConfirm": "Tarik permintaanmu untuk {title}?",
@@ -1937,8 +1958,6 @@
     },
     "admin": {
       "tab": "Permintaan"
-    },
-    "noIngestYet": "Drama belum didukung",
-    "noIngestYetHint": "Kami belum bisa menambahkan drama. Suara di sini menunjukkan seberapa diminati."
+    }
   }
 }

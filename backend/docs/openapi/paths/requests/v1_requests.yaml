@@ -8,8 +8,8 @@ get:
   parameters:
     - name: status
       in: query
-      description: ACTIVE (open, planned or in progress), RELEASED or DECLINED.
-      schema: { type: string, enum: [ACTIVE, RELEASED, DECLINED], default: ACTIVE }
+      description: ACTIVE (open or planned), IN_PROGRESS, RELEASED or DECLINED.
+      schema: { type: string, enum: [ACTIVE, IN_PROGRESS, RELEASED, DECLINED], default: ACTIVE }
     - name: category
       in: query
       schema: { type: string, enum: [ANIME, JDRAMA, YOUTUBE, AUDIOBOOK] }

@@ -12,6 +12,7 @@ export interface RouteAuth {
 export const routeAuth: RouteAuth[] = [
   { method: 'post', path: '/v1/requests', middleware: requireSession() },
   { method: 'get', path: '/v1/requests/me', middleware: requireSession() },
+  { method: 'get', path: '/v1/requests/mine', middleware: requireSession() },
   { method: 'delete', path: '/v1/requests/:requestId', middleware: requireSession() },
   { method: 'post', path: '/v1/requests/:requestId/vote', middleware: requireSession() },
   { method: 'delete', path: '/v1/requests/:requestId/vote', middleware: requireSession() },

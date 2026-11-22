@@ -216,7 +216,11 @@
     "showHiddenMedia": "Show hidden media",
     "hideHiddenMedia": "Hide hidden media",
     "loadError": "Couldn't load the media list.",
-    "loadMoreError": "Couldn't load more media."
+    "loadMoreError": "Couldn't load more media.",
+    "empty": "No titles found.",
+    "emptySearch": "No titles match \"{query}\".",
+    "requestHint": "Missing an anime, drama, audiobook or YouTube channel? Ask for it on the requests board.",
+    "requestCta": "Request a title"
   },
   "searchSettingsModal": {
     "exactMatchTitle": "Exact match",
@@ -1849,6 +1853,8 @@
     "intro": "Ask for the anime, dramas, audiobooks and YouTube channels you want to study with, and vote for the ones others asked for. The most wanted titles come first.",
     "newRequest": "New request",
     "boostWithPatreon": "Boost with Patreon",
+    "manageAdmin": "Manage",
+    "yours": "Yours",
     "allowance": {
       "open": "{count} of {limit} open requests",
       "boosts": "{remaining} of {total} boosts left this month (renews {date})"
@@ -1874,8 +1880,11 @@
     },
     "tabs": {
       "ACTIVE": "Open",
+      "IN_PROGRESS": "In progress",
       "RELEASED": "Released",
-      "DECLINED": "Declined"
+      "DECLINED": "Declined",
+      "MINE": "My requests",
+      "VOTED": "Voted"
     },
     "searchLabel": "Search requests",
     "sortLabel": "Sort",
@@ -1895,8 +1904,11 @@
     "emptySearch": "No requests match that search.",
     "empty": {
       "ACTIVE": "No open requests yet. Be the first!",
+      "IN_PROGRESS": "No requests are in progress right now.",
       "RELEASED": "No requests have been released yet.",
-      "DECLINED": "No requests have been declined."
+      "DECLINED": "No requests have been declined.",
+      "MINE": "You have not requested any titles yet.",
+      "VOTED": "You have not voted for any requests yet."
     },
     "vote": "Vote",
     "unvote": "Remove vote",
@@ -1914,13 +1926,22 @@
     "viewSource": "View source",
     "searchIt": "Search it",
     "onNadeshiko": "On Nadeshiko",
+    "releasedOn": "Released {date}",
     "boost": {
       "action": "Boost",
       "boosted": "Boosted",
       "already": "You boosted this request.",
       "hint": "A boost counts as five votes and cannot be taken back.",
+      "patronsOnly": "Patrons only — boost counts as 5 votes",
+      "confirmHeading": "Boost this request?",
+      "confirmBody": "Give {title} a boost (+5 votes)? Boosts are permanent and cannot be undone.",
+      "remainingAfter": "{remaining} of {total} boosts will remain this month.",
+      "nudge": "Want {title} sooner? Patrons can boost a title by +5 votes.",
       "done": "You boosted {title}.",
-      "failed": "That boost could not be given. You may have none left this month."
+      "failed": "That boost could not be given. You may have none left this month.",
+      "unlockHeading": "Unlock boosts with Patreon",
+      "unlockBody": "Want “{title}” sooner? Patrons get 3 to 10 monthly boosts, and each boost counts as 5 votes.",
+      "alreadyPatronSignIn": "Already a patron? Sign in"
     },
     "withdraw": "Withdraw",
     "withdrawConfirm": "Withdraw your request for {title}?",
@@ -1937,8 +1958,6 @@
     },
     "admin": {
       "tab": "Requests"
-    },
-    "noIngestYet": "No drama ingest yet",
-    "noIngestYetHint": "We cannot add dramas yet. Votes here tell us how much they are wanted."
+    }
   }
 }
