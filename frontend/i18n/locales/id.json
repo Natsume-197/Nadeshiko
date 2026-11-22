@@ -1940,12 +1940,6 @@
     "status": {
       "bannerActive": "Banner aktif"
     },
-    "pulse": {
-      "users": "{count} pengguna",
-      "patrons": "{count} patron",
-      "media": "{count} judul",
-      "segments": "{count} segmen"
-    },
     "categories": {
       "moderation": "Moderasi & Kualitas",
       "community": "Komunitas",

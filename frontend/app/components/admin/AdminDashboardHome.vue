@@ -8,7 +8,6 @@ import {
 } from '~/composables/useAdminOverview';
 
 const { t } = useI18n();
-const { formatNumber } = useFormat();
 const localePath = useLocalePath();
 
 const { overview, isLoading, refresh } = useAdminOverview();
@@ -43,8 +42,8 @@ function badgeClasses(tone: 'brand' | 'warning' | 'danger' | 'success' | 'neutra
 
 <template>
   <div data-testid="admin-dashboard-home" class="space-y-8">
-    <!-- Title + live corpus/community pulse strip -->
-    <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+    <!-- Title + refresh -->
+    <div class="flex items-end justify-between gap-3">
       <div>
         <h1 class="text-2xl font-bold tracking-tight text-ink">
           {{ t('adminDashboard.title') }}
@@ -54,33 +53,17 @@ function badgeClasses(tone: 'brand' | 'warning' | 'danger' | 'success' | 'neutra
         </p>
       </div>
 
-      <div
-        v-if="overview"
-        data-testid="admin-pulse-strip"
-        class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-faint"
+      <button
+        type="button"
+        data-testid="admin-refresh-overview"
+        :disabled="isLoading"
+        :aria-label="t('adminDashboard.nav.refresh')"
+        :title="t('adminDashboard.nav.refresh')"
+        class="inline-flex size-8 items-center justify-center rounded-lg border border-hairline bg-surface text-ink-muted transition-colors hover:bg-surface-hover hover:text-ink disabled:opacity-50"
+        @click="refresh"
       >
-        <span>{{ t('adminDashboard.pulse.users', { count: formatNumber(overview.users.total) }) }}</span>
-        <span aria-hidden="true">·</span>
-        <span>{{ t('adminDashboard.pulse.patrons', { count: formatNumber(overview.users.activePatrons) }) }}</span>
-        <span aria-hidden="true">·</span>
-        <span>{{ t('adminDashboard.pulse.media', { count: formatNumber(overview.catalogue.media) }) }}</span>
-        <span aria-hidden="true">·</span>
-        <span>{{ t('adminDashboard.pulse.segments', { count: formatNumber(overview.catalogue.segments) }) }}</span>
-        <button
-          type="button"
-          data-testid="admin-refresh-overview"
-          :disabled="isLoading"
-          :aria-label="t('adminDashboard.nav.refresh')"
-          :title="t('adminDashboard.nav.refresh')"
-          class="inline-flex size-6 items-center justify-center rounded-md text-ink-faint transition-colors hover:bg-surface-hover hover:text-ink disabled:opacity-50"
-          @click="refresh"
-        >
-          <UiBaseIcon :path="mdiRefresh" :size="14" :class="{ 'animate-spin': isLoading }" />
-        </button>
-      </div>
-      <div v-else-if="isLoading" class="text-xs text-ink-faint">
-        {{ t('adminDashboard.loading') }}
-      </div>
+        <UiBaseIcon :path="mdiRefresh" :size="16" :class="{ 'animate-spin': isLoading }" />
+      </button>
     </div>
 
     <!-- 3-column categorized directory -->

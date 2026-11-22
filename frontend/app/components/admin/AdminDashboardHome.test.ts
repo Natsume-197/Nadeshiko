@@ -56,10 +56,9 @@ afterEach(() => {
 });
 
 describe('AdminDashboardHome', () => {
-  test('renders the pulse strip and all 3 categorized directory columns', () => {
+  test('renders all 3 categorized directory columns', () => {
     const wrapper = render();
 
-    expect(wrapper.find('[data-testid="admin-pulse-strip"]').exists()).toBe(true);
     for (const sec of ['moderation', 'community', 'site']) {
       expect(wrapper.find(`[data-testid="admin-section-${sec}"]`).exists()).toBe(true);
     }

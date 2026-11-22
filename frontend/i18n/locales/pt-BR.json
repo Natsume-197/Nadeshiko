@@ -1940,12 +1940,6 @@
     "status": {
       "bannerActive": "Banner ativo"
     },
-    "pulse": {
-      "users": "{count} usuários",
-      "patrons": "{count} apoiadores",
-      "media": "{count} títulos",
-      "segments": "{count} segmentos"
-    },
     "categories": {
       "moderation": "Moderação e qualidade",
       "community": "Comunidade",

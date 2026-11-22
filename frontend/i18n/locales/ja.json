@@ -1940,12 +1940,6 @@
     "status": {
       "bannerActive": "お知らせ表示中"
     },
-    "pulse": {
-      "users": "ユーザー {count}",
-      "patrons": "パトロン {count}",
-      "media": "作品 {count}",
-      "segments": "セグメント {count}"
-    },
     "categories": {
       "moderation": "モデレーションと品質",
       "community": "コミュニティ",

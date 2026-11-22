@@ -1940,12 +1940,6 @@
     "status": {
       "bannerActive": "公告生效中"
     },
-    "pulse": {
-      "users": "{count} 位用户",
-      "patrons": "{count} 位赞助者",
-      "media": "{count} 部作品",
-      "segments": "{count} 条片段"
-    },
     "categories": {
       "moderation": "审核与质量",
       "community": "社区",
