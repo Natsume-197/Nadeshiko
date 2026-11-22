@@ -85,6 +85,7 @@ export type t_AdminPatreonCampaignMember = {
   linkedUserId: number | null;
   linkedUsername: string | null;
   memberId: string;
+  monthlyAmountCents: number;
   patreonTierTitles: string[];
   patreonUserId: string | null;
   patronStatus: string | null;

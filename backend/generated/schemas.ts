@@ -59,6 +59,7 @@ export const s_AdminPatreonCampaignMember = z.object({
   email: z.string().nullable(),
   patronStatus: z.string().nullable(),
   entitledAmountCents: z.coerce.number(),
+  monthlyAmountCents: z.coerce.number(),
   lifetimeSupportCents: z.coerce.number(),
   pledgeStart: z.iso.datetime({ offset: true }).nullable(),
   lastChargeStatus: z.string().nullable(),

@@ -53,7 +53,7 @@ const filteredCampaignMembers = computed<AdminPatreonCampaignMember[]>(() => {
     if (
       campaignFilter.value === 'paid' &&
       member.lifetimeSupportCents <= 0 &&
-      !(member.patronStatus === 'active_patron' && member.entitledAmountCents > 0)
+      member.monthlyAmountCents <= 0
     ) {
       return false;
     }
@@ -487,10 +487,10 @@ onMounted(() => fetchPatreon(false));
 
                 <td class="px-3 py-2.5 text-right whitespace-nowrap tabular-nums">
                   <span
-                    v-if="member.entitledAmountCents > 0"
+                    v-if="member.monthlyAmountCents > 0"
                     :class="member.patronStatus === 'active_patron' ? 'font-semibold text-emerald-300' : 'text-ink-muted'"
                   >
-                    {{ formatUsdCents(member.entitledAmountCents) }}
+                    {{ formatUsdCents(member.monthlyAmountCents) }}
                   </span>
                   <span v-else class="text-ink-faint">—</span>
                 </td>

@@ -6,6 +6,7 @@ required:
   - email
   - patronStatus
   - entitledAmountCents
+  - monthlyAmountCents
   - lifetimeSupportCents
   - pledgeStart
   - lastChargeStatus
@@ -34,6 +35,9 @@ properties:
     nullable: true
   entitledAmountCents:
     type: integer
+  monthlyAmountCents:
+    type: integer
+    description: Normalized monthly USD cents using the Patreon tier list price when assigned (excludes Apple iOS IAP markup).
   lifetimeSupportCents:
     type: integer
   pledgeStart:

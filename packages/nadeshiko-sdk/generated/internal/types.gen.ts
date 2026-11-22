@@ -3329,6 +3329,10 @@ export type AdminPatreonCampaignMember = {
     email: string;
     patronStatus: string;
     entitledAmountCents: number;
+    /**
+     * Normalized monthly USD cents using the Patreon tier list price when assigned (excludes Apple iOS IAP markup).
+     */
+    monthlyAmountCents: number;
     lifetimeSupportCents: number;
     pledgeStart: string;
     lastChargeStatus: string;

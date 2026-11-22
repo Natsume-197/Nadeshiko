@@ -27,6 +27,7 @@ export interface CampaignMemberRecord {
   email: string | null;
   patronStatus: string | null;
   entitledAmountCents: number;
+  monthlyAmountCents: number;
   lifetimeSupportCents: number;
   pledgeStart: string | null;
   lastChargeStatus: string | null;
@@ -56,7 +57,7 @@ function buildMembersUrl(campaignId: string): string {
     'fields[member]',
     'full_name,email,patron_status,currently_entitled_amount_cents,campaign_lifetime_support_cents,lifetime_support_cents,pledge_relationship_start,last_charge_status,last_charge_date',
   );
-  url.searchParams.set('fields[tier]', 'title');
+  url.searchParams.set('fields[tier]', 'title,amount_cents');
   url.searchParams.set('fields[user]', 'full_name');
   url.searchParams.set('page[count]', '500');
   return url.toString();
@@ -65,6 +66,7 @@ function buildMembersUrl(campaignId: string): string {
 function parseMember(
   item: PatreonResource,
   tierTitlesById: Map<string, string>,
+  tierAmountsById: Map<string, number>,
   userNamesById: Map<string, string>,
 ): CampaignMemberRecord {
   const attrs = item.attributes ?? {};
@@ -78,15 +80,23 @@ function parseMember(
 
   const memberName = typeof attrs.full_name === 'string' && attrs.full_name.trim() ? attrs.full_name.trim() : null;
   const userName = patreonUserId ? (userNamesById.get(patreonUserId) ?? null) : null;
+  const patronStatus = typeof attrs.patron_status === 'string' ? attrs.patron_status : null;
+  const entitledAmountCents =
+    typeof attrs.currently_entitled_amount_cents === 'number' ? attrs.currently_entitled_amount_cents : 0;
+  // Prefer the Patreon tier's USD list price so Apple iOS's +43% IAP markup does not inflate monthly revenue.
+  // Fall back to `entitledAmountCents` for active custom pledges that are not attached to a paid tier.
+  const tierAmountCents = entitledTierIds.reduce((max, id) => Math.max(max, tierAmountsById.get(id) ?? 0), 0);
+  const monthlyAmountCents =
+    patronStatus === 'active_patron' ? (tierAmountCents > 0 ? tierAmountCents : entitledAmountCents) : 0;
 
   return {
     memberId: item.id,
     patreonUserId,
     fullName: memberName ?? userName ?? '—',
     email: typeof attrs.email === 'string' && attrs.email.trim() ? attrs.email.trim() : null,
-    patronStatus: typeof attrs.patron_status === 'string' ? attrs.patron_status : null,
-    entitledAmountCents:
-      typeof attrs.currently_entitled_amount_cents === 'number' ? attrs.currently_entitled_amount_cents : 0,
+    patronStatus,
+    entitledAmountCents,
+    monthlyAmountCents,
     lifetimeSupportCents:
       typeof attrs.campaign_lifetime_support_cents === 'number'
         ? attrs.campaign_lifetime_support_cents
@@ -124,6 +134,7 @@ export async function fetchCampaignMembers(force = false): Promise<CampaignMembe
   }
 
   const tierTitlesById = new Map<string, string>();
+  const tierAmountsById = new Map<string, number>();
   const userNamesById = new Map<string, string>();
   const rawMembers: PatreonResource[] = [];
 
@@ -161,8 +172,13 @@ export async function fetchCampaignMembers(force = false): Promise<CampaignMembe
 
       const payload = (await response.json()) as CampaignMembersApiResponse;
       for (const inc of payload.included ?? []) {
-        if (inc.type === 'tier' && typeof inc.attributes?.title === 'string') {
-          tierTitlesById.set(inc.id, inc.attributes.title);
+        if (inc.type === 'tier') {
+          if (typeof inc.attributes?.title === 'string') {
+            tierTitlesById.set(inc.id, inc.attributes.title);
+          }
+          if (typeof inc.attributes?.amount_cents === 'number') {
+            tierAmountsById.set(inc.id, inc.attributes.amount_cents);
+          }
         } else if (inc.type === 'user' && typeof inc.attributes?.full_name === 'string') {
           userNamesById.set(inc.id, inc.attributes.full_name);
         }
@@ -184,14 +200,14 @@ export async function fetchCampaignMembers(force = false): Promise<CampaignMembe
     };
   }
 
-  const members = rawMembers.map((item) => parseMember(item, tierTitlesById, userNamesById));
-  // Active patrons first, then declined, then former, sorted by highest pledge / lifetime support / newest start.
+  const members = rawMembers.map((item) => parseMember(item, tierTitlesById, tierAmountsById, userNamesById));
+  // Active patrons first, then declined, then former, sorted by highest monthly amount / lifetime support / newest start.
   const statusRank = (s: string | null) =>
     s === 'active_patron' ? 0 : s === 'declined_patron' ? 1 : s === 'former_patron' ? 2 : 3;
   members.sort((a, b) => {
     const rankDiff = statusRank(a.patronStatus) - statusRank(b.patronStatus);
     if (rankDiff !== 0) return rankDiff;
-    if (b.entitledAmountCents !== a.entitledAmountCents) return b.entitledAmountCents - a.entitledAmountCents;
+    if (b.monthlyAmountCents !== a.monthlyAmountCents) return b.monthlyAmountCents - a.monthlyAmountCents;
     if (b.lifetimeSupportCents !== a.lifetimeSupportCents) return b.lifetimeSupportCents - a.lifetimeSupportCents;
     return (b.pledgeStart ?? '').localeCompare(a.pledgeStart ?? '');
   });

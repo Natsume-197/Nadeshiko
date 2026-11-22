@@ -121,10 +121,10 @@ export const getAdminPatreonOverview: GetAdminPatreonOverview = async ({ query }
 
   const campaignActiveMembers = campaignMembers.filter((m) => m.patronStatus === 'active_patron');
   const campaignUnlinkedActive = campaignActiveMembers.filter((m) => m.linkedUserId === null).length;
-  const campaignMonthlyCents = campaignActiveMembers.reduce((sum, m) => sum + m.entitledAmountCents, 0);
+  const campaignMonthlyCents = campaignActiveMembers.reduce((sum, m) => sum + m.monthlyAmountCents, 0);
   const campaignLifetimeCents = campaignMembers.reduce((sum, m) => sum + m.lifetimeSupportCents, 0);
   const campaignPayingEver = campaignMembers.filter(
-    (m) => m.lifetimeSupportCents > 0 || (m.patronStatus === 'active_patron' && m.entitledAmountCents > 0),
+    (m) => m.lifetimeSupportCents > 0 || m.monthlyAmountCents > 0,
   ).length;
 
   const manualUsers = await User.createQueryBuilder('u')
