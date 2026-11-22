@@ -1938,9 +1938,7 @@
       "refresh": "Muat ulang hitungan"
     },
     "status": {
-      "bannerActive": "Banner aktif",
-      "failedJobs": "{count} job gagal",
-      "soon": "Fase 2"
+      "bannerActive": "Banner aktif"
     },
     "pulse": {
       "users": "{count} pengguna",
@@ -1951,27 +1949,16 @@
     "categories": {
       "moderation": "Moderasi & Kualitas",
       "community": "Komunitas",
-      "site": "Situs & Pengguna",
-      "catalogue": "Katalog & Data"
+      "site": "Situs & Pengguna"
     },
     "items": {
       "reportsDesc": "Tinjau, filter, dan selesaikan laporan secara massal.",
-      "feedbackTitle": "Kotak Masukan",
-      "feedbackDesc": "Baca pesan widget masukan beserta konteks halaman dan sesi PostHog.",
       "requestsDesc": "Kelola permintaan konten, boost patron, dan notifikasi rilis.",
       "roadmapDesc": "Buat, urutkan, dan perbarui item roadmap publik.",
       "announcementDesc": "Tampilkan banner info, peringatan, atau pemeliharaan situs.",
       "usersDesc": "Kelola akun, peran, pemblokiran, dan kuota API bulanan.",
       "patreonTitle": "Patreon & Tier",
       "patreonDesc": "Periksa keanggotaan Patreon tertaut, batas tier, dan status sinkronisasi.",
-      "emailTitle": "Email & Supresi",
-      "emailDesc": "Periksa daftar supresi bounce SES dan log pengiriman email.",
-      "queuesTitle": "Manajemen Data & Antrean",
-      "queuesDesc": "Pantau antrean pg-boss, coba ulang job gagal, dan picu pembaruan data.",
-      "catalogueTitle": "Katalog Media",
-      "catalogueDesc": "Jelajahi anime, J-drama, kanal YouTube, dan buku audio terbit.",
-      "statsTitle": "Statistik & Cakupan Korpus",
-      "statsDesc": "Lihat cakupan kosakata, rincian terjemahan, dan jam dialog.",
       "statusTitle": "Halaman Status Publik",
       "statusDesc": "Buka status.nadeshiko.co di tab baru."
     }

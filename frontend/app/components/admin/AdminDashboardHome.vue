@@ -83,10 +83,10 @@ function badgeClasses(tone: 'brand' | 'warning' | 'danger' | 'success' | 'neutra
       </div>
     </div>
 
-    <!-- 4-column categorized directory -->
+    <!-- 3-column categorized directory -->
     <section
       data-testid="admin-directory"
-      class="grid grid-cols-1 gap-x-6 gap-y-8 md:grid-cols-2 xl:grid-cols-4"
+      class="grid grid-cols-1 gap-x-6 gap-y-8 md:grid-cols-3"
     >
       <div
         v-for="cat in ADMIN_CATEGORIES"
@@ -102,9 +102,9 @@ function badgeClasses(tone: 'brand' | 'warning' | 'danger' | 'success' | 'neutra
 
         <ul class="space-y-1">
           <li v-for="{ item, badge } in itemsForCategory(cat.id)" :key="item.id">
-            <!-- Live internal route -->
+            <!-- Internal route -->
             <NuxtLink
-              v-if="item.status === 'live' && item.to"
+              v-if="item.to"
               :to="localePath(item.to)"
               :data-testid="`admin-dir-${item.id}`"
               class="group flex items-start gap-3 rounded-lg px-2.5 py-2 transition-colors hover:bg-surface-hover"
@@ -133,9 +133,9 @@ function badgeClasses(tone: 'brand' | 'warning' | 'danger' | 'success' | 'neutra
               </span>
             </NuxtLink>
 
-            <!-- Live external link -->
+            <!-- External link -->
             <a
-              v-else-if="item.status === 'live' && item.href"
+              v-else-if="item.href"
               :href="item.href"
               target="_blank"
               rel="noopener noreferrer"
@@ -157,39 +157,6 @@ function badgeClasses(tone: 'brand' | 'warning' | 'danger' | 'success' | 'neutra
                 </span>
               </span>
             </a>
-
-            <!-- Planned Phase 2 item (non-broken, still surfaces live backend counts) -->
-            <div
-              v-else
-              :data-testid="`admin-dir-${item.id}`"
-              class="flex items-start gap-3 rounded-lg px-2.5 py-2 opacity-75"
-            >
-              <span class="mt-0.5 shrink-0 text-ink-faint">
-                <UiBaseIcon :path="item.icon" :size="18" />
-              </span>
-              <span class="min-w-0 flex-1">
-                <span class="flex flex-wrap items-center gap-1.5">
-                  <span class="text-sm font-medium text-ink-muted">
-                    {{ t(item.titleKey) }}
-                  </span>
-                  <span
-                    v-if="badge"
-                    :class="[
-                      'rounded-full border px-1.5 py-0.5 text-[10px] font-semibold leading-none',
-                      badgeClasses(badge.tone),
-                    ]"
-                  >
-                    {{ badgeLabel(badge) }}
-                  </span>
-                  <span class="rounded border border-hairline bg-surface px-1.5 py-0.5 text-[10px] font-medium text-ink-faint">
-                    {{ t('adminDashboard.status.soon') }}
-                  </span>
-                </span>
-                <span class="mt-0.5 block text-xs leading-snug text-ink-faint">
-                  {{ t(item.descriptionKey) }}
-                </span>
-              </span>
-            </div>
           </li>
         </ul>
       </div>

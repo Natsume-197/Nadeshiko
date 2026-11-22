@@ -1938,9 +1938,7 @@
       "refresh": "件数を更新"
     },
     "status": {
-      "bannerActive": "お知らせ表示中",
-      "failedJobs": "失敗ジョブ {count}件",
-      "soon": "フェーズ2"
+      "bannerActive": "お知らせ表示中"
     },
     "pulse": {
       "users": "ユーザー {count}",
@@ -1951,27 +1949,16 @@
     "categories": {
       "moderation": "モデレーションと品質",
       "community": "コミュニティ",
-      "site": "サイトとユーザー",
-      "catalogue": "カタログとデータ"
+      "site": "サイトとユーザー"
     },
     "items": {
       "reportsDesc": "報告の絞り込みや一括処理を行います。",
-      "feedbackTitle": "フィードバック受信箱",
-      "feedbackDesc": "フィードバック本文とページ情報・PostHogセッションを確認します。",
       "requestsDesc": "コンテンツリクエスト、ブースト、公開通知を管理します。",
       "roadmapDesc": "公開ロードマップの項目を作成・並び替え・更新します。",
       "announcementDesc": "サイト全体にお知らせやメンテナンスバナーを表示します。",
       "usersDesc": "アカウント、ロール、BAN、月間API上限オーバーライドを管理します。",
       "patreonTitle": "Patreonとティア",
       "patreonDesc": "連携済みPatreon会員、ティア上限、同期状態を確認します。",
-      "emailTitle": "メールと送信停止",
-      "emailDesc": "SESバウンスによる送信停止リストと送信履歴を確認します。",
-      "queuesTitle": "データ管理とキュー",
-      "queuesDesc": "pg-bossキュー監視、失敗ジョブ再実行、各種更新を実行します。",
-      "catalogueTitle": "メディアカタログ",
-      "catalogueDesc": "公開中のアニメ・ドラマ・YouTube・オーディオブックを閲覧します。",
-      "statsTitle": "コーパス統計とカバー率",
-      "statsDesc": "語彙カバー率、翻訳内訳、収録時間を確認します。",
       "statusTitle": "ステータスページ",
       "statusDesc": "status.nadeshiko.co を新しいタブで開きます。"
     }

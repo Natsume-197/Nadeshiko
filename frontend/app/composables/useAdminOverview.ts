@@ -2,12 +2,7 @@ import type { AdminOverview } from '@brigadasos/nadeshiko-sdk';
 import {
   mdiAccountGroupOutline,
   mdiBullhornOutline,
-  mdiChartBar,
-  mdiDatabaseCogOutline,
-  mdiEmailAlertOutline,
   mdiHeartOutline,
-  mdiMessageAlertOutline,
-  mdiMovieOpenOutline,
   mdiOpenInNew,
   mdiShieldCrownOutline,
   mdiThumbUpOutline,
@@ -15,7 +10,7 @@ import {
 } from '@mdi/js';
 import { handleApiError } from '~/utils/apiError';
 
-export type AdminCategoryId = 'moderation' | 'community' | 'site' | 'catalogue';
+export type AdminCategoryId = 'moderation' | 'community' | 'site';
 
 export interface AdminDirectoryBadge {
   text?: string;
@@ -32,7 +27,6 @@ export interface AdminDirectoryItem {
   icon: string;
   to?: string;
   href?: string;
-  status: 'live' | 'planned';
   badge?: (overview: AdminOverview | null) => AdminDirectoryBadge | null;
 }
 
@@ -40,11 +34,10 @@ export const ADMIN_CATEGORIES: readonly { id: AdminCategoryId; labelKey: string 
   { id: 'moderation', labelKey: 'adminDashboard.categories.moderation' },
   { id: 'community', labelKey: 'adminDashboard.categories.community' },
   { id: 'site', labelKey: 'adminDashboard.categories.site' },
-  { id: 'catalogue', labelKey: 'adminDashboard.categories.catalogue' },
 ] as const;
 
 export const ADMIN_DIRECTORY_ITEMS: readonly AdminDirectoryItem[] = [
-  // Moderation & quality
+  // Moderation
   {
     id: 'reports',
     category: 'moderation',
@@ -52,17 +45,7 @@ export const ADMIN_DIRECTORY_ITEMS: readonly AdminDirectoryItem[] = [
     descriptionKey: 'adminDashboard.items.reportsDesc',
     icon: mdiShieldCrownOutline,
     to: '/admin/reports',
-    status: 'live',
     badge: (o) => (o && o.reports.open > 0 ? { text: `${o.reports.open}`, tone: 'brand' } : null),
-  },
-  {
-    id: 'feedback',
-    category: 'moderation',
-    titleKey: 'adminDashboard.items.feedbackTitle',
-    descriptionKey: 'adminDashboard.items.feedbackDesc',
-    icon: mdiMessageAlertOutline,
-    status: 'planned',
-    badge: (o) => (o && o.feedback.unhandled > 0 ? { text: `${o.feedback.unhandled}`, tone: 'warning' } : null),
   },
 
   // Community
@@ -73,7 +56,6 @@ export const ADMIN_DIRECTORY_ITEMS: readonly AdminDirectoryItem[] = [
     descriptionKey: 'adminDashboard.items.requestsDesc',
     icon: mdiThumbUpOutline,
     to: '/admin/requests',
-    status: 'live',
     badge: (o) =>
       o && o.requests.open > 0
         ? { text: `${o.requests.open}`, tone: o.requests.boostedOpen > 0 ? 'warning' : 'brand' }
@@ -86,7 +68,6 @@ export const ADMIN_DIRECTORY_ITEMS: readonly AdminDirectoryItem[] = [
     descriptionKey: 'adminDashboard.items.roadmapDesc',
     icon: mdiTimelineClockOutline,
     to: '/admin/roadmap',
-    status: 'live',
   },
   {
     id: 'announcement',
@@ -95,7 +76,6 @@ export const ADMIN_DIRECTORY_ITEMS: readonly AdminDirectoryItem[] = [
     descriptionKey: 'adminDashboard.items.announcementDesc',
     icon: mdiBullhornOutline,
     to: '/admin/announcement',
-    status: 'live',
     badge: (o) => (o?.announcement.active ? { key: 'adminDashboard.status.bannerActive', tone: 'warning' } : null),
   },
 
@@ -107,7 +87,6 @@ export const ADMIN_DIRECTORY_ITEMS: readonly AdminDirectoryItem[] = [
     descriptionKey: 'adminDashboard.items.usersDesc',
     icon: mdiAccountGroupOutline,
     to: '/admin/users',
-    status: 'live',
     badge: (o) => (o ? { text: `${o.users.total}`, tone: 'neutral' } : null),
   },
   {
@@ -117,65 +96,15 @@ export const ADMIN_DIRECTORY_ITEMS: readonly AdminDirectoryItem[] = [
     descriptionKey: 'adminDashboard.items.patreonDesc',
     icon: mdiHeartOutline,
     to: '/admin/patreon',
-    status: 'live',
     badge: (o) => (o && o.users.activePatrons > 0 ? { text: `${o.users.activePatrons}`, tone: 'success' } : null),
   },
   {
-    id: 'email-suppressions',
-    category: 'site',
-    titleKey: 'adminDashboard.items.emailTitle',
-    descriptionKey: 'adminDashboard.items.emailDesc',
-    icon: mdiEmailAlertOutline,
-    status: 'planned',
-    badge: (o) => (o && o.email.suppressed > 0 ? { text: `${o.email.suppressed}`, tone: 'warning' } : null),
-  },
-
-  // Catalogue & data
-  {
-    id: 'queues',
-    category: 'catalogue',
-    titleKey: 'adminDashboard.items.queuesTitle',
-    descriptionKey: 'adminDashboard.items.queuesDesc',
-    icon: mdiDatabaseCogOutline,
-    status: 'planned',
-    badge: (o) => {
-      if (!o) return null;
-      if (o.queues.failed > 0) {
-        return { key: 'adminDashboard.status.failedJobs', params: { count: o.queues.failed }, tone: 'danger' };
-      }
-      if (o.queues.queued + o.queues.active > 0) {
-        return { text: `${o.queues.queued + o.queues.active}`, tone: 'neutral' };
-      }
-      return null;
-    },
-  },
-  {
-    id: 'media-catalogue',
-    category: 'catalogue',
-    titleKey: 'adminDashboard.items.catalogueTitle',
-    descriptionKey: 'adminDashboard.items.catalogueDesc',
-    icon: mdiMovieOpenOutline,
-    to: '/media',
-    status: 'live',
-    badge: (o) => (o ? { text: `${o.catalogue.media}`, tone: 'neutral' } : null),
-  },
-  {
-    id: 'corpus-stats',
-    category: 'catalogue',
-    titleKey: 'adminDashboard.items.statsTitle',
-    descriptionKey: 'adminDashboard.items.statsDesc',
-    icon: mdiChartBar,
-    to: '/stats',
-    status: 'live',
-  },
-  {
     id: 'status-page',
-    category: 'catalogue',
+    category: 'site',
     titleKey: 'adminDashboard.items.statusTitle',
     descriptionKey: 'adminDashboard.items.statusDesc',
     icon: mdiOpenInNew,
     href: 'https://status.nadeshiko.co',
-    status: 'live',
   },
 ];
 

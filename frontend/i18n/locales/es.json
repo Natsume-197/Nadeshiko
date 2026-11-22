@@ -1938,9 +1938,7 @@
       "refresh": "Actualizar contadores"
     },
     "status": {
-      "bannerActive": "Banner activo",
-      "failedJobs": "{count} jobs fallidos",
-      "soon": "Fase 2"
+      "bannerActive": "Banner activo"
     },
     "pulse": {
       "users": "{count} usuarios",
@@ -1951,27 +1949,16 @@
     "categories": {
       "moderation": "Moderación y calidad",
       "community": "Comunidad",
-      "site": "Sitio y usuarios",
-      "catalogue": "Catálogo y datos"
+      "site": "Sitio y usuarios"
     },
     "items": {
       "reportsDesc": "Revisa, filtra y resuelve reportes abiertos en lote.",
-      "feedbackTitle": "Bandeja de feedback",
-      "feedbackDesc": "Lee mensajes del widget con contexto técnico y enlace a PostHog.",
       "requestsDesc": "Gestiona pedidos de contenido, boosts de patrons y avisos de publicación.",
       "roadmapDesc": "Crea, ordena y actualiza los ítems del roadmap público.",
       "announcementDesc": "Muestra un banner global informativo, de aviso o mantenimiento.",
       "usersDesc": "Gestiona cuentas, roles, baneos y excepciones de cuota mensual de API.",
       "patreonTitle": "Patreon y tiers",
       "patreonDesc": "Consulta membresías de Patreon vinculadas, límites por tier y sincronización.",
-      "emailTitle": "Correos y supresiones",
-      "emailDesc": "Revisa supresiones por rebote en SES y registros de correos.",
-      "queuesTitle": "Datos y colas (pg-boss)",
-      "queuesDesc": "Supervisa colas de fondo, reintenta jobs fallidos y lanza refrescos.",
-      "catalogueTitle": "Catálogo de medios",
-      "catalogueDesc": "Explora anime, J-dramas, canales de YouTube y audiolibros publicados.",
-      "statsTitle": "Estadísticas y cobertura",
-      "statsDesc": "Consulta cobertura de vocabulario, traducciones y horas de diálogo.",
       "statusTitle": "Página de estado",
       "statusDesc": "Abre status.nadeshiko.co en una nueva pestaña."
     }

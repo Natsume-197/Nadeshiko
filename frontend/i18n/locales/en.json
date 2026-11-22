@@ -1938,9 +1938,7 @@
       "refresh": "Refresh counts"
     },
     "status": {
-      "bannerActive": "Banner live",
-      "failedJobs": "{count} failed jobs",
-      "soon": "Phase 2"
+      "bannerActive": "Banner live"
     },
     "pulse": {
       "users": "{count} users",
@@ -1951,27 +1949,16 @@
     "categories": {
       "moderation": "Moderation & Quality",
       "community": "Community",
-      "site": "Site & Users",
-      "catalogue": "Catalogue & Data"
+      "site": "Site & Users"
     },
     "items": {
       "reportsDesc": "Review, filter and bulk-resolve open reports.",
-      "feedbackTitle": "Feedback Inbox",
-      "feedbackDesc": "Read feedback widget messages with page context and PostHog session links.",
       "requestsDesc": "Manage content requests, patron boosts and release notifications.",
       "roadmapDesc": "Create, order and update public roadmap items.",
       "announcementDesc": "Display a site-wide info, warning or maintenance banner.",
       "usersDesc": "Manage accounts, roles, bans and monthly API quota overrides.",
       "patreonTitle": "Patreon & Tiers",
       "patreonDesc": "Inspect linked Patreon memberships, tier limits and sync status.",
-      "emailTitle": "Emails & Suppressions",
-      "emailDesc": "Check SES bounce suppressions and lifecycle email logs.",
-      "queuesTitle": "Data Management & Queues",
-      "queuesDesc": "Monitor pg-boss queues, retry failed jobs and trigger corpus refreshes.",
-      "catalogueTitle": "Media Catalogue",
-      "catalogueDesc": "Browse published anime, J-dramas, YouTube channels and audiobooks.",
-      "statsTitle": "Corpus Stats & Coverage",
-      "statsDesc": "View word frequency coverage, translation breakdown and dialogue hours.",
       "statusTitle": "Public Status Page",
       "statusDesc": "Open status.nadeshiko.co in a new tab."
     }

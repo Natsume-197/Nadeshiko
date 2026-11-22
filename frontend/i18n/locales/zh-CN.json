@@ -1938,9 +1938,7 @@
       "refresh": "刷新计数"
     },
     "status": {
-      "bannerActive": "公告生效中",
-      "failedJobs": "{count} 个失败任务",
-      "soon": "第 2 阶段"
+      "bannerActive": "公告生效中"
     },
     "pulse": {
       "users": "{count} 位用户",
@@ -1951,27 +1949,16 @@
     "categories": {
       "moderation": "审核与质量",
       "community": "社区",
-      "site": "站点与用户",
-      "catalogue": "目录与数据"
+      "site": "站点与用户"
     },
     "items": {
       "reportsDesc": "筛选并批量处理待审核的举报。",
-      "feedbackTitle": "反馈收件箱",
-      "feedbackDesc": "查看反馈内容、页面上下文与 PostHog 会话链接。",
       "requestsDesc": "管理内容请求、赞助者加速与上线通知。",
       "roadmapDesc": "创建、排序并更新公开路线图条目。",
       "announcementDesc": "显示全站通知、警告或维护横幅。",
       "usersDesc": "管理账号、角色、封禁及每月 API 配额覆盖。",
       "patreonTitle": "Patreon 与等级",
       "patreonDesc": "查看已绑定的 Patreon 会员、等级限额与同步状态。",
-      "emailTitle": "邮件与退信拦截",
-      "emailDesc": "查看 SES 退信拦截列表与邮件发送日志。",
-      "queuesTitle": "数据管理与队列",
-      "queuesDesc": "监控 pg-boss 队列、重试失败任务并触发数据刷新。",
-      "catalogueTitle": "媒体目录",
-      "catalogueDesc": "浏览已发布的动画、日剧、YouTube 频道与有声书。",
-      "statsTitle": "语料统计与覆盖率",
-      "statsDesc": "查看词频覆盖率、翻译分布与对话时长。",
       "statusTitle": "服务状态页",
       "statusDesc": "在新标签页打开 status.nadeshiko.co。"
     }
