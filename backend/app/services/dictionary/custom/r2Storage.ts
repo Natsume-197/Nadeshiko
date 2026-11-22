@@ -224,15 +224,23 @@ export async function uploadArtifactToR2(storageKey: string, localFilePath: stri
   if (!r2) return;
 
   const { size } = await stat(localFilePath);
-  await r2Client(r2).send(
-    new PutObjectCommand({
-      Bucket: r2.bucket,
-      Key: r2ObjectKey(storageKey, r2.prefix),
-      Body: createReadStream(localFilePath),
-      ContentLength: size,
-      ContentType: 'application/vnd.sqlite3',
-    }),
-  );
+  const body = createReadStream(localFilePath);
+  try {
+    await r2Client(r2).send(
+      new PutObjectCommand({
+        Bucket: r2.bucket,
+        Key: r2ObjectKey(storageKey, r2.prefix),
+        Body: body,
+        ContentLength: size,
+        ContentType: 'application/vnd.sqlite3',
+      }),
+    );
+  } finally {
+    if (!body.destroyed) {
+      body.on('error', () => {});
+      body.destroy();
+    }
+  }
 }
 
 /**
