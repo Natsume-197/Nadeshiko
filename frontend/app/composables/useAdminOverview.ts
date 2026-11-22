@@ -13,9 +13,9 @@ import { handleApiError } from '~/utils/apiError';
 export type AdminCategoryId = 'moderation' | 'community' | 'site';
 
 export interface AdminDirectoryBadge {
-  text?: string;
+  /** Formatted with the reader's locale; ignored when `key` is set. */
+  count?: number;
   key?: string;
-  params?: Record<string, unknown>;
   tone: 'brand' | 'warning' | 'danger' | 'success' | 'neutral';
 }
 
@@ -25,8 +25,9 @@ export interface AdminDirectoryItem {
   titleKey: string;
   descriptionKey: string;
   icon: string;
-  to?: string;
-  href?: string;
+  /** Locale-relative app path, or an absolute URL when `external` is set. */
+  to: string;
+  external?: boolean;
   badge?: (overview: AdminOverview | null) => AdminDirectoryBadge | null;
 }
 
@@ -45,7 +46,7 @@ export const ADMIN_DIRECTORY_ITEMS: readonly AdminDirectoryItem[] = [
     descriptionKey: 'adminDashboard.items.reportsDesc',
     icon: mdiShieldCrownOutline,
     to: '/admin/reports',
-    badge: (o) => (o && o.reports.open > 0 ? { text: `${o.reports.open}`, tone: 'brand' } : null),
+    badge: (o) => (o && o.reports.open > 0 ? { count: o.reports.open, tone: 'brand' } : null),
   },
 
   // Community
@@ -58,7 +59,7 @@ export const ADMIN_DIRECTORY_ITEMS: readonly AdminDirectoryItem[] = [
     to: '/admin/requests',
     badge: (o) =>
       o && o.requests.open > 0
-        ? { text: `${o.requests.open}`, tone: o.requests.boostedOpen > 0 ? 'warning' : 'brand' }
+        ? { count: o.requests.open, tone: o.requests.boostedOpen > 0 ? 'warning' : 'brand' }
         : null,
   },
   {
@@ -87,7 +88,7 @@ export const ADMIN_DIRECTORY_ITEMS: readonly AdminDirectoryItem[] = [
     descriptionKey: 'adminDashboard.items.usersDesc',
     icon: mdiAccountGroupOutline,
     to: '/admin/users',
-    badge: (o) => (o ? { text: `${o.users.total}`, tone: 'neutral' } : null),
+    badge: (o) => (o ? { count: o.users.total, tone: 'neutral' } : null),
   },
   {
     id: 'patreon',
@@ -96,7 +97,7 @@ export const ADMIN_DIRECTORY_ITEMS: readonly AdminDirectoryItem[] = [
     descriptionKey: 'adminDashboard.items.patreonDesc',
     icon: mdiHeartOutline,
     to: '/admin/patreon',
-    badge: (o) => (o && o.users.activePatrons > 0 ? { text: `${o.users.activePatrons}`, tone: 'success' } : null),
+    badge: (o) => (o && o.users.activePatrons > 0 ? { count: o.users.activePatrons, tone: 'success' } : null),
   },
   {
     id: 'status-page',
@@ -104,39 +105,31 @@ export const ADMIN_DIRECTORY_ITEMS: readonly AdminDirectoryItem[] = [
     titleKey: 'adminDashboard.items.statusTitle',
     descriptionKey: 'adminDashboard.items.statusDesc',
     icon: mdiOpenInNew,
-    href: 'https://status.nadeshiko.co',
+    to: 'https://status.nadeshiko.co',
+    external: true,
   },
 ];
 
+/** Live counts for the dashboard badges; refetched each time the dashboard mounts. */
 export function useAdminOverview() {
-  const overview = useState<AdminOverview | null>('admin-overview-data', () => null);
-  const isLoading = useState<boolean>('admin-overview-loading', () => false);
-  const hasLoaded = useState<boolean>('admin-overview-loaded', () => false);
-
-  async function refresh() {
-    if (isLoading.value) return;
-    isLoading.value = true;
-    try {
-      overview.value = await useNadeshikoSdk().getAdminOverview();
-      hasLoaded.value = true;
-    } catch (error) {
-      handleApiError('admin:overview-fetch-failed', error);
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  async function ensureLoaded() {
-    if (!hasLoaded.value && !isLoading.value) {
-      await refresh();
-    }
-  }
-
-  return {
-    overview,
-    isLoading,
-    hasLoaded,
+  const {
+    data: overview,
+    status,
     refresh,
-    ensureLoaded,
-  };
+  } = useLazyAsyncData(
+    'admin-overview',
+    async () => {
+      try {
+        return await useNadeshikoSdk().getAdminOverview();
+      } catch (error) {
+        handleApiError('admin:overview-fetch-failed', error);
+        return null;
+      }
+    },
+    { server: false, default: () => null },
+  );
+
+  const isLoading = computed(() => status.value === 'pending');
+
+  return { overview, isLoading, refresh };
 }

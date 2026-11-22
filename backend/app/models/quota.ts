@@ -41,7 +41,15 @@ export function patreonQuotaTier(
   if (membership?.patronStatus !== 'active_patron') return null;
   if (now - membership.membershipCheckedAt.getTime() > PATREON_QUOTA_STALE_MS) return null;
 
-  const entitled = new Set(membership.entitledTierIds ?? []);
+  return highestEntitledTier(tiers, membership.entitledTierIds ?? []);
+}
+
+/**
+ * Of the quota tiers whose Patreon tier id is among `entitledTierIds`, the one with the highest monthly limit, or null.
+ * Matching only: no membership status or staleness check (`patreonQuotaTier` adds those).
+ */
+export function highestEntitledTier(tiers: Iterable<Tier>, entitledTierIds: readonly string[]): Tier | null {
+  const entitled = new Set(entitledTierIds);
   let earned: Tier | null = null;
   for (const tier of tiers) {
     if (tier.patreonTierId == null || !entitled.has(tier.patreonTierId)) continue;

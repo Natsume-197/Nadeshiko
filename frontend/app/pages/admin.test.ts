@@ -14,7 +14,6 @@ const route = reactive<{
   query: {},
   fullPath: '/en/admin',
 });
-const ensureLoaded = vi.fn();
 
 vi.mock('vue-i18n', () => ({ useI18n: () => ({ t: (k: string) => k, locale: ref('en') }) }));
 vi.mock('vue-router', () => ({ useRoute: () => route }));
@@ -22,7 +21,6 @@ vi.stubGlobal('useLocalePath', () => (p: string) => `/en${p}`);
 vi.stubGlobal('definePageMeta', vi.fn());
 vi.stubGlobal('defineNuxtRouteMiddleware', (fn: unknown) => fn);
 vi.stubGlobal('navigateTo', vi.fn());
-vi.stubGlobal('useAdminOverview', () => ({ ensureLoaded }));
 
 import AdminShell from './admin.vue';
 
@@ -53,9 +51,15 @@ afterEach(() => {
 });
 
 describe('Admin shell', () => {
-  test('fetches overview on mount and hides the back link on /admin home', () => {
+  test('guards with the shared auth and admin middleware', () => {
+    render('/en/admin');
+    expect(definePageMeta).toHaveBeenCalledWith(
+      expect.objectContaining({ middleware: ['auth', 'locale-preference', 'require-admin'] }),
+    );
+  });
+
+  test('hides the back link on /admin home', () => {
     const wrapper = render('/en/admin');
-    expect(ensureLoaded).toHaveBeenCalledTimes(1);
     expect(wrapper.find('[data-testid="admin-back-home"]').exists()).toBe(false);
   });
 

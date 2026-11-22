@@ -31,25 +31,10 @@ export const s_AddSegmentToCollectionRequest = z.object({
 });
 
 export const s_AdminOverview = z.object({
-  reports: z.object({ open: z.coerce.number(), processing: z.coerce.number() }),
-  requests: z.object({
-    open: z.coerce.number(),
-    planned: z.coerce.number(),
-    inProgress: z.coerce.number(),
-    boostedOpen: z.coerce.number(),
-  }),
-  feedback: z.object({ unhandled: z.coerce.number(), total: z.coerce.number() }),
-  users: z.object({
-    total: z.coerce.number(),
-    newLast7d: z.coerce.number(),
-    activePatrons: z.coerce.number(),
-    banned: z.coerce.number(),
-  }),
-  catalogue: z.object({ media: z.coerce.number(), episodes: z.coerce.number(), segments: z.coerce.number() }),
-  queues: z.object({ queued: z.coerce.number(), active: z.coerce.number(), failed: z.coerce.number() }),
-  email: z.object({ suppressed: z.coerce.number() }),
+  reports: z.object({ open: z.coerce.number() }),
+  requests: z.object({ open: z.coerce.number(), boostedOpen: z.coerce.number() }),
+  users: z.object({ total: z.coerce.number(), activePatrons: z.coerce.number() }),
   announcement: z.object({ active: PermissiveBoolean }),
-  generatedAt: z.iso.datetime({ offset: true }),
 });
 
 export const s_AdminPatreonCampaignMember = z.object({
@@ -66,12 +51,10 @@ export const s_AdminPatreonCampaignMember = z.object({
   lastChargeDate: z.iso.datetime({ offset: true }).nullable(),
   entitledTierIds: z.array(z.string()),
   patreonTierTitles: z.array(z.string()),
-  resolvedTierId: z.string().nullable(),
   resolvedTierName: z.string().nullable(),
   unmatchedTierIds: z.array(z.string()),
   linkedUserId: z.coerce.number().nullable(),
   linkedUsername: z.string().nullable(),
-  linkedEmail: z.string().nullable(),
   matchedUserId: z.coerce.number().nullable(),
   matchedUsername: z.string().nullable(),
 });
@@ -83,8 +66,7 @@ export const s_AdminPatreonConnection = z.object({
   patreonUserId: z.string(),
   fullName: z.string().nullable(),
   patronStatus: z.string().nullable(),
-  entitledAmountCents: z.coerce.number(),
-  entitledTierIds: z.array(z.string()),
+  monthlyAmountCents: z.coerce.number(),
   resolvedTierId: z.string().nullable(),
   resolvedTierName: z.string().nullable(),
   effectiveQuotaLimit: z.coerce.number(),
@@ -691,7 +673,6 @@ export const s_AdminPatreonOverview = z.object({
   summary: z.object({
     totalLinked: z.coerce.number(),
     active: z.coerce.number(),
-    stale: z.coerce.number(),
     issues: z.coerce.number(),
     campaignActive: z.coerce.number(),
     campaignUnlinkedActive: z.coerce.number(),
@@ -700,7 +681,6 @@ export const s_AdminPatreonOverview = z.object({
     campaignPayingEver: z.coerce.number(),
   }),
   campaign: z.object({
-    configured: PermissiveBoolean,
     status: z.enum(['ok', 'unconfigured', 'unauthorized', 'error']),
     errorMessage: z.string().nullable(),
     fetchedAt: z.iso.datetime({ offset: true }).nullable(),

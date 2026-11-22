@@ -37,38 +37,15 @@ export type t_AdminOverview = {
   announcement: {
     active: boolean;
   };
-  catalogue: {
-    episodes: number;
-    media: number;
-    segments: number;
-  };
-  email: {
-    suppressed: number;
-  };
-  feedback: {
-    total: number;
-    unhandled: number;
-  };
-  generatedAt: string;
-  queues: {
-    active: number;
-    failed: number;
-    queued: number;
-  };
   reports: {
     open: number;
-    processing: number;
   };
   requests: {
     boostedOpen: number;
-    inProgress: number;
     open: number;
-    planned: number;
   };
   users: {
     activePatrons: number;
-    banned: number;
-    newLast7d: number;
     total: number;
   };
 };
@@ -81,7 +58,6 @@ export type t_AdminPatreonCampaignMember = {
   lastChargeDate: string | null;
   lastChargeStatus: string | null;
   lifetimeSupportCents: number;
-  linkedEmail: string | null;
   linkedUserId: number | null;
   linkedUsername: string | null;
   matchedUserId: number | null;
@@ -92,7 +68,6 @@ export type t_AdminPatreonCampaignMember = {
   patreonUserId: string | null;
   patronStatus: string | null;
   pledgeStart: string | null;
-  resolvedTierId: string | null;
   resolvedTierName: string | null;
   unmatchedTierIds: string[];
 };
@@ -100,14 +75,13 @@ export type t_AdminPatreonCampaignMember = {
 export type t_AdminPatreonConnection = {
   effectiveQuotaLimit: number;
   email: string;
-  entitledAmountCents: number;
-  entitledTierIds: string[];
   fullName: string | null;
   hasIssue: boolean;
   isActive: boolean;
   isStale: boolean;
   linkedAt: string;
   membershipCheckedAt: string;
+  monthlyAmountCents: number;
   patreonUserId: string;
   patronStatus: string | null;
   quotaSource: 'override' | 'tier' | 'patreon' | 'legacy_column' | 'default';
@@ -120,7 +94,6 @@ export type t_AdminPatreonConnection = {
 
 export type t_AdminPatreonOverview = {
   campaign: {
-    configured: boolean;
     errorMessage: string | null;
     fetchedAt: string | null;
     members: t_AdminPatreonCampaignMember[];
@@ -147,7 +120,6 @@ export type t_AdminPatreonOverview = {
     campaignPayingEver: number;
     campaignUnlinkedActive: number;
     issues: number;
-    stale: number;
     totalLinked: number;
   };
   tiers: {

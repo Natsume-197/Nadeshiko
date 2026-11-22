@@ -7,7 +7,6 @@ const getAdminPatreonOverview = vi.fn();
 const refreshAdminPatreonConnection = vi.fn();
 const unlinkAdminPatreonConnection = vi.fn();
 const refreshAllAdminPatreonConnections = vi.fn();
-const refreshAdminOverview = vi.fn();
 const useToastSuccess = vi.fn();
 
 vi.stubGlobal('useI18n', () => ({
@@ -21,7 +20,6 @@ vi.stubGlobal('useFormat', () => ({
   formatRelativeTime: (s: string) => s,
 }));
 vi.stubGlobal('useLocalePath', () => (p: string) => `/en${p}`);
-vi.stubGlobal('useAdminOverview', () => ({ refresh: refreshAdminOverview }));
 vi.stubGlobal('useToastSuccess', useToastSuccess);
 vi.stubGlobal('useNadeshikoSdk', () => ({
   getAdminPatreonOverview,
@@ -41,7 +39,6 @@ function makePayload() {
     summary: {
       totalLinked: 2,
       active: 1,
-      stale: 1,
       issues: 1,
       campaignActive: 2,
       campaignUnlinkedActive: 1,
@@ -50,7 +47,6 @@ function makePayload() {
       campaignPayingEver: 3,
     },
     campaign: {
-      configured: true,
       status: 'ok',
       errorMessage: null,
       fetchedAt: '2026-11-22T12:00:00.000Z',
@@ -67,14 +63,11 @@ function makePayload() {
           pledgeStart: '2026-08-01T00:00:00.000Z',
           lastChargeStatus: 'Paid',
           lastChargeDate: '2026-11-01T00:00:00.000Z',
-          entitledTierIds: ['28118736'],
           patreonTierTitles: ['Flower'],
-          resolvedTierId: 'pro',
           resolvedTierName: 'Flower',
           unmatchedTierIds: [],
           linkedUserId: 10,
           linkedUsername: 'hanako',
-          linkedEmail: 'hanako@example.com',
           matchedUserId: null,
           matchedUsername: null,
         },
@@ -90,14 +83,11 @@ function makePayload() {
           pledgeStart: '2026-11-15T00:00:00.000Z',
           lastChargeStatus: 'Declined',
           lastChargeDate: '2026-11-15T00:00:00.000Z',
-          entitledTierIds: ['28118736'],
           patreonTierTitles: ['Flower'],
-          resolvedTierId: 'pro',
           resolvedTierName: 'Flower',
           unmatchedTierIds: [],
           linkedUserId: null,
           linkedUsername: null,
-          linkedEmail: null,
           matchedUserId: 42,
           matchedUsername: 'newbie_jp',
         },
@@ -113,14 +103,11 @@ function makePayload() {
           pledgeStart: '2026-01-10T00:00:00.000Z',
           lastChargeStatus: 'Paid',
           lastChargeDate: '2026-05-10T00:00:00.000Z',
-          entitledTierIds: [],
           patreonTierTitles: [],
-          resolvedTierId: null,
           resolvedTierName: null,
           unmatchedTierIds: [],
           linkedUserId: null,
           linkedUsername: null,
-          linkedEmail: null,
           matchedUserId: null,
           matchedUsername: null,
         },
@@ -136,14 +123,11 @@ function makePayload() {
           pledgeStart: null,
           lastChargeStatus: null,
           lastChargeDate: null,
-          entitledTierIds: [],
           patreonTierTitles: [],
-          resolvedTierId: null,
           resolvedTierName: null,
           unmatchedTierIds: [],
           linkedUserId: null,
           linkedUsername: null,
-          linkedEmail: null,
           matchedUserId: null,
           matchedUsername: null,
         },
@@ -169,8 +153,7 @@ function makePayload() {
         patreonUserId: 'p-10',
         fullName: 'Hanako',
         patronStatus: 'active_patron',
-        entitledAmountCents: 1000,
-        entitledTierIds: ['28118736'],
+        monthlyAmountCents: 1000,
         resolvedTierId: 'pro',
         resolvedTierName: 'Flower',
         effectiveQuotaLimit: 30000,
@@ -189,8 +172,7 @@ function makePayload() {
         patreonUserId: 'p-11',
         fullName: 'Taro',
         patronStatus: 'active_patron',
-        entitledAmountCents: 1000,
-        entitledTierIds: ['unknown-tier'],
+        monthlyAmountCents: 1000,
         resolvedTierId: null,
         resolvedTierName: null,
         effectiveQuotaLimit: 5000,
@@ -289,6 +271,33 @@ describe('PatreonManager', () => {
     expect(wrapper.find('[data-testid="patreon-row-11"]').exists()).toBe(false);
   });
 
+  test('shows the campaign status alert and blanks campaign KPIs when Patreon is unavailable', async () => {
+    const payload = makePayload();
+    payload.campaign.status = 'unauthorized';
+    getAdminPatreonOverview.mockResolvedValue(payload);
+
+    const wrapper = await render();
+
+    expect(wrapper.get('[data-testid="patreon-campaign-alert"]').text()).toContain(
+      'adminPatreon.campaign.unauthorized',
+    );
+    expect(wrapper.get('[data-testid="kpi-monthly"]').text()).toBe('—');
+    expect(wrapper.get('[data-testid="kpi-unlinked"]').text()).toBe('—');
+    expect(wrapper.get('[data-testid="kpi-issues"]').text()).toBe('1');
+  });
+
+  test('keeps the unlink confirmation inline until cancelled', async () => {
+    const wrapper = await render();
+
+    await wrapper.get('[data-testid="campaign-unlink-10"]').trigger('click');
+    expect(wrapper.find('[data-testid="campaign-confirm-unlink-10"]').exists()).toBe(true);
+    const cancel = wrapper.get('[data-testid="campaign-confirm-unlink-10"]').element.nextElementSibling as HTMLElement;
+    cancel.click();
+    await flushPromises();
+    expect(wrapper.find('[data-testid="campaign-confirm-unlink-10"]').exists()).toBe(false);
+    expect(unlinkAdminPatreonConnection).not.toHaveBeenCalled();
+  });
+
   test('triggers inline refresh from campaign tab, unlink from linked tab, and sync-all', async () => {
     const payload = makePayload();
     refreshAdminPatreonConnection.mockResolvedValue(payload.connections[0]);
@@ -301,6 +310,7 @@ describe('PatreonManager', () => {
     await wrapper.get('[data-testid="campaign-refresh-10"]').trigger('click');
     await flushPromises();
     expect(refreshAdminPatreonConnection).toHaveBeenCalledWith({ userId: 10 });
+    expect(getAdminPatreonOverview).toHaveBeenCalledTimes(2);
 
     // Switch to Linked tab to unlink taro
     await wrapper.get('[data-testid="tab-linked"]').trigger('click');

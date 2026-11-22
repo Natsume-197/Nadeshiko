@@ -20,6 +20,7 @@ import { httpUrl } from '~/utils/strings';
 import { DEFAULT_OG_IMAGE_PATH } from '~/utils/metaTags';
 
 type Status = 'PROPOSED' | 'CONSIDERING' | 'PLANNED' | 'IN_PROGRESS' | 'RELEASED' | 'DECLINED';
+/** The fields of a `/v1/roadmap` item this page reads. */
 interface RoadmapItem {
   id: string;
   kind: 'CONTENT' | 'FEATURE';
@@ -27,14 +28,12 @@ interface RoadmapItem {
   title: string;
   description: string;
   sourceUrl: string | null;
-  coverUrl: string | null;
   targetDate: string | null;
   introducedInVersion: string | null;
   sortOrder: number;
-  createdAt: string;
-  proposerName: string | null;
 }
-const { t, locale } = useI18n();
+const { t } = useI18n();
+const { formatDate } = useFormat();
 const localePath = useLocalePath();
 
 useSeoMeta({
@@ -47,7 +46,7 @@ useSeoMeta({
 });
 
 const { data, error } = await useAsyncData('roadmap', () =>
-  $fetch<{ items: RoadmapItem[]; patreonUrl: string }>('/v1/roadmap'),
+  $fetch<{ items: RoadmapItem[] }>('/v1/roadmap'),
 );
 const items = computed(() => data.value?.items ?? []);
 
@@ -92,55 +91,38 @@ const featureItems = computed(() =>
     }),
 );
 
-const featureIcons: Record<string, string> = {
-  'Content requests': mdiThumbUpOutline,
-  'Better search filters': mdiFilterOutline,
-  'Public roadmap': mdiMapOutline,
-  'Seven interface languages': mdiTranslate,
-  'YouTube playback in search': mdiYoutube,
-  'Word cards': mdiCardTextOutline,
-  'Your own dictionaries': mdiBookOpenPageVariantOutline,
-  'Rich Anki mining': mdiCardsOutline,
-  'Search history and familiar titles': mdiHistory,
-  'Granular API keys': mdiKeyOutline,
-};
-
-const featureTranslationKeys: Record<string, string> = {
-  'Content requests': 'contentRequests',
-  'Better search filters': 'searchFilters',
-  'Public roadmap': 'publicRoadmap',
-  'Seven interface languages': 'interfaceLanguages',
-  'YouTube playback in search': 'youtubePlayback',
-  'Word cards': 'wordCards',
-  'Your own dictionaries': 'ownDictionaries',
-  'Rich Anki mining': 'ankiMining',
-  'Search history and familiar titles': 'searchHistory',
-  'Granular API keys': 'apiKeys',
+/** Known feature entries, by their stored English title: icon and `roadmap.features.<key>` translation. */
+const knownFeatures: Record<string, { icon: string; key: string }> = {
+  'Content requests': { icon: mdiThumbUpOutline, key: 'contentRequests' },
+  'Better search filters': { icon: mdiFilterOutline, key: 'searchFilters' },
+  'Public roadmap': { icon: mdiMapOutline, key: 'publicRoadmap' },
+  'Seven interface languages': { icon: mdiTranslate, key: 'interfaceLanguages' },
+  'YouTube playback in search': { icon: mdiYoutube, key: 'youtubePlayback' },
+  'Word cards': { icon: mdiCardTextOutline, key: 'wordCards' },
+  'Your own dictionaries': { icon: mdiBookOpenPageVariantOutline, key: 'ownDictionaries' },
+  'Rich Anki mining': { icon: mdiCardsOutline, key: 'ankiMining' },
+  'Search history and familiar titles': { icon: mdiHistory, key: 'searchHistory' },
+  'Granular API keys': { icon: mdiKeyOutline, key: 'apiKeys' },
 };
 
 function featureIcon(item: RoadmapItem) {
-  return featureIcons[item.title] ?? mdiTools;
+  return knownFeatures[item.title]?.icon ?? mdiTools;
 }
 
 function featureTitle(item: RoadmapItem) {
-  const key = featureTranslationKeys[item.title];
+  const key = knownFeatures[item.title]?.key;
   return key ? t(`roadmap.features.${key}.title`) : item.title;
 }
 
 function featureDescription(item: RoadmapItem) {
-  const key = featureTranslationKeys[item.title];
+  const key = knownFeatures[item.title]?.key;
   return key ? t(`roadmap.features.${key}.description`) : item.description;
 }
 
 function featureDate(item: RoadmapItem) {
   if (item.status !== 'RELEASED') return t('roadmap.featureSoon');
   if (!item.targetDate) return t('roadmap.featureReleased');
-  return new Intl.DateTimeFormat(locale.value, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    timeZone: 'UTC',
-  }).format(new Date(`${item.targetDate}T00:00:00Z`));
+  return formatDate(`${item.targetDate}T00:00:00Z`, 'dateUtc');
 }
 </script>
 

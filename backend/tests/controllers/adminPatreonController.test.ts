@@ -17,9 +17,15 @@ const mockFetchCampaignMembers = vi.fn();
 
 vi.mock('@app/services/patreon/connection', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@app/services/patreon/connection')>();
+  const { ValidationFailedError } = await import('@app/errors');
   return {
     ...actual,
     isPatreonConfigured: () => mockIsPatreonConfigured(),
+    assertConfigured: () => {
+      if (!mockIsPatreonConfigured()) {
+        throw new ValidationFailedError({ connection: 'Patreon linking is not configured on this server.' });
+      }
+    },
     getPatreonConnection: (...args: unknown[]) => mockGetPatreonConnection(...args),
   };
 });
@@ -106,7 +112,6 @@ beforeEach(async () => {
   mockGetPatreonConnection.mockReset();
   mockRefreshPatreonMemberships.mockReset();
   mockFetchCampaignMembers.mockReset().mockResolvedValue({
-    configured: true,
     status: 'ok',
     errorMessage: null,
     fetchedAt: '2026-11-22T12:00:00.000Z',
@@ -131,6 +136,8 @@ describe('GET /v1/admin/patreon', () => {
     await seedConnection(core.users.regular.id, {
       patreonUserId: 'p-active',
       fullName: 'Active Patron',
+      // Pledged through iOS: Patreon reports the Apple markup, the campaign list carries the tier's list price.
+      entitledAmountCents: 1467,
       entitledTierIds: ['tier-flower'],
       membershipCheckedAt: new Date(),
     });
@@ -170,6 +177,23 @@ describe('GET /v1/admin/patreon', () => {
       }),
     );
 
+    // Manually assigned a lower tier, but also a linked Flower patron: Patreon outranks the assignment
+    await seedTier('basic', { displayName: 'Basic', monthlyQuotaLimit: 10000, sortOrder: 10 });
+    const manualAndPatronUser = await User.save(
+      User.create({
+        username: 'manual-and-patron',
+        email: 'manual-and-patron@example.com',
+        isActive: true,
+        isVerified: true,
+        tierId: 'basic',
+      }),
+    );
+    await seedConnection(manualAndPatronUser.id, {
+      patreonUserId: 'p-manual',
+      entitledTierIds: ['tier-flower'],
+      membershipCheckedAt: new Date(),
+    });
+
     // Existing Nadeshiko user who paid on Patreon with the same email (different casing) but hasn't linked OAuth yet
     const emailMatchedUser = await User.save(
       User.create({
@@ -181,7 +205,6 @@ describe('GET /v1/admin/patreon', () => {
     );
 
     mockFetchCampaignMembers.mockResolvedValue({
-      configured: true,
       status: 'ok',
       errorMessage: null,
       fetchedAt: '2026-11-22T12:00:00.000Z',
@@ -253,9 +276,8 @@ describe('GET /v1/admin/patreon', () => {
     expect(res.status).toBe(200);
     expect(res.body.configured).toBe(true);
     expect(res.body.summary).toEqual({
-      totalLinked: 3,
-      active: 2,
-      stale: 1,
+      totalLinked: 4,
+      active: 3,
       issues: 2,
       campaignActive: 2,
       campaignUnlinkedActive: 1,
@@ -289,13 +311,14 @@ describe('GET /v1/admin/patreon', () => {
       patreonTierId: 'tier-flower',
       monthlyQuotaLimit: 30000,
       monthlyRequestBoosts: 5,
-      activePatronCount: 1,
+      activePatronCount: 2,
       campaignPatronCount: 2,
       campaignMonthlyCents: 2000,
     });
 
     const activeRow = res.body.connections.find((c: { userId: number }) => c.userId === core.users.regular.id);
     expect(activeRow).toMatchObject({
+      monthlyAmountCents: 1000,
       resolvedTierId: 'pro',
       resolvedTierName: 'Flower',
       effectiveQuotaLimit: 30000,
@@ -316,6 +339,8 @@ describe('GET /v1/admin/patreon', () => {
 
     const unmatchedRow = res.body.connections.find((c: { userId: number }) => c.userId === unknownTierUser.id);
     expect(unmatchedRow).toMatchObject({
+      // Not in the campaign list, so there is no list price to normalize to.
+      monthlyAmountCents: 1000,
       resolvedTierId: null,
       unmatchedTierIds: ['tier-mystery-999'],
       hasIssue: true,
@@ -328,6 +353,12 @@ describe('GET /v1/admin/patreon', () => {
           quotaOverride: 20000,
           effectiveQuotaLimit: 20000,
           quotaSource: 'override',
+        }),
+        expect.objectContaining({
+          userId: manualAndPatronUser.id,
+          tierName: 'Basic',
+          effectiveQuotaLimit: 30000,
+          quotaSource: 'patreon',
         }),
       ]),
     );

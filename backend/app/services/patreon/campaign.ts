@@ -1,18 +1,12 @@
 import { config } from '@config/config';
 import { logger } from '@config/log';
 import { Cache, createCacheNamespace } from '@lib/cache';
+import { type PatreonResource, relationshipTierIds } from './jsonapi';
 
 /** Cache campaign members for 5 minutes so opening `/admin/patreon` does not hammer Patreon's rate limit. */
 export const PATREON_CAMPAIGN_CACHE = createCacheNamespace('patreonCampaignMembers');
 const CAMPAIGN_CACHE_TTL_MS = 5 * 60_000;
 const MAX_PAGES = 10;
-
-interface PatreonResource {
-  id: string;
-  type: string;
-  attributes?: Record<string, unknown>;
-  relationships?: Record<string, { data?: { id: string; type: string } | Array<{ id: string; type: string }> | null }>;
-}
 
 interface CampaignMembersApiResponse {
   data?: PatreonResource[];
@@ -39,7 +33,6 @@ export interface CampaignMemberRecord {
 export type CampaignFetchStatus = 'ok' | 'unconfigured' | 'unauthorized' | 'error';
 
 export interface CampaignMembersSnapshot {
-  configured: boolean;
   status: CampaignFetchStatus;
   errorMessage: string | null;
   fetchedAt: string | null;
@@ -49,6 +42,17 @@ export interface CampaignMembersSnapshot {
 export function isPatreonCreatorConfigured(): boolean {
   return Boolean(config.PATREON_CREATOR_ACCESS_TOKEN && config.PATREON_CAMPAIGN_ID);
 }
+
+function failedSnapshot(
+  status: Exclude<CampaignFetchStatus, 'ok'>,
+  errorMessage: string | null = null,
+): CampaignMembersSnapshot {
+  return { status, errorMessage, fetchedAt: null, members: [] };
+}
+
+const str = (value: unknown): string | null => (typeof value === 'string' ? value : null);
+const trimmed = (value: unknown): string | null => str(value)?.trim() || null;
+const num = (value: unknown): number | null => (typeof value === 'number' ? value : null);
 
 function buildMembersUrl(campaignId: string): string {
   const url = new URL(`https://www.patreon.com/api/oauth2/v2/campaigns/${encodeURIComponent(campaignId)}/members`);
@@ -72,17 +76,15 @@ function parseMember(
   const attrs = item.attributes ?? {};
   const userRel = item.relationships?.user?.data;
   const patreonUserId = userRel && !Array.isArray(userRel) ? userRel.id : null;
-  const tiersRel = item.relationships?.currently_entitled_tiers?.data;
-  const entitledTierIds = Array.isArray(tiersRel) ? tiersRel.filter((t) => t.type === 'tier').map((t) => t.id) : [];
+  const entitledTierIds = relationshipTierIds(item, 'currently_entitled_tiers');
   const patreonTierTitles = entitledTierIds
     .map((id) => tierTitlesById.get(id))
     .filter((title): title is string => Boolean(title));
 
-  const memberName = typeof attrs.full_name === 'string' && attrs.full_name.trim() ? attrs.full_name.trim() : null;
+  const memberName = trimmed(attrs.full_name);
   const userName = patreonUserId ? (userNamesById.get(patreonUserId) ?? null) : null;
-  const patronStatus = typeof attrs.patron_status === 'string' ? attrs.patron_status : null;
-  const entitledAmountCents =
-    typeof attrs.currently_entitled_amount_cents === 'number' ? attrs.currently_entitled_amount_cents : 0;
+  const patronStatus = str(attrs.patron_status);
+  const entitledAmountCents = num(attrs.currently_entitled_amount_cents) ?? 0;
   // Prefer the Patreon tier's USD list price so Apple iOS's +43% IAP markup does not inflate monthly revenue.
   // Fall back to `entitledAmountCents` for active custom pledges that are not attached to a paid tier.
   const tierAmountCents = entitledTierIds.reduce((max, id) => Math.max(max, tierAmountsById.get(id) ?? 0), 0);
@@ -93,19 +95,14 @@ function parseMember(
     memberId: item.id,
     patreonUserId,
     fullName: memberName ?? userName ?? '—',
-    email: typeof attrs.email === 'string' && attrs.email.trim() ? attrs.email.trim() : null,
+    email: trimmed(attrs.email),
     patronStatus,
     entitledAmountCents,
     monthlyAmountCents,
-    lifetimeSupportCents:
-      typeof attrs.campaign_lifetime_support_cents === 'number'
-        ? attrs.campaign_lifetime_support_cents
-        : typeof attrs.lifetime_support_cents === 'number'
-          ? attrs.lifetime_support_cents
-          : 0,
-    pledgeStart: typeof attrs.pledge_relationship_start === 'string' ? attrs.pledge_relationship_start : null,
-    lastChargeStatus: typeof attrs.last_charge_status === 'string' ? attrs.last_charge_status : null,
-    lastChargeDate: typeof attrs.last_charge_date === 'string' ? attrs.last_charge_date : null,
+    lifetimeSupportCents: num(attrs.campaign_lifetime_support_cents) ?? num(attrs.lifetime_support_cents) ?? 0,
+    pledgeStart: str(attrs.pledge_relationship_start),
+    lastChargeStatus: str(attrs.last_charge_status),
+    lastChargeDate: str(attrs.last_charge_date),
     entitledTierIds,
     patreonTierTitles,
   };
@@ -117,13 +114,7 @@ function parseMember(
  */
 export async function fetchCampaignMembers(force = false): Promise<CampaignMembersSnapshot> {
   if (!isPatreonCreatorConfigured()) {
-    return {
-      configured: false,
-      status: 'unconfigured',
-      errorMessage: null,
-      fetchedAt: null,
-      members: [],
-    };
+    return failedSnapshot('unconfigured');
   }
 
   if (force) {
@@ -150,24 +141,15 @@ export async function fetchCampaignMembers(force = false): Promise<CampaignMembe
 
       if (response.status === 401 || response.status === 403) {
         logger.warn({ status: response.status }, 'Patreon Creator Access Token rejected by Patreon API');
-        return {
-          configured: true,
-          status: 'unauthorized',
-          errorMessage: `Patreon API returned HTTP ${response.status}. Renew PATREON_CREATOR_ACCESS_TOKEN.`,
-          fetchedAt: null,
-          members: [],
-        };
+        return failedSnapshot(
+          'unauthorized',
+          `Patreon API returned HTTP ${response.status}. Renew PATREON_CREATOR_ACCESS_TOKEN.`,
+        );
       }
 
       if (!response.ok) {
         logger.warn({ status: response.status }, 'Patreon campaign members request failed');
-        return {
-          configured: true,
-          status: 'error',
-          errorMessage: `Patreon API returned HTTP ${response.status}.`,
-          fetchedAt: null,
-          members: [],
-        };
+        return failedSnapshot('error', `Patreon API returned HTTP ${response.status}.`);
       }
 
       const payload = (await response.json()) as CampaignMembersApiResponse;
@@ -191,13 +173,7 @@ export async function fetchCampaignMembers(force = false): Promise<CampaignMembe
     }
   } catch (err) {
     logger.warn({ err }, 'Could not reach Patreon API for campaign members');
-    return {
-      configured: true,
-      status: 'error',
-      errorMessage: err instanceof Error ? err.message : 'Network error calling Patreon API.',
-      fetchedAt: null,
-      members: [],
-    };
+    return failedSnapshot('error', err instanceof Error ? err.message : 'Network error calling Patreon API.');
   }
 
   const members = rawMembers.map((item) => parseMember(item, tierTitlesById, tierAmountsById, userNamesById));
@@ -213,7 +189,6 @@ export async function fetchCampaignMembers(force = false): Promise<CampaignMembe
   });
 
   const snapshot: CampaignMembersSnapshot = {
-    configured: true,
     status: 'ok',
     errorMessage: null,
     fetchedAt: new Date().toISOString(),

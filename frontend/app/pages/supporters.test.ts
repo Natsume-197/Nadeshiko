@@ -13,6 +13,7 @@ const navigateTo = vi.fn();
 vi.stubGlobal('$fetch', $fetch);
 vi.stubGlobal('navigateTo', navigateTo);
 vi.stubGlobal('useI18n', () => ({ t: (k: string) => k, locale: ref('en') }));
+vi.stubGlobal('useFormat', () => ({ formatDate: (v: string, style: string) => `${style}:${v}` }));
 vi.stubGlobal('useLocalePath', () => (p: string) => `/en${p}`);
 vi.stubGlobal('useRequestURL', () => new URL('https://nadeshiko.test/supporters'));
 vi.stubGlobal('useSeoMeta', vi.fn());
@@ -35,12 +36,9 @@ const featureRoadmapItem = {
   title: 'Custom themes',
   description: 'Personalize the palette.',
   sourceUrl: null,
-  coverUrl: null,
   targetDate: '2026-12-01',
   introducedInVersion: null,
   sortOrder: 0,
-  createdAt: '2026-11-01',
-  proposerName: null,
 };
 
 const contentRoadmapItem = {
@@ -50,12 +48,9 @@ const contentRoadmapItem = {
   title: 'Frieren',
   description: '',
   sourceUrl: null,
-  coverUrl: null,
   targetDate: '2026-12-01',
   introducedInVersion: null,
   sortOrder: 0,
-  createdAt: '2026-11-01',
-  proposerName: null,
 };
 
 const mounted: { unmount: () => void }[] = [];
@@ -86,10 +81,7 @@ const isShown = (el: ReturnType<typeof panel>) => (el.element as HTMLElement).st
 
 beforeEach(() => {
   $fetch.mockReset();
-  $fetch.mockResolvedValue({
-    items: [featureRoadmapItem, contentRoadmapItem],
-    patreonUrl: 'https://www.patreon.com/NadeshikoApp',
-  });
+  $fetch.mockResolvedValue({ items: [featureRoadmapItem, contentRoadmapItem] });
   navigateTo.mockReset();
   history.replaceState(null, '', '/en/supporters');
 });

@@ -6,8 +6,7 @@ required:
   - patreonUserId
   - fullName
   - patronStatus
-  - entitledAmountCents
-  - entitledTierIds
+  - monthlyAmountCents
   - resolvedTierId
   - resolvedTierName
   - effectiveQuotaLimit
@@ -40,14 +39,10 @@ properties:
     type: string
     nullable: true
     example: active_patron
-  entitledAmountCents:
+  monthlyAmountCents:
     type: integer
+    description: Monthly USD cents, normalized to the Patreon tier list price when the member appears in the live campaign list (excludes Apple iOS IAP markup); otherwise Patreon's raw entitled amount.
     example: 1000
-  entitledTierIds:
-    type: array
-    items:
-      type: string
-    example: ["28118736"]
   resolvedTierId:
     type: string
     nullable: true

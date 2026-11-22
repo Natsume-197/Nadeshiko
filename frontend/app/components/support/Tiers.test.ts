@@ -1,23 +1,27 @@
 // @vitest-environment happy-dom
 import { flushPromises, mount } from '@vue/test-utils';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { defineComponent, reactive, ref } from 'vue';
+import { defineComponent, reactive } from 'vue';
 
 /** The support section on the Supporters page states the tiers from the shared list, links directly to each tier's
  * Patreon checkout URL, and guides readers to link their Patreon account (or highlights their active tier). */
 
-const $fetch = vi.fn();
+vi.mock('~/utils/apiError', () => ({ handleApiError: vi.fn() }));
+
+const getMe = vi.fn();
 const openLoginModal = vi.fn();
 const storeState = reactive({ isLoggedIn: false });
 
-vi.stubGlobal('$fetch', $fetch);
+vi.stubGlobal('useNadeshikoSdk', () => ({ getMe }));
 vi.stubGlobal('userStore', () => storeState);
 vi.stubGlobal('useLoginModal', () => ({ openLoginModal }));
 vi.stubGlobal('useI18n', () => ({
   t: (k: string, p?: Record<string, unknown>) => (p ? `${k}(${JSON.stringify(p)})` : k),
-  locale: ref('en'),
 }));
-vi.stubGlobal('useFormat', () => ({ formatNumber: (n: number) => String(n) }));
+vi.stubGlobal('useFormat', () => ({
+  formatNumber: (n: number) => String(n),
+  formatUsdWhole: (n: number) => `$${n}`,
+}));
 vi.stubGlobal('useLocalePath', () => (p: string) => `/en${p}`);
 
 import { SUPPORT_TIERS, tierCheckoutUrl } from '~/utils/supportTiers';
@@ -45,7 +49,7 @@ async function render() {
 }
 
 beforeEach(() => {
-  $fetch.mockReset();
+  getMe.mockReset();
   openLoginModal.mockReset();
   storeState.isLoggedIn = false;
 });
@@ -112,7 +116,7 @@ describe('Support section', () => {
 
   test('guides signed-in free readers to Settings #connections', async () => {
     storeState.isLoggedIn = true;
-    $fetch.mockResolvedValue({ quota: { limit: 5000, tier: { id: 'free', displayName: 'Free' } } });
+    getMe.mockResolvedValue({ quota: { limit: 5000, tier: { id: 'free', displayName: 'Free' } } });
 
     const wrapper = await render();
 
@@ -124,7 +128,7 @@ describe('Support section', () => {
 
   test('highlights the active tier and hides the link strip for signed-in supporters', async () => {
     storeState.isLoggedIn = true;
-    $fetch.mockResolvedValue({ quota: { limit: 30000, tier: { id: 'pro', displayName: 'Flower' } } });
+    getMe.mockResolvedValue({ quota: { limit: 30000, tier: { id: 'pro', displayName: 'Flower' } } });
 
     const wrapper = await render();
 

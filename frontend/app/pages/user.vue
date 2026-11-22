@@ -59,22 +59,7 @@ definePageMeta({
   robots: false,
   // Nuxt applies parent middleware to all /user/** children, parent first.
   // URL-specific redirects remain in the pages that own them.
-  middleware: [
-    defineNuxtRouteMiddleware(() => {
-      const store = userStore();
-      if (!store.isLoggedIn) {
-        return navigateTo(useLocalePath()('/'), { replace: true });
-      }
-    }),
-    'locale-preference',
-    defineNuxtRouteMiddleware((to) => {
-      const store = userStore();
-      const { localizedPath } = splitLocalePrefix(to.path);
-      if (localizedPath.startsWith('/user/admin') && !store.isAdmin) {
-        return navigateTo(useLocalePath()('/user/settings'), { replace: true });
-      }
-    }),
-  ],
+  middleware: ['auth', 'locale-preference'],
 });
 
 const mobileTabsRef = ref<HTMLElement | null>(null);

@@ -12,6 +12,10 @@ export function useFormat() {
   const formatUsdCents = (cents: number | null | undefined): string =>
     cents == null ? '-' : n(cents / 100, 'currencyUsd');
 
+  /** Whole-dollar USD amount, for prices that never carry cents: 5 -> "$5". */
+  const formatUsdWhole = (dollars: number | null | undefined): string =>
+    dollars == null ? '-' : n(dollars, 'currencyUsdWhole');
+
   const toDate = (value: Date | string | number | null | undefined): Date | null => {
     if (value == null) return null;
     const date = value instanceof Date ? value : new Date(value);
@@ -62,5 +66,5 @@ export function useFormat() {
     return formatDate(date, 'short');
   };
 
-  return { formatNumber, formatPercent, formatUsdCents, formatDate, formatRelativeTime };
+  return { formatNumber, formatPercent, formatUsdCents, formatUsdWhole, formatDate, formatRelativeTime };
 }

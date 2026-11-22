@@ -13,12 +13,10 @@ required:
   - lastChargeDate
   - entitledTierIds
   - patreonTierTitles
-  - resolvedTierId
   - resolvedTierName
   - unmatchedTierIds
   - linkedUserId
   - linkedUsername
-  - linkedEmail
   - matchedUserId
   - matchedUsername
 properties:
@@ -61,9 +59,6 @@ properties:
     type: array
     items:
       type: string
-  resolvedTierId:
-    type: string
-    nullable: true
   resolvedTierName:
     type: string
     nullable: true
@@ -75,9 +70,6 @@ properties:
     type: integer
     nullable: true
   linkedUsername:
-    type: string
-    nullable: true
-  linkedEmail:
     type: string
     nullable: true
   matchedUserId:

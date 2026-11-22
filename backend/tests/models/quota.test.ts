@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   PATREON_QUOTA_STALE_MS,
+  highestEntitledTier,
   patreonQuotaTier,
   resolveQuotaLimit,
   unmatchedPatreonTierIds,
@@ -156,6 +157,14 @@ describe('patreonQuotaTier', () => {
   it('never grants a tier that has no Patreon tier id', () => {
     const handMade = { id: 'partner', monthlyQuotaLimit: 1_000_000, patreonTierId: null } as unknown as Tier;
     expect(patreonQuotaTier([...tiers, handMade], patron([NADESHIKO]), NOW)?.id).toBe('max');
+  });
+});
+
+describe('highestEntitledTier', () => {
+  it('matches by tier id alone, ignoring membership status and age', () => {
+    expect(highestEntitledTier(tiers, [SEED, FLOWER])?.id).toBe('pro');
+    expect(highestEntitledTier(tiers, ['99999999'])).toBeNull();
+    expect(highestEntitledTier(tiers, [])).toBeNull();
   });
 });
 

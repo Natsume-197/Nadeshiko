@@ -14,9 +14,7 @@ import {
   ContentRequest,
   ContentRequestKind,
   ContentRequestStatus,
-  EmailSuppression,
   Episode,
-  Feedback,
   Media,
   PatreonConnection,
   Report,
@@ -63,7 +61,7 @@ beforeEach(() => {
 });
 
 describe('GET /v1/admin/overview', () => {
-  it('returns live counts across moderation, community, feedback, users, catalogue, email, announcement and queues', async () => {
+  it('returns open report and request counts, users, patrons and announcement state', async () => {
     const media = await Media.save(
       Media.create({
         publicId: 'ov-media-001',
@@ -186,11 +184,6 @@ describe('GET /v1/admin/overview', () => {
       }),
     ]);
 
-    await Feedback.save([
-      Feedback.create({ body: 'Unhandled note', handledAt: null }),
-      Feedback.create({ body: 'Handled note', handledAt: new Date() }),
-    ]);
-
     await PatreonConnection.save(
       PatreonConnection.create({
         userId: core.users.regular.id,
@@ -205,15 +198,6 @@ describe('GET /v1/admin/overview', () => {
       }),
     );
 
-    await EmailSuppression.save(
-      EmailSuppression.create({
-        address: 'bounced-overview@example.com',
-        cause: 'hard_bounce',
-        reason: 'mailbox unavailable',
-        suppressedAt: new Date(),
-      }),
-    );
-
     await Announcement.save(
       Announcement.create({
         message: 'Maintenance tonight',
@@ -224,35 +208,29 @@ describe('GET /v1/admin/overview', () => {
 
     const res = await request(app).get('/v1/admin/overview');
     expect(res.status).toBe(200);
-    expect(res.body.reports).toEqual({ open: 1, processing: 1 });
-    expect(res.body.requests).toEqual({ open: 1, planned: 1, inProgress: 1, boostedOpen: 1 });
-    expect(res.body.feedback).toEqual({ unhandled: 1, total: 2 });
+    expect(res.body).toEqual({
+      reports: { open: 1 },
+      requests: { open: 1, boostedOpen: 1 },
+      users: { total: expect.any(Number), activePatrons: 1 },
+      announcement: { active: true },
+    });
     expect(res.body.users.total).toBeGreaterThanOrEqual(5);
-    expect(res.body.users.activePatrons).toBe(1);
-    expect(res.body.catalogue).toEqual({ media: 1, episodes: 1, segments: 1 });
-    expect(res.body.email).toEqual({ suppressed: 1 });
-    expect(res.body.announcement).toEqual({ active: true });
-    expect(typeof res.body.queues.queued).toBe('number');
-    expect(typeof res.body.queues.active).toBe('number');
-    expect(typeof res.body.queues.failed).toBe('number');
-    expect(Number.isNaN(Date.parse(res.body.generatedAt))).toBe(false);
   });
 
   it('serves cached overview until cleared', async () => {
     const first = await request(app).get('/v1/admin/overview');
     expect(first.status).toBe(200);
-    expect(first.body.feedback.unhandled).toBe(0);
+    expect(first.body.announcement.active).toBe(false);
 
-    await Feedback.save(Feedback.create({ body: 'New after cache', handledAt: null }));
+    await Announcement.save(Announcement.create({ message: 'New after cache', type: 'MAINTENANCE', active: true }));
 
     const cached = await request(app).get('/v1/admin/overview');
     expect(cached.status).toBe(200);
-    expect(cached.body.generatedAt).toBe(first.body.generatedAt);
-    expect(cached.body.feedback.unhandled).toBe(0);
+    expect(cached.body.announcement.active).toBe(false);
 
     Cache.invalidate(ADMIN_OVERVIEW_CACHE);
     const fresh = await request(app).get('/v1/admin/overview');
     expect(fresh.status).toBe(200);
-    expect(fresh.body.feedback.unhandled).toBe(1);
+    expect(fresh.body.announcement.active).toBe(true);
   });
 });

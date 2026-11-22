@@ -2890,10 +2890,6 @@ export type AdminOverview = {
          * Reports currently open and waiting for review.
          */
         open: number;
-        /**
-         * Reports currently being processed.
-         */
-        processing: number;
     };
     requests: {
         /**
@@ -2901,27 +2897,9 @@ export type AdminOverview = {
          */
         open: number;
         /**
-         * Content requests accepted as PLANNED.
-         */
-        planned: number;
-        /**
-         * Content requests currently IN_PROGRESS.
-         */
-        inProgress: number;
-        /**
          * Open content requests that have at least one patron boost.
          */
         boostedOpen: number;
-    };
-    feedback: {
-        /**
-         * Feedback submissions not yet marked handled.
-         */
-        unhandled: number;
-        /**
-         * Total stored feedback submissions.
-         */
-        total: number;
     };
     users: {
         /**
@@ -2929,51 +2907,9 @@ export type AdminOverview = {
          */
         total: number;
         /**
-         * Active user accounts created in the last 7 days.
-         */
-        newLast7d: number;
-        /**
          * Linked Patreon accounts with an active paid membership.
          */
         activePatrons: number;
-        /**
-         * Active user accounts currently banned.
-         */
-        banned: number;
-    };
-    catalogue: {
-        /**
-         * Total titles in the catalogue.
-         */
-        media: number;
-        /**
-         * Total episodes across all titles.
-         */
-        episodes: number;
-        /**
-         * Total dialogue segments across all titles.
-         */
-        segments: number;
-    };
-    queues: {
-        /**
-         * Background jobs waiting to run or retry in pg-boss.
-         */
-        queued: number;
-        /**
-         * Background jobs currently running in pg-boss.
-         */
-        active: number;
-        /**
-         * Background jobs in failed state in pg-boss.
-         */
-        failed: number;
-    };
-    email: {
-        /**
-         * Email addresses currently on the SES suppression list.
-         */
-        suppressed: number;
     };
     announcement: {
         /**
@@ -2981,10 +2917,6 @@ export type AdminOverview = {
          */
         active: boolean;
     };
-    /**
-     * Timestamp when this snapshot was computed.
-     */
-    generatedAt: string;
 };
 
 /**
@@ -3339,12 +3271,10 @@ export type AdminPatreonCampaignMember = {
     lastChargeDate: string;
     entitledTierIds: Array<string>;
     patreonTierTitles: Array<string>;
-    resolvedTierId: string;
     resolvedTierName: string;
     unmatchedTierIds: Array<string>;
     linkedUserId: number;
     linkedUsername: string;
-    linkedEmail: string;
     /**
      * Existing Nadeshiko user matched by lowercase email when the patron has not linked Patreon OAuth yet.
      */
@@ -3359,8 +3289,10 @@ export type AdminPatreonConnection = {
     patreonUserId: string;
     fullName: string;
     patronStatus: string;
-    entitledAmountCents: number;
-    entitledTierIds: Array<string>;
+    /**
+     * Monthly USD cents, normalized to the Patreon tier list price when the member appears in the live campaign list (excludes Apple iOS IAP markup); otherwise Patreon's raw entitled amount.
+     */
+    monthlyAmountCents: number;
     resolvedTierId: string;
     resolvedTierName: string;
     effectiveQuotaLimit: number;
@@ -3397,7 +3329,6 @@ export type AdminPatreonOverview = {
     summary: {
         totalLinked: number;
         active: number;
-        stale: number;
         issues: number;
         campaignActive: number;
         campaignUnlinkedActive: number;
@@ -3415,7 +3346,6 @@ export type AdminPatreonOverview = {
         campaignPayingEver: number;
     };
     campaign: {
-        configured: boolean;
         status: 'ok' | 'unconfigured' | 'unauthorized' | 'error';
         errorMessage: string;
         fetchedAt: string;

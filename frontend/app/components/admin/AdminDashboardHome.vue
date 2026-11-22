@@ -8,6 +8,7 @@ import {
 } from '~/composables/useAdminOverview';
 
 const { t } = useI18n();
+const { formatNumber } = useFormat();
 const localePath = useLocalePath();
 
 const { overview, isLoading, refresh } = useAdminOverview();
@@ -20,8 +21,7 @@ function itemsForCategory(category: AdminCategoryId) {
 }
 
 function badgeLabel(badge: AdminDirectoryBadge): string {
-  if (badge.key) return badge.params ? t(badge.key, badge.params) : t(badge.key);
-  return badge.text ?? '';
+  return badge.key ? t(badge.key) : formatNumber(badge.count);
 }
 
 function badgeClasses(tone: 'brand' | 'warning' | 'danger' | 'success' | 'neutral'): string {
@@ -60,7 +60,7 @@ function badgeClasses(tone: 'brand' | 'warning' | 'danger' | 'success' | 'neutra
         :aria-label="t('adminDashboard.nav.refresh')"
         :title="t('adminDashboard.nav.refresh')"
         class="inline-flex size-8 items-center justify-center rounded-lg border border-hairline bg-surface text-ink-muted transition-colors hover:bg-surface-hover hover:text-ink disabled:opacity-50"
-        @click="refresh"
+        @click="refresh()"
       >
         <UiBaseIcon :path="mdiRefresh" :size="16" :class="{ 'animate-spin': isLoading }" />
       </button>
@@ -77,18 +77,16 @@ function badgeClasses(tone: 'brand' | 'warning' | 'danger' | 'success' | 'neutra
         :data-testid="`admin-section-${cat.id}`"
         class="space-y-3"
       >
-        <div class="flex items-center justify-between border-b border-hairline pb-2">
-          <h2 class="text-xs font-semibold uppercase tracking-wider text-ink-faint">
-            {{ t(cat.labelKey) }}
-          </h2>
-        </div>
+        <h2 class="border-b border-hairline pb-2 text-xs font-semibold uppercase tracking-wider text-ink-faint">
+          {{ t(cat.labelKey) }}
+        </h2>
 
         <ul class="space-y-1">
           <li v-for="{ item, badge } in itemsForCategory(cat.id)" :key="item.id">
-            <!-- Internal route -->
             <NuxtLink
-              v-if="item.to"
-              :to="localePath(item.to)"
+              :to="item.external ? item.to : localePath(item.to)"
+              :target="item.external ? '_blank' : undefined"
+              :rel="item.external ? 'noopener noreferrer' : undefined"
               :data-testid="`admin-dir-${item.id}`"
               class="group flex items-start gap-3 rounded-lg px-2.5 py-2 transition-colors hover:bg-surface-hover"
             >
@@ -96,10 +94,11 @@ function badgeClasses(tone: 'brand' | 'warning' | 'danger' | 'success' | 'neutra
                 <UiBaseIcon :path="item.icon" :size="18" />
               </span>
               <span class="min-w-0 flex-1">
-                <span class="flex items-center gap-2">
+                <span :class="['flex items-center', item.external ? 'gap-1.5' : 'gap-2']">
                   <span class="text-sm font-medium text-ink group-hover:text-brand transition-colors">
                     {{ t(item.titleKey) }}
                   </span>
+                  <UiBaseIcon v-if="item.external" :path="mdiOpenInNew" :size="12" class="text-ink-faint" />
                   <span
                     v-if="badge"
                     :class="[
@@ -115,31 +114,6 @@ function badgeClasses(tone: 'brand' | 'warning' | 'danger' | 'success' | 'neutra
                 </span>
               </span>
             </NuxtLink>
-
-            <!-- External link -->
-            <a
-              v-else-if="item.href"
-              :href="item.href"
-              target="_blank"
-              rel="noopener noreferrer"
-              :data-testid="`admin-dir-${item.id}`"
-              class="group flex items-start gap-3 rounded-lg px-2.5 py-2 transition-colors hover:bg-surface-hover"
-            >
-              <span class="mt-0.5 shrink-0 text-brand">
-                <UiBaseIcon :path="item.icon" :size="18" />
-              </span>
-              <span class="min-w-0 flex-1">
-                <span class="flex items-center gap-1.5">
-                  <span class="text-sm font-medium text-ink group-hover:text-brand transition-colors">
-                    {{ t(item.titleKey) }}
-                  </span>
-                  <UiBaseIcon :path="mdiOpenInNew" :size="12" class="text-ink-faint" />
-                </span>
-                <span class="mt-0.5 block text-xs leading-snug text-ink-faint">
-                  {{ t(item.descriptionKey) }}
-                </span>
-              </span>
-            </a>
           </li>
         </ul>
       </div>

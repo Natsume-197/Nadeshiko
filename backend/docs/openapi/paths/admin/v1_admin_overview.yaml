@@ -5,9 +5,9 @@ get:
   operationId: getAdminOverview
   summary: Get live summary counts for the admin dashboard
   description: |
-    Returns lightweight aggregate counts across moderation queues, community requests,
-    feedback, users, catalogue totals, background job queues, email suppressions and
-    the global announcement banner for the admin launcher and navigation badges.
+    Returns lightweight aggregate counts (open reports, open and boosted content requests,
+    users, active patrons and whether the global announcement banner is on) for the admin
+    launcher and navigation badges.
 
   security:
     - ApiKey: [READ_ADMIN]

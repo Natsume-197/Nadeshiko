@@ -1,3 +1,5 @@
+import { PATREON_URL } from '#shared/utils/socialLinks';
+
 /**
  * The Patreon tiers as the site describes them: the Support page, and the hint on Developer settings.
  *
@@ -65,9 +67,12 @@ export const SUPPORT_TIERS: readonly SupportTier[] = [
   },
 ];
 
+/** The campaign slug, taken from the public Patreon link so the two cannot drift. */
+const PATREON_SLUG = new URL(PATREON_URL).pathname.replace(/^\/+|\/+$/g, '');
+
 /** Official Patreon checkout URL for a specific tier (matches Patreon API v2 `tier.attributes.url`). */
 export function tierCheckoutUrl(tier: SupportTier): string {
-  return `https://www.patreon.com/checkout/NadeshikoApp?rid=${tier.patreonTierId}`;
+  return `https://www.patreon.com/checkout/${PATREON_SLUG}?rid=${tier.patreonTierId}`;
 }
 
 export const HIGHEST_MONTHLY_API_REQUESTS = Math.max(...SUPPORT_TIERS.map((tier) => tier.monthlyApiRequests));

@@ -13,6 +13,7 @@ const impersonateUser = vi.fn();
 
 vi.stubGlobal('useNadeshikoSdk', () => ({ getAdminUsersWithProviders, banUser, unbanUser }));
 vi.stubGlobal('userStore', () => ({ impersonateUser }));
+vi.stubGlobal('useRoute', () => ({ path: '/admin/users', params: {}, query: {} }));
 // The count line is the only window onto which page the table thinks it is on,
 // so the stub has to carry its params -- one that returns the bare key makes
 // every pagination assertion below pass without looking at anything.

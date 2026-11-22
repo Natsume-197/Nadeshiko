@@ -10,17 +10,23 @@ import {
   PatreonConnection,
   Tier,
   User,
+  highestEntitledTier,
   patreonQuotaTier,
   resolveQuotaLimit,
   unmatchedPatreonTierIds,
 } from '@app/models';
-import { getPatreonConnection, isPatreonConfigured, unlinkPatreon } from '@app/services/patreon/connection';
+import {
+  assertConfigured,
+  getPatreonConnection,
+  isPatreonConfigured,
+  unlinkPatreon,
+} from '@app/services/patreon/connection';
 import { fetchCampaignMembers } from '@app/services/patreon/campaign';
 import { refreshPatreonMemberships } from '@app/workers/patreonMembershipRefreshWorker';
 import { ADMIN_OVERVIEW_CACHE } from '@app/controllers/adminDashboardController';
 import { invalidateUserCache } from '@app/middleware/authCacheStore';
 import { assertUser } from '@app/middleware/authentication';
-import { NotFoundError, ValidationFailedError } from '@app/errors';
+import { NotFoundError } from '@app/errors';
 import { Cache } from '@lib/cache';
 import { config } from '@config/config';
 import { logger } from '@config/log';
@@ -31,6 +37,7 @@ function buildConnectionDTO(
   tiers: Tier[],
   tierById: Map<string, Tier>,
   now: number,
+  normalizedMonthlyCents?: number,
 ): t_AdminPatreonConnection {
   const isStale = now - connection.membershipCheckedAt.getTime() > PATREON_QUOTA_STALE_MS;
   const earned = patreonQuotaTier(tiers, connection, now);
@@ -53,8 +60,7 @@ function buildConnectionDTO(
     patreonUserId: connection.patreonUserId,
     fullName: connection.fullName ?? null,
     patronStatus: connection.patronStatus ?? null,
-    entitledAmountCents: connection.entitledAmountCents,
-    entitledTierIds: connection.entitledTierIds ?? [],
+    monthlyAmountCents: normalizedMonthlyCents ?? connection.entitledAmountCents,
     resolvedTierId: earned?.id ?? null,
     resolvedTierName: earned?.displayName ?? null,
     effectiveQuotaLimit: resolved.limit,
@@ -70,15 +76,27 @@ function buildConnectionDTO(
 
 export const getAdminPatreonOverview: GetAdminPatreonOverview = async ({ query }, respond) => {
   const now = Date.now();
-  const [tiers, connectionRows, campaignSnapshot] = await Promise.all([
+  const [tiers, connectionRows, campaignSnapshot, manualUsers] = await Promise.all([
     Tier.find({ order: { sortOrder: 'ASC', id: 'ASC' } }),
     PatreonConnection.find({
       relations: { user: true },
       order: { membershipCheckedAt: 'DESC', id: 'DESC' },
     }),
     fetchCampaignMembers(query.refreshCampaign === true),
+    User.createQueryBuilder('u')
+      .where('u.is_active = true')
+      .andWhere('(u.quota_override IS NOT NULL OR (u.tier_id IS NOT NULL AND u.tier_id != :free))', { free: 'free' })
+      .orderBy('u.quota_override', 'DESC', 'NULLS LAST')
+      .addOrderBy('u.username', 'ASC')
+      .getMany(),
   ]);
   const tierById = new Map(tiers.map((tier) => [tier.id, tier]));
+  const campaignMonthlyByPatreonUserId = new Map(
+    campaignSnapshot.members
+      .filter((member) => member.patreonUserId)
+      .map((member) => [member.patreonUserId as string, member.monthlyAmountCents]),
+  );
+  const earnedTierByUserId = new Map<number, Tier | null>();
 
   const activeCountByTier = new Map<string, number>();
   const connectionByPatreonUserId = new Map<string, t_AdminPatreonConnection>();
@@ -86,7 +104,15 @@ export const getAdminPatreonOverview: GetAdminPatreonOverview = async ({ query }
 
   for (const row of connectionRows) {
     if (!row.user) continue;
-    const dto = buildConnectionDTO(row, row.user, tiers, tierById, now);
+    const dto = buildConnectionDTO(
+      row,
+      row.user,
+      tiers,
+      tierById,
+      now,
+      campaignMonthlyByPatreonUserId.get(row.patreonUserId),
+    );
+    earnedTierByUserId.set(row.user.id, patreonQuotaTier(tiers, row, now));
     connections.push(dto);
     connectionByPatreonUserId.set(dto.patreonUserId, dto);
     if (dto.resolvedTierId) {
@@ -118,31 +144,22 @@ export const getAdminPatreonOverview: GetAdminPatreonOverview = async ({ query }
     const linked = member.patreonUserId ? (connectionByPatreonUserId.get(member.patreonUserId) ?? null) : null;
     const matched =
       !linked && member.email ? (matchedUserByEmail.get(member.email.trim().toLowerCase()) ?? null) : null;
-    const earned = patreonQuotaTier(
-      tiers,
-      {
-        patronStatus: member.patronStatus,
-        entitledTierIds: member.entitledTierIds,
-        membershipCheckedAt: new Date(now),
-      },
-      now,
-    );
-    const unmatchedTierIds =
-      member.patronStatus === 'active_patron' ? unmatchedPatreonTierIds(tiers, member.entitledTierIds) : [];
+    // The campaign list is live from Patreon, so only the active status applies: there is no staleness to check.
+    const isActivePatron = member.patronStatus === 'active_patron';
+    const earned = isActivePatron ? highestEntitledTier(tiers, member.entitledTierIds) : null;
+    const unmatchedTierIds = isActivePatron ? unmatchedPatreonTierIds(tiers, member.entitledTierIds) : [];
 
-    if (member.patronStatus === 'active_patron' && earned) {
+    if (earned) {
       campaignCountByTier.set(earned.id, (campaignCountByTier.get(earned.id) ?? 0) + 1);
       campaignMonthlyByTier.set(earned.id, (campaignMonthlyByTier.get(earned.id) ?? 0) + member.monthlyAmountCents);
     }
 
     return {
       ...member,
-      resolvedTierId: earned?.id ?? null,
       resolvedTierName: earned?.displayName ?? null,
       unmatchedTierIds,
       linkedUserId: linked?.userId ?? null,
       linkedUsername: linked?.username ?? null,
-      linkedEmail: linked?.email ?? null,
       matchedUserId: matched?.id ?? null,
       matchedUsername: matched?.username ?? null,
     };
@@ -156,19 +173,13 @@ export const getAdminPatreonOverview: GetAdminPatreonOverview = async ({ query }
     (m) => m.lifetimeSupportCents > 0 || m.monthlyAmountCents > 0,
   ).length;
 
-  const manualUsers = await User.createQueryBuilder('u')
-    .where('u.is_active = true')
-    .andWhere('(u.quota_override IS NOT NULL OR (u.tier_id IS NOT NULL AND u.tier_id != :free))', { free: 'free' })
-    .orderBy('u.quota_override', 'DESC', 'NULLS LAST')
-    .addOrderBy('u.username', 'ASC')
-    .getMany();
-
   const manualGrants = manualUsers.map((user) => {
     const assignedTier = user.tierId ? (tierById.get(user.tierId) ?? null) : null;
     const resolved = resolveQuotaLimit({
       ...user,
       tier: assignedTier,
-      patreonTier: null,
+      // Same inputs as enforcement (resolveEffectiveQuota): a linked Patreon tier can outrank the manual one.
+      patreonTier: earnedTierByUserId.get(user.id) ?? null,
     });
     return {
       userId: user.id,
@@ -188,7 +199,6 @@ export const getAdminPatreonOverview: GetAdminPatreonOverview = async ({ query }
     summary: {
       totalLinked: connections.length,
       active: connections.filter((c) => c.isActive).length,
-      stale: connections.filter((c) => c.isStale).length,
       issues: connections.filter((c) => c.hasIssue).length,
       campaignActive: campaignActiveMembers.length,
       campaignUnlinkedActive,
@@ -197,7 +207,6 @@ export const getAdminPatreonOverview: GetAdminPatreonOverview = async ({ query }
       campaignPayingEver,
     },
     campaign: {
-      configured: campaignSnapshot.configured,
       status: campaignSnapshot.status,
       errorMessage: campaignSnapshot.errorMessage,
       fetchedAt: campaignSnapshot.fetchedAt,
@@ -220,11 +229,12 @@ export const getAdminPatreonOverview: GetAdminPatreonOverview = async ({ query }
 
 export const refreshAdminPatreonConnection: RefreshAdminPatreonConnection = async ({ params }, respond, req) => {
   const actor = assertUser(req);
-  if (!isPatreonConfigured()) {
-    throw new ValidationFailedError({ connection: 'Patreon linking is not configured on this server.' });
-  }
+  assertConfigured();
 
-  const user = await User.findOne({ where: { id: params.userId } });
+  const [user, tiers] = await Promise.all([
+    User.findOne({ where: { id: params.userId } }),
+    Tier.find({ order: { sortOrder: 'ASC', id: 'ASC' } }),
+  ]);
   if (!user) {
     throw new NotFoundError(`User with ID ${params.userId} not found`);
   }
@@ -237,7 +247,6 @@ export const refreshAdminPatreonConnection: RefreshAdminPatreonConnection = asyn
   invalidateUserCache(params.userId);
   Cache.invalidate(ADMIN_OVERVIEW_CACHE);
 
-  const tiers = await Tier.find({ order: { sortOrder: 'ASC', id: 'ASC' } });
   const tierById = new Map(tiers.map((tier) => [tier.id, tier]));
   const dto = buildConnectionDTO(refreshed, user, tiers, tierById, Date.now());
 
@@ -279,9 +288,7 @@ export const unlinkAdminPatreonConnection: UnlinkAdminPatreonConnection = async 
 
 export const refreshAllAdminPatreonConnections: RefreshAllAdminPatreonConnections = async (_params, respond, req) => {
   const actor = assertUser(req);
-  if (!isPatreonConfigured()) {
-    throw new ValidationFailedError({ connection: 'Patreon linking is not configured on this server.' });
-  }
+  assertConfigured();
 
   const result = await refreshPatreonMemberships();
   Cache.invalidate(ADMIN_OVERVIEW_CACHE);

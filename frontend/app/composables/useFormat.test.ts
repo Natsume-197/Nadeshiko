@@ -64,6 +64,21 @@ describe('percentages', () => {
   });
 });
 
+describe('US dollars', () => {
+  test('cents are divided into dollars before formatting', () => {
+    expect(useFormat().formatUsdCents(1467)).toBe('currencyUsd:14.67');
+  });
+
+  test('whole-dollar prices use the no-cents style', () => {
+    expect(useFormat().formatUsdWhole(5)).toBe('currencyUsdWhole:5');
+  });
+
+  test('a missing amount renders as a dash', () => {
+    expect(useFormat().formatUsdCents(null)).toBe('-');
+    expect(useFormat().formatUsdWhole(undefined)).toBe('-');
+  });
+});
+
 describe('dates', () => {
   test('default to the short shape', () => {
     expect(useFormat().formatDate(NOW)).toBe(`short:${NOW.toISOString()}`);

@@ -3985,9 +3985,9 @@ paths:
       operationId: getAdminOverview
       summary: Get live summary counts for the admin dashboard
       description: |
-        Returns lightweight aggregate counts across moderation queues, community requests,
-        feedback, users, catalogue totals, background job queues, email suppressions and
-        the global announcement banner for the admin launcher and navigation badges.
+        Returns lightweight aggregate counts (open reports, open and boosted content requests,
+        users, active patrons and whether the global announcement banner is on) for the admin
+        launcher and navigation badges.
       security:
         - ApiKey:
             - READ_ADMIN
@@ -9545,137 +9545,46 @@ components:
       required:
         - reports
         - requests
-        - feedback
         - users
-        - catalogue
-        - queues
-        - email
         - announcement
-        - generatedAt
       properties:
         reports:
           type: object
           required:
             - open
-            - processing
           properties:
             open:
               type: integer
               description: Reports currently open and waiting for review.
               example: 4
-            processing:
-              type: integer
-              description: Reports currently being processed.
-              example: 1
         requests:
           type: object
           required:
             - open
-            - planned
-            - inProgress
             - boostedOpen
           properties:
             open:
               type: integer
               description: Content requests waiting in OPEN status.
               example: 12
-            planned:
-              type: integer
-              description: Content requests accepted as PLANNED.
-              example: 5
-            inProgress:
-              type: integer
-              description: Content requests currently IN_PROGRESS.
-              example: 2
             boostedOpen:
               type: integer
               description: Open content requests that have at least one patron boost.
               example: 3
-        feedback:
-          type: object
-          required:
-            - unhandled
-            - total
-          properties:
-            unhandled:
-              type: integer
-              description: Feedback submissions not yet marked handled.
-              example: 6
-            total:
-              type: integer
-              description: Total stored feedback submissions.
-              example: 42
         users:
           type: object
           required:
             - total
-            - newLast7d
             - activePatrons
-            - banned
           properties:
             total:
               type: integer
               description: Active (non-deleted) user accounts.
               example: 1420
-            newLast7d:
-              type: integer
-              description: Active user accounts created in the last 7 days.
-              example: 38
             activePatrons:
               type: integer
               description: Linked Patreon accounts with an active paid membership.
               example: 7
-            banned:
-              type: integer
-              description: Active user accounts currently banned.
-              example: 2
-        catalogue:
-          type: object
-          required:
-            - media
-            - episodes
-            - segments
-          properties:
-            media:
-              type: integer
-              description: Total titles in the catalogue.
-              example: 420
-            episodes:
-              type: integer
-              description: Total episodes across all titles.
-              example: 5300
-            segments:
-              type: integer
-              description: Total dialogue segments across all titles.
-              example: 1580000
-        queues:
-          type: object
-          required:
-            - queued
-            - active
-            - failed
-          properties:
-            queued:
-              type: integer
-              description: Background jobs waiting to run or retry in pg-boss.
-              example: 3
-            active:
-              type: integer
-              description: Background jobs currently running in pg-boss.
-              example: 1
-            failed:
-              type: integer
-              description: Background jobs in failed state in pg-boss.
-              example: 0
-        email:
-          type: object
-          required:
-            - suppressed
-          properties:
-            suppressed:
-              type: integer
-              description: Email addresses currently on the SES suppression list.
-              example: 2
         announcement:
           type: object
           required:
@@ -9685,11 +9594,6 @@ components:
               type: boolean
               description: Whether a site-wide announcement banner is currently enabled.
               example: false
-        generatedAt:
-          type: string
-          format: date-time
-          description: Timestamp when this snapshot was computed.
-          example: '2026-11-21T21:50:00.000Z'
     ReportTargetType:
       type: string
       description: Kind of entity a report is about
@@ -10229,12 +10133,10 @@ components:
         - lastChargeDate
         - entitledTierIds
         - patreonTierTitles
-        - resolvedTierId
         - resolvedTierName
         - unmatchedTierIds
         - linkedUserId
         - linkedUsername
-        - linkedEmail
         - matchedUserId
         - matchedUsername
       properties:
@@ -10277,9 +10179,6 @@ components:
           type: array
           items:
             type: string
-        resolvedTierId:
-          type: string
-          nullable: true
         resolvedTierName:
           type: string
           nullable: true
@@ -10291,9 +10190,6 @@ components:
           type: integer
           nullable: true
         linkedUsername:
-          type: string
-          nullable: true
-        linkedEmail:
           type: string
           nullable: true
         matchedUserId:
@@ -10312,8 +10208,7 @@ components:
         - patreonUserId
         - fullName
         - patronStatus
-        - entitledAmountCents
-        - entitledTierIds
+        - monthlyAmountCents
         - resolvedTierId
         - resolvedTierName
         - effectiveQuotaLimit
@@ -10346,15 +10241,10 @@ components:
           type: string
           nullable: true
           example: active_patron
-        entitledAmountCents:
+        monthlyAmountCents:
           type: integer
+          description: Monthly USD cents, normalized to the Patreon tier list price when the member appears in the live campaign list (excludes Apple iOS IAP markup); otherwise Patreon's raw entitled amount.
           example: 1000
-        entitledTierIds:
-          type: array
-          items:
-            type: string
-          example:
-            - '28118736'
         resolvedTierId:
           type: string
           nullable: true
@@ -10418,7 +10308,6 @@ components:
           required:
             - totalLinked
             - active
-            - stale
             - issues
             - campaignActive
             - campaignUnlinkedActive
@@ -10429,8 +10318,6 @@ components:
             totalLinked:
               type: integer
             active:
-              type: integer
-            stale:
               type: integer
             issues:
               type: integer
@@ -10450,14 +10337,11 @@ components:
         campaign:
           type: object
           required:
-            - configured
             - status
             - errorMessage
             - fetchedAt
             - members
           properties:
-            configured:
-              type: boolean
             status:
               type: string
               enum:

@@ -1406,9 +1406,9 @@ export const getCollectionStats = <ThrowOnError extends boolean = false>(options
 /**
  * Get live summary counts for the admin dashboard
  *
- * Returns lightweight aggregate counts across moderation queues, community requests,
- * feedback, users, catalogue totals, background job queues, email suppressions and
- * the global announcement banner for the admin launcher and navigation badges.
+ * Returns lightweight aggregate counts (open reports, open and boosted content requests,
+ * users, active patrons and whether the global announcement banner is on) for the admin
+ * launcher and navigation badges.
  *
  */
 export const getAdminOverview = <ThrowOnError extends boolean = false>(options?: Options<GetAdminOverviewData, ThrowOnError>): RequestResult<GetAdminOverviewResponses, GetAdminOverviewErrors, ThrowOnError> => (options?.client ?? client).get<GetAdminOverviewResponses, GetAdminOverviewErrors, ThrowOnError>({

@@ -10,35 +10,50 @@ import {
   mdiArrowDown,
   mdiArrowUp,
   mdiCheckCircleOutline,
-  mdiLinkOff,
   mdiMagnify,
   mdiRefresh,
   mdiSwapVertical,
   mdiSync,
 } from '@mdi/js';
 import { handleApiError } from '~/utils/apiError';
+import PatreonLinkActions from './PatreonLinkActions.vue';
+
+type CampaignFilter = 'active' | 'unlinked' | 'paid' | 'all';
+type LinkedFilter = 'all' | 'active' | 'issues';
+type SortKey = 'monthly' | 'lifetime' | 'since';
+type ChipTone = 'brand' | 'warning' | 'danger';
+
+const CHIP_ACTIVE_CLASSES: Record<ChipTone, string> = {
+  brand: 'border-brand-solid bg-brand/15 text-brand font-semibold',
+  warning: 'border-amber-500/60 bg-amber-500/15 text-amber-300 font-semibold',
+  danger: 'border-red-500/60 bg-red-500/15 text-red-300 font-semibold',
+};
+
+const SORT_COLUMNS: readonly { key: SortKey; labelKey: string; alignRight: boolean }[] = [
+  { key: 'monthly', labelKey: 'adminPatreon.campaign.monthly', alignRight: true },
+  { key: 'lifetime', labelKey: 'adminPatreon.campaign.lifetime', alignRight: true },
+  { key: 'since', labelKey: 'adminPatreon.campaign.since', alignRight: false },
+];
 
 const { t } = useI18n();
 const { formatDate, formatNumber, formatRelativeTime, formatUsdCents } = useFormat();
 const localePath = useLocalePath();
-const { refresh: refreshAdminOverview } = useAdminOverview();
 
 const data = ref<AdminPatreonOverview | null>(null);
 const isLoading = ref(false);
 const isSyncingAll = ref(false);
 const refreshingUserId = ref<number | null>(null);
 const unlinkingUserId = ref<number | null>(null);
-const confirmingUnlinkUserId = ref<number | null>(null);
 
 const activeTab = ref<'campaign' | 'linked'>('campaign');
 
 const campaignSearch = ref('');
-const campaignFilter = ref<'active' | 'unlinked' | 'paid' | 'all'>('active');
-const campaignSortKey = ref<'default' | 'monthly' | 'lifetime' | 'since'>('default');
+const campaignFilter = ref<CampaignFilter>('active');
+const campaignSortKey = ref<'default' | SortKey>('default');
 const campaignSortDir = ref<'desc' | 'asc'>('desc');
 
 const searchQuery = ref('');
-const statusFilter = ref<'all' | 'active' | 'issues'>('all');
+const statusFilter = ref<LinkedFilter>('all');
 
 async function fetchPatreon(refreshCampaign = false) {
   isLoading.value = true;
@@ -53,6 +68,75 @@ async function fetchPatreon(refreshCampaign = false) {
   }
 }
 
+const campaignOk = computed(() => data.value?.campaign.status === 'ok');
+const canResync = computed(() => data.value?.configured ?? false);
+
+const kpis = computed(() => {
+  if (!data.value) return [];
+  const s = data.value.summary;
+  const ok = campaignOk.value;
+  return [
+    {
+      id: 'monthly',
+      label: t('adminPatreon.kpi.monthlyLabel'),
+      value: ok ? formatUsdCents(s.campaignMonthlyCents) : '—',
+      valueClass: ok && s.campaignMonthlyCents > 0 ? 'text-emerald-300' : 'text-ink',
+      sub: t('adminPatreon.kpi.monthlySub', { count: s.campaignActive }),
+    },
+    {
+      id: 'lifetime',
+      label: t('adminPatreon.kpi.lifetimeLabel'),
+      value: ok ? formatUsdCents(s.campaignLifetimeCents) : '—',
+      valueClass: 'text-ink',
+      sub: t('adminPatreon.kpi.lifetimeSub', { count: s.campaignPayingEver }),
+    },
+    {
+      id: 'unlinked',
+      label: t('adminPatreon.kpi.unlinkedLabel'),
+      value: ok ? formatNumber(s.campaignUnlinkedActive) : '—',
+      valueClass: !ok ? 'text-ink-faint' : s.campaignUnlinkedActive > 0 ? 'text-amber-300' : 'text-emerald-300',
+      sub: t('adminPatreon.kpi.unlinkedSub', { count: s.campaignActive }),
+    },
+    {
+      id: 'issues',
+      label: t('adminPatreon.kpi.issuesLabel'),
+      value: formatNumber(s.issues),
+      valueClass: s.issues > 0 ? 'text-red-300' : 'text-ink',
+      sub: t('adminPatreon.kpi.issuesSub', { count: s.totalLinked }),
+    },
+  ];
+});
+
+const campaignFilters = computed<{ value: CampaignFilter; tone: ChipTone; label: string }[]>(() => {
+  const s = data.value?.summary;
+  return [
+    { value: 'active', tone: 'brand', label: t('adminPatreon.filters.active', { count: s?.campaignActive ?? 0 }) },
+    {
+      value: 'unlinked',
+      tone: 'warning',
+      label: t('adminPatreon.campaign.unlinkedFilter', { count: s?.campaignUnlinkedActive ?? 0 }),
+    },
+    { value: 'paid', tone: 'brand', label: t('adminPatreon.campaign.paidFilter', { count: s?.campaignPayingEver ?? 0 }) },
+    { value: 'all', tone: 'brand', label: t('adminPatreon.filters.all', { count: data.value?.campaign.members.length ?? 0 }) },
+  ];
+});
+
+const linkedFilters = computed<{ value: LinkedFilter; tone: ChipTone; label: string }[]>(() => {
+  const s = data.value?.summary;
+  return [
+    { value: 'all', tone: 'brand', label: t('adminPatreon.filters.all', { count: s?.totalLinked ?? 0 }) },
+    { value: 'active', tone: 'brand', label: t('adminPatreon.filters.active', { count: s?.active ?? 0 }) },
+    { value: 'issues', tone: 'danger', label: t('adminPatreon.filters.issues', { count: s?.issues ?? 0 }) },
+  ];
+});
+
+function chipClasses(selected: boolean, tone: ChipTone): string[] {
+  return [
+    'rounded-lg border px-2.5 py-1 text-xs font-medium transition-colors',
+    selected ? CHIP_ACTIVE_CLASSES[tone] : 'border-hairline bg-surface text-ink-muted hover:bg-surface-hover hover:text-ink',
+  ];
+}
+
 const connectionsByUserId = computed(() => {
   const map = new Map<number, AdminPatreonConnection>();
   for (const conn of data.value?.connections ?? []) {
@@ -61,7 +145,7 @@ const connectionsByUserId = computed(() => {
   return map;
 });
 
-function toggleCampaignSort(key: 'monthly' | 'lifetime' | 'since') {
+function toggleCampaignSort(key: SortKey) {
   if (campaignSortKey.value === key) {
     campaignSortDir.value = campaignSortDir.value === 'desc' ? 'asc' : 'desc';
   } else {
@@ -70,7 +154,7 @@ function toggleCampaignSort(key: 'monthly' | 'lifetime' | 'since') {
   }
 }
 
-function sortIconFor(key: 'monthly' | 'lifetime' | 'since'): string {
+function sortIconFor(key: SortKey): string {
   if (campaignSortKey.value !== key) return mdiSwapVertical;
   return campaignSortDir.value === 'desc' ? mdiArrowDown : mdiArrowUp;
 }
@@ -182,15 +266,9 @@ function userSearchPath(username: string): string {
 async function refreshOne(userId: number) {
   refreshingUserId.value = userId;
   try {
-    const updated = await useNadeshikoSdk().refreshAdminPatreonConnection({ userId });
-    if (data.value) {
-      data.value = {
-        ...data.value,
-        connections: data.value.connections.map((c) => (c.userId === userId ? updated : c)),
-      };
-    }
+    await useNadeshikoSdk().refreshAdminPatreonConnection({ userId });
     useToastSuccess(t('adminPatreon.refreshOneSuccess'));
-    await Promise.all([fetchPatreon(false), refreshAdminOverview()]);
+    await fetchPatreon(false);
   } catch (error) {
     handleApiError('admin:patreon-refresh-one-failed', error, { toastKey: 'adminPatreon.refreshOneError' });
   } finally {
@@ -202,9 +280,8 @@ async function unlinkOne(userId: number) {
   unlinkingUserId.value = userId;
   try {
     await useNadeshikoSdk().unlinkAdminPatreonConnection({ userId });
-    confirmingUnlinkUserId.value = null;
     useToastSuccess(t('adminPatreon.unlinkSuccess'));
-    await Promise.all([fetchPatreon(false), refreshAdminOverview()]);
+    await fetchPatreon(false);
   } catch (error) {
     handleApiError('admin:patreon-unlink-failed', error, { toastKey: 'adminPatreon.unlinkError' });
   } finally {
@@ -217,7 +294,7 @@ async function syncAll() {
   try {
     const result = await useNadeshikoSdk().refreshAllAdminPatreonConnections();
     useToastSuccess(t('adminPatreon.syncAllSuccess', { checked: result.checked, failed: result.failed }));
-    await Promise.all([fetchPatreon(true), refreshAdminOverview()]);
+    await fetchPatreon(true);
   } catch (error) {
     handleApiError('admin:patreon-sync-all-failed', error, { toastKey: 'adminPatreon.syncAllError' });
   } finally {
@@ -270,7 +347,7 @@ onMounted(() => fetchPatreon(false));
         <button
           type="button"
           data-testid="patreon-sync-all"
-          :disabled="!data?.configured || isSyncingAll || (data?.summary.totalLinked ?? 0) === 0"
+          :disabled="!canResync || isSyncingAll || (data?.summary.totalLinked ?? 0) === 0"
           class="inline-flex h-9 items-center gap-1.5 rounded-lg bg-brand-solid px-3.5 text-xs font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-45"
           @click="syncAll"
         >
@@ -282,66 +359,15 @@ onMounted(() => fetchPatreon(false));
 
     <!-- Financial & health summary strip -->
     <div v-if="data" data-testid="patreon-kpi-strip" class="grid grid-cols-2 gap-3 lg:grid-cols-4">
-      <div class="rounded-xl border border-hairline bg-card-background px-4 py-3">
-        <div class="text-[11px] font-medium text-ink-faint">{{ t('adminPatreon.kpi.monthlyLabel') }}</div>
+      <div v-for="kpi in kpis" :key="kpi.id" class="rounded-xl border border-hairline bg-card-background px-4 py-3">
+        <div class="text-[11px] font-medium text-ink-faint">{{ kpi.label }}</div>
         <div
-          data-testid="kpi-monthly"
-          :class="[
-            'mt-1 text-2xl font-bold tracking-tight tabular-nums',
-            data.campaign.status === 'ok' && data.summary.campaignMonthlyCents > 0 ? 'text-emerald-300' : 'text-ink',
-          ]"
+          :data-testid="`kpi-${kpi.id}`"
+          :class="['mt-1 text-2xl font-bold tracking-tight tabular-nums', kpi.valueClass]"
         >
-          {{ data.campaign.status === 'ok' ? formatUsdCents(data.summary.campaignMonthlyCents) : '—' }}
+          {{ kpi.value }}
         </div>
-        <div class="mt-0.5 text-[11px] text-ink-faint">
-          {{ t('adminPatreon.kpi.monthlySub', { count: data.summary.campaignActive }) }}
-        </div>
-      </div>
-
-      <div class="rounded-xl border border-hairline bg-card-background px-4 py-3">
-        <div class="text-[11px] font-medium text-ink-faint">{{ t('adminPatreon.kpi.lifetimeLabel') }}</div>
-        <div data-testid="kpi-lifetime" class="mt-1 text-2xl font-bold tracking-tight tabular-nums text-ink">
-          {{ data.campaign.status === 'ok' ? formatUsdCents(data.summary.campaignLifetimeCents) : '—' }}
-        </div>
-        <div class="mt-0.5 text-[11px] text-ink-faint">
-          {{ t('adminPatreon.kpi.lifetimeSub', { count: data.summary.campaignPayingEver }) }}
-        </div>
-      </div>
-
-      <div class="rounded-xl border border-hairline bg-card-background px-4 py-3">
-        <div class="text-[11px] font-medium text-ink-faint">{{ t('adminPatreon.kpi.unlinkedLabel') }}</div>
-        <div
-          data-testid="kpi-unlinked"
-          :class="[
-            'mt-1 text-2xl font-bold tracking-tight tabular-nums',
-            data.campaign.status !== 'ok'
-              ? 'text-ink-faint'
-              : data.summary.campaignUnlinkedActive > 0
-                ? 'text-amber-300'
-                : 'text-emerald-300',
-          ]"
-        >
-          {{ data.campaign.status === 'ok' ? formatNumber(data.summary.campaignUnlinkedActive) : '—' }}
-        </div>
-        <div class="mt-0.5 text-[11px] text-ink-faint">
-          {{ t('adminPatreon.kpi.unlinkedSub', { count: data.summary.campaignActive }) }}
-        </div>
-      </div>
-
-      <div class="rounded-xl border border-hairline bg-card-background px-4 py-3">
-        <div class="text-[11px] font-medium text-ink-faint">{{ t('adminPatreon.kpi.issuesLabel') }}</div>
-        <div
-          data-testid="kpi-issues"
-          :class="[
-            'mt-1 text-2xl font-bold tracking-tight tabular-nums',
-            data.summary.issues > 0 ? 'text-red-300' : 'text-ink',
-          ]"
-        >
-          {{ formatNumber(data.summary.issues) }}
-        </div>
-        <div class="mt-0.5 text-[11px] text-ink-faint">
-          {{ t('adminPatreon.kpi.issuesSub', { count: data.summary.totalLinked }) }}
-        </div>
+        <div class="mt-0.5 text-[11px] text-ink-faint">{{ kpi.sub }}</div>
       </div>
     </div>
 
@@ -402,7 +428,7 @@ onMounted(() => fetchPatreon(false));
         <p class="text-xs text-ink-faint">{{ t('adminPatreon.campaign.subtitle') }}</p>
 
         <div
-          v-if="data && data.campaign.status !== 'ok'"
+          v-if="data && !campaignOk"
           data-testid="patreon-campaign-alert"
           :class="[
             'flex items-start gap-2 rounded-lg border px-3 py-2.5 text-xs',
@@ -414,13 +440,7 @@ onMounted(() => fetchPatreon(false));
           <UiBaseIcon :path="mdiAlertOutline" :size="16" class="mt-0.5 shrink-0" />
           <div>
             <p class="font-medium">
-              {{
-                data.campaign.status === 'unconfigured'
-                  ? t('adminPatreon.campaign.unconfigured')
-                  : data.campaign.status === 'unauthorized'
-                    ? t('adminPatreon.campaign.unauthorized')
-                    : t('adminPatreon.campaign.error')
-              }}
+              {{ t(`adminPatreon.campaign.${data.campaign.status}`) }}
             </p>
             <p v-if="data.campaign.errorMessage" class="mt-0.5 text-[11px] opacity-80">
               {{ data.campaign.errorMessage }}
@@ -432,56 +452,14 @@ onMounted(() => fetchPatreon(false));
           <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div class="flex flex-wrap items-center gap-1.5">
               <button
+                v-for="filter in campaignFilters"
+                :key="filter.value"
                 type="button"
-                data-testid="campaign-filter-active"
-                :class="[
-                  'rounded-lg border px-2.5 py-1 text-xs font-medium transition-colors',
-                  campaignFilter === 'active'
-                    ? 'border-brand-solid bg-brand/15 text-brand font-semibold'
-                    : 'border-hairline bg-surface text-ink-muted hover:bg-surface-hover hover:text-ink',
-                ]"
-                @click="campaignFilter = 'active'"
+                :data-testid="`campaign-filter-${filter.value}`"
+                :class="chipClasses(campaignFilter === filter.value, filter.tone)"
+                @click="campaignFilter = filter.value"
               >
-                {{ t('adminPatreon.filters.active', { count: data.summary.campaignActive }) }}
-              </button>
-              <button
-                type="button"
-                data-testid="campaign-filter-unlinked"
-                :class="[
-                  'rounded-lg border px-2.5 py-1 text-xs font-medium transition-colors',
-                  campaignFilter === 'unlinked'
-                    ? 'border-amber-500/60 bg-amber-500/15 text-amber-300 font-semibold'
-                    : 'border-hairline bg-surface text-ink-muted hover:bg-surface-hover hover:text-ink',
-                ]"
-                @click="campaignFilter = 'unlinked'"
-              >
-                {{ t('adminPatreon.campaign.unlinkedFilter', { count: data.summary.campaignUnlinkedActive }) }}
-              </button>
-              <button
-                type="button"
-                data-testid="campaign-filter-paid"
-                :class="[
-                  'rounded-lg border px-2.5 py-1 text-xs font-medium transition-colors',
-                  campaignFilter === 'paid'
-                    ? 'border-brand-solid bg-brand/15 text-brand font-semibold'
-                    : 'border-hairline bg-surface text-ink-muted hover:bg-surface-hover hover:text-ink',
-                ]"
-                @click="campaignFilter = 'paid'"
-              >
-                {{ t('adminPatreon.campaign.paidFilter', { count: data.summary.campaignPayingEver }) }}
-              </button>
-              <button
-                type="button"
-                data-testid="campaign-filter-all"
-                :class="[
-                  'rounded-lg border px-2.5 py-1 text-xs font-medium transition-colors',
-                  campaignFilter === 'all'
-                    ? 'border-brand-solid bg-brand/15 text-brand font-semibold'
-                    : 'border-hairline bg-surface text-ink-muted hover:bg-surface-hover hover:text-ink',
-                ]"
-                @click="campaignFilter = 'all'"
-              >
-                {{ t('adminPatreon.filters.all', { count: data.campaign.members.length }) }}
+                {{ filter.label }}
               </button>
             </div>
 
@@ -508,37 +486,19 @@ onMounted(() => fetchPatreon(false));
                   <th class="px-3 py-2.5">{{ t('adminPatreon.campaign.member') }}</th>
                   <th class="px-3 py-2.5">{{ t('adminPatreon.table.status') }}</th>
                   <th class="px-3 py-2.5">{{ t('adminPatreon.tiers.tier') }}</th>
-                  <th class="px-3 py-2.5 text-right">
+                  <th
+                    v-for="col in SORT_COLUMNS"
+                    :key="col.key"
+                    :class="['px-3 py-2.5', { 'text-right': col.alignRight }]"
+                  >
                     <button
                       type="button"
-                      data-testid="sort-monthly"
+                      :data-testid="`sort-${col.key}`"
                       class="inline-flex items-center gap-1 uppercase tracking-wider hover:text-ink"
-                      @click="toggleCampaignSort('monthly')"
+                      @click="toggleCampaignSort(col.key)"
                     >
-                      <span>{{ t('adminPatreon.campaign.monthly') }}</span>
-                      <UiBaseIcon :path="sortIconFor('monthly')" :size="13" />
-                    </button>
-                  </th>
-                  <th class="px-3 py-2.5 text-right">
-                    <button
-                      type="button"
-                      data-testid="sort-lifetime"
-                      class="inline-flex items-center gap-1 uppercase tracking-wider hover:text-ink"
-                      @click="toggleCampaignSort('lifetime')"
-                    >
-                      <span>{{ t('adminPatreon.campaign.lifetime') }}</span>
-                      <UiBaseIcon :path="sortIconFor('lifetime')" :size="13" />
-                    </button>
-                  </th>
-                  <th class="px-3 py-2.5">
-                    <button
-                      type="button"
-                      data-testid="sort-since"
-                      class="inline-flex items-center gap-1 uppercase tracking-wider hover:text-ink"
-                      @click="toggleCampaignSort('since')"
-                    >
-                      <span>{{ t('adminPatreon.campaign.since') }}</span>
-                      <UiBaseIcon :path="sortIconFor('since')" :size="13" />
+                      <span>{{ t(col.labelKey) }}</span>
+                      <UiBaseIcon :path="sortIconFor(col.key)" :size="13" />
                     </button>
                   </th>
                   <th class="px-3 py-2.5">{{ t('adminPatreon.campaign.nadeshikoLink') }}</th>
@@ -665,53 +625,16 @@ onMounted(() => fetchPatreon(false));
                         </span>
                       </div>
 
-                      <div
-                        v-if="confirmingUnlinkUserId === member.linkedUserId"
-                        class="inline-flex items-center gap-1"
-                      >
-                        <button
-                          type="button"
-                          :data-testid="`campaign-confirm-unlink-${member.linkedUserId}`"
-                          :disabled="unlinkingUserId === member.linkedUserId"
-                          class="rounded bg-red-600 px-2 py-0.5 text-[10px] font-semibold text-white hover:bg-red-500 disabled:opacity-50"
-                          @click="unlinkOne(member.linkedUserId)"
-                        >
-                          {{ t('adminPatreon.actions.confirmUnlink') }}
-                        </button>
-                        <button
-                          type="button"
-                          class="rounded border border-hairline bg-surface px-1.5 py-0.5 text-[10px] text-ink-muted hover:text-ink"
-                          @click="confirmingUnlinkUserId = null"
-                        >
-                          {{ t('adminPatreon.actions.cancel') }}
-                        </button>
-                      </div>
-
-                      <div v-else class="inline-flex items-center gap-1">
-                        <button
-                          type="button"
-                          :data-testid="`campaign-refresh-${member.linkedUserId}`"
-                          :disabled="!data.configured || refreshingUserId === member.linkedUserId"
-                          class="inline-flex items-center gap-1 rounded border border-hairline bg-surface px-1.5 py-0.5 text-[10px] font-medium text-ink-muted hover:bg-surface-hover hover:text-ink disabled:opacity-45"
-                          @click="refreshOne(member.linkedUserId)"
-                        >
-                          <UiBaseIcon
-                            :path="mdiSync"
-                            :size="11"
-                            :class="{ 'animate-spin': refreshingUserId === member.linkedUserId }"
-                          />
-                          <span>{{ t('adminPatreon.actions.resync') }}</span>
-                        </button>
-                        <button
-                          type="button"
-                          :data-testid="`campaign-unlink-${member.linkedUserId}`"
-                          class="inline-flex items-center gap-1 rounded border border-hairline bg-surface px-1.5 py-0.5 text-[10px] font-medium text-ink-faint hover:border-red-500/40 hover:bg-red-500/10 hover:text-red-300"
-                          @click="confirmingUnlinkUserId = member.linkedUserId"
-                        >
-                          <UiBaseIcon :path="mdiLinkOff" :size="11" />
-                          <span>{{ t('adminPatreon.actions.unlink') }}</span>
-                        </button>
-                      </div>
+                      <PatreonLinkActions
+                        compact
+                        testid-prefix="campaign"
+                        :user-id="member.linkedUserId"
+                        :can-resync="canResync"
+                        :refreshing="refreshingUserId === member.linkedUserId"
+                        :unlinking="unlinkingUserId === member.linkedUserId"
+                        @refresh="refreshOne(member.linkedUserId)"
+                        @unlink="unlinkOne(member.linkedUserId)"
+                      />
                     </div>
 
                     <!-- State 2: Email matches an existing Nadeshiko account (not OAuth-linked yet) -->
@@ -772,43 +695,14 @@ onMounted(() => fetchPatreon(false));
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div class="flex flex-wrap items-center gap-1.5">
             <button
+              v-for="filter in linkedFilters"
+              :key="filter.value"
               type="button"
-              data-testid="patreon-filter-all"
-              :class="[
-                'rounded-lg border px-2.5 py-1 text-xs font-medium transition-colors',
-                statusFilter === 'all'
-                  ? 'border-brand-solid bg-brand/15 text-brand font-semibold'
-                  : 'border-hairline bg-surface text-ink-muted hover:bg-surface-hover hover:text-ink',
-              ]"
-              @click="statusFilter = 'all'"
+              :data-testid="`patreon-filter-${filter.value}`"
+              :class="chipClasses(statusFilter === filter.value, filter.tone)"
+              @click="statusFilter = filter.value"
             >
-              {{ t('adminPatreon.filters.all', { count: data?.summary.totalLinked ?? 0 }) }}
-            </button>
-            <button
-              type="button"
-              data-testid="patreon-filter-active"
-              :class="[
-                'rounded-lg border px-2.5 py-1 text-xs font-medium transition-colors',
-                statusFilter === 'active'
-                  ? 'border-brand-solid bg-brand/15 text-brand font-semibold'
-                  : 'border-hairline bg-surface text-ink-muted hover:bg-surface-hover hover:text-ink',
-              ]"
-              @click="statusFilter = 'active'"
-            >
-              {{ t('adminPatreon.filters.active', { count: data?.summary.active ?? 0 }) }}
-            </button>
-            <button
-              type="button"
-              data-testid="patreon-filter-issues"
-              :class="[
-                'rounded-lg border px-2.5 py-1 text-xs font-medium transition-colors',
-                statusFilter === 'issues'
-                  ? 'border-red-500/60 bg-red-500/15 text-red-300 font-semibold'
-                  : 'border-hairline bg-surface text-ink-muted hover:bg-surface-hover hover:text-ink',
-              ]"
-              @click="statusFilter = 'issues'"
-            >
-              {{ t('adminPatreon.filters.issues', { count: data?.summary.issues ?? 0 }) }}
+              {{ filter.label }}
             </button>
           </div>
 
@@ -908,10 +802,10 @@ onMounted(() => fetchPatreon(false));
                       —
                     </span>
                     <span
-                      v-if="conn.entitledAmountCents > 0"
+                      v-if="conn.monthlyAmountCents > 0"
                       class="tabular-nums text-[11px] font-medium text-emerald-300/90"
                     >
-                      {{ t('adminPatreon.pledgePerMonth', { amount: formatUsdCents(conn.entitledAmountCents) }) }}
+                      {{ t('adminPatreon.pledgePerMonth', { amount: formatUsdCents(conn.monthlyAmountCents) }) }}
                     </span>
                   </div>
                   <div class="mt-0.5 text-[11px] text-ink-faint">
@@ -934,51 +828,15 @@ onMounted(() => fetchPatreon(false));
                 </td>
 
                 <td class="px-3 py-2.5 text-right whitespace-nowrap">
-                  <div v-if="confirmingUnlinkUserId === conn.userId" class="inline-flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      :data-testid="`patreon-confirm-unlink-${conn.userId}`"
-                      :disabled="unlinkingUserId === conn.userId"
-                      class="rounded-md bg-red-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-red-500 disabled:opacity-50"
-                      @click="unlinkOne(conn.userId)"
-                    >
-                      {{ t('adminPatreon.actions.confirmUnlink') }}
-                    </button>
-                    <button
-                      type="button"
-                      class="rounded-md border border-hairline bg-surface px-2 py-1 text-[11px] text-ink-muted hover:text-ink"
-                      @click="confirmingUnlinkUserId = null"
-                    >
-                      {{ t('adminPatreon.actions.cancel') }}
-                    </button>
-                  </div>
-
-                  <div v-else class="inline-flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      :data-testid="`patreon-refresh-${conn.userId}`"
-                      :disabled="!data?.configured || refreshingUserId === conn.userId"
-                      class="inline-flex items-center gap-1 rounded-md border border-hairline bg-surface px-2.5 py-1 text-[11px] font-medium text-ink-muted transition-colors hover:bg-surface-hover hover:text-ink disabled:cursor-not-allowed disabled:opacity-45"
-                      @click="refreshOne(conn.userId)"
-                    >
-                      <UiBaseIcon
-                        :path="mdiSync"
-                        :size="13"
-                        :class="{ 'animate-spin': refreshingUserId === conn.userId }"
-                      />
-                      <span>{{ t('adminPatreon.actions.resync') }}</span>
-                    </button>
-                    <button
-                      type="button"
-                      :data-testid="`patreon-unlink-${conn.userId}`"
-                      class="inline-flex items-center gap-1 rounded-md border border-hairline bg-surface px-2 py-1 text-[11px] font-medium text-ink-faint transition-colors hover:border-red-500/40 hover:bg-red-500/10 hover:text-red-300"
-                      :title="t('adminPatreon.actions.unlink')"
-                      @click="confirmingUnlinkUserId = conn.userId"
-                    >
-                      <UiBaseIcon :path="mdiLinkOff" :size="13" />
-                      <span>{{ t('adminPatreon.actions.unlink') }}</span>
-                    </button>
-                  </div>
+                  <PatreonLinkActions
+                    testid-prefix="patreon"
+                    :user-id="conn.userId"
+                    :can-resync="canResync"
+                    :refreshing="refreshingUserId === conn.userId"
+                    :unlinking="unlinkingUserId === conn.userId"
+                    @refresh="refreshOne(conn.userId)"
+                    @unlink="unlinkOne(conn.userId)"
+                  />
                 </td>
               </tr>
             </tbody>

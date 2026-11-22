@@ -13,7 +13,7 @@ vi.stubGlobal('useI18n', () => ({
   locale: ref('en'),
 }));
 vi.stubGlobal('useFormat', () => ({
-  formatNumber: (n: number) => String(n),
+  formatNumber: (n: number) => n.toLocaleString('en-US'),
 }));
 vi.stubGlobal('useLocalePath', () => (p: string) => `/en${p}`);
 vi.stubGlobal('useAdminOverview', () => ({ overview, isLoading, refresh }));
@@ -38,16 +38,11 @@ function render() {
 beforeEach(() => {
   vi.clearAllMocks();
   overview.value = {
-    reports: { open: 7, processing: 2 },
-    requests: { open: 11, planned: 3, inProgress: 2, boostedOpen: 4 },
-    feedback: { unhandled: 5, total: 20 },
-    users: { total: 420, newLast7d: 19, activePatrons: 9, banned: 1 },
-    catalogue: { media: 250, episodes: 3100, segments: 950000 },
-    queues: { queued: 2, active: 1, failed: 0 },
-    email: { suppressed: 3 },
+    reports: { open: 7 },
+    requests: { open: 11, boostedOpen: 4 },
+    users: { total: 4200, activePatrons: 9 },
     announcement: { active: true },
-    generatedAt: '2026-11-21T22:00:00.000Z',
-  };
+  } as AdminOverview;
   isLoading.value = false;
 });
 
@@ -79,6 +74,19 @@ describe('AdminDashboardHome', () => {
     ]) {
       expect(hrefs).toContain(target);
     }
+  });
+
+  test('shows locale-formatted counts and the external status link', () => {
+    const wrapper = render();
+
+    expect(wrapper.get('[data-testid="admin-dir-users"]').text()).toContain('4,200');
+    expect(wrapper.get('[data-testid="admin-dir-reports"]').text()).toContain('7');
+    expect(wrapper.get('[data-testid="admin-dir-announcement"]').text()).toContain(
+      'adminDashboard.status.bannerActive',
+    );
+    const status = wrapper.get('[data-testid="admin-dir-status-page"]');
+    expect(status.attributes('href')).toBe('https://status.nadeshiko.co');
+    expect(status.attributes('target')).toBe('_blank');
   });
 
   test('refreshes live overview counts when clicking refresh', async () => {

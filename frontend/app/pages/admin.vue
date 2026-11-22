@@ -8,34 +8,14 @@ const { t } = useI18n();
 const localePath = useLocalePath();
 const route = useRoute();
 
-const { ensureLoaded } = useAdminOverview();
-
 definePageMeta({
   robots: false,
-  middleware: [
-    defineNuxtRouteMiddleware(() => {
-      const store = userStore();
-      if (!store.isLoggedIn) {
-        return navigateTo(useLocalePath()('/'), { replace: true });
-      }
-    }),
-    'locale-preference',
-    defineNuxtRouteMiddleware(() => {
-      const store = userStore();
-      if (!store.isAdmin) {
-        return navigateTo(useLocalePath()('/user/settings'), { replace: true });
-      }
-    }),
-  ],
+  middleware: ['auth', 'locale-preference', 'require-admin'],
 });
 
 const isHome = computed(() => {
   const { localizedPath } = splitLocalePrefix(route.path);
   return (localizedPath.replace(/\/+$/, '') || '/') === '/admin';
-});
-
-onMounted(() => {
-  ensureLoaded();
 });
 </script>
 

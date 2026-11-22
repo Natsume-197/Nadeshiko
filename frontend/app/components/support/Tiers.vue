@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { mdiCheck, mdiCheckCircleOutline, mdiChevronDown, mdiLinkVariant, mdiPatreon } from '@mdi/js';
+import { handleApiError } from '~/utils/apiError';
 import { FREE_MONTHLY_API_REQUESTS, SUPPORT_TIERS, tierCheckoutUrl, type SupportTier } from '~/utils/supportTiers';
 
 /**
@@ -8,49 +9,37 @@ import { FREE_MONTHLY_API_REQUESTS, SUPPORT_TIERS, tierCheckoutUrl, type Support
  * 2. Full-width unified FAQ accordion
  */
 
-const { t, locale } = useI18n();
-const { formatNumber } = useFormat();
+const { t } = useI18n();
+const { formatNumber, formatUsdWhole } = useFormat();
 const localePath = useLocalePath();
 const store = userStore();
+const sdk = useNadeshikoSdk();
 const { openLoginModal } = useLoginModal();
 
-interface UserQuotaSummary {
-  limit: number;
-  tier: { id: string; displayName: string } | null;
-}
-
-const activeTierId = ref<string | null>(null);
-const activeTierLimit = ref<number | null>(null);
+/** The signed-in reader's quota; null when signed out or the lookup failed. */
+const quota = ref<{ tierId: string | null; limit: number | null } | null>(null);
 
 const activeSupportTier = computed<SupportTier | null>(
-  () => SUPPORT_TIERS.find((tier) => tier.quotaTierId === activeTierId.value) ?? null,
+  () => SUPPORT_TIERS.find((tier) => tier.quotaTierId === quota.value?.tierId) ?? null,
 );
+
+const isActiveTier = (tier: SupportTier) => activeSupportTier.value?.quotaTierId === tier.quotaTierId;
 
 async function loadAccountTier() {
   if (!store.isLoggedIn) {
-    activeTierId.value = null;
-    activeTierLimit.value = null;
+    quota.value = null;
     return;
   }
-  try {
-    const me = await $fetch<{ quota?: UserQuotaSummary }>('/v1/user/me');
-    activeTierId.value = me?.quota?.tier?.id ?? null;
-    activeTierLimit.value = typeof me?.quota?.limit === 'number' ? me.quota.limit : null;
-  } catch {
+  const me = await sdk.getMe().catch((error: unknown) => {
     // Non-critical enhancement; the public tier cards still work without account status.
-  }
+    handleApiError('support:quota-fetch-failed', error, { toastKey: false });
+    return null;
+  });
+  if (me) quota.value = { tierId: me.quota?.tier?.id ?? null, limit: me.quota?.limit ?? null };
 }
 
 onMounted(loadAccountTier);
 watch(() => store.isLoggedIn, loadAccountTier);
-
-const usd = (amount: number) =>
-  new Intl.NumberFormat(locale.value, {
-    style: 'currency',
-    currency: 'USD',
-    currencyDisplay: 'narrowSymbol',
-    maximumFractionDigits: 0,
-  }).format(amount);
 
 const tierName = (tier: SupportTier) => t(`support.tiers.${tier.key}`);
 
@@ -112,8 +101,8 @@ const faq = computed(() => [
             <p class="text-sm font-semibold text-ink">
               {{ t('support.activeBanner.title', { tier: tierName(activeSupportTier) }) }}
             </p>
-            <p v-if="activeTierLimit" class="mt-0.5 text-xs text-ink-muted">
-              {{ t('support.activeBanner.quota', { limit: formatNumber(activeTierLimit) }) }}
+            <p v-if="quota?.limit" class="mt-0.5 text-xs text-ink-muted">
+              {{ t('support.activeBanner.quota', { limit: formatNumber(quota.limit) }) }}
             </p>
           </div>
         </div>
@@ -132,7 +121,7 @@ const faq = computed(() => [
           :key="tier.key"
           class="tier-card relative flex flex-col rounded-xl border p-6 transition"
           :class="
-            activeTierId === tier.quotaTierId
+            isActiveTier(tier)
               ? 'border-emerald-500/50 bg-card-background ring-1 ring-emerald-500/25'
               : tier.priorityRequests
                 ? 'border-brand/45 bg-card-background hover:border-brand/70'
@@ -140,7 +129,7 @@ const faq = computed(() => [
           "
         >
           <span
-            v-if="activeTierId === tier.quotaTierId"
+            v-if="isActiveTier(tier)"
             data-testid="support-current-tier-badge"
             class="absolute -top-2.5 right-6 z-10 rounded-full bg-emerald-600 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white"
           >
@@ -162,7 +151,7 @@ const faq = computed(() => [
             <!-- biome-ignore lint/a11y/noHeaderScope: vue-i18n scope, not a table header -->
             <i18n-t keypath="support.perMonth" tag="p" scope="global" class="mt-2 flex items-baseline gap-1 text-sm font-medium text-ink-faint">
               <template #price>
-                <span class="text-3xl font-black tracking-tight tabular-nums text-ink">{{ usd(tier.priceUsd) }}</span>
+                <span class="text-3xl font-black tracking-tight tabular-nums text-ink">{{ formatUsdWhole(tier.priceUsd) }}</span>
               </template>
             </i18n-t>
           </div>
@@ -181,7 +170,7 @@ const faq = computed(() => [
                   :path="mdiCheck"
                   :size="16"
                   class="mt-0.5 shrink-0"
-                  :class="activeTierId === tier.quotaTierId ? 'text-emerald-400' : 'text-brand'"
+                  :class="isActiveTier(tier) ? 'text-emerald-400' : 'text-brand'"
                 />
                 <span class="leading-snug">{{ perk }}</span>
               </li>

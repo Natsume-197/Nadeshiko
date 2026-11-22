@@ -20,7 +20,6 @@ properties:
     required:
       - totalLinked
       - active
-      - stale
       - issues
       - campaignActive
       - campaignUnlinkedActive
@@ -31,8 +30,6 @@ properties:
       totalLinked:
         type: integer
       active:
-        type: integer
-      stale:
         type: integer
       issues:
         type: integer
@@ -52,14 +49,11 @@ properties:
   campaign:
     type: object
     required:
-      - configured
       - status
       - errorMessage
       - fetchedAt
       - members
     properties:
-      configured:
-        type: boolean
       status:
         type: string
         enum:
