@@ -520,7 +520,6 @@
       "developer": "Desenvolvedor",
       "users": "Usuários",
       "reports": "Problemas relatados",
-      "agentActivity": "Atividade do agente",
       "announcement": "Aviso",
       "dictionaries": "Dicionários"
     },
@@ -1592,29 +1591,6 @@
     },
     "loadError": "Não foi possível carregar a lista de palavras."
   },
-  "agentActivity": {
-    "title": "Atividade do agente",
-    "description": "Edições feitas pelo agente de moderação, obtidas do histórico de versões. Confira algumas e restaure o que estiver incorreto.",
-    "empty": "Nenhuma atividade do agente neste período",
-    "episode": "Ep. {number}",
-    "noReport": "sem relato",
-    "restore": "Restaurar",
-    "restoring": "Restaurando…",
-    "restoreSuccess": "Frase restaurada",
-    "restoreError": "Não foi possível restaurar a frase",
-    "window": {
-      "day": "Últimas 24 horas",
-      "week": "Últimos 7 dias",
-      "month": "Últimos 30 dias"
-    },
-    "table": {
-      "segment": "Frase",
-      "change": "Alteração",
-      "report": "Relato",
-      "when": "Data",
-      "actions": "Ações"
-    }
-  },
   "connections": {
     "title": "Conexões",
     "patreon": {
@@ -1994,7 +1970,7 @@
     },
     "cards": {
       "moderationTitle": "Denúncias e moderação",
-      "moderationDesc": "Revise denúncias abertas e confira edições do agente de moderação.",
+      "moderationDesc": "Revise, filtre e resolva denúncias abertas de segmentos e títulos.",
       "openCount": "{count} abertas",
       "requestsDesc": "Priorize pedidos de conteúdo, boosts de apoiadores e duplicatas.",
       "boostedCount": "{count} com boost",
@@ -2011,7 +1987,6 @@
     },
     "items": {
       "reportsDesc": "Revise, filtre e resolva denúncias abertas em lote.",
-      "agentActivityDesc": "Inspecione diffs do agente de moderação e reverta com um clique.",
       "feedbackTitle": "Caixa de feedback",
       "feedbackDesc": "Leia mensagens do widget com contexto da página e link do PostHog.",
       "requestsDesc": "Gerencie pedidos de conteúdo, boosts de apoiadores e avisos de lançamento.",

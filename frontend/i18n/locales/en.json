@@ -520,7 +520,6 @@
       "developer": "Developer",
       "users": "Users",
       "reports": "Reports",
-      "agentActivity": "Agent Activity",
       "announcement": "Announcement",
       "dictionaries": "Dictionaries"
     },
@@ -1592,29 +1591,6 @@
     },
     "loadError": "Couldn't load the word list."
   },
-  "agentActivity": {
-    "title": "Agent Activity",
-    "description": "Edits made by the moderation agent, read back from the revisions it wrote. Spot-check a few and restore anything that looks wrong.",
-    "empty": "No agent activity in this window",
-    "episode": "EP{number}",
-    "noReport": "no report",
-    "restore": "Restore",
-    "restoring": "Restoring...",
-    "restoreSuccess": "Sentence restored",
-    "restoreError": "Failed to restore sentence",
-    "window": {
-      "day": "Last 24 hours",
-      "week": "Last 7 days",
-      "month": "Last 30 days"
-    },
-    "table": {
-      "segment": "Sentence",
-      "change": "Change",
-      "report": "Report",
-      "when": "When",
-      "actions": "Actions"
-    }
-  },
   "connections": {
     "title": "Connections",
     "patreon": {
@@ -1994,7 +1970,7 @@
     },
     "cards": {
       "moderationTitle": "Reports & Moderation",
-      "moderationDesc": "Review open segment reports and spot-check moderation agent edits.",
+      "moderationDesc": "Review, filter and bulk-resolve open segment and media reports.",
       "openCount": "{count} open",
       "requestsDesc": "Prioritise reader requests, patron boosts and duplicate merges.",
       "boostedCount": "{count} boosted",
@@ -2011,7 +1987,6 @@
     },
     "items": {
       "reportsDesc": "Review, filter and bulk-resolve open reports.",
-      "agentActivityDesc": "Inspect automated moderation diffs and revert edits in one click.",
       "feedbackTitle": "Feedback Inbox",
       "feedbackDesc": "Read feedback widget messages with page context and PostHog session links.",
       "requestsDesc": "Manage content requests, patron boosts and release notifications.",

@@ -22,7 +22,6 @@ import type {
   t_AdminReportListResponse,
   t_AdminUserWithProviders,
   t_AffectedCountResponse,
-  t_AgentActivityResponse,
   t_Announcement,
   t_BatchUpdateReportsRequest,
   t_BulkDeleteReportsRequest,
@@ -39,7 +38,6 @@ import type {
   t_GetAdminUsersWithProvidersQuerySchema,
   t_ListAdminContentRequestsQuerySchema,
   t_ListAdminReportsQuerySchema,
-  t_ListAgentActivityQuerySchema,
   t_MergeAdminContentRequestParamSchema,
   t_MergeAdminContentRequestRequestBody,
   t_Report,
@@ -55,7 +53,7 @@ import type {
   t_UpdateAdminUserQuotaParamSchema,
   t_UpdateReportRequest,
 } from '../models.ts';
-import type { AnnouncementOutput, BatchUpdateReportsRequestOutput, BulkDeleteReportsRequestOutput, BulkUpdateReportsRequestOutput, GetAdminUsersWithProvidersQueryOutput, ListAdminContentRequestsQueryOutput, ListAdminReportsQueryOutput, ListAgentActivityQueryOutput, MergeAdminContentRequestRequestBodyOutput, RoadmapItemWriteOutput, UpdateAccountQuotaRequestOutput, UpdateAdminContentRequestRequestBodyOutput, UpdateAdminRoadmapItemRequestBodyOutput, UpdateReportRequestOutput } from '../outputTypes.ts';
+import type { AnnouncementOutput, BatchUpdateReportsRequestOutput, BulkDeleteReportsRequestOutput, BulkUpdateReportsRequestOutput, GetAdminUsersWithProvidersQueryOutput, ListAdminContentRequestsQueryOutput, ListAdminReportsQueryOutput, MergeAdminContentRequestRequestBodyOutput, RoadmapItemWriteOutput, UpdateAccountQuotaRequestOutput, UpdateAdminContentRequestRequestBodyOutput, UpdateAdminRoadmapItemRequestBodyOutput, UpdateReportRequestOutput } from '../outputTypes.ts';
 import {
   PermissiveBoolean,
   s_AccountQuotaState,
@@ -64,7 +62,6 @@ import {
   s_AdminReportListResponse,
   s_AdminUserWithProviders,
   s_AffectedCountResponse,
-  s_AgentActivityResponse,
   s_Announcement,
   s_BatchUpdateReportsRequest,
   s_BulkDeleteReportsRequest,
@@ -202,23 +199,6 @@ export type DeleteAdminReportResponder = {
 export type DeleteAdminReport = (
   params: Params<t_DeleteAdminReportParamSchema, void, void, void>,
   respond: DeleteAdminReportResponder,
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
-
-export type ListAgentActivityResponder = {
-  with200(): ExpressRuntimeResponse<t_AgentActivityResponse>;
-  with400(): ExpressRuntimeResponse<t_Error400>;
-  with401(): ExpressRuntimeResponse<t_Error401>;
-  with403(): ExpressRuntimeResponse<t_Error403>;
-  with429(): ExpressRuntimeResponse<t_Error429>;
-  with500(): ExpressRuntimeResponse<t_Error500>;
-} & ExpressRuntimeResponder;
-
-export type ListAgentActivity = (
-  params: Params<void, ListAgentActivityQueryOutput, void, void>,
-  respond: ListAgentActivityResponder,
   req: Request,
   res: Response,
   next: NextFunction,
@@ -440,7 +420,6 @@ export type AdminImplementation = {
   bulkDeleteAdminReports: BulkDeleteAdminReports;
   updateAdminReport: UpdateAdminReport;
   deleteAdminReport: DeleteAdminReport;
-  listAgentActivity: ListAgentActivity;
   getAnnouncement: GetAnnouncement;
   updateAnnouncement: UpdateAnnouncement;
   getAdminUsersWithProviders: GetAdminUsersWithProviders;
@@ -857,67 +836,6 @@ export function createAdminRouter(
         .deleteAdminReport(input, responder, req, res, next)
         .catch(handleImplementationError)
         .then(handleResponse(res, deleteAdminReportResponseBodyValidator));
-    } catch (error) {
-      next(error);
-    }
-  });
-
-  const listAgentActivityQuerySchema = z.object({
-    since: z.iso.datetime({ offset: true }).optional(),
-    reportId: z.coerce.number().optional(),
-    take: z.coerce.number().min(1).max(500).optional().default(100),
-  });
-
-  const listAgentActivityResponseBodyValidator = responseValidationFactory(
-    [
-      ['200', s_AgentActivityResponse],
-      ['400', s_Error400],
-      ['401', s_Error401],
-      ['403', s_Error403],
-      ['429', s_Error429],
-      ['500', s_Error500],
-    ],
-    undefined,
-  );
-
-  // listAgentActivity
-  router.get(`/v1/admin/agent-activity`, async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const input = {
-        params: undefined,
-        query: parseRequestInput(listAgentActivityQuerySchema, req.query, RequestInputType.QueryString),
-        body: undefined,
-        headers: undefined,
-      };
-
-      const responder = {
-        with200() {
-          return new ExpressRuntimeResponse<t_AgentActivityResponse>(200);
-        },
-        with400() {
-          return new ExpressRuntimeResponse<t_Error400>(400);
-        },
-        with401() {
-          return new ExpressRuntimeResponse<t_Error401>(401);
-        },
-        with403() {
-          return new ExpressRuntimeResponse<t_Error403>(403);
-        },
-        with429() {
-          return new ExpressRuntimeResponse<t_Error429>(429);
-        },
-        with500() {
-          return new ExpressRuntimeResponse<t_Error500>(500);
-        },
-        withStatus(status: StatusCode) {
-          return new ExpressRuntimeResponse(status);
-        },
-      };
-
-      await implementation
-        .listAgentActivity(input, responder, req, res, next)
-        .catch(handleImplementationError)
-        .then(handleResponse(res, listAgentActivityResponseBodyValidator));
     } catch (error) {
       next(error);
     }

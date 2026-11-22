@@ -24,9 +24,7 @@ import {
   ReportSource,
   ReportStatus,
   ReportTargetType,
-  RevisionActor,
   Segment,
-  SegmentRevision,
   SegmentStatus,
 } from '@app/models';
 import { AuthType, ApiKeyKind, ApiPermission } from '@app/models/ApiPermission';
@@ -193,38 +191,6 @@ describe('GET /v1/admin/overview', () => {
       Feedback.create({ body: 'Handled note', handledAt: new Date() }),
     ]);
 
-    const recentAgentRev = await SegmentRevision.save(
-      SegmentRevision.create({
-        segmentId: segment.id,
-        revisionNumber: 1,
-        snapshot: { textEn: 'old' },
-        actor: RevisionActor.AGENT,
-        userId: core.users.kevin.id,
-      }),
-    );
-    const oldAgentRev = await SegmentRevision.save(
-      SegmentRevision.create({
-        segmentId: segment.id,
-        revisionNumber: 2,
-        snapshot: { textEn: 'older' },
-        actor: RevisionActor.AGENT,
-        userId: core.users.kevin.id,
-      }),
-    );
-    await SegmentRevision.query(`UPDATE "SegmentRevision" SET created_at = NOW() - INTERVAL '48 hours' WHERE id = $1`, [
-      oldAgentRev.id,
-    ]);
-    await SegmentRevision.save(
-      SegmentRevision.create({
-        segmentId: segment.id,
-        revisionNumber: 3,
-        snapshot: { textEn: 'human' },
-        actor: RevisionActor.HUMAN,
-        userId: core.users.kevin.id,
-      }),
-    );
-    expect(recentAgentRev.id).toBeGreaterThan(0);
-
     await PatreonConnection.save(
       PatreonConnection.create({
         userId: core.users.regular.id,
@@ -261,7 +227,6 @@ describe('GET /v1/admin/overview', () => {
     expect(res.body.reports).toEqual({ open: 1, processing: 1 });
     expect(res.body.requests).toEqual({ open: 1, planned: 1, inProgress: 1, boostedOpen: 1 });
     expect(res.body.feedback).toEqual({ unhandled: 1, total: 2 });
-    expect(res.body.agentActivity).toEqual({ editsLast24h: 1 });
     expect(res.body.users.total).toBeGreaterThanOrEqual(5);
     expect(res.body.users.activePatrons).toBe(1);
     expect(res.body.catalogue).toEqual({ media: 1, episodes: 1, segments: 1 });

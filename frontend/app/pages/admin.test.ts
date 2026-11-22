@@ -43,7 +43,6 @@ function makeOverview(overrides: Partial<AdminOverview> = {}): AdminOverview {
     reports: { open: 3, processing: 1 },
     requests: { open: 5, planned: 2, inProgress: 1, boostedOpen: 2 },
     feedback: { unhandled: 4, total: 10 },
-    agentActivity: { editsLast24h: 2 },
     users: { total: 120, newLast7d: 8, activePatrons: 6, banned: 1 },
     catalogue: { media: 50, episodes: 600, segments: 150000 },
     queues: { queued: 1, active: 0, failed: 0 },

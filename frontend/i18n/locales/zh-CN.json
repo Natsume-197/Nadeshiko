@@ -520,7 +520,6 @@
       "developer": "开发者",
       "users": "用户",
       "reports": "问题反馈",
-      "agentActivity": "自动审核记录",
       "announcement": "公告",
       "dictionaries": "词典"
     },
@@ -1592,29 +1591,6 @@
     },
     "loadError": "无法加载词语列表。"
   },
-  "agentActivity": {
-    "title": "自动审核记录",
-    "description": "查看自动审核助手保存的修改记录。可抽查修改结果，并还原不正确的改动。",
-    "empty": "所选时间段内暂无自动审核记录",
-    "episode": "第 {number} 集",
-    "noReport": "无关联反馈",
-    "restore": "还原",
-    "restoring": "还原中…",
-    "restoreSuccess": "例句已还原",
-    "restoreError": "无法还原例句",
-    "window": {
-      "day": "最近 24 小时",
-      "week": "最近 7 天",
-      "month": "最近 30 天"
-    },
-    "table": {
-      "segment": "例句",
-      "change": "修改内容",
-      "report": "关联反馈",
-      "when": "时间",
-      "actions": "操作"
-    }
-  },
   "connections": {
     "title": "关联账户",
     "patreon": {
@@ -1994,7 +1970,7 @@
     },
     "cards": {
       "moderationTitle": "举报与审核",
-      "moderationDesc": "处理待审片段举报并抽查审核代理的修改记录。",
+      "moderationDesc": "筛选并批量处理待审核的片段与作品举报。",
       "openCount": "{count} 待处理",
       "requestsDesc": "管理读者内容请求、赞助者加速与重复合并。",
       "boostedCount": "{count} 已加速",
@@ -2011,7 +1987,6 @@
     },
     "items": {
       "reportsDesc": "筛选并批量处理待审核的举报。",
-      "agentActivityDesc": "查看自动审核差异并一键恢复修改。",
       "feedbackTitle": "反馈收件箱",
       "feedbackDesc": "查看反馈内容、页面上下文与 PostHog 会话链接。",
       "requestsDesc": "管理内容请求、赞助者加速与上线通知。",

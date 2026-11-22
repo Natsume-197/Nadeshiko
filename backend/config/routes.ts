@@ -34,7 +34,6 @@ import { getAdminOverview, getAdminUsersWithProviders } from '@app/controllers/a
 import { handleSesWebhook, WEBHOOK_SES_PATH } from '@app/controllers/webhooks/sesController';
 import { listTiers, getAdminUserQuota, updateAdminUserQuota } from '@app/controllers/adminQuotaController';
 import { getAnnouncement, updateAnnouncement } from '@app/controllers/announcementController';
-import { listAgentActivity } from '@app/controllers/agentActivityController';
 import {
   listMedia,
   createMedia,
@@ -312,7 +311,6 @@ const AdminRoutes = createAdminRouter({
   bulkDeleteAdminReports,
   updateAdminReport,
   deleteAdminReport,
-  listAgentActivity,
   getAnnouncement,
   updateAnnouncement,
   getAdminUsersWithProviders,

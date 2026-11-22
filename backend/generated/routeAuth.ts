@@ -91,7 +91,6 @@ export const routeAuth: RouteAuth[] = [
   { method: 'delete', path: '/v1/admin/reports/bulk', middleware: requireSession(enforceAdminAccess) },
   { method: 'patch', path: '/v1/admin/reports/:reportId', middleware: requireAuth(enforceSessionAdmin, enforceApiKeyScope(ApiPermission.UPDATE_MEDIA)) },
   { method: 'delete', path: '/v1/admin/reports/:reportId', middleware: requireSession(enforceAdminAccess) },
-  { method: 'get', path: '/v1/admin/agent-activity', middleware: requireAuth(enforceSessionAdmin, enforceApiKeyScope(ApiPermission.READ_ADMIN)) },
   { method: 'put', path: '/v1/admin/announcement', middleware: requireSession(enforceAdminAccess) },
   { method: 'get', path: '/v1/admin/users-with-providers', middleware: requireSession(enforceAdminAccess) },
   { method: 'get', path: '/v1/admin/tiers', middleware: requireSession(enforceAdminAccess) },

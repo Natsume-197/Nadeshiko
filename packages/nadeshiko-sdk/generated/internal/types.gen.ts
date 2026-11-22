@@ -2923,12 +2923,6 @@ export type AdminOverview = {
          */
         total: number;
     };
-    agentActivity: {
-        /**
-         * Segment revisions written by the moderation agent in the last 24 hours.
-         */
-        editsLast24h: number;
-    };
     users: {
         /**
          * Active (non-deleted) user accounts.
@@ -3142,57 +3136,6 @@ export type UpdateReportRequest = {
      * Admin notes about the report
      */
     adminNotes?: string;
-};
-
-export type AgentActivityResponse = {
-    entries: Array<{
-        /**
-         * Revision ID
-         */
-        revisionId: number;
-        /**
-         * The revision number to pass to the restore endpoint to undo this edit
-         */
-        revisionNumber: number;
-        /**
-         * Public ID of the segment that was changed
-         */
-        segmentPublicId: string;
-        /**
-         * Public ID of the media the segment belongs to
-         */
-        mediaPublicId: string;
-        /**
-         * Episode the segment belongs to
-         */
-        episodeNumber: number;
-        /**
-         * The segment's editable fields as they were before this edit
-         */
-        snapshot: {
-            [key: string]: unknown;
-        };
-        /**
-         * The same fields as they are now. Paired with `snapshot` this is the
-         * diff, without the caller having to fetch the segment separately.
-         *
-         */
-        current: {
-            [key: string]: unknown;
-        };
-        /**
-         * The report this edit answered, when it answered one
-         */
-        reportId: number;
-        /**
-         * Account the service credential belongs to
-         */
-        actedBy: string;
-        /**
-         * When the edit was made
-         */
-        createdAt: string;
-    }>;
 };
 
 /**
@@ -7898,60 +7841,6 @@ export type UpdateAdminReportResponses = {
 };
 
 export type UpdateAdminReportResponse = UpdateAdminReportResponses[keyof UpdateAdminReportResponses];
-
-export type ListAgentActivityData = {
-    body?: never;
-    path?: never;
-    query?: {
-        /**
-         * Only return activity at or after this timestamp. Defaults to 24 hours ago.
-         */
-        since?: string;
-        /**
-         * Only return edits made in answer to this report
-         */
-        reportId?: number;
-        /**
-         * Maximum entries to return
-         */
-        take?: number;
-    };
-    url: '/v1/admin/agent-activity';
-};
-
-export type ListAgentActivityErrors = {
-    /**
-     * Bad Request
-     */
-    400: Error400;
-    /**
-     * Unauthorized
-     */
-    401: Error401;
-    /**
-     * Forbidden
-     */
-    403: Error403;
-    /**
-     * Too Many Requests. The response body indicates whether the request was rejected due to per-minute rate limiting or monthly quota exhaustion.
-     */
-    429: Error429;
-    /**
-     * Internal Server Error
-     */
-    500: Error500;
-};
-
-export type ListAgentActivityError = ListAgentActivityErrors[keyof ListAgentActivityErrors];
-
-export type ListAgentActivityResponses = {
-    /**
-     * OK
-     */
-    200: AgentActivityResponse;
-};
-
-export type ListAgentActivityResponse = ListAgentActivityResponses[keyof ListAgentActivityResponses];
 
 export type GetAnnouncementData = {
     body?: never;

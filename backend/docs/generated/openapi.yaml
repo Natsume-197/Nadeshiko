@@ -4274,68 +4274,6 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
-  /v1/admin/agent-activity:
-    get:
-      operationId: listAgentActivity
-      x-internal: true
-      tags:
-        - Admin
-      summary: List edits made by the moderation agent
-      description: |
-        Returns segment revisions written under a service credential, newest first,
-        joined to the segment they changed and the report they answered.
-
-        This is the independent record of what the agent actually did. The agent's own
-        Discord digest reports what it believes it did; this reports what landed in the
-        database. Reading both is how a run that half-failed, or an action the agent
-        did not mention, becomes visible.
-
-        Each entry carries the pre-edit `snapshot`, so a bad edit can be reverted
-        straight from here through the revision restore endpoint without going hunting
-        for the revision number.
-      security:
-        - ApiKey:
-            - READ_ADMIN
-        - SessionCookie:
-            - ADMIN
-      parameters:
-        - name: since
-          in: query
-          schema:
-            type: string
-            format: date-time
-          description: Only return activity at or after this timestamp. Defaults to 24 hours ago.
-          example: '2026-08-06T00:00:00Z'
-        - name: reportId
-          in: query
-          schema:
-            type: integer
-          description: Only return edits made in answer to this report
-        - name: take
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 500
-            default: 100
-          description: Maximum entries to return
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AgentActivityResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '429':
-          $ref: '#/components/responses/TooManyRequests'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
   /v1/admin/announcement:
     get:
       tags:
@@ -9460,7 +9398,6 @@ components:
         - reports
         - requests
         - feedback
-        - agentActivity
         - users
         - catalogue
         - queues
@@ -9520,15 +9457,6 @@ components:
               type: integer
               description: Total stored feedback submissions.
               example: 42
-        agentActivity:
-          type: object
-          required:
-            - editsLast24h
-          properties:
-            editsLast24h:
-              type: integer
-              description: Segment revisions written by the moderation agent in the last 24 hours.
-              example: 9
         users:
           type: object
           required:
@@ -9804,64 +9732,6 @@ components:
           maxLength: 1000
           description: Admin notes about the report
           example: Confirmed wrong translation, will fix
-    AgentActivityResponse:
-      type: object
-      required:
-        - entries
-      properties:
-        entries:
-          type: array
-          items:
-            type: object
-            required:
-              - revisionId
-              - revisionNumber
-              - segmentPublicId
-              - mediaPublicId
-              - episodeNumber
-              - snapshot
-              - current
-              - reportId
-              - actedBy
-              - createdAt
-            properties:
-              revisionId:
-                type: integer
-                description: Revision ID
-              revisionNumber:
-                type: integer
-                description: The revision number to pass to the restore endpoint to undo this edit
-              segmentPublicId:
-                type: string
-                description: Public ID of the segment that was changed
-              mediaPublicId:
-                type: string
-                description: Public ID of the media the segment belongs to
-              episodeNumber:
-                type: integer
-                description: Episode the segment belongs to
-              snapshot:
-                type: object
-                additionalProperties: true
-                description: The segment's editable fields as they were before this edit
-              current:
-                type: object
-                additionalProperties: true
-                description: |
-                  The same fields as they are now. Paired with `snapshot` this is the
-                  diff, without the caller having to fetch the segment separately.
-              reportId:
-                type: integer
-                nullable: true
-                description: The report this edit answered, when it answered one
-              actedBy:
-                type: string
-                nullable: true
-                description: Account the service credential belongs to
-              createdAt:
-                type: string
-                format: date-time
-                description: When the edit was made
     Announcement:
       type: object
       description: Site-wide announcement banner

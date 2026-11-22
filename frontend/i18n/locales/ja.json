@@ -520,7 +520,6 @@
       "developer": "開発者向け",
       "users": "ユーザー",
       "reports": "問題の報告",
-      "agentActivity": "エージェントの編集履歴",
       "announcement": "お知らせ",
       "dictionaries": "辞書"
     },
@@ -1592,29 +1591,6 @@
     },
     "loadError": "単語リストを読み込めませんでした。"
   },
-  "agentActivity": {
-    "title": "エージェントの編集履歴",
-    "description": "モデレーションエージェントが行った変更を、保存された編集履歴から確認できます。内容を確認し、問題があれば元の状態に復元してください。",
-    "empty": "この期間にエージェントが行った編集はありません",
-    "episode": "第{number}話",
-    "noReport": "報告なし",
-    "restore": "復元",
-    "restoring": "復元中...",
-    "restoreSuccess": "例文を復元しました",
-    "restoreError": "例文の復元に失敗しました",
-    "window": {
-      "day": "過去24時間",
-      "week": "過去7日間",
-      "month": "過去30日間"
-    },
-    "table": {
-      "segment": "例文",
-      "change": "変更",
-      "report": "報告",
-      "when": "日時",
-      "actions": "操作"
-    }
-  },
   "connections": {
     "title": "外部サービスとの連携",
     "patreon": {
@@ -1994,7 +1970,7 @@
     },
     "cards": {
       "moderationTitle": "報告とモデレーション",
-      "moderationDesc": "未処理の報告を確認し、自動モデレーションの変更を点検します。",
+      "moderationDesc": "未処理のセグメント・作品報告を確認し、絞り込みや一括処理を行います。",
       "openCount": "未処理 {count}",
       "requestsDesc": "ユーザーリクエスト、パトロンブースト、重複統合を管理します。",
       "boostedCount": "ブースト {count}",
@@ -2011,7 +1987,6 @@
     },
     "items": {
       "reportsDesc": "報告の絞り込みや一括処理を行います。",
-      "agentActivityDesc": "モデレーションエージェントの差分を確認し、ワンクリックで復元します。",
       "feedbackTitle": "フィードバック受信箱",
       "feedbackDesc": "フィードバック本文とページ情報・PostHogセッションを確認します。",
       "requestsDesc": "コンテンツリクエスト、ブースト、公開通知を管理します。",

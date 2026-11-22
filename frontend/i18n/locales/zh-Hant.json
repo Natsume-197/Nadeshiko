@@ -520,7 +520,6 @@
       "developer": "開發者",
       "users": "使用者",
       "reports": "問題回饋",
-      "agentActivity": "自動稽核記錄",
       "announcement": "公告",
       "dictionaries": "辭典"
     },
@@ -1592,29 +1591,6 @@
     },
     "loadError": "無法載入詞語列表。"
   },
-  "agentActivity": {
-    "title": "自動稽核記錄",
-    "description": "檢視自動稽核助手儲存的修改記錄。可抽查修改結果，並還原不正確的改動。",
-    "empty": "所選時間段內暫無自動稽核記錄",
-    "episode": "第 {number} 集",
-    "noReport": "無關聯回饋",
-    "restore": "還原",
-    "restoring": "還原中…",
-    "restoreSuccess": "例句已還原",
-    "restoreError": "無法還原例句",
-    "window": {
-      "day": "最近 24 小時",
-      "week": "最近 7 天",
-      "month": "最近 30 天"
-    },
-    "table": {
-      "segment": "例句",
-      "change": "修改內容",
-      "report": "關聯回饋",
-      "when": "時間",
-      "actions": "操作"
-    }
-  },
   "connections": {
     "title": "關聯賬戶",
     "patreon": {
@@ -1994,7 +1970,7 @@
     },
     "cards": {
       "moderationTitle": "檢舉與審核",
-      "moderationDesc": "處理待審片段檢舉並抽查審核代理的修改紀錄。",
+      "moderationDesc": "篩選並批次處理待審核的片段與作品檢舉。",
       "openCount": "{count} 待處理",
       "requestsDesc": "管理讀者內容請求、贊助者加速與重複合併。",
       "boostedCount": "{count} 已加速",
@@ -2011,7 +1987,6 @@
     },
     "items": {
       "reportsDesc": "篩選並批次處理待審核的檢舉。",
-      "agentActivityDesc": "檢視自動審核差異並一鍵還原修改。",
       "feedbackTitle": "回饋收件匣",
       "feedbackDesc": "檢視回饋訊息、頁面資訊與 PostHog 工作階段連結。",
       "requestsDesc": "管理內容請求、贊助者加速與上線通知。",

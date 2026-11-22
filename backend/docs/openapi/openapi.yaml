@@ -252,8 +252,6 @@ paths:
     $ref: "./paths/admin/v1_admin_reports_bulk.yaml"
   "/v1/admin/reports/{reportId}":
     $ref: "./paths/admin/v1_admin_reports_id.yaml"
-  "/v1/admin/agent-activity":
-    $ref: "./paths/admin/v1_admin_agent_activity.yaml"
   "/v1/admin/announcement":
     $ref: "./paths/admin/v1_admin_announcement.yaml"
   "/v1/admin/users-with-providers":

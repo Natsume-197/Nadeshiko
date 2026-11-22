@@ -99,10 +99,11 @@ function badgeClasses(tone: 'brand' | 'warning' | 'danger' | 'success' | 'neutra
       aria-label="Quick actions"
       class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5"
     >
-      <!-- 1. Moderation & Reports (multi-action card) -->
-      <div
+      <!-- 1. Moderation & Reports -->
+      <NuxtLink
+        :to="localePath('/admin/reports')"
         data-testid="admin-card-moderation"
-        class="flex flex-col justify-between rounded-xl border border-hairline bg-card-background p-4 transition-colors hover:border-brand/40"
+        class="group flex flex-col justify-between rounded-xl border border-hairline bg-card-background p-4 transition-colors hover:border-brand/40 hover:bg-surface-hover/40"
       >
         <div>
           <div class="flex items-center justify-between gap-2">
@@ -117,31 +118,19 @@ function badgeClasses(tone: 'brand' | 'warning' | 'danger' | 'success' | 'neutra
               {{ t('adminDashboard.cards.openCount', { count: overview.reports.open }) }}
             </span>
           </div>
-          <h2 class="mt-3 text-sm font-semibold text-ink">
+          <h2 class="mt-3 text-sm font-semibold text-ink group-hover:text-brand transition-colors">
             {{ t('adminDashboard.cards.moderationTitle') }}
           </h2>
           <p class="mt-1 text-xs leading-relaxed text-ink-faint">
             {{ t('adminDashboard.cards.moderationDesc') }}
           </p>
         </div>
-        <div class="mt-3.5 flex flex-wrap gap-1.5">
-          <NuxtLink
-            :to="localePath('/admin/reports')"
-            class="inline-flex items-center rounded-md bg-brand-solid px-2.5 py-1 text-[11px] font-semibold text-white transition-opacity hover:opacity-90"
-          >
+        <div class="mt-3.5 flex flex-wrap gap-1.5 text-[11px] text-ink-muted">
+          <span class="inline-flex items-center rounded-md bg-brand-solid px-2.5 py-1 text-[11px] font-semibold text-white">
             {{ t('adminDashboard.nav.reviewQueue') }}
-          </NuxtLink>
-          <NuxtLink
-            :to="localePath('/admin/agent-activity')"
-            class="inline-flex items-center gap-1 rounded-md border border-hairline bg-surface px-2.5 py-1 text-[11px] font-medium text-ink-muted transition-colors hover:bg-surface-hover hover:text-ink"
-          >
-            <span>{{ t('accountSettings.tabs.agentActivity') }}</span>
-            <span v-if="overview && overview.agentActivity.editsLast24h > 0" class="text-brand font-semibold">
-              ({{ overview.agentActivity.editsLast24h }})
-            </span>
-          </NuxtLink>
+          </span>
         </div>
-      </div>
+      </NuxtLink>
 
       <!-- 2. Content Requests -->
       <NuxtLink

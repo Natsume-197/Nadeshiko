@@ -48,7 +48,6 @@ export const getAdminOverview: GetAdminOverview = async (_params, respond) => {
            (SELECT COUNT(*)::int FROM "ContentRequest" WHERE status = 'OPEN' AND boost_count > 0) AS requests_boosted_open,
            (SELECT COUNT(*)::int FROM "Feedback" WHERE handled_at IS NULL) AS feedback_unhandled,
            (SELECT COUNT(*)::int FROM "Feedback") AS feedback_total,
-           (SELECT COUNT(*)::int FROM "SegmentRevision" WHERE actor = 'AGENT' AND created_at >= NOW() - INTERVAL '24 hours') AS agent_edits_24h,
            (SELECT COUNT(*)::int FROM "User" WHERE is_active = true) AS users_total,
            (SELECT COUNT(*)::int FROM "User" WHERE is_active = true AND created_at >= NOW() - INTERVAL '7 days') AS users_new_7d,
            (SELECT COUNT(*)::int FROM "User" WHERE is_active = true AND banned = true) AS users_banned,
@@ -75,9 +74,6 @@ export const getAdminOverview: GetAdminOverview = async (_params, respond) => {
         feedback: {
           unhandled: Number(summary?.feedback_unhandled ?? 0),
           total: Number(summary?.feedback_total ?? 0),
-        },
-        agentActivity: {
-          editsLast24h: Number(summary?.agent_edits_24h ?? 0),
         },
         users: {
           total: Number(summary?.users_total ?? 0),

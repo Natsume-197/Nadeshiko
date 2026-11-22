@@ -1,12 +1,12 @@
 import { e2eAccountForWorker, loginAsE2EUser, test, expect } from '../auth';
 import { e2eBypassHeaders, getE2EBaseUrl } from '../env';
 
-const ADMIN_PAGES = ['users', 'reports', 'agent-activity', 'announcement'] as const;
+const ADMIN_PAGES = ['/admin', '/admin/users', '/admin/reports', '/admin/announcement'] as const;
 
 test.describe('Admin authorization', () => {
-  for (const pageName of ADMIN_PAGES) {
-    test(`a normal account cannot open the ${pageName} page`, async ({ authenticatedPage }) => {
-      await authenticatedPage.goto(`/user/admin/${pageName}`);
+  for (const adminPath of ADMIN_PAGES) {
+    test(`a normal account cannot open ${adminPath}`, async ({ authenticatedPage }) => {
+      await authenticatedPage.goto(adminPath);
 
       await expect(authenticatedPage).toHaveURL(/\/en\/user\/settings$/, { timeout: 15_000 });
       await expect(authenticatedPage.getByTestId('account-username')).toBeVisible();
@@ -15,9 +15,9 @@ test.describe('Admin authorization', () => {
 
   test('a normal account receives 403 from every admin API surface', async ({ authenticatedPage }) => {
     for (const [method, path] of [
+      ['get', '/v1/admin/overview'],
       ['get', '/v1/admin/users-with-providers'],
       ['get', '/v1/admin/reports'],
-      ['get', '/v1/admin/agent-activity'],
       // Reading the site-wide announcement is intentionally public; changing
       // it is the administration boundary this test must protect.
       ['put', '/v1/admin/announcement'],
@@ -34,10 +34,10 @@ test.describe('Admin authorization', () => {
     try {
       await loginAsE2EUser(page, e2eAccountForWorker(9));
       for (const [path, heading] of [
-        ['/user/admin/users', 'Users'],
-        ['/user/admin/reports', 'Report Management'],
-        ['/user/admin/agent-activity', 'Agent Activity'],
-        ['/user/admin/announcement', 'Announcement'],
+        ['/admin', 'Admin Dashboard'],
+        ['/admin/users', 'Users'],
+        ['/admin/reports', 'Report Management'],
+        ['/admin/announcement', 'Announcement'],
       ] as const) {
         const response = await page.goto(path);
         expect(response?.status(), `${path} should render for an admin`).toBe(200);

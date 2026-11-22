@@ -9,7 +9,6 @@ import {
   mdiMessageAlertOutline,
   mdiMovieOpenOutline,
   mdiOpenInNew,
-  mdiRobotOutline,
   mdiShieldCrownOutline,
   mdiThumbUpOutline,
   mdiTimelineClockOutline,
@@ -55,17 +54,6 @@ export const ADMIN_DIRECTORY_ITEMS: readonly AdminDirectoryItem[] = [
     to: '/admin/reports',
     status: 'live',
     badge: (o) => (o && o.reports.open > 0 ? { text: `${o.reports.open}`, tone: 'brand' } : null),
-  },
-  {
-    id: 'agent-activity',
-    category: 'moderation',
-    titleKey: 'accountSettings.tabs.agentActivity',
-    descriptionKey: 'adminDashboard.items.agentActivityDesc',
-    icon: mdiRobotOutline,
-    to: '/admin/agent-activity',
-    status: 'live',
-    badge: (o) =>
-      o && o.agentActivity.editsLast24h > 0 ? { text: `${o.agentActivity.editsLast24h} / 24h`, tone: 'neutral' } : null,
   },
   {
     id: 'feedback',

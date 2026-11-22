@@ -3,7 +3,6 @@ required:
   - reports
   - requests
   - feedback
-  - agentActivity
   - users
   - catalogue
   - queues
@@ -63,15 +62,6 @@ properties:
         type: integer
         description: Total stored feedback submissions.
         example: 42
-  agentActivity:
-    type: object
-    required:
-      - editsLast24h
-    properties:
-      editsLast24h:
-        type: integer
-        description: Segment revisions written by the moderation agent in the last 24 hours.
-        example: 9
   users:
     type: object
     required:

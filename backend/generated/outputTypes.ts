@@ -13,7 +13,6 @@ export type AddSegmentToCollectionRequestOutput = z.output<typeof schemas.s_AddS
 export type AdminOverviewOutput = z.output<typeof schemas.s_AdminOverview>;
 export type AdminUserWithProvidersOutput = z.output<typeof schemas.s_AdminUserWithProviders>;
 export type AffectedCountResponseOutput = z.output<typeof schemas.s_AffectedCountResponse>;
-export type AgentActivityResponseOutput = z.output<typeof schemas.s_AgentActivityResponse>;
 export type AnnouncementOutput = z.output<typeof schemas.s_Announcement>;
 export type ApiKeyScopeOutput = z.output<typeof schemas.s_ApiKeyScope>;
 export type CategoryOutput = z.output<typeof schemas.s_Category>;
@@ -170,13 +169,6 @@ export const listAdminReportsQuerySchema = z.object({
     orphaned: schemas.PermissiveBoolean.optional(),
   });
 export type ListAdminReportsQueryOutput = z.output<typeof listAdminReportsQuerySchema>;
-
-export const listAgentActivityQuerySchema = z.object({
-    since: z.iso.datetime({ offset: true }).optional(),
-    reportId: z.coerce.number().optional(),
-    take: z.coerce.number().min(1).max(500).optional().default(100),
-  });
-export type ListAgentActivityQueryOutput = z.output<typeof listAgentActivityQuerySchema>;
 
 export const getAdminUsersWithProvidersQuerySchema = z.object({
     limit: z.coerce.number().min(1).max(100).optional().default(20),

@@ -520,7 +520,6 @@
       "developer": "Pengembang",
       "users": "Pengguna",
       "reports": "Laporan",
-      "agentActivity": "Aktivitas agen",
       "announcement": "Pengumuman",
       "dictionaries": "Kamus"
     },
@@ -1592,29 +1591,6 @@
     },
     "loadError": "Gagal memuat daftar kata."
   },
-  "agentActivity": {
-    "title": "Aktivitas agen",
-    "description": "Perubahan yang dibuat oleh agen moderasi, berdasarkan riwayat revisinya. Tinjau beberapa hasil dan pulihkan versi sebelumnya jika ada yang keliru.",
-    "empty": "Tidak ada aktivitas agen dalam rentang waktu ini",
-    "episode": "Ep. {number}",
-    "noReport": "tanpa laporan",
-    "restore": "Pulihkan",
-    "restoring": "Memulihkan…",
-    "restoreSuccess": "Kalimat dipulihkan",
-    "restoreError": "Gagal memulihkan kalimat",
-    "window": {
-      "day": "24 jam terakhir",
-      "week": "7 hari terakhir",
-      "month": "30 hari terakhir"
-    },
-    "table": {
-      "segment": "Kalimat",
-      "change": "Perubahan",
-      "report": "Laporan",
-      "when": "Waktu",
-      "actions": "Tindakan"
-    }
-  },
   "connections": {
     "title": "Akun terhubung",
     "patreon": {
@@ -1994,7 +1970,7 @@
     },
     "cards": {
       "moderationTitle": "Laporan & Moderasi",
-      "moderationDesc": "Tinjau laporan segmen terbuka dan periksa suntingan agen moderasi.",
+      "moderationDesc": "Tinjau, filter, dan selesaikan laporan segmen dan media yang terbuka.",
       "openCount": "{count} terbuka",
       "requestsDesc": "Prioritaskan permintaan konten, boost patron, dan penggabungan duplikat.",
       "boostedCount": "{count} di-boost",
@@ -2011,7 +1987,6 @@
     },
     "items": {
       "reportsDesc": "Tinjau, filter, dan selesaikan laporan secara massal.",
-      "agentActivityDesc": "Periksa perubahan agen moderasi dan pulihkan dalam satu klik.",
       "feedbackTitle": "Kotak Masukan",
       "feedbackDesc": "Baca pesan widget masukan beserta konteks halaman dan sesi PostHog.",
       "requestsDesc": "Kelola permintaan konten, boost patron, dan notifikasi rilis.",

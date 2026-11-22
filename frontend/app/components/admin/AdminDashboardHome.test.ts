@@ -45,7 +45,6 @@ beforeEach(() => {
     reports: { open: 7, processing: 2 },
     requests: { open: 11, planned: 3, inProgress: 2, boostedOpen: 4 },
     feedback: { unhandled: 5, total: 20 },
-    agentActivity: { editsLast24h: 3 },
     users: { total: 420, newLast7d: 19, activePatrons: 9, banned: 1 },
     catalogue: { media: 250, episodes: 3100, segments: 950000 },
     queues: { queued: 2, active: 1, failed: 0 },
@@ -73,13 +72,12 @@ describe('AdminDashboardHome', () => {
     }
   });
 
-  test('links all six migrated admin tools under /admin/*', () => {
+  test('links all five active admin tools under /admin/*', () => {
     const wrapper = render();
     const hrefs = wrapper.findAll('a').map((a) => a.attributes('href'));
 
     for (const target of [
       '/en/admin/reports',
-      '/en/admin/agent-activity',
       '/en/admin/requests',
       '/en/admin/roadmap',
       '/en/admin/announcement',

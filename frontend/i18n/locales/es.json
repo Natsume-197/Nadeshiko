@@ -520,7 +520,6 @@
       "developer": "Desarrolladores",
       "users": "Usuarios",
       "reports": "Reportes",
-      "agentActivity": "Ediciones del agente",
       "announcement": "Avisos",
       "dictionaries": "Diccionarios"
     },
@@ -1592,29 +1591,6 @@
     },
     "loadError": "No se pudo cargar la lista de palabras."
   },
-  "agentActivity": {
-    "title": "Ediciones del agente",
-    "description": "Consulta los cambios guardados por el agente de moderación. Revisa las ediciones y restaura la versión anterior si encuentras algún problema.",
-    "empty": "No hay ediciones del agente en este periodo",
-    "episode": "Ep. {number}",
-    "noReport": "Sin reporte",
-    "restore": "Restaurar",
-    "restoring": "Restaurando…",
-    "restoreSuccess": "Frase restaurada",
-    "restoreError": "No se pudo restaurar la frase",
-    "window": {
-      "day": "Últimas 24 horas",
-      "week": "Últimos 7 días",
-      "month": "Últimos 30 días"
-    },
-    "table": {
-      "segment": "Frase",
-      "change": "Cambio",
-      "report": "Reporte",
-      "when": "Fecha",
-      "actions": "Acciones"
-    }
-  },
   "connections": {
     "title": "Servicios conectados",
     "patreon": {
@@ -1994,7 +1970,7 @@
     },
     "cards": {
       "moderationTitle": "Reportes y moderación",
-      "moderationDesc": "Revisa reportes abiertos y verifica los cambios del agente de moderación.",
+      "moderationDesc": "Revisa, filtra y resuelve reportes abiertos de segmentos y títulos.",
       "openCount": "{count} abiertos",
       "requestsDesc": "Prioriza pedidos de la comunidad, boosts de patrons y duplicados.",
       "boostedCount": "{count} con boost",
@@ -2011,7 +1987,6 @@
     },
     "items": {
       "reportsDesc": "Revisa, filtra y resuelve reportes abiertos en lote.",
-      "agentActivityDesc": "Inspecciona los diffs del agente de moderación y revierte en un clic.",
       "feedbackTitle": "Bandeja de feedback",
       "feedbackDesc": "Lee mensajes del widget con contexto técnico y enlace a PostHog.",
       "requestsDesc": "Gestiona pedidos de contenido, boosts de patrons y avisos de publicación.",

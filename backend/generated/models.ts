@@ -34,9 +34,6 @@ export type t_AdminContentRequest = t_ContentRequest & {
 };
 
 export type t_AdminOverview = {
-  agentActivity: {
-    editsLast24h: number;
-  };
   announcement: {
     active: boolean;
   };
@@ -117,21 +114,6 @@ export type t_AdminUserWithProviders = {
 
 export type t_AffectedCountResponse = {
   count: number;
-};
-
-export type t_AgentActivityResponse = {
-  entries: {
-    actedBy: string | null;
-    createdAt: string;
-    current: Record<string, unknown>;
-    episodeNumber: number;
-    mediaPublicId: string;
-    reportId: number | null;
-    revisionId: number;
-    revisionNumber: number;
-    segmentPublicId: string;
-    snapshot: Record<string, unknown>;
-  }[];
 };
 
 export type t_Announcement = {
@@ -1502,12 +1484,6 @@ export type t_ListAdminReportsQuerySchema = {
   'target.mediaId'?: number;
   'target.segmentId'?: number;
   'target.type'?: t_ReportTargetType;
-};
-
-export type t_ListAgentActivityQuerySchema = {
-  reportId?: number;
-  since?: string;
-  take?: number;
 };
 
 export type t_ListCollectionsQuerySchema = {

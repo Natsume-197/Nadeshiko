@@ -39,7 +39,6 @@ export const s_AdminOverview = z.object({
     boostedOpen: z.coerce.number(),
   }),
   feedback: z.object({ unhandled: z.coerce.number(), total: z.coerce.number() }),
-  agentActivity: z.object({ editsLast24h: z.coerce.number() }),
   users: z.object({
     total: z.coerce.number(),
     newLast7d: z.coerce.number(),
@@ -67,23 +66,6 @@ export const s_AdminUserWithProviders = z.object({
 });
 
 export const s_AffectedCountResponse = z.object({ count: z.coerce.number() });
-
-export const s_AgentActivityResponse = z.object({
-  entries: z.array(
-    z.object({
-      revisionId: z.coerce.number(),
-      revisionNumber: z.coerce.number(),
-      segmentPublicId: z.string(),
-      mediaPublicId: z.string(),
-      episodeNumber: z.coerce.number(),
-      snapshot: z.record(z.string(), z.unknown()),
-      current: z.record(z.string(), z.unknown()),
-      reportId: z.coerce.number().nullable(),
-      actedBy: z.string().nullable(),
-      createdAt: z.iso.datetime({ offset: true }),
-    }),
-  ),
-});
 
 export const s_Announcement = z.object({
   message: z.string().max(500),
