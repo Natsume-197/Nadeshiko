@@ -2008,7 +2008,7 @@
     "title": "Patreon e tiers",
     "configured": "Configurado · Campanha {campaignId}",
     "notConfigured": "Não configurado neste ambiente",
-    "summaryLine": "{active} ativos · {linked} vinculados · {issues} com problemas",
+    "summaryLine": "{campaignActive} ativos no Patreon ({unlinked} sem vínculo) · {linked} vinculados no Nadeshiko · {issues} com problemas",
     "syncAll": "Sincronizar todos",
     "syncingAll": "Sincronizando…",
     "searchPlaceholder": "Buscar usuário, email ou Patreon…",
@@ -2067,6 +2067,24 @@
       "assignment": "Atribuição",
       "override": "Cota manual",
       "empty": "Nenhum override manual ou tier não gratuito atribuído."
+    },
+    "campaign": {
+      "title": "Apoiadores na campanha do Patreon",
+      "subtitle": "Lista ao vivo do Patreon.com cruzada com as contas do Nadeshiko.",
+      "fetchedAt": "Atualizado {when}",
+      "unconfigured": "PATREON_CREATOR_ACCESS_TOKEN não está configurado neste servidor.",
+      "unauthorized": "O Patreon rejeitou o Creator Access Token. Renove e atualize no SSM.",
+      "error": "Não foi possível consultar a API do Patreon agora.",
+      "unlinkedFilter": "Sem vínculo ({count})",
+      "member": "Apoiador",
+      "since": "Desde",
+      "nadeshikoLink": "Conta Nadeshiko",
+      "notLinked": "Ainda não vinculado",
+      "empty": "Nenhum apoiador da campanha corresponde a este filtro."
+    },
+    "linkedSection": {
+      "title": "Contas vinculadas no Nadeshiko",
+      "subtitle": "Usuários que conectaram o Patreon via OAuth para benefícios automáticos."
     }
   }
 }

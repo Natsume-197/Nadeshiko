@@ -2008,7 +2008,7 @@
     "title": "Patreon & Tier",
     "configured": "Terkonfigurasi · Kampanye {campaignId}",
     "notConfigured": "Belum dikonfigurasi di lingkungan ini",
-    "summaryLine": "{active} aktif · {linked} tertaut · {issues} bermasalah",
+    "summaryLine": "{campaignActive} aktif di Patreon ({unlinked} belum tertaut) · {linked} tertaut di Nadeshiko · {issues} bermasalah",
     "syncAll": "Sinkronkan semua",
     "syncingAll": "Menyinkronkan…",
     "searchPlaceholder": "Cari pengguna, email, atau Patreon…",
@@ -2067,6 +2067,24 @@
       "assignment": "Penetapan",
       "override": "Override kuota",
       "empty": "Tidak ada override manual atau penetapan tier non-gratis."
+    },
+    "campaign": {
+      "title": "Anggota kampanye Patreon",
+      "subtitle": "Daftar langsung dari Patreon.com yang dicocokkan dengan akun Nadeshiko.",
+      "fetchedAt": "Diambil {when}",
+      "unconfigured": "PATREON_CREATOR_ACCESS_TOKEN belum diatur di server ini.",
+      "unauthorized": "Patreon menolak Creator Access Token. Perbarui token dan simpan ke SSM.",
+      "error": "Tidak dapat menghubungi API Patreon saat ini.",
+      "unlinkedFilter": "Belum tertaut ({count})",
+      "member": "Anggota",
+      "since": "Sejak",
+      "nadeshikoLink": "Akun Nadeshiko",
+      "notLinked": "Belum tertaut",
+      "empty": "Tidak ada anggota kampanye yang cocok dengan filter ini."
+    },
+    "linkedSection": {
+      "title": "Akun Nadeshiko tertaut",
+      "subtitle": "Pengguna yang menautkan Patreon lewat OAuth untuk manfaat otomatis."
     }
   }
 }

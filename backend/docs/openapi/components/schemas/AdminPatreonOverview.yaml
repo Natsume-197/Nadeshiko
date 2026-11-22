@@ -3,6 +3,7 @@ required:
   - configured
   - campaignId
   - summary
+  - campaign
   - tiers
   - connections
   - manualGrants
@@ -21,6 +22,8 @@ properties:
       - active
       - stale
       - issues
+      - campaignActive
+      - campaignUnlinkedActive
     properties:
       totalLinked:
         type: integer
@@ -30,6 +33,39 @@ properties:
         type: integer
       issues:
         type: integer
+      campaignActive:
+        type: integer
+      campaignUnlinkedActive:
+        type: integer
+  campaign:
+    type: object
+    required:
+      - configured
+      - status
+      - errorMessage
+      - fetchedAt
+      - members
+    properties:
+      configured:
+        type: boolean
+      status:
+        type: string
+        enum:
+          - ok
+          - unconfigured
+          - unauthorized
+          - error
+      errorMessage:
+        type: string
+        nullable: true
+      fetchedAt:
+        type: string
+        format: date-time
+        nullable: true
+      members:
+        type: array
+        items:
+          $ref: "./AdminPatreonCampaignMember.yaml"
   tiers:
     type: array
     items:

@@ -15,6 +15,7 @@ import {
   unmatchedPatreonTierIds,
 } from '@app/models';
 import { getPatreonConnection, isPatreonConfigured, unlinkPatreon } from '@app/services/patreon/connection';
+import { fetchCampaignMembers } from '@app/services/patreon/campaign';
 import { refreshPatreonMemberships } from '@app/workers/patreonMembershipRefreshWorker';
 import { ADMIN_OVERVIEW_CACHE } from '@app/controllers/adminDashboardController';
 import { invalidateUserCache } from '@app/middleware/authCacheStore';
@@ -67,27 +68,59 @@ function buildConnectionDTO(
   };
 }
 
-export const getAdminPatreonOverview: GetAdminPatreonOverview = async (_params, respond) => {
+export const getAdminPatreonOverview: GetAdminPatreonOverview = async ({ query }, respond) => {
   const now = Date.now();
-  const tiers = await Tier.find({ order: { sortOrder: 'ASC', id: 'ASC' } });
+  const [tiers, connectionRows, campaignSnapshot] = await Promise.all([
+    Tier.find({ order: { sortOrder: 'ASC', id: 'ASC' } }),
+    PatreonConnection.find({
+      relations: { user: true },
+      order: { membershipCheckedAt: 'DESC', id: 'DESC' },
+    }),
+    fetchCampaignMembers(query.refreshCampaign === true),
+  ]);
   const tierById = new Map(tiers.map((tier) => [tier.id, tier]));
 
-  const connectionRows = await PatreonConnection.find({
-    relations: { user: true },
-    order: { membershipCheckedAt: 'DESC', id: 'DESC' },
-  });
-
   const activeCountByTier = new Map<string, number>();
+  const connectionByPatreonUserId = new Map<string, t_AdminPatreonConnection>();
   const connections: t_AdminPatreonConnection[] = [];
 
   for (const row of connectionRows) {
     if (!row.user) continue;
     const dto = buildConnectionDTO(row, row.user, tiers, tierById, now);
     connections.push(dto);
+    connectionByPatreonUserId.set(dto.patreonUserId, dto);
     if (dto.resolvedTierId) {
       activeCountByTier.set(dto.resolvedTierId, (activeCountByTier.get(dto.resolvedTierId) ?? 0) + 1);
     }
   }
+
+  const campaignMembers = campaignSnapshot.members.map((member) => {
+    const linked = member.patreonUserId ? (connectionByPatreonUserId.get(member.patreonUserId) ?? null) : null;
+    const earned = patreonQuotaTier(
+      tiers,
+      {
+        patronStatus: member.patronStatus,
+        entitledTierIds: member.entitledTierIds,
+        membershipCheckedAt: new Date(now),
+      },
+      now,
+    );
+    const unmatchedTierIds =
+      member.patronStatus === 'active_patron' ? unmatchedPatreonTierIds(tiers, member.entitledTierIds) : [];
+
+    return {
+      ...member,
+      resolvedTierId: earned?.id ?? null,
+      resolvedTierName: earned?.displayName ?? null,
+      unmatchedTierIds,
+      linkedUserId: linked?.userId ?? null,
+      linkedUsername: linked?.username ?? null,
+      linkedEmail: linked?.email ?? null,
+    };
+  });
+
+  const campaignActiveMembers = campaignMembers.filter((m) => m.patronStatus === 'active_patron');
+  const campaignUnlinkedActive = campaignActiveMembers.filter((m) => m.linkedUserId === null).length;
 
   const manualUsers = await User.createQueryBuilder('u')
     .where('u.is_active = true')
@@ -123,6 +156,15 @@ export const getAdminPatreonOverview: GetAdminPatreonOverview = async (_params, 
       active: connections.filter((c) => c.isActive).length,
       stale: connections.filter((c) => c.isStale).length,
       issues: connections.filter((c) => c.hasIssue).length,
+      campaignActive: campaignActiveMembers.length,
+      campaignUnlinkedActive,
+    },
+    campaign: {
+      configured: campaignSnapshot.configured,
+      status: campaignSnapshot.status,
+      errorMessage: campaignSnapshot.errorMessage,
+      fetchedAt: campaignSnapshot.fetchedAt,
+      members: campaignMembers,
     },
     tiers: tiers.map((tier) => ({
       id: tier.id,

@@ -3322,6 +3322,27 @@ export type AdminContentRequest = ContentRequest & {
     } | null;
 };
 
+export type AdminPatreonCampaignMember = {
+    memberId: string;
+    patreonUserId: string;
+    fullName: string;
+    email: string;
+    patronStatus: string;
+    entitledAmountCents: number;
+    lifetimeSupportCents: number;
+    pledgeStart: string;
+    lastChargeStatus: string;
+    lastChargeDate: string;
+    entitledTierIds: Array<string>;
+    patreonTierTitles: Array<string>;
+    resolvedTierId: string;
+    resolvedTierName: string;
+    unmatchedTierIds: Array<string>;
+    linkedUserId: number;
+    linkedUsername: string;
+    linkedEmail: string;
+};
+
 export type AdminPatreonConnection = {
     userId: number;
     username: string;
@@ -3369,6 +3390,15 @@ export type AdminPatreonOverview = {
         active: number;
         stale: number;
         issues: number;
+        campaignActive: number;
+        campaignUnlinkedActive: number;
+    };
+    campaign: {
+        configured: boolean;
+        status: 'ok' | 'unconfigured' | 'unauthorized' | 'error';
+        errorMessage: string;
+        fetchedAt: string;
+        members: Array<AdminPatreonCampaignMember>;
     };
     tiers: Array<{
         id: string;
@@ -8475,7 +8505,12 @@ export type MergeAdminContentRequestResponse = MergeAdminContentRequestResponses
 export type GetAdminPatreonOverviewData = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        /**
+         * Bypass the 5-minute cache and fetch live campaign members from Patreon
+         */
+        refreshCampaign?: boolean;
+    };
     url: '/v1/admin/patreon';
 };
 

@@ -2008,7 +2008,7 @@
     "title": "Patreon & Tiers",
     "configured": "Configured · Campaign {campaignId}",
     "notConfigured": "Not configured in this environment",
-    "summaryLine": "{active} active · {linked} linked · {issues} with issues",
+    "summaryLine": "{campaignActive} active on Patreon ({unlinked} not linked) · {linked} linked in Nadeshiko · {issues} issues",
     "syncAll": "Sync all now",
     "syncingAll": "Syncing…",
     "searchPlaceholder": "Search user, email or Patreon…",
@@ -2067,6 +2067,24 @@
       "assignment": "Assignment",
       "override": "Quota override",
       "empty": "No manual overrides or non-free tier assignments."
+    },
+    "campaign": {
+      "title": "Patreon campaign members",
+      "subtitle": "Live list from Patreon.com cross-referenced with Nadeshiko accounts.",
+      "fetchedAt": "Fetched {when}",
+      "unconfigured": "PATREON_CREATOR_ACCESS_TOKEN is not set on this server.",
+      "unauthorized": "Patreon rejected the Creator Access Token. Renew it and update SSM.",
+      "error": "Could not reach Patreon API right now.",
+      "unlinkedFilter": "Not linked ({count})",
+      "member": "Member",
+      "since": "Pledge start",
+      "nadeshikoLink": "Nadeshiko account",
+      "notLinked": "Not linked yet",
+      "empty": "No campaign members match this filter."
+    },
+    "linkedSection": {
+      "title": "Linked Nadeshiko accounts",
+      "subtitle": "Users who connected Patreon via OAuth and receive automatic perks."
     }
   }
 }

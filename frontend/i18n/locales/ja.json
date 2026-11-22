@@ -2008,7 +2008,7 @@
     "title": "Patreonとティア",
     "configured": "設定済み · キャンペーン {campaignId}",
     "notConfigured": "この環境では未設定",
-    "summaryLine": "有効 {active} · 連携済み {linked} · 要確認 {issues}",
+    "summaryLine": "Patreon有効 {campaignActive}（未連携 {unlinked}）· Nadeshiko連携済み {linked} · 問題 {issues}",
     "syncAll": "すべて同期",
     "syncingAll": "同期中…",
     "searchPlaceholder": "ユーザー・メール・Patreon名で検索…",
@@ -2067,6 +2067,24 @@
       "assignment": "割り当て",
       "override": "手動上限",
       "empty": "手動設定されているアカウントはありません。"
+    },
+    "campaign": {
+      "title": "Patreonキャンペーン会員",
+      "subtitle": "Patreon.comから取得した最新リストとNadeshikoアカウントの照合結果です。",
+      "fetchedAt": "取得: {when}",
+      "unconfigured": "このサーバーに PATREON_CREATOR_ACCESS_TOKEN が設定されていません。",
+      "unauthorized": "Creator Access Token が拒否されました。更新してSSMに保存してください。",
+      "error": "Patreon API に接続できませんでした。",
+      "unlinkedFilter": "未連携 ({count})",
+      "member": "会員",
+      "since": "開始日",
+      "nadeshikoLink": "Nadeshikoアカウント",
+      "notLinked": "未連携",
+      "empty": "条件に一致するキャンペーン会員はいません。"
+    },
+    "linkedSection": {
+      "title": "Nadeshiko連携済みアカウント",
+      "subtitle": "OAuthでPatreonを連携し、特典を受け取っているユーザー一覧です。"
     }
   }
 }

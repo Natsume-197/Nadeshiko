@@ -11,6 +11,13 @@ get:
 
   security:
     - SessionCookie: [ADMIN]
+  parameters:
+    - name: refreshCampaign
+      in: query
+      schema:
+        type: boolean
+        default: false
+      description: Bypass the 5-minute cache and fetch live campaign members from Patreon
   responses:
     "200":
       description: OK

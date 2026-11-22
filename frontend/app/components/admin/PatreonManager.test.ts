@@ -37,7 +37,55 @@ function makePayload() {
   return {
     configured: true,
     campaignId: '999999',
-    summary: { totalLinked: 2, active: 1, stale: 1, issues: 1 },
+    summary: { totalLinked: 2, active: 1, stale: 1, issues: 1, campaignActive: 2, campaignUnlinkedActive: 1 },
+    campaign: {
+      configured: true,
+      status: 'ok',
+      errorMessage: null,
+      fetchedAt: '2026-11-22T12:00:00.000Z',
+      members: [
+        {
+          memberId: 'mem-1',
+          patreonUserId: 'p-10',
+          fullName: 'Hanako',
+          email: 'hanako@patreon.test',
+          patronStatus: 'active_patron',
+          entitledAmountCents: 1000,
+          lifetimeSupportCents: 3000,
+          pledgeStart: '2026-08-01T00:00:00.000Z',
+          lastChargeStatus: 'Paid',
+          lastChargeDate: '2026-11-01T00:00:00.000Z',
+          entitledTierIds: ['28118736'],
+          patreonTierTitles: ['Flower'],
+          resolvedTierId: 'pro',
+          resolvedTierName: 'Flower',
+          unmatchedTierIds: [],
+          linkedUserId: 10,
+          linkedUsername: 'hanako',
+          linkedEmail: 'hanako@example.com',
+        },
+        {
+          memberId: 'mem-2',
+          patreonUserId: 'p-99',
+          fullName: 'New Supporter',
+          email: 'new@patreon.test',
+          patronStatus: 'active_patron',
+          entitledAmountCents: 1000,
+          lifetimeSupportCents: 1000,
+          pledgeStart: '2026-11-15T00:00:00.000Z',
+          lastChargeStatus: 'Paid',
+          lastChargeDate: '2026-11-15T00:00:00.000Z',
+          entitledTierIds: ['28118736'],
+          patreonTierTitles: ['Flower'],
+          resolvedTierId: 'pro',
+          resolvedTierName: 'Flower',
+          unmatchedTierIds: [],
+          linkedUserId: null,
+          linkedUsername: null,
+          linkedEmail: null,
+        },
+      ],
+    },
     tiers: [
       {
         id: 'pro',
@@ -129,13 +177,19 @@ afterEach(() => {
 });
 
 describe('PatreonManager', () => {
-  test('renders connections, tiers mapping and manual grants', async () => {
+  test('renders campaign members, connections, tiers mapping and manual grants', async () => {
     const wrapper = await render();
 
+    expect(wrapper.find('[data-testid="campaign-row-mem-1"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="campaign-row-mem-2"]').exists()).toBe(true);
     expect(wrapper.find('[data-testid="patreon-row-10"]').exists()).toBe(true);
     expect(wrapper.find('[data-testid="patreon-row-11"]').exists()).toBe(true);
     expect(wrapper.get('[data-testid="patreon-tiers-card"]').text()).toContain('Flower');
     expect(wrapper.get('[data-testid="patreon-manual-grants-card"]').text()).toContain('kobo');
+
+    await wrapper.get('[data-testid="campaign-filter-unlinked"]').trigger('click');
+    expect(wrapper.find('[data-testid="campaign-row-mem-1"]').exists()).toBe(false);
+    expect(wrapper.find('[data-testid="campaign-row-mem-2"]').exists()).toBe(true);
   });
 
   test('filters by issues and search query', async () => {

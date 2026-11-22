@@ -11,6 +11,7 @@ export type AccountQuotaStateOutput = z.output<typeof schemas.s_AccountQuotaStat
 export type ActivityTypeOutput = z.output<typeof schemas.s_ActivityType>;
 export type AddSegmentToCollectionRequestOutput = z.output<typeof schemas.s_AddSegmentToCollectionRequest>;
 export type AdminOverviewOutput = z.output<typeof schemas.s_AdminOverview>;
+export type AdminPatreonCampaignMemberOutput = z.output<typeof schemas.s_AdminPatreonCampaignMember>;
 export type AdminPatreonConnectionOutput = z.output<typeof schemas.s_AdminPatreonConnection>;
 export type AdminUserWithProvidersOutput = z.output<typeof schemas.s_AdminUserWithProviders>;
 export type AffectedCountResponseOutput = z.output<typeof schemas.s_AffectedCountResponse>;
@@ -188,6 +189,9 @@ export const listAdminContentRequestsQuerySchema = z.object({
     take: z.coerce.number().min(1).max(100).optional().default(50),
   });
 export type ListAdminContentRequestsQueryOutput = z.output<typeof listAdminContentRequestsQuerySchema>;
+
+export const getAdminPatreonOverviewQuerySchema = z.object({ refreshCampaign: schemas.PermissiveBoolean.optional().default(false) });
+export type GetAdminPatreonOverviewQueryOutput = z.output<typeof getAdminPatreonOverviewQuerySchema>;
 
 export const listCollectionsQuerySchema = z.object({
     visibility: schemas.s_CollectionVisibility.optional(),

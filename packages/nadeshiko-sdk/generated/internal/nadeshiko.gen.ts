@@ -500,8 +500,8 @@ export type NadeshikoClient = {
       (params: Types.MergeAdminContentRequestData['path'] & NonNullable<Types.MergeAdminContentRequestData['body']>): Promise<Types.MergeAdminContentRequestResponse>;
     };
     getAdminPatreonOverview: {
-      (params: { throwOnError: false }): Promise<{ data: Types.GetAdminPatreonOverviewResponse; response: Response; request: Request } | { error: Types.GetAdminPatreonOverviewErrors; response: Response; request: Request }>;
-      (): Promise<Types.GetAdminPatreonOverviewResponse>;
+      (params: NonNullable<Types.GetAdminPatreonOverviewData['query']> & { throwOnError: false }): Promise<{ data: Types.GetAdminPatreonOverviewResponse; response: Response; request: Request } | { error: Types.GetAdminPatreonOverviewErrors; response: Response; request: Request }>;
+      (params?: NonNullable<Types.GetAdminPatreonOverviewData['query']>): Promise<Types.GetAdminPatreonOverviewResponse>;
     };
     refreshAllAdminPatreonConnections: {
       (params: { throwOnError: false }): Promise<{ data: Types.RefreshAllAdminPatreonConnectionsResponse; response: Response; request: Request } | { error: Types.RefreshAllAdminPatreonConnectionsErrors; response: Response; request: Request }>;
@@ -1491,8 +1491,8 @@ export function createNadeshikoClient(config: NadeshikoConfig): NadeshikoClient 
   };
 
   const _getAdminPatreonOverview = (params?: any) => {
-    const tOE = params?.throwOnError;
-    const p = getAdminPatreonOverview({ client: clientInstance, throwOnError: tOE === false ? false : true } as any);
+    const { throwOnError: tOE, ...query } = params ?? {};
+    const p = getAdminPatreonOverview({ ...(Object.keys(query).length > 0 ? { query } : {}), client: clientInstance, throwOnError: tOE === false ? false : true } as any);
     return tOE === false ? p : p.then((r: any) => r.data);
   };
 

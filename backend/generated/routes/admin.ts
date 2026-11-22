@@ -36,6 +36,7 @@ import type {
   t_Error409,
   t_Error429,
   t_Error500,
+  t_GetAdminPatreonOverviewQuerySchema,
   t_GetAdminUserQuotaParamSchema,
   t_GetAdminUsersWithProvidersQuerySchema,
   t_ListAdminContentRequestsQuerySchema,
@@ -57,7 +58,7 @@ import type {
   t_UpdateAdminUserQuotaParamSchema,
   t_UpdateReportRequest,
 } from '../models.ts';
-import type { AnnouncementOutput, BatchUpdateReportsRequestOutput, BulkDeleteReportsRequestOutput, BulkUpdateReportsRequestOutput, GetAdminUsersWithProvidersQueryOutput, ListAdminContentRequestsQueryOutput, ListAdminReportsQueryOutput, MergeAdminContentRequestRequestBodyOutput, RoadmapItemWriteOutput, UpdateAccountQuotaRequestOutput, UpdateAdminContentRequestRequestBodyOutput, UpdateAdminRoadmapItemRequestBodyOutput, UpdateReportRequestOutput } from '../outputTypes.ts';
+import type { AnnouncementOutput, BatchUpdateReportsRequestOutput, BulkDeleteReportsRequestOutput, BulkUpdateReportsRequestOutput, GetAdminPatreonOverviewQueryOutput, GetAdminUsersWithProvidersQueryOutput, ListAdminContentRequestsQueryOutput, ListAdminReportsQueryOutput, MergeAdminContentRequestRequestBodyOutput, RoadmapItemWriteOutput, UpdateAccountQuotaRequestOutput, UpdateAdminContentRequestRequestBodyOutput, UpdateAdminRoadmapItemRequestBodyOutput, UpdateReportRequestOutput } from '../outputTypes.ts';
 import {
   PermissiveBoolean,
   s_AccountQuotaState,
@@ -427,7 +428,7 @@ export type GetAdminPatreonOverviewResponder = {
 } & ExpressRuntimeResponder;
 
 export type GetAdminPatreonOverview = (
-  params: Params<void, void, void, void>,
+  params: Params<void, GetAdminPatreonOverviewQueryOutput, void, void>,
   respond: GetAdminPatreonOverviewResponder,
   req: Request,
   res: Response,
@@ -1593,6 +1594,8 @@ export function createAdminRouter(
     }
   });
 
+  const getAdminPatreonOverviewQuerySchema = z.object({ refreshCampaign: PermissiveBoolean.optional().default(false) });
+
   const getAdminPatreonOverviewResponseBodyValidator = responseValidationFactory(
     [
       ['200', s_AdminPatreonOverview],
@@ -1609,7 +1612,7 @@ export function createAdminRouter(
     try {
       const input = {
         params: undefined,
-        query: undefined,
+        query: parseRequestInput(getAdminPatreonOverviewQuerySchema, req.query, RequestInputType.QueryString),
         body: undefined,
         headers: undefined,
       };

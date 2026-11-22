@@ -13,6 +13,7 @@ setupTestSuite();
 const mockIsPatreonConfigured = vi.fn(() => true);
 const mockGetPatreonConnection = vi.fn();
 const mockRefreshPatreonMemberships = vi.fn();
+const mockFetchCampaignMembers = vi.fn();
 
 vi.mock('@app/services/patreon/connection', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@app/services/patreon/connection')>();
@@ -20,6 +21,14 @@ vi.mock('@app/services/patreon/connection', async (importOriginal) => {
     ...actual,
     isPatreonConfigured: () => mockIsPatreonConfigured(),
     getPatreonConnection: (...args: unknown[]) => mockGetPatreonConnection(...args),
+  };
+});
+
+vi.mock('@app/services/patreon/campaign', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@app/services/patreon/campaign')>();
+  return {
+    ...actual,
+    fetchCampaignMembers: (...args: unknown[]) => mockFetchCampaignMembers(...args),
   };
 });
 
@@ -96,6 +105,13 @@ beforeEach(async () => {
   mockIsPatreonConfigured.mockReset().mockReturnValue(true);
   mockGetPatreonConnection.mockReset();
   mockRefreshPatreonMemberships.mockReset();
+  mockFetchCampaignMembers.mockReset().mockResolvedValue({
+    configured: true,
+    status: 'ok',
+    errorMessage: null,
+    fetchedAt: '2026-11-22T12:00:00.000Z',
+    members: [],
+  });
   await PatreonConnection.query('DELETE FROM "PatreonConnection"');
   await Tier.query('DELETE FROM "Tier"');
 });
@@ -154,6 +170,43 @@ describe('GET /v1/admin/patreon', () => {
       }),
     );
 
+    mockFetchCampaignMembers.mockResolvedValue({
+      configured: true,
+      status: 'ok',
+      errorMessage: null,
+      fetchedAt: '2026-11-22T12:00:00.000Z',
+      members: [
+        {
+          memberId: 'mem-1',
+          patreonUserId: 'p-active',
+          fullName: 'Active Patron',
+          email: 'active@patreon.test',
+          patronStatus: 'active_patron',
+          entitledAmountCents: 1000,
+          lifetimeSupportCents: 3000,
+          pledgeStart: '2026-08-01T00:00:00.000Z',
+          lastChargeStatus: 'Paid',
+          lastChargeDate: '2026-11-01T00:00:00.000Z',
+          entitledTierIds: ['tier-flower'],
+          patreonTierTitles: ['Flower'],
+        },
+        {
+          memberId: 'mem-2',
+          patreonUserId: 'p-unlinked-99',
+          fullName: 'Unlinked Patron',
+          email: 'unlinked@patreon.test',
+          patronStatus: 'active_patron',
+          entitledAmountCents: 1000,
+          lifetimeSupportCents: 1000,
+          pledgeStart: '2026-11-01T00:00:00.000Z',
+          lastChargeStatus: 'Paid',
+          lastChargeDate: '2026-11-01T00:00:00.000Z',
+          entitledTierIds: ['tier-flower'],
+          patreonTierTitles: ['Flower'],
+        },
+      ],
+    });
+
     const res = await request(app).get('/v1/admin/patreon');
     expect(res.status).toBe(200);
     expect(res.body.configured).toBe(true);
@@ -162,7 +215,24 @@ describe('GET /v1/admin/patreon', () => {
       active: 2,
       stale: 1,
       issues: 2,
+      campaignActive: 2,
+      campaignUnlinkedActive: 1,
     });
+    expect(res.body.campaign.status).toBe('ok');
+    expect(res.body.campaign.members).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          memberId: 'mem-1',
+          linkedUserId: core.users.regular.id,
+          resolvedTierName: 'Flower',
+        }),
+        expect.objectContaining({
+          memberId: 'mem-2',
+          linkedUserId: null,
+          resolvedTierName: 'Flower',
+        }),
+      ]),
+    );
 
     const flowerTier = res.body.tiers.find((t: { id: string }) => t.id === 'pro');
     expect(flowerTier).toMatchObject({

@@ -4960,6 +4960,13 @@ paths:
       security:
         - SessionCookie:
             - ADMIN
+      parameters:
+        - name: refreshCampaign
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: Bypass the 5-minute cache and fetch live campaign members from Patreon
       responses:
         '200':
           description: OK
@@ -10206,6 +10213,83 @@ components:
                     - IN_PROGRESS
                     - RELEASED
                     - DECLINED
+    AdminPatreonCampaignMember:
+      type: object
+      required:
+        - memberId
+        - patreonUserId
+        - fullName
+        - email
+        - patronStatus
+        - entitledAmountCents
+        - lifetimeSupportCents
+        - pledgeStart
+        - lastChargeStatus
+        - lastChargeDate
+        - entitledTierIds
+        - patreonTierTitles
+        - resolvedTierId
+        - resolvedTierName
+        - unmatchedTierIds
+        - linkedUserId
+        - linkedUsername
+        - linkedEmail
+      properties:
+        memberId:
+          type: string
+        patreonUserId:
+          type: string
+          nullable: true
+        fullName:
+          type: string
+        email:
+          type: string
+          nullable: true
+        patronStatus:
+          type: string
+          nullable: true
+        entitledAmountCents:
+          type: integer
+        lifetimeSupportCents:
+          type: integer
+        pledgeStart:
+          type: string
+          format: date-time
+          nullable: true
+        lastChargeStatus:
+          type: string
+          nullable: true
+        lastChargeDate:
+          type: string
+          format: date-time
+          nullable: true
+        entitledTierIds:
+          type: array
+          items:
+            type: string
+        patreonTierTitles:
+          type: array
+          items:
+            type: string
+        resolvedTierId:
+          type: string
+          nullable: true
+        resolvedTierName:
+          type: string
+          nullable: true
+        unmatchedTierIds:
+          type: array
+          items:
+            type: string
+        linkedUserId:
+          type: integer
+          nullable: true
+        linkedUsername:
+          type: string
+          nullable: true
+        linkedEmail:
+          type: string
+          nullable: true
     AdminPatreonConnection:
       type: object
       required:
@@ -10304,6 +10388,7 @@ components:
         - configured
         - campaignId
         - summary
+        - campaign
         - tiers
         - connections
         - manualGrants
@@ -10322,6 +10407,8 @@ components:
             - active
             - stale
             - issues
+            - campaignActive
+            - campaignUnlinkedActive
           properties:
             totalLinked:
               type: integer
@@ -10331,6 +10418,39 @@ components:
               type: integer
             issues:
               type: integer
+            campaignActive:
+              type: integer
+            campaignUnlinkedActive:
+              type: integer
+        campaign:
+          type: object
+          required:
+            - configured
+            - status
+            - errorMessage
+            - fetchedAt
+            - members
+          properties:
+            configured:
+              type: boolean
+            status:
+              type: string
+              enum:
+                - ok
+                - unconfigured
+                - unauthorized
+                - error
+            errorMessage:
+              type: string
+              nullable: true
+            fetchedAt:
+              type: string
+              format: date-time
+              nullable: true
+            members:
+              type: array
+              items:
+                $ref: '#/components/schemas/AdminPatreonCampaignMember'
         tiers:
           type: array
           items:

@@ -2008,7 +2008,7 @@
     "title": "Patreon 與等級",
     "configured": "已設定 · 活動 {campaignId}",
     "notConfigured": "此環境尚未設定",
-    "summaryLine": "{active} 有效 · {linked} 已連結 · {issues} 異常",
+    "summaryLine": "Patreon 有效 {campaignActive}（未連結 {unlinked}）· Nadeshiko 已連結 {linked} · 異常 {issues}",
     "syncAll": "全部同步",
     "syncingAll": "同步中…",
     "searchPlaceholder": "搜尋使用者、信箱或 Patreon…",
@@ -2067,6 +2067,24 @@
       "assignment": "指派類型",
       "override": "自訂配額",
       "empty": "目前沒有手動配額或非免費等級指派。"
+    },
+    "campaign": {
+      "title": "Patreon 活動贊助者",
+      "subtitle": "直接取自 Patreon.com 並與 Nadeshiko 帳號自動比對。",
+      "fetchedAt": "更新於 {when}",
+      "unconfigured": "此伺服器尚未設定 PATREON_CREATOR_ACCESS_TOKEN。",
+      "unauthorized": "Patreon 拒絕了 Creator Access Token，請續期並更新 SSM。",
+      "error": "暫時無法連線到 Patreon API。",
+      "unlinkedFilter": "未連結 ({count})",
+      "member": "贊助者",
+      "since": "開始日期",
+      "nadeshikoLink": "Nadeshiko 帳號",
+      "notLinked": "尚未連結",
+      "empty": "沒有符合條件的活動贊助者。"
+    },
+    "linkedSection": {
+      "title": "已連結的 Nadeshiko 帳號",
+      "subtitle": "透過 OAuth 連結 Patreon 並自動享有權益的使用者。"
     }
   }
 }

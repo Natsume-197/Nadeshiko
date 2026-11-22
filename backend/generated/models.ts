@@ -73,6 +73,27 @@ export type t_AdminOverview = {
   };
 };
 
+export type t_AdminPatreonCampaignMember = {
+  email: string | null;
+  entitledAmountCents: number;
+  entitledTierIds: string[];
+  fullName: string;
+  lastChargeDate: string | null;
+  lastChargeStatus: string | null;
+  lifetimeSupportCents: number;
+  linkedEmail: string | null;
+  linkedUserId: number | null;
+  linkedUsername: string | null;
+  memberId: string;
+  patreonTierTitles: string[];
+  patreonUserId: string | null;
+  patronStatus: string | null;
+  pledgeStart: string | null;
+  resolvedTierId: string | null;
+  resolvedTierName: string | null;
+  unmatchedTierIds: string[];
+};
+
 export type t_AdminPatreonConnection = {
   effectiveQuotaLimit: number;
   email: string;
@@ -95,6 +116,13 @@ export type t_AdminPatreonConnection = {
 };
 
 export type t_AdminPatreonOverview = {
+  campaign: {
+    configured: boolean;
+    errorMessage: string | null;
+    fetchedAt: string | null;
+    members: t_AdminPatreonCampaignMember[];
+    status: 'ok' | 'unconfigured' | 'unauthorized' | 'error';
+  };
   campaignId: string | null;
   configured: boolean;
   connections: t_AdminPatreonConnection[];
@@ -110,6 +138,8 @@ export type t_AdminPatreonOverview = {
   }[];
   summary: {
     active: number;
+    campaignActive: number;
+    campaignUnlinkedActive: number;
     issues: number;
     stale: number;
     totalLinked: number;
@@ -1432,6 +1462,10 @@ export type t_DeleteUserDictionaryParamSchema = {
 
 export type t_ForgetFamiliarMediaParamSchema = {
   mediaPublicId: string;
+};
+
+export type t_GetAdminPatreonOverviewQuerySchema = {
+  refreshCampaign?: boolean;
 };
 
 export type t_GetAdminUserQuotaParamSchema = {

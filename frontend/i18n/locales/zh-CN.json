@@ -2008,7 +2008,7 @@
     "title": "Patreon 与等级",
     "configured": "已配置 · 活动 {campaignId}",
     "notConfigured": "当前环境未配置",
-    "summaryLine": "{active} 有效 · {linked} 已绑定 · {issues} 异常",
+    "summaryLine": "Patreon 有效 {campaignActive}（未绑定 {unlinked}）· Nadeshiko 已绑定 {linked} · 异常 {issues}",
     "syncAll": "全部同步",
     "syncingAll": "正在同步…",
     "searchPlaceholder": "搜索用户、邮箱或 Patreon…",
@@ -2067,6 +2067,24 @@
       "assignment": "分配类型",
       "override": "自定义配额",
       "empty": "暂无手动配额或非免费等级分配。"
+    },
+    "campaign": {
+      "title": "Patreon 活动赞助者",
+      "subtitle": "直接拉取自 Patreon.com 并与 Nadeshiko 账号自动匹配。",
+      "fetchedAt": "获取于 {when}",
+      "unconfigured": "当前服务器未配置 PATREON_CREATOR_ACCESS_TOKEN。",
+      "unauthorized": "Patreon 拒绝了 Creator Access Token，请续期并更新 SSM。",
+      "error": "暂时无法访问 Patreon API。",
+      "unlinkedFilter": "未绑定 ({count})",
+      "member": "赞助者",
+      "since": "开始日期",
+      "nadeshikoLink": "Nadeshiko 账号",
+      "notLinked": "尚未绑定",
+      "empty": "没有符合条件的活动赞助者。"
+    },
+    "linkedSection": {
+      "title": "已绑定的 Nadeshiko 账号",
+      "subtitle": "通过 OAuth 绑定 Patreon 并自动享受权益的用户。"
     }
   }
 }

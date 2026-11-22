@@ -1,0 +1,76 @@
+type: object
+required:
+  - memberId
+  - patreonUserId
+  - fullName
+  - email
+  - patronStatus
+  - entitledAmountCents
+  - lifetimeSupportCents
+  - pledgeStart
+  - lastChargeStatus
+  - lastChargeDate
+  - entitledTierIds
+  - patreonTierTitles
+  - resolvedTierId
+  - resolvedTierName
+  - unmatchedTierIds
+  - linkedUserId
+  - linkedUsername
+  - linkedEmail
+properties:
+  memberId:
+    type: string
+  patreonUserId:
+    type: string
+    nullable: true
+  fullName:
+    type: string
+  email:
+    type: string
+    nullable: true
+  patronStatus:
+    type: string
+    nullable: true
+  entitledAmountCents:
+    type: integer
+  lifetimeSupportCents:
+    type: integer
+  pledgeStart:
+    type: string
+    format: date-time
+    nullable: true
+  lastChargeStatus:
+    type: string
+    nullable: true
+  lastChargeDate:
+    type: string
+    format: date-time
+    nullable: true
+  entitledTierIds:
+    type: array
+    items:
+      type: string
+  patreonTierTitles:
+    type: array
+    items:
+      type: string
+  resolvedTierId:
+    type: string
+    nullable: true
+  resolvedTierName:
+    type: string
+    nullable: true
+  unmatchedTierIds:
+    type: array
+    items:
+      type: string
+  linkedUserId:
+    type: integer
+    nullable: true
+  linkedUsername:
+    type: string
+    nullable: true
+  linkedEmail:
+    type: string
+    nullable: true

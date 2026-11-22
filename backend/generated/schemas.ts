@@ -52,6 +52,27 @@ export const s_AdminOverview = z.object({
   generatedAt: z.iso.datetime({ offset: true }),
 });
 
+export const s_AdminPatreonCampaignMember = z.object({
+  memberId: z.string(),
+  patreonUserId: z.string().nullable(),
+  fullName: z.string(),
+  email: z.string().nullable(),
+  patronStatus: z.string().nullable(),
+  entitledAmountCents: z.coerce.number(),
+  lifetimeSupportCents: z.coerce.number(),
+  pledgeStart: z.iso.datetime({ offset: true }).nullable(),
+  lastChargeStatus: z.string().nullable(),
+  lastChargeDate: z.iso.datetime({ offset: true }).nullable(),
+  entitledTierIds: z.array(z.string()),
+  patreonTierTitles: z.array(z.string()),
+  resolvedTierId: z.string().nullable(),
+  resolvedTierName: z.string().nullable(),
+  unmatchedTierIds: z.array(z.string()),
+  linkedUserId: z.coerce.number().nullable(),
+  linkedUsername: z.string().nullable(),
+  linkedEmail: z.string().nullable(),
+});
+
 export const s_AdminPatreonConnection = z.object({
   userId: z.coerce.number(),
   username: z.string(),
@@ -669,6 +690,15 @@ export const s_AdminPatreonOverview = z.object({
     active: z.coerce.number(),
     stale: z.coerce.number(),
     issues: z.coerce.number(),
+    campaignActive: z.coerce.number(),
+    campaignUnlinkedActive: z.coerce.number(),
+  }),
+  campaign: z.object({
+    configured: PermissiveBoolean,
+    status: z.enum(['ok', 'unconfigured', 'unauthorized', 'error']),
+    errorMessage: z.string().nullable(),
+    fetchedAt: z.iso.datetime({ offset: true }).nullable(),
+    members: z.array(s_AdminPatreonCampaignMember),
   }),
   tiers: z.array(
     z.object({
