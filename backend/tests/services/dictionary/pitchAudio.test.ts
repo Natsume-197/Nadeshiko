@@ -20,6 +20,7 @@ import {
   applyHaPlan,
   CLIP_SETTINGS,
   ACCENT_DROP_SEMITONES,
+  FLAT_END_LIFT_SEMITONES,
   fitAccent,
   makeClip,
   type VoicevoxClient,
@@ -179,8 +180,9 @@ describe('shaping a clip', () => {
   });
 
   it('adds no drop to a flat word, nor to one that drops after its last mora', () => {
-    // 電車, flat, fell on its last mora: it is raised back to the high morae.
-    expect(semitones(fitAccent(contour([21.8, 24.7, 20.9]), 0))).toEqual([21.8, 24.7, 23.7]);
+    // 電車, flat, fell on its last mora: it is raised back to the high morae, and 1 st more against the
+    // synthesiser's final lowering.
+    expect(semitones(fitAccent(contour([21.8, 24.7, 20.9]), 0))).toEqual([21.8, 24.7, 23.7 + FLAT_END_LIFT_SEMITONES]);
     expect(fitAccent(contour([21.8, 24.7, 20.9]), 3)).toEqual(fitAccent(contour([21.8, 24.7, 20.9]), 0));
   });
 

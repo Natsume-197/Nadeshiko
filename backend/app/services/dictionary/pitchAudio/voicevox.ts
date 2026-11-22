@@ -102,6 +102,14 @@ export const CLIP_SETTINGS = { outputSamplingRate: 24000, prePhonemeLength: 0.1,
  */
 export const ACCENT_DROP_SEMITONES = 5;
 
+/**
+ * Semitones the last mora of a flat word is raised. The synthesiser lowers the end of an utterance by about 2 st
+ * (92% of the flat words the check rejected fell on their last mora, median 2.0 st), which a learner can take for an
+ * accent; 1 st makes the end level (median step +0.2 st) without turning it into a rise. Measured live on 14 flat
+ * words: 4 passed the check before, 14 after.
+ */
+export const FLAT_END_LIFT_SEMITONES = 1;
+
 const toSemitones = (pitch: number) => 12 * Math.log2(Math.exp(pitch) / 100);
 const fromSemitones = (semitones: number) => Math.log(100 * 2 ** (semitones / 12));
 
@@ -110,7 +118,8 @@ const fromSemitones = (semitones: number) => Math.log(100 * 2 ** (semitones / 12
  * natural intonation: the high morae (the first for a drop after it, otherwise the second up to the downstep) no
  * more than 1 semitone under the highest of them, a first mora that must rise at least 1.5 under them, and every
  * mora after the downstep at least `drop` under the lowest high one. Flat (0) and a drop after the last mora (which
- * sounds flat said alone) have no drop. Replacing the whole contour with fixed levels sounded mechanical, with dips
+ * sounds flat said alone) have no drop, and their last mora is raised {@link FLAT_END_LIFT_SEMITONES} against the
+ * synthesiser's final lowering. Replacing the whole contour with fixed levels sounded mechanical, with dips
  * and steps. Voiceless morae (pitch 0: っ, a devoiced vowel) stay voiceless.
  */
 export function fitAccent(
@@ -131,6 +140,11 @@ export function fitAccent(
   for (let i = d; i < n; i++) {
     const value = pitch[i];
     if (value != null) pitch[i] = Math.min(value, floor - drop);
+  }
+  if (d === n) {
+    const last = pitch.findLastIndex((value) => value !== null);
+    const value = pitch[last];
+    if (last > 0 && value != null) pitch[last] = value + FLAT_END_LIFT_SEMITONES;
   }
   return morae.map((mora, i) => {
     const value = pitch[i];
