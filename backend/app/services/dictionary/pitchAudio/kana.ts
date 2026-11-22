@@ -93,10 +93,15 @@ function moraSource(alignment: Array<{ text: string; ruby?: string }>, index: nu
 
 const VOWEL_KANA: Record<string, string> = { a: 'ア', i: 'イ', u: 'ウ', e: 'エ', o: 'オ', N: 'ン' };
 
-/** Spellings that sound the same: ヂ/ジ, ヅ/ズ, ヲ/オ. */
+/** Spellings that sound the same: ヂ/ジ, ヅ/ズ, ヲ/オ, ヱ/エ, ヰ/イ. */
 function sound(mora: string): string {
   const big = mora.length === 1 ? { ァ: 'ア', ィ: 'イ', ゥ: 'ウ', ェ: 'エ', ォ: 'オ' }[mora] : undefined;
-  return (big ?? mora).replace(/ヂ/g, 'ジ').replace(/ヅ/g, 'ズ').replace(/ヲ/g, 'オ');
+  return (big ?? mora)
+    .replace(/ヂ/g, 'ジ')
+    .replace(/ヅ/g, 'ズ')
+    .replace(/ヲ/g, 'オ')
+    .replace(/ヱ/g, 'エ')
+    .replace(/ヰ/g, 'イ');
 }
 
 /**

@@ -1,5 +1,6 @@
 import { checkAccent, checkMorae, decodeWav, moraPitches, pitchTrack } from './check';
-import { accentFor, type HaPlan, splitMorae, synthesisText } from './kana';
+import { toHiragana } from '../import/entries';
+import { accentFor, type HaPlan, sameMora, splitMorae, synthesisText } from './kana';
 
 /**
  * Making one pitch-audio clip with a VOICEVOX engine (task 40). Runs on the operator's PC, never in production.
@@ -122,10 +123,29 @@ const fromSemitones = (semitones: number) => Math.log(100 * 2 ** (semitones / 12
  * synthesiser's final lowering. Replacing the whole contour with fixed levels sounded mechanical, with dips
  * and steps. Voiceless morae (pitch 0: っ, a devoiced vowel) stay voiceless.
  */
+/** How hard {@link fitAccent} pushes: the drop, the lift of a flat word's last mora, and how far a high mora may sag
+ * under the highest. */
+export interface FitStrength {
+  drop: number;
+  flatLift: number;
+  sag: number;
+}
+
+/**
+ * The attempts a clip gets, gentlest first: a clip that fails the check is made again with a deeper drop, a higher
+ * flat end and a more level high stretch. Measured on 28 words rejected at the first strength (mostly a drop onto ん,
+ * a long vowel or a voiceless mora): 1 passed at 5 st, 12 at 6.5, 15 at 8.
+ */
+export const FIT_STEPS: readonly FitStrength[] = [
+  { drop: ACCENT_DROP_SEMITONES, flatLift: FLAT_END_LIFT_SEMITONES, sag: 1 },
+  { drop: 6.5, flatLift: 1.75, sag: 0.5 },
+  { drop: 8, flatLift: 2.5, sag: 0.25 },
+];
+
 export function fitAccent(
   morae: VoicevoxMora[],
   downstep: number,
-  drop: number = ACCENT_DROP_SEMITONES,
+  { drop, flatLift, sag }: FitStrength = FIT_STEPS[0] as FitStrength,
 ): VoicevoxMora[] {
   const n = morae.length;
   const d = downstep <= 0 || downstep >= n ? n : downstep;
@@ -133,7 +153,7 @@ export function fitAccent(
   const high = [...Array(n).keys()].filter((i) => (d === 1 ? i === 0 : i >= 1 && i < d) && pitch[i] !== null);
   if (high.length === 0) return morae;
   const top = Math.max(...high.map((i) => pitch[i] ?? -Infinity));
-  for (const i of high) pitch[i] = Math.max(pitch[i] ?? top, top - 1);
+  for (const i of high) pitch[i] = Math.max(pitch[i] ?? top, top - sag);
   const floor = Math.min(...high.map((i) => pitch[i] ?? Infinity));
   const first = pitch[0];
   if (d !== 1 && first != null) pitch[0] = Math.min(first, floor - 1.5);
@@ -144,7 +164,7 @@ export function fitAccent(
   if (d === n) {
     const last = pitch.findLastIndex((value) => value !== null);
     const value = pitch[last];
-    if (last > 0 && value != null) pitch[last] = value + FLAT_END_LIFT_SEMITONES;
+    if (last > 0 && value != null) pitch[last] = value + flatLift;
   }
   return morae.map((mora, i) => {
     const value = pitch[i];
@@ -179,31 +199,85 @@ export interface ClipResult {
   pitches: Array<number | null>;
 }
 
+/** How the engine says each kana alone, asked once per client: what a misread mora is rewritten to. */
+const kanaSounds = new WeakMap<VoicevoxClient, Map<string, VoicevoxMora | null>>();
+
+async function soundOf(client: VoicevoxClient, kana: string): Promise<VoicevoxMora | null> {
+  const known = kanaSounds.get(client) ?? new Map<string, VoicevoxMora | null>();
+  kanaSounds.set(client, known);
+  if (!known.has(kana)) {
+    const morae = (await client.audioQuery(toHiragana(kana))).accent_phrases.flatMap((phrase) => phrase.moras);
+    known.set(kana, morae.length === 1 && morae[0]?.text === kana ? (morae[0] ?? null) : null);
+  }
+  return known.get(kana) ?? null;
+}
+
+/**
+ * Rewrites the morae the engine misread to the reading's, keeping their pitch: a final つ said as っ (さつ), う as
+ * another vowel (つかう → "tsukaa"), a historical ひ/ほ/ふ said as a vowel (おもひで). The mora's sounds come from
+ * the engine saying that kana alone; a mora it cannot say alone is left as it was (and the check then rejects it).
+ */
+export async function correctMorae(
+  client: VoicevoxClient,
+  morae: VoicevoxMora[],
+  reading: string,
+  ha: HaPlan,
+): Promise<VoicevoxMora[]> {
+  const expected = splitMorae(reading);
+  const out = [...morae];
+  for (let i = 0; i < out.length; i++) {
+    const mora = out[i];
+    const want = expected[i];
+    const previous = i > 0 ? (out[i - 1]?.vowel ?? null) : null;
+    if (!mora || !want || ha.has(i) || sameMora(want, mora.text, previous)) continue;
+    const sound = await soundOf(client, want);
+    if (!sound) continue;
+    const voiceless = mora.vowel === 'cl' || mora.vowel_length <= 0;
+    out[i] = {
+      ...mora,
+      text: sound.text,
+      consonant: sound.consonant,
+      vowel: sound.vowel,
+      consonant_length: sound.consonant ? (mora.consonant_length ?? sound.consonant_length) : null,
+      vowel_length: voiceless ? sound.vowel_length : mora.vowel_length,
+      pitch: mora.pitch > 0 ? mora.pitch : sound.pitch,
+    };
+  }
+  return out;
+}
+
 /**
  * One clip: the hiragana reading through `audio_query` (morae and their lengths), its accent phrases joined into one,
- * は/へ fixed, VOICEVOX's own intonation for our downstep (`mora_pitch`), fitted where it contradicts the accent, then
- * synthesised and checked.
+ * は/へ fixed, misread morae rewritten, VOICEVOX's own intonation for our downstep (`mora_pitch`), fitted where it
+ * contradicts the accent, then synthesised and checked; a clip that fails the accent check is made again with the
+ * next of {@link FIT_STEPS}. `attempt` is the strength it passed with (or the last tried), 0 when none was tried.
  */
-export async function makeClip(client: VoicevoxClient, clip: ClipRequest): Promise<ClipResult> {
+export async function makeClip(client: VoicevoxClient, clip: ClipRequest): Promise<ClipResult & { attempt: number }> {
   const query = await client.audioQuery(synthesisText(clip.reading));
   const raw = query.accent_phrases.flatMap((phrase) => phrase.moras);
   // Count first: with the wrong number of morae, the downstep cannot be placed.
   if (raw.length !== splitMorae(clip.reading).length) {
-    return { wav: null, problems: checkMorae(clip.reading, raw, clip.ha), pitches: [] };
+    return { wav: null, problems: checkMorae(clip.reading, raw, clip.ha), pitches: [], attempt: 0 };
   }
 
-  const morae = applyHaPlan(raw, clip.reading, clip.ha);
+  const morae = await correctMorae(client, applyHaPlan(raw, clip.reading, clip.ha), clip.reading, clip.ha);
+  const moraProblems = checkMorae(clip.reading, morae, clip.ha);
+  if (moraProblems.length > 0) return { wav: null, problems: moraProblems, pitches: [], attempt: 0 };
+
   const accent = accentFor(clip.downstep, morae.length);
   const [natural] = await client.moraPitch([{ moras: morae, accent, pause_mora: null, is_interrogative: false }]);
-  if (!natural) return { wav: null, problems: ['VOICEVOX returned no accent phrase'], pitches: [] };
-  const final: AccentPhrase = { ...natural, moras: fitAccent(natural.moras, clip.downstep) };
+  if (!natural) return { wav: null, problems: ['VOICEVOX returned no accent phrase'], pitches: [], attempt: 0 };
 
-  const wav = await client.synthesis({ ...query, ...CLIP_SETTINGS, speedScale: 1, accent_phrases: [final] });
-  const problems = checkMorae(clip.reading, final.moras, clip.ha);
-  const { samples, sampleRate } = decodeWav(wav);
-  const pitches = moraPitches(pitchTrack(samples, sampleRate), final.moras, CLIP_SETTINGS.prePhonemeLength);
-  const intended = final.moras.map((mora) => (mora.pitch > 0 ? toSemitones(mora.pitch) : null));
-  const accentProblem = checkAccent(pitches, clip.downstep, splitMorae(clip.reading), intended);
-  if (accentProblem) problems.push(accentProblem);
-  return { wav, problems, pitches };
+  let last: ClipResult & { attempt: number } = { wav: null, problems: [], pitches: [], attempt: 0 };
+  for (const [index, strength] of FIT_STEPS.entries()) {
+    const final: AccentPhrase = { ...natural, moras: fitAccent(natural.moras, clip.downstep, strength) };
+    const wav = await client.synthesis({ ...query, ...CLIP_SETTINGS, speedScale: 1, accent_phrases: [final] });
+    const { samples, sampleRate } = decodeWav(wav);
+    const pitches = moraPitches(pitchTrack(samples, sampleRate), final.moras, CLIP_SETTINGS.prePhonemeLength);
+    const intended = final.moras.map((mora) => (mora.pitch > 0 ? toSemitones(mora.pitch) : null));
+    const accentProblem = checkAccent(pitches, clip.downstep, splitMorae(clip.reading), intended);
+    last = { wav, problems: accentProblem ? [accentProblem] : [], pitches, attempt: index + 1 };
+    if (!accentProblem) break;
+  }
+  return last;
 }

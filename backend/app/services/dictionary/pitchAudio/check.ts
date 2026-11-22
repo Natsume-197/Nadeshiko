@@ -182,6 +182,9 @@ export function foldOctaves(pitches: Array<number | null>, intended: Array<numbe
  * as the drop from this much. */
 export const FINAL_N_DROP_SEMITONES = 3.5;
 
+/** A fall before the downstep counts as the drop coming early only from this share of the drop itself. */
+export const EARLY_SHARE = 0.6;
+
 /**
  * Whether the pitch per mora follows the downstep: with a drop after mora d (1 ≤ d < n) the pitch falls across d by at
  * least {@link DROP_SEMITONES} and not before it; flat (0) and a drop after the last mora (which sounds flat said
@@ -219,15 +222,20 @@ export function checkAccent(
     return null;
   }
   // The fall that spans the downstep: from the last voiced mora up to d to the first voiced one after it.
-  const across = falls.find((fall) => fall.after <= downstep - 1 && fall.before >= downstep);
+  // It starts from a HIGH mora: the first for a drop after it, else the second up to the downstep. With those all
+  // voiceless (やすひと², す devoiced), the mora before is the low first one and the drop cannot be measured.
+  const highStart = downstep === 1 ? 0 : 1;
+  const across = falls.find((fall) => fall.after >= highStart && fall.after <= downstep - 1 && fall.before >= downstep);
   if (!across) return null; // no voiced mora on one side (a devoiced or っ mora at the edge): nothing to measure
   if (across.size < across.needed) {
     const elsewhere = drops.find((fall) => fall !== across);
     const where = elsewhere ? `, fell after mora ${elsewhere.after + 1} instead` : '';
     return `accent: expected a drop after mora ${downstep}, fell ${across.size.toFixed(1)} st${where} [${contour}]`;
   }
-  // A fall that keeps going after the drop is fine (よう|に glides down through the long vowel); one before it is not.
-  const early = drops.find((fall) => fall.before <= downstep - 1);
+  // A fall that keeps going after the drop is fine (よう|に glides down through the long vowel); one before it is not,
+  // unless it is small next to the drop: the pitch starts down late in the accented mora itself (いきのびる⁴: 2.1 st
+  // into the び, then 7.8 st after it), which the median of that mora catches.
+  const early = drops.find((fall) => fall.before <= downstep - 1 && fall.size >= EARLY_SHARE * across.size);
   if (early) {
     return `accent: expected the drop after mora ${downstep}, fell already after mora ${early.after + 1} [${contour}]`;
   }

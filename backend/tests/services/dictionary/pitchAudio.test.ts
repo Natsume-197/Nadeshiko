@@ -20,6 +20,9 @@ import {
   applyHaPlan,
   CLIP_SETTINGS,
   ACCENT_DROP_SEMITONES,
+  correctMorae,
+  FIT_STEPS,
+  type FitStrength,
   FLAT_END_LIFT_SEMITONES,
   fitAccent,
   makeClip,
@@ -146,6 +149,7 @@ describe('kana', () => {
     expect(sameMora('ウ', 'オ', 'U')).toBe(false);
     expect(sameMora('ヅ', 'ズ', null)).toBe(true);
     expect(sameMora('ァ', 'ア', 'a')).toBe(true);
+    expect(sameMora('ヱ', 'エ', null)).toBe(true);
     expect(sameMora('ハ', 'ワ', null, 'literal')).toBe(false);
     expect(sameMora('ハ', 'ワ', null, 'particle')).toBe(true);
     expect(sameMora('ヘ', 'エ', null, 'either')).toBe(true);
@@ -176,7 +180,14 @@ describe('shaping a clip', () => {
     // 心 fell too little: the third mora goes down, a first mora that did not rise goes under the high one.
     expect(semitones(fitAccent(contour([23.9, 23.9, 22]), 2))).toEqual([22.4, 23.9, 18.9]);
     // A high mora sagging more than a semitone under the others comes up.
-    expect(semitones(fitAccent(contour([18, 24, 20, 17]), 3, 4))).toEqual([18, 24, 23, 17]);
+    expect(semitones(fitAccent(contour([18, 24, 20, 17]), 3, { drop: 4, flatLift: 1, sag: 1 }))).toEqual([
+      18, 24, 23, 17,
+    ]);
+    // A stronger attempt digs the drop deeper and lets the high stretch sag less.
+    const strong = FIT_STEPS[2] as FitStrength;
+    const fitted = semitones(fitAccent(contour([18, 24, 23.5, 20]), 3, strong));
+    expect(Math.abs((fitted[2] ?? 0) - (24 - strong.sag))).toBeLessThan(0.1);
+    expect(Math.abs((fitted[3] ?? 0) - (24 - strong.sag - strong.drop))).toBeLessThan(0.1);
   });
 
   it('adds no drop to a flat word, nor to one that drops after its last mora', () => {
@@ -225,6 +236,13 @@ describe('the check', () => {
     expect(checkAccent([24, 19.5, 24, 18], 3)).toMatch(/fell already after mora 1/);
   });
 
+  it('lets the pitch start down inside the accented mora when the drop after it is much bigger', () => {
+    // いきのびる⁴: 2.1 st into the び, then 7.8 st after it.
+    expect(checkAccent([15.8, 22.4, 23.4, 21.3, 13.5], 4)).toBeNull();
+    // As big as the drop itself, it is the drop coming early.
+    expect(checkAccent([15.8, 22.4, 23.4, 19, 13.5], 4)).toMatch(/fell already after mora 3/);
+  });
+
   it('allows a final ん to fade, unless it falls as far as a drop', () => {
     expect(checkAccent([21.5, 24.5, 22.6], 0, ['ジ', 'カ', 'ン'])).toBeNull();
     expect(checkAccent([19.0, 24.6, 19.7], 2, ['ニ', 'ホ', 'ン'])).toBeNull();
@@ -239,6 +257,8 @@ describe('the check', () => {
   it('measures nothing across a voiceless mora at the edge of the drop, but wants some mora measured', () => {
     expect(checkAccent([null, 18.9], 1)).toBeNull();
     expect(checkAccent([null, null], 1)).toMatch(/no mora could be measured/);
+    // やすひと²: the accented す is voiceless, so no high mora is heard before the drop; the low や does not count.
+    expect(checkAccent([19, null, null, 19.5], 2)).toBeNull();
   });
 
   it('reads the pitch of each mora from the audio', async () => {
@@ -267,14 +287,56 @@ describe('makeClip', () => {
     expect(result.wav?.subarray(0, 4).toString()).toBe('RIFF');
   });
 
-  it('fails a clip whose audio does not fall where it should', async () => {
+  it('passes at the first strength when it can', async () => {
+    expect(
+      (await makeClip(fakeEngine({ こころ: KOKORO }), { reading: 'こころ', downstep: 2, ha: new Map() })).attempt,
+    ).toBe(1);
+  });
+
+  it('tries every strength, then fails a clip whose audio does not fall where it should', async () => {
     const result = await makeClip(fakeEngine({ こころ: KOKORO }, false), {
       reading: 'こころ',
       downstep: 2,
       ha: new Map(),
     });
 
+    expect(result.attempt).toBe(FIT_STEPS.length);
     expect(result.problems).toEqual([expect.stringMatching(/^accent: expected a drop after mora 2/)]);
+  });
+
+  it('rewrites a mora the engine misread to the one it says alone', async () => {
+    // つかう came out "tsukaa": the う is rewritten to how the engine says う.
+    const engine = fakeEngine({
+      つかう: [[mora('ツ', 'u', 'ts'), mora('カ', 'a', 'k'), mora('ア', 'a')]],
+      う: [[mora('ウ', 'u')]],
+    });
+    const fixed = await correctMorae(
+      engine,
+      [mora('ツ', 'u', 'ts'), mora('カ', 'a', 'k'), mora('ア', 'a')],
+      'つかう',
+      new Map(),
+    );
+
+    expect(fixed.map((m) => [m.text, m.vowel])).toEqual([
+      ['ツ', 'u'],
+      ['カ', 'a'],
+      ['ウ', 'u'],
+    ]);
+    expect((await makeClip(engine, { reading: 'つかう', downstep: 0, ha: new Map() })).problems).toEqual([]);
+  });
+
+  it('leaves a misread mora the engine cannot say alone, and rejects the clip', async () => {
+    const result = await makeClip(
+      fakeEngine({ つかう: [[mora('ツ', 'u', 'ts'), mora('カ', 'a', 'k'), mora('ア', 'a')]], う: [] }),
+      {
+        reading: 'つかう',
+        downstep: 0,
+        ha: new Map(),
+      },
+    );
+
+    expect(result.wav).toBeNull();
+    expect(result.problems[0]).toMatch(/^mora 3: expected ウ, got ア/);
   });
 
   it('fails without synthesising when the morae do not count up', async () => {
