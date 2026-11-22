@@ -1812,11 +1812,6 @@
       "loggedInCta": "設定で Patreon を連携",
       "loggedOutBody": "ログインして設定から Patreon アカウントを連携すると、支援者特典が有効になります。",
       "loggedOutCta": "ログインして連携"
-    },
-    "story": {
-      "title": "ひとりで作り、維持しています",
-      "body": "Nadeshiko は広告も検索の課金壁もない個人開発プロジェクトです。いただいた支援はサーバー代、メディア配信、新しい作品の追加と機能改善にそのまま充てられます。",
-      "role": "Nadeshiko 開発者"
     }
   },
   "requests": {

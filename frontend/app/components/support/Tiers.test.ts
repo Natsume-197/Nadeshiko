@@ -135,12 +135,6 @@ describe('Support section', () => {
     expect(cards[0]?.find('[data-testid="support-current-tier-badge"]').exists()).toBe(false);
   });
 
-  test('renders the personal note from the creator', async () => {
-    const wrapper = await render();
-
-    expect(wrapper.get('[data-testid="support-story"]').text()).toContain('Natsume');
-  });
-
   test('the app question points at the Terms', async () => {
     const answer = (await render()).get('[data-testid="support-faq-apps"]');
 

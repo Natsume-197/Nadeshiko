@@ -1812,11 +1812,6 @@
       "loggedInCta": "前往設定綁定 Patreon",
       "loggedOutBody": "登入並在設定中綁定 Patreon 帳號即可啟用您的贊助者權益。",
       "loggedOutCta": "登入並綁定"
-    },
-    "story": {
-      "title": "由一人開發並維護",
-      "body": "Nadeshiko 是一個無廣告、核心搜尋永久免費的獨立專案。每一份支持都直接用於伺服器、媒體託管以及收錄新作品和開發新功能。",
-      "role": "Nadeshiko 開發者"
     }
   },
   "requests": {

@@ -1812,11 +1812,6 @@
       "loggedInCta": "Link Patreon in Settings",
       "loggedOutBody": "Sign in and link your Patreon account in Settings to unlock your supporter benefits.",
       "loggedOutCta": "Sign in to link"
-    },
-    "story": {
-      "title": "Made by one person",
-      "body": "Nadeshiko is an independent project with no ads and no paywall on search. Every contribution goes straight into servers, media hosting, and time to index new titles and build better features.",
-      "role": "Creator of Nadeshiko"
     }
   },
   "requests": {

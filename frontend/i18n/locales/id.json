@@ -1812,11 +1812,6 @@
       "loggedInCta": "Tautkan Patreon di Pengaturan",
       "loggedOutBody": "Masuk dan tautkan akun Patreon Anda di Pengaturan untuk mengaktifkan manfaat pendukung.",
       "loggedOutCta": "Masuk untuk menautkan"
-    },
-    "story": {
-      "title": "Dibuat oleh satu orang",
-      "body": "Nadeshiko adalah proyek independen tanpa iklan dan tanpa paywall pada pencarian. Setiap dukungan langsung dipakai untuk server, hosting media, dan waktu mengindeks judul baru.",
-      "role": "Pembuat Nadeshiko"
     }
   },
   "requests": {

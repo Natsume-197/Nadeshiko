@@ -1812,11 +1812,6 @@
       "loggedInCta": "Vincular Patreon en Ajustes",
       "loggedOutBody": "Inicia sesión y vincula tu cuenta de Patreon en Ajustes para activar tus beneficios de mecenas.",
       "loggedOutCta": "Iniciar sesión para vincular"
-    },
-    "story": {
-      "title": "Hecho por una sola persona",
-      "body": "Nadeshiko es un proyecto independiente, sin anuncios ni muros de pago en el buscador. Cada aporte va directo a servidores, alojamiento multimedia y tiempo para indexar nuevos títulos y mejoras.",
-      "role": "Creador de Nadeshiko"
     }
   },
   "requests": {

@@ -5,8 +5,7 @@ import { FREE_MONTHLY_API_REQUESTS, SUPPORT_TIERS, tierCheckoutUrl, type Support
 /**
  * The support tab of the Supporters page (`/supporters#support`):
  * 1. Three clean, subgrid-aligned Patreon tier cards + supporter status / link strip
- * 2. Short, unboxed personal note from the creator
- * 3. Unified FAQ accordion
+ * 2. Full-width unified FAQ accordion
  */
 
 const { t, locale } = useI18n();
@@ -254,21 +253,8 @@ const faq = computed(() => [
       </div>
     </div>
 
-    <!-- 2. Short, unboxed personal note -->
-    <div data-testid="support-story" class="mx-auto max-w-2xl text-center">
-      <h3 class="text-xl font-bold tracking-tight text-ink">
-        {{ t('support.story.title') }}
-      </h3>
-      <p class="mt-3 text-sm leading-relaxed text-ink-muted sm:text-[15px]">
-        {{ t('support.story.body') }}
-      </p>
-      <p class="mt-4 text-sm font-semibold text-ink">
-        — Natsume <span class="font-normal text-ink-faint">· {{ t('support.story.role') }}</span>
-      </p>
-    </div>
-
-    <!-- 3. Questions: unified card with hairline dividers -->
-    <div class="mx-auto max-w-3xl">
+    <!-- 2. Questions: full-width unified card aligned with the tiers above -->
+    <div>
       <h3 class="text-center text-xl font-bold tracking-tight text-ink">{{ t('support.faq.title') }}</h3>
       <div class="mt-5 divide-y divide-hairline overflow-hidden rounded-xl border border-hairline bg-card-background">
         <details

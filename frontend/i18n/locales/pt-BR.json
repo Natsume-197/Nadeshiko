@@ -1812,11 +1812,6 @@
       "loggedInCta": "Vincular Patreon em Configurações",
       "loggedOutBody": "Entre e vincule sua conta do Patreon em Configurações para ativar seus benefícios de apoiador.",
       "loggedOutCta": "Entrar para vincular"
-    },
-    "story": {
-      "title": "Feito por uma só pessoa",
-      "body": "O Nadeshiko é um projeto independente, sem anúncios e sem paywall na busca. Cada contribuição vai direto para servidores, hospedagem de mídia e tempo para adicionar novos títulos e melhorias.",
-      "role": "Criador do Nadeshiko"
     }
   },
   "requests": {
