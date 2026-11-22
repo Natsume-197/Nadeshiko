@@ -1944,11 +1944,8 @@
     "nav": {
       "home": "Dasbor",
       "openDashboard": "Dasbor Admin",
-      "jumpLabel": "Buka tampilan admin",
-      "jumpPlaceholder": "Buka tampilan ({count})…",
       "reviewQueue": "Antrean Laporan",
-      "refresh": "Muat ulang hitungan",
-      "showAll": "Tampilkan semua"
+      "refresh": "Muat ulang hitungan"
     },
     "status": {
       "bannerActive": "Banner aktif",

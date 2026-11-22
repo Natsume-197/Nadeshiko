@@ -4,6 +4,7 @@ import {
   mdiBullhornOutline,
   mdiDatabaseCogOutline,
   mdiOpenInNew,
+  mdiRefresh,
   mdiShieldCrownOutline,
   mdiThumbUpOutline,
 } from '@mdi/js';
@@ -17,23 +18,8 @@ import {
 const { t } = useI18n();
 const { formatNumber } = useFormat();
 const localePath = useLocalePath();
-const route = useRoute();
 
-const { overview, isLoading } = useAdminOverview();
-
-const selectedCategory = computed<AdminCategoryId | null>(() => {
-  const raw = typeof route.query.section === 'string' ? route.query.section : null;
-  if (raw && ADMIN_CATEGORIES.some((cat) => cat.id === raw)) {
-    return raw as AdminCategoryId;
-  }
-  return null;
-});
-
-const visibleCategories = computed(() =>
-  selectedCategory.value
-    ? ADMIN_CATEGORIES.filter((cat) => cat.id === selectedCategory.value)
-    : ADMIN_CATEGORIES,
-);
+const { overview, isLoading, refresh } = useAdminOverview();
 
 function itemsForCategory(category: AdminCategoryId) {
   return ADMIN_DIRECTORY_ITEMS.filter((item) => item.category === category).map((item) => ({
@@ -88,6 +74,17 @@ function badgeClasses(tone: 'brand' | 'warning' | 'danger' | 'success' | 'neutra
         <span>{{ t('adminDashboard.pulse.media', { count: formatNumber(overview.catalogue.media) }) }}</span>
         <span aria-hidden="true">·</span>
         <span>{{ t('adminDashboard.pulse.segments', { count: formatNumber(overview.catalogue.segments) }) }}</span>
+        <button
+          type="button"
+          data-testid="admin-refresh-overview"
+          :disabled="isLoading"
+          :aria-label="t('adminDashboard.nav.refresh')"
+          :title="t('adminDashboard.nav.refresh')"
+          class="inline-flex size-6 items-center justify-center rounded-md text-ink-faint transition-colors hover:bg-surface-hover hover:text-ink disabled:opacity-50"
+          @click="refresh"
+        >
+          <UiBaseIcon :path="mdiRefresh" :size="14" :class="{ 'animate-spin': isLoading }" />
+        </button>
       </div>
       <div v-else-if="isLoading" class="text-xs text-ink-faint">
         {{ t('adminDashboard.loading') }}
@@ -288,13 +285,10 @@ function badgeClasses(tone: 'brand' | 'warning' | 'danger' | 'success' | 'neutra
     <!-- 4-column categorized directory (Jiten-style) -->
     <section
       data-testid="admin-directory"
-      :class="[
-        'grid grid-cols-1 gap-x-6 gap-y-8',
-        visibleCategories.length === 1 ? 'max-w-xl' : 'md:grid-cols-2 xl:grid-cols-4',
-      ]"
+      class="grid grid-cols-1 gap-x-6 gap-y-8 md:grid-cols-2 xl:grid-cols-4"
     >
       <div
-        v-for="cat in visibleCategories"
+        v-for="cat in ADMIN_CATEGORIES"
         :key="cat.id"
         :data-testid="`admin-section-${cat.id}`"
         class="space-y-3"
@@ -303,13 +297,6 @@ function badgeClasses(tone: 'brand' | 'warning' | 'danger' | 'success' | 'neutra
           <h2 class="text-xs font-semibold uppercase tracking-wider text-ink-faint">
             {{ t(cat.labelKey) }}
           </h2>
-          <NuxtLink
-            v-if="selectedCategory === cat.id"
-            :to="localePath('/admin')"
-            class="text-[11px] font-medium text-brand hover:underline"
-          >
-            {{ t('adminDashboard.nav.showAll') }}
-          </NuxtLink>
         </div>
 
         <ul class="space-y-1">

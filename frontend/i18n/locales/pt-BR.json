@@ -1944,11 +1944,8 @@
     "nav": {
       "home": "Painel",
       "openDashboard": "Painel Admin",
-      "jumpLabel": "Ir para uma tela admin",
-      "jumpPlaceholder": "Ir para tela ({count})…",
       "reviewQueue": "Fila de revisão",
-      "refresh": "Atualizar contagens",
-      "showAll": "Mostrar tudo"
+      "refresh": "Atualizar contagens"
     },
     "status": {
       "bannerActive": "Banner ativo",

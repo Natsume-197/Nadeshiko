@@ -178,11 +178,6 @@ export const ADMIN_DIRECTORY_ITEMS: readonly AdminDirectoryItem[] = [
   },
 ];
 
-export const ADMIN_LIVE_INTERNAL_ITEMS = ADMIN_DIRECTORY_ITEMS.filter(
-  (item): item is AdminDirectoryItem & { to: string } =>
-    item.status === 'live' && typeof item.to === 'string' && item.to.startsWith('/admin/'),
-);
-
 export function useAdminOverview() {
   const overview = useState<AdminOverview | null>('admin-overview-data', () => null);
   const isLoading = useState<boolean>('admin-overview-loading', () => false);

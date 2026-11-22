@@ -1944,11 +1944,8 @@
     "nav": {
       "home": "ダッシュボード",
       "openDashboard": "管理ダッシュボード",
-      "jumpLabel": "管理画面へ移動",
-      "jumpPlaceholder": "画面へ移動 ({count})…",
       "reviewQueue": "レビュー待ち",
-      "refresh": "件数を更新",
-      "showAll": "すべて表示"
+      "refresh": "件数を更新"
     },
     "status": {
       "bannerActive": "お知らせ表示中",

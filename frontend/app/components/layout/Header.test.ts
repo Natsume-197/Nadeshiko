@@ -150,17 +150,15 @@ describe('what a signed-IN reader is offered', () => {
     const wrapper = render();
     await openDrawer(wrapper);
 
-    expect(has(wrapper, 'nav-admin-top')).toBe(false);
     expect(has(wrapper, 'nav-admin')).toBe(false);
     expect(has(wrapper, 'nav-admin-mobile')).toBe(false);
   });
 
-  test('admins get direct links to the admin dashboard', async () => {
+  test('admins get admin dashboard links in the profile menu and mobile drawer', async () => {
     isAdmin.value = true;
     const wrapper = render();
     await openDrawer(wrapper);
 
-    expect(has(wrapper, 'nav-admin-top')).toBe(true);
     expect(has(wrapper, 'nav-admin')).toBe(true);
     expect(has(wrapper, 'nav-admin-mobile')).toBe(true);
   });

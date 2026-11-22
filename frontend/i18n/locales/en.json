@@ -1944,11 +1944,8 @@
     "nav": {
       "home": "Dashboard",
       "openDashboard": "Admin Dashboard",
-      "jumpLabel": "Jump to an admin view",
-      "jumpPlaceholder": "Jump to view ({count})…",
       "reviewQueue": "Review Queue",
-      "refresh": "Refresh counts",
-      "showAll": "Show all"
+      "refresh": "Refresh counts"
     },
     "status": {
       "bannerActive": "Banner live",

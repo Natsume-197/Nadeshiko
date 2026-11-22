@@ -128,13 +128,6 @@ watch(() => route.fullPath, closeNavSidebar);
                         class="text-sm font-semibold text-white transition-all duration-200 hover:text-opacity-80">
                         {{ $t("navbar.buttons.api") }}
                     </NuxtLink>
-                    <ClientOnly>
-                        <NuxtLink v-if="isAdmin" :to="localePath('/admin')" data-testid="nav-admin-top"
-                            class="inline-flex items-center gap-1 text-sm font-semibold text-white transition-all duration-200 hover:text-opacity-80">
-                            <UiBaseIcon :path="mdiShieldCrownOutline" :size="16" />
-                            <span>{{ $t("navbar.buttons.admin") }}</span>
-                        </NuxtLink>
-                    </ClientOnly>
                 </div>
                 <div class="gap-2 flex flex-row">
                     <div class="flex items-center">

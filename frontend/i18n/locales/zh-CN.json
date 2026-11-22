@@ -1944,11 +1944,8 @@
     "nav": {
       "home": "控制台",
       "openDashboard": "管理控制台",
-      "jumpLabel": "跳转到管理页面",
-      "jumpPlaceholder": "跳转到页面 ({count})…",
       "reviewQueue": "审核队列",
-      "refresh": "刷新计数",
-      "showAll": "显示全部"
+      "refresh": "刷新计数"
     },
     "status": {
       "bannerActive": "公告生效中",

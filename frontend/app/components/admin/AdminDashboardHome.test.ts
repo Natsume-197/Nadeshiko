@@ -1,15 +1,12 @@
 // @vitest-environment happy-dom
 import { mount } from '@vue/test-utils';
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
-import { reactive, ref } from 'vue';
+import { ref } from 'vue';
 import type { AdminOverview } from '@brigadasos/nadeshiko-sdk';
 
-const route = reactive<{ path: string; query: Record<string, string> }>({
-  path: '/en/admin',
-  query: {},
-});
 const overview = ref<AdminOverview | null>(null);
 const isLoading = ref(false);
+const refresh = vi.fn();
 
 vi.stubGlobal('useI18n', () => ({
   t: (k: string, params?: Record<string, unknown>) => (params ? `${k}:${JSON.stringify(params)}` : k),
@@ -19,15 +16,13 @@ vi.stubGlobal('useFormat', () => ({
   formatNumber: (n: number) => String(n),
 }));
 vi.stubGlobal('useLocalePath', () => (p: string) => `/en${p}`);
-vi.stubGlobal('useRoute', () => route);
-vi.stubGlobal('useAdminOverview', () => ({ overview, isLoading }));
+vi.stubGlobal('useAdminOverview', () => ({ overview, isLoading, refresh }));
 
 import AdminDashboardHome from './AdminDashboardHome.vue';
 
 const mounted: { unmount: () => void }[] = [];
 
-function render(query: Record<string, string> = {}) {
-  route.query = query;
+function render() {
   const wrapper = mount(AdminDashboardHome, {
     global: {
       stubs: {
@@ -41,6 +36,7 @@ function render(query: Record<string, string> = {}) {
 }
 
 beforeEach(() => {
+  vi.clearAllMocks();
   overview.value = {
     reports: { open: 7, processing: 2 },
     requests: { open: 11, planned: 3, inProgress: 2, boostedOpen: 4 },
@@ -87,12 +83,9 @@ describe('AdminDashboardHome', () => {
     }
   });
 
-  test('filters the directory to one column when ?section is set', () => {
-    const wrapper = render({ section: 'site' });
-
-    expect(wrapper.find('[data-testid="admin-section-site"]').exists()).toBe(true);
-    expect(wrapper.find('[data-testid="admin-section-moderation"]').exists()).toBe(false);
-    expect(wrapper.find('[data-testid="admin-section-community"]').exists()).toBe(false);
-    expect(wrapper.find('[data-testid="admin-section-catalogue"]').exists()).toBe(false);
+  test('refreshes live overview counts when clicking refresh', async () => {
+    const wrapper = render();
+    await wrapper.get('[data-testid="admin-refresh-overview"]').trigger('click');
+    expect(refresh).toHaveBeenCalledTimes(1);
   });
 });

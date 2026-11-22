@@ -1944,11 +1944,8 @@
     "nav": {
       "home": "控制台",
       "openDashboard": "管理控制台",
-      "jumpLabel": "前往管理頁面",
-      "jumpPlaceholder": "前往頁面 ({count})…",
       "reviewQueue": "審核佇列",
-      "refresh": "重新整理統計",
-      "showAll": "顯示全部"
+      "refresh": "重新整理統計"
     },
     "status": {
       "bannerActive": "公告啟用中",

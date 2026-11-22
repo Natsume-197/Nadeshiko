@@ -1944,11 +1944,8 @@
     "nav": {
       "home": "Inicio",
       "openDashboard": "Panel de administración",
-      "jumpLabel": "Ir a una vista de administración",
-      "jumpPlaceholder": "Ir a una vista ({count})…",
       "reviewQueue": "Cola de reportes",
-      "refresh": "Actualizar contadores",
-      "showAll": "Ver todo"
+      "refresh": "Actualizar contadores"
     },
     "status": {
       "bannerActive": "Banner activo",
