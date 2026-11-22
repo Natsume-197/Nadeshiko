@@ -33,6 +33,107 @@ export type t_AdminContentRequest = t_ContentRequest & {
   } | null;
 };
 
+export type t_AdminOverview = {
+  announcement: {
+    active: boolean;
+  };
+  reports: {
+    open: number;
+  };
+  requests: {
+    boostedOpen: number;
+    open: number;
+  };
+  users: {
+    activePatrons: number;
+    total: number;
+  };
+};
+
+export type t_AdminPatreonCampaignMember = {
+  email: string | null;
+  entitledAmountCents: number;
+  entitledTierIds: string[];
+  fullName: string;
+  lastChargeDate: string | null;
+  lastChargeStatus: string | null;
+  lifetimeSupportCents: number;
+  linkedUserId: number | null;
+  linkedUsername: string | null;
+  matchedUserId: number | null;
+  matchedUsername: string | null;
+  memberId: string;
+  monthlyAmountCents: number;
+  patreonTierTitles: string[];
+  patreonUserId: string | null;
+  patronStatus: string | null;
+  pledgeStart: string | null;
+  resolvedTierName: string | null;
+  unmatchedTierIds: string[];
+};
+
+export type t_AdminPatreonConnection = {
+  effectiveQuotaLimit: number;
+  email: string;
+  fullName: string | null;
+  hasIssue: boolean;
+  isActive: boolean;
+  isStale: boolean;
+  linkedAt: string;
+  membershipCheckedAt: string;
+  monthlyAmountCents: number;
+  patreonUserId: string;
+  patronStatus: string | null;
+  quotaSource: 'override' | 'tier' | 'patreon' | 'legacy_column' | 'default';
+  resolvedTierId: string | null;
+  resolvedTierName: string | null;
+  unmatchedTierIds: string[];
+  userId: number;
+  username: string;
+};
+
+export type t_AdminPatreonOverview = {
+  campaign: {
+    errorMessage: string | null;
+    fetchedAt: string | null;
+    members: t_AdminPatreonCampaignMember[];
+    status: 'ok' | 'unconfigured' | 'unauthorized' | 'error';
+  };
+  campaignId: string | null;
+  configured: boolean;
+  connections: t_AdminPatreonConnection[];
+  manualGrants: {
+    effectiveQuotaLimit: number;
+    email: string;
+    quotaOverride: number | null;
+    quotaSource: 'override' | 'tier' | 'patreon' | 'legacy_column' | 'default';
+    tierId: string | null;
+    tierName: string | null;
+    userId: number;
+    username: string;
+  }[];
+  summary: {
+    active: number;
+    campaignActive: number;
+    campaignLifetimeCents: number;
+    campaignMonthlyCents: number;
+    campaignPayingEver: number;
+    campaignUnlinkedActive: number;
+    issues: number;
+    totalLinked: number;
+  };
+  tiers: {
+    activePatronCount: number;
+    campaignMonthlyCents: number;
+    campaignPatronCount: number;
+    displayName: string;
+    id: string;
+    monthlyQuotaLimit: number;
+    monthlyRequestBoosts: number;
+    patreonTierId: string | null;
+  }[];
+};
+
 export type t_AdminReportGroup = {
   firstReportedAt: string;
   lastStatusChange: string | null;
@@ -74,21 +175,6 @@ export type t_AdminUserWithProviders = {
 
 export type t_AffectedCountResponse = {
   count: number;
-};
-
-export type t_AgentActivityResponse = {
-  entries: {
-    actedBy: string | null;
-    createdAt: string;
-    current: Record<string, unknown>;
-    episodeNumber: number;
-    mediaPublicId: string;
-    reportId: number | null;
-    revisionId: number;
-    revisionNumber: number;
-    segmentPublicId: string;
-    snapshot: Record<string, unknown>;
-  }[];
 };
 
 export type t_Announcement = {
@@ -1358,6 +1444,10 @@ export type t_ForgetFamiliarMediaParamSchema = {
   mediaPublicId: string;
 };
 
+export type t_GetAdminPatreonOverviewQuerySchema = {
+  refreshCampaign?: boolean;
+};
+
 export type t_GetAdminUserQuotaParamSchema = {
   userId: number;
 };
@@ -1461,12 +1551,6 @@ export type t_ListAdminReportsQuerySchema = {
   'target.type'?: t_ReportTargetType;
 };
 
-export type t_ListAgentActivityQuerySchema = {
-  reportId?: number;
-  since?: string;
-  take?: number;
-};
-
 export type t_ListCollectionsQuerySchema = {
   cursor?: string;
   take?: number;
@@ -1542,6 +1626,10 @@ export type t_ModerateEpisodeSegmentsParamSchema = {
   mediaPublicId: string;
 };
 
+export type t_RefreshAdminPatreonConnectionParamSchema = {
+  userId: number;
+};
+
 export type t_RemoveExcludedMediaParamSchema = {
   mediaPublicId: string;
 };
@@ -1566,6 +1654,10 @@ export type t_RestoreSegmentRevisionParamSchema = {
 
 export type t_SearchCollectionSegmentsParamSchema = {
   collectionPublicId: string;
+};
+
+export type t_UnlinkAdminPatreonConnectionParamSchema = {
+  userId: number;
 };
 
 export type t_UnsubscribeFromEmailQuerySchema = {

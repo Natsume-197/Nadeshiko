@@ -43,7 +43,8 @@
       "activity": "学习记录",
       "language": "语言",
       "logout": "退出登录",
-      "requests": "请求"
+      "requests": "请求",
+      "admin": "管理"
     }
   },
   "announcementBanner": {
@@ -519,7 +520,6 @@
       "developer": "开发者",
       "users": "用户",
       "reports": "问题反馈",
-      "agentActivity": "自动审核记录",
       "announcement": "公告",
       "dictionaries": "词典"
     },
@@ -1591,29 +1591,6 @@
     },
     "loadError": "无法加载词语列表。"
   },
-  "agentActivity": {
-    "title": "自动审核记录",
-    "description": "查看自动审核助手保存的修改记录。可抽查修改结果，并还原不正确的改动。",
-    "empty": "所选时间段内暂无自动审核记录",
-    "episode": "第 {number} 集",
-    "noReport": "无关联反馈",
-    "restore": "还原",
-    "restoring": "还原中…",
-    "restoreSuccess": "例句已还原",
-    "restoreError": "无法还原例句",
-    "window": {
-      "day": "最近 24 小时",
-      "week": "最近 7 天",
-      "month": "最近 30 天"
-    },
-    "table": {
-      "segment": "例句",
-      "change": "修改内容",
-      "report": "关联反馈",
-      "when": "时间",
-      "actions": "操作"
-    }
-  },
   "connections": {
     "title": "关联账户",
     "patreon": {
@@ -1632,29 +1609,17 @@
     "seoTitle": "支持者 | Nadeshiko",
     "seoDescription": "在 Patreon 上支持 Nadeshiko，了解每个档位的回馈，以及即将加入的作品和功能。",
     "title": "支持者",
-    "intro": "支持者让 Nadeshiko 持续运行，并一起决定接下来做什么。在下方选择档位，再看看我们正在开发的内容。",
+    "intro": "句子搜索、音频、词卡和 Anki 导出永久免费。赞助者的支持用于维持服务器并让 Nadeshiko 持续成长。",
     "tabs": {
       "tiers": "档位"
     }
   },
   "roadmap": {
     "title": "路线图",
-    "intro": "看看 Nadeshiko 即将加入的内容。任何人都可以请求作品，并为接下来的内容投票。",
     "support": "支持 Nadeshiko",
     "proposeCta": "请求作品",
-    "filterLabel": "筛选路线图",
-    "filters": {
-      "content": "作品",
-      "feature": "功能"
-    },
-    "dateFlexible": "时间待定",
     "featureSoon": "即将推出™",
     "featureReleased": "已发布",
-    "titleInProgress": "进行中",
-    "titleDone": "已完成",
-    "proposedBy": "由 {name} 推荐",
-    "patronCommunity": "Nadeshiko 赞助会员",
-    "emptyTitles": "目前还没有安排作品。",
     "emptyFeatures": "目前还没有功能里程碑。",
     "viewSource": "查看来源",
     "loadError": "目前无法加载路线图。",
@@ -1708,8 +1673,7 @@
     "admin": {
       "tab": "路线图",
       "title": "路线图队列"
-    },
-    "requestsLink": "前往请求页面。"
+    }
   },
   "feedback": {
     "open": "意见反馈",
@@ -1797,18 +1761,9 @@
     "whatsIncluded": "包含内容",
     "discord": "包含 Discord 福利",
     "tierText": {
-      "seed": [
-        "如果 Nadeshiko 在你学习日语的路上帮到了你，你也想表达感谢、帮助网站继续运行，这个档位就是为你准备的。谢谢你！",
-        "作为回报，你可以用助推把想要的作品推到请求列表前面，并获得更高的 API 额度。"
-      ],
-      "flower": [
-        "献给真正相信这个项目的人。非常感谢你的支持！",
-        "在 Seed 档福利的基础上，你可以提出新功能建议，直接影响 Nadeshiko 的开发。"
-      ],
-      "nadeshiko": [
-        "我们的最高档位，献给想给予 Nadeshiko 最大支持的人。正是这一档的支持，让我们能不断扩充片库、开发新功能。",
-        "你将获得 Flower 档的全部福利、最多的助推次数让你的选择优先，以及我们最高的 API 额度。"
-      ]
+      "seed": "帮助维持 Nadeshiko 运转，同时解锁感谢福利。",
+      "flower": "适合认可这个项目、希望直接参与未来功能方向的你。",
+      "nadeshiko": "最高支持档位，助力收录更多作品并提供最高额度。"
     },
     "tiersIntro": "选择适合你的档位。你可以随时在 Patreon 上更改或取消。",
     "everythingBadge": "全部包含",
@@ -1844,6 +1799,19 @@
         "q": "一个 Patreon 账户可以解锁多个 Nadeshiko 账户吗？",
         "a": "不可以。一个 Patreon 账户只能关联一个 Nadeshiko 账户。"
       }
+    },
+    "currentTierBadge": "当前档位",
+    "activeBanner": {
+      "title": "您正在以 {tier} 档位支持 Nadeshiko。",
+      "quota": "您的账号已启用每月 {limit} 次 API 请求额度。",
+      "manage": "管理 Patreon 绑定"
+    },
+    "linkStrip": {
+      "title": "已经在 Patreon 支持我们了吗？",
+      "loggedInBody": "在设置中绑定您的 Patreon 账号，即可自动解锁 API 额度、自定义主题和请求加速。",
+      "loggedInCta": "前往设置绑定 Patreon",
+      "loggedOutBody": "登录并在设置中绑定 Patreon 账号即可激活您的赞助者权益。",
+      "loggedOutCta": "登录并绑定"
     }
   },
   "requests": {
@@ -1958,6 +1926,138 @@
     },
     "admin": {
       "tab": "请求"
+    }
+  },
+  "adminDashboard": {
+    "title": "管理控制台",
+    "subtitle": "在一个界面集中处理审核、社区、账号与系统健康状态。",
+    "loading": "正在加载实时计数…",
+    "nav": {
+      "home": "控制台",
+      "openDashboard": "管理控制台",
+      "refresh": "刷新计数"
+    },
+    "status": {
+      "bannerActive": "公告生效中"
+    },
+    "categories": {
+      "moderation": "审核与质量",
+      "community": "社区",
+      "site": "站点与用户"
+    },
+    "items": {
+      "reportsDesc": "筛选并批量处理待审核的举报。",
+      "requestsDesc": "管理内容请求、赞助者加速与上线通知。",
+      "roadmapDesc": "创建、排序并更新公开路线图条目。",
+      "announcementDesc": "显示全站通知、警告或维护横幅。",
+      "usersDesc": "管理账号、角色、封禁及每月 API 配额覆盖。",
+      "patreonTitle": "Patreon 与等级",
+      "patreonDesc": "查看已绑定的 Patreon 会员、等级限额与同步状态。",
+      "statusTitle": "服务状态页",
+      "statusDesc": "在新标签页打开 status.nadeshiko.co。"
+    }
+  },
+  "adminPatreon": {
+    "title": "Patreon 与等级",
+    "configured": "已配置 · 活动 {campaignId}",
+    "notConfigured": "当前环境未配置",
+    "syncAll": "全部同步",
+    "syncingAll": "正在同步…",
+    "searchPlaceholder": "搜索用户、邮箱或 Patreon…",
+    "empty": "没有符合条件的 Patreon 绑定记录。",
+    "loadError": "加载 Patreon 绑定失败。",
+    "refreshOneSuccess": "已刷新 Patreon 会员状态。",
+    "refreshOneError": "刷新 Patreon 会员状态失败。",
+    "unlinkSuccess": "已解除 Patreon 绑定。",
+    "unlinkError": "解除 Patreon 绑定失败。",
+    "syncAllSuccess": "已同步 {checked} 个账号（失败 {failed} 个）。",
+    "syncAllError": "执行全量 Patreon 同步失败。",
+    "quotaPerMonth": "{limit}/月 · {source}",
+    "linkedDate": "绑定于 {date}",
+    "filters": {
+      "all": "全部 ({count})",
+      "active": "有效 ({count})",
+      "issues": "异常 ({count})"
+    },
+    "status": {
+      "activePatron": "有效",
+      "declinedPatron": "扣款失败",
+      "formerPatron": "已取消",
+      "notPatron": "非赞助者"
+    },
+    "badges": {
+      "stale": "已过期 (>7天)",
+      "unmatched": "未映射: {id}"
+    },
+    "table": {
+      "account": "账号",
+      "patreon": "Patreon",
+      "status": "状态",
+      "tierAndQuota": "等级与配额",
+      "lastChecked": "上次同步",
+      "actions": "操作"
+    },
+    "actions": {
+      "resync": "重新同步",
+      "unlink": "解绑",
+      "confirmUnlink": "确认解绑",
+      "cancel": "取消"
+    },
+    "tiers": {
+      "title": "等级映射",
+      "subtitle": "当前配置的 Patreon 等级 ID、每月 API 配额与请求加速次数（只读）。",
+      "tier": "等级",
+      "quota": "API / 月",
+      "patreon": "Patreon",
+      "linked": "已绑定",
+      "monthly": "每月",
+      "perks": "API / 加速"
+    },
+    "manualGrants": {
+      "title": "手动等级与配额覆盖",
+      "subtitle": "未通过 Patreon 而手动分配等级或自定义 API 配额的账号。",
+      "manageInUsers": "前往用户管理",
+      "assignment": "分配类型",
+      "override": "自定义配额",
+      "empty": "暂无手动配额或非免费等级分配。"
+    },
+    "campaign": {
+      "subtitle": "直接拉取自 Patreon.com 并与 Nadeshiko 账号自动匹配。",
+      "fetchedAt": "获取于 {when}",
+      "unconfigured": "当前服务器未配置 PATREON_CREATOR_ACCESS_TOKEN。",
+      "unauthorized": "Patreon 拒绝了 Creator Access Token，请续期并更新 SSM。",
+      "error": "暂时无法访问 Patreon API。",
+      "unlinkedFilter": "未绑定 ({count})",
+      "member": "赞助者",
+      "since": "开始日期",
+      "nadeshikoLink": "Nadeshiko 账号",
+      "empty": "没有符合条件的活动赞助者。",
+      "paidFilter": "有付费记录 ({count})",
+      "monthly": "每月",
+      "lifetime": "历史总计",
+      "lastCharge": "扣款：{date}",
+      "matchedAccount": "检测到账号",
+      "noOauthYet": "未绑定 OAuth",
+      "noAccount": "无账号",
+      "subtotal": "小计 ({count})"
+    },
+    "linkedSection": {
+      "subtitle": "通过 OAuth 绑定 Patreon 并自动享受权益的用户。"
+    },
+    "pledgePerMonth": "{amount}/月",
+    "kpi": {
+      "monthlyLabel": "每月收入",
+      "monthlySub": "{count} 位活跃赞助者 · 税前 USD",
+      "lifetimeLabel": "历史总计",
+      "lifetimeSub": "共 {count} 位赞助者支持过",
+      "unlinkedLabel": "未绑定的活跃赞助者",
+      "unlinkedSub": "Patreon 活跃共 {count} 位",
+      "issuesLabel": "异常账号",
+      "issuesSub": "Nadeshiko 已绑定共 {count} 个"
+    },
+    "tabs": {
+      "campaign": "Patreon 赞助者 ({count})",
+      "linked": "已绑定账号 ({count})"
     }
   }
 }

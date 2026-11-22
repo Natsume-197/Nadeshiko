@@ -1,0 +1,33 @@
+delete:
+  tags:
+    - Admin
+  x-internal: true
+  operationId: unlinkAdminPatreonConnection
+  summary: Unlink a user's Patreon connection
+  description: |
+    Deletes the stored Patreon OAuth connection for a user so they can reconnect cleanly or fix
+    a mismatched link, invalidating quota caches immediately.
+
+  security:
+    - SessionCookie: [ADMIN]
+  parameters:
+    - name: userId
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+      description: Internal Nadeshiko user ID whose Patreon link should be removed
+  responses:
+    "204":
+      description: Connection removed
+    "401":
+      $ref: "../../components/responses/Unauthorized.yaml"
+    "403":
+      $ref: "../../components/responses/Forbidden.yaml"
+    "404":
+      $ref: "../../components/responses/NotFound.yaml"
+    "429":
+      $ref: "../../components/responses/TooManyRequests.yaml"
+    "500":
+      $ref: "../../components/responses/InternalServerError.yaml"

@@ -1,0 +1,35 @@
+get:
+  tags:
+    - Admin
+  x-internal: true
+  operationId: getAdminPatreonOverview
+  summary: List linked Patreon connections, tier mapping and manual quota exceptions
+  description: |
+    Returns Patreon OAuth configuration status, all linked Patreon memberships with staleness
+    and tier-match diagnostics, the configured quota/boost tier mapping, and non-Patreon manual
+    tier or quota override grants.
+
+  security:
+    - SessionCookie: [ADMIN]
+  parameters:
+    - name: refreshCampaign
+      in: query
+      schema:
+        type: boolean
+        default: false
+      description: Bypass the 5-minute cache and fetch live campaign members from Patreon
+  responses:
+    "200":
+      description: OK
+      content:
+        application/json:
+          schema:
+            $ref: "../../components/schemas/AdminPatreonOverview.yaml"
+    "401":
+      $ref: "../../components/responses/Unauthorized.yaml"
+    "403":
+      $ref: "../../components/responses/Forbidden.yaml"
+    "429":
+      $ref: "../../components/responses/TooManyRequests.yaml"
+    "500":
+      $ref: "../../components/responses/InternalServerError.yaml"

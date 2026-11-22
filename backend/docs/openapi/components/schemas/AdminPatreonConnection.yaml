@@ -1,0 +1,85 @@
+type: object
+required:
+  - userId
+  - username
+  - email
+  - patreonUserId
+  - fullName
+  - patronStatus
+  - monthlyAmountCents
+  - resolvedTierId
+  - resolvedTierName
+  - effectiveQuotaLimit
+  - quotaSource
+  - unmatchedTierIds
+  - isActive
+  - isStale
+  - hasIssue
+  - membershipCheckedAt
+  - linkedAt
+properties:
+  userId:
+    type: integer
+    example: 42
+  username:
+    type: string
+    example: tanaka_san
+  email:
+    type: string
+    format: email
+    example: tanaka@example.com
+  patreonUserId:
+    type: string
+    example: "12345678"
+  fullName:
+    type: string
+    nullable: true
+    example: Tanaka Taro
+  patronStatus:
+    type: string
+    nullable: true
+    example: active_patron
+  monthlyAmountCents:
+    type: integer
+    description: Monthly USD cents, normalized to the Patreon tier list price when the member appears in the live campaign list (excludes Apple iOS IAP markup); otherwise Patreon's raw entitled amount.
+    example: 1000
+  resolvedTierId:
+    type: string
+    nullable: true
+    example: pro
+  resolvedTierName:
+    type: string
+    nullable: true
+    example: Flower
+  effectiveQuotaLimit:
+    type: integer
+    example: 30000
+  quotaSource:
+    type: string
+    enum:
+      - override
+      - tier
+      - patreon
+      - legacy_column
+      - default
+    example: patreon
+  unmatchedTierIds:
+    type: array
+    items:
+      type: string
+    description: Entitled Patreon tier IDs that match no configured Tier row.
+  isActive:
+    type: boolean
+    description: True when active_patron with positive pledge and checked within the staleness bound.
+  isStale:
+    type: boolean
+    description: True when membershipCheckedAt is older than the 7-day staleness bound.
+  hasIssue:
+    type: boolean
+    description: True when stale, declined, or carrying unmatched Patreon tier IDs.
+  membershipCheckedAt:
+    type: string
+    format: date-time
+  linkedAt:
+    type: string
+    format: date-time

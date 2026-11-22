@@ -6,9 +6,9 @@ definePageMeta({
   robots: false,
   middleware: defineNuxtRouteMiddleware((to) => {
     const { localizedPath } = splitLocalePrefix(to.path);
-    const targetPath = preferredLocalePath(localizedPath.replace(/^\/admin/, '/user/admin'));
+    const targetPath = preferredLocalePath(localizedPath.replace(/^\/user\/admin/, '/admin'));
 
-    return navigateTo(targetPath || useLocalePath()('/user/admin/users'), { replace: true, redirectCode: 301 });
+    return navigateTo(targetPath || useLocalePath()('/admin'), { replace: true, redirectCode: 301 });
   }),
 });
 </script>

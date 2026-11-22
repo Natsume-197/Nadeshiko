@@ -1,27 +1,47 @@
 <script setup lang="ts">
-import { mdiChevronDown } from '@mdi/js';
-import { PATREON_URL } from '#shared/utils/socialLinks';
-import { FREE_MONTHLY_API_REQUESTS, SUPPORT_TIERS, type SupportTier } from '~/utils/supportTiers';
+import { mdiCheck, mdiCheckCircleOutline, mdiChevronDown, mdiLinkVariant, mdiPatreon } from '@mdi/js';
+import { handleApiError } from '~/utils/apiError';
+import { FREE_MONTHLY_API_REQUESTS, SUPPORT_TIERS, tierCheckoutUrl, type SupportTier } from '~/utils/supportTiers';
 
 /**
- * The support section of the Supporters page (`/supporters#support`): the Patreon tiers and what each one gives back,
- * then the common questions. The roadmap follows it on the same page, since supporting is how readers shape it.
- *
- * Framed as support with thank-you extras, not a paid version of the site. The numbers come from `supportTiers`, the
- * same list the Developer settings hint reads, and the tier cards are worded as on Patreon.
+ * The support tab of the Supporters page (`/supporters#support`):
+ * 1. Three clean, subgrid-aligned Patreon tier cards + supporter status / link strip
+ * 2. Full-width unified FAQ accordion
  */
 
-const { t, locale } = useI18n();
-const { formatNumber } = useFormat();
+const { t } = useI18n();
+const { formatNumber, formatUsdWhole } = useFormat();
 const localePath = useLocalePath();
+const store = userStore();
+const sdk = useNadeshikoSdk();
+const { openLoginModal } = useLoginModal();
 
-const usd = (amount: number) =>
-  new Intl.NumberFormat(locale.value, { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(amount);
+/** The signed-in reader's quota; null when signed out or the lookup failed. */
+const quota = ref<{ tierId: string | null; limit: number | null } | null>(null);
+
+const activeSupportTier = computed<SupportTier | null>(
+  () => SUPPORT_TIERS.find((tier) => tier.quotaTierId === quota.value?.tierId) ?? null,
+);
+
+const isActiveTier = (tier: SupportTier) => activeSupportTier.value?.quotaTierId === tier.quotaTierId;
+
+async function loadAccountTier() {
+  if (!store.isLoggedIn) {
+    quota.value = null;
+    return;
+  }
+  const me = await sdk.getMe().catch((error: unknown) => {
+    // Non-critical enhancement; the public tier cards still work without account status.
+    handleApiError('support:quota-fetch-failed', error, { toastKey: false });
+    return null;
+  });
+  if (me) quota.value = { tierId: me.quota?.tier?.id ?? null, limit: me.quota?.limit ?? null };
+}
+
+onMounted(loadAccountTier);
+watch(() => store.isLoggedIn, loadAccountTier);
 
 const tierName = (tier: SupportTier) => t(`support.tiers.${tier.key}`);
-
-/** "$5 / month", in the locale's own order ("月額 $5"). */
-const priceLine = (tier: SupportTier) => t('support.perMonth', { price: usd(tier.priceUsd) });
 
 /** The Discord mark, as the footer draws it (`@mdi/js` has none). */
 const DISCORD_PATH =
@@ -47,7 +67,11 @@ function perks(tier: SupportTier, index: number): string[] {
 }
 
 const faq = computed(() => [
-  { key: 'cancel', q: t('support.faq.cancel.q'), a: t('support.faq.cancel.a', { count: formatNumber(FREE_MONTHLY_API_REQUESTS) }) },
+  {
+    key: 'cancel',
+    q: t('support.faq.cancel.q'),
+    a: t('support.faq.cancel.a', { count: formatNumber(FREE_MONTHLY_API_REQUESTS) }),
+  },
   { key: 'personal', q: t('support.faq.personal.q'), a: t('support.faq.personal.a') },
   { key: 'apps', q: t('support.faq.apps.q'), a: null },
   { key: 'oneAccount', q: t('support.faq.oneAccount.q'), a: t('support.faq.oneAccount.a') },
@@ -55,82 +79,190 @@ const faq = computed(() => [
 </script>
 
 <template>
-  <section id="support" class="scroll-mt-20 text-white" aria-labelledby="support-title" data-testid="support-section">
-    <h2 id="support-title" class="text-center text-3xl font-black tracking-tight md:text-4xl">{{ t('support.title') }}</h2>
-    <p class="mt-3 text-center text-sm text-gray-400">{{ t('support.tiersIntro') }}</p>
+  <section
+    id="support"
+    class="scroll-mt-20 space-y-16 text-ink"
+    aria-labelledby="support-title"
+    data-testid="support-section"
+  >
+    <!-- 1. Tier Cards + Status / Linking Strip -->
+    <div>
+      <h2 id="support-title" class="sr-only">{{ t('support.title') }}</h2>
+      <p class="text-center text-sm text-ink-muted">{{ t('support.tiersIntro') }}</p>
 
-    <!-- Tiers: laid out like the tier cards on Patreon, with the same words. -->
-    <ul class="mt-12 grid gap-5 lg:grid-cols-3" data-testid="support-tier-cards">
-      <li
-        v-for="(tier, index) in SUPPORT_TIERS"
-        :key="tier.key"
-        class="relative flex flex-col rounded-xl bg-[#231c1c] p-6 ring-1 transition hover:ring-brand/40"
-        :class="tier.priorityRequests ? 'ring-brand/50' : 'ring-white/[0.06]'"
+      <div
+        v-if="activeSupportTier"
+        data-testid="support-active-banner"
+        class="mt-6 flex flex-col gap-3 rounded-xl border border-emerald-500/35 bg-emerald-500/10 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
       >
-        <span
-          v-if="tier.priorityRequests"
-          class="absolute -top-2.5 right-6 rounded-full bg-brand-solid px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-on-accent"
-          >{{ t('support.everythingBadge') }}</span
-        >
-        <p class="text-lg font-bold">
-          {{ tierName(tier) }} <span lang="ja">{{ tier.kanji }}</span>
-        </p>
-        <p class="mt-0.5 text-gray-400">{{ priceLine(tier) }}</p>
-
-        <div class="mt-5 space-y-4 text-[15px] leading-relaxed text-gray-200">
-          <p>{{ t(`support.tierText.${tier.key}.0`) }}</p>
-          <p>{{ t(`support.tierText.${tier.key}.1`) }}</p>
+        <div class="flex items-start gap-3">
+          <UiBaseIcon :path="mdiCheckCircleOutline" :size="20" class="mt-0.5 shrink-0 text-emerald-400" />
+          <div>
+            <p class="text-sm font-semibold text-ink">
+              {{ t('support.activeBanner.title', { tier: tierName(activeSupportTier) }) }}
+            </p>
+            <p v-if="quota?.limit" class="mt-0.5 text-xs text-ink-muted">
+              {{ t('support.activeBanner.quota', { limit: formatNumber(quota.limit) }) }}
+            </p>
+          </div>
         </div>
+        <NuxtLink
+          :to="`${localePath('/user/settings')}#connections`"
+          class="inline-flex h-9 shrink-0 items-center justify-center rounded-lg border border-hairline bg-surface-lift px-3.5 text-xs font-semibold text-ink transition-colors hover:border-brand/50 hover:bg-surface-hover"
+        >
+          {{ t('support.activeBanner.manage') }}
+        </NuxtLink>
+      </div>
 
-        <div class="my-6 h-px bg-white/10" />
-
-        <p class="text-sm font-bold">{{ t('support.whatsIncluded') }}</p>
-        <ul class="mt-3 flex-1 space-y-2.5 text-[15px] text-gray-200">
-          <li v-for="perk in perks(tier, index)" :key="perk" class="flex gap-3">
-            <span aria-hidden="true" class="mt-[0.6em] h-1.5 w-1.5 shrink-0 rounded-full bg-gray-300" />{{ perk }}
-          </li>
-        </ul>
-        <p class="mt-4 flex items-center gap-2 text-[15px] text-gray-400">
-          <svg aria-hidden="true" viewBox="0 -25 260 260" class="h-[18px] w-[18px] shrink-0 fill-current"><path :d="DISCORD_PATH" /></svg>{{ t('support.discord') }}
-        </p>
-
-        <a
-          :href="PATREON_URL"
-          target="_blank"
-          rel="noopener"
-          data-testid="support-patreon-link"
-          class="mt-7 inline-flex h-10 items-center justify-center rounded-lg text-sm font-semibold transition"
+      <!-- Tiers: 4 aligned internal sections via CSS subgrid on lg+. -->
+      <ul class="tier-cards-grid mt-7 grid gap-5 lg:grid-cols-3" data-testid="support-tier-cards">
+        <li
+          v-for="(tier, index) in SUPPORT_TIERS"
+          :key="tier.key"
+          class="tier-card relative flex flex-col rounded-xl border p-6 transition"
           :class="
-            tier.priorityRequests
-              ? 'bg-brand-solid text-on-accent hover:bg-brand-hover'
-              : 'bg-white/[0.06] text-gray-100 hover:bg-white/10'
+            isActiveTier(tier)
+              ? 'border-emerald-500/50 bg-card-background ring-1 ring-emerald-500/25'
+              : tier.priorityRequests
+                ? 'border-brand/45 bg-card-background hover:border-brand/70'
+                : 'border-hairline bg-card-background hover:border-brand/35'
           "
         >
-          {{ t('support.chooseTier', { tier: tierName(tier) }) }}
-        </a>
-      </li>
-    </ul>
+          <span
+            v-if="isActiveTier(tier)"
+            data-testid="support-current-tier-badge"
+            class="absolute -top-2.5 right-6 z-10 rounded-full bg-emerald-600 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white"
+          >
+            {{ t('support.currentTierBadge') }}
+          </span>
+          <span
+            v-else-if="tier.priorityRequests"
+            class="absolute -top-2.5 right-6 z-10 rounded-full bg-brand-solid px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-on-accent"
+          >
+            {{ t('support.everythingBadge') }}
+          </span>
 
-    <!-- Questions -->
-    <div class="mx-auto mt-24 max-w-3xl">
-      <h3 class="text-center text-2xl font-bold tracking-tight">{{ t('support.faq.title') }}</h3>
-      <!-- One card per question, in the tier cards' colours. -->
-      <div class="mt-8 space-y-3">
+          <!-- Row 1: Name, kanji, and clear price -->
+          <div>
+            <p class="text-lg font-bold tracking-tight text-ink">
+              {{ tierName(tier) }} <span lang="ja" class="font-normal text-ink-faint">{{ tier.kanji }}</span>
+            </p>
+
+            <!-- biome-ignore lint/a11y/noHeaderScope: vue-i18n scope, not a table header -->
+            <i18n-t keypath="support.perMonth" tag="p" scope="global" class="mt-2 flex items-baseline gap-1 text-sm font-medium text-ink-faint">
+              <template #price>
+                <span class="text-3xl font-black tracking-tight tabular-nums text-ink">{{ formatUsdWhole(tier.priceUsd) }}</span>
+              </template>
+            </i18n-t>
+          </div>
+
+          <!-- Row 2: One concise summary line + aligned hairline divider -->
+          <p class="mt-4 border-b border-hairline pb-5 text-sm leading-relaxed text-ink-muted">
+            {{ t(`support.tierText.${tier.key}`) }}
+          </p>
+
+          <!-- Row 3: Perks + Discord -->
+          <div class="flex flex-1 flex-col pt-5">
+            <p class="text-xs font-semibold uppercase tracking-wider text-ink-faint">{{ t('support.whatsIncluded') }}</p>
+            <ul class="mt-3 space-y-2.5 text-sm text-ink">
+              <li v-for="perk in perks(tier, index)" :key="perk" class="flex items-start gap-2.5">
+                <UiBaseIcon
+                  :path="mdiCheck"
+                  :size="16"
+                  class="mt-0.5 shrink-0"
+                  :class="isActiveTier(tier) ? 'text-emerald-400' : 'text-brand'"
+                />
+                <span class="leading-snug">{{ perk }}</span>
+              </li>
+            </ul>
+            <p class="mt-auto flex items-center gap-2 pt-5 text-xs text-ink-faint">
+              <svg aria-hidden="true" viewBox="0 -25 260 260" class="h-4 w-4 shrink-0 fill-current">
+                <path :d="DISCORD_PATH" />
+              </svg>
+              {{ t('support.discord') }}
+            </p>
+          </div>
+
+          <!-- Row 4: Direct tier checkout CTA -->
+          <div class="pt-6">
+            <a
+              :href="tierCheckoutUrl(tier)"
+              target="_blank"
+              rel="noopener"
+              data-testid="support-patreon-link"
+              class="inline-flex h-10 w-full items-center justify-center rounded-lg text-sm font-semibold transition"
+              :class="
+                tier.priorityRequests
+                  ? 'bg-brand-solid text-on-accent hover:bg-brand-hover'
+                  : 'border border-hairline bg-surface-lift text-ink hover:border-brand/50 hover:bg-surface-hover'
+              "
+            >
+              {{ t('support.chooseTier', { tier: tierName(tier) }) }}
+            </a>
+          </div>
+        </li>
+      </ul>
+
+      <!-- Already a patron? Link Patreon in Settings (hidden once already active) -->
+      <div
+        v-if="!activeSupportTier"
+        data-testid="support-link-strip"
+        class="mt-6 flex flex-col gap-3 rounded-xl border border-hairline bg-card-background px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
+      >
+        <div class="flex items-start gap-3">
+          <UiBaseIcon :path="mdiPatreon" :size="20" class="mt-0.5 shrink-0 text-[#ff424d]" />
+          <div>
+            <p class="text-sm font-semibold text-ink">{{ t('support.linkStrip.title') }}</p>
+            <p class="mt-0.5 text-xs text-ink-muted">
+              {{ store.isLoggedIn ? t('support.linkStrip.loggedInBody') : t('support.linkStrip.loggedOutBody') }}
+            </p>
+          </div>
+        </div>
+
+        <NuxtLink
+          v-if="store.isLoggedIn"
+          data-testid="support-link-settings-cta"
+          :to="`${localePath('/user/settings')}#connections`"
+          class="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-hairline bg-surface-lift px-3.5 text-xs font-semibold text-ink transition-colors hover:border-brand/50 hover:bg-surface-hover"
+        >
+          <UiBaseIcon :path="mdiLinkVariant" :size="15" />
+          <span>{{ t('support.linkStrip.loggedInCta') }}</span>
+        </NuxtLink>
+
+        <button
+          v-else
+          type="button"
+          data-testid="support-link-login-cta"
+          class="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-hairline bg-surface-lift px-3.5 text-xs font-semibold text-ink transition-colors hover:border-brand/50 hover:bg-surface-hover"
+          @click="openLoginModal()"
+        >
+          <UiBaseIcon :path="mdiLinkVariant" :size="15" />
+          <span>{{ t('support.linkStrip.loggedOutCta') }}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 2. Questions: full-width unified card aligned with the tiers above -->
+    <div>
+      <h3 class="text-center text-xl font-bold tracking-tight text-ink">{{ t('support.faq.title') }}</h3>
+      <div class="mt-5 divide-y divide-hairline overflow-hidden rounded-xl border border-hairline bg-card-background">
         <details
           v-for="item in faq"
           :key="item.key"
-          class="group rounded-xl bg-[#231c1c] ring-1 ring-white/[0.06] transition hover:ring-white/15 open:ring-brand/40"
+          class="group transition-colors open:bg-surface-soft"
           :data-testid="`support-faq-${item.key}`"
         >
           <summary
-            class="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5 text-[15px] font-semibold [&::-webkit-details-marker]:hidden"
+            class="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-4 text-[15px] font-semibold text-ink transition-colors hover:bg-surface-hover [&::-webkit-details-marker]:hidden"
           >
             {{ item.q }}
-            <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/[0.06] transition group-open:rotate-180 group-open:bg-brand/20">
-              <UiBaseIcon :path="mdiChevronDown" size="18" class="text-gray-400 group-open:text-brand" />
+            <span
+              class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface-lift transition group-open:rotate-180 group-open:bg-brand/15"
+            >
+              <UiBaseIcon :path="mdiChevronDown" size="18" class="text-ink-muted group-open:text-brand" />
             </span>
           </summary>
-          <div class="px-6 pb-6 text-[15px] leading-relaxed text-gray-300">
+          <div class="px-6 pb-5 text-sm leading-relaxed text-ink-muted">
             <template v-if="item.a">{{ item.a }}</template>
             <!-- biome-ignore lint/a11y/noHeaderScope: vue-i18n scope, not a table header -->
             <i18n-t v-else keypath="support.faq.apps.a" tag="span" scope="global">
@@ -146,3 +278,17 @@ const faq = computed(() => [
     </div>
   </section>
 </template>
+
+<style scoped>
+@media (min-width: 1024px) {
+  .tier-cards-grid {
+    grid-template-rows: auto auto 1fr auto;
+    row-gap: 0;
+  }
+  .tier-card {
+    display: grid;
+    grid-row: span 4;
+    grid-template-rows: subgrid;
+  }
+}
+</style>

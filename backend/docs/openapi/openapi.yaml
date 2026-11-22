@@ -242,6 +242,8 @@ paths:
     $ref: "./paths/collections/v1_collections_id_stats.yaml"
 
   # Admin endpoints
+  "/v1/admin/overview":
+    $ref: "./paths/admin/v1_admin_overview.yaml"
   "/v1/admin/reports":
     $ref: "./paths/admin/v1_admin_reports.yaml"
   "/v1/admin/reports/batch":
@@ -250,8 +252,6 @@ paths:
     $ref: "./paths/admin/v1_admin_reports_bulk.yaml"
   "/v1/admin/reports/{reportId}":
     $ref: "./paths/admin/v1_admin_reports_id.yaml"
-  "/v1/admin/agent-activity":
-    $ref: "./paths/admin/v1_admin_agent_activity.yaml"
   "/v1/admin/announcement":
     $ref: "./paths/admin/v1_admin_announcement.yaml"
   "/v1/admin/users-with-providers":
@@ -270,6 +270,14 @@ paths:
     $ref: "./paths/admin/v1_admin_requests_id.yaml"
   "/v1/admin/requests/{requestId}/merge":
     $ref: "./paths/admin/v1_admin_requests_id_merge.yaml"
+  "/v1/admin/patreon":
+    $ref: "./paths/admin/v1_admin_patreon.yaml"
+  "/v1/admin/patreon/refresh-all":
+    $ref: "./paths/admin/v1_admin_patreon_refresh_all.yaml"
+  "/v1/admin/patreon/connections/{userId}":
+    $ref: "./paths/admin/v1_admin_patreon_connection.yaml"
+  "/v1/admin/patreon/connections/{userId}/refresh":
+    $ref: "./paths/admin/v1_admin_patreon_connection_refresh.yaml"
 
 components:
   securitySchemes:

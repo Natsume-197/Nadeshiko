@@ -7,9 +7,13 @@ const PRIVATE_ROUTES = [
   '/user/activity',
   '/user/media',
   '/user/developer',
+  '/admin',
+  '/admin/users',
+  '/admin/reports',
+  '/admin/announcement',
+  '/admin/patreon',
   '/user/admin/users',
   '/user/admin/reports',
-  '/user/admin/agent-activity',
   '/user/admin/announcement',
 ] as const;
 

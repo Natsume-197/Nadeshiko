@@ -5,6 +5,7 @@ import { logger } from '@config/log';
 import { InvalidRequestError, ValidationFailedError } from '@app/errors';
 import { invalidatePatreonQuotaCache } from '@app/services/quota/effectiveQuota';
 import { decryptSecret, encryptSecret } from '@lib/secretBox';
+import { type PatreonResource, relationshipTierIds } from './jsonapi';
 
 const FLOW_TTL_MS = 10 * 60_000;
 const MEMBERSHIP_FRESH_MS = 15 * 60_000;
@@ -24,13 +25,6 @@ interface TokenResponse {
   access_token: string;
   refresh_token?: string;
   expires_in?: number;
-}
-
-interface PatreonResource {
-  id: string;
-  type: string;
-  attributes?: Record<string, unknown>;
-  relationships?: Record<string, { data?: { id: string; type: string } | Array<{ id: string; type: string }> | null }>;
 }
 
 interface IdentityResponse {
@@ -55,7 +49,7 @@ export function isPatreonConfigured(): boolean {
   );
 }
 
-function assertConfigured() {
+export function assertConfigured() {
   if (!isPatreonConfigured()) {
     throw new ValidationFailedError({ connection: 'Patreon linking is not configured on this server.' });
   }
@@ -126,14 +120,13 @@ export function membershipFrom(response: IdentityResponse) {
   });
   const attrs = membership?.attributes ?? {};
   const campaign = membership?.relationships?.campaign?.data;
-  const tiers = membership?.relationships?.currently_entitled_tiers?.data;
   return {
     memberId: membership?.id ?? null,
     campaignId: !Array.isArray(campaign) ? (campaign?.id ?? null) : null,
     patronStatus: typeof attrs.patron_status === 'string' ? attrs.patron_status : null,
     entitledAmountCents:
       typeof attrs.currently_entitled_amount_cents === 'number' ? attrs.currently_entitled_amount_cents : 0,
-    entitledTierIds: Array.isArray(tiers) ? tiers.filter((tier) => tier.type === 'tier').map((tier) => tier.id) : [],
+    entitledTierIds: relationshipTierIds(membership, 'currently_entitled_tiers'),
   };
 }
 

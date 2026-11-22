@@ -43,7 +43,8 @@
       "activity": "利用履歴",
       "language": "言語",
       "logout": "ログアウト",
-      "requests": "リクエスト"
+      "requests": "リクエスト",
+      "admin": "管理"
     }
   },
   "announcementBanner": {
@@ -519,7 +520,6 @@
       "developer": "開発者向け",
       "users": "ユーザー",
       "reports": "問題の報告",
-      "agentActivity": "エージェントの編集履歴",
       "announcement": "お知らせ",
       "dictionaries": "辞書"
     },
@@ -1591,29 +1591,6 @@
     },
     "loadError": "単語リストを読み込めませんでした。"
   },
-  "agentActivity": {
-    "title": "エージェントの編集履歴",
-    "description": "モデレーションエージェントが行った変更を、保存された編集履歴から確認できます。内容を確認し、問題があれば元の状態に復元してください。",
-    "empty": "この期間にエージェントが行った編集はありません",
-    "episode": "第{number}話",
-    "noReport": "報告なし",
-    "restore": "復元",
-    "restoring": "復元中...",
-    "restoreSuccess": "例文を復元しました",
-    "restoreError": "例文の復元に失敗しました",
-    "window": {
-      "day": "過去24時間",
-      "week": "過去7日間",
-      "month": "過去30日間"
-    },
-    "table": {
-      "segment": "例文",
-      "change": "変更",
-      "report": "報告",
-      "when": "日時",
-      "actions": "操作"
-    }
-  },
   "connections": {
     "title": "外部サービスとの連携",
     "patreon": {
@@ -1632,29 +1609,17 @@
     "seoTitle": "サポーター | Nadeshiko",
     "seoDescription": "PatreonでNadeshikoを支援。各ティアの特典と、これから追加される作品や機能を紹介します。",
     "title": "サポーター",
-    "intro": "サポーターの皆さんがNadeshikoの運営を支え、次に何を作るかを一緒に決めています。下からティアを選んで、開発中のものもご覧ください。",
+    "intro": "例文検索・音声・単語カード・Anki出力はずっと無料。ご支援はサーバー維持と継続的な開発に使われます。",
     "tabs": {
       "tiers": "ティア"
     }
   },
   "roadmap": {
     "title": "ロードマップ",
-    "intro": "Nadeshikoに追加予定の作品をチェック。誰でも作品をリクエストして、次に追加するものに投票できます。",
     "support": "Nadeshikoを支援する",
     "proposeCta": "作品をリクエスト",
-    "filterLabel": "ロードマップを絞り込む",
-    "filters": {
-      "content": "作品",
-      "feature": "機能"
-    },
-    "dateFlexible": "時期未定",
     "featureSoon": "近日公開™",
     "featureReleased": "リリース済み",
-    "titleInProgress": "対応中",
-    "titleDone": "完了",
-    "proposedBy": "提案者：{name}",
-    "patronCommunity": "NadeshikoのPatreonメンバー",
-    "emptyTitles": "予定されている作品はまだありません。",
     "emptyFeatures": "機能のマイルストーンはまだありません。",
     "viewSource": "参照元を見る",
     "loadError": "現在ロードマップを読み込めません。",
@@ -1708,8 +1673,7 @@
     "admin": {
       "tab": "ロードマップ",
       "title": "ロードマップのキュー"
-    },
-    "requestsLink": "リクエストへ"
+    }
   },
   "feedback": {
     "open": "フィードバック",
@@ -1797,18 +1761,9 @@
     "whatsIncluded": "含まれる特典",
     "discord": "Discordの特典つき",
     "tierText": {
-      "seed": [
-        "Nadeshikoが日本語学習の役に立っていて、感謝の気持ちを伝えたい、サイトの存続を応援したいという方へ。ありがとうございます！",
-        "お礼として、見たい作品をリクエスト一覧の上位に押し上げるブーストと、引き上げられたAPI上限を受け取れます。"
-      ],
-      "flower": [
-        "このプロジェクトを本当に信じてくださる方へ。ご支援に心から感謝します！",
-        "Seedの特典に加えて、新機能を提案し、Nadeshikoの開発に直接関わることができます。"
-      ],
-      "nadeshiko": [
-        "Nadeshikoを最も強く応援したい方のための最上位ティアです。このレベルのご支援が、ライブラリの拡充と新機能の開発を支えています。",
-        "Flowerの特典すべてに加え、最も多いブーストで希望作品を優先でき、APIの上限も最大になります。"
-      ]
+      "seed": "Nadeshiko の運営を支えながら、学習に役立つ特典を受け取れます。",
+      "flower": "プロジェクトを応援し、これからの機能づくりにも直接関わりたい方向け。",
+      "nadeshiko": "作品の追加と開発を最も力強く支える最上位プランです。"
     },
     "tiersIntro": "自分に合ったティアを選んでください。Patreonでいつでも変更、解約できます。",
     "everythingBadge": "すべて込み",
@@ -1844,6 +1799,19 @@
         "q": "1 つの Patreon アカウントで複数の Nadeshiko アカウントを有効にできますか？",
         "a": "いいえ。1 つの Patreon アカウントは 1 つの Nadeshiko アカウントにのみ連携できます。"
       }
+    },
+    "currentTierBadge": "現在のプラン",
+    "activeBanner": {
+      "title": "{tier} プランで Nadeshiko を支援中です。",
+      "quota": "月間 {limit} 件の API リクエスト上限が有効です。",
+      "manage": "Patreon 連携を管理"
+    },
+    "linkStrip": {
+      "title": "すでに Patreon で支援中ですか？",
+      "loggedInBody": "設定で Patreon アカウントを連携すると、API 上限・カスタムテーマ・リクエストブーストが自動で有効になります。",
+      "loggedInCta": "設定で Patreon を連携",
+      "loggedOutBody": "ログインして設定から Patreon アカウントを連携すると、支援者特典が有効になります。",
+      "loggedOutCta": "ログインして連携"
     }
   },
   "requests": {
@@ -1958,6 +1926,138 @@
     },
     "admin": {
       "tab": "リクエスト"
+    }
+  },
+  "adminDashboard": {
+    "title": "管理ダッシュボード",
+    "subtitle": "モデレーション、コミュニティ、アカウント、システム状態を一元管理します。",
+    "loading": "最新データを読み込み中…",
+    "nav": {
+      "home": "ダッシュボード",
+      "openDashboard": "管理ダッシュボード",
+      "refresh": "件数を更新"
+    },
+    "status": {
+      "bannerActive": "お知らせ表示中"
+    },
+    "categories": {
+      "moderation": "モデレーションと品質",
+      "community": "コミュニティ",
+      "site": "サイトとユーザー"
+    },
+    "items": {
+      "reportsDesc": "報告の絞り込みや一括処理を行います。",
+      "requestsDesc": "コンテンツリクエスト、ブースト、公開通知を管理します。",
+      "roadmapDesc": "公開ロードマップの項目を作成・並び替え・更新します。",
+      "announcementDesc": "サイト全体にお知らせやメンテナンスバナーを表示します。",
+      "usersDesc": "アカウント、ロール、BAN、月間API上限オーバーライドを管理します。",
+      "patreonTitle": "Patreonとティア",
+      "patreonDesc": "連携済みPatreon会員、ティア上限、同期状態を確認します。",
+      "statusTitle": "ステータスページ",
+      "statusDesc": "status.nadeshiko.co を新しいタブで開きます。"
+    }
+  },
+  "adminPatreon": {
+    "title": "Patreonとティア",
+    "configured": "設定済み · キャンペーン {campaignId}",
+    "notConfigured": "この環境では未設定",
+    "syncAll": "すべて同期",
+    "syncingAll": "同期中…",
+    "searchPlaceholder": "ユーザー・メール・Patreon名で検索…",
+    "empty": "条件に一致するPatreon連携はありません。",
+    "loadError": "Patreon連携の読み込みに失敗しました。",
+    "refreshOneSuccess": "Patreon会員情報を更新しました。",
+    "refreshOneError": "Patreon会員情報の更新に失敗しました。",
+    "unlinkSuccess": "Patreon連携を解除しました。",
+    "unlinkError": "Patreon連携の解除に失敗しました。",
+    "syncAllSuccess": "{checked}件を同期しました（失敗 {failed}件）。",
+    "syncAllError": "Patreonの一括同期に失敗しました。",
+    "quotaPerMonth": "{limit}/月 · {source}",
+    "linkedDate": "連携日 {date}",
+    "filters": {
+      "all": "すべて ({count})",
+      "active": "有効 ({count})",
+      "issues": "問題あり ({count})"
+    },
+    "status": {
+      "activePatron": "有効",
+      "declinedPatron": "決済失敗",
+      "formerPatron": "解約済み",
+      "notPatron": "未支援"
+    },
+    "badges": {
+      "stale": "期限切れ (>7日)",
+      "unmatched": "未対応ID: {id}"
+    },
+    "table": {
+      "account": "アカウント",
+      "patreon": "Patreon",
+      "status": "状態",
+      "tierAndQuota": "ティアと上限",
+      "lastChecked": "最終確認",
+      "actions": "操作"
+    },
+    "actions": {
+      "resync": "再同期",
+      "unlink": "解除",
+      "confirmUnlink": "解除を確定",
+      "cancel": "キャンセル"
+    },
+    "tiers": {
+      "title": "ティア対応表",
+      "subtitle": "設定済みのPatreonティアID、月間API上限、リクエストブーストの一覧です。",
+      "tier": "ティア",
+      "quota": "API / 月",
+      "patreon": "Patreon",
+      "linked": "連携",
+      "monthly": "月額",
+      "perks": "API / ブースト"
+    },
+    "manualGrants": {
+      "title": "手動ティア・上限オーバーライド",
+      "subtitle": "Patreon以外で有料ティアやカスタムAPI上限が設定されているアカウントです。",
+      "manageInUsers": "ユーザー画面で編集",
+      "assignment": "割り当て",
+      "override": "手動上限",
+      "empty": "手動設定されているアカウントはありません。"
+    },
+    "campaign": {
+      "subtitle": "Patreon.comから取得した最新リストとNadeshikoアカウントの照合結果です。",
+      "fetchedAt": "取得: {when}",
+      "unconfigured": "このサーバーに PATREON_CREATOR_ACCESS_TOKEN が設定されていません。",
+      "unauthorized": "Creator Access Token が拒否されました。更新してSSMに保存してください。",
+      "error": "Patreon API に接続できませんでした。",
+      "unlinkedFilter": "未連携 ({count})",
+      "member": "会員",
+      "since": "開始日",
+      "nadeshikoLink": "Nadeshikoアカウント",
+      "empty": "条件に一致するキャンペーン会員はいません。",
+      "paidFilter": "支援履歴あり ({count})",
+      "monthly": "月額",
+      "lifetime": "累計",
+      "lastCharge": "最終課金: {date}",
+      "matchedAccount": "アカウント一致",
+      "noOauthYet": "OAuth 未連携",
+      "noAccount": "アカウントなし",
+      "subtotal": "小計 ({count})"
+    },
+    "linkedSection": {
+      "subtitle": "OAuthでPatreonを連携し、特典を受け取っているユーザー一覧です。"
+    },
+    "pledgePerMonth": "{amount}/月",
+    "kpi": {
+      "monthlyLabel": "月間収益",
+      "monthlySub": "有効な支援者 {count} 名・総額 USD",
+      "lifetimeLabel": "累計収益",
+      "lifetimeSub": "累計 {count} 名が支援",
+      "unlinkedLabel": "未連携の有効支援者",
+      "unlinkedSub": "Patreon 有効 {count} 名中",
+      "issuesLabel": "問題のあるアカウント",
+      "issuesSub": "Nadeshiko 連携 {count} 件中"
+    },
+    "tabs": {
+      "campaign": "Patreon 支援者 ({count})",
+      "linked": "連携済みアカウント ({count})"
     }
   }
 }

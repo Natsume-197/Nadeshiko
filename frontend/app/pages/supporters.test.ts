@@ -13,6 +13,7 @@ const navigateTo = vi.fn();
 vi.stubGlobal('$fetch', $fetch);
 vi.stubGlobal('navigateTo', navigateTo);
 vi.stubGlobal('useI18n', () => ({ t: (k: string) => k, locale: ref('en') }));
+vi.stubGlobal('useFormat', () => ({ formatDate: (v: string, style: string) => `${style}:${v}` }));
 vi.stubGlobal('useLocalePath', () => (p: string) => `/en${p}`);
 vi.stubGlobal('useRequestURL', () => new URL('https://nadeshiko.test/supporters'));
 vi.stubGlobal('useSeoMeta', vi.fn());
@@ -24,22 +25,32 @@ vi.stubGlobal('useAsyncData', async (_k: unknown, handler: () => Promise<unknown
   return { data, refresh: vi.fn(), pending: ref(false), error: ref(null) };
 });
 
+import { PATREON_URL } from '#shared/utils/socialLinks';
 import SupportersPage from './supporters.vue';
 import RoadmapRedirect from './roadmap.vue';
 
-const roadmapItem = {
+const featureRoadmapItem = {
   id: 'r1',
+  kind: 'FEATURE',
+  status: 'PLANNED',
+  title: 'Custom themes',
+  description: 'Personalize the palette.',
+  sourceUrl: null,
+  targetDate: '2026-12-01',
+  introducedInVersion: null,
+  sortOrder: 0,
+};
+
+const contentRoadmapItem = {
+  id: 'r2',
   kind: 'CONTENT',
   status: 'PLANNED',
   title: 'Frieren',
   description: '',
   sourceUrl: null,
-  coverUrl: null,
   targetDate: '2026-12-01',
   introducedInVersion: null,
   sortOrder: 0,
-  createdAt: '2026-11-01',
-  proposerName: null,
 };
 
 const mounted: { unmount: () => void }[] = [];
@@ -70,7 +81,7 @@ const isShown = (el: ReturnType<typeof panel>) => (el.element as HTMLElement).st
 
 beforeEach(() => {
   $fetch.mockReset();
-  $fetch.mockResolvedValue({ items: [roadmapItem], patreonUrl: 'https://www.patreon.com/NadeshikoApp' });
+  $fetch.mockResolvedValue({ items: [featureRoadmapItem, contentRoadmapItem] });
   navigateTo.mockReset();
   history.replaceState(null, '', '/en/supporters');
 });
@@ -86,7 +97,8 @@ describe('Supporters page', () => {
     expect(isShown(panel(wrapper, 'support'))).toBe(true);
     expect(panel(wrapper, 'support').find('[data-testid="tiers-stub"]').exists()).toBe(true);
     expect(isShown(panel(wrapper, 'roadmap'))).toBe(false);
-    expect(panel(wrapper, 'roadmap').text()).toContain('Frieren');
+    expect(panel(wrapper, 'roadmap').text()).toContain('Custom themes');
+    expect(panel(wrapper, 'roadmap').text()).not.toContain('Frieren');
     expect(wrapper.get('[data-testid="supporters-tab-support"]').attributes('aria-selected')).toBe('true');
   });
 
@@ -123,10 +135,10 @@ describe('Supporters page', () => {
 });
 
 describe('content requests', () => {
-  test('the hero and the roadmap tab point to the requests page', async () => {
+  test('the hero points to Patreon and the requests page', async () => {
     const wrapper = await render();
+    expect(wrapper.get('[data-testid="supporters-hero-patreon-cta"]').attributes('href')).toBe(PATREON_URL);
     expect(wrapper.get('[data-testid="supporters-requests-cta"]').attributes('href')).toBe('/en/requests');
-    expect(panel(wrapper, 'roadmap').get('a[href="/en/requests"]').text()).toBe('roadmap.requestsLink');
   });
 });
 

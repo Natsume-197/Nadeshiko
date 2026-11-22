@@ -15,10 +15,14 @@ const datetimeFormats = {
 
 const decimal = { style: 'decimal' } as const;
 const percent = { style: 'percent', maximumFractionDigits: 1 } as const;
+const currencyUsd = { style: 'currency', currency: 'USD', currencyDisplay: 'narrowSymbol' } as const;
+const currencyUsdWhole = { ...currencyUsd, maximumFractionDigits: 0 } as const;
 
 const numberFormats = {
   decimal,
   percent,
+  currencyUsd,
+  currencyUsdWhole,
 };
 
 // Declare message files in nuxt.config.ts so only the active locale loads; importing them here bundles all locales.

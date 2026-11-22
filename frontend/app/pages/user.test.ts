@@ -82,21 +82,19 @@ describe('which tabs are offered', () => {
     expect(tabs(render())).toContain('/en/user/developer');
   });
 
-  test('but NOT the admin ones', () => {
+  test('but NOT the admin dashboard link', () => {
     const wrapper = render();
 
-    for (const path of ['/user/admin/users', '/user/admin/reports', '/user/admin/announcement']) {
-      expect(tabs(wrapper)).not.toContain(`/en${path}`);
-    }
+    expect(tabs(wrapper)).not.toContain('/en/admin');
   });
 
-  test('an admin gets them, after the ordinary ones', () => {
+  test('an admin gets the admin dashboard link, after the ordinary ones', () => {
     isAdmin.value = true;
     const wrapper = render();
 
     const all = tabs(wrapper);
-    expect(all).toContain('/en/user/admin/users');
-    expect(all.indexOf('/en/user/admin/users')).toBeGreaterThan(all.indexOf('/en/user/settings'));
+    expect(all).toContain('/en/admin');
+    expect(all.indexOf('/en/admin')).toBeGreaterThan(all.indexOf('/en/user/settings'));
   });
 
   test('the desktop and mobile strips offer the SAME tabs', () => {
@@ -136,11 +134,5 @@ describe('which tab is lit', () => {
 
   test('`/user` itself lights Settings, because that is where it lands', () => {
     expect(currentTab(render('/en/user'))).toBe('/en/user/settings');
-  });
-
-  test('a deeper admin path lights its own tab', () => {
-    isAdmin.value = true;
-
-    expect(currentTab(render('/en/user/admin/reports'))).toBe('/en/user/admin/reports');
   });
 });

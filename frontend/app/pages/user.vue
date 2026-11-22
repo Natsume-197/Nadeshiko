@@ -8,12 +8,7 @@ import {
   mdiMovieOpenOutline,
   mdiHistory,
   mdiFormatListBulletedSquare,
-  mdiAccountGroupOutline,
-  mdiShieldCrownOutline,
-  mdiBullhornOutline,
-  mdiRobotOutline,
-  mdiThumbUpOutline,
-  mdiTimelineClockOutline,
+  mdiViewDashboardOutline,
   mdiPaletteOutline,
   mdiBookOpenVariantOutline,
 } from '@mdi/js';
@@ -44,12 +39,7 @@ const tabsAdvanced = computed(() => [
 ]);
 
 const tabsAdmin = computed(() => [
-  { name: t('accountSettings.tabs.users'), icon: mdiAccountGroupOutline, route: '/user/admin/users' },
-  { name: t('accountSettings.tabs.reports'), icon: mdiShieldCrownOutline, route: '/user/admin/reports' },
-  { name: t('accountSettings.tabs.agentActivity'), icon: mdiRobotOutline, route: '/user/admin/agent-activity' },
-  { name: t('accountSettings.tabs.announcement'), icon: mdiBullhornOutline, route: '/user/admin/announcement' },
-  { name: t('roadmap.admin.tab'), icon: mdiTimelineClockOutline, route: '/user/admin/roadmap' },
-  { name: t('requests.admin.tab'), icon: mdiThumbUpOutline, route: '/user/admin/requests' },
+  { name: t('adminDashboard.nav.openDashboard'), icon: mdiViewDashboardOutline, route: '/admin' },
 ]);
 
 const allTabs = computed(() => [
@@ -69,22 +59,7 @@ definePageMeta({
   robots: false,
   // Nuxt applies parent middleware to all /user/** children, parent first.
   // URL-specific redirects remain in the pages that own them.
-  middleware: [
-    defineNuxtRouteMiddleware(() => {
-      const store = userStore();
-      if (!store.isLoggedIn) {
-        return navigateTo(useLocalePath()('/'), { replace: true });
-      }
-    }),
-    'locale-preference',
-    defineNuxtRouteMiddleware((to) => {
-      const store = userStore();
-      const { localizedPath } = splitLocalePrefix(to.path);
-      if (localizedPath.startsWith('/user/admin') && !store.isAdmin) {
-        return navigateTo(useLocalePath()('/user/settings'), { replace: true });
-      }
-    }),
-  ],
+  middleware: ['auth', 'locale-preference'],
 });
 
 const mobileTabsRef = ref<HTMLElement | null>(null);

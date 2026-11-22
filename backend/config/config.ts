@@ -80,6 +80,7 @@ const envSchema = z.object({
   PATREON_OAUTH_REDIRECT_URI: z.string().default(''),
   PATREON_CAMPAIGN_ID: z.string().default(''),
   PATREON_CAMPAIGN_URL: z.string().url().default('https://www.patreon.com/c/NadeshikoApp'),
+  PATREON_CREATOR_ACCESS_TOKEN: z.string().default(''),
   PATREON_CONNECTION_SECRET: z
     .string()
     .default('')

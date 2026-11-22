@@ -68,6 +68,7 @@ env:
     - PATREON_OAUTH_CLIENT_SECRET
     - PATREON_CONNECTION_SECRET
     - PATREON_CAMPAIGN_ID
+    - PATREON_CREATOR_ACCESS_TOKEN
     # Custom Yomitan dictionaries in R2 (task 48). Stored with .kamal/ssm-put-user-dicts staging.
     - USER_DICT_R2_ENDPOINT
     - USER_DICT_R2_BUCKET

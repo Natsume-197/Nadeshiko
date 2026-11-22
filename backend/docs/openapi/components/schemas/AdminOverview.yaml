@@ -1,0 +1,53 @@
+type: object
+required:
+  - reports
+  - requests
+  - users
+  - announcement
+properties:
+  reports:
+    type: object
+    required:
+      - open
+    properties:
+      open:
+        type: integer
+        description: Reports currently open and waiting for review.
+        example: 4
+  requests:
+    type: object
+    required:
+      - open
+      - boostedOpen
+    properties:
+      open:
+        type: integer
+        description: Content requests waiting in OPEN status.
+        example: 12
+      boostedOpen:
+        type: integer
+        description: Open content requests that have at least one patron boost.
+        example: 3
+  users:
+    type: object
+    required:
+      - total
+      - activePatrons
+    properties:
+      total:
+        type: integer
+        description: Active (non-deleted) user accounts.
+        example: 1420
+      activePatrons:
+        type: integer
+        description: Linked Patreon accounts with an active paid membership.
+        example: 7
+  announcement:
+    type: object
+    required:
+      - active
+    properties:
+      active:
+        type: boolean
+        description: Whether a site-wide announcement banner is currently enabled.
+        example: false

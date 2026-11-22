@@ -43,7 +43,8 @@
       "activity": "Atividade",
       "language": "Idioma",
       "logout": "Sair",
-      "requests": "Pedidos"
+      "requests": "Pedidos",
+      "admin": "Admin"
     }
   },
   "announcementBanner": {
@@ -519,7 +520,6 @@
       "developer": "Desenvolvedor",
       "users": "Usuários",
       "reports": "Problemas relatados",
-      "agentActivity": "Atividade do agente",
       "announcement": "Aviso",
       "dictionaries": "Dicionários"
     },
@@ -1591,29 +1591,6 @@
     },
     "loadError": "Não foi possível carregar a lista de palavras."
   },
-  "agentActivity": {
-    "title": "Atividade do agente",
-    "description": "Edições feitas pelo agente de moderação, obtidas do histórico de versões. Confira algumas e restaure o que estiver incorreto.",
-    "empty": "Nenhuma atividade do agente neste período",
-    "episode": "Ep. {number}",
-    "noReport": "sem relato",
-    "restore": "Restaurar",
-    "restoring": "Restaurando…",
-    "restoreSuccess": "Frase restaurada",
-    "restoreError": "Não foi possível restaurar a frase",
-    "window": {
-      "day": "Últimas 24 horas",
-      "week": "Últimos 7 dias",
-      "month": "Últimos 30 dias"
-    },
-    "table": {
-      "segment": "Frase",
-      "change": "Alteração",
-      "report": "Relato",
-      "when": "Data",
-      "actions": "Ações"
-    }
-  },
   "connections": {
     "title": "Conexões",
     "patreon": {
@@ -1632,29 +1609,17 @@
     "seoTitle": "Apoiadores | Nadeshiko",
     "seoDescription": "Apoie o Nadeshiko no Patreon, veja o que cada nível oferece e quais títulos e recursos vêm por aí.",
     "title": "Apoiadores",
-    "intro": "Os apoiadores mantêm o Nadeshiko funcionando e ajudam a decidir o que vem a seguir. Escolha um nível abaixo e veja o que estamos construindo.",
+    "intro": "Busca, áudio, cartões e exportação Anki são grátis para sempre. Os apoiadores mantêm os servidores no ar e ajudam o Nadeshiko a crescer.",
     "tabs": {
       "tiers": "Níveis"
     }
   },
   "roadmap": {
     "title": "Roadmap",
-    "intro": "Veja o que está chegando ao Nadeshiko. Qualquer pessoa pode pedir um título e votar no que vem a seguir.",
     "support": "Apoiar o Nadeshiko",
     "proposeCta": "Pedir um título",
-    "filterLabel": "Filtrar o roadmap",
-    "filters": {
-      "content": "Títulos",
-      "feature": "Recursos"
-    },
-    "dateFlexible": "Data a definir",
     "featureSoon": "Em breve™",
     "featureReleased": "Lançado",
-    "titleInProgress": "Em andamento",
-    "titleDone": "Concluído",
-    "proposedBy": "Sugerido por {name}",
-    "patronCommunity": "apoiadores do Nadeshiko",
-    "emptyTitles": "Ainda não há títulos programados.",
     "emptyFeatures": "Ainda não há marcos de recursos.",
     "viewSource": "Ver fonte",
     "loadError": "Não foi possível carregar o roadmap agora.",
@@ -1708,8 +1673,7 @@
     "admin": {
       "tab": "Roadmap",
       "title": "Fila do roadmap"
-    },
-    "requestsLink": "Ir para os pedidos."
+    }
   },
   "feedback": {
     "open": "Feedback",
@@ -1797,18 +1761,9 @@
     "whatsIncluded": "O que está incluído",
     "discord": "Inclui benefícios no Discord",
     "tierText": {
-      "seed": [
-        "Se o Nadeshiko tem sido útil na sua jornada aprendendo japonês e você quer mostrar seu apreço e ajudar a manter o site no ar, este nível é para você. Obrigado!",
-        "Em troca, você ganha boosts para levar os títulos que quer ao topo da lista de pedidos, e um limite de API maior."
-      ],
-      "flower": [
-        "Para quem realmente acredita no projeto. Agradecemos muito a sua contribuição!",
-        "Além dos benefícios do nível Seed, você pode sugerir novos recursos e influenciar diretamente o desenvolvimento do Nadeshiko."
-      ],
-      "nadeshiko": [
-        "Nosso nível mais alto, para quem quer dar ao Nadeshiko o maior apoio. As contribuições deste nível são o que nos permite continuar ampliando a biblioteca e criando novos recursos.",
-        "Você tem tudo do nível Flower, o maior número de boosts para que suas escolhas venham primeiro e nosso maior limite de API."
-      ]
+      "seed": "Ajude a manter o Nadeshiko no ar e receba extras de agradecimento.",
+      "flower": "Para quem acredita no projeto e quer ajudar a moldar o que vem por aí.",
+      "nadeshiko": "Nosso maior nível de apoio para ampliar o catálogo e oferecer os maiores limites."
     },
     "tiersIntro": "Escolha o que combina com você. Dá para mudar ou cancelar no Patreon quando quiser.",
     "everythingBadge": "Tudo incluído",
@@ -1844,6 +1799,19 @@
         "q": "Uma conta do Patreon pode desbloquear várias contas do Nadeshiko?",
         "a": "Não. Uma conta do Patreon se vincula a uma única conta do Nadeshiko."
       }
+    },
+    "currentTierBadge": "Seu nível atual",
+    "activeBanner": {
+      "title": "Você está apoiando o Nadeshiko no nível {tier}.",
+      "quota": "{limit} solicitações à API por mês ativas na sua conta.",
+      "manage": "Gerenciar vínculo"
+    },
+    "linkStrip": {
+      "title": "Já apoia no Patreon?",
+      "loggedInBody": "Vincule sua conta do Patreon em Configurações para ativar automaticamente seu limite de API, temas personalizados e boosts.",
+      "loggedInCta": "Vincular Patreon em Configurações",
+      "loggedOutBody": "Entre e vincule sua conta do Patreon em Configurações para ativar seus benefícios de apoiador.",
+      "loggedOutCta": "Entrar para vincular"
     }
   },
   "requests": {
@@ -1958,6 +1926,138 @@
     },
     "admin": {
       "tab": "Pedidos"
+    }
+  },
+  "adminDashboard": {
+    "title": "Painel Admin",
+    "subtitle": "Moderação, comunidade, contas e saúde do sistema em um só lugar.",
+    "loading": "Carregando contagens…",
+    "nav": {
+      "home": "Painel",
+      "openDashboard": "Painel Admin",
+      "refresh": "Atualizar contagens"
+    },
+    "status": {
+      "bannerActive": "Banner ativo"
+    },
+    "categories": {
+      "moderation": "Moderação e qualidade",
+      "community": "Comunidade",
+      "site": "Site e usuários"
+    },
+    "items": {
+      "reportsDesc": "Revise, filtre e resolva denúncias abertas em lote.",
+      "requestsDesc": "Gerencie pedidos de conteúdo, boosts de apoiadores e avisos de lançamento.",
+      "roadmapDesc": "Crie, ordene e atualize itens do roadmap público.",
+      "announcementDesc": "Exiba um banner global de aviso, alerta ou manutenção.",
+      "usersDesc": "Gerencie contas, cargos, banimentos e limites mensais da API.",
+      "patreonTitle": "Patreon e tiers",
+      "patreonDesc": "Confira assinaturas Patreon vinculadas, limites por tier e sincronização.",
+      "statusTitle": "Página de status",
+      "statusDesc": "Abre status.nadeshiko.co em uma nova aba."
+    }
+  },
+  "adminPatreon": {
+    "title": "Patreon e tiers",
+    "configured": "Configurado · Campanha {campaignId}",
+    "notConfigured": "Não configurado neste ambiente",
+    "syncAll": "Sincronizar todos",
+    "syncingAll": "Sincronizando…",
+    "searchPlaceholder": "Buscar usuário, email ou Patreon…",
+    "empty": "Nenhuma conexão Patreon corresponde a este filtro.",
+    "loadError": "Não foi possível carregar as conexões Patreon.",
+    "refreshOneSuccess": "Assinatura Patreon atualizada.",
+    "refreshOneError": "Não foi possível atualizar a assinatura Patreon.",
+    "unlinkSuccess": "Conexão Patreon desvinculada.",
+    "unlinkError": "Não foi possível desvincular a conexão Patreon.",
+    "syncAllSuccess": "{checked} conexões sincronizadas ({failed} com erro).",
+    "syncAllError": "Não foi possível sincronizar o Patreon.",
+    "quotaPerMonth": "{limit}/mês · {source}",
+    "linkedDate": "Vinculado em {date}",
+    "filters": {
+      "all": "Todos ({count})",
+      "active": "Ativos ({count})",
+      "issues": "Com problemas ({count})"
+    },
+    "status": {
+      "activePatron": "Ativo",
+      "declinedPatron": "Pagamento recusado",
+      "formerPatron": "Ex-apoiador",
+      "notPatron": "Sem assinatura"
+    },
+    "badges": {
+      "stale": "Desatualizado (>7d)",
+      "unmatched": "Sem mapa: {id}"
+    },
+    "table": {
+      "account": "Conta",
+      "patreon": "Patreon",
+      "status": "Status",
+      "tierAndQuota": "Tier e cota",
+      "lastChecked": "Última checagem",
+      "actions": "Ações"
+    },
+    "actions": {
+      "resync": "Re-sincronizar",
+      "unlink": "Desvincular",
+      "confirmUnlink": "Confirmar",
+      "cancel": "Cancelar"
+    },
+    "tiers": {
+      "title": "Mapeamento de tiers",
+      "subtitle": "Visão somente leitura dos IDs do Patreon, cotas mensais da API e boosts.",
+      "tier": "Tier",
+      "quota": "API / mês",
+      "patreon": "Patreon",
+      "linked": "Vinc.",
+      "monthly": "Mensal",
+      "perks": "API / boosts"
+    },
+    "manualGrants": {
+      "title": "Tiers e overrides manuais",
+      "subtitle": "Contas com tier atribuído manualmente ou cota personalizada fora do Patreon.",
+      "manageInUsers": "Editar em Usuários",
+      "assignment": "Atribuição",
+      "override": "Cota manual",
+      "empty": "Nenhum override manual ou tier não gratuito atribuído."
+    },
+    "campaign": {
+      "subtitle": "Lista ao vivo do Patreon.com cruzada com as contas do Nadeshiko.",
+      "fetchedAt": "Atualizado {when}",
+      "unconfigured": "PATREON_CREATOR_ACCESS_TOKEN não está configurado neste servidor.",
+      "unauthorized": "O Patreon rejeitou o Creator Access Token. Renove e atualize no SSM.",
+      "error": "Não foi possível consultar a API do Patreon agora.",
+      "unlinkedFilter": "Sem vínculo ({count})",
+      "member": "Apoiador",
+      "since": "Desde",
+      "nadeshikoLink": "Conta Nadeshiko",
+      "empty": "Nenhum apoiador da campanha corresponde a este filtro.",
+      "paidFilter": "Com pagamentos ({count})",
+      "monthly": "Mensal",
+      "lifetime": "Histórico",
+      "lastCharge": "Cobrado: {date}",
+      "matchedAccount": "Conta encontrada",
+      "noOauthYet": "Sem vínculo OAuth",
+      "noAccount": "Sem conta",
+      "subtotal": "Subtotal ({count})"
+    },
+    "linkedSection": {
+      "subtitle": "Usuários que conectaram o Patreon via OAuth para benefícios automáticos."
+    },
+    "pledgePerMonth": "{amount}/mês",
+    "kpi": {
+      "monthlyLabel": "Receita mensal",
+      "monthlySub": "{count} apoiadores ativos · bruto USD",
+      "lifetimeLabel": "Total histórico",
+      "lifetimeSub": "{count} pessoas já apoiaram",
+      "unlinkedLabel": "Ativos sem vínculo",
+      "unlinkedSub": "de {count} ativos no Patreon",
+      "issuesLabel": "Contas com problemas",
+      "issuesSub": "de {count} vinculadas no Nadeshiko"
+    },
+    "tabs": {
+      "campaign": "Apoiadores no Patreon ({count})",
+      "linked": "Contas vinculadas ({count})"
     }
   }
 }

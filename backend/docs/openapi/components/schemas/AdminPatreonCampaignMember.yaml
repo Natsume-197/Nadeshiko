@@ -1,0 +1,81 @@
+type: object
+required:
+  - memberId
+  - patreonUserId
+  - fullName
+  - email
+  - patronStatus
+  - entitledAmountCents
+  - monthlyAmountCents
+  - lifetimeSupportCents
+  - pledgeStart
+  - lastChargeStatus
+  - lastChargeDate
+  - entitledTierIds
+  - patreonTierTitles
+  - resolvedTierName
+  - unmatchedTierIds
+  - linkedUserId
+  - linkedUsername
+  - matchedUserId
+  - matchedUsername
+properties:
+  memberId:
+    type: string
+  patreonUserId:
+    type: string
+    nullable: true
+  fullName:
+    type: string
+  email:
+    type: string
+    nullable: true
+  patronStatus:
+    type: string
+    nullable: true
+  entitledAmountCents:
+    type: integer
+  monthlyAmountCents:
+    type: integer
+    description: Normalized monthly USD cents using the Patreon tier list price when assigned (excludes Apple iOS IAP markup).
+  lifetimeSupportCents:
+    type: integer
+  pledgeStart:
+    type: string
+    format: date-time
+    nullable: true
+  lastChargeStatus:
+    type: string
+    nullable: true
+  lastChargeDate:
+    type: string
+    format: date-time
+    nullable: true
+  entitledTierIds:
+    type: array
+    items:
+      type: string
+  patreonTierTitles:
+    type: array
+    items:
+      type: string
+  resolvedTierName:
+    type: string
+    nullable: true
+  unmatchedTierIds:
+    type: array
+    items:
+      type: string
+  linkedUserId:
+    type: integer
+    nullable: true
+  linkedUsername:
+    type: string
+    nullable: true
+  matchedUserId:
+    type: integer
+    nullable: true
+    description: Existing Nadeshiko user matched by lowercase email when the patron has not linked Patreon OAuth yet.
+  matchedUsername:
+    type: string
+    nullable: true

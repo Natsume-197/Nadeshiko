@@ -2884,6 +2884,41 @@ export type UpdateCollectionSegmentRequest = {
     position?: number;
 };
 
+export type AdminOverview = {
+    reports: {
+        /**
+         * Reports currently open and waiting for review.
+         */
+        open: number;
+    };
+    requests: {
+        /**
+         * Content requests waiting in OPEN status.
+         */
+        open: number;
+        /**
+         * Open content requests that have at least one patron boost.
+         */
+        boostedOpen: number;
+    };
+    users: {
+        /**
+         * Active (non-deleted) user accounts.
+         */
+        total: number;
+        /**
+         * Linked Patreon accounts with an active paid membership.
+         */
+        activePatrons: number;
+    };
+    announcement: {
+        /**
+         * Whether a site-wide announcement banner is currently enabled.
+         */
+        active: boolean;
+    };
+};
+
 /**
  * Kind of entity a report is about
  */
@@ -3033,57 +3068,6 @@ export type UpdateReportRequest = {
      * Admin notes about the report
      */
     adminNotes?: string;
-};
-
-export type AgentActivityResponse = {
-    entries: Array<{
-        /**
-         * Revision ID
-         */
-        revisionId: number;
-        /**
-         * The revision number to pass to the restore endpoint to undo this edit
-         */
-        revisionNumber: number;
-        /**
-         * Public ID of the segment that was changed
-         */
-        segmentPublicId: string;
-        /**
-         * Public ID of the media the segment belongs to
-         */
-        mediaPublicId: string;
-        /**
-         * Episode the segment belongs to
-         */
-        episodeNumber: number;
-        /**
-         * The segment's editable fields as they were before this edit
-         */
-        snapshot: {
-            [key: string]: unknown;
-        };
-        /**
-         * The same fields as they are now. Paired with `snapshot` this is the
-         * diff, without the caller having to fetch the segment separately.
-         *
-         */
-        current: {
-            [key: string]: unknown;
-        };
-        /**
-         * The report this edit answered, when it answered one
-         */
-        reportId: number;
-        /**
-         * Account the service credential belongs to
-         */
-        actedBy: string;
-        /**
-         * When the edit was made
-         */
-        createdAt: string;
-    }>;
 };
 
 /**
@@ -3268,6 +3252,135 @@ export type AdminContentRequest = ContentRequest & {
         title: string;
         status: 'OPEN' | 'PLANNED' | 'IN_PROGRESS' | 'RELEASED' | 'DECLINED';
     } | null;
+};
+
+export type AdminPatreonCampaignMember = {
+    memberId: string;
+    patreonUserId: string;
+    fullName: string;
+    email: string;
+    patronStatus: string;
+    entitledAmountCents: number;
+    /**
+     * Normalized monthly USD cents using the Patreon tier list price when assigned (excludes Apple iOS IAP markup).
+     */
+    monthlyAmountCents: number;
+    lifetimeSupportCents: number;
+    pledgeStart: string;
+    lastChargeStatus: string;
+    lastChargeDate: string;
+    entitledTierIds: Array<string>;
+    patreonTierTitles: Array<string>;
+    resolvedTierName: string;
+    unmatchedTierIds: Array<string>;
+    linkedUserId: number;
+    linkedUsername: string;
+    /**
+     * Existing Nadeshiko user matched by lowercase email when the patron has not linked Patreon OAuth yet.
+     */
+    matchedUserId: number;
+    matchedUsername: string;
+};
+
+export type AdminPatreonConnection = {
+    userId: number;
+    username: string;
+    email: string;
+    patreonUserId: string;
+    fullName: string;
+    patronStatus: string;
+    /**
+     * Monthly USD cents, normalized to the Patreon tier list price when the member appears in the live campaign list (excludes Apple iOS IAP markup); otherwise Patreon's raw entitled amount.
+     */
+    monthlyAmountCents: number;
+    resolvedTierId: string;
+    resolvedTierName: string;
+    effectiveQuotaLimit: number;
+    quotaSource: 'override' | 'tier' | 'patreon' | 'legacy_column' | 'default';
+    /**
+     * Entitled Patreon tier IDs that match no configured Tier row.
+     */
+    unmatchedTierIds: Array<string>;
+    /**
+     * True when active_patron with positive pledge and checked within the staleness bound.
+     */
+    isActive: boolean;
+    /**
+     * True when membershipCheckedAt is older than the 7-day staleness bound.
+     */
+    isStale: boolean;
+    /**
+     * True when stale, declined, or carrying unmatched Patreon tier IDs.
+     */
+    hasIssue: boolean;
+    membershipCheckedAt: string;
+    linkedAt: string;
+};
+
+export type AdminPatreonOverview = {
+    /**
+     * Whether Patreon OAuth credentials and campaign ID are configured on this server.
+     */
+    configured: boolean;
+    /**
+     * Configured Patreon campaign ID, if set.
+     */
+    campaignId: string;
+    summary: {
+        totalLinked: number;
+        active: number;
+        issues: number;
+        campaignActive: number;
+        campaignUnlinkedActive: number;
+        /**
+         * Gross monthly pledge total in campaign currency cents across active Patreon campaign members.
+         */
+        campaignMonthlyCents: number;
+        /**
+         * Gross all-time support total in campaign currency cents across all Patreon campaign members.
+         */
+        campaignLifetimeCents: number;
+        /**
+         * Count of campaign members with non-zero historical or active support.
+         */
+        campaignPayingEver: number;
+    };
+    campaign: {
+        status: 'ok' | 'unconfigured' | 'unauthorized' | 'error';
+        errorMessage: string;
+        fetchedAt: string;
+        members: Array<AdminPatreonCampaignMember>;
+    };
+    tiers: Array<{
+        id: string;
+        displayName: string;
+        patreonTierId: string;
+        monthlyQuotaLimit: number;
+        monthlyRequestBoosts: number;
+        /**
+         * Count of active linked Nadeshiko OAuth connections resolved to this tier.
+         */
+        activePatronCount: number;
+        /**
+         * Count of active Patreon.com campaign members resolved to this tier.
+         */
+        campaignPatronCount: number;
+        /**
+         * Normalized monthly USD cents from active Patreon.com campaign members in this tier.
+         */
+        campaignMonthlyCents: number;
+    }>;
+    connections: Array<AdminPatreonConnection>;
+    manualGrants: Array<{
+        userId: number;
+        username: string;
+        email: string;
+        tierId: string;
+        tierName: string;
+        quotaOverride: number;
+        effectiveQuotaLimit: number;
+        quotaSource: 'override' | 'tier' | 'patreon' | 'legacy_column' | 'default';
+    }>;
 };
 
 export type AuthUser = {
@@ -7459,6 +7572,43 @@ export type GetCollectionStatsResponses = {
 
 export type GetCollectionStatsResponse = GetCollectionStatsResponses[keyof GetCollectionStatsResponses];
 
+export type GetAdminOverviewData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/admin/overview';
+};
+
+export type GetAdminOverviewErrors = {
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Forbidden
+     */
+    403: Error403;
+    /**
+     * Too Many Requests. The response body indicates whether the request was rejected due to per-minute rate limiting or monthly quota exhaustion.
+     */
+    429: Error429;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type GetAdminOverviewError = GetAdminOverviewErrors[keyof GetAdminOverviewErrors];
+
+export type GetAdminOverviewResponses = {
+    /**
+     * OK
+     */
+    200: AdminOverview;
+};
+
+export type GetAdminOverviewResponse = GetAdminOverviewResponses[keyof GetAdminOverviewResponses];
+
 export type ListAdminReportsData = {
     body?: never;
     path?: never;
@@ -7752,60 +7902,6 @@ export type UpdateAdminReportResponses = {
 };
 
 export type UpdateAdminReportResponse = UpdateAdminReportResponses[keyof UpdateAdminReportResponses];
-
-export type ListAgentActivityData = {
-    body?: never;
-    path?: never;
-    query?: {
-        /**
-         * Only return activity at or after this timestamp. Defaults to 24 hours ago.
-         */
-        since?: string;
-        /**
-         * Only return edits made in answer to this report
-         */
-        reportId?: number;
-        /**
-         * Maximum entries to return
-         */
-        take?: number;
-    };
-    url: '/v1/admin/agent-activity';
-};
-
-export type ListAgentActivityErrors = {
-    /**
-     * Bad Request
-     */
-    400: Error400;
-    /**
-     * Unauthorized
-     */
-    401: Error401;
-    /**
-     * Forbidden
-     */
-    403: Error403;
-    /**
-     * Too Many Requests. The response body indicates whether the request was rejected due to per-minute rate limiting or monthly quota exhaustion.
-     */
-    429: Error429;
-    /**
-     * Internal Server Error
-     */
-    500: Error500;
-};
-
-export type ListAgentActivityError = ListAgentActivityErrors[keyof ListAgentActivityErrors];
-
-export type ListAgentActivityResponses = {
-    /**
-     * OK
-     */
-    200: AgentActivityResponse;
-};
-
-export type ListAgentActivityResponse = ListAgentActivityResponses[keyof ListAgentActivityResponses];
 
 export type GetAnnouncementData = {
     body?: never;
@@ -8367,6 +8463,188 @@ export type MergeAdminContentRequestResponses = {
 };
 
 export type MergeAdminContentRequestResponse = MergeAdminContentRequestResponses[keyof MergeAdminContentRequestResponses];
+
+export type GetAdminPatreonOverviewData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Bypass the 5-minute cache and fetch live campaign members from Patreon
+         */
+        refreshCampaign?: boolean;
+    };
+    url: '/v1/admin/patreon';
+};
+
+export type GetAdminPatreonOverviewErrors = {
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Forbidden
+     */
+    403: Error403;
+    /**
+     * Too Many Requests. The response body indicates whether the request was rejected due to per-minute rate limiting or monthly quota exhaustion.
+     */
+    429: Error429;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type GetAdminPatreonOverviewError = GetAdminPatreonOverviewErrors[keyof GetAdminPatreonOverviewErrors];
+
+export type GetAdminPatreonOverviewResponses = {
+    /**
+     * OK
+     */
+    200: AdminPatreonOverview;
+};
+
+export type GetAdminPatreonOverviewResponse = GetAdminPatreonOverviewResponses[keyof GetAdminPatreonOverviewResponses];
+
+export type RefreshAllAdminPatreonConnectionsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/admin/patreon/refresh-all';
+};
+
+export type RefreshAllAdminPatreonConnectionsErrors = {
+    /**
+     * Bad Request
+     */
+    400: Error400;
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Forbidden
+     */
+    403: Error403;
+    /**
+     * Too Many Requests. The response body indicates whether the request was rejected due to per-minute rate limiting or monthly quota exhaustion.
+     */
+    429: Error429;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type RefreshAllAdminPatreonConnectionsError = RefreshAllAdminPatreonConnectionsErrors[keyof RefreshAllAdminPatreonConnectionsErrors];
+
+export type RefreshAllAdminPatreonConnectionsResponses = {
+    /**
+     * Refresh pass completed
+     */
+    200: {
+        checked: number;
+        failed: number;
+    };
+};
+
+export type RefreshAllAdminPatreonConnectionsResponse = RefreshAllAdminPatreonConnectionsResponses[keyof RefreshAllAdminPatreonConnectionsResponses];
+
+export type UnlinkAdminPatreonConnectionData = {
+    body?: never;
+    path: {
+        /**
+         * Internal Nadeshiko user ID whose Patreon link should be removed
+         */
+        userId: number;
+    };
+    query?: never;
+    url: '/v1/admin/patreon/connections/{userId}';
+};
+
+export type UnlinkAdminPatreonConnectionErrors = {
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Forbidden
+     */
+    403: Error403;
+    /**
+     * Not Found
+     */
+    404: Error404;
+    /**
+     * Too Many Requests. The response body indicates whether the request was rejected due to per-minute rate limiting or monthly quota exhaustion.
+     */
+    429: Error429;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type UnlinkAdminPatreonConnectionError = UnlinkAdminPatreonConnectionErrors[keyof UnlinkAdminPatreonConnectionErrors];
+
+export type UnlinkAdminPatreonConnectionResponses = {
+    /**
+     * Connection removed
+     */
+    204: void;
+};
+
+export type UnlinkAdminPatreonConnectionResponse = UnlinkAdminPatreonConnectionResponses[keyof UnlinkAdminPatreonConnectionResponses];
+
+export type RefreshAdminPatreonConnectionData = {
+    body?: never;
+    path: {
+        /**
+         * Internal Nadeshiko user ID whose Patreon link should be refreshed
+         */
+        userId: number;
+    };
+    query?: never;
+    url: '/v1/admin/patreon/connections/{userId}/refresh';
+};
+
+export type RefreshAdminPatreonConnectionErrors = {
+    /**
+     * Bad Request
+     */
+    400: Error400;
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Forbidden
+     */
+    403: Error403;
+    /**
+     * Not Found
+     */
+    404: Error404;
+    /**
+     * Too Many Requests. The response body indicates whether the request was rejected due to per-minute rate limiting or monthly quota exhaustion.
+     */
+    429: Error429;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type RefreshAdminPatreonConnectionError = RefreshAdminPatreonConnectionErrors[keyof RefreshAdminPatreonConnectionErrors];
+
+export type RefreshAdminPatreonConnectionResponses = {
+    /**
+     * Refreshed connection state
+     */
+    200: AdminPatreonConnection;
+};
+
+export type RefreshAdminPatreonConnectionResponse = RefreshAdminPatreonConnectionResponses[keyof RefreshAdminPatreonConnectionResponses];
 
 export type GetSessionData = {
     body?: never;

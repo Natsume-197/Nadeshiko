@@ -30,11 +30,16 @@ import {
   getDictionaryKanjiIndex,
   identifyDictionaryWord,
 } from '@app/controllers/dictionaryController';
-import { getAdminUsersWithProviders } from '@app/controllers/adminDashboardController';
+import { getAdminOverview, getAdminUsersWithProviders } from '@app/controllers/adminDashboardController';
+import {
+  getAdminPatreonOverview,
+  refreshAdminPatreonConnection,
+  refreshAllAdminPatreonConnections,
+  unlinkAdminPatreonConnection,
+} from '@app/controllers/adminPatreonController';
 import { handleSesWebhook, WEBHOOK_SES_PATH } from '@app/controllers/webhooks/sesController';
 import { listTiers, getAdminUserQuota, updateAdminUserQuota } from '@app/controllers/adminQuotaController';
 import { getAnnouncement, updateAnnouncement } from '@app/controllers/announcementController';
-import { listAgentActivity } from '@app/controllers/agentActivityController';
 import {
   listMedia,
   createMedia,
@@ -305,13 +310,13 @@ const CollectionsRoutes = createCollectionsRouter({
 });
 
 const AdminRoutes = createAdminRouter({
+  getAdminOverview,
   listAdminReports,
   batchUpdateAdminReports,
   bulkUpdateAdminReports,
   bulkDeleteAdminReports,
   updateAdminReport,
   deleteAdminReport,
-  listAgentActivity,
   getAnnouncement,
   updateAnnouncement,
   getAdminUsersWithProviders,
@@ -324,6 +329,10 @@ const AdminRoutes = createAdminRouter({
   listAdminContentRequests,
   updateAdminContentRequest,
   mergeAdminContentRequest,
+  getAdminPatreonOverview,
+  refreshAllAdminPatreonConnections,
+  refreshAdminPatreonConnection,
+  unlinkAdminPatreonConnection,
 });
 
 const FeedbackRoutes = createFeedbackRouter({

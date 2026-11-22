@@ -3977,6 +3977,37 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
+  /v1/admin/overview:
+    get:
+      tags:
+        - Admin
+      x-internal: true
+      operationId: getAdminOverview
+      summary: Get live summary counts for the admin dashboard
+      description: |
+        Returns lightweight aggregate counts (open reports, open and boosted content requests,
+        users, active patrons and whether the global announcement banner is on) for the admin
+        launcher and navigation badges.
+      security:
+        - ApiKey:
+            - READ_ADMIN
+        - SessionCookie:
+            - ADMIN
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminOverview'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /v1/admin/reports:
     get:
       tags:
@@ -4239,68 +4270,6 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-        '429':
-          $ref: '#/components/responses/TooManyRequests'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-  /v1/admin/agent-activity:
-    get:
-      operationId: listAgentActivity
-      x-internal: true
-      tags:
-        - Admin
-      summary: List edits made by the moderation agent
-      description: |
-        Returns segment revisions written under a service credential, newest first,
-        joined to the segment they changed and the report they answered.
-
-        This is the independent record of what the agent actually did. The agent's own
-        Discord digest reports what it believes it did; this reports what landed in the
-        database. Reading both is how a run that half-failed, or an action the agent
-        did not mention, becomes visible.
-
-        Each entry carries the pre-edit `snapshot`, so a bad edit can be reverted
-        straight from here through the revision restore endpoint without going hunting
-        for the revision number.
-      security:
-        - ApiKey:
-            - READ_ADMIN
-        - SessionCookie:
-            - ADMIN
-      parameters:
-        - name: since
-          in: query
-          schema:
-            type: string
-            format: date-time
-          description: Only return activity at or after this timestamp. Defaults to 24 hours ago.
-          example: '2026-08-06T00:00:00Z'
-        - name: reportId
-          in: query
-          schema:
-            type: integer
-          description: Only return edits made in answer to this report
-        - name: take
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 500
-            default: 100
-          description: Maximum entries to return
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AgentActivityResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
         '429':
           $ref: '#/components/responses/TooManyRequests'
         '500':
@@ -4975,6 +4944,154 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/admin/patreon:
+    get:
+      tags:
+        - Admin
+      x-internal: true
+      operationId: getAdminPatreonOverview
+      summary: List linked Patreon connections, tier mapping and manual quota exceptions
+      description: |
+        Returns Patreon OAuth configuration status, all linked Patreon memberships with staleness
+        and tier-match diagnostics, the configured quota/boost tier mapping, and non-Patreon manual
+        tier or quota override grants.
+      security:
+        - SessionCookie:
+            - ADMIN
+      parameters:
+        - name: refreshCampaign
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: Bypass the 5-minute cache and fetch live campaign members from Patreon
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminPatreonOverview'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/admin/patreon/refresh-all:
+    post:
+      tags:
+        - Admin
+      x-internal: true
+      operationId: refreshAllAdminPatreonConnections
+      summary: Re-sync all linked Patreon memberships immediately
+      description: |
+        Runs the Patreon membership refresh pass across every linked account and returns how many
+        succeeded and failed. Fails with 400 when Patreon OAuth is not configured on this server.
+      security:
+        - SessionCookie:
+            - ADMIN
+      responses:
+        '200':
+          description: Refresh pass completed
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - checked
+                  - failed
+                properties:
+                  checked:
+                    type: integer
+                  failed:
+                    type: integer
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/admin/patreon/connections/{userId}:
+    delete:
+      tags:
+        - Admin
+      x-internal: true
+      operationId: unlinkAdminPatreonConnection
+      summary: Unlink a user's Patreon connection
+      description: |
+        Deletes the stored Patreon OAuth connection for a user so they can reconnect cleanly or fix
+        a mismatched link, invalidating quota caches immediately.
+      security:
+        - SessionCookie:
+            - ADMIN
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          description: Internal Nadeshiko user ID whose Patreon link should be removed
+      responses:
+        '204':
+          description: Connection removed
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/admin/patreon/connections/{userId}/refresh:
+    post:
+      tags:
+        - Admin
+      x-internal: true
+      operationId: refreshAdminPatreonConnection
+      summary: Force a live Patreon membership refresh for one user
+      description: |
+        Contacts Patreon to refresh the stored membership status and entitled tiers for one linked
+        account, invalidating quota caches immediately.
+      security:
+        - SessionCookie:
+            - ADMIN
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          description: Internal Nadeshiko user ID whose Patreon link should be refreshed
+      responses:
+        '200':
+          description: Refreshed connection state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminPatreonConnection'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
 components:
@@ -9423,6 +9540,60 @@ components:
           type: integer
           description: New position in the collection
           example: 2
+    AdminOverview:
+      type: object
+      required:
+        - reports
+        - requests
+        - users
+        - announcement
+      properties:
+        reports:
+          type: object
+          required:
+            - open
+          properties:
+            open:
+              type: integer
+              description: Reports currently open and waiting for review.
+              example: 4
+        requests:
+          type: object
+          required:
+            - open
+            - boostedOpen
+          properties:
+            open:
+              type: integer
+              description: Content requests waiting in OPEN status.
+              example: 12
+            boostedOpen:
+              type: integer
+              description: Open content requests that have at least one patron boost.
+              example: 3
+        users:
+          type: object
+          required:
+            - total
+            - activePatrons
+          properties:
+            total:
+              type: integer
+              description: Active (non-deleted) user accounts.
+              example: 1420
+            activePatrons:
+              type: integer
+              description: Linked Patreon accounts with an active paid membership.
+              example: 7
+        announcement:
+          type: object
+          required:
+            - active
+          properties:
+            active:
+              type: boolean
+              description: Whether a site-wide announcement banner is currently enabled.
+              example: false
     ReportTargetType:
       type: string
       description: Kind of entity a report is about
@@ -9613,64 +9784,6 @@ components:
           maxLength: 1000
           description: Admin notes about the report
           example: Confirmed wrong translation, will fix
-    AgentActivityResponse:
-      type: object
-      required:
-        - entries
-      properties:
-        entries:
-          type: array
-          items:
-            type: object
-            required:
-              - revisionId
-              - revisionNumber
-              - segmentPublicId
-              - mediaPublicId
-              - episodeNumber
-              - snapshot
-              - current
-              - reportId
-              - actedBy
-              - createdAt
-            properties:
-              revisionId:
-                type: integer
-                description: Revision ID
-              revisionNumber:
-                type: integer
-                description: The revision number to pass to the restore endpoint to undo this edit
-              segmentPublicId:
-                type: string
-                description: Public ID of the segment that was changed
-              mediaPublicId:
-                type: string
-                description: Public ID of the media the segment belongs to
-              episodeNumber:
-                type: integer
-                description: Episode the segment belongs to
-              snapshot:
-                type: object
-                additionalProperties: true
-                description: The segment's editable fields as they were before this edit
-              current:
-                type: object
-                additionalProperties: true
-                description: |
-                  The same fields as they are now. Paired with `snapshot` this is the
-                  diff, without the caller having to fetch the segment separately.
-              reportId:
-                type: integer
-                nullable: true
-                description: The report this edit answered, when it answered one
-              actedBy:
-                type: string
-                nullable: true
-                description: Account the service credential belongs to
-              createdAt:
-                type: string
-                format: date-time
-                description: When the edit was made
     Announcement:
       type: object
       description: Site-wide announcement banner
@@ -10004,6 +10117,327 @@ components:
                     - IN_PROGRESS
                     - RELEASED
                     - DECLINED
+    AdminPatreonCampaignMember:
+      type: object
+      required:
+        - memberId
+        - patreonUserId
+        - fullName
+        - email
+        - patronStatus
+        - entitledAmountCents
+        - monthlyAmountCents
+        - lifetimeSupportCents
+        - pledgeStart
+        - lastChargeStatus
+        - lastChargeDate
+        - entitledTierIds
+        - patreonTierTitles
+        - resolvedTierName
+        - unmatchedTierIds
+        - linkedUserId
+        - linkedUsername
+        - matchedUserId
+        - matchedUsername
+      properties:
+        memberId:
+          type: string
+        patreonUserId:
+          type: string
+          nullable: true
+        fullName:
+          type: string
+        email:
+          type: string
+          nullable: true
+        patronStatus:
+          type: string
+          nullable: true
+        entitledAmountCents:
+          type: integer
+        monthlyAmountCents:
+          type: integer
+          description: Normalized monthly USD cents using the Patreon tier list price when assigned (excludes Apple iOS IAP markup).
+        lifetimeSupportCents:
+          type: integer
+        pledgeStart:
+          type: string
+          format: date-time
+          nullable: true
+        lastChargeStatus:
+          type: string
+          nullable: true
+        lastChargeDate:
+          type: string
+          format: date-time
+          nullable: true
+        entitledTierIds:
+          type: array
+          items:
+            type: string
+        patreonTierTitles:
+          type: array
+          items:
+            type: string
+        resolvedTierName:
+          type: string
+          nullable: true
+        unmatchedTierIds:
+          type: array
+          items:
+            type: string
+        linkedUserId:
+          type: integer
+          nullable: true
+        linkedUsername:
+          type: string
+          nullable: true
+        matchedUserId:
+          type: integer
+          nullable: true
+          description: Existing Nadeshiko user matched by lowercase email when the patron has not linked Patreon OAuth yet.
+        matchedUsername:
+          type: string
+          nullable: true
+    AdminPatreonConnection:
+      type: object
+      required:
+        - userId
+        - username
+        - email
+        - patreonUserId
+        - fullName
+        - patronStatus
+        - monthlyAmountCents
+        - resolvedTierId
+        - resolvedTierName
+        - effectiveQuotaLimit
+        - quotaSource
+        - unmatchedTierIds
+        - isActive
+        - isStale
+        - hasIssue
+        - membershipCheckedAt
+        - linkedAt
+      properties:
+        userId:
+          type: integer
+          example: 42
+        username:
+          type: string
+          example: tanaka_san
+        email:
+          type: string
+          format: email
+          example: tanaka@example.com
+        patreonUserId:
+          type: string
+          example: '12345678'
+        fullName:
+          type: string
+          nullable: true
+          example: Tanaka Taro
+        patronStatus:
+          type: string
+          nullable: true
+          example: active_patron
+        monthlyAmountCents:
+          type: integer
+          description: Monthly USD cents, normalized to the Patreon tier list price when the member appears in the live campaign list (excludes Apple iOS IAP markup); otherwise Patreon's raw entitled amount.
+          example: 1000
+        resolvedTierId:
+          type: string
+          nullable: true
+          example: pro
+        resolvedTierName:
+          type: string
+          nullable: true
+          example: Flower
+        effectiveQuotaLimit:
+          type: integer
+          example: 30000
+        quotaSource:
+          type: string
+          enum:
+            - override
+            - tier
+            - patreon
+            - legacy_column
+            - default
+          example: patreon
+        unmatchedTierIds:
+          type: array
+          items:
+            type: string
+          description: Entitled Patreon tier IDs that match no configured Tier row.
+        isActive:
+          type: boolean
+          description: True when active_patron with positive pledge and checked within the staleness bound.
+        isStale:
+          type: boolean
+          description: True when membershipCheckedAt is older than the 7-day staleness bound.
+        hasIssue:
+          type: boolean
+          description: True when stale, declined, or carrying unmatched Patreon tier IDs.
+        membershipCheckedAt:
+          type: string
+          format: date-time
+        linkedAt:
+          type: string
+          format: date-time
+    AdminPatreonOverview:
+      type: object
+      required:
+        - configured
+        - campaignId
+        - summary
+        - campaign
+        - tiers
+        - connections
+        - manualGrants
+      properties:
+        configured:
+          type: boolean
+          description: Whether Patreon OAuth credentials and campaign ID are configured on this server.
+        campaignId:
+          type: string
+          nullable: true
+          description: Configured Patreon campaign ID, if set.
+        summary:
+          type: object
+          required:
+            - totalLinked
+            - active
+            - issues
+            - campaignActive
+            - campaignUnlinkedActive
+            - campaignMonthlyCents
+            - campaignLifetimeCents
+            - campaignPayingEver
+          properties:
+            totalLinked:
+              type: integer
+            active:
+              type: integer
+            issues:
+              type: integer
+            campaignActive:
+              type: integer
+            campaignUnlinkedActive:
+              type: integer
+            campaignMonthlyCents:
+              type: integer
+              description: Gross monthly pledge total in campaign currency cents across active Patreon campaign members.
+            campaignLifetimeCents:
+              type: integer
+              description: Gross all-time support total in campaign currency cents across all Patreon campaign members.
+            campaignPayingEver:
+              type: integer
+              description: Count of campaign members with non-zero historical or active support.
+        campaign:
+          type: object
+          required:
+            - status
+            - errorMessage
+            - fetchedAt
+            - members
+          properties:
+            status:
+              type: string
+              enum:
+                - ok
+                - unconfigured
+                - unauthorized
+                - error
+            errorMessage:
+              type: string
+              nullable: true
+            fetchedAt:
+              type: string
+              format: date-time
+              nullable: true
+            members:
+              type: array
+              items:
+                $ref: '#/components/schemas/AdminPatreonCampaignMember'
+        tiers:
+          type: array
+          items:
+            type: object
+            required:
+              - id
+              - displayName
+              - patreonTierId
+              - monthlyQuotaLimit
+              - monthlyRequestBoosts
+              - activePatronCount
+              - campaignPatronCount
+              - campaignMonthlyCents
+            properties:
+              id:
+                type: string
+              displayName:
+                type: string
+              patreonTierId:
+                type: string
+                nullable: true
+              monthlyQuotaLimit:
+                type: integer
+              monthlyRequestBoosts:
+                type: integer
+              activePatronCount:
+                type: integer
+                description: Count of active linked Nadeshiko OAuth connections resolved to this tier.
+              campaignPatronCount:
+                type: integer
+                description: Count of active Patreon.com campaign members resolved to this tier.
+              campaignMonthlyCents:
+                type: integer
+                description: Normalized monthly USD cents from active Patreon.com campaign members in this tier.
+        connections:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminPatreonConnection'
+        manualGrants:
+          type: array
+          items:
+            type: object
+            required:
+              - userId
+              - username
+              - email
+              - tierId
+              - tierName
+              - quotaOverride
+              - effectiveQuotaLimit
+              - quotaSource
+            properties:
+              userId:
+                type: integer
+              username:
+                type: string
+              email:
+                type: string
+                format: email
+              tierId:
+                type: string
+                nullable: true
+              tierName:
+                type: string
+                nullable: true
+              quotaOverride:
+                type: integer
+                nullable: true
+              effectiveQuotaLimit:
+                type: integer
+              quotaSource:
+                type: string
+                enum:
+                  - override
+                  - tier
+                  - patreon
+                  - legacy_column
+                  - default
   examples:
     RateLimitExceeded:
       summary: Rate Limit Exceeded

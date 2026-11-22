@@ -30,6 +30,55 @@ export const s_AddSegmentToCollectionRequest = z.object({
   segmentPublicId: z.string().regex(new RegExp('^[A-Za-z0-9_-]{12}$')),
 });
 
+export const s_AdminOverview = z.object({
+  reports: z.object({ open: z.coerce.number() }),
+  requests: z.object({ open: z.coerce.number(), boostedOpen: z.coerce.number() }),
+  users: z.object({ total: z.coerce.number(), activePatrons: z.coerce.number() }),
+  announcement: z.object({ active: PermissiveBoolean }),
+});
+
+export const s_AdminPatreonCampaignMember = z.object({
+  memberId: z.string(),
+  patreonUserId: z.string().nullable(),
+  fullName: z.string(),
+  email: z.string().nullable(),
+  patronStatus: z.string().nullable(),
+  entitledAmountCents: z.coerce.number(),
+  monthlyAmountCents: z.coerce.number(),
+  lifetimeSupportCents: z.coerce.number(),
+  pledgeStart: z.iso.datetime({ offset: true }).nullable(),
+  lastChargeStatus: z.string().nullable(),
+  lastChargeDate: z.iso.datetime({ offset: true }).nullable(),
+  entitledTierIds: z.array(z.string()),
+  patreonTierTitles: z.array(z.string()),
+  resolvedTierName: z.string().nullable(),
+  unmatchedTierIds: z.array(z.string()),
+  linkedUserId: z.coerce.number().nullable(),
+  linkedUsername: z.string().nullable(),
+  matchedUserId: z.coerce.number().nullable(),
+  matchedUsername: z.string().nullable(),
+});
+
+export const s_AdminPatreonConnection = z.object({
+  userId: z.coerce.number(),
+  username: z.string(),
+  email: z.email(),
+  patreonUserId: z.string(),
+  fullName: z.string().nullable(),
+  patronStatus: z.string().nullable(),
+  monthlyAmountCents: z.coerce.number(),
+  resolvedTierId: z.string().nullable(),
+  resolvedTierName: z.string().nullable(),
+  effectiveQuotaLimit: z.coerce.number(),
+  quotaSource: z.enum(['override', 'tier', 'patreon', 'legacy_column', 'default']),
+  unmatchedTierIds: z.array(z.string()),
+  isActive: PermissiveBoolean,
+  isStale: PermissiveBoolean,
+  hasIssue: PermissiveBoolean,
+  membershipCheckedAt: z.iso.datetime({ offset: true }),
+  linkedAt: z.iso.datetime({ offset: true }),
+});
+
 export const s_AdminUserWithProviders = z.object({
   id: z.coerce.number(),
   name: z.string(),
@@ -44,23 +93,6 @@ export const s_AdminUserWithProviders = z.object({
 });
 
 export const s_AffectedCountResponse = z.object({ count: z.coerce.number() });
-
-export const s_AgentActivityResponse = z.object({
-  entries: z.array(
-    z.object({
-      revisionId: z.coerce.number(),
-      revisionNumber: z.coerce.number(),
-      segmentPublicId: z.string(),
-      mediaPublicId: z.string(),
-      episodeNumber: z.coerce.number(),
-      snapshot: z.record(z.string(), z.unknown()),
-      current: z.record(z.string(), z.unknown()),
-      reportId: z.coerce.number().nullable(),
-      actedBy: z.string().nullable(),
-      createdAt: z.iso.datetime({ offset: true }),
-    }),
-  ),
-});
 
 export const s_Announcement = z.object({
   message: z.string().max(500),
@@ -633,6 +665,52 @@ export const s_AdminContentRequest = s_ContentRequest.extend({
       status: z.enum(['OPEN', 'PLANNED', 'IN_PROGRESS', 'RELEASED', 'DECLINED']),
     })
     .nullable(),
+});
+
+export const s_AdminPatreonOverview = z.object({
+  configured: PermissiveBoolean,
+  campaignId: z.string().nullable(),
+  summary: z.object({
+    totalLinked: z.coerce.number(),
+    active: z.coerce.number(),
+    issues: z.coerce.number(),
+    campaignActive: z.coerce.number(),
+    campaignUnlinkedActive: z.coerce.number(),
+    campaignMonthlyCents: z.coerce.number(),
+    campaignLifetimeCents: z.coerce.number(),
+    campaignPayingEver: z.coerce.number(),
+  }),
+  campaign: z.object({
+    status: z.enum(['ok', 'unconfigured', 'unauthorized', 'error']),
+    errorMessage: z.string().nullable(),
+    fetchedAt: z.iso.datetime({ offset: true }).nullable(),
+    members: z.array(s_AdminPatreonCampaignMember),
+  }),
+  tiers: z.array(
+    z.object({
+      id: z.string(),
+      displayName: z.string(),
+      patreonTierId: z.string().nullable(),
+      monthlyQuotaLimit: z.coerce.number(),
+      monthlyRequestBoosts: z.coerce.number(),
+      activePatronCount: z.coerce.number(),
+      campaignPatronCount: z.coerce.number(),
+      campaignMonthlyCents: z.coerce.number(),
+    }),
+  ),
+  connections: z.array(s_AdminPatreonConnection),
+  manualGrants: z.array(
+    z.object({
+      userId: z.coerce.number(),
+      username: z.string(),
+      email: z.email(),
+      tierId: z.string().nullable(),
+      tierName: z.string().nullable(),
+      quotaOverride: z.coerce.number().nullable(),
+      effectiveQuotaLimit: z.coerce.number(),
+      quotaSource: z.enum(['override', 'tier', 'patreon', 'legacy_column', 'default']),
+    }),
+  ),
 });
 
 export const s_AdminReportGroupItem = z.object({
