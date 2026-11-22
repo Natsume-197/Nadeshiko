@@ -3433,9 +3433,9 @@ export type ListContentRequestsData = {
     path?: never;
     query?: {
         /**
-         * ACTIVE (open, planned or in progress), RELEASED or DECLINED.
+         * ACTIVE (open or planned), IN_PROGRESS, RELEASED or DECLINED.
          */
-        status?: 'ACTIVE' | 'RELEASED' | 'DECLINED';
+        status?: 'ACTIVE' | 'IN_PROGRESS' | 'RELEASED' | 'DECLINED';
         category?: 'ANIME' | 'JDRAMA' | 'YOUTUBE' | 'AUDIOBOOK';
         sort?: 'TOP' | 'RECENT';
         /**
@@ -3570,6 +3570,14 @@ export type GetContentRequestAllowanceResponses = {
          * Null for admins (no limit).
          */
         openLimit: number | null;
+        /**
+         * Total requests filed by this reader across all statuses.
+         */
+        ownCount: number;
+        /**
+         * Total requests this reader voted for or boosted across all statuses.
+         */
+        votedCount: number;
         boosts: {
             perMonth: number;
             used: number;
@@ -3586,6 +3594,63 @@ export type GetContentRequestAllowanceResponses = {
 };
 
 export type GetContentRequestAllowanceResponse = GetContentRequestAllowanceResponses[keyof GetContentRequestAllowanceResponses];
+
+export type ListMyContentRequestsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * OWN (requests filed by the signed-in reader) or VOTED (requests they voted for or boosted).
+         */
+        scope?: 'OWN' | 'VOTED';
+        /**
+         * ALL (every status), ACTIVE (open or planned), IN_PROGRESS, RELEASED or DECLINED.
+         */
+        status?: 'ALL' | 'ACTIVE' | 'IN_PROGRESS' | 'RELEASED' | 'DECLINED';
+        category?: 'ANIME' | 'JDRAMA' | 'YOUTUBE' | 'AUDIOBOOK';
+        sort?: 'TOP' | 'RECENT';
+        /**
+         * Case-insensitive title filter.
+         */
+        q?: string;
+        page?: number;
+        take?: number;
+    };
+    url: '/v1/requests/mine';
+};
+
+export type ListMyContentRequestsErrors = {
+    /**
+     * Bad Request
+     */
+    400: Error400;
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Too Many Requests. The response body indicates whether the request was rejected due to per-minute rate limiting or monthly quota exhaustion.
+     */
+    429: Error429;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type ListMyContentRequestsError = ListMyContentRequestsErrors[keyof ListMyContentRequestsErrors];
+
+export type ListMyContentRequestsResponses = {
+    /**
+     * OK
+     */
+    200: {
+        items: Array<ContentRequest>;
+        total: number;
+    };
+};
+
+export type ListMyContentRequestsResponse = ListMyContentRequestsResponses[keyof ListMyContentRequestsResponses];
 
 export type WithdrawContentRequestData = {
     body?: never;
