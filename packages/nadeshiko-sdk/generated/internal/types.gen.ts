@@ -3322,6 +3322,75 @@ export type AdminContentRequest = ContentRequest & {
     } | null;
 };
 
+export type AdminPatreonConnection = {
+    userId: number;
+    username: string;
+    email: string;
+    patreonUserId: string;
+    fullName: string;
+    patronStatus: string;
+    entitledAmountCents: number;
+    entitledTierIds: Array<string>;
+    resolvedTierId: string;
+    resolvedTierName: string;
+    effectiveQuotaLimit: number;
+    quotaSource: 'override' | 'tier' | 'patreon' | 'legacy_column' | 'default';
+    /**
+     * Entitled Patreon tier IDs that match no configured Tier row.
+     */
+    unmatchedTierIds: Array<string>;
+    /**
+     * True when active_patron with positive pledge and checked within the staleness bound.
+     */
+    isActive: boolean;
+    /**
+     * True when membershipCheckedAt is older than the 7-day staleness bound.
+     */
+    isStale: boolean;
+    /**
+     * True when stale, declined, or carrying unmatched Patreon tier IDs.
+     */
+    hasIssue: boolean;
+    membershipCheckedAt: string;
+    linkedAt: string;
+};
+
+export type AdminPatreonOverview = {
+    /**
+     * Whether Patreon OAuth credentials and campaign ID are configured on this server.
+     */
+    configured: boolean;
+    /**
+     * Configured Patreon campaign ID, if set.
+     */
+    campaignId: string;
+    summary: {
+        totalLinked: number;
+        active: number;
+        stale: number;
+        issues: number;
+    };
+    tiers: Array<{
+        id: string;
+        displayName: string;
+        patreonTierId: string;
+        monthlyQuotaLimit: number;
+        monthlyRequestBoosts: number;
+        activePatronCount: number;
+    }>;
+    connections: Array<AdminPatreonConnection>;
+    manualGrants: Array<{
+        userId: number;
+        username: string;
+        email: string;
+        tierId: string;
+        tierName: string;
+        quotaOverride: number;
+        effectiveQuotaLimit: number;
+        quotaSource: 'override' | 'tier' | 'patreon' | 'legacy_column' | 'default';
+    }>;
+};
+
 export type AuthUser = {
     readonly id: string;
     name: string;
@@ -8402,6 +8471,183 @@ export type MergeAdminContentRequestResponses = {
 };
 
 export type MergeAdminContentRequestResponse = MergeAdminContentRequestResponses[keyof MergeAdminContentRequestResponses];
+
+export type GetAdminPatreonOverviewData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/admin/patreon';
+};
+
+export type GetAdminPatreonOverviewErrors = {
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Forbidden
+     */
+    403: Error403;
+    /**
+     * Too Many Requests. The response body indicates whether the request was rejected due to per-minute rate limiting or monthly quota exhaustion.
+     */
+    429: Error429;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type GetAdminPatreonOverviewError = GetAdminPatreonOverviewErrors[keyof GetAdminPatreonOverviewErrors];
+
+export type GetAdminPatreonOverviewResponses = {
+    /**
+     * OK
+     */
+    200: AdminPatreonOverview;
+};
+
+export type GetAdminPatreonOverviewResponse = GetAdminPatreonOverviewResponses[keyof GetAdminPatreonOverviewResponses];
+
+export type RefreshAllAdminPatreonConnectionsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/admin/patreon/refresh-all';
+};
+
+export type RefreshAllAdminPatreonConnectionsErrors = {
+    /**
+     * Bad Request
+     */
+    400: Error400;
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Forbidden
+     */
+    403: Error403;
+    /**
+     * Too Many Requests. The response body indicates whether the request was rejected due to per-minute rate limiting or monthly quota exhaustion.
+     */
+    429: Error429;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type RefreshAllAdminPatreonConnectionsError = RefreshAllAdminPatreonConnectionsErrors[keyof RefreshAllAdminPatreonConnectionsErrors];
+
+export type RefreshAllAdminPatreonConnectionsResponses = {
+    /**
+     * Refresh pass completed
+     */
+    200: {
+        checked: number;
+        failed: number;
+    };
+};
+
+export type RefreshAllAdminPatreonConnectionsResponse = RefreshAllAdminPatreonConnectionsResponses[keyof RefreshAllAdminPatreonConnectionsResponses];
+
+export type UnlinkAdminPatreonConnectionData = {
+    body?: never;
+    path: {
+        /**
+         * Internal Nadeshiko user ID whose Patreon link should be removed
+         */
+        userId: number;
+    };
+    query?: never;
+    url: '/v1/admin/patreon/connections/{userId}';
+};
+
+export type UnlinkAdminPatreonConnectionErrors = {
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Forbidden
+     */
+    403: Error403;
+    /**
+     * Not Found
+     */
+    404: Error404;
+    /**
+     * Too Many Requests. The response body indicates whether the request was rejected due to per-minute rate limiting or monthly quota exhaustion.
+     */
+    429: Error429;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type UnlinkAdminPatreonConnectionError = UnlinkAdminPatreonConnectionErrors[keyof UnlinkAdminPatreonConnectionErrors];
+
+export type UnlinkAdminPatreonConnectionResponses = {
+    /**
+     * Connection removed
+     */
+    204: void;
+};
+
+export type UnlinkAdminPatreonConnectionResponse = UnlinkAdminPatreonConnectionResponses[keyof UnlinkAdminPatreonConnectionResponses];
+
+export type RefreshAdminPatreonConnectionData = {
+    body?: never;
+    path: {
+        /**
+         * Internal Nadeshiko user ID whose Patreon link should be refreshed
+         */
+        userId: number;
+    };
+    query?: never;
+    url: '/v1/admin/patreon/connections/{userId}/refresh';
+};
+
+export type RefreshAdminPatreonConnectionErrors = {
+    /**
+     * Bad Request
+     */
+    400: Error400;
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Forbidden
+     */
+    403: Error403;
+    /**
+     * Not Found
+     */
+    404: Error404;
+    /**
+     * Too Many Requests. The response body indicates whether the request was rejected due to per-minute rate limiting or monthly quota exhaustion.
+     */
+    429: Error429;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type RefreshAdminPatreonConnectionError = RefreshAdminPatreonConnectionErrors[keyof RefreshAdminPatreonConnectionErrors];
+
+export type RefreshAdminPatreonConnectionResponses = {
+    /**
+     * Refreshed connection state
+     */
+    200: AdminPatreonConnection;
+};
+
+export type RefreshAdminPatreonConnectionResponse = RefreshAdminPatreonConnectionResponses[keyof RefreshAdminPatreonConnectionResponses];
 
 export type GetSessionData = {
     body?: never;

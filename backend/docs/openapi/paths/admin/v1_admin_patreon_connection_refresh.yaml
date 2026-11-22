@@ -1,0 +1,39 @@
+post:
+  tags:
+    - Admin
+  x-internal: true
+  operationId: refreshAdminPatreonConnection
+  summary: Force a live Patreon membership refresh for one user
+  description: |
+    Contacts Patreon to refresh the stored membership status and entitled tiers for one linked
+    account, invalidating quota caches immediately.
+
+  security:
+    - SessionCookie: [ADMIN]
+  parameters:
+    - name: userId
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+      description: Internal Nadeshiko user ID whose Patreon link should be refreshed
+  responses:
+    "200":
+      description: Refreshed connection state
+      content:
+        application/json:
+          schema:
+            $ref: "../../components/schemas/AdminPatreonConnection.yaml"
+    "400":
+      $ref: "../../components/responses/BadRequest.yaml"
+    "401":
+      $ref: "../../components/responses/Unauthorized.yaml"
+    "403":
+      $ref: "../../components/responses/Forbidden.yaml"
+    "404":
+      $ref: "../../components/responses/NotFound.yaml"
+    "429":
+      $ref: "../../components/responses/TooManyRequests.yaml"
+    "500":
+      $ref: "../../components/responses/InternalServerError.yaml"

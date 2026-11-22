@@ -73,6 +73,57 @@ export type t_AdminOverview = {
   };
 };
 
+export type t_AdminPatreonConnection = {
+  effectiveQuotaLimit: number;
+  email: string;
+  entitledAmountCents: number;
+  entitledTierIds: string[];
+  fullName: string | null;
+  hasIssue: boolean;
+  isActive: boolean;
+  isStale: boolean;
+  linkedAt: string;
+  membershipCheckedAt: string;
+  patreonUserId: string;
+  patronStatus: string | null;
+  quotaSource: 'override' | 'tier' | 'patreon' | 'legacy_column' | 'default';
+  resolvedTierId: string | null;
+  resolvedTierName: string | null;
+  unmatchedTierIds: string[];
+  userId: number;
+  username: string;
+};
+
+export type t_AdminPatreonOverview = {
+  campaignId: string | null;
+  configured: boolean;
+  connections: t_AdminPatreonConnection[];
+  manualGrants: {
+    effectiveQuotaLimit: number;
+    email: string;
+    quotaOverride: number | null;
+    quotaSource: 'override' | 'tier' | 'patreon' | 'legacy_column' | 'default';
+    tierId: string | null;
+    tierName: string | null;
+    userId: number;
+    username: string;
+  }[];
+  summary: {
+    active: number;
+    issues: number;
+    stale: number;
+    totalLinked: number;
+  };
+  tiers: {
+    activePatronCount: number;
+    displayName: string;
+    id: string;
+    monthlyQuotaLimit: number;
+    monthlyRequestBoosts: number;
+    patreonTierId: string | null;
+  }[];
+};
+
 export type t_AdminReportGroup = {
   firstReportedAt: string;
   lastStatusChange: string | null;
@@ -1561,6 +1612,10 @@ export type t_ModerateEpisodeSegmentsParamSchema = {
   mediaPublicId: string;
 };
 
+export type t_RefreshAdminPatreonConnectionParamSchema = {
+  userId: number;
+};
+
 export type t_RemoveExcludedMediaParamSchema = {
   mediaPublicId: string;
 };
@@ -1585,6 +1640,10 @@ export type t_RestoreSegmentRevisionParamSchema = {
 
 export type t_SearchCollectionSegmentsParamSchema = {
   collectionPublicId: string;
+};
+
+export type t_UnlinkAdminPatreonConnectionParamSchema = {
+  userId: number;
 };
 
 export type t_UnsubscribeFromEmailQuerySchema = {

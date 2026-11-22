@@ -4946,6 +4946,147 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
+  /v1/admin/patreon:
+    get:
+      tags:
+        - Admin
+      x-internal: true
+      operationId: getAdminPatreonOverview
+      summary: List linked Patreon connections, tier mapping and manual quota exceptions
+      description: |
+        Returns Patreon OAuth configuration status, all linked Patreon memberships with staleness
+        and tier-match diagnostics, the configured quota/boost tier mapping, and non-Patreon manual
+        tier or quota override grants.
+      security:
+        - SessionCookie:
+            - ADMIN
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminPatreonOverview'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/admin/patreon/refresh-all:
+    post:
+      tags:
+        - Admin
+      x-internal: true
+      operationId: refreshAllAdminPatreonConnections
+      summary: Re-sync all linked Patreon memberships immediately
+      description: |
+        Runs the Patreon membership refresh pass across every linked account and returns how many
+        succeeded and failed. Fails with 400 when Patreon OAuth is not configured on this server.
+      security:
+        - SessionCookie:
+            - ADMIN
+      responses:
+        '200':
+          description: Refresh pass completed
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - checked
+                  - failed
+                properties:
+                  checked:
+                    type: integer
+                  failed:
+                    type: integer
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/admin/patreon/connections/{userId}:
+    delete:
+      tags:
+        - Admin
+      x-internal: true
+      operationId: unlinkAdminPatreonConnection
+      summary: Unlink a user's Patreon connection
+      description: |
+        Deletes the stored Patreon OAuth connection for a user so they can reconnect cleanly or fix
+        a mismatched link, invalidating quota caches immediately.
+      security:
+        - SessionCookie:
+            - ADMIN
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          description: Internal Nadeshiko user ID whose Patreon link should be removed
+      responses:
+        '204':
+          description: Connection removed
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/admin/patreon/connections/{userId}/refresh:
+    post:
+      tags:
+        - Admin
+      x-internal: true
+      operationId: refreshAdminPatreonConnection
+      summary: Force a live Patreon membership refresh for one user
+      description: |
+        Contacts Patreon to refresh the stored membership status and entitled tiers for one linked
+        account, invalidating quota caches immediately.
+      security:
+        - SessionCookie:
+            - ADMIN
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          description: Internal Nadeshiko user ID whose Patreon link should be refreshed
+      responses:
+        '200':
+          description: Refreshed connection state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminPatreonConnection'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 components:
   securitySchemes:
     ApiKey:
@@ -10065,6 +10206,200 @@ components:
                     - IN_PROGRESS
                     - RELEASED
                     - DECLINED
+    AdminPatreonConnection:
+      type: object
+      required:
+        - userId
+        - username
+        - email
+        - patreonUserId
+        - fullName
+        - patronStatus
+        - entitledAmountCents
+        - entitledTierIds
+        - resolvedTierId
+        - resolvedTierName
+        - effectiveQuotaLimit
+        - quotaSource
+        - unmatchedTierIds
+        - isActive
+        - isStale
+        - hasIssue
+        - membershipCheckedAt
+        - linkedAt
+      properties:
+        userId:
+          type: integer
+          example: 42
+        username:
+          type: string
+          example: tanaka_san
+        email:
+          type: string
+          format: email
+          example: tanaka@example.com
+        patreonUserId:
+          type: string
+          example: '12345678'
+        fullName:
+          type: string
+          nullable: true
+          example: Tanaka Taro
+        patronStatus:
+          type: string
+          nullable: true
+          example: active_patron
+        entitledAmountCents:
+          type: integer
+          example: 1000
+        entitledTierIds:
+          type: array
+          items:
+            type: string
+          example:
+            - '28118736'
+        resolvedTierId:
+          type: string
+          nullable: true
+          example: pro
+        resolvedTierName:
+          type: string
+          nullable: true
+          example: Flower
+        effectiveQuotaLimit:
+          type: integer
+          example: 30000
+        quotaSource:
+          type: string
+          enum:
+            - override
+            - tier
+            - patreon
+            - legacy_column
+            - default
+          example: patreon
+        unmatchedTierIds:
+          type: array
+          items:
+            type: string
+          description: Entitled Patreon tier IDs that match no configured Tier row.
+        isActive:
+          type: boolean
+          description: True when active_patron with positive pledge and checked within the staleness bound.
+        isStale:
+          type: boolean
+          description: True when membershipCheckedAt is older than the 7-day staleness bound.
+        hasIssue:
+          type: boolean
+          description: True when stale, declined, or carrying unmatched Patreon tier IDs.
+        membershipCheckedAt:
+          type: string
+          format: date-time
+        linkedAt:
+          type: string
+          format: date-time
+    AdminPatreonOverview:
+      type: object
+      required:
+        - configured
+        - campaignId
+        - summary
+        - tiers
+        - connections
+        - manualGrants
+      properties:
+        configured:
+          type: boolean
+          description: Whether Patreon OAuth credentials and campaign ID are configured on this server.
+        campaignId:
+          type: string
+          nullable: true
+          description: Configured Patreon campaign ID, if set.
+        summary:
+          type: object
+          required:
+            - totalLinked
+            - active
+            - stale
+            - issues
+          properties:
+            totalLinked:
+              type: integer
+            active:
+              type: integer
+            stale:
+              type: integer
+            issues:
+              type: integer
+        tiers:
+          type: array
+          items:
+            type: object
+            required:
+              - id
+              - displayName
+              - patreonTierId
+              - monthlyQuotaLimit
+              - monthlyRequestBoosts
+              - activePatronCount
+            properties:
+              id:
+                type: string
+              displayName:
+                type: string
+              patreonTierId:
+                type: string
+                nullable: true
+              monthlyQuotaLimit:
+                type: integer
+              monthlyRequestBoosts:
+                type: integer
+              activePatronCount:
+                type: integer
+        connections:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminPatreonConnection'
+        manualGrants:
+          type: array
+          items:
+            type: object
+            required:
+              - userId
+              - username
+              - email
+              - tierId
+              - tierName
+              - quotaOverride
+              - effectiveQuotaLimit
+              - quotaSource
+            properties:
+              userId:
+                type: integer
+              username:
+                type: string
+              email:
+                type: string
+                format: email
+              tierId:
+                type: string
+                nullable: true
+              tierName:
+                type: string
+                nullable: true
+              quotaOverride:
+                type: integer
+                nullable: true
+              effectiveQuotaLimit:
+                type: integer
+              quotaSource:
+                type: string
+                enum:
+                  - override
+                  - tier
+                  - patreon
+                  - legacy_column
+                  - default
   examples:
     RateLimitExceeded:
       summary: Rate Limit Exceeded

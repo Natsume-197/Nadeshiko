@@ -2003,5 +2003,70 @@
       "statusTitle": "服務狀態頁",
       "statusDesc": "在新分頁開啟 status.nadeshiko.co。"
     }
+  },
+  "adminPatreon": {
+    "title": "Patreon 與等級",
+    "configured": "已設定 · 活動 {campaignId}",
+    "notConfigured": "此環境尚未設定",
+    "summaryLine": "{active} 有效 · {linked} 已連結 · {issues} 異常",
+    "syncAll": "全部同步",
+    "syncingAll": "同步中…",
+    "searchPlaceholder": "搜尋使用者、信箱或 Patreon…",
+    "empty": "沒有符合條件的 Patreon 連結。",
+    "loadError": "無法載入 Patreon 連結。",
+    "refreshOneSuccess": "已更新 Patreon 會員狀態。",
+    "refreshOneError": "無法更新 Patreon 會員狀態。",
+    "unlinkSuccess": "已解除 Patreon 連結。",
+    "unlinkError": "無法解除 Patreon 連結。",
+    "syncAllSuccess": "已同步 {checked} 個帳號（失敗 {failed} 個）。",
+    "syncAllError": "無法執行全量 Patreon 同步。",
+    "quotaPerMonth": "{limit}/月 · {source}",
+    "linkedDate": "連結於 {date}",
+    "filters": {
+      "all": "全部 ({count})",
+      "active": "有效 ({count})",
+      "issues": "異常 ({count})"
+    },
+    "status": {
+      "activePatron": "有效",
+      "declinedPatron": "扣款失敗",
+      "formerPatron": "已取消",
+      "notPatron": "非贊助者"
+    },
+    "badges": {
+      "stale": "已過期 (>7天)",
+      "unmatched": "未對應: {id}"
+    },
+    "table": {
+      "account": "帳號",
+      "patreon": "Patreon",
+      "status": "狀態",
+      "tierAndQuota": "等級與配額",
+      "lastChecked": "上次同步",
+      "actions": "操作"
+    },
+    "actions": {
+      "resync": "重新同步",
+      "unlink": "解除連結",
+      "confirmUnlink": "確認解除",
+      "cancel": "取消"
+    },
+    "tiers": {
+      "title": "等級對應",
+      "subtitle": "已設定的 Patreon 等級 ID、每月 API 配額與請求加速次數（唯讀）。",
+      "tier": "等級",
+      "patreonId": "Patreon ID",
+      "quota": "API / 月",
+      "boosts": "加速 / 月",
+      "active": "有效人數"
+    },
+    "manualGrants": {
+      "title": "手動等級與配額覆寫",
+      "subtitle": "非透過 Patreon 而手動指派等級或自訂 API 配額的帳號。",
+      "manageInUsers": "前往使用者管理",
+      "assignment": "指派類型",
+      "override": "自訂配額",
+      "empty": "目前沒有手動配額或非免費等級指派。"
+    }
   }
 }

@@ -270,6 +270,14 @@ paths:
     $ref: "./paths/admin/v1_admin_requests_id.yaml"
   "/v1/admin/requests/{requestId}/merge":
     $ref: "./paths/admin/v1_admin_requests_id_merge.yaml"
+  "/v1/admin/patreon":
+    $ref: "./paths/admin/v1_admin_patreon.yaml"
+  "/v1/admin/patreon/refresh-all":
+    $ref: "./paths/admin/v1_admin_patreon_refresh_all.yaml"
+  "/v1/admin/patreon/connections/{userId}":
+    $ref: "./paths/admin/v1_admin_patreon_connection.yaml"
+  "/v1/admin/patreon/connections/{userId}/refresh":
+    $ref: "./paths/admin/v1_admin_patreon_connection_refresh.yaml"
 
 components:
   securitySchemes:

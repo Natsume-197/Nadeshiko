@@ -2003,5 +2003,70 @@
       "statusTitle": "ステータスページ",
       "statusDesc": "status.nadeshiko.co を新しいタブで開きます。"
     }
+  },
+  "adminPatreon": {
+    "title": "Patreonとティア",
+    "configured": "設定済み · キャンペーン {campaignId}",
+    "notConfigured": "この環境では未設定",
+    "summaryLine": "有効 {active} · 連携済み {linked} · 要確認 {issues}",
+    "syncAll": "すべて同期",
+    "syncingAll": "同期中…",
+    "searchPlaceholder": "ユーザー・メール・Patreon名で検索…",
+    "empty": "条件に一致するPatreon連携はありません。",
+    "loadError": "Patreon連携の読み込みに失敗しました。",
+    "refreshOneSuccess": "Patreon会員情報を更新しました。",
+    "refreshOneError": "Patreon会員情報の更新に失敗しました。",
+    "unlinkSuccess": "Patreon連携を解除しました。",
+    "unlinkError": "Patreon連携の解除に失敗しました。",
+    "syncAllSuccess": "{checked}件を同期しました（失敗 {failed}件）。",
+    "syncAllError": "Patreonの一括同期に失敗しました。",
+    "quotaPerMonth": "{limit}/月 · {source}",
+    "linkedDate": "連携日 {date}",
+    "filters": {
+      "all": "すべて ({count})",
+      "active": "有効 ({count})",
+      "issues": "問題あり ({count})"
+    },
+    "status": {
+      "activePatron": "有効",
+      "declinedPatron": "決済失敗",
+      "formerPatron": "解約済み",
+      "notPatron": "未支援"
+    },
+    "badges": {
+      "stale": "期限切れ (>7日)",
+      "unmatched": "未対応ID: {id}"
+    },
+    "table": {
+      "account": "アカウント",
+      "patreon": "Patreon",
+      "status": "状態",
+      "tierAndQuota": "ティアと上限",
+      "lastChecked": "最終確認",
+      "actions": "操作"
+    },
+    "actions": {
+      "resync": "再同期",
+      "unlink": "解除",
+      "confirmUnlink": "解除を確定",
+      "cancel": "キャンセル"
+    },
+    "tiers": {
+      "title": "ティア対応表",
+      "subtitle": "設定済みのPatreonティアID、月間API上限、リクエストブーストの一覧です。",
+      "tier": "ティア",
+      "patreonId": "Patreon ID",
+      "quota": "API / 月",
+      "boosts": "ブースト / 月",
+      "active": "有効"
+    },
+    "manualGrants": {
+      "title": "手動ティア・上限オーバーライド",
+      "subtitle": "Patreon以外で有料ティアやカスタムAPI上限が設定されているアカウントです。",
+      "manageInUsers": "ユーザー画面で編集",
+      "assignment": "割り当て",
+      "override": "手動上限",
+      "empty": "手動設定されているアカウントはありません。"
+    }
   }
 }

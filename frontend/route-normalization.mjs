@@ -38,6 +38,7 @@ const STATIC_PAGES = new Set([
   '/user/dictionaries',
   '/admin',
   '/admin/announcement',
+  '/admin/patreon',
   '/admin/reports',
   '/admin/users',
   '/admin/roadmap',

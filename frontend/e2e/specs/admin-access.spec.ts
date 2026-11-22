@@ -1,7 +1,7 @@
 import { e2eAccountForWorker, loginAsE2EUser, test, expect } from '../auth';
 import { e2eBypassHeaders, getE2EBaseUrl } from '../env';
 
-const ADMIN_PAGES = ['/admin', '/admin/users', '/admin/reports', '/admin/announcement'] as const;
+const ADMIN_PAGES = ['/admin', '/admin/users', '/admin/reports', '/admin/announcement', '/admin/patreon'] as const;
 
 test.describe('Admin authorization', () => {
   for (const adminPath of ADMIN_PAGES) {
@@ -16,6 +16,7 @@ test.describe('Admin authorization', () => {
   test('a normal account receives 403 from every admin API surface', async ({ authenticatedPage }) => {
     for (const [method, path] of [
       ['get', '/v1/admin/overview'],
+      ['get', '/v1/admin/patreon'],
       ['get', '/v1/admin/users-with-providers'],
       ['get', '/v1/admin/reports'],
       // Reading the site-wide announcement is intentionally public; changing
@@ -38,6 +39,7 @@ test.describe('Admin authorization', () => {
         ['/admin/users', 'Users'],
         ['/admin/reports', 'Report Management'],
         ['/admin/announcement', 'Announcement'],
+        ['/admin/patreon', 'Patreon & Tiers'],
       ] as const) {
         const response = await page.goto(path);
         expect(response?.status(), `${path} should render for an admin`).toBe(200);

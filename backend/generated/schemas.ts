@@ -52,6 +52,27 @@ export const s_AdminOverview = z.object({
   generatedAt: z.iso.datetime({ offset: true }),
 });
 
+export const s_AdminPatreonConnection = z.object({
+  userId: z.coerce.number(),
+  username: z.string(),
+  email: z.email(),
+  patreonUserId: z.string(),
+  fullName: z.string().nullable(),
+  patronStatus: z.string().nullable(),
+  entitledAmountCents: z.coerce.number(),
+  entitledTierIds: z.array(z.string()),
+  resolvedTierId: z.string().nullable(),
+  resolvedTierName: z.string().nullable(),
+  effectiveQuotaLimit: z.coerce.number(),
+  quotaSource: z.enum(['override', 'tier', 'patreon', 'legacy_column', 'default']),
+  unmatchedTierIds: z.array(z.string()),
+  isActive: PermissiveBoolean,
+  isStale: PermissiveBoolean,
+  hasIssue: PermissiveBoolean,
+  membershipCheckedAt: z.iso.datetime({ offset: true }),
+  linkedAt: z.iso.datetime({ offset: true }),
+});
+
 export const s_AdminUserWithProviders = z.object({
   id: z.coerce.number(),
   name: z.string(),
@@ -638,6 +659,40 @@ export const s_AdminContentRequest = s_ContentRequest.extend({
       status: z.enum(['OPEN', 'PLANNED', 'IN_PROGRESS', 'RELEASED', 'DECLINED']),
     })
     .nullable(),
+});
+
+export const s_AdminPatreonOverview = z.object({
+  configured: PermissiveBoolean,
+  campaignId: z.string().nullable(),
+  summary: z.object({
+    totalLinked: z.coerce.number(),
+    active: z.coerce.number(),
+    stale: z.coerce.number(),
+    issues: z.coerce.number(),
+  }),
+  tiers: z.array(
+    z.object({
+      id: z.string(),
+      displayName: z.string(),
+      patreonTierId: z.string().nullable(),
+      monthlyQuotaLimit: z.coerce.number(),
+      monthlyRequestBoosts: z.coerce.number(),
+      activePatronCount: z.coerce.number(),
+    }),
+  ),
+  connections: z.array(s_AdminPatreonConnection),
+  manualGrants: z.array(
+    z.object({
+      userId: z.coerce.number(),
+      username: z.string(),
+      email: z.email(),
+      tierId: z.string().nullable(),
+      tierName: z.string().nullable(),
+      quotaOverride: z.coerce.number().nullable(),
+      effectiveQuotaLimit: z.coerce.number(),
+      quotaSource: z.enum(['override', 'tier', 'patreon', 'legacy_column', 'default']),
+    }),
+  ),
 });
 
 export const s_AdminReportGroupItem = z.object({

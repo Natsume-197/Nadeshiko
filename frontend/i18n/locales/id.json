@@ -2003,5 +2003,70 @@
       "statusTitle": "Halaman Status Publik",
       "statusDesc": "Buka status.nadeshiko.co di tab baru."
     }
+  },
+  "adminPatreon": {
+    "title": "Patreon & Tier",
+    "configured": "Terkonfigurasi · Kampanye {campaignId}",
+    "notConfigured": "Belum dikonfigurasi di lingkungan ini",
+    "summaryLine": "{active} aktif · {linked} tertaut · {issues} bermasalah",
+    "syncAll": "Sinkronkan semua",
+    "syncingAll": "Menyinkronkan…",
+    "searchPlaceholder": "Cari pengguna, email, atau Patreon…",
+    "empty": "Tidak ada koneksi Patreon yang cocok dengan filter ini.",
+    "loadError": "Gagal memuat koneksi Patreon.",
+    "refreshOneSuccess": "Keanggotaan Patreon diperbarui.",
+    "refreshOneError": "Gagal memperbarui keanggotaan Patreon.",
+    "unlinkSuccess": "Koneksi Patreon dilepas.",
+    "unlinkError": "Gagal melepas koneksi Patreon.",
+    "syncAllSuccess": "Menyinkronkan {checked} koneksi ({failed} gagal).",
+    "syncAllError": "Gagal menjalankan sinkronisasi Patreon.",
+    "quotaPerMonth": "{limit}/bln · {source}",
+    "linkedDate": "Tertaut {date}",
+    "filters": {
+      "all": "Semua ({count})",
+      "active": "Aktif ({count})",
+      "issues": "Bermasalah ({count})"
+    },
+    "status": {
+      "activePatron": "Aktif",
+      "declinedPatron": "Pembayaran ditolak",
+      "formerPatron": "Mantan patron",
+      "notPatron": "Bukan patron"
+    },
+    "badges": {
+      "stale": "Kedaluwarsa (>7h)",
+      "unmatched": "Tak cocok: {id}"
+    },
+    "table": {
+      "account": "Akun",
+      "patreon": "Patreon",
+      "status": "Status",
+      "tierAndQuota": "Tier & kuota",
+      "lastChecked": "Terakhir dicek",
+      "actions": "Aksi"
+    },
+    "actions": {
+      "resync": "Sinkron ulang",
+      "unlink": "Lepas",
+      "confirmUnlink": "Konfirmasi lepas",
+      "cancel": "Batal"
+    },
+    "tiers": {
+      "title": "Pemetaan tier",
+      "subtitle": "Referensi baca-saja ID tier Patreon, kuota API bulanan, dan boost permintaan.",
+      "tier": "Tier",
+      "patreonId": "ID Patreon",
+      "quota": "API / bln",
+      "boosts": "Boost / bln",
+      "active": "Aktif"
+    },
+    "manualGrants": {
+      "title": "Tier & override manual",
+      "subtitle": "Akun dengan tier non-gratis atau override kuota API di luar Patreon.",
+      "manageInUsers": "Edit di Pengguna",
+      "assignment": "Penetapan",
+      "override": "Override kuota",
+      "empty": "Tidak ada override manual atau penetapan tier non-gratis."
+    }
   }
 }

@@ -116,7 +116,8 @@ export const ADMIN_DIRECTORY_ITEMS: readonly AdminDirectoryItem[] = [
     titleKey: 'adminDashboard.items.patreonTitle',
     descriptionKey: 'adminDashboard.items.patreonDesc',
     icon: mdiHeartOutline,
-    status: 'planned',
+    to: '/admin/patreon',
+    status: 'live',
     badge: (o) => (o && o.users.activePatrons > 0 ? { text: `${o.users.activePatrons}`, tone: 'success' } : null),
   },
   {

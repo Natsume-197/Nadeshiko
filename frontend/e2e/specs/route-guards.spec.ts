@@ -11,6 +11,7 @@ const PRIVATE_ROUTES = [
   '/admin/users',
   '/admin/reports',
   '/admin/announcement',
+  '/admin/patreon',
   '/user/admin/users',
   '/user/admin/reports',
   '/user/admin/announcement',

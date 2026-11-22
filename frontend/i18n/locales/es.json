@@ -2003,5 +2003,70 @@
       "statusTitle": "Página de estado",
       "statusDesc": "Abre status.nadeshiko.co en una nueva pestaña."
     }
+  },
+  "adminPatreon": {
+    "title": "Patreon y tiers",
+    "configured": "Configurado · Campaña {campaignId}",
+    "notConfigured": "No configurado en este entorno",
+    "summaryLine": "{active} activos · {linked} vinculados · {issues} con problemas",
+    "syncAll": "Sincronizar todos",
+    "syncingAll": "Sincronizando…",
+    "searchPlaceholder": "Buscar usuario, correo o Patreon…",
+    "empty": "No hay conexiones de Patreon que coincidan con este filtro.",
+    "loadError": "No se pudieron cargar las conexiones de Patreon.",
+    "refreshOneSuccess": "Membresía de Patreon actualizada.",
+    "refreshOneError": "No se pudo actualizar la membresía de Patreon.",
+    "unlinkSuccess": "Conexión de Patreon desvinculada.",
+    "unlinkError": "No se pudo desvincular la conexión de Patreon.",
+    "syncAllSuccess": "Sincronizadas {checked} conexiones ({failed} fallidas).",
+    "syncAllError": "No se pudo ejecutar la sincronización de Patreon.",
+    "quotaPerMonth": "{limit}/mes · {source}",
+    "linkedDate": "Vinculado {date}",
+    "filters": {
+      "all": "Todos ({count})",
+      "active": "Activos ({count})",
+      "issues": "Con problemas ({count})"
+    },
+    "status": {
+      "activePatron": "Activo",
+      "declinedPatron": "Pago rechazado",
+      "formerPatron": "Ex-patron",
+      "notPatron": "Sin suscripción"
+    },
+    "badges": {
+      "stale": "Desactualizado (>7d)",
+      "unmatched": "Sin mapear: {id}"
+    },
+    "table": {
+      "account": "Cuenta",
+      "patreon": "Patreon",
+      "status": "Estado",
+      "tierAndQuota": "Tier y cuota",
+      "lastChecked": "Última revisión",
+      "actions": "Acciones"
+    },
+    "actions": {
+      "resync": "Re-sincronizar",
+      "unlink": "Desvincular",
+      "confirmUnlink": "Confirmar",
+      "cancel": "Cancelar"
+    },
+    "tiers": {
+      "title": "Mapeo de tiers",
+      "subtitle": "Referencia de los IDs de Patreon configurados, cuotas mensuales de API y boosts.",
+      "tier": "Tier",
+      "patreonId": "ID Patreon",
+      "quota": "API / mes",
+      "boosts": "Boosts / mes",
+      "active": "Activos"
+    },
+    "manualGrants": {
+      "title": "Tiers y overrides manuales",
+      "subtitle": "Cuentas con un tier asignado a mano o cuota personalizada fuera de Patreon.",
+      "manageInUsers": "Editar en Usuarios",
+      "assignment": "Asignación",
+      "override": "Cuota manual",
+      "empty": "No hay overrides manuales ni tiers asignados fuera de Patreon."
+    }
   }
 }

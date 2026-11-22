@@ -1,0 +1,101 @@
+type: object
+required:
+  - configured
+  - campaignId
+  - summary
+  - tiers
+  - connections
+  - manualGrants
+properties:
+  configured:
+    type: boolean
+    description: Whether Patreon OAuth credentials and campaign ID are configured on this server.
+  campaignId:
+    type: string
+    nullable: true
+    description: Configured Patreon campaign ID, if set.
+  summary:
+    type: object
+    required:
+      - totalLinked
+      - active
+      - stale
+      - issues
+    properties:
+      totalLinked:
+        type: integer
+      active:
+        type: integer
+      stale:
+        type: integer
+      issues:
+        type: integer
+  tiers:
+    type: array
+    items:
+      type: object
+      required:
+        - id
+        - displayName
+        - patreonTierId
+        - monthlyQuotaLimit
+        - monthlyRequestBoosts
+        - activePatronCount
+      properties:
+        id:
+          type: string
+        displayName:
+          type: string
+        patreonTierId:
+          type: string
+          nullable: true
+        monthlyQuotaLimit:
+          type: integer
+        monthlyRequestBoosts:
+          type: integer
+        activePatronCount:
+          type: integer
+  connections:
+    type: array
+    items:
+      $ref: "./AdminPatreonConnection.yaml"
+  manualGrants:
+    type: array
+    items:
+      type: object
+      required:
+        - userId
+        - username
+        - email
+        - tierId
+        - tierName
+        - quotaOverride
+        - effectiveQuotaLimit
+        - quotaSource
+      properties:
+        userId:
+          type: integer
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        tierId:
+          type: string
+          nullable: true
+        tierName:
+          type: string
+          nullable: true
+        quotaOverride:
+          type: integer
+          nullable: true
+        effectiveQuotaLimit:
+          type: integer
+        quotaSource:
+          type: string
+          enum:
+            - override
+            - tier
+            - patreon
+            - legacy_column
+            - default

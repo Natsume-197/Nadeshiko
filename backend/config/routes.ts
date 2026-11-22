@@ -31,6 +31,12 @@ import {
   identifyDictionaryWord,
 } from '@app/controllers/dictionaryController';
 import { getAdminOverview, getAdminUsersWithProviders } from '@app/controllers/adminDashboardController';
+import {
+  getAdminPatreonOverview,
+  refreshAdminPatreonConnection,
+  refreshAllAdminPatreonConnections,
+  unlinkAdminPatreonConnection,
+} from '@app/controllers/adminPatreonController';
 import { handleSesWebhook, WEBHOOK_SES_PATH } from '@app/controllers/webhooks/sesController';
 import { listTiers, getAdminUserQuota, updateAdminUserQuota } from '@app/controllers/adminQuotaController';
 import { getAnnouncement, updateAnnouncement } from '@app/controllers/announcementController';
@@ -323,6 +329,10 @@ const AdminRoutes = createAdminRouter({
   listAdminContentRequests,
   updateAdminContentRequest,
   mergeAdminContentRequest,
+  getAdminPatreonOverview,
+  refreshAllAdminPatreonConnections,
+  refreshAdminPatreonConnection,
+  unlinkAdminPatreonConnection,
 });
 
 const FeedbackRoutes = createFeedbackRouter({

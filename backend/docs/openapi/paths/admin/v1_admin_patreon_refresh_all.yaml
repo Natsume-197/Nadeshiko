@@ -1,0 +1,37 @@
+post:
+  tags:
+    - Admin
+  x-internal: true
+  operationId: refreshAllAdminPatreonConnections
+  summary: Re-sync all linked Patreon memberships immediately
+  description: |
+    Runs the Patreon membership refresh pass across every linked account and returns how many
+    succeeded and failed. Fails with 400 when Patreon OAuth is not configured on this server.
+
+  security:
+    - SessionCookie: [ADMIN]
+  responses:
+    "200":
+      description: Refresh pass completed
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - checked
+              - failed
+            properties:
+              checked:
+                type: integer
+              failed:
+                type: integer
+    "400":
+      $ref: "../../components/responses/BadRequest.yaml"
+    "401":
+      $ref: "../../components/responses/Unauthorized.yaml"
+    "403":
+      $ref: "../../components/responses/Forbidden.yaml"
+    "429":
+      $ref: "../../components/responses/TooManyRequests.yaml"
+    "500":
+      $ref: "../../components/responses/InternalServerError.yaml"

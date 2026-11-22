@@ -68,7 +68,7 @@ describe('AdminDashboardHome', () => {
     }
   });
 
-  test('links all five active admin tools under /admin/*', () => {
+  test('links all six active admin tools under /admin/*', () => {
     const wrapper = render();
     const hrefs = wrapper.findAll('a').map((a) => a.attributes('href'));
 
@@ -78,6 +78,7 @@ describe('AdminDashboardHome', () => {
       '/en/admin/roadmap',
       '/en/admin/announcement',
       '/en/admin/users',
+      '/en/admin/patreon',
     ]) {
       expect(hrefs).toContain(target);
     }

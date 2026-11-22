@@ -2003,5 +2003,70 @@
       "statusTitle": "Public Status Page",
       "statusDesc": "Open status.nadeshiko.co in a new tab."
     }
+  },
+  "adminPatreon": {
+    "title": "Patreon & Tiers",
+    "configured": "Configured · Campaign {campaignId}",
+    "notConfigured": "Not configured in this environment",
+    "summaryLine": "{active} active · {linked} linked · {issues} with issues",
+    "syncAll": "Sync all now",
+    "syncingAll": "Syncing…",
+    "searchPlaceholder": "Search user, email or Patreon…",
+    "empty": "No linked Patreon connections match this filter.",
+    "loadError": "Failed to load Patreon connections.",
+    "refreshOneSuccess": "Patreon membership refreshed.",
+    "refreshOneError": "Could not refresh Patreon membership.",
+    "unlinkSuccess": "Patreon connection unlinked.",
+    "unlinkError": "Could not unlink Patreon connection.",
+    "syncAllSuccess": "Synced {checked} connection(s) ({failed} failed).",
+    "syncAllError": "Could not run Patreon sync.",
+    "quotaPerMonth": "{limit}/mo · {source}",
+    "linkedDate": "Linked {date}",
+    "filters": {
+      "all": "All ({count})",
+      "active": "Active ({count})",
+      "issues": "Issues ({count})"
+    },
+    "status": {
+      "activePatron": "Active",
+      "declinedPatron": "Declined",
+      "formerPatron": "Former",
+      "notPatron": "Not a patron"
+    },
+    "badges": {
+      "stale": "Stale (>7d)",
+      "unmatched": "Unmatched: {id}"
+    },
+    "table": {
+      "account": "Account",
+      "patreon": "Patreon",
+      "status": "Status",
+      "tierAndQuota": "Tier & quota",
+      "lastChecked": "Last checked",
+      "actions": "Actions"
+    },
+    "actions": {
+      "resync": "Re-sync",
+      "unlink": "Unlink",
+      "confirmUnlink": "Confirm unlink",
+      "cancel": "Cancel"
+    },
+    "tiers": {
+      "title": "Tier mapping",
+      "subtitle": "Read-only view of configured Patreon tier IDs, monthly API quotas and request boosts.",
+      "tier": "Tier",
+      "patreonId": "Patreon ID",
+      "quota": "API / mo",
+      "boosts": "Boosts / mo",
+      "active": "Active"
+    },
+    "manualGrants": {
+      "title": "Manual tiers & overrides",
+      "subtitle": "Accounts with a non-free tier or custom API quota override outside Patreon.",
+      "manageInUsers": "Edit in Users",
+      "assignment": "Assignment",
+      "override": "Quota override",
+      "empty": "No manual overrides or non-free tier assignments."
+    }
   }
 }

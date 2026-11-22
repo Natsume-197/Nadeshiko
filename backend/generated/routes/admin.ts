@@ -19,6 +19,8 @@ import type {
   t_AccountQuotaState,
   t_AdminContentRequest,
   t_AdminOverview,
+  t_AdminPatreonConnection,
+  t_AdminPatreonOverview,
   t_AdminReportListResponse,
   t_AdminUserWithProviders,
   t_AffectedCountResponse,
@@ -40,10 +42,12 @@ import type {
   t_ListAdminReportsQuerySchema,
   t_MergeAdminContentRequestParamSchema,
   t_MergeAdminContentRequestRequestBody,
+  t_RefreshAdminPatreonConnectionParamSchema,
   t_Report,
   t_RoadmapItem,
   t_RoadmapItemWrite,
   t_Tier,
+  t_UnlinkAdminPatreonConnectionParamSchema,
   t_UpdateAccountQuotaRequest,
   t_UpdateAdminContentRequestParamSchema,
   t_UpdateAdminContentRequestRequestBody,
@@ -59,6 +63,8 @@ import {
   s_AccountQuotaState,
   s_AdminContentRequest,
   s_AdminOverview,
+  s_AdminPatreonConnection,
+  s_AdminPatreonOverview,
   s_AdminReportListResponse,
   s_AdminUserWithProviders,
   s_AffectedCountResponse,
@@ -412,6 +418,77 @@ export type MergeAdminContentRequest = (
   next: NextFunction,
 ) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
 
+export type GetAdminPatreonOverviewResponder = {
+  with200(): ExpressRuntimeResponse<t_AdminPatreonOverview>;
+  with401(): ExpressRuntimeResponse<t_Error401>;
+  with403(): ExpressRuntimeResponse<t_Error403>;
+  with429(): ExpressRuntimeResponse<t_Error429>;
+  with500(): ExpressRuntimeResponse<t_Error500>;
+} & ExpressRuntimeResponder;
+
+export type GetAdminPatreonOverview = (
+  params: Params<void, void, void, void>,
+  respond: GetAdminPatreonOverviewResponder,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
+
+export type RefreshAllAdminPatreonConnectionsResponder = {
+  with200(): ExpressRuntimeResponse<{
+    checked: number;
+    failed: number;
+  }>;
+  with400(): ExpressRuntimeResponse<t_Error400>;
+  with401(): ExpressRuntimeResponse<t_Error401>;
+  with403(): ExpressRuntimeResponse<t_Error403>;
+  with429(): ExpressRuntimeResponse<t_Error429>;
+  with500(): ExpressRuntimeResponse<t_Error500>;
+} & ExpressRuntimeResponder;
+
+export type RefreshAllAdminPatreonConnections = (
+  params: Params<void, void, void, void>,
+  respond: RefreshAllAdminPatreonConnectionsResponder,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
+
+export type UnlinkAdminPatreonConnectionResponder = {
+  with204(): ExpressRuntimeResponse<void>;
+  with401(): ExpressRuntimeResponse<t_Error401>;
+  with403(): ExpressRuntimeResponse<t_Error403>;
+  with404(): ExpressRuntimeResponse<t_Error404>;
+  with429(): ExpressRuntimeResponse<t_Error429>;
+  with500(): ExpressRuntimeResponse<t_Error500>;
+} & ExpressRuntimeResponder;
+
+export type UnlinkAdminPatreonConnection = (
+  params: Params<t_UnlinkAdminPatreonConnectionParamSchema, void, void, void>,
+  respond: UnlinkAdminPatreonConnectionResponder,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
+
+export type RefreshAdminPatreonConnectionResponder = {
+  with200(): ExpressRuntimeResponse<t_AdminPatreonConnection>;
+  with400(): ExpressRuntimeResponse<t_Error400>;
+  with401(): ExpressRuntimeResponse<t_Error401>;
+  with403(): ExpressRuntimeResponse<t_Error403>;
+  with404(): ExpressRuntimeResponse<t_Error404>;
+  with429(): ExpressRuntimeResponse<t_Error429>;
+  with500(): ExpressRuntimeResponse<t_Error500>;
+} & ExpressRuntimeResponder;
+
+export type RefreshAdminPatreonConnection = (
+  params: Params<t_RefreshAdminPatreonConnectionParamSchema, void, void, void>,
+  respond: RefreshAdminPatreonConnectionResponder,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
+
 export type AdminImplementation = {
   getAdminOverview: GetAdminOverview;
   listAdminReports: ListAdminReports;
@@ -432,6 +509,10 @@ export type AdminImplementation = {
   listAdminContentRequests: ListAdminContentRequests;
   updateAdminContentRequest: UpdateAdminContentRequest;
   mergeAdminContentRequest: MergeAdminContentRequest;
+  getAdminPatreonOverview: GetAdminPatreonOverview;
+  refreshAllAdminPatreonConnections: RefreshAllAdminPatreonConnections;
+  unlinkAdminPatreonConnection: UnlinkAdminPatreonConnection;
+  refreshAdminPatreonConnection: RefreshAdminPatreonConnection;
 };
 
 export function createAdminRouter(
@@ -1511,6 +1592,236 @@ export function createAdminRouter(
       next(error);
     }
   });
+
+  const getAdminPatreonOverviewResponseBodyValidator = responseValidationFactory(
+    [
+      ['200', s_AdminPatreonOverview],
+      ['401', s_Error401],
+      ['403', s_Error403],
+      ['429', s_Error429],
+      ['500', s_Error500],
+    ],
+    undefined,
+  );
+
+  // getAdminPatreonOverview
+  router.get(`/v1/admin/patreon`, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const input = {
+        params: undefined,
+        query: undefined,
+        body: undefined,
+        headers: undefined,
+      };
+
+      const responder = {
+        with200() {
+          return new ExpressRuntimeResponse<t_AdminPatreonOverview>(200);
+        },
+        with401() {
+          return new ExpressRuntimeResponse<t_Error401>(401);
+        },
+        with403() {
+          return new ExpressRuntimeResponse<t_Error403>(403);
+        },
+        with429() {
+          return new ExpressRuntimeResponse<t_Error429>(429);
+        },
+        with500() {
+          return new ExpressRuntimeResponse<t_Error500>(500);
+        },
+        withStatus(status: StatusCode) {
+          return new ExpressRuntimeResponse(status);
+        },
+      };
+
+      await implementation
+        .getAdminPatreonOverview(input, responder, req, res, next)
+        .catch(handleImplementationError)
+        .then(handleResponse(res, getAdminPatreonOverviewResponseBodyValidator));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  const refreshAllAdminPatreonConnectionsResponseBodyValidator = responseValidationFactory(
+    [
+      ['200', z.object({ checked: z.coerce.number(), failed: z.coerce.number() })],
+      ['400', s_Error400],
+      ['401', s_Error401],
+      ['403', s_Error403],
+      ['429', s_Error429],
+      ['500', s_Error500],
+    ],
+    undefined,
+  );
+
+  // refreshAllAdminPatreonConnections
+  router.post(`/v1/admin/patreon/refresh-all`, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const input = {
+        params: undefined,
+        query: undefined,
+        body: undefined,
+        headers: undefined,
+      };
+
+      const responder = {
+        with200() {
+          return new ExpressRuntimeResponse<{
+            checked: number;
+            failed: number;
+          }>(200);
+        },
+        with400() {
+          return new ExpressRuntimeResponse<t_Error400>(400);
+        },
+        with401() {
+          return new ExpressRuntimeResponse<t_Error401>(401);
+        },
+        with403() {
+          return new ExpressRuntimeResponse<t_Error403>(403);
+        },
+        with429() {
+          return new ExpressRuntimeResponse<t_Error429>(429);
+        },
+        with500() {
+          return new ExpressRuntimeResponse<t_Error500>(500);
+        },
+        withStatus(status: StatusCode) {
+          return new ExpressRuntimeResponse(status);
+        },
+      };
+
+      await implementation
+        .refreshAllAdminPatreonConnections(input, responder, req, res, next)
+        .catch(handleImplementationError)
+        .then(handleResponse(res, refreshAllAdminPatreonConnectionsResponseBodyValidator));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  const unlinkAdminPatreonConnectionParamSchema = z.object({ userId: z.coerce.number().min(1) });
+
+  const unlinkAdminPatreonConnectionResponseBodyValidator = responseValidationFactory(
+    [
+      ['204', z.undefined()],
+      ['401', s_Error401],
+      ['403', s_Error403],
+      ['404', s_Error404],
+      ['429', s_Error429],
+      ['500', s_Error500],
+    ],
+    undefined,
+  );
+
+  // unlinkAdminPatreonConnection
+  router.delete(`/v1/admin/patreon/connections/:userId`, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const input = {
+        params: parseRequestInput(unlinkAdminPatreonConnectionParamSchema, req.params, RequestInputType.RouteParam),
+        query: undefined,
+        body: undefined,
+        headers: undefined,
+      };
+
+      const responder = {
+        with204() {
+          return new ExpressRuntimeResponse<void>(204);
+        },
+        with401() {
+          return new ExpressRuntimeResponse<t_Error401>(401);
+        },
+        with403() {
+          return new ExpressRuntimeResponse<t_Error403>(403);
+        },
+        with404() {
+          return new ExpressRuntimeResponse<t_Error404>(404);
+        },
+        with429() {
+          return new ExpressRuntimeResponse<t_Error429>(429);
+        },
+        with500() {
+          return new ExpressRuntimeResponse<t_Error500>(500);
+        },
+        withStatus(status: StatusCode) {
+          return new ExpressRuntimeResponse(status);
+        },
+      };
+
+      await implementation
+        .unlinkAdminPatreonConnection(input, responder, req, res, next)
+        .catch(handleImplementationError)
+        .then(handleResponse(res, unlinkAdminPatreonConnectionResponseBodyValidator));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  const refreshAdminPatreonConnectionParamSchema = z.object({ userId: z.coerce.number().min(1) });
+
+  const refreshAdminPatreonConnectionResponseBodyValidator = responseValidationFactory(
+    [
+      ['200', s_AdminPatreonConnection],
+      ['400', s_Error400],
+      ['401', s_Error401],
+      ['403', s_Error403],
+      ['404', s_Error404],
+      ['429', s_Error429],
+      ['500', s_Error500],
+    ],
+    undefined,
+  );
+
+  // refreshAdminPatreonConnection
+  router.post(
+    `/v1/admin/patreon/connections/:userId/refresh`,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const input = {
+          params: parseRequestInput(refreshAdminPatreonConnectionParamSchema, req.params, RequestInputType.RouteParam),
+          query: undefined,
+          body: undefined,
+          headers: undefined,
+        };
+
+        const responder = {
+          with200() {
+            return new ExpressRuntimeResponse<t_AdminPatreonConnection>(200);
+          },
+          with400() {
+            return new ExpressRuntimeResponse<t_Error400>(400);
+          },
+          with401() {
+            return new ExpressRuntimeResponse<t_Error401>(401);
+          },
+          with403() {
+            return new ExpressRuntimeResponse<t_Error403>(403);
+          },
+          with404() {
+            return new ExpressRuntimeResponse<t_Error404>(404);
+          },
+          with429() {
+            return new ExpressRuntimeResponse<t_Error429>(429);
+          },
+          with500() {
+            return new ExpressRuntimeResponse<t_Error500>(500);
+          },
+          withStatus(status: StatusCode) {
+            return new ExpressRuntimeResponse(status);
+          },
+        };
+
+        await implementation
+          .refreshAdminPatreonConnection(input, responder, req, res, next)
+          .catch(handleImplementationError)
+          .then(handleResponse(res, refreshAdminPatreonConnectionResponseBodyValidator));
+      } catch (error) {
+        next(error);
+      }
+    },
+  );
 
   return router;
 }
