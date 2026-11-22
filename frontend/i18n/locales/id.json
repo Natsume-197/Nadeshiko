@@ -1821,6 +1821,19 @@
         "q": "Bisakah satu akun Patreon membuka beberapa akun Nadeshiko?",
         "a": "Tidak. Satu akun Patreon hanya bisa ditautkan ke satu akun Nadeshiko."
       }
+    },
+    "currentTierBadge": "Tingkat Anda saat ini",
+    "activeBanner": {
+      "title": "Anda mendukung Nadeshiko di tingkat {tier}.",
+      "quota": "Batas {limit} permintaan API/bulan aktif di akun Anda.",
+      "manage": "Kelola tautan Patreon"
+    },
+    "linkStrip": {
+      "title": "Sudah menjadi pendukung di Patreon?",
+      "loggedInBody": "Tautkan akun Patreon Anda di Pengaturan untuk mengaktifkan batas API, tema kustom, dan boost permintaan secara otomatis.",
+      "loggedInCta": "Tautkan Patreon di Pengaturan",
+      "loggedOutBody": "Masuk dan tautkan akun Patreon Anda di Pengaturan untuk mengaktifkan manfaat pendukung.",
+      "loggedOutCta": "Masuk untuk menautkan"
     }
   },
   "requests": {

@@ -1821,6 +1821,19 @@
         "q": "Can one Patreon account unlock several Nadeshiko accounts?",
         "a": "No. One Patreon account links to one Nadeshiko account."
       }
+    },
+    "currentTierBadge": "Your current tier",
+    "activeBanner": {
+      "title": "You are supporting Nadeshiko on the {tier} tier.",
+      "quota": "{limit} API requests/month active on your account.",
+      "manage": "Manage Patreon link"
+    },
+    "linkStrip": {
+      "title": "Already supporting on Patreon?",
+      "loggedInBody": "Link your Patreon account in Settings to unlock your API limit, custom themes, and request boosts automatically.",
+      "loggedInCta": "Link Patreon in Settings",
+      "loggedOutBody": "Sign in and link your Patreon account in Settings to unlock your supporter benefits.",
+      "loggedOutCta": "Sign in to link"
     }
   },
   "requests": {

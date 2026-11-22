@@ -24,6 +24,7 @@ vi.stubGlobal('useAsyncData', async (_k: unknown, handler: () => Promise<unknown
   return { data, refresh: vi.fn(), pending: ref(false), error: ref(null) };
 });
 
+import { PATREON_URL } from '#shared/utils/socialLinks';
 import SupportersPage from './supporters.vue';
 import RoadmapRedirect from './roadmap.vue';
 
@@ -123,8 +124,9 @@ describe('Supporters page', () => {
 });
 
 describe('content requests', () => {
-  test('the hero and the roadmap tab point to the requests page', async () => {
+  test('the hero points to Patreon and requests, and the roadmap tab points to requests', async () => {
     const wrapper = await render();
+    expect(wrapper.get('[data-testid="supporters-hero-patreon-cta"]').attributes('href')).toBe(PATREON_URL);
     expect(wrapper.get('[data-testid="supporters-requests-cta"]').attributes('href')).toBe('/en/requests');
     expect(panel(wrapper, 'roadmap').get('a[href="/en/requests"]').text()).toBe('roadmap.requestsLink');
   });

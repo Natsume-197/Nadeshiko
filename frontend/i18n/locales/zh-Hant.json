@@ -1821,6 +1821,19 @@
         "q": "一個 Patreon 帳戶可以解鎖多個 Nadeshiko 帳戶嗎？",
         "a": "不可以。一個 Patreon 帳戶只能連結一個 Nadeshiko 帳戶。"
       }
+    },
+    "currentTierBadge": "目前方案",
+    "activeBanner": {
+      "title": "您正在以 {tier} 方案支持 Nadeshiko。",
+      "quota": "您的帳號已啟用每月 {limit} 次 API 請求額度。",
+      "manage": "管理 Patreon 綁定"
+    },
+    "linkStrip": {
+      "title": "已經在 Patreon 支持我們了嗎？",
+      "loggedInBody": "在設定中綁定您的 Patreon 帳號，即可自動解鎖 API 額度、自訂主題與請求加速。",
+      "loggedInCta": "前往設定綁定 Patreon",
+      "loggedOutBody": "登入並在設定中綁定 Patreon 帳號即可啟用您的贊助者權益。",
+      "loggedOutCta": "登入並綁定"
     }
   },
   "requests": {

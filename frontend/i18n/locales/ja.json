@@ -1821,6 +1821,19 @@
         "q": "1 つの Patreon アカウントで複数の Nadeshiko アカウントを有効にできますか？",
         "a": "いいえ。1 つの Patreon アカウントは 1 つの Nadeshiko アカウントにのみ連携できます。"
       }
+    },
+    "currentTierBadge": "現在のプラン",
+    "activeBanner": {
+      "title": "{tier} プランで Nadeshiko を支援中です。",
+      "quota": "月間 {limit} 件の API リクエスト上限が有効です。",
+      "manage": "Patreon 連携を管理"
+    },
+    "linkStrip": {
+      "title": "すでに Patreon で支援中ですか？",
+      "loggedInBody": "設定で Patreon アカウントを連携すると、API 上限・カスタムテーマ・リクエストブーストが自動で有効になります。",
+      "loggedInCta": "設定で Patreon を連携",
+      "loggedOutBody": "ログインして設定から Patreon アカウントを連携すると、支援者特典が有効になります。",
+      "loggedOutCta": "ログインして連携"
     }
   },
   "requests": {

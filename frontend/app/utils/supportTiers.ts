@@ -8,6 +8,8 @@
 export interface SupportTier {
   /** Matches the backend `Tier.id` the Patreon tier earns. */
   quotaTierId: 'plus' | 'pro' | 'max';
+  /** Matches the live Patreon tier ID (used for direct checkout links). */
+  patreonTierId: string;
   /** Translation key under `support.tiers`. */
   key: 'seed' | 'flower' | 'nadeshiko';
   /** Shown untranslated next to the name, as on the Patreon page. */
@@ -27,6 +29,7 @@ export const FREE_MONTHLY_API_REQUESTS = 5000;
 export const SUPPORT_TIERS: readonly SupportTier[] = [
   {
     quotaTierId: 'plus',
+    patreonTierId: '22710324',
     key: 'seed',
     kanji: '種',
     priceUsd: 5,
@@ -38,6 +41,7 @@ export const SUPPORT_TIERS: readonly SupportTier[] = [
   },
   {
     quotaTierId: 'pro',
+    patreonTierId: '28118736',
     key: 'flower',
     kanji: '花',
     priceUsd: 10,
@@ -49,6 +53,7 @@ export const SUPPORT_TIERS: readonly SupportTier[] = [
   },
   {
     quotaTierId: 'max',
+    patreonTierId: '30077695',
     key: 'nadeshiko',
     kanji: '撫子',
     priceUsd: 20,
@@ -59,5 +64,10 @@ export const SUPPORT_TIERS: readonly SupportTier[] = [
     customThemes: true,
   },
 ];
+
+/** Official Patreon checkout URL for a specific tier (matches Patreon API v2 `tier.attributes.url`). */
+export function tierCheckoutUrl(tier: SupportTier): string {
+  return `https://www.patreon.com/checkout/NadeshikoApp?rid=${tier.patreonTierId}`;
+}
 
 export const HIGHEST_MONTHLY_API_REQUESTS = Math.max(...SUPPORT_TIERS.map((tier) => tier.monthlyApiRequests));

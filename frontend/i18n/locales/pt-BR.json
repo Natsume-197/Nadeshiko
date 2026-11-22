@@ -1821,6 +1821,19 @@
         "q": "Uma conta do Patreon pode desbloquear várias contas do Nadeshiko?",
         "a": "Não. Uma conta do Patreon se vincula a uma única conta do Nadeshiko."
       }
+    },
+    "currentTierBadge": "Seu nível atual",
+    "activeBanner": {
+      "title": "Você está apoiando o Nadeshiko no nível {tier}.",
+      "quota": "{limit} solicitações à API por mês ativas na sua conta.",
+      "manage": "Gerenciar vínculo"
+    },
+    "linkStrip": {
+      "title": "Já apoia no Patreon?",
+      "loggedInBody": "Vincule sua conta do Patreon em Configurações para ativar automaticamente seu limite de API, temas personalizados e boosts.",
+      "loggedInCta": "Vincular Patreon em Configurações",
+      "loggedOutBody": "Entre e vincule sua conta do Patreon em Configurações para ativar seus benefícios de apoiador.",
+      "loggedOutCta": "Entrar para vincular"
     }
   },
   "requests": {
