@@ -24,6 +24,7 @@ import {
   ReportTargetType,
   Segment,
   SegmentStatus,
+  User,
 } from '@app/models';
 import { AuthType, ApiKeyKind, ApiPermission } from '@app/models/ApiPermission';
 
@@ -206,15 +207,16 @@ describe('GET /v1/admin/overview', () => {
       }),
     );
 
+    const expectedActiveUsers = await User.countBy({ isActive: true });
     const res = await request(app).get('/v1/admin/overview');
     expect(res.status).toBe(200);
     expect(res.body).toEqual({
       reports: { open: 1 },
       requests: { open: 1, boostedOpen: 1 },
-      users: { total: expect.any(Number), activePatrons: 1 },
+      users: { total: expectedActiveUsers, activePatrons: 1 },
       announcement: { active: true },
     });
-    expect(res.body.users.total).toBeGreaterThanOrEqual(5);
+    expect(res.body.users.total).toBeGreaterThanOrEqual(Object.keys(core.users).length);
   });
 
   it('serves cached overview until cleared', async () => {
