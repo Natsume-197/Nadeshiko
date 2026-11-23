@@ -71,6 +71,13 @@ env:
 
     - E2E_USER_PASSWORD
 
+    # Custom Yomitan dictionaries in R2 (task 48). Stored with .kamal/ssm-put-user-dicts prod; a missing one aborts the
+    # deploy.
+    - USER_DICT_R2_ENDPOINT
+    - USER_DICT_R2_BUCKET
+    - USER_DICT_R2_ACCESS_KEY_ID
+    - USER_DICT_R2_SECRET_ACCESS_KEY
+
   clear:
     ENVIRONMENT: production
     RELEASE_SHA: <%= ENV.fetch("VERSION", "unknown") %>
@@ -101,10 +108,9 @@ env:
 
     # Sudachi sidecar for Nadeshiko's morphological parser (`sudachi` accessory below).
     SUDACHI_URL: "http://nadeshiko-backend-prod-sudachi:8090"
-    # Custom Yomitan dictionaries (task 48), off until the operator turns them on. To turn on: put USER_DICT_R2_ENDPOINT,
-    # _BUCKET, _ACCESS_KEY_ID and _SECRET_ACCESS_KEY in SSM (/nadeshiko/prod/...), add them to .kamal/secrets.prod and
-    # env.secret above, then set this to "true". With it on and R2 unset the backend refuses to boot.
-    USER_DICTIONARIES_ENABLED: "false"
+    # Custom Yomitan dictionaries (task 48), on for every signed-in account; free accounts and patrons differ only in
+    # quota (quotas.ts). Needs the four USER_DICT_R2_* secrets above; with them missing the backend refuses to boot.
+    USER_DICTIONARIES_ENABLED: "true"
     USER_DICTIONARIES_DIR: /app/data/user-dictionaries
     # Local copy of the dictionaries readers use (R2 holds them all): a named volume, so it survives deploys, capped at
     # 5 GB on a 75 GB disk shared with everything else. Files are immutable and renamed into place, so the old and new
