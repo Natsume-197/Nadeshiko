@@ -116,9 +116,7 @@ export function toAdminReportGroupsDTO(
     };
 
     const userIds = new Set(members.map((r) => r.userId).filter((id) => id != null));
-    // `members` always contains at least `rep` (the `?? [rep]` fallback above).
-    const [firstMember = rep] = members;
-    const firstCreated = members.reduce((min, r) => (r.createdAt < min ? r.createdAt : min), firstMember.createdAt);
+    const firstCreated = new Date(Math.min(...members.map((r) => r.createdAt.getTime())));
     const lastUpdated = members.reduce(
       (max, r) => {
         if (!r.updatedAt) return max;

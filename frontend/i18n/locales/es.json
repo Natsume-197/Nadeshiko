@@ -1595,14 +1595,14 @@
     "title": "Servicios conectados",
     "patreon": {
       "name": "Patreon",
-      "description": "Vincula Patreon para verificar tu membresía: los patrons tienen boosts para pedidos y temas personalizados.",
-      "connect": "Connect",
-      "disconnect": "Disconnect",
-      "active": "Linked as {name} — active member",
-      "inactive": "Linked as {name} — no active paid membership",
-      "member": "your Patreon account",
-      "join": "Join",
-      "confirmDisconnect": "Disconnect your Patreon account from Nadeshiko?"
+      "description": "Vincula Patreon para verificar tu membresía: los mecenas tienen boosts para pedidos y temas personalizados.",
+      "connect": "Conectar",
+      "disconnect": "Desconectar",
+      "active": "Vinculado como {name} — mecenas activo",
+      "inactive": "Vinculado como {name} — sin membresía de pago activa",
+      "member": "tu cuenta de Patreon",
+      "join": "Unirse",
+      "confirmDisconnect": "¿Desconectar tu cuenta de Patreon de Nadeshiko?"
     }
   },
   "supporters": {
@@ -1662,7 +1662,7 @@
       },
       "contentRequests": {
         "title": "Pedidos de contenido",
-        "description": "Cualquiera puede pedir anime, dramas, audiolibros y canales de YouTube y votar por lo siguiente; los patrons dan boosts."
+        "description": "Cualquiera puede pedir anime, dramas, audiolibros y canales de YouTube y votar por lo siguiente; los mecenas dan boosts."
       }
     },
     "callbackDeclined": "No se ha aprobado la conexión con Patreon.",
@@ -1774,7 +1774,7 @@
       "nadeshiko": "Nadeshiko"
     },
     "perks": {
-      "talkToDevs": "Habla directamente con los desarrolladores",
+      "talkToDevs": "Habla directamente con el desarrollador",
       "everythingIn": "Todo lo de {tier}",
       "apiRequests": "{count} solicitudes a la API al mes",
       "customThemes": "Temas personalizados",
@@ -1900,16 +1900,16 @@
       "boosted": "Boosteado",
       "already": "Ya diste boost a este pedido.",
       "hint": "Un boost cuenta como cinco votos y no se puede retirar.",
-      "patronsOnly": "Solo para patrons — el boost cuenta como 5 votos",
+      "patronsOnly": "Solo para mecenas — el boost cuenta como 5 votos",
       "confirmHeading": "¿Dar boost a este pedido?",
       "confirmBody": "¿Quieres dar un boost (+5 votos) a {title}? Los boosts son permanentes y no se pueden deshacer.",
       "remainingAfter": "Te quedarán {remaining} de {total} boosts este mes.",
-      "nudge": "¿Quieres {title} antes? Los patrons pueden impulsar un título con +5 votos.",
+      "nudge": "¿Quieres {title} antes? Los mecenas pueden impulsar un título con +5 votos.",
       "done": "Diste boost a {title}.",
       "failed": "No se pudo dar ese boost. Puede que no te queden este mes.",
       "unlockHeading": "Desbloquea boosts con Patreon",
-      "unlockBody": "¿Quieres «{title}» antes? Los patrons reciben de 3 a 10 boosts al mes, y cada boost cuenta como 5 votos.",
-      "alreadyPatronSignIn": "¿Ya eres patron? Inicia sesión"
+      "unlockBody": "¿Quieres «{title}» antes? Los mecenas reciben de 3 a 10 boosts al mes, y cada boost cuenta como 5 votos.",
+      "alreadyPatronSignIn": "¿Ya eres mecenas? Inicia sesión"
     },
     "withdraw": "Retirar",
     "withdrawConfirm": "¿Retirar tu pedido de {title}?",
@@ -1920,8 +1920,8 @@
     "how": {
       "title": "Cómo funcionan los pedidos",
       "vote": "Cualquiera con cuenta puede pedir títulos y votar. Cada voto cuenta una vez, y pedir un título que ya está pedido suma tu voto a ese pedido.",
-      "boost": "Los patrons reciben boosts cada mes: 3 en Seed, 5 en Flower y 10 en Nadeshiko. Un boost cuenta como cinco votos.",
-      "limits": "Puedes tener 10 pedidos abiertos a la vez (30 si eres patron) y enviar hasta 5 al día.",
+      "boost": "Los mecenas reciben boosts cada mes: 3 en Seed, 5 en Flower y 10 en Nadeshiko. Un boost cuenta como cinco votos.",
+      "limits": "Puedes tener 10 pedidos abiertos a la vez (30 si eres mecenas) y enviar hasta 5 al día.",
       "news": "Te avisamos por email cuando empezamos con un título que votaste y cuando se publica. Puedes desactivarlo en tus ajustes."
     },
     "admin": {
@@ -1947,7 +1947,7 @@
     },
     "items": {
       "reportsDesc": "Revisa, filtra y resuelve reportes abiertos en lote.",
-      "requestsDesc": "Gestiona pedidos de contenido, boosts de patrons y avisos de publicación.",
+      "requestsDesc": "Gestiona pedidos de contenido, boosts de mecenas y avisos de publicación.",
       "roadmapDesc": "Crea, ordena y actualiza los ítems del roadmap público.",
       "announcementDesc": "Muestra un banner global informativo, de aviso o mantenimiento.",
       "usersDesc": "Gestiona cuentas, roles, baneos y excepciones de cuota mensual de API.",
@@ -1982,7 +1982,7 @@
     "status": {
       "activePatron": "Activo",
       "declinedPatron": "Pago rechazado",
-      "formerPatron": "Ex-patron",
+      "formerPatron": "Exmecenas",
       "notPatron": "Sin suscripción"
     },
     "badges": {

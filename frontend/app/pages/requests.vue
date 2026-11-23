@@ -601,7 +601,7 @@ function rankOf(index: number): number | null {
 
       <div class="-mb-px mt-5 flex items-center justify-between gap-2">
         <div
-          class="flex min-w-0 items-center gap-1 overflow-x-auto scrollbar-hide"
+          class="flex min-w-0 items-center gap-1 overflow-x-auto pr-6 scrollbar-hide max-sm:[mask-image:linear-gradient(to_right,black_calc(100%-24px),transparent)] sm:pr-0"
           role="tablist"
           :aria-label="t('requests.title')"
         >

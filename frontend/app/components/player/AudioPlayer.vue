@@ -47,6 +47,7 @@ const {
 } = storeToRefs(playerStore);
 
 const { scrollBehavior } = useMotionPreference();
+const { openDropdownId, isTokenTooltipOpen } = useDropdownState();
 
 const progress = ref(0);
 const animationFrameId = ref<number | null>(null);
@@ -107,6 +108,9 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
       playerStore.toggleAutoplay();
       break;
     case 'Escape': {
+      // Yield Escape to an open word card or dropdown (e.g. a word card over Listening mode,
+      // or Listening mode's Practice/display menus) so Esc always dismisses the innermost layer first.
+      if (!rateMenuOpen.value && (openDropdownId.value !== null || isTokenTooltipOpen.value)) return;
       // Before the modal: a player open over Context is a layer on top of
       // the dialog, so the first Escape dismisses it and the next one
       // closes the dialog. Immersive is a layer on the player, and the speed

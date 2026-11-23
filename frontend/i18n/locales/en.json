@@ -1774,7 +1774,7 @@
       "nadeshiko": "Nadeshiko"
     },
     "perks": {
-      "talkToDevs": "Talk directly to the devs",
+      "talkToDevs": "Talk directly to the dev",
       "everythingIn": "Everything in {tier}",
       "apiRequests": "{count} API requests a month",
       "customThemes": "Custom themes",

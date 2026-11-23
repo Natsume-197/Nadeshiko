@@ -82,6 +82,11 @@ vi.stubGlobal('useTranslationVisibility', () => ({
   modeFor: () => 'show',
 }));
 vi.stubGlobal('useTranslationLanguages', () => ({ languages: ref(['EN']) }));
+const dropdownState = {
+  openDropdownId: ref<string | null>(null),
+  isTokenTooltipOpen: ref(false),
+};
+vi.stubGlobal('useDropdownState', () => dropdownState);
 vi.stubGlobal('useLocalePath', () => (p: unknown) => (typeof p === 'string' ? p : JSON.stringify(p)));
 
 import AudioPlayer from './AudioPlayer.vue';
@@ -145,6 +150,8 @@ beforeEach(() => {
   playerStore.showPlayer.value = true;
   playerStore.isImmersive.value = false;
   playerStore.volume.value = 1;
+  dropdownState.openDropdownId.value = null;
+  dropdownState.isTokenTooltipOpen.value = false;
 });
 
 afterEach(() => {
@@ -404,5 +411,26 @@ describe('the bar', () => {
       'player-listening-mode',
       'player-close',
     ]);
+  });
+
+  test('yields Escape to an open word card or dropdown before exiting listening mode', () => {
+    playerStore.isImmersive.value = true;
+    render();
+
+    dropdownState.isTokenTooltipOpen.value = true;
+    const cardEsc = press('Escape');
+    expect(cardEsc.defaultPrevented).toBe(false);
+    expect(playerStore.toggleImmersive).not.toHaveBeenCalled();
+
+    dropdownState.isTokenTooltipOpen.value = false;
+    dropdownState.openDropdownId.value = 'nd-listening-practice';
+    const menuEsc = press('Escape');
+    expect(menuEsc.defaultPrevented).toBe(false);
+    expect(playerStore.toggleImmersive).not.toHaveBeenCalled();
+
+    dropdownState.openDropdownId.value = null;
+    const exitEsc = press('Escape');
+    expect(exitEsc.defaultPrevented).toBe(true);
+    expect(playerStore.toggleImmersive).toHaveBeenCalledTimes(1);
   });
 });

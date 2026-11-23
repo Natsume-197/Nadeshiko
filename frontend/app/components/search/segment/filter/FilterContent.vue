@@ -70,6 +70,9 @@ const CATEGORY_BADGE_KEYS: Partial<Record<string, string>> = {
 const categoryBadgeKey = (category: string | undefined): string | undefined =>
   categorySelected.value === 'all' && category ? CATEGORY_BADGE_KEYS[category] : undefined;
 
+const translateIfPresent = (key: string | undefined, translate: (k: string) => string): string | undefined =>
+  key ? translate(key) : undefined;
+
 // Each keystroke restarts the timer, so the list only re-filters 300ms after
 // the reader stops typing. `useTimeoutFn` cancels it on unmount for us.
 const { start: scheduleFilter } = useTimeoutFn(
@@ -338,7 +341,7 @@ const applyPendingFocus = () => {
                 :key="item.mediaPublicId"
                 :row-id="item.mediaPublicId"
                 :label="item.displayName"
-                :badge="categoryBadgeKey(item.category) ? $t(categoryBadgeKey(item.category)!) : undefined"
+                :badge="translateIfPresent(categoryBadgeKey(item.category), $t)"
                 :count="item.matchCount"
                 :selected="item.mediaPublicId === selectedMediaId"
                 @select="filterAnime(item.mediaPublicId, item.displayName, item.slug)">

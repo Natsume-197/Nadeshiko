@@ -514,10 +514,6 @@ const relatedTitle = (kanji: { reading: string | null; meaning: string | null })
   row-gap: 12px;
 }
 
-.kanji-view--full .kanji-view__examples {
-  font-size: 14px;
-}
-
 /* Furigana that never pushes the kanji apart: the reading sits over its base and may overhang it, instead of
    widening the base to the reading's width (which left gaps like 老 若 男女). */
 .kanji-view__example ruby {
@@ -599,6 +595,10 @@ const relatedTitle = (kanji: { reading: string | null; meaning: string | null })
   min-width: 0;
   font-size: 13px;
   color: var(--ink-muted);
+}
+
+.kanji-view--full .kanji-view__examples {
+  font-size: 14px;
 }
 
 .kanji-view__sep {
