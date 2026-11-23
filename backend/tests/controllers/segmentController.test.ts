@@ -334,7 +334,7 @@ describe('POST /v1/media/:mediaId/episodes/:episodeNumber/segments/batch', () =>
   });
 
   it('queues every ingested line for tokenization', async () => {
-    // The prior bug inserted and indexed uploaded rows without calling Shirabe, leaving sentences without morphology.
+    // The prior bug inserted and indexed uploaded rows without parsing them, leaving sentences without morphology.
     const { media, episode } = await seedIngestTarget();
 
     const res = await request(app)
@@ -470,6 +470,7 @@ describe('PATCH /v1/media/segments/:segmentPublicId', () => {
     const episode = fixtures.episodes.pilot;
     // Offsets refer to the parsed sentence; keeping them after editing a line would place furigana over the wrong
     // kanji.
+    // A row parsed by the previous parser: its stored version must be cleared along with the tokens.
     const segment = await seedSegment(fixtures.media.testShow.id, episode.episodeNumber, {
       contentJa: '走る',
       tokens: [{ s: '走る', d: '走る', r: 'ハシル', b: 0, e: 2, p: '動詞' }],
@@ -499,7 +500,7 @@ describe('PATCH /v1/media/segments/:segmentPublicId', () => {
     });
 
     // Fixing a translation or a timing says nothing about the morphology, and
-    // re-parsing on every edit would spend Shirabe's CPU to arrive back here.
+    // re-parsing on every edit would spend parser CPU to arrive back here.
     const res = await request(app)
       .patch(`/v1/media/segments/${segment.publicId}`)
       .send({ textEn: { content: 'he walks' }, startTimeMs: 5, endTimeMs: 900 });

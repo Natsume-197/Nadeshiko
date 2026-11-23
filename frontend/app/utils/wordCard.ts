@@ -513,8 +513,7 @@ export function dictionaryKey(sense: Pick<CardSense, 'dictionary' | 'dictionaryS
 
 /** ①-⑳ ㉑-㉟ ㊱-㊿ is every circled numeral Unicode has, and ㋐-㋾ every circled
  *  kana. A dictionary that runs past the end of either falls back to plain
- *  digits rather than to a glyph nobody can read as "fifty-one". Mirrors
- *  `SearchHelper::CIRCLED` on the Shirabe side. */
+ *  digits rather than to a glyph nobody can read as "fifty-one". */
 const CIRCLED = [...range(0x2460, 0x2473), ...range(0x3251, 0x325f), ...range(0x32b1, 0x32bf)];
 const CIRCLED_KANA = range(0x32d0, 0x32fe);
 
@@ -524,8 +523,7 @@ function range(from: number, to: number): string[] {
 
 /**
  * Number each dictionary by depth: groups use digits, senses circled numbers, sub-senses circled kana. Reset
- * child counters under a new parent; omit the unused group indentation for flat dictionaries. Mirrors
- * Shirabe's sense numbering.
+ * child counters under a new parent; omit the unused group indentation for flat dictionaries.
  */
 function numberSenses(cards: CardSense[], kept: Array<{ sense: DictionarySense; dictionary: string }>): CardSense[] {
   const tieredDictionaries = new Set(
@@ -625,7 +623,7 @@ const SMALL_KANA = 'ゃゅょャュョぁぃぅぇぉァィゥェォ';
  * The reading split into morae, each marked high or low for one accent pattern.
  * Heiban (downstep 0) rises after the first mora and stays up; atamadaka (1) is
  * high on the first mora only; anything else is high from the second mora to the
- * downstep. Mirrors Shirabe's own pitch diagram.
+ * downstep.
  */
 /**
  * Classify pitch from downstep and mora count; the same downstep can be odaka or nakadaka depending on

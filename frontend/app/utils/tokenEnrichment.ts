@@ -8,7 +8,7 @@ export interface SlimToken {
   e: number;
   p: string;
   /**
-   * Shirabe's short POS tag for `words/identify`. Prefer it over the copied fallback table; older tokens may
+   * The short POS tag (noun, verb, adj…) for `words/identify`. Prefer it over the copied fallback table; older tokens may
    * carry only `p`.
    */
   pt?: string;
@@ -17,7 +17,7 @@ export interface SlimToken {
   /** Ruby, already aligned to this surface. Absent when there is none to show,
    *  which is the ordinary case for an all-kana word. */
   f?: Array<{ t: string; r?: string }>;
-  /** The part of speech in words ("Verb", "Particle", "Expression"). Shirabe
+  /** The part of speech in words ("Verb", "Particle", "Expression"). The parser
    *  resolves it, so there is no UniDic table to keep here and no gap when it
    *  emits a category a hand-written table never had. */
   posLabel?: string;
@@ -37,7 +37,7 @@ export interface SlimToken {
 }
 
 /**
- * Dictionary lookup coordinates assembled once: reading is katakana and POS is Shirabe's short tag, not
+ * Dictionary lookup coordinates assembled once: reading is katakana and POS is the short tag, not
  * either display value. Wrong representations can silently resolve the wrong homograph.
  */
 export interface WordRef {
@@ -48,7 +48,7 @@ export interface WordRef {
   /** Katakana, as the analyzer read THIS surface. Not `readingHiragana`. */
   reading: string;
   /**
-   * Shirabe's short POS tag, never raw UniDic or printable `posLabel`. Unknown tags cannot provide the
+   * The short POS tag, never raw UniDic or printable `posLabel`. Unknown tags cannot provide the
    * ranker's grammatical disambiguation.
    */
   pos: string;
@@ -80,7 +80,7 @@ export interface FuriganaSegment {
 }
 
 /**
- * Use Shirabe-aligned ruby; without `f`, render the surface bare rather than attempting local kana alignment.
+ * Use the token's aligned ruby; without `f`, render the surface bare rather than attempting local kana alignment.
  */
 export function furiganaOf(token: SlimToken): FuriganaSegment[] {
   if (!token.f || token.f.length === 0) return [{ text: token.s, reading: '' }];
@@ -155,11 +155,11 @@ function highlightRanges(highlight: string): Array<{ start: number; end: number 
 }
 
 /**
- * Elasticsearch's analyzer can match inside a Shirabe token. `enrichTokens` exposes partial ranges in
+ * Elasticsearch's analyzer can match inside a grouped token. `enrichTokens` exposes partial ranges in
  * token-local coordinates rather than highlighting the whole word.
  */
 /**
- * Fallback copy of Shirabe's short-POS vocabulary for tokens without `pt`, including old cached responses.
+ * Fallback copy of the short POS tag set for tokens without `pt`, including old cached responses.
  * Remove only when no such token can arrive. `連語` maps to expression; punctuation, symbols and whitespace
  * have no lookup tag.
  */

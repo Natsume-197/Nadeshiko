@@ -30,7 +30,7 @@ export const EXPRESSION_TIER_CAP = rankTier(5000);
 export const MAX_DIFFICULTY = MAX_RANK_TIER * 64 + MAX_RANK_TIER;
 
 const NON_CONTENT_KINDS = new Set(['function', 'symbol']);
-/** Fallback for tokens parsed before Shirabe set `kind`: UniDic POS[0] of particles, auxiliaries and punctuation. */
+/** Fallback for older tokens parsed before `kind` existed: UniDic POS[0] of particles, auxiliaries and punctuation. */
 const NON_CONTENT_POS = new Set(['助詞', '助動詞', '補助記号', '記号', '空白']);
 const INTERJECTION_POS = '感動詞';
 const EXPRESSION_POS = '連語';

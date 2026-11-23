@@ -154,7 +154,7 @@ const WORD: DictionaryWord = {
 };
 
 describe('cardSenses', () => {
-  it('splits the labels Shirabe resolved into parts of speech and misc tags', () => {
+  it('splits the resolved labels into parts of speech and misc tags', () => {
     const [first] = cardSenses(WORD, preference('en'));
 
     // Chips carry the short label keyed off the JMdict code, with JMdict's own
@@ -371,7 +371,7 @@ describe('headwordFurigana', () => {
     expect(headwordFurigana(word)).toEqual([{ text: '手加減', reading: 'てかげん' }]);
   });
 
-  // Shirabe sends the READING here for every candidate of よう, so 良う and 癰
+  // The previous dictionary provider sent the READING here for every candidate of よう, so 良う and 癰
   // both arrive carrying `[{text: 'よう'}]`. Rendered straight, the card titled
   // itself よう however far the reader moved the picker.
   it('drops ruby that spells a different word', () => {
@@ -543,8 +543,8 @@ describe('lookupState', () => {
 });
 
 /**
- * A reader who linked their Shirabe account and put a monolingual dictionary
- * above JMdict. Everything below is about what changes on the card when the
+ * A reader whose dictionary stack puts a monolingual dictionary above
+ * JMdict. Everything below is about what changes on the card when the
  * definitions stop coming from one dictionary in one of two languages.
  */
 const STACKED: DictionaryWord = {
@@ -570,7 +570,7 @@ const STACKED: DictionaryWord = {
 describe('a card built from more than one dictionary', () => {
   // The reason this is not governed by the en/es visibility preference: a
   // monolingual dictionary only reaches this card because the reader put it in
-  // their own Shirabe stack, which says more than any toggle here does. Before
+  // their own dictionary stack, which says more than any toggle here does. Before
   // this, every one of its senses was dropped for having no gloss "the reader
   // can read" and the card silently showed only JMdict.
   it('prints Japanese definitions from a dictionary the reader chose', () => {
@@ -875,7 +875,7 @@ describe('sense numbering', () => {
     ]);
   });
 
-  // An older Shirabe sends no `depth` at all, and a flat list of plain senses is
+  // Older responses carry no `depth` at all, and a flat list of plain senses is
   // what that has always meant.
   it('reads a sense with no depth as an ordinary one', () => {
     const flat = {

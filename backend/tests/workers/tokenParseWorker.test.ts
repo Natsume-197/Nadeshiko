@@ -150,7 +150,7 @@ describe('token parse worker', () => {
 
     expect(enqueued).toContain(untokenized.id);
     expect(enqueued).not.toContain(alreadyParsed.id);
-    // Not served and not indexed, so parsing it spends Shirabe's CPU on text no
+    // Not served and not indexed, so parsing it spends parser CPU on text no
     // reader can reach.
     expect(enqueued).not.toContain(deleted.id);
   });

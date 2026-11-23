@@ -16,7 +16,7 @@ Code: `app/services/search/segmentDocument/difficulty.ts`.
 
 1. **Content words.** Particles, auxiliaries, punctuation, interjections (感動詞), numbers (a leading
    digit, or kanji numerals only: 十 and 百万 are numbers, 十分 and 千葉 are words), Latin-only tokens (OK,
-   LINE) and letterless tokens do not count. Tokens with Shirabe's `kind` use it (`function` and `symbol` are
+   LINE) and letterless tokens do not count. Tokens with a `kind` use it (`function` and `symbol` are
    skipped). Older tokens without a `kind` fall back to the UniDic part of speech.
 2. **Rank.** Each content word is looked up in `WordFrequency` (an anime word-frequency list),
    keeping the lowest rank per key. The rank is the best of:
@@ -46,7 +46,7 @@ Code: `app/services/search/segmentDocument/difficulty.ts`.
    therefore orders sentences within the group their hardest word sets and never moves one into a harder
    group.
 
-   A first version graded Shirabe's inflection labels (〜たら, causative, 〜ていただく…) and let them compete
+   A first version graded the parser's inflection labels (〜たら, causative, 〜ていただく…) and let them compete
    with words for the hardest place. In a blind test of 40 pairs it agreed with the reader less often than
    vocabulary alone (3 of 8 decided pairs) because it overweighted causatives and set phrases (行かせない,
    待たせてもらいました, 行ってくる), so it was replaced by this term.

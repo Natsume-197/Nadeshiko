@@ -6,8 +6,9 @@ import { ctx } from './testLexicon';
 const surfaces = (groups: Group[]) => groups.map((group) => group.s);
 const run = (text: string) => combine(morphemes(text), ctx);
 
-describe('combine: the Sudachi-vs-Shirabe examples', () => {
-  // Shirabe's grouping first, then ours. Where we differ, the upstream combine stages group the same way we do.
+describe('combine: grouping examples', () => {
+  // Each sentence with the grouping we expect. Where we differ from the previous parser, the upstream combine stages
+  // group the same way we do.
   it.each([
     ['やります', ['やります']],
     ['なかったです', ['なかった', 'です']],
@@ -29,7 +30,7 @@ describe('combine: the Sudachi-vs-Shirabe examples', () => {
     expect(surfaces(run(text))).toEqual(expected);
   });
 
-  it('groups 言わ|れる and お|方, but keeps さすが|は apart (Shirabe: さすがは)', () => {
+  it('groups 言わ|れる and お|方, but keeps さすが|は apart (previous parser: さすがは)', () => {
     expect(surfaces(run('さすがは内家拳の達人と言われるお方'))).toEqual([
       'さすが',
       'は',

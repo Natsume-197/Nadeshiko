@@ -1,17 +1,11 @@
 /**
- * Chip labels for the tags Shirabe hangs on a sense, in the reader's language.
+ * Chip labels for the tags on a dictionary sense, in the reader's language.
  *
- * Shirabe resolves `?locale=` into ONE language for the labels it returns, but
- * it only ships a UI in English and Spanish, and JMdict's own tag labels are
- * English whatever you ask for -- so the label riding on the response was
- * English on every card, and a reader on the Spanish or Japanese interface met
- * "Ichidan verb" among their own prose.
- *
- * The wording is Shirabe's Legend (`app/models/legend.rb` plus
- * `legend.terms.<slug>.label` / `.jp` in its `config/locales/*.yml`), so a word
- * reads the same in both products and a chip here means exactly what the panel
- * over there explains. The code → slug mapping is its `legend_slug` and
- * `USAGE_LEGEND_SLUGS` from `search_helper.rb`.
+ * JMdict's own tag labels are English whatever you ask for, so a label taken
+ * straight from the response would be English on every card, and a reader on
+ * the Spanish or Japanese interface would meet "Ichidan verb" among their own
+ * prose. Instead each tag code maps to a Legend slug, and each slug carries its
+ * label in every interface language.
  *
  * Two deliberate departures from the Legend, both about chip granularity:
  *
@@ -25,8 +19,7 @@
  *
  * A handful of Legend entries have no Japanese term (`jp` is blank upstream:
  * vulgar, derogatory, familiar, archaic, obsolete, rare, jocular). Those fall
- * back to English rather than being invented here; fill them in when Shirabe
- * does.
+ * back to English rather than being invented here.
  */
 
 import indonesianLabels from '../../i18n/word-tags/id.json';
@@ -49,7 +42,7 @@ export function tagLanguage(uiLocale: string): TagLanguage {
   return 'en';
 }
 
-/** en / es / ja for one Legend slug. `ja` omitted where Shirabe has no term. */
+/** en / es / ja for one Legend slug. `ja` omitted where the Legend has no Japanese term. */
 type LegendLabel = {
   en: string;
   es: string;
@@ -272,9 +265,9 @@ function shortened(code: string, full: string): string {
   return stripped.charAt(0).toUpperCase() + stripped.slice(1);
 }
 
-/** The Legend entry a tag belongs to, by Shirabe's category. Field and dialect
+/** The Legend entry a tag belongs to, by the tag's category. Field and dialect
  *  are absent on purpose: the Legend has no entry for either, and they render as
- *  plain chips there too. */
+ *  plain chips. */
 function legendSlug(category: string, code: string): string | undefined {
   switch (category) {
     case 'partOfSpeech':
@@ -291,7 +284,7 @@ function legendSlug(category: string, code: string): string | undefined {
 /**
  * The chip label for one tag, in the reader's interface language.
  *
- * `category` is Shirabe's: 'partOfSpeech' and 'nameType' name what a word IS,
+ * `category` is the tag's category: 'partOfSpeech' and 'nameType' name what a word IS,
  * 'misc' the register it is used in. Field and dialect carry no Legend entry
  * and print JMdict's own wording.
  */

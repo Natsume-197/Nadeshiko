@@ -112,7 +112,7 @@ async function run({ media, all }: Options): Promise<void> {
   console.error(`\nscanned ${scanned} segments across ${assessed.length} media`);
   if (flagged.length > 0) {
     console.error(
-      'repair with: strip-wakati-spaces.ts --media <publicId>, then parse-corpus-with-shirabe.ts, then reindex-media.ts',
+      'repair with: strip-wakati-spaces.ts --media <publicId>, then npm run tokens:reparse -- --stale, then reindex-media.ts',
     );
   }
 }

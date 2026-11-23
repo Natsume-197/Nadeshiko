@@ -1,6 +1,6 @@
-/** Repair one media's U+0020 spaces, preserving U+3000; clear tokens atomically because offsets become invalid.
- * Require `--media` and preview with `--dry-run`: edits have no revision history. Then run
- * `parse-corpus-with-shirabe.ts --media <id>` and `reindex-media.ts --media <id>`, in that order. */
+/** Repair one media's U+0020 spaces, preserving U+3000; clear tokens and their parser version atomically because
+ * offsets become invalid. Require `--media` and preview with `--dry-run`: edits have no revision history. Then run
+ * `npm run tokens:reparse -- --stale` and `reindex-media.ts --media <id>`, in that order. */
 
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -68,7 +68,8 @@ async function run({ mediaPublicId, dryRun }: Options): Promise<void> {
       await repository.query(
         `UPDATE "Segment" AS s
             SET content = incoming.content,
-                tokens = NULL
+                tokens = NULL,
+                parser_version = NULL
            FROM (SELECT unnest($1::text[]) AS uuid, unnest($2::text[]) AS content) AS incoming
           WHERE s.uuid = incoming.uuid`,
         [edits.map((edit) => edit.uuid), edits.map((edit) => edit.after)],
@@ -86,7 +87,9 @@ async function run({ mediaPublicId, dryRun }: Options): Promise<void> {
   console.error(`scanned ${scanned} segments, ${dryRun ? 'would rewrite' : 'rewrote'} ${changed}`);
   if (dryRun) console.error('dry run: nothing was written');
   else
-    console.error(`now: parse-corpus-with-shirabe.ts --media ${mediaPublicId}, then reindex-media.ts, in that order`);
+    console.error(
+      `now: npm run tokens:reparse -- --stale, then reindex-media.ts --media ${mediaPublicId}, in that order`,
+    );
 }
 
 async function main(): Promise<void> {

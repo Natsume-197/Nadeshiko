@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { enrichTokens, furiganaOf, shortPos, tokensToAnkiFurigana, type SlimToken } from './tokenEnrichment';
 
-// Shirabe owns token grouping; these tests cover frontend labels, ruby and highlighting.
+// The backend parser owns token grouping; these tests cover frontend labels, ruby and highlighting.
 
-// Already-grouped Shirabe tokens use katakana readings, aligned ruby and UTF-16 offsets matching JavaScript
+// Already-grouped tokens use katakana readings, aligned ruby and UTF-16 offsets matching JavaScript
 // string indices.
 const INFLECTED: SlimToken = {
   s: '焼けた',
@@ -55,7 +55,7 @@ describe('enrichTokens', () => {
     expect(yaketa?.lookupRef.reading).toBe('ヤケタ');
   });
 
-  // Lookup POS uses Shirabe's short vocabulary, not raw UniDic or the printable label.
+  // Lookup POS uses the short tag set, not raw UniDic or the printable label.
   it('assembles everything the dictionary lookup asks by', () => {
     const [yaketa] = enrichTokens(YAKETA);
 
@@ -140,7 +140,7 @@ describe('highlight matching', () => {
     expect(enriched[1]?.matchType).toBe('none');
   });
 
-  // Elasticsearch can match inside a Shirabe token; expose only the matched token-local range.
+  // Elasticsearch can match inside a grouped token; expose only the matched token-local range.
   it('reports a match that lands inside a token, with the part that matched', () => {
     const enriched = enrichTokens(YAKETA, '<em>焼け</em>たフライパンに');
 
@@ -157,7 +157,7 @@ describe('shortPos', () => {
   const token = (p: string, pt?: string): SlimToken =>
     ({ s: 'x', d: 'x', r: 'x', b: 0, e: 1, p, ...(pt ? { pt } : {}) }) as SlimToken;
 
-  it('maps the UniDic categories onto Shirabe short tags', () => {
+  it('maps the UniDic categories onto the short POS tags', () => {
     expect(shortPos(token('動詞'))).toBe('verb');
     expect(shortPos(token('名詞'))).toBe('noun');
     expect(shortPos(token('助詞'))).toBe('prt');

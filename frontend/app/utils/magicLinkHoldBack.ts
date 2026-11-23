@@ -1,7 +1,6 @@
 /**
  * Increase resend waits to conserve the five-per-hour sign-in budget while allowing delayed delivery. Cap at
- * two minutes to avoid excessive waits after a mistyped address; later sends repeat the final delay. Mirrors
- * Shirabe's hold-backs.
+ * two minutes to avoid excessive waits after a mistyped address; later sends repeat the final delay.
  */
 export const MAGIC_LINK_HOLD_BACKS = [30, 60, 120] as const;
 

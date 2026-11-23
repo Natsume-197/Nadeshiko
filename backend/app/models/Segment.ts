@@ -3,8 +3,7 @@ import { BaseEntity } from './base.entity';
 import { Episode } from './Episode';
 import { nanoid } from 'nanoid';
 
-/** Keep compact token keys stable across OpenAPI, SDKs, and Anki; grouped Shirabe tokens use `parts` for finer
- * pieces. */
+/** Keep compact token keys stable across OpenAPI, SDKs, and Anki; grouped tokens use `parts` for finer pieces. */
 export interface SlimToken {
   s: string;
   d: string;
@@ -18,7 +17,7 @@ export interface SlimToken {
   /** The part of speech as a reader would say it ("Verb", "Noun"), where `p` carries the
    *  raw UniDic tag. Absent when the parser offers no label. */
   posLabel?: string;
-  /** Store Shirabe’s short POS vocabulary for word-identification ranking; older rows fall back from `p` until
+  /** Store the short POS tag (noun, verb, adj…) for word-identification ranking; older rows fall back from `p` until
    * reparsed. */
   pt?: string;
   /** Store inner morpheme offsets so Elasticsearch matches inside grouped tokens can render partial highlights. */
@@ -123,7 +122,7 @@ export class Segment extends BaseEntity {
   @Column({ name: 'rating_analysis', type: 'jsonb' })
   ratingAnalysis!: RatingAnalysisData;
 
-  // Store Shirabe’s published token shape; null means not yet reparsed and renders as plain highlight HTML.
+  // Store the published token shape; null means not yet reparsed and renders as plain highlight HTML.
   @Column({ name: 'tokens', type: 'jsonb', nullable: true })
   tokens!: SlimToken[] | null;
 

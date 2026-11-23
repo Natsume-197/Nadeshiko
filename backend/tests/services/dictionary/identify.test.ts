@@ -307,7 +307,7 @@ describe('identifyWord', () => {
     expect(best).toMatchObject({ headword: 'こと', reading: 'コト', furigana: [{ text: 'こと' }] });
   });
 
-  it('shows a word usually written in kana in kana even when met in kanji, as Shirabe does', async () => {
+  it('shows a word usually written in kana in kana even when met in kanji', async () => {
     const [best] = await identifyWord(TestDataSource, { lemma: '事', surface: '事', reading: 'コト', locale: 'en' });
 
     expect(best).toMatchObject({ headword: 'こと', reading: 'コト' });

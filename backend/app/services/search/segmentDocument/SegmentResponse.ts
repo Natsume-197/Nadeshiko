@@ -395,7 +395,7 @@ export class SegmentResponse {
       case 'expression':
       case 'symbol':
         return value;
-      // Shirabe may name a kind we do not publish yet. Leaving the field off says we have
+      // A stored token may name a kind we do not publish yet. Leaving the field off says we have
       // nothing to tell; picking one of ours would be inventing a grammatical category.
       default:
         return undefined;

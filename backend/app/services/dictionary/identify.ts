@@ -9,9 +9,9 @@ import { hasKanji, lookupKeys, toHiragana, toKatakana } from './import/entries';
 
 /**
  * Nadeshiko's own answer to "which word is this token?" (task 40): ranked candidates from `dict.*`, in the same
- * shape Shirabe's `words/identify` gives the word card, so the card renders either provider the same way.
+ * shape the word card renders.
  *
- * Ranking uses what a stored token carries: lemma, surface, the surface's reading, and Shirabe's short POS tag
+ * Ranking uses what a stored token carries: lemma, surface, the surface's reading, and the short POS tag
  * (`SlimToken.pt`). It follows the usual form preference (search-only and rare spellings rank down, common words
  * up) plus two checks of our own: the reading of the kanji stem, which is what separates 開く read ひらく from
  * 開く read あく, and the part of speech.
@@ -22,7 +22,7 @@ export interface IdentifyQuery {
   surface?: string;
   /** Reading of the SURFACE (タベマシタ for 食べました), as tokens store it. */
   reading?: string;
-  /** Shirabe's short POS tag: noun, verb, adj, adv, prt, aux, pron, det, conj, intj, pref, suf, exp. */
+  /** The short POS tag: noun, verb, adj, adv, prt, aux, pron, det, conj, intj, pref, suf, exp. */
   pos?: string;
   locale: 'en' | 'es';
 }
@@ -242,8 +242,7 @@ export function scoreWord(word: StoredWord, query: IdentifyQuery): number {
 function headwordOf(word: StoredWord, query: IdentifyQuery): StoredForm | undefined {
   const kanji = word.forms.filter((form) => !form.kana);
   const kana = word.forms.filter((form) => form.kana);
-  // A word usually written in kana is shown in kana, however the reader met it: する, not 為る, and わかる for 分かった,
-  // as Shirabe's card does.
+  // A word usually written in kana is shown in kana, however the reader met it: する, not 為る, and わかる for 分かった.
   if (usuallyKana(word)) {
     const met = kana.find((form) => usable(form) && form.text === toHiragana(query.lemma));
     return met ?? kana.find(usable) ?? kana[0];
@@ -261,8 +260,8 @@ function headwordOf(word: StoredWord, query: IdentifyQuery): StoredForm | undefi
 }
 
 function readingOf(word: StoredWord, headword: StoredForm, query: IdentifyQuery): StoredForm | undefined {
-  // A kana headword reads as the kana form the reader met when the word has one (のだ met as んだ reads ンダ, as
-  // Shirabe gives it), else as itself.
+  // A kana headword reads as the kana form the reader met when the word has one (のだ met as んだ reads ンダ), else as
+  // itself.
   if (headword.kana) {
     return word.forms.find((form) => form.kana && form.active && form.text === toHiragana(query.lemma)) ?? headword;
   }
@@ -313,7 +312,7 @@ function pitchKeys(word: StoredWord, headword: StoredForm | undefined, reading: 
   return keys;
 }
 
-/** One ruby per run of kanji, as Shirabe aligns it: 自分 over じぶん rather than 自 じ + 分 ぶん. Kana between kanji
+/** One ruby per run of kanji: 自分 over じぶん rather than 自 じ + 分 ぶん. Kana between kanji
  * keeps its own segment (お + 前 まえ). */
 export function groupKanjiRuns(
   segments: Array<{ text: string; ruby?: string }>,
@@ -328,8 +327,8 @@ export function groupKanjiRuns(
   return out;
 }
 
-/** Every spelling, kana and kanji taken in turn (きょう, 今日, こんにち, こんち…), the order Shirabe's card lists them in.
- * Search-only spellings included, as there. */
+/** Every spelling, kana and kanji taken in turn (きょう, 今日, こんにち, こんち…), the order the card lists them in.
+ * Search-only spellings included. */
 function interleaved(forms: StoredForm[]): StoredForm[] {
   const kana = forms.filter((form) => form.kana);
   const kanji = forms.filter((form) => !form.kana);
@@ -352,7 +351,7 @@ function toCandidate(
 ): DictionaryCandidate {
   const headword = headwordOf(word, query);
   const reading = headword ? readingOf(word, headword, query) : undefined;
-  // A kana headword gets one ruby-less segment, as Shirabe sends it: the card then prints the word alone instead of
+  // A kana headword gets one ruby-less segment: the card then prints the word alone instead of
   // repeating it in katakana beside itself.
   const ruby =
     headword && reading && !headword.kana
@@ -368,7 +367,7 @@ function toCandidate(
   return {
     id: `${word.source}:${word.id}`,
     headword: headword?.text ?? '',
-    // Katakana, as Shirabe gives it: the card shows it beside a kana headword in the picker and keeps the hiragana
+    // Katakana: the card shows it beside a kana headword in the picker and keeps the hiragana
     // spelling among the forms, so the case is visible.
     reading: reading ? toKatakana(reading.text) : null,
     common: word.common,
@@ -376,7 +375,7 @@ function toCandidate(
     sourceId: String(word.id),
     dictionary: word.source,
     jlpt: word.jlpt === null ? null : `N${word.jlpt}`,
-    // Rank in our corpus, shown on the card as "#N" like Shirabe's (which ranks spellings; ours ranks words).
+    // Rank in our corpus, shown on the card as "#N" (it ranks words, not spellings).
     frequency: word.frequency?.rank ?? null,
     ...(ruby ? { furigana: groupKanjiRuns(ruby) } : {}),
     // The card draws at most two patterns, so a word with more keeps UniDic's first two.
@@ -473,7 +472,7 @@ const SURFACE_POS_OTHERWISE = (code: string) =>
   code === 'exp' || /^adv/.test(code) || code === 'conj' || code === 'prt' || /^aux/.test(code) || code === 'int';
 
 /**
- * A JMdict word spelled exactly like the token's surface, which Shirabe's card shows before the lemma's: だった
+ * A JMdict word spelled exactly like the token's surface, which the card shows before the lemma's: だった
  * rather than だ, 確かに rather than 確か, される rather than する. Guarded so a homograph cannot slip in that way:
  * a kana surface only matches a kanji word usually written in kana (しよう is not 使用), the reading must be the
  * token's, and the part of speech must be the token's or a function word's, and the word common (だし is not 出汁; して stays する).
@@ -687,9 +686,8 @@ function baseFormLabels(surface: string, word: StoredWord): string[] {
 const STEM_STEPS = new Set(['(infinitive)', '(te form)', '(unstressed infinitive)']);
 
 /**
- * The candidate row offers no names under a word that is not one (のか: not the name 温夏; という: not 伊藤), as
- * Shirabe's card, which asks JMdict only. Homographs of any part of speech stay: Shirabe offers them too (もう: 盲,
- * 網, 猛). The first candidate is never dropped. Exported for tests.
+ * The candidate row offers no names under a word that is not one (のか: not the name 温夏; という: not 伊藤).
+ * Homographs of any part of speech stay (もう: 盲, 網, 猛). The first candidate is never dropped. Exported for tests.
  */
 export function rowFilter(ranked: StoredWord[]): StoredWord[] {
   const [first, ...rest] = ranked;
@@ -700,7 +698,7 @@ export function rowFilter(ranked: StoredWord[]): StoredWord[] {
 /**
  * JMdict words the token's surface is an inflection of, other than the ones already ranked: every base form the
  * deconjugator reaches whose grammatical tag one of the word's senses carries (分かった: 分かつ v5t; 食べられない:
- * 食べられる v1; 初めて: 初める), the way Shirabe's candidate row offers them. Stems and made-up forms (分かう) find nothing.
+ * 食べられる v1; 初めて: 初める), offered in the candidate row. Stems and made-up forms (分かう) find nothing.
  */
 async function baseFormWords(dataSource: DataSource, query: IdentifyQuery, ranked: Set<number>): Promise<StoredWord[]> {
   // The surface as met, or the lemma when the token is already a dictionary form: 初めて can still be 初める's
@@ -735,7 +733,7 @@ async function baseFormWords(dataSource: DataSource, query: IdentifyQuery, ranke
 }
 
 /** Content words, the only pieces a part is made of: grammar is not split out (お母さん, 私たち, だった and
- * お願いします have no parts; 捜査本部, そういう and あの子 do), as on Shirabe's card. A verb counts unless it is a
+ * お願いします have no parts; 捜査本部, そういう and あの子 do). A verb counts unless it is a
  * support verb (する, ある, いる, ござる: 非自立可能); an adjective counts even then (わけではない: わけ, ない). */
 function isContent(m: Morpheme): boolean {
   const [pos1, pos2] = m.pos;
@@ -744,7 +742,7 @@ function isContent(m: Morpheme): boolean {
 }
 
 /**
- * The words each headword is made of, as Shirabe's card shows them: the headword cut into Sudachi's shortest units
+ * The words each headword is made of, as the card shows them: the headword cut into Sudachi's shortest units
  * (split mode A), grammar left out, each piece given to the JMdict word our ranking picks for it. Null for a
  * headword that does not split into at least two such words. One sidecar call for all of them; without the sidecar
  * (SUDACHI_URL unset, or down) the card goes without parts rather than failing. Exported for tests.

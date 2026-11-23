@@ -5,9 +5,9 @@ import { inTransaction, recordSource } from './db';
 /** JLPT levels from stephenmk/yomitan-jlpt-vocab's `original_data/n1.csv`..`n5.csv` (columns
  * `jmdict_seq,kana,kanji,waller_definition`). The level belongs to the word its JMdict id names.
  *
- * One widening, measured against Shirabe's cards (2026-11-10): a row Waller wrote in kana only also gives its level to
+ * One widening (2026-11-10): a row Waller wrote in kana only also gives its level to
  * the words usually written in that kana. stephenmk ties Waller's N5 それ to a rare entry (2216210) and leaves the
- * それ readers meet (1006970, 其れ, usually kana) at N1; Shirabe, matching Waller by text, says N5. Each word keeps
+ * それ readers meet (1006970, 其れ, usually kana) at N1; matching Waller by text says N5. Each word keeps
  * the easiest level it gets either way. */
 
 export interface JlptReport {

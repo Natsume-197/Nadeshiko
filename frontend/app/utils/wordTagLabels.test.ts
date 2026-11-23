@@ -58,7 +58,7 @@ describe('tagLabel', () => {
   });
 
   it('gives Japanese English where the legend has no Japanese term', () => {
-    // Shirabe leaves `jp` blank for a handful of register flags; borrowing the
+    // The legend has no Japanese term for a handful of register flags; borrowing the
     // Spanish would be worse than borrowing the language the rest of a Japanese
     // reader card is already in.
     expect(tagLabel('misc', 'vulg', 'vulgar expression or word', 'ja')).toBe('Vulgar');

@@ -1156,7 +1156,7 @@ function reportDictionaryClick(dictionary: DictionaryId, surface: DictionaryLink
             <ol v-else-if="senses.length > 0" class="token-tooltip__senses">
               <template v-for="(sense, si) in senses" :key="si">
                 <!-- The dictionary named ONCE above the senses it wrote, on a row
-                     of its own, the way Shirabe's own word page does it. Inline
+                     of its own. Inline
                      on the first sense it read as something that sense was
                      saying, and it pushed that sense's number out of line with
                      the rest of the run.
@@ -2121,7 +2121,7 @@ a.token-tooltip__word:hover {
 }
 
 /* One mora per cell, an overline over the high ones and a fall after the
-   downstep: the same reading as Shirabe's own pitch diagram. */
+   downstep. */
 .token-tooltip__pitch {
   display: flex;
   flex-wrap: wrap;
@@ -2168,7 +2168,7 @@ a.token-tooltip__word:hover {
   list-style: none;
 }
 
-/* Number and body, the same two-column row Shirabe's word page uses. Baseline
+/* Number and body in a two-column row. Baseline
    rather than top: a definition carrying furigana opens a taller line box, and a
    number aligned to its top floats level with the ruby instead of with the word
    it numbers. */
@@ -2298,8 +2298,7 @@ a.token-tooltip__word:hover {
 /* Chips rather than a run-on line of prose. JMdict's own labels repeat
    themselves ("noun (common) (futsuumeishi)"), so the chip prints the short form
    keyed off the tag code and keeps the full wording in its `title`. Coloured by
-   category so a usage qualifier never reads as a part of speech -- the same
-   split Shirabe makes between its POS and qualifier chips. */
+   category so a usage qualifier never reads as a part of speech. */
 .token-tooltip__chips {
   display: flex;
   flex-wrap: wrap;

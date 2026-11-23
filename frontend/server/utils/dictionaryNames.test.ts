@@ -36,7 +36,7 @@ describe('withoutNameEntries', () => {
   });
 });
 
-// The flag Shirabe publishes, which is the only reliable test: JMdict carries
+// The published `name` flag, which is the only reliable test: JMdict carries
 // ~7,300 JMnedict rows under its own slug, so `dictionary` alone keeps every one
 // of them and never says so.
 describe('withoutNameEntries with the published flag', () => {
@@ -49,8 +49,8 @@ describe('withoutNameEntries with the published flag', () => {
     expect(kept.map((candidate) => candidate.id)).toEqual(['時']);
   });
 
-  // A word whose entry happens to sit in jmnedict is still a word if Shirabe
-  // says so; the flag wins in both directions.
+  // A word whose entry happens to sit in jmnedict is still a word if the flag
+  // says so; it wins in both directions.
   it('keeps a non-name even when the slug says jmnedict', () => {
     expect(withoutNameEntries([{ id: 'x', dictionary: 'jmnedict', name: false }])).toHaveLength(1);
   });

@@ -102,7 +102,7 @@ function token(surface: string, over: Record<string, unknown> = {}) {
 }
 
 /**
- * A Shirabe candidate. Senses hang off `entries`, one per dictionary -- which is
+ * A dictionary candidate. Senses hang off `entries`, one per dictionary -- which is
  * where `cardSenses` reads them from, and what carries the part of speech the
  * chips disambiguate by.
  */
@@ -261,7 +261,7 @@ describe('telling two candidates apart', () => {
   // NOT covered here: the part-of-speech INITIAL that separates two chips
   // printed the same. It comes from `candidatePartOfSpeech`, which reads sense
   // tags through the reader's gloss-language preference -- so exercising it
-  // needs a fixture that reproduces Shirabe's tag shape faithfully enough to be
+  // needs a fixture that reproduces the stored tag shape faithfully enough to be
   // testing the fixture rather than the card. That decision is unit tested in
   // `wordCard.test.ts`, on the real shape; what is pinned here is the wiring
   // around it -- that duplicates get chips, and that picking one switches the
