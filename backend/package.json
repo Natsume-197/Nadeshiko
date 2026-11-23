@@ -91,7 +91,7 @@
     "pg-boss": "^12.38.1",
     "pino": "^10.4.0",
     "pino-http": "^11.0.0",
-    "posthog-node": "^5.63.1",
+    "posthog-node": "^6.0.5",
     "tsx": "^4.23.15",
     "typeorm": "^1.1.2",
     "uuid": "^14.0.3",
