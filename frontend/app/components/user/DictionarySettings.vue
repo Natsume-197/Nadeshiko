@@ -6,6 +6,7 @@ import {
   mdiCloudUploadOutline,
   mdiDeleteOutline,
   mdiDragVertical,
+  mdiHelpCircleOutline,
   mdiLoading,
   mdiPlus,
 } from '@mdi/js';
@@ -39,6 +40,7 @@ const loading = ref(true);
 const saving = ref(false);
 const deletingId = ref<number | null>(null);
 const confirmDeleteId = ref<number | null>(null);
+const showFormatHelp = ref(false);
 
 const draggingFile = ref(false);
 const draggedRowIndex = ref<number | null>(null);
@@ -415,7 +417,34 @@ onBeforeUnmount(stopPolling);
   <section class="nd-settings-section" data-testid="dictionary-settings">
     <div class="mb-2.5 flex flex-wrap items-end justify-between gap-3 px-1">
       <div class="min-w-0">
-        <h2 class="nd-settings-section-label !mb-0 !px-0">{{ t('accountSettings.dictionaries.title') }}</h2>
+        <div class="flex items-center gap-1.5">
+          <h2 class="nd-settings-section-label !mb-0 !px-0">{{ t('accountSettings.dictionaries.title') }}</h2>
+          <div class="group/help relative inline-flex items-center">
+            <button
+              type="button"
+              class="inline-flex size-5 items-center justify-center rounded-full text-ink-faint transition-colors hover:bg-lift hover:text-ink"
+              :aria-label="t('accountSettings.dictionaries.supportedFormats')"
+              :aria-expanded="showFormatHelp"
+              data-testid="dictionary-format-help"
+              @click="showFormatHelp = !showFormatHelp"
+              @blur="showFormatHelp = false"
+            >
+              <UiBaseIcon :path="mdiHelpCircleOutline" size="15" />
+            </button>
+            <div
+              role="tooltip"
+              class="nd-menu pointer-events-none absolute left-0 top-full z-20 mt-1.5 w-72 !p-3 text-xs leading-relaxed text-ink-muted transition-opacity"
+              :class="
+                showFormatHelp
+                  ? 'opacity-100'
+                  : 'opacity-0 group-hover/help:opacity-100 group-focus-within/help:opacity-100'
+              "
+            >
+              <p class="font-medium text-ink">{{ t('accountSettings.dictionaries.description') }}</p>
+              <p class="mt-1">{{ t('accountSettings.dictionaries.supportedFormats') }}</p>
+            </div>
+          </div>
+        </div>
         <p class="mt-0.5 text-xs text-ink-muted">{{ t('accountSettings.dictionaries.stackHint') }}</p>
       </div>
 
@@ -726,14 +755,11 @@ onBeforeUnmount(stopPolling);
       {{ uploadError }}
     </p>
 
-    <div class="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-1 text-xs text-ink-faint">
-      <p>{{ t('accountSettings.dictionaries.supportedFormats') }}</p>
-      <p v-if="data && !data.quota.isPatron" class="text-ink-muted">
-        {{ t('accountSettings.dictionaries.patronUpsell') }}
-        <NuxtLink :to="`${localePath('/supporters')}#support`" class="text-brand hover:underline">
-          {{ t('accountSettings.account.customTheme.seeSupport') }}
-        </NuxtLink>
-      </p>
-    </div>
+    <p v-if="data && !data.quota.isPatron" class="mt-2 px-1 text-xs text-ink-muted">
+      {{ t('accountSettings.dictionaries.patronUpsell') }}
+      <NuxtLink :to="`${localePath('/supporters')}#support`" class="text-brand hover:underline">
+        {{ t('accountSettings.account.customTheme.seeSupport') }}
+      </NuxtLink>
+    </p>
   </section>
 </template>
