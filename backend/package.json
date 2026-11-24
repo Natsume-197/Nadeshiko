@@ -46,6 +46,7 @@
     "create:service-key": "node --env-file-if-exists=.env --import tsx bin/createServiceKey.ts",
     "email:backfill-feedback": "node --env-file-if-exists=.env --import tsx bin/backfillFeedbackAsk.ts",
     "email:test": "node --env-file-if-exists=.env --import tsx scripts/test-email.ts",
+    "dictionary:setup": "node --env-file-if-exists=.env --import tsx bin/setupDictionary.ts",
     "dictionary:frequency": "node --max-old-space-size=700 --env-file-if-exists=.env --import tsx bin/computeFrequency.ts",
     "dictionary:pitch-audio": "node --env-file-if-exists=.env --import tsx bin/generatePitchAudio.ts",
     "tokens:reparse": "node --env-file-if-exists=.env --import tsx bin/reparseTokens.ts",

@@ -27,6 +27,7 @@ The setup script will:
 2. Start PostgreSQL and Elasticsearch containers via Docker Compose.
 3. Bootstrap the database, run migrations, and seed initial data.
 4. Optionally download a seed database with sample content (requires a token from a project admin).
+5. Optionally download and import all open-source dictionary and kanji sources (~70 MB, no token required) so word cards and `/kanji` pages work locally. You can also run this step on its own later with `npm run dictionary:setup --workspace backend`.
 
 > Important: If you want to debug or develop any feature related to actual content, ask the Nadeshiko admins in the discord server for a token that can be used to download a backup of the dev table. This has to be provided during the setup script above. Otherwise, the database will be completely empty after setup.
 
