@@ -466,6 +466,24 @@ async function handleSeedDownload(adminUser: string, appDatabase: string): Promi
   }
 }
 
+async function handleDictionaryDownload(): Promise<void> {
+  printSection('Dictionary & kanji sources');
+  printInfo('Word cards, /kanji pages, pitch accents, and JLPT/Kanken badges read from the local');
+  printInfo('dict.* tables (JMdict, JMnedict, furigana, KANJIDIC2, KRADFILE, KanjiVG, JLPT,');
+  printInfo('Kanjium, radicals, Kanken, and collocations — ~70 MB download, a few minutes to import).');
+  console.log('');
+
+  const answer = await prompt('Download and import dictionary & kanji sources? (y/N) ');
+  if (answer.toLowerCase() !== 'y') {
+    printInfo('Skipping dictionary sources. Word cards and /kanji will show "No entry" until imported.');
+    printInfo('Run `npm run dictionary:setup --workspace backend` later to import them.');
+    return;
+  }
+
+  runNpmScript('dictionary:setup');
+  printSuccess('Dictionary & kanji sources imported');
+}
+
 async function main() {
   try {
     printHeader();
@@ -483,6 +501,7 @@ async function main() {
     runDbSetup();
     setupElasticsearchTestUser();
     await handleSeedDownload(adminUser, appDatabase);
+    await handleDictionaryDownload();
 
     console.log('');
     console.log('====================================');
