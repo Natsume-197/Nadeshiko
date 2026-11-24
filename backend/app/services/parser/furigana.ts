@@ -8,6 +8,8 @@
  * GuessRubyText as a last resort (the original runs GuessRubyText over dictionary forms when it imports them instead).
  */
 
+import { toHiragana } from './combine/kana';
+
 /** One piece of dictionary ruby as stored in `dict.furigana.segments`: 食べる is [{text:'食', ruby:'た'}, {text:'べる'}]. */
 export interface RubySegment {
   text: string;
@@ -316,12 +318,6 @@ function containsKanji(surface: string): boolean {
 
 function toHiraganaChar(c: string): string {
   return c >= 'ァ' && c <= 'ヶ' ? String.fromCharCode(c.charCodeAt(0) - 0x60) : c;
-}
-
-function toHiragana(text: string): string {
-  let out = '';
-  for (let k = 0; k < text.length; k++) out += toHiraganaChar(text.charAt(k));
-  return out;
 }
 
 /** SentenceFurigana.KanaEqual. */

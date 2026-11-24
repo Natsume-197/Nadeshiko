@@ -1,6 +1,6 @@
-import { SPECIAL_CASES_2, SPECIAL_CASES_3 } from '../data/ruleData';
+import { SPECIAL_2, SPECIAL_3 } from '../data/ruleData';
 import { append, isNominaliserBeforeCopula, span } from '../group';
-import type { CombineContext, Group, WordClass } from '../types';
+import type { CombineContext, Group } from '../types';
 
 const startsWithShire = (text: string) => ['しれ', 'しんな', 'しんね'].some((head) => text.startsWith(head));
 
@@ -103,19 +103,6 @@ export function combineQuotativeToIu(groups: Group[], _ctx: CombineContext): Gro
     out.push(word);
   }
   return changed ? out : groups;
-}
-
-const SPECIAL_2 = new Map<string, Array<{ second: string; cls: WordClass }>>();
-for (const [first, second, cls] of SPECIAL_CASES_2) {
-  const list = SPECIAL_2.get(first) ?? [];
-  list.push({ second, cls });
-  SPECIAL_2.set(first, list);
-}
-const SPECIAL_3 = new Map<string, Array<{ second: string; third: string; cls: WordClass }>>();
-for (const [first, second, third, cls] of SPECIAL_CASES_3) {
-  const list = SPECIAL_3.get(first) ?? [];
-  list.push({ second, third, cls });
-  SPECIAL_3.set(first, list);
 }
 
 /**

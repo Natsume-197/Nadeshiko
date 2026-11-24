@@ -1,11 +1,6 @@
-import { append, hasSection, SECTION } from '../group';
+import { append, isNaAdjectiveToken } from '../group';
 import { deconjugationKey } from '../kana';
 import type { CombineContext, Group } from '../types';
-
-const isNaAdjectiveToken = (group: Group) =>
-  group.cls === 'NaAdjective' ||
-  hasSection(group, SECTION.PossibleNaAdjective) ||
-  hasSection(group, SECTION.NaAdjectiveLike);
 
 /**
  * 飲ん|だ and 飲ん|で are past and て-forms of む/ぬ/ぶ/ぐ verbs, while たくさん|で and さん|だ take the copula.

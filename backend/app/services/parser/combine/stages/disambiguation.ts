@@ -14,7 +14,7 @@ import { HOUR_PINS, TEMPORAL_ANCHOR_TEXTS, TEMPORAL_DURATION_PINS } from '../dat
 import { PIN } from '../data/pins';
 import { deconj, hasSection, isNounClass, known, knownVerbOrAdjective, prepend } from '../group';
 import { recut } from '../recut';
-import { isNumeralChar, toKatakana, widenDigits } from '../kana';
+import { isNumeralChar, takesOrdinalMeAfterTsu, toKatakana, widenDigits } from '../kana';
 import type { CombineContext, Group } from '../types';
 import { isNumeralToken } from './rewrite';
 
@@ -100,10 +100,6 @@ function applyCounterPins(groups: Group[], i: number, ctx: CombineContext): void
   )
     groups[i] = pin(word, ctx, PIN.me, 0, { d: '目', n: '目' });
 }
-
-/** 一つ目/二つ目 have their own ordinal entries. */
-const takesOrdinalMeAfterTsu = (c: string | undefined) =>
-  c !== '一' && c !== '二' && c !== '１' && c !== '２' && isNumeralChar(c);
 
 const MOVEMENT_VERBS = new Set(['歩く', '巡る', '旅する', '走る', '駆ける', '散る', '散らばる', '逃げる', '飛ぶ']);
 const CASE_PARTICLES = new Set(['から', 'を', 'が', 'に', 'で', 'へ', 'の', 'は', 'も']);

@@ -1,4 +1,4 @@
-import { SPECIAL_CASES_2, SPECIAL_CASES_3 } from '../data/ruleData';
+import { CASE_PARTICLES, SPECIAL_2, SPECIAL_3 } from '../data/ruleData';
 import {
   append,
   deconj,
@@ -8,6 +8,7 @@ import {
   isSymbolClass,
   knownVerbOrAdjective,
   SECTION,
+  isNaAdjectiveToken,
 } from '../group';
 import {
   isAllHiragana,
@@ -15,13 +16,14 @@ import {
   isHiraganaChar,
   isKanji,
   isKatakanaWordChar,
-  isNumeralChar,
   toHiragana,
   toKatakana,
+  GODAN_RENYOU_TO_DICT_END,
+  takesOrdinalMeAfterTsu,
 } from '../kana';
 import { type Piece, recut } from '../recut';
 import { cpLength, dropLast, firstChar, lastChars, tail } from '../text';
-import type { CombineContext, Group, WordClass } from '../types';
+import type { CombineContext, Group } from '../types';
 
 /**
  * `ProcessSpecialCases`: the single-pass repair of Sudachi cuts that sits between the early rewrite rules and the
@@ -33,7 +35,6 @@ import type { CombineContext, Group, WordClass } from '../types';
  * has no frequency ranks, so the two rank gates (rank < 40000) use JMdict's common flag instead.
  */
 
-const CASE_PARTICLES = new Set(['に', 'を', 'が', 'へ', 'で', 'と', 'は', 'も', 'か', 'から', 'より', 'まで', 'の']);
 const DA_COMPOUND_SUFFIXES = new Set(['が', 'けど', 'けれど', 'けれども', 'から', 'し', 'って', 'の']);
 const KANA_TSU_NUMERALS = new Set([
   'ひとつ',
@@ -46,30 +47,6 @@ const KANA_TSU_NUMERALS = new Set([
   'やっつ',
   'ここのつ',
 ]);
-const RENYOKEI_TO_GODAN_BASE: Record<string, string> = {
-  き: 'く',
-  ぎ: 'ぐ',
-  し: 'す',
-  ち: 'つ',
-  に: 'ぬ',
-  び: 'ぶ',
-  み: 'む',
-  り: 'る',
-  い: 'う',
-};
-
-const SPECIAL_2 = new Map<string, Array<{ second: string; cls: WordClass }>>();
-for (const [first, second, cls] of SPECIAL_CASES_2) {
-  const list = SPECIAL_2.get(first) ?? [];
-  list.push({ second, cls });
-  SPECIAL_2.set(first, list);
-}
-const SPECIAL_3 = new Map<string, Array<{ second: string; third: string; cls: WordClass }>>();
-for (const [first, second, third, cls] of SPECIAL_CASES_3) {
-  const list = SPECIAL_3.get(first) ?? [];
-  list.push({ second, third, cls });
-  SPECIAL_3.set(first, list);
-}
 
 /** `HasNonNameCompoundLookup` / `HasCompoundLookup`: our lexicon holds no names, so both are a plain lookup. */
 const has = (ctx: CombineContext, text: string) => text.length > 0 && ctx.lexicon.has(text);
@@ -78,15 +55,11 @@ const isFrequent = (ctx: CombineContext, text: string) => ctx.lexicon.hasClass(t
 /** `HasSuruVerbCompoundLookup`. */
 const isSuruVerb = (ctx: CombineContext, text: string) => ctx.lexicon.hasClass(text, 'verb');
 
-/** `TakesOrdinalMeAfterTsu`: 一つ目/二つ目 have their own ordinal entries. */
-const takesOrdinalMeAfterTsu = (char: string | undefined) =>
-  !!char && !['一', '二', '１', '２'].includes(char) && isNumeralChar(char);
-
 /** `RenyokeiSurfaceToVerb`. */
 function renyokeiSurfaceToVerb(ctx: CombineContext, text: string): string | undefined {
   if (cpLength(text) < 2) return undefined;
   if (has(ctx, `${text}る`)) return `${text}る`;
-  const base = RENYOKEI_TO_GODAN_BASE[lastChars(text)];
+  const base = GODAN_RENYOU_TO_DICT_END[lastChars(text)];
   if (base && has(ctx, dropLast(text) + base)) return dropLast(text) + base;
   return undefined;
 }
@@ -105,12 +78,6 @@ const deconjugatesToCausativeOrPassive = (ctx: CombineContext, surface: string) 
       knownVerbOrAdjective(ctx, form.text) &&
       form.process.some((step) => step.includes('causative') || step.includes('passive')),
   );
-
-/** `IsNaAdjectiveToken`. */
-const isNaAdjectiveToken = (group: Group) =>
-  group.cls === 'NaAdjective' ||
-  hasSection(group, SECTION.PossibleNaAdjective) ||
-  hasSection(group, SECTION.NaAdjectiveLike);
 
 /** `IsBoundAuxiliaryNegative`: なく after a て-form + bound auxiliary stem (出て+こ+なく) is not a なくなった head. */
 function isBoundAuxiliaryNegative(w1: Group, emitted: readonly Group[]): boolean {

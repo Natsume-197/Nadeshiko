@@ -1,7 +1,7 @@
 import type { DataSource } from 'typeorm';
 import type { SlimToken, TokenPart } from '@app/models/Segment';
 import { combine, type Group, loadLexicon } from './combine';
-import { toHiragana } from './combine/kana';
+import { hasHanScript as hasKanji, toHiragana } from './combine/kana';
 import { deconjugate } from './deconjugator';
 import { type RubySegment, surfaceFurigana } from './furigana';
 import { inflectionLabels } from './labels';
@@ -17,8 +17,6 @@ import { analyseSentences } from './preprocess';
 
 /** `<revision>`: bump when output changes in a way stored rows should be reparsed for. */
 export const NADESHIKO_PARSER_REVISION = 6;
-
-const hasKanji = (text: string) => /\p{Script=Han}/u.test(text);
 
 /** Dictionary rubies per spelling, from `dict.furigana` (JMdict's own first). */
 async function rubiesFor(
