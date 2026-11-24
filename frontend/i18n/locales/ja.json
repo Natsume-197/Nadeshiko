@@ -2042,7 +2042,9 @@
     "channels": {
       "title": "通知方法",
       "site": "サイト",
-      "email": "メール"
+      "email": "メール",
+      "siteSection": "サイト内通知",
+      "emailSection": "メール通知"
     },
     "watch": {
       "notify": "登場したら知らせる",

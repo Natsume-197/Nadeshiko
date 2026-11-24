@@ -2042,7 +2042,9 @@
     "channels": {
       "title": "通知方式",
       "site": "網站",
-      "email": "電子郵件"
+      "email": "電子郵件",
+      "siteSection": "站內通知",
+      "emailSection": "電子郵件通知"
     },
     "watch": {
       "notify": "出現時通知我",

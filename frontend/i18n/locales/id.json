@@ -2042,7 +2042,9 @@
     "channels": {
       "title": "Saluran",
       "site": "Situs",
-      "email": "Email"
+      "email": "Email",
+      "siteSection": "Notifikasi di situs",
+      "emailSection": "Notifikasi email"
     },
     "watch": {
       "notify": "Beri tahu saya saat muncul",

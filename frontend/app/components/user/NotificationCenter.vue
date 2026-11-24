@@ -77,16 +77,12 @@ function statusLabel(alert: WordWatch): string {
  * Absent means on for both; email categories also follow the master `productEmails.enabled` switch.
  * Sends only the key that changed, merged over stored preferences, so concurrent device edits are kept.
  */
-const SITE_CATEGORIES = new Set(['words', 'requests'] as const);
-type SiteCategory = 'words' | 'requests';
+const SITE_CATEGORIES = ['words', 'requests'] as const;
+type SiteCategory = (typeof SITE_CATEGORIES)[number];
 const NOTIFICATION_CATEGORIES = ['words', 'requests', 'recap', 'checkins', 'updates'] as const;
 type NotificationCategory = (typeof NOTIFICATION_CATEGORIES)[number];
 
 const emailMasterOn = computed(() => store.preferences?.productEmails?.enabled !== false);
-
-function hasSiteChannel(category: NotificationCategory): category is SiteCategory {
-  return SITE_CATEGORIES.has(category as SiteCategory);
-}
 
 function isSiteOn(category: SiteCategory): boolean {
   return store.preferences?.siteNotifications?.[category] !== false;
@@ -238,11 +234,45 @@ async function toggleEmailCategory(category: NotificationCategory) {
     </div>
   </section>
 
-  <section data-testid="emails-card" class="nd-settings-section">
-    <h2 class="nd-settings-section-label">{{ $t('notifications.channels.title') }}</h2>
+  <section data-testid="site-notifications-card" class="nd-settings-section">
+    <h2 class="nd-settings-section-label">{{ $t('notifications.channels.siteSection') }}</h2>
 
     <div class="nd-settings-group">
-      <div class="nd-settings-item">
+      <div v-for="category in SITE_CATEGORIES" :key="category" class="nd-settings-item">
+        <div class="flex items-center justify-between gap-4">
+          <div class="min-w-0 flex-1">
+            <p class="nd-settings-row-title">{{ $t(`accountSettings.emails.${category}Title`) }}</p>
+            <p class="nd-settings-row-desc">{{ $t(`accountSettings.emails.${category}Description`) }}</p>
+          </div>
+          <button
+            type="button"
+            :data-testid="`channel-${category}-site`"
+            :aria-label="`${$t(`accountSettings.emails.${category}Title`)}: ${$t('notifications.channels.site')}`"
+            :aria-pressed="isSiteOn(category)"
+            :disabled="busy"
+            :class="[
+              'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:cursor-not-allowed',
+              isSiteOn(category) ? 'bg-brand-solid' : 'bg-gray-600',
+            ]"
+            @click="toggleSiteChannel(category)"
+          >
+            <span
+              :class="[
+                'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
+                isSiteOn(category) ? 'translate-x-5' : 'translate-x-0',
+              ]"
+            />
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section data-testid="emails-card" class="nd-settings-section">
+    <h2 class="nd-settings-section-label">{{ $t('notifications.channels.emailSection') }}</h2>
+
+    <div class="nd-settings-group">
+      <div class="nd-settings-item bg-lift">
         <div class="flex items-center justify-between gap-4">
           <div class="min-w-0 flex-1">
             <p class="nd-settings-row-title">{{ $t('accountSettings.emails.allTitle') }}</p>
@@ -270,69 +300,37 @@ async function toggleEmailCategory(category: NotificationCategory) {
         </div>
       </div>
 
-      <div class="nd-settings-item !py-2">
-        <table class="w-full text-sm" data-testid="channels-table">
-          <thead>
-            <tr class="text-left text-xs text-ink-faint">
-              <th class="py-2.5 pr-4" />
-              <th class="py-2.5 px-2 text-center font-medium">{{ $t('notifications.channels.site') }}</th>
-              <th class="py-2.5 pl-2 text-center font-medium">{{ $t('notifications.channels.email') }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="category in NOTIFICATION_CATEGORIES" :key="category" class="border-t border-line-subtle">
-              <td class="py-3.5 pr-4">
-                <p class="nd-settings-row-title">{{ $t(`accountSettings.emails.${category}Title`) }}</p>
-                <p class="nd-settings-row-desc">{{ $t(`accountSettings.emails.${category}Description`) }}</p>
-              </td>
-              <td class="py-3.5 px-2 text-center align-middle">
-                <button
-                  v-if="hasSiteChannel(category)"
-                  type="button"
-                  :data-testid="`channel-${category}-site`"
-                  :aria-label="`${$t(`accountSettings.emails.${category}Title`)}: ${$t('notifications.channels.site')}`"
-                  :aria-pressed="isSiteOn(category)"
-                  :disabled="busy"
-                  :class="[
-                    'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:cursor-not-allowed',
-                    isSiteOn(category) ? 'bg-brand-solid' : 'bg-gray-600',
-                  ]"
-                  @click="toggleSiteChannel(category)"
-                >
-                  <span
-                    :class="[
-                      'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
-                      isSiteOn(category) ? 'translate-x-5' : 'translate-x-0',
-                    ]"
-                  />
-                </button>
-                <span v-else class="text-xs text-ink-muted" aria-hidden="true">—</span>
-              </td>
-              <td :class="['py-3.5 pl-2 text-center align-middle transition-opacity', emailMasterOn ? '' : 'opacity-50']">
-                <button
-                  type="button"
-                  :data-testid="`email-category-${category}`"
-                  :aria-label="`${$t(`accountSettings.emails.${category}Title`)}: ${$t('notifications.channels.email')}`"
-                  :aria-pressed="isEmailOn(category)"
-                  :disabled="busy || !emailMasterOn"
-                  :class="[
-                    'relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none',
-                    emailMasterOn && !busy ? 'cursor-pointer' : 'cursor-not-allowed',
-                    isEmailOn(category) ? 'bg-brand-solid' : 'bg-gray-600',
-                  ]"
-                  @click="toggleEmailCategory(category)"
-                >
-                  <span
-                    :class="[
-                      'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
-                      isEmailOn(category) ? 'translate-x-5' : 'translate-x-0',
-                    ]"
-                  />
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <div
+        v-for="category in NOTIFICATION_CATEGORIES"
+        :key="category"
+        :class="['nd-settings-item transition-opacity', emailMasterOn ? '' : 'opacity-50']"
+      >
+        <div class="flex items-center justify-between gap-4">
+          <div class="min-w-0 flex-1">
+            <p class="nd-settings-row-title">{{ $t(`accountSettings.emails.${category}Title`) }}</p>
+            <p class="nd-settings-row-desc">{{ $t(`accountSettings.emails.${category}Description`) }}</p>
+          </div>
+          <button
+            type="button"
+            :data-testid="`email-category-${category}`"
+            :aria-label="`${$t(`accountSettings.emails.${category}Title`)}: ${$t('notifications.channels.email')}`"
+            :aria-pressed="isEmailOn(category)"
+            :disabled="busy || !emailMasterOn"
+            :class="[
+              'relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none',
+              emailMasterOn && !busy ? 'cursor-pointer' : 'cursor-not-allowed',
+              isEmailOn(category) ? 'bg-brand-solid' : 'bg-gray-600',
+            ]"
+            @click="toggleEmailCategory(category)"
+          >
+            <span
+              :class="[
+                'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
+                isEmailOn(category) ? 'translate-x-5' : 'translate-x-0',
+              ]"
+            />
+          </button>
+        </div>
       </div>
     </div>
   </section>

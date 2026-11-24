@@ -2042,7 +2042,9 @@
     "channels": {
       "title": "Canais",
       "site": "Site",
-      "email": "E-mail"
+      "email": "E-mail",
+      "siteSection": "Notificações no site",
+      "emailSection": "Notificações por e-mail"
     },
     "watch": {
       "notify": "Avise-me quando aparecer",
