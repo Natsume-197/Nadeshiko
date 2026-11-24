@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { AddExcludedMediaData, AddExcludedMediaErrors, AddExcludedMediaResponses, AddFavoriteMediaData, AddFavoriteMediaErrors, AddFavoriteMediaResponses, AddSegmentToCollectionData, AddSegmentToCollectionErrors, AddSegmentToCollectionResponses, AuthAdminStopImpersonatingData, AuthAdminStopImpersonatingErrors, AuthAdminStopImpersonatingResponses, AuthApiKeyCreateData, AuthApiKeyCreateErrors, AuthApiKeyCreateResponses, AuthApiKeyListData, AuthApiKeyListErrors, AuthApiKeyListResponses, AuthApiKeyUpdateData, AuthApiKeyUpdateErrors, AuthApiKeyUpdateResponses, AuthRevokeOtherSessionsData, AuthRevokeOtherSessionsErrors, AuthRevokeOtherSessionsResponses, AuthRevokeSessionData, AuthRevokeSessionErrors, AuthRevokeSessionResponses, AuthRevokeSessionsData, AuthRevokeSessionsErrors, AuthRevokeSessionsResponses, BanUserData, BanUserErrors, BanUserResponses, BatchUpdateAdminReportsData, BatchUpdateAdminReportsErrors, BatchUpdateAdminReportsResponses, BoostContentRequestData, BoostContentRequestErrors, BoostContentRequestResponses, BulkDeleteAdminReportsData, BulkDeleteAdminReportsErrors, BulkDeleteAdminReportsResponses, BulkUpdateAdminReportsData, BulkUpdateAdminReportsErrors, BulkUpdateAdminReportsResponses, ChangeEmailData, ChangeEmailErrors, ChangeEmailResponses, ClearFamiliarMediaData, ClearFamiliarMediaErrors, ClearFamiliarMediaResponses, CompletePatreonLinkData, CompletePatreonLinkErrors, CompletePatreonLinkResponses, CompleteUserDictionaryUploadData, CompleteUserDictionaryUploadErrors, CompleteUserDictionaryUploadResponses, CreateAdminRoadmapItemData, CreateAdminRoadmapItemErrors, CreateAdminRoadmapItemResponses, CreateCollectionData, CreateCollectionErrors, CreateCollectionResponses, CreateContentRequestData, CreateContentRequestErrors, CreateContentRequestResponses, CreateEpisodeData, CreateEpisodeErrors, CreateEpisodeResponses, CreateFeedbackData, CreateFeedbackErrors, CreateFeedbackResponses, CreateMediaData, CreateMediaErrors, CreateMediaResponses, CreateSegmentData, CreateSegmentErrors, CreateSegmentResponses, CreateSegmentsBatchData, CreateSegmentsBatchErrors, CreateSegmentsBatchResponses, CreateUserApiKeyData, CreateUserApiKeyErrors, CreateUserApiKeyResponses, CreateUserReportData, CreateUserReportErrors, CreateUserReportResponses, DeleteAdminReportData, DeleteAdminReportErrors, DeleteAdminReportResponses, DeleteCollectionData, DeleteCollectionErrors, DeleteCollectionResponses, DeleteEpisodeData, DeleteEpisodeErrors, DeleteEpisodeResponses, DeleteMediaData, DeleteMediaErrors, DeleteMediaResponses, DeleteUserActivityByDateData, DeleteUserActivityByDateErrors, DeleteUserActivityByDateResponses, DeleteUserActivityByIdData, DeleteUserActivityByIdErrors, DeleteUserActivityByIdResponses, DeleteUserActivityData, DeleteUserActivityErrors, DeleteUserActivityResponses, DeleteUserData, DeleteUserDictionaryData, DeleteUserDictionaryErrors, DeleteUserDictionaryResponses, DeleteUserErrors, DeleteUserResponses, ExportUserDataData, ExportUserDataErrors, ExportUserDataResponses, ForgetFamiliarMediaData, ForgetFamiliarMediaErrors, ForgetFamiliarMediaResponses, GetAdminOverviewData, GetAdminOverviewErrors, GetAdminOverviewResponses, GetAdminPatreonOverviewData, GetAdminPatreonOverviewErrors, GetAdminPatreonOverviewResponses, GetAdminUserQuotaData, GetAdminUserQuotaErrors, GetAdminUserQuotaResponses, GetAdminUsersWithProvidersData, GetAdminUsersWithProvidersErrors, GetAdminUsersWithProvidersResponses, GetAnnouncementData, GetAnnouncementErrors, GetAnnouncementResponses, GetCollectionData, GetCollectionErrors, GetCollectionResponses, GetCollectionStatsData, GetCollectionStatsErrors, GetCollectionStatsResponses, GetContentRequestAllowanceData, GetContentRequestAllowanceErrors, GetContentRequestAllowanceResponses, GetCoveredWordsData, GetCoveredWordsErrors, GetCoveredWordsResponses, GetDictionaryKanjiData, GetDictionaryKanjiErrors, GetDictionaryKanjiIndexData, GetDictionaryKanjiIndexErrors, GetDictionaryKanjiIndexResponses, GetDictionaryKanjiResponses, GetEmailPreferencesByTokenData, GetEmailPreferencesByTokenErrors, GetEmailPreferencesByTokenResponses, GetEpisodeData, GetEpisodeErrors, GetEpisodeResponses, GetFeedbackFormTokenData, GetFeedbackFormTokenErrors, GetFeedbackFormTokenResponses, GetMeData, GetMediaData, GetMediaErrors, GetMediaResponses, GetMeErrors, GetMeResponses, GetPatreonConnectionData, GetPatreonConnectionErrors, GetPatreonConnectionResponses, GetSearchStatsData, GetSearchStatsErrors, GetSearchStatsResponses, GetSegmentContextData, GetSegmentContextErrors, GetSegmentContextResponses, GetSegmentData, GetSegmentErrors, GetSegmentResponses, GetSessionData, GetSessionErrors, GetSessionPostData, GetSessionPostErrors, GetSessionPostResponses, GetSessionResponses, GetStatsOverviewData, GetStatsOverviewErrors, GetStatsOverviewResponses, GetUserActivityHeatmapData, GetUserActivityHeatmapErrors, GetUserActivityHeatmapResponses, GetUserActivityStatsData, GetUserActivityStatsErrors, GetUserActivityStatsResponses, GetUserPreferencesData, GetUserPreferencesErrors, GetUserPreferencesResponses, IdentifyDictionaryWordData, IdentifyDictionaryWordErrors, IdentifyDictionaryWordResponses, ImpersonateUserData, ImpersonateUserErrors, ImpersonateUserResponses, ListAdminContentRequestsData, ListAdminContentRequestsErrors, ListAdminContentRequestsResponses, ListAdminReportsData, ListAdminReportsErrors, ListAdminReportsResponses, ListAdminRoadmapData, ListAdminRoadmapErrors, ListAdminRoadmapResponses, ListCollectionsData, ListCollectionsErrors, ListCollectionsResponses, ListContentRequestsData, ListContentRequestsErrors, ListContentRequestsResponses, ListEpisodesData, ListEpisodesErrors, ListEpisodesResponses, ListExcludedMediaData, ListExcludedMediaErrors, ListExcludedMediaResponses, ListFamiliarMediaData, ListFamiliarMediaErrors, ListFamiliarMediaResponses, ListFavoriteMediaData, ListFavoriteMediaErrors, ListFavoriteMediaResponses, ListMediaData, ListMediaErrors, ListMediaResponses, ListMyContentRequestsData, ListMyContentRequestsErrors, ListMyContentRequestsResponses, ListRoadmapData, ListRoadmapErrors, ListRoadmapResponses, ListSegmentRevisionsData, ListSegmentRevisionsErrors, ListSegmentRevisionsResponses, ListSegmentsData, ListSegmentsErrors, ListSegmentsResponses, ListTiersData, ListTiersErrors, ListTiersResponses, ListUserActivityData, ListUserActivityErrors, ListUserActivityResponses, ListUserDictionariesData, ListUserDictionariesErrors, ListUserDictionariesResponses, ListUserSessionsData, ListUserSessionsErrors, ListUserSessionsResponses, MergeAdminContentRequestData, MergeAdminContentRequestErrors, MergeAdminContentRequestResponses, ModerateEpisodeSegmentsData, ModerateEpisodeSegmentsErrors, ModerateEpisodeSegmentsResponses, RefreshAdminPatreonConnectionData, RefreshAdminPatreonConnectionErrors, RefreshAdminPatreonConnectionResponses, RefreshAllAdminPatreonConnectionsData, RefreshAllAdminPatreonConnectionsErrors, RefreshAllAdminPatreonConnectionsResponses, RemoveExcludedMediaData, RemoveExcludedMediaErrors, RemoveExcludedMediaResponses, RemoveFavoriteMediaData, RemoveFavoriteMediaErrors, RemoveFavoriteMediaResponses, RemoveSegmentFromCollectionData, RemoveSegmentFromCollectionErrors, RemoveSegmentFromCollectionResponses, ReserveUserDictionaryUploadData, ReserveUserDictionaryUploadErrors, ReserveUserDictionaryUploadResponses, RestoreSegmentRevisionData, RestoreSegmentRevisionErrors, RestoreSegmentRevisionResponses, SearchCollectionSegmentsData, SearchCollectionSegmentsErrors, SearchCollectionSegmentsResponses, SearchData, SearchErrors, SearchMediaData, SearchMediaErrors, SearchMediaResponses, SearchResponses, SearchWordsData, SearchWordsErrors, SearchWordsResponses, SignInWithEmailOtpData, SignInWithEmailOtpErrors, SignInWithEmailOtpResponses, SignInWithMagicLinkData, SignInWithMagicLinkErrors, SignInWithMagicLinkResponses, SignOutData, SignOutErrors, SignOutResponses, SocialSignInData, SocialSignInErrors, SocialSignInResponses, StartPatreonLinkData, StartPatreonLinkErrors, StartPatreonLinkResponses, TrackUserActivityData, TrackUserActivityErrors, TrackUserActivityResponses, TriggerCoveredWordsUpdateData, TriggerCoveredWordsUpdateErrors, TriggerCoveredWordsUpdateResponses, UnbanUserData, UnbanUserErrors, UnbanUserResponses, UnlinkAdminPatreonConnectionData, UnlinkAdminPatreonConnectionErrors, UnlinkAdminPatreonConnectionResponses, UnlinkPatreonData, UnlinkPatreonErrors, UnlinkPatreonResponses, UnsubscribeFromEmailData, UnsubscribeFromEmailErrors, UnsubscribeFromEmailResponses, UnvoteContentRequestData, UnvoteContentRequestErrors, UnvoteContentRequestResponses, UpdateAdminContentRequestData, UpdateAdminContentRequestErrors, UpdateAdminContentRequestResponses, UpdateAdminReportData, UpdateAdminReportErrors, UpdateAdminReportResponses, UpdateAdminRoadmapItemData, UpdateAdminRoadmapItemErrors, UpdateAdminRoadmapItemResponses, UpdateAdminUserQuotaData, UpdateAdminUserQuotaErrors, UpdateAdminUserQuotaResponses, UpdateAnnouncementData, UpdateAnnouncementErrors, UpdateAnnouncementResponses, UpdateCollectionData, UpdateCollectionErrors, UpdateCollectionResponses, UpdateCollectionSegmentData, UpdateCollectionSegmentErrors, UpdateCollectionSegmentResponses, UpdateEmailPreferencesByTokenData, UpdateEmailPreferencesByTokenErrors, UpdateEmailPreferencesByTokenResponses, UpdateEpisodeData, UpdateEpisodeErrors, UpdateEpisodeResponses, UpdateMediaData, UpdateMediaErrors, UpdateMediaResponses, UpdateSegmentData, UpdateSegmentErrors, UpdateSegmentResponses, UpdateUserDictionariesData, UpdateUserDictionariesErrors, UpdateUserDictionariesResponses, UpdateUserPreferencesData, UpdateUserPreferencesErrors, UpdateUserPreferencesResponses, VoteContentRequestData, VoteContentRequestErrors, VoteContentRequestResponses, WithdrawContentRequestData, WithdrawContentRequestErrors, WithdrawContentRequestResponses } from './types.gen';
+import type { AddExcludedMediaData, AddExcludedMediaErrors, AddExcludedMediaResponses, AddFavoriteMediaData, AddFavoriteMediaErrors, AddFavoriteMediaResponses, AddSegmentToCollectionData, AddSegmentToCollectionErrors, AddSegmentToCollectionResponses, AuthAdminStopImpersonatingData, AuthAdminStopImpersonatingErrors, AuthAdminStopImpersonatingResponses, AuthApiKeyCreateData, AuthApiKeyCreateErrors, AuthApiKeyCreateResponses, AuthApiKeyListData, AuthApiKeyListErrors, AuthApiKeyListResponses, AuthApiKeyUpdateData, AuthApiKeyUpdateErrors, AuthApiKeyUpdateResponses, AuthRevokeOtherSessionsData, AuthRevokeOtherSessionsErrors, AuthRevokeOtherSessionsResponses, AuthRevokeSessionData, AuthRevokeSessionErrors, AuthRevokeSessionResponses, AuthRevokeSessionsData, AuthRevokeSessionsErrors, AuthRevokeSessionsResponses, BanUserData, BanUserErrors, BanUserResponses, BatchUpdateAdminReportsData, BatchUpdateAdminReportsErrors, BatchUpdateAdminReportsResponses, BoostContentRequestData, BoostContentRequestErrors, BoostContentRequestResponses, BulkDeleteAdminReportsData, BulkDeleteAdminReportsErrors, BulkDeleteAdminReportsResponses, BulkUpdateAdminReportsData, BulkUpdateAdminReportsErrors, BulkUpdateAdminReportsResponses, ChangeEmailData, ChangeEmailErrors, ChangeEmailResponses, CheckWordWatchData, CheckWordWatchErrors, CheckWordWatchResponses, ClearFamiliarMediaData, ClearFamiliarMediaErrors, ClearFamiliarMediaResponses, CompletePatreonLinkData, CompletePatreonLinkErrors, CompletePatreonLinkResponses, CompleteUserDictionaryUploadData, CompleteUserDictionaryUploadErrors, CompleteUserDictionaryUploadResponses, CreateAdminRoadmapItemData, CreateAdminRoadmapItemErrors, CreateAdminRoadmapItemResponses, CreateCollectionData, CreateCollectionErrors, CreateCollectionResponses, CreateContentRequestData, CreateContentRequestErrors, CreateContentRequestResponses, CreateEpisodeData, CreateEpisodeErrors, CreateEpisodeResponses, CreateFeedbackData, CreateFeedbackErrors, CreateFeedbackResponses, CreateMediaData, CreateMediaErrors, CreateMediaResponses, CreateSegmentData, CreateSegmentErrors, CreateSegmentResponses, CreateSegmentsBatchData, CreateSegmentsBatchErrors, CreateSegmentsBatchResponses, CreateUserApiKeyData, CreateUserApiKeyErrors, CreateUserApiKeyResponses, CreateUserReportData, CreateUserReportErrors, CreateUserReportResponses, DeleteAdminReportData, DeleteAdminReportErrors, DeleteAdminReportResponses, DeleteCollectionData, DeleteCollectionErrors, DeleteCollectionResponses, DeleteEpisodeData, DeleteEpisodeErrors, DeleteEpisodeResponses, DeleteMediaData, DeleteMediaErrors, DeleteMediaResponses, DeleteUserActivityByDateData, DeleteUserActivityByDateErrors, DeleteUserActivityByDateResponses, DeleteUserActivityByIdData, DeleteUserActivityByIdErrors, DeleteUserActivityByIdResponses, DeleteUserActivityData, DeleteUserActivityErrors, DeleteUserActivityResponses, DeleteUserData, DeleteUserDictionaryData, DeleteUserDictionaryErrors, DeleteUserDictionaryResponses, DeleteUserErrors, DeleteUserResponses, DeleteWordWatchData, DeleteWordWatchErrors, DeleteWordWatchResponses, ExportUserDataData, ExportUserDataErrors, ExportUserDataResponses, ForgetFamiliarMediaData, ForgetFamiliarMediaErrors, ForgetFamiliarMediaResponses, GetAdminOverviewData, GetAdminOverviewErrors, GetAdminOverviewResponses, GetAdminPatreonOverviewData, GetAdminPatreonOverviewErrors, GetAdminPatreonOverviewResponses, GetAdminUserQuotaData, GetAdminUserQuotaErrors, GetAdminUserQuotaResponses, GetAdminUsersWithProvidersData, GetAdminUsersWithProvidersErrors, GetAdminUsersWithProvidersResponses, GetAnnouncementData, GetAnnouncementErrors, GetAnnouncementResponses, GetCollectionData, GetCollectionErrors, GetCollectionResponses, GetCollectionStatsData, GetCollectionStatsErrors, GetCollectionStatsResponses, GetContentRequestAllowanceData, GetContentRequestAllowanceErrors, GetContentRequestAllowanceResponses, GetCoveredWordsData, GetCoveredWordsErrors, GetCoveredWordsResponses, GetDictionaryKanjiData, GetDictionaryKanjiErrors, GetDictionaryKanjiIndexData, GetDictionaryKanjiIndexErrors, GetDictionaryKanjiIndexResponses, GetDictionaryKanjiResponses, GetEmailPreferencesByTokenData, GetEmailPreferencesByTokenErrors, GetEmailPreferencesByTokenResponses, GetEpisodeData, GetEpisodeErrors, GetEpisodeResponses, GetFeedbackFormTokenData, GetFeedbackFormTokenErrors, GetFeedbackFormTokenResponses, GetMeData, GetMediaData, GetMediaErrors, GetMediaResponses, GetMeErrors, GetMeResponses, GetPatreonConnectionData, GetPatreonConnectionErrors, GetPatreonConnectionResponses, GetSearchStatsData, GetSearchStatsErrors, GetSearchStatsResponses, GetSegmentContextData, GetSegmentContextErrors, GetSegmentContextResponses, GetSegmentData, GetSegmentErrors, GetSegmentResponses, GetSessionData, GetSessionErrors, GetSessionPostData, GetSessionPostErrors, GetSessionPostResponses, GetSessionResponses, GetStatsOverviewData, GetStatsOverviewErrors, GetStatsOverviewResponses, GetUnreadNotificationCountData, GetUnreadNotificationCountErrors, GetUnreadNotificationCountResponses, GetUserActivityHeatmapData, GetUserActivityHeatmapErrors, GetUserActivityHeatmapResponses, GetUserActivityStatsData, GetUserActivityStatsErrors, GetUserActivityStatsResponses, GetUserPreferencesData, GetUserPreferencesErrors, GetUserPreferencesResponses, IdentifyDictionaryWordData, IdentifyDictionaryWordErrors, IdentifyDictionaryWordResponses, ImpersonateUserData, ImpersonateUserErrors, ImpersonateUserResponses, ListAdminContentRequestsData, ListAdminContentRequestsErrors, ListAdminContentRequestsResponses, ListAdminReportsData, ListAdminReportsErrors, ListAdminReportsResponses, ListAdminRoadmapData, ListAdminRoadmapErrors, ListAdminRoadmapResponses, ListCollectionsData, ListCollectionsErrors, ListCollectionsResponses, ListContentRequestsData, ListContentRequestsErrors, ListContentRequestsResponses, ListEpisodesData, ListEpisodesErrors, ListEpisodesResponses, ListExcludedMediaData, ListExcludedMediaErrors, ListExcludedMediaResponses, ListFamiliarMediaData, ListFamiliarMediaErrors, ListFamiliarMediaResponses, ListFavoriteMediaData, ListFavoriteMediaErrors, ListFavoriteMediaResponses, ListMediaData, ListMediaErrors, ListMediaResponses, ListMyContentRequestsData, ListMyContentRequestsErrors, ListMyContentRequestsResponses, ListNotificationsData, ListNotificationsErrors, ListNotificationsResponses, ListRoadmapData, ListRoadmapErrors, ListRoadmapResponses, ListSegmentRevisionsData, ListSegmentRevisionsErrors, ListSegmentRevisionsResponses, ListSegmentsData, ListSegmentsErrors, ListSegmentsResponses, ListTiersData, ListTiersErrors, ListTiersResponses, ListUserActivityData, ListUserActivityErrors, ListUserActivityResponses, ListUserDictionariesData, ListUserDictionariesErrors, ListUserDictionariesResponses, ListUserSessionsData, ListUserSessionsErrors, ListUserSessionsResponses, ListWordWatchesData, ListWordWatchesErrors, ListWordWatchesResponses, MarkNotificationsReadData, MarkNotificationsReadErrors, MarkNotificationsReadResponses, MergeAdminContentRequestData, MergeAdminContentRequestErrors, MergeAdminContentRequestResponses, ModerateEpisodeSegmentsData, ModerateEpisodeSegmentsErrors, ModerateEpisodeSegmentsResponses, RefreshAdminPatreonConnectionData, RefreshAdminPatreonConnectionErrors, RefreshAdminPatreonConnectionResponses, RefreshAllAdminPatreonConnectionsData, RefreshAllAdminPatreonConnectionsErrors, RefreshAllAdminPatreonConnectionsResponses, RemoveExcludedMediaData, RemoveExcludedMediaErrors, RemoveExcludedMediaResponses, RemoveFavoriteMediaData, RemoveFavoriteMediaErrors, RemoveFavoriteMediaResponses, RemoveSegmentFromCollectionData, RemoveSegmentFromCollectionErrors, RemoveSegmentFromCollectionResponses, ReserveUserDictionaryUploadData, ReserveUserDictionaryUploadErrors, ReserveUserDictionaryUploadResponses, RestoreSegmentRevisionData, RestoreSegmentRevisionErrors, RestoreSegmentRevisionResponses, SearchCollectionSegmentsData, SearchCollectionSegmentsErrors, SearchCollectionSegmentsResponses, SearchData, SearchErrors, SearchMediaData, SearchMediaErrors, SearchMediaResponses, SearchResponses, SearchWordsData, SearchWordsErrors, SearchWordsResponses, SetWordWatchData, SetWordWatchErrors, SetWordWatchResponses, SignInWithEmailOtpData, SignInWithEmailOtpErrors, SignInWithEmailOtpResponses, SignInWithMagicLinkData, SignInWithMagicLinkErrors, SignInWithMagicLinkResponses, SignOutData, SignOutErrors, SignOutResponses, SocialSignInData, SocialSignInErrors, SocialSignInResponses, StartPatreonLinkData, StartPatreonLinkErrors, StartPatreonLinkResponses, TrackUserActivityData, TrackUserActivityErrors, TrackUserActivityResponses, TriggerCoveredWordsUpdateData, TriggerCoveredWordsUpdateErrors, TriggerCoveredWordsUpdateResponses, UnbanUserData, UnbanUserErrors, UnbanUserResponses, UnlinkAdminPatreonConnectionData, UnlinkAdminPatreonConnectionErrors, UnlinkAdminPatreonConnectionResponses, UnlinkPatreonData, UnlinkPatreonErrors, UnlinkPatreonResponses, UnsubscribeFromEmailData, UnsubscribeFromEmailErrors, UnsubscribeFromEmailResponses, UnvoteContentRequestData, UnvoteContentRequestErrors, UnvoteContentRequestResponses, UpdateAdminContentRequestData, UpdateAdminContentRequestErrors, UpdateAdminContentRequestResponses, UpdateAdminReportData, UpdateAdminReportErrors, UpdateAdminReportResponses, UpdateAdminRoadmapItemData, UpdateAdminRoadmapItemErrors, UpdateAdminRoadmapItemResponses, UpdateAdminUserQuotaData, UpdateAdminUserQuotaErrors, UpdateAdminUserQuotaResponses, UpdateAnnouncementData, UpdateAnnouncementErrors, UpdateAnnouncementResponses, UpdateCollectionData, UpdateCollectionErrors, UpdateCollectionResponses, UpdateCollectionSegmentData, UpdateCollectionSegmentErrors, UpdateCollectionSegmentResponses, UpdateEmailPreferencesByTokenData, UpdateEmailPreferencesByTokenErrors, UpdateEmailPreferencesByTokenResponses, UpdateEpisodeData, UpdateEpisodeErrors, UpdateEpisodeResponses, UpdateMediaData, UpdateMediaErrors, UpdateMediaResponses, UpdateSegmentData, UpdateSegmentErrors, UpdateSegmentResponses, UpdateUserDictionariesData, UpdateUserDictionariesErrors, UpdateUserDictionariesResponses, UpdateUserPreferencesData, UpdateUserPreferencesErrors, UpdateUserPreferencesResponses, UpdateWordWatchData, UpdateWordWatchErrors, UpdateWordWatchResponses, VoteContentRequestData, VoteContentRequestErrors, VoteContentRequestResponses, WithdrawContentRequestData, WithdrawContentRequestErrors, WithdrawContentRequestResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -142,6 +142,139 @@ export const boostContentRequest = <ThrowOnError extends boolean = false>(option
         }],
     url: '/v1/requests/{requestId}/boost',
     ...options
+});
+
+/**
+ * The signed-in reader's notifications, newest first
+ */
+export const listNotifications = <ThrowOnError extends boolean = false>(options?: Options<ListNotificationsData, ThrowOnError>): RequestResult<ListNotificationsResponses, ListNotificationsErrors, ThrowOnError> => (options?.client ?? client).get<ListNotificationsResponses, ListNotificationsErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'nadeshiko.session_token',
+            type: 'apiKey'
+        }],
+    url: '/v1/notifications',
+    ...options
+});
+
+/**
+ * How many of the reader's notifications are unread
+ *
+ * What the bell in the header shows. A partial-index lookup, cheap enough to ask on every page load.
+ */
+export const getUnreadNotificationCount = <ThrowOnError extends boolean = false>(options?: Options<GetUnreadNotificationCountData, ThrowOnError>): RequestResult<GetUnreadNotificationCountResponses, GetUnreadNotificationCountErrors, ThrowOnError> => (options?.client ?? client).get<GetUnreadNotificationCountResponses, GetUnreadNotificationCountErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'nadeshiko.session_token',
+            type: 'apiKey'
+        }],
+    url: '/v1/notifications/unread-count',
+    ...options
+});
+
+/**
+ * Mark notifications as read
+ *
+ * Marks the listed entries as read, or all of the reader's entries when `ids` is left out.
+ */
+export const markNotificationsRead = <ThrowOnError extends boolean = false>(options: Options<MarkNotificationsReadData, ThrowOnError>): RequestResult<MarkNotificationsReadResponses, MarkNotificationsReadErrors, ThrowOnError> => (options.client ?? client).post<MarkNotificationsReadResponses, MarkNotificationsReadErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'nadeshiko.session_token',
+            type: 'apiKey'
+        }],
+    url: '/v1/notifications/read',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * The signed-in reader's word alerts
+ */
+export const listWordWatches = <ThrowOnError extends boolean = false>(options?: Options<ListWordWatchesData, ThrowOnError>): RequestResult<ListWordWatchesResponses, ListWordWatchesErrors, ThrowOnError> => (options?.client ?? client).get<ListWordWatchesResponses, ListWordWatchesErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'nadeshiko.session_token',
+            type: 'apiKey'
+        }],
+    url: '/v1/word-watches',
+    ...options
+});
+
+/**
+ * Watch a word, or switch the alert you have on it
+ *
+ * Creates the reader's alert on a word, or switches their existing alert on the
+ * same word and match mode to the asked mode. The word must be one Japanese word
+ * of up to 16 characters. `FIRST` is refused for a word that already has
+ * sentences in the reader's search, and `NEW_SENTENCES` for a `CONTAINS` search.
+ *
+ */
+export const setWordWatch = <ThrowOnError extends boolean = false>(options: Options<SetWordWatchData, ThrowOnError>): RequestResult<SetWordWatchResponses, SetWordWatchErrors, ThrowOnError> => (options.client ?? client).post<SetWordWatchResponses, SetWordWatchErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'nadeshiko.session_token',
+            type: 'apiKey'
+        }],
+    url: '/v1/word-watches',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * The reader's alert on one word, if any
+ *
+ * What the search page reads to draw its alert button.
+ */
+export const checkWordWatch = <ThrowOnError extends boolean = false>(options: Options<CheckWordWatchData, ThrowOnError>): RequestResult<CheckWordWatchResponses, CheckWordWatchErrors, ThrowOnError> => (options.client ?? client).get<CheckWordWatchResponses, CheckWordWatchErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'nadeshiko.session_token',
+            type: 'apiKey'
+        }],
+    url: '/v1/word-watches/check',
+    ...options
+});
+
+/**
+ * Remove a word alert
+ */
+export const deleteWordWatch = <ThrowOnError extends boolean = false>(options: Options<DeleteWordWatchData, ThrowOnError>): RequestResult<DeleteWordWatchResponses, DeleteWordWatchErrors, ThrowOnError> => (options.client ?? client).delete<DeleteWordWatchResponses, DeleteWordWatchErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'nadeshiko.session_token',
+            type: 'apiKey'
+        }],
+    url: '/v1/word-watches/{watchId}',
+    ...options
+});
+
+/**
+ * Pause, resume or switch a word alert
+ *
+ * `paused: true` pauses the alert. `paused: false` or a new `mode` makes it
+ * active again and starts counting from now, so a long pause does not arrive
+ * as one huge digest.
+ *
+ */
+export const updateWordWatch = <ThrowOnError extends boolean = false>(options: Options<UpdateWordWatchData, ThrowOnError>): RequestResult<UpdateWordWatchResponses, UpdateWordWatchErrors, ThrowOnError> => (options.client ?? client).patch<UpdateWordWatchResponses, UpdateWordWatchErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'nadeshiko.session_token',
+            type: 'apiKey'
+        }],
+    url: '/v1/word-watches/{watchId}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
 });
 
 /**

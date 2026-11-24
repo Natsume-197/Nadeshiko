@@ -11,6 +11,7 @@ import { userStore } from '~/stores/auth';
 import { CATEGORY_API_MAPPING, CATEGORY_LABEL_KEYS, CATEGORY_SLUGS, discountHiddenMedia } from '~/utils/categories';
 import { buildHiddenBreakdown, countHiddenResults, type HiddenBreakdownRow } from '~/utils/hiddenResults';
 import { decodeSearchQuery, readSearchRouteFilters, splitLocalePrefix } from '~/utils/routes';
+import { isWordQuery } from '#shared/utils/wordEntry';
 import { episodeLabelKey } from '~/utils/media';
 import { EPISODE_HITS_LOADING, type FetchOutcome, type SearchScope } from '~/composables/useSearchFetch';
 import { canRetrySearchFailure, SEARCH_FAILURE_MESSAGES, type SearchFailure } from '~/utils/searchFailure';
@@ -85,6 +86,17 @@ const episode = ref<number | null>(null);
 
 const categoryApiMapping = CATEGORY_API_MAPPING;
 const selectedApiCategory = computed(() => categoryApiMapping[category.value] ?? null);
+
+/** Offer a first-appearance alert only on a plain word search with nothing in it: not inside a title, a collection
+ * or one category tab, where an empty page does not mean the word is missing from Nadeshiko. */
+const canWatchEmptySearch = computed(
+  () =>
+    !sentenceFailure.value &&
+    !media.value &&
+    !props.collectionId &&
+    !selectedApiCategory.value &&
+    isWordQuery(query.value),
+);
 // A title is a refinement of a word search, not its replacement. Keep an
 // explicit way back to the unscoped word results while a `?media=` filter is
 // present; a title browse without a word still has just the title tab.
@@ -1153,6 +1165,12 @@ onBeforeRouteUpdate(async (to, from) => {
                                 {{ $t('searchErrors.retry') }}
                             </template>
                         </UiButtonPrimaryAction>
+                        <!-- Word alerts (task 52): a word with no sentences yet can be watched from its empty search. -->
+                        <SearchWordWatchButton
+                            v-if="canWatchEmptySearch"
+                            :query="query.trim()"
+                            mode="FIRST"
+                            :match-mode="matchMode === 'CONTAINS' ? 'CONTAINS' : 'WORD'" />
                     </template>
                 </SearchSegmentContainer>
                 <CommonInfiniteScrollObserver @intersect="loadSentences({ append: true })" v-if="hasMoreResults && !isLoading" />

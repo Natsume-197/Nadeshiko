@@ -11,7 +11,7 @@ const { t } = useI18n();
 const route = useRoute();
 const localePath = useLocalePath();
 
-const CATEGORIES = ['recap', 'checkins', 'updates', 'requests'] as const;
+const CATEGORIES = ['recap', 'checkins', 'updates', 'requests', 'words'] as const;
 type Category = (typeof CATEGORIES)[number];
 
 const token = computed(() => String(route.query.token ?? ''));
@@ -20,7 +20,7 @@ const message = ref('');
 const saving = ref<Category | 'all' | null>(null);
 
 const enabled = ref(true);
-const categories = reactive<Record<Category, boolean>>({ recap: true, checkins: true, updates: true, requests: true });
+const categories = reactive<Record<Category, boolean>>({ recap: true, checkins: true, updates: true, requests: true, words: true });
 /** Which category the email that brought them here belonged to, so the page can point at it. */
 const cameFrom = ref<Category | null>(null);
 

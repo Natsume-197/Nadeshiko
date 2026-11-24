@@ -4,7 +4,7 @@ import { createClient as createApiClient, createConfig, type Client } from './cl
 import type { Auth } from './core/auth.gen';
 import type { ClientOptions } from './types.gen';
 import type * as Types from './types.gen';
-import { search, getSearchStats, searchWords, searchMedia, getStatsOverview, listMedia, getSegment, getSegmentContext, getMedia, listEpisodes, getEpisode, getMe, createUserApiKey, listExcludedMedia, addExcludedMedia, removeExcludedMedia, listFavoriteMedia, addFavoriteMedia, removeFavoriteMedia, listFamiliarMedia, listUserActivity, getUserActivityHeatmap, getUserActivityStats, listCollections, createCollection, getCollection, deleteCollection, addSegmentToCollection, searchCollectionSegments, removeSegmentFromCollection, listRoadmap, listContentRequests, createContentRequest, getContentRequestAllowance, listMyContentRequests, withdrawContentRequest, voteContentRequest, unvoteContentRequest, boostContentRequest, identifyDictionaryWord, getDictionaryKanjiIndex, getDictionaryKanji, getCoveredWords, triggerCoveredWordsUpdate, createMedia, updateSegment, listSegmentRevisions, restoreSegmentRevision, updateMedia, deleteMedia, createEpisode, updateEpisode, deleteEpisode, listSegments, createSegment, createSegmentsBatch, moderateEpisodeSegments, getPatreonConnection, startPatreonLink, unlinkPatreon, completePatreonLink, listUserDictionaries, updateUserDictionaries, deleteUserDictionary, reserveUserDictionaryUpload, completeUserDictionaryUpload, clearFamiliarMedia, forgetFamiliarMedia, createUserReport, getUserPreferences, updateUserPreferences, trackUserActivity, deleteUserActivity, deleteUserActivityByDate, deleteUserActivityById, exportUserData, createFeedback, getFeedbackFormToken, unsubscribeFromEmail, getEmailPreferencesByToken, updateEmailPreferencesByToken, updateCollection, updateCollectionSegment, getCollectionStats, getAdminOverview, listAdminReports, batchUpdateAdminReports, bulkUpdateAdminReports, bulkDeleteAdminReports, updateAdminReport, deleteAdminReport, getAnnouncement, updateAnnouncement, getAdminUsersWithProviders, listTiers, getAdminUserQuota, updateAdminUserQuota, listAdminRoadmap, createAdminRoadmapItem, updateAdminRoadmapItem, listAdminContentRequests, updateAdminContentRequest, mergeAdminContentRequest, getAdminPatreonOverview, refreshAllAdminPatreonConnections, unlinkAdminPatreonConnection, refreshAdminPatreonConnection, getSession, getSessionPost, signOut, socialSignIn, signInWithMagicLink, signInWithEmailOtp, listUserSessions, authRevokeSession, authRevokeSessions, authRevokeOtherSessions, deleteUser, changeEmail, authApiKeyCreate, authApiKeyList, authApiKeyUpdate, banUser, unbanUser, impersonateUser, authAdminStopImpersonating, type Options } from './sdk.gen';
+import { search, getSearchStats, searchWords, searchMedia, getStatsOverview, listMedia, getSegment, getSegmentContext, getMedia, listEpisodes, getEpisode, getMe, createUserApiKey, listExcludedMedia, addExcludedMedia, removeExcludedMedia, listFavoriteMedia, addFavoriteMedia, removeFavoriteMedia, listFamiliarMedia, listUserActivity, getUserActivityHeatmap, getUserActivityStats, listCollections, createCollection, getCollection, deleteCollection, addSegmentToCollection, searchCollectionSegments, removeSegmentFromCollection, listRoadmap, listContentRequests, createContentRequest, getContentRequestAllowance, listMyContentRequests, withdrawContentRequest, voteContentRequest, unvoteContentRequest, boostContentRequest, listNotifications, getUnreadNotificationCount, markNotificationsRead, listWordWatches, setWordWatch, checkWordWatch, updateWordWatch, deleteWordWatch, identifyDictionaryWord, getDictionaryKanjiIndex, getDictionaryKanji, getCoveredWords, triggerCoveredWordsUpdate, createMedia, updateSegment, listSegmentRevisions, restoreSegmentRevision, updateMedia, deleteMedia, createEpisode, updateEpisode, deleteEpisode, listSegments, createSegment, createSegmentsBatch, moderateEpisodeSegments, getPatreonConnection, startPatreonLink, unlinkPatreon, completePatreonLink, listUserDictionaries, updateUserDictionaries, deleteUserDictionary, reserveUserDictionaryUpload, completeUserDictionaryUpload, clearFamiliarMedia, forgetFamiliarMedia, createUserReport, getUserPreferences, updateUserPreferences, trackUserActivity, deleteUserActivity, deleteUserActivityByDate, deleteUserActivityById, exportUserData, createFeedback, getFeedbackFormToken, unsubscribeFromEmail, getEmailPreferencesByToken, updateEmailPreferencesByToken, updateCollection, updateCollectionSegment, getCollectionStats, getAdminOverview, listAdminReports, batchUpdateAdminReports, bulkUpdateAdminReports, bulkDeleteAdminReports, updateAdminReport, deleteAdminReport, getAnnouncement, updateAnnouncement, getAdminUsersWithProviders, listTiers, getAdminUserQuota, updateAdminUserQuota, listAdminRoadmap, createAdminRoadmapItem, updateAdminRoadmapItem, listAdminContentRequests, updateAdminContentRequest, mergeAdminContentRequest, getAdminPatreonOverview, refreshAllAdminPatreonConnections, unlinkAdminPatreonConnection, refreshAdminPatreonConnection, getSession, getSessionPost, signOut, socialSignIn, signInWithMagicLink, signInWithEmailOtp, listUserSessions, authRevokeSession, authRevokeSessions, authRevokeOtherSessions, deleteUser, changeEmail, authApiKeyCreate, authApiKeyList, authApiKeyUpdate, banUser, unbanUser, impersonateUser, authAdminStopImpersonating, type Options } from './sdk.gen';
 import { withRetry, type RetryOptions } from './retry';
 import { NadeshikoError, buildNadeshikoError, isProblemDetails, type NadeshikoErrorCode, type RateLimitReason } from './errors';
 import { flatPaginate } from './paginate';
@@ -221,6 +221,40 @@ export type NadeshikoClient = {
       (id: string): Promise<Types.BoostContentRequestResponse>;
       (params: Types.BoostContentRequestData['path'] & { throwOnError: false }): Promise<{ data: Types.BoostContentRequestResponse; response: Response; request: Request } | { error: Types.BoostContentRequestErrors; response: Response; request: Request }>;
       (params: Types.BoostContentRequestData['path']): Promise<Types.BoostContentRequestResponse>;
+    };
+    listNotifications: {
+      (params: NonNullable<Types.ListNotificationsData['query']> & { throwOnError: false }): Promise<{ data: Types.ListNotificationsResponse; response: Response; request: Request } | { error: Types.ListNotificationsErrors; response: Response; request: Request }>;
+      (params?: NonNullable<Types.ListNotificationsData['query']>): Promise<Types.ListNotificationsResponse>;
+    };
+    getUnreadNotificationCount: {
+      (params: { throwOnError: false }): Promise<{ data: Types.GetUnreadNotificationCountResponse; response: Response; request: Request } | { error: Types.GetUnreadNotificationCountErrors; response: Response; request: Request }>;
+      (): Promise<Types.GetUnreadNotificationCountResponse>;
+    };
+    markNotificationsRead: {
+      (params: NonNullable<Types.MarkNotificationsReadData['body']> & { throwOnError: false }): Promise<{ data: Types.MarkNotificationsReadResponse; response: Response; request: Request } | { error: Types.MarkNotificationsReadErrors; response: Response; request: Request }>;
+      (params?: NonNullable<Types.MarkNotificationsReadData['body']>): Promise<Types.MarkNotificationsReadResponse>;
+    };
+    listWordWatches: {
+      (params: { throwOnError: false }): Promise<{ data: Types.ListWordWatchesResponse; response: Response; request: Request } | { error: Types.ListWordWatchesErrors; response: Response; request: Request }>;
+      (): Promise<Types.ListWordWatchesResponse>;
+    };
+    setWordWatch: {
+      (params: NonNullable<Types.SetWordWatchData['body']> & { throwOnError: false }): Promise<{ data: Types.SetWordWatchResponse; response: Response; request: Request } | { error: Types.SetWordWatchErrors; response: Response; request: Request }>;
+      (params: NonNullable<Types.SetWordWatchData['body']>): Promise<Types.SetWordWatchResponse>;
+    };
+    checkWordWatch: {
+      (params: NonNullable<Types.CheckWordWatchData['query']> & { throwOnError: false }): Promise<{ data: Types.CheckWordWatchResponse; response: Response; request: Request } | { error: Types.CheckWordWatchErrors; response: Response; request: Request }>;
+      (params?: NonNullable<Types.CheckWordWatchData['query']>): Promise<Types.CheckWordWatchResponse>;
+    };
+    updateWordWatch: {
+      (id: string): Promise<Types.UpdateWordWatchResponse>;
+      (params: Types.UpdateWordWatchData['path'] & NonNullable<Types.UpdateWordWatchData['body']> & { throwOnError: false }): Promise<{ data: Types.UpdateWordWatchResponse; response: Response; request: Request } | { error: Types.UpdateWordWatchErrors; response: Response; request: Request }>;
+      (params: Types.UpdateWordWatchData['path'] & NonNullable<Types.UpdateWordWatchData['body']>): Promise<Types.UpdateWordWatchResponse>;
+    };
+    deleteWordWatch: {
+      (id: string): Promise<Types.DeleteWordWatchResponse>;
+      (params: Types.DeleteWordWatchData['path'] & { throwOnError: false }): Promise<{ data: Types.DeleteWordWatchResponse; response: Response; request: Request } | { error: Types.DeleteWordWatchErrors; response: Response; request: Request }>;
+      (params: Types.DeleteWordWatchData['path']): Promise<Types.DeleteWordWatchResponse>;
     };
     identifyDictionaryWord: {
       (params: NonNullable<Types.IdentifyDictionaryWordData['query']> & { throwOnError: false }): Promise<{ data: Types.IdentifyDictionaryWordResponse; response: Response; request: Request } | { error: Types.IdentifyDictionaryWordErrors; response: Response; request: Request }>;
@@ -1012,6 +1046,62 @@ export function createNadeshikoClient(config: NadeshikoConfig): NadeshikoClient 
     return tOE === false ? p : p.then((r: any) => r.data);
   };
 
+  const _listNotifications = (params?: any) => {
+    const { throwOnError: tOE, ...query } = params ?? {};
+    const p = listNotifications({ ...(Object.keys(query).length > 0 ? { query } : {}), client: clientInstance, throwOnError: tOE === false ? false : true } as any);
+    return tOE === false ? p : p.then((r: any) => r.data);
+  };
+
+  const _getUnreadNotificationCount = (params?: any) => {
+    const tOE = params?.throwOnError;
+    const p = getUnreadNotificationCount({ client: clientInstance, throwOnError: tOE === false ? false : true } as any);
+    return tOE === false ? p : p.then((r: any) => r.data);
+  };
+
+  const _markNotificationsRead = (params?: any) => {
+    const { throwOnError: tOE, ...body } = params ?? {};
+    const p = markNotificationsRead({ body, client: clientInstance, throwOnError: tOE === false ? false : true } as any);
+    return tOE === false ? p : p.then((r: any) => r.data);
+  };
+
+  const _listWordWatches = (params?: any) => {
+    const tOE = params?.throwOnError;
+    const p = listWordWatches({ client: clientInstance, throwOnError: tOE === false ? false : true } as any);
+    return tOE === false ? p : p.then((r: any) => r.data);
+  };
+
+  const _setWordWatch = (params?: any) => {
+    const { throwOnError: tOE, ...body } = params ?? {};
+    const p = setWordWatch({ body, client: clientInstance, throwOnError: tOE === false ? false : true } as any);
+    return tOE === false ? p : p.then((r: any) => r.data);
+  };
+
+  const _checkWordWatch = (params?: any) => {
+    const { throwOnError: tOE, ...query } = params ?? {};
+    const p = checkWordWatch({ ...(Object.keys(query).length > 0 ? { query } : {}), client: clientInstance, throwOnError: tOE === false ? false : true } as any);
+    return tOE === false ? p : p.then((r: any) => r.data);
+  };
+
+  const _updateWordWatch = (paramsOrId?: any) => {
+    if (typeof paramsOrId === 'string') {
+      return updateWordWatch({ throwOnError: true, path: { watchId: paramsOrId }, client: clientInstance } as any).then((r: any) => r.data);
+    }
+    const params = paramsOrId;
+    const { throwOnError: tOE, watchId, ...body } = params ?? {};
+    const p = updateWordWatch({ path: { watchId }, body, client: clientInstance, throwOnError: tOE === false ? false : true } as any);
+    return tOE === false ? p : p.then((r: any) => r.data);
+  };
+
+  const _deleteWordWatch = (paramsOrId?: any) => {
+    if (typeof paramsOrId === 'string') {
+      return deleteWordWatch({ throwOnError: true, path: { watchId: paramsOrId }, client: clientInstance } as any).then((r: any) => r.data);
+    }
+    const params = paramsOrId;
+    const { throwOnError: tOE, watchId } = params ?? {};
+    const p = deleteWordWatch({ path: { watchId }, client: clientInstance, throwOnError: tOE === false ? false : true } as any);
+    return tOE === false ? p : p.then((r: any) => r.data);
+  };
+
   const _identifyDictionaryWord = (params?: any) => {
     const { throwOnError: tOE, ...query } = params ?? {};
     const p = identifyDictionaryWord({ ...(Object.keys(query).length > 0 ? { query } : {}), client: clientInstance, throwOnError: tOE === false ? false : true } as any);
@@ -1677,6 +1767,14 @@ export function createNadeshikoClient(config: NadeshikoConfig): NadeshikoClient 
     voteContentRequest: _voteContentRequest,
     unvoteContentRequest: _unvoteContentRequest,
     boostContentRequest: _boostContentRequest,
+    listNotifications: _listNotifications,
+    getUnreadNotificationCount: _getUnreadNotificationCount,
+    markNotificationsRead: _markNotificationsRead,
+    listWordWatches: _listWordWatches,
+    setWordWatch: _setWordWatch,
+    checkWordWatch: _checkWordWatch,
+    updateWordWatch: _updateWordWatch,
+    deleteWordWatch: _deleteWordWatch,
     identifyDictionaryWord: _identifyDictionaryWord,
     getDictionaryKanjiIndex: _getDictionaryKanjiIndex,
     getDictionaryKanji: _getDictionaryKanji,

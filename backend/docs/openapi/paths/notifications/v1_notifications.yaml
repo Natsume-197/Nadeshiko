@@ -1,0 +1,35 @@
+get:
+  tags: [Notifications]
+  x-internal: true
+  operationId: listNotifications
+  summary: The signed-in reader's notifications, newest first
+  security:
+    - SessionCookie: []
+  parameters:
+    - in: query
+      name: take
+      required: false
+      schema: { type: integer, minimum: 1, maximum: 50, default: 20 }
+    - in: query
+      name: before
+      required: false
+      description: Only entries created before this instant (the `createdAt` of the last entry of the previous page).
+      schema: { type: string, format: date-time }
+  responses:
+    "200":
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [items, unreadCount, hasMore]
+            properties:
+              items:
+                type: array
+                items: { $ref: "../../components/schemas/Notification.yaml" }
+              unreadCount: { type: integer }
+              hasMore: { type: boolean }
+    "400": { $ref: "../../components/responses/BadRequest.yaml" }
+    "401": { $ref: "../../components/responses/Unauthorized.yaml" }
+    "429": { $ref: "../../components/responses/TooManyRequests.yaml" }
+    "500": { $ref: "../../components/responses/InternalServerError.yaml" }

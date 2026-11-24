@@ -82,7 +82,7 @@ const togglingProductEmails = ref(false);
  * checkbox that showed them as explicitly on would be inventing a decision they
  * never made.
  */
-const EMAIL_CATEGORIES = ['recap', 'checkins', 'updates', 'requests'] as const;
+const EMAIL_CATEGORIES = ['recap', 'checkins', 'updates', 'requests', 'words'] as const;
 type EmailCategory = (typeof EMAIL_CATEGORIES)[number];
 
 const emailCategories = reactive(

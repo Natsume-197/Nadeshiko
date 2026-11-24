@@ -9,6 +9,7 @@ import { registerDictionaryRefreshWorker } from '@app/workers/dictionaryRefreshW
 import { registerRecurringLinesWorker } from '@app/workers/recurringLinesWorker';
 import { registerPatreonMembershipRefreshWorker } from '@app/workers/patreonMembershipRefreshWorker';
 import { registerUserDictionaryImportWorker } from '@app/workers/userDictionaryImportWorker';
+import { registerWordWatchWorkers } from '@app/workers/wordWatchWorker';
 import { closeAllArtifactHandles } from '@app/services/dictionary/custom/sqlitePool';
 import { sendRecurringSweepJob } from '@app/workers/recurringLinesQueue';
 import { setBossInstance } from '@app/workers/pgBossClient';
@@ -30,6 +31,8 @@ import {
   PATREON_MEMBERSHIP_REFRESH_QUEUE,
   USER_DICTIONARY_IMPORT_QUEUE,
   USER_DICTIONARY_MAINTENANCE_QUEUE,
+  WORD_WATCH_FIRST_QUEUE,
+  WORD_WATCH_DIGEST_QUEUE,
 } from '@app/workers/queueNames';
 import { getAppPostgresConfig } from '@config/postgresConfig';
 import { logger } from '@config/log';
@@ -213,6 +216,27 @@ export const workersInitializer: RuntimeInitializer = {
         },
       },
       {
+        name: WORD_WATCH_FIRST_QUEUE,
+        options: {
+          // One retry for a DB or Elasticsearch blip; a second failure waits for tomorrow. A rerun is safe: met alerts
+          // are closed as they are found, and the email job key carries the day.
+          retryLimit: 1,
+          retryDelay: 300,
+          expireInSeconds: 3600,
+          retentionSeconds: 86400,
+        },
+      },
+      {
+        name: WORD_WATCH_DIGEST_QUEUE,
+        options: {
+          // Same as above; the email job key carries the ISO week.
+          retryLimit: 1,
+          retryDelay: 300,
+          expireInSeconds: 3600,
+          retentionSeconds: 7 * 86400,
+        },
+      },
+      {
         name: USER_DICTIONARY_MAINTENANCE_QUEUE,
         options: {
           retryLimit: 1,
@@ -247,6 +271,10 @@ export const workersInitializer: RuntimeInitializer = {
     // Custom dictionaries (task 48): interrupted imports, orphaned artifacts, local cache size. A no-op while
     // USER_DICTIONARIES_ENABLED is off.
     await boss.schedule(USER_DICTIONARY_MAINTENANCE_QUEUE, '45 2 * * *', {});
+    // Word alerts (task 52): after the lifecycle sweep, out of search's busy hours. The digest goes out on Mondays,
+    // after the daily sweep has run.
+    await boss.schedule(WORD_WATCH_FIRST_QUEUE, '30 5 * * *', {});
+    await boss.schedule(WORD_WATCH_DIGEST_QUEUE, '15 6 * * 1', {});
     logger.info('PgBoss initialized, queues created, cron scheduled');
 
     setBossInstance(boss);
@@ -262,6 +290,7 @@ export const workersInitializer: RuntimeInitializer = {
     await registerRecurringLinesWorker(boss);
     await registerPatreonMembershipRefreshWorker(boss);
     await registerUserDictionaryImportWorker(boss);
+    await registerWordWatchWorkers(boss);
     // Also sweep at boot: the first deploy fills the flags with no manual step, and any later deploy converges them.
     // Collapsed to one sweep per ten minutes, so a burst of restarts does not queue several.
     await sendRecurringSweepJob('boot');

@@ -8,7 +8,7 @@ import { mutateUserPreferences } from '@app/controllers/preferencesController';
  * rows. */
 /** Categories represent independently meaningful mail commitments; a support ask belongs to its containing category
  * or a separate bulk system, not a new key. */
-export const EMAIL_CATEGORIES = ['recap', 'checkins', 'updates', 'requests'] as const;
+export const EMAIL_CATEGORIES = ['recap', 'checkins', 'updates', 'requests', 'words'] as const;
 
 export type EmailCategory = (typeof EMAIL_CATEGORIES)[number];
 

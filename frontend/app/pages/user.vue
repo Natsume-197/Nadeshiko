@@ -11,6 +11,7 @@ import {
   mdiViewDashboardOutline,
   mdiPaletteOutline,
   mdiBookOpenVariantOutline,
+  mdiBellOutline,
 } from '@mdi/js';
 import { useDragScroll } from '~/composables/useDragScroll';
 import { splitLocalePrefix } from '~/utils/routes';
@@ -23,6 +24,7 @@ const store = userStore();
 
 const tabsGeneral = computed(() => [
   { name: t('accountSettings.tabs.settings'), icon: mdiAccount, route: '/user/settings' },
+  { name: t('accountSettings.tabs.notifications'), icon: mdiBellOutline, route: '/user/notifications' },
   { name: t('accountSettings.tabs.themes'), icon: mdiPaletteOutline, route: '/user/themes' },
   ...(store.customDictionariesAvailable
     ? [{ name: t('accountSettings.tabs.dictionaries'), icon: mdiBookOpenVariantOutline, route: '/user/dictionaries' }]

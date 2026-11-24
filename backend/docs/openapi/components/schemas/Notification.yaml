@@ -1,0 +1,27 @@
+type: object
+description: One entry in the reader's notification centre (the bell).
+required: [id, kind, payload, read, createdAt]
+properties:
+  id:
+    type: string
+    format: uuid
+  kind:
+    type: string
+    enum: [word-available, word-digest, request-update]
+    description: |
+      `word-available`: watched words that started returning sentences.
+      `word-digest`: new sentences for followed words this week.
+      `request-update`: a content request the reader backed started or shipped.
+  payload:
+    type: object
+    additionalProperties: true
+    description: |
+      What the site needs to draw the entry. Word kinds carry `words`, a list of
+      `{ query, matchMode, titles, sentences | newSentences }` (the site builds the
+      link from the query and match mode); `request-update` carries
+      `{ status, title, path }`.
+  read:
+    type: boolean
+  createdAt:
+    type: string
+    format: date-time

@@ -3,17 +3,7 @@
  * already lists. Shared by the search page, which decides whether to ask, and the Nitro route, which picks the entry.
  */
 
-/** Longest query that can be a single dictionary word; anything longer is a phrase. */
-const MAX_WORD_LENGTH = 16;
-
-const JAPANESE_WORD = /^[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}ー々〆ヶ]+$/u;
-
-/** Whether a search query can be one dictionary word: Japanese script only, no spaces or punctuation, short. */
-export function isWordQuery(query: string): boolean {
-  const text = query.trim();
-  const length = [...text].length;
-  return length > 0 && length <= MAX_WORD_LENGTH && JAPANESE_WORD.test(text);
-}
+export { isWordQuery } from '@brigadasos/nadeshiko-shared/wordQuery';
 
 /** Katakana to hiragana, so ヨム and よむ are the same spelling. */
 export function toHiragana(text: string): string {

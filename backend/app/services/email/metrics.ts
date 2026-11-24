@@ -56,6 +56,8 @@ export type EmailKind =
   | 'dormant-30'
   | 'recap'
   | 'request-update'
+  | 'word-available'
+  | 'word-digest'
   | 'unknown';
 
 export const EMAIL_KINDS: readonly EmailKind[] = [
@@ -67,6 +69,8 @@ export const EMAIL_KINDS: readonly EmailKind[] = [
   'dormant-30',
   'recap',
   'request-update',
+  'word-available',
+  'word-digest',
   'unknown',
 ];
 

@@ -319,6 +319,102 @@ export type Error409 = {
 };
 
 /**
+ * One entry in the reader's notification centre (the bell).
+ */
+export type Notification = {
+    id: string;
+    /**
+     * `word-available`: watched words that started returning sentences.
+     * `word-digest`: new sentences for followed words this week.
+     * `request-update`: a content request the reader backed started or shipped.
+     *
+     */
+    kind: 'word-available' | 'word-digest' | 'request-update';
+    /**
+     * What the site needs to draw the entry. Word kinds carry `words`, a list of
+     * `{ query, matchMode, titles, sentences | newSentences }` (the site builds the
+     * link from the query and match mode); `request-update` carries
+     * `{ status, title, path }`.
+     *
+     */
+    payload: {
+        [key: string]: unknown;
+    };
+    read: boolean;
+    createdAt: string;
+};
+
+/**
+ * One of the reader's word alerts.
+ */
+export type WordWatch = {
+    id: string;
+    /**
+     * The watched word, NFKC-normalised.
+     */
+    query: string;
+    matchMode: 'WORD' | 'EXACT' | 'CONTAINS';
+    /**
+     * `FIRST`: one notice when the word starts returning sentences, then the
+     * alert is `FULFILLED`. `NEW_SENTENCES`: a weekly digest of new sentences.
+     *
+     */
+    mode: 'FIRST' | 'NEW_SENTENCES';
+    status: 'ACTIVE' | 'FULFILLED' | 'PAUSED';
+    lastNotifiedAt: string | null;
+    createdAt: string;
+};
+
+export type WordWatchSetResponse = {
+    watch: WordWatch;
+    outcome: 'created' | 'updated';
+    /**
+     * Sentences the word has in the reader's own search right now.
+     */
+    sentenceCount: number;
+    /**
+     * A new-sentences alert on a word so common that the weekly digest will bring a lot; the site warns.
+     */
+    commonWord: boolean;
+};
+
+/**
+ * Service Unavailable error response
+ */
+export type Error503 = {
+    /**
+     * Specific error code for programmatic handling
+     */
+    code: 'SERVICE_OVERLOADED';
+    /**
+     * A short, human-readable summary of the problem
+     */
+    title: string;
+    /**
+     * A human-readable explanation specific to this occurrence
+     */
+    detail: string;
+    /**
+     * A URI reference that identifies the problem type (`about:blank` when the problem has no further semantics beyond the HTTP status, per RFC 9457)
+     */
+    type?: string;
+    /**
+     * A URI reference that identifies the specific occurrence (e.g., trace ID)
+     */
+    instance?: string;
+    /**
+     * The HTTP status code
+     */
+    status: 503;
+    /**
+     * Optional map of field names to their error messages (for validation errors)
+     */
+    errors?: {
+        [key: string]: string;
+    };
+};
+
+/**
  * What to search for (omit for queryless browse/stats)
  */
 export type SearchQuery = {
@@ -852,42 +948,6 @@ export type SearchResponse = {
         };
     };
     pagination: SearchPagination;
-};
-
-/**
- * Service Unavailable error response
- */
-export type Error503 = {
-    /**
-     * Specific error code for programmatic handling
-     */
-    code: 'SERVICE_OVERLOADED';
-    /**
-     * A short, human-readable summary of the problem
-     */
-    title: string;
-    /**
-     * A human-readable explanation specific to this occurrence
-     */
-    detail: string;
-    /**
-     * A URI reference that identifies the problem type (`about:blank` when the problem has no further semantics beyond the HTTP status, per RFC 9457)
-     */
-    type?: string;
-    /**
-     * A URI reference that identifies the specific occurrence (e.g., trace ID)
-     */
-    instance?: string;
-    /**
-     * The HTTP status code
-     */
-    status: 503;
-    /**
-     * Optional map of field names to their error messages (for validation errors)
-     */
-    errors?: {
-        [key: string]: string;
-    };
 };
 
 /**
@@ -2592,6 +2652,22 @@ export type UserPreferences = {
          *
          */
         requests?: boolean;
+        /**
+         * Word alerts by email: a watched word first appearing, and the weekly
+         * digest of new sentences for followed words. Absent means follow
+         * `enabled`.
+         *
+         */
+        words?: boolean;
+    };
+    /**
+     * The site channel of the notification centre (the bell), per category.
+     * Absent means on. Email has its own switches in `productEmails`.
+     *
+     */
+    siteNotifications?: {
+        words?: boolean;
+        requests?: boolean;
     };
     /**
      * A patron's custom theme: a light or dark base plus an accent and a page
@@ -3956,6 +4032,361 @@ export type BoostContentRequestResponses = {
 };
 
 export type BoostContentRequestResponse = BoostContentRequestResponses[keyof BoostContentRequestResponses];
+
+export type ListNotificationsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        take?: number;
+        /**
+         * Only entries created before this instant (the `createdAt` of the last entry of the previous page).
+         */
+        before?: string;
+    };
+    url: '/v1/notifications';
+};
+
+export type ListNotificationsErrors = {
+    /**
+     * Bad Request
+     */
+    400: Error400;
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Too Many Requests. The response body indicates whether the request was rejected due to per-minute rate limiting or monthly quota exhaustion.
+     */
+    429: Error429;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type ListNotificationsError = ListNotificationsErrors[keyof ListNotificationsErrors];
+
+export type ListNotificationsResponses = {
+    /**
+     * OK
+     */
+    200: {
+        items: Array<Notification>;
+        unreadCount: number;
+        hasMore: boolean;
+    };
+};
+
+export type ListNotificationsResponse = ListNotificationsResponses[keyof ListNotificationsResponses];
+
+export type GetUnreadNotificationCountData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/notifications/unread-count';
+};
+
+export type GetUnreadNotificationCountErrors = {
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Too Many Requests. The response body indicates whether the request was rejected due to per-minute rate limiting or monthly quota exhaustion.
+     */
+    429: Error429;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type GetUnreadNotificationCountError = GetUnreadNotificationCountErrors[keyof GetUnreadNotificationCountErrors];
+
+export type GetUnreadNotificationCountResponses = {
+    /**
+     * OK
+     */
+    200: {
+        count: number;
+    };
+};
+
+export type GetUnreadNotificationCountResponse = GetUnreadNotificationCountResponses[keyof GetUnreadNotificationCountResponses];
+
+export type MarkNotificationsReadData = {
+    body: {
+        ids?: Array<string>;
+    };
+    path?: never;
+    query?: never;
+    url: '/v1/notifications/read';
+};
+
+export type MarkNotificationsReadErrors = {
+    /**
+     * Bad Request
+     */
+    400: Error400;
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Too Many Requests. The response body indicates whether the request was rejected due to per-minute rate limiting or monthly quota exhaustion.
+     */
+    429: Error429;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type MarkNotificationsReadError = MarkNotificationsReadErrors[keyof MarkNotificationsReadErrors];
+
+export type MarkNotificationsReadResponses = {
+    /**
+     * OK
+     */
+    200: {
+        unreadCount: number;
+    };
+};
+
+export type MarkNotificationsReadResponse = MarkNotificationsReadResponses[keyof MarkNotificationsReadResponses];
+
+export type ListWordWatchesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/word-watches';
+};
+
+export type ListWordWatchesErrors = {
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Too Many Requests. The response body indicates whether the request was rejected due to per-minute rate limiting or monthly quota exhaustion.
+     */
+    429: Error429;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type ListWordWatchesError = ListWordWatchesErrors[keyof ListWordWatchesErrors];
+
+export type ListWordWatchesResponses = {
+    /**
+     * OK
+     */
+    200: {
+        items: Array<WordWatch>;
+        activeCount: number;
+        /**
+         * Active alerts this reader may have (more for patrons).
+         */
+        limit: number;
+    };
+};
+
+export type ListWordWatchesResponse = ListWordWatchesResponses[keyof ListWordWatchesResponses];
+
+export type SetWordWatchData = {
+    body: {
+        query: string;
+        matchMode?: 'WORD' | 'EXACT' | 'CONTAINS';
+        mode: 'FIRST' | 'NEW_SENTENCES';
+    };
+    path?: never;
+    query?: never;
+    url: '/v1/word-watches';
+};
+
+export type SetWordWatchErrors = {
+    /**
+     * Bad Request
+     */
+    400: Error400;
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Forbidden
+     */
+    403: Error403;
+    /**
+     * Too Many Requests. The response body indicates whether the request was rejected due to per-minute rate limiting or monthly quota exhaustion.
+     */
+    429: Error429;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+    /**
+     * Service Unavailable. The server is already running as many requests of this kind as it can and refused this one rather than queue it. Nothing about the caller was counted -- this is not a rate limit -- so there is no budget to stay inside; wait the number of seconds in the `Retry-After` header and send the same request again.
+     */
+    503: Error503;
+};
+
+export type SetWordWatchError = SetWordWatchErrors[keyof SetWordWatchErrors];
+
+export type SetWordWatchResponses = {
+    /**
+     * An existing alert was switched
+     */
+    200: WordWatchSetResponse;
+    /**
+     * Created
+     */
+    201: WordWatchSetResponse;
+};
+
+export type SetWordWatchResponse = SetWordWatchResponses[keyof SetWordWatchResponses];
+
+export type CheckWordWatchData = {
+    body?: never;
+    path?: never;
+    query: {
+        query: string;
+        matchMode?: 'WORD' | 'EXACT' | 'CONTAINS';
+    };
+    url: '/v1/word-watches/check';
+};
+
+export type CheckWordWatchErrors = {
+    /**
+     * Bad Request
+     */
+    400: Error400;
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Too Many Requests. The response body indicates whether the request was rejected due to per-minute rate limiting or monthly quota exhaustion.
+     */
+    429: Error429;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type CheckWordWatchError = CheckWordWatchErrors[keyof CheckWordWatchErrors];
+
+export type CheckWordWatchResponses = {
+    /**
+     * OK
+     */
+    200: {
+        watch: WordWatch | null;
+    };
+};
+
+export type CheckWordWatchResponse = CheckWordWatchResponses[keyof CheckWordWatchResponses];
+
+export type DeleteWordWatchData = {
+    body?: never;
+    path: {
+        watchId: string;
+    };
+    query?: never;
+    url: '/v1/word-watches/{watchId}';
+};
+
+export type DeleteWordWatchErrors = {
+    /**
+     * Bad Request
+     */
+    400: Error400;
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Not Found
+     */
+    404: Error404;
+    /**
+     * Too Many Requests. The response body indicates whether the request was rejected due to per-minute rate limiting or monthly quota exhaustion.
+     */
+    429: Error429;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type DeleteWordWatchError = DeleteWordWatchErrors[keyof DeleteWordWatchErrors];
+
+export type DeleteWordWatchResponses = {
+    /**
+     * Removed
+     */
+    204: void;
+};
+
+export type DeleteWordWatchResponse = DeleteWordWatchResponses[keyof DeleteWordWatchResponses];
+
+export type UpdateWordWatchData = {
+    body: {
+        mode?: 'FIRST' | 'NEW_SENTENCES';
+        paused?: boolean;
+    };
+    path: {
+        watchId: string;
+    };
+    query?: never;
+    url: '/v1/word-watches/{watchId}';
+};
+
+export type UpdateWordWatchErrors = {
+    /**
+     * Bad Request
+     */
+    400: Error400;
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Forbidden
+     */
+    403: Error403;
+    /**
+     * Not Found
+     */
+    404: Error404;
+    /**
+     * Too Many Requests. The response body indicates whether the request was rejected due to per-minute rate limiting or monthly quota exhaustion.
+     */
+    429: Error429;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+    /**
+     * Service Unavailable. The server is already running as many requests of this kind as it can and refused this one rather than queue it. Nothing about the caller was counted -- this is not a rate limit -- so there is no budget to stay inside; wait the number of seconds in the `Retry-After` header and send the same request again.
+     */
+    503: Error503;
+};
+
+export type UpdateWordWatchError = UpdateWordWatchErrors[keyof UpdateWordWatchErrors];
+
+export type UpdateWordWatchResponses = {
+    /**
+     * OK
+     */
+    200: WordWatch;
+};
+
+export type UpdateWordWatchResponse = UpdateWordWatchResponses[keyof UpdateWordWatchResponses];
 
 export type SearchData = {
     body: SearchRequest;
@@ -7009,6 +7440,7 @@ export type GetEmailPreferencesByTokenResponses = {
             checkins: boolean;
             updates: boolean;
             requests: boolean;
+            words: boolean;
         };
         /**
          * Which category the email carrying this token belonged to, when
@@ -7016,7 +7448,7 @@ export type GetEmailPreferencesByTokenResponses = {
          * the reader clicked about.
          *
          */
-        category?: 'recap' | 'checkins' | 'updates' | 'requests';
+        category?: 'recap' | 'checkins' | 'updates' | 'requests' | 'words';
     };
 };
 
@@ -7037,6 +7469,7 @@ export type UpdateEmailPreferencesByTokenData = {
         checkins?: boolean;
         updates?: boolean;
         requests?: boolean;
+        words?: boolean;
     };
     path?: never;
     query?: never;
@@ -7063,6 +7496,7 @@ export type UpdateEmailPreferencesByTokenResponses = {
             checkins: boolean;
             updates: boolean;
             requests: boolean;
+            words: boolean;
         };
     };
 };

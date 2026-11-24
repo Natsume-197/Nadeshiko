@@ -1,0 +1,28 @@
+type: object
+description: One of the reader's word alerts.
+required: [id, query, matchMode, mode, status, lastNotifiedAt, createdAt]
+properties:
+  id:
+    type: string
+    format: uuid
+  query:
+    type: string
+    description: The watched word, NFKC-normalised.
+  matchMode:
+    type: string
+    enum: [WORD, EXACT, CONTAINS]
+  mode:
+    type: string
+    enum: [FIRST, NEW_SENTENCES]
+    description: |
+      `FIRST`: one notice when the word starts returning sentences, then the
+      alert is `FULFILLED`. `NEW_SENTENCES`: a weekly digest of new sentences.
+  status:
+    type: string
+    enum: [ACTIVE, FULFILLED, PAUSED]
+  lastNotifiedAt:
+    type: [string, "null"]
+    format: date-time
+  createdAt:
+    type: string
+    format: date-time

@@ -56,8 +56,9 @@ export type GetEmailPreferencesByTokenResponder = {
       recap: boolean;
       requests: boolean;
       updates: boolean;
+      words: boolean;
     };
-    category?: 'recap' | 'checkins' | 'updates' | 'requests' | null;
+    category?: 'recap' | 'checkins' | 'updates' | 'requests' | 'words' | null;
     enabled: boolean;
   }>;
   with400(): ExpressRuntimeResponse<t_Error400>;
@@ -78,6 +79,7 @@ export type UpdateEmailPreferencesByTokenResponder = {
       recap: boolean;
       requests: boolean;
       updates: boolean;
+      words: boolean;
     };
     enabled: boolean;
   }>;
@@ -170,8 +172,9 @@ export function createEmailRouter(
             checkins: PermissiveBoolean,
             updates: PermissiveBoolean,
             requests: PermissiveBoolean,
+            words: PermissiveBoolean,
           }),
-          category: z.enum(['recap', 'checkins', 'updates', 'requests']).nullable().optional(),
+          category: z.enum(['recap', 'checkins', 'updates', 'requests', 'words']).nullable().optional(),
         }),
       ],
       ['400', s_Error400],
@@ -197,8 +200,9 @@ export function createEmailRouter(
               recap: boolean;
               requests: boolean;
               updates: boolean;
+              words: boolean;
             };
-            category?: 'recap' | 'checkins' | 'updates' | 'requests' | null;
+            category?: 'recap' | 'checkins' | 'updates' | 'requests' | 'words' | null;
             enabled: boolean;
           }>(200);
         },
@@ -230,6 +234,7 @@ export function createEmailRouter(
             checkins: PermissiveBoolean,
             updates: PermissiveBoolean,
             requests: PermissiveBoolean,
+            words: PermissiveBoolean,
           }),
         }),
       ],
@@ -256,6 +261,7 @@ export function createEmailRouter(
               recap: boolean;
               requests: boolean;
               updates: boolean;
+              words: boolean;
             };
             enabled: boolean;
           }>(200);

@@ -44,7 +44,8 @@
       "language": "Bahasa",
       "logout": "Keluar",
       "requests": "Permintaan",
-      "admin": "Admin"
+      "admin": "Admin",
+      "notifications": "Notifikasi"
     }
   },
   "announcementBanner": {
@@ -521,7 +522,8 @@
       "users": "Pengguna",
       "reports": "Laporan",
       "announcement": "Pengumuman",
-      "dictionaries": "Kamus"
+      "dictionaries": "Kamus",
+      "notifications": "Notifikasi"
     },
     "dashboard": {
       "roles": {
@@ -1062,7 +1064,9 @@
       "turnedOn": "{name}: aktif",
       "turnedOff": "{name}: nonaktif",
       "requestsTitle": "Permintaanmu",
-      "requestsDescription": "Kabar tentang judul yang kamu pilih: saat mulai dikerjakan dan saat dirilis."
+      "requestsDescription": "Kabar tentang judul yang kamu pilih: saat mulai dikerjakan dan saat dirilis.",
+      "wordsTitle": "Peringatan kata",
+      "wordsDescription": "Kata baru dan ringkasan mingguan."
     },
     "dictionaries": {
       "title": "Kamus Kustom",
@@ -2058,6 +2062,59 @@
     "tabs": {
       "campaign": "Anggota Patreon ({count})",
       "linked": "Akun tertaut ({count})"
+    }
+  },
+  "notifications": {
+    "bell": {
+      "label": "Notifikasi",
+      "labelUnread": "Notifikasi, {count} belum dibaca",
+      "unreadDot": "Belum dibaca",
+      "empty": "Belum ada yang baru.",
+      "loading": "Memuat…",
+      "markAllRead": "Tandai semua sudah dibaca",
+      "settings": "Pengaturan notifikasi",
+      "loadMore": "Tampilkan yang lebih lama"
+    },
+    "kinds": {
+      "wordAvailable": "{word} sudah ada di Nadeshiko",
+      "wordAvailableMany": "{count} kata kamu sudah ada di Nadeshiko",
+      "wordDigest": "{count} kalimat baru untuk {word}",
+      "wordDigestMany": "Kalimat baru untuk {count} kata kamu",
+      "requestInProgress": "Mulai mengerjakan {title}",
+      "requestReleased": "{title} sudah ada di Nadeshiko"
+    },
+    "alerts": {
+      "title": "Peringatan kata",
+      "count": "{active}/{limit}",
+      "empty": "Belum ada peringatan.",
+      "loadError": "Gagal memuat.",
+      "modeFirst": "Menunggu",
+      "modeNew": "Mengikuti",
+      "statusFulfilled": "Sudah muncul",
+      "statusPaused": "Dijeda",
+      "followNew": "Ikuti",
+      "pause": "Jeda",
+      "resume": "Lanjutkan",
+      "remove": "Hapus",
+      "removeWord": "Hapus peringatan untuk {word}"
+    },
+    "channels": {
+      "title": "Saluran",
+      "site": "Situs",
+      "email": "Email",
+      "emailOff": "Email dimatikan.",
+      "emailOffLink": "Pengaturan"
+    },
+    "watch": {
+      "notify": "Beri tahu saya saat muncul",
+      "notifyOn": "Peringatan aktif",
+      "follow": "Ikuti",
+      "following": "Mengikuti",
+      "commonWarning": "{count} kalimat: akan banyak.",
+      "limit": "Batas peringatan tercapai.",
+      "alreadyThere": "Kata ini sudah punya kalimat.",
+      "busy": "Sibuk. Coba lagi nanti.",
+      "error": "Gagal menyimpan."
     }
   }
 }

@@ -3,6 +3,7 @@
 
 export * as roadmap from './internal/roadmap.gen';
 export * as requests from './internal/requests.gen';
+export * as notifications from './internal/notifications.gen';
 export * as search from './internal/search.gen';
 export * as stats from './internal/stats.gen';
 export * as media from './internal/media.gen';

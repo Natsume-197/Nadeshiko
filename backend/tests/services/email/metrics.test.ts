@@ -62,6 +62,8 @@ describe('the email metric contract', () => {
       'unknown',
       'verify-new-email',
       'welcome',
+      'word-available',
+      'word-digest',
     ]);
 
     const events = findMetric(resource, 'email.events');

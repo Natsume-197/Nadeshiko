@@ -413,6 +413,14 @@ export const s_MediaSearchStats = z.object({
   ),
 });
 
+export const s_Notification = z.object({
+  id: z.string(),
+  kind: z.enum(['word-available', 'word-digest', 'request-update']),
+  payload: z.record(z.string(), z.unknown()),
+  read: PermissiveBoolean,
+  createdAt: z.iso.datetime({ offset: true }),
+});
+
 export const s_PatreonConnection = z.object({
   linked: PermissiveBoolean,
   fullName: z.string().nullable(),
@@ -652,6 +660,16 @@ export const s_WordCoverageTier = z.object({
 export const s_WordMatchMedia = z.object({
   mediaPublicId: z.string().regex(new RegExp('^[A-Za-z0-9_-]{12}$')),
   matchCount: z.coerce.number().min(0),
+});
+
+export const s_WordWatch = z.object({
+  id: z.string(),
+  query: z.string(),
+  matchMode: z.enum(['WORD', 'EXACT', 'CONTAINS']),
+  mode: z.enum(['FIRST', 'NEW_SENTENCES']),
+  status: z.enum(['ACTIVE', 'FULFILLED', 'PAUSED']),
+  lastNotifiedAt: z.iso.datetime({ offset: true }).nullable(),
+  createdAt: z.iso.datetime({ offset: true }),
 });
 
 export const s_AdminContentRequest = s_ContentRequest.extend({
@@ -1125,7 +1143,11 @@ export const s_UserPreferences = z.object({
       checkins: PermissiveBoolean.optional(),
       updates: PermissiveBoolean.optional(),
       requests: PermissiveBoolean.optional(),
+      words: PermissiveBoolean.optional(),
     })
+    .optional(),
+  siteNotifications: z
+    .object({ words: PermissiveBoolean.optional(), requests: PermissiveBoolean.optional() })
     .optional(),
   customTheme: z
     .object({
@@ -1146,6 +1168,13 @@ export const s_WordMatch = z.object({
   matchCount: z.coerce.number().min(0),
   realMatchCount: z.coerce.number().min(0),
   media: z.array(s_WordMatchMedia),
+});
+
+export const s_WordWatchSetResponse = z.object({
+  watch: s_WordWatch,
+  outcome: z.enum(['created', 'updated']),
+  sentenceCount: z.coerce.number(),
+  commonWord: PermissiveBoolean,
 });
 
 export const s_AdminReportGroup = z.object({
@@ -1313,6 +1342,19 @@ export const s_CreateContentRequestRequestBody = z.object({
   note: z.string().max(1000).optional(),
 });
 
+export const s_MarkNotificationsReadRequestBody = z.object({ ids: z.array(z.string()).max(100).optional() });
+
+export const s_SetWordWatchRequestBody = z.object({
+  query: z.string().min(1).max(64),
+  matchMode: z.enum(['WORD', 'EXACT', 'CONTAINS']).optional().default('WORD'),
+  mode: z.enum(['FIRST', 'NEW_SENTENCES']),
+});
+
+export const s_UpdateWordWatchRequestBody = z.object({
+  mode: z.enum(['FIRST', 'NEW_SENTENCES']).optional(),
+  paused: PermissiveBoolean.optional(),
+});
+
 export const s_CreateUserApiKeyRequestBody = z.object({
   name: z.string().min(1).max(100),
   scopes: z.array(s_ApiKeyScope).min(1).max(12),
@@ -1341,6 +1383,7 @@ export const s_UpdateEmailPreferencesByTokenRequestBody = z.object({
   checkins: PermissiveBoolean.optional(),
   updates: PermissiveBoolean.optional(),
   requests: PermissiveBoolean.optional(),
+  words: PermissiveBoolean.optional(),
 });
 
 export const s_UpdateAdminRoadmapItemRequestBody = z.object({

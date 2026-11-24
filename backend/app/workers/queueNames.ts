@@ -13,6 +13,8 @@ export const RECURRING_SWEEP_QUEUE = 'segment-recurring-sweep';
 export const PATREON_MEMBERSHIP_REFRESH_QUEUE = 'patreon-membership-refresh';
 export const USER_DICTIONARY_IMPORT_QUEUE = 'user-dictionary-import';
 export const USER_DICTIONARY_MAINTENANCE_QUEUE = 'user-dictionary-maintenance';
+export const WORD_WATCH_FIRST_QUEUE = 'word-watch-first';
+export const WORD_WATCH_DIGEST_QUEUE = 'word-watch-digest';
 
 const ES_SYNC_QUEUES = [ES_SYNC_CREATE_QUEUE, ES_SYNC_UPDATE_QUEUE, ES_SYNC_DELETE_QUEUE] as const;
 
@@ -32,6 +34,8 @@ export const ALL_QUEUES = [
   PATREON_MEMBERSHIP_REFRESH_QUEUE,
   USER_DICTIONARY_IMPORT_QUEUE,
   USER_DICTIONARY_MAINTENANCE_QUEUE,
+  WORD_WATCH_FIRST_QUEUE,
+  WORD_WATCH_DIGEST_QUEUE,
 ] as const;
 
 export type EsSyncQueueName = (typeof ES_SYNC_QUEUES)[number];

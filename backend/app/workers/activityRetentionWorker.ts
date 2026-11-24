@@ -2,6 +2,7 @@ import { PgBoss, Job } from 'pg-boss';
 import { UserActivity } from '@app/models/UserActivity';
 import { LessThan } from 'typeorm';
 import { logger } from '@config/log';
+import { pruneNotifications } from '@app/services/notifications/notify';
 import { ACTIVITY_RETENTION_QUEUE } from './queueNames';
 import { instrumentedHandler } from './workerInstrumentation';
 
@@ -27,6 +28,10 @@ async function handleRetentionCleanup(): Promise<void> {
 
     const count = result.affected || 0;
     logger.info({ count }, 'Activity retention cleanup complete');
+
+    // The notification centre's retention (task 52) rides the same nightly delete window.
+    const notifications = await pruneNotifications();
+    logger.info({ count: notifications }, 'Notification retention cleanup complete');
   } catch (error) {
     logger.error({ err: error }, 'Error during activity retention cleanup');
     throw error;

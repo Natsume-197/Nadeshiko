@@ -1,0 +1,14 @@
+type: object
+required: [watch, outcome, sentenceCount, commonWord]
+properties:
+  watch:
+    $ref: "./WordWatch.yaml"
+  outcome:
+    type: string
+    enum: [created, updated]
+  sentenceCount:
+    type: integer
+    description: Sentences the word has in the reader's own search right now.
+  commonWord:
+    type: boolean
+    description: A new-sentences alert on a word so common that the weekly digest will bring a lot; the site warns.
