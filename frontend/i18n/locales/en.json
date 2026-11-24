@@ -1119,7 +1119,10 @@
       "moveDown": "Move dictionary down",
       "enable": "Enable dictionary",
       "disable": "Disable dictionary",
-      "delete": "Delete dictionary"
+      "delete": "Delete dictionary",
+      "uploadButton": "Upload .zip",
+      "confirmDelete": "Delete",
+      "cancelDelete": "Cancel"
     },
     "general": {
       "searchSectionTitle": "Search and content",

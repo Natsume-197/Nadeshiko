@@ -6,6 +6,6 @@ const store = userStore();
 </script>
 
 <template>
-  <DictionaryPreferencesCard />
   <DictionarySettings v-if="store.customDictionariesAvailable" />
+  <DictionaryPreferencesCard />
 </template>

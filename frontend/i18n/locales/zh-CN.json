@@ -1119,7 +1119,10 @@
       "moveDown": "下移词典",
       "enable": "启用词典",
       "disable": "停用词典",
-      "delete": "删除词典"
+      "delete": "删除词典",
+      "uploadButton": "上传 .zip",
+      "confirmDelete": "删除",
+      "cancelDelete": "取消"
     },
     "general": {
       "searchSectionTitle": "搜索与内容",

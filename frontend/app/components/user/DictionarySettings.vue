@@ -3,10 +3,11 @@ import { dictionaryImportError } from '~/utils/dictionaryImportError';
 import {
   mdiArrowDown,
   mdiArrowUp,
-  mdiBookOpenVariantOutline,
   mdiCloudUploadOutline,
   mdiDeleteOutline,
+  mdiDragVertical,
   mdiLoading,
+  mdiPlus,
 } from '@mdi/js';
 import type { UserDictionary, UserDictionaryListResponse } from '@brigadasos/nadeshiko-sdk';
 import { useI18n } from 'vue-i18n';
@@ -37,12 +38,20 @@ const data = ref<UserDictionaryListResponse | null>(null);
 const loading = ref(true);
 const saving = ref(false);
 const deletingId = ref<number | null>(null);
+const confirmDeleteId = ref<number | null>(null);
 
 const draggingFile = ref(false);
+const draggedRowIndex = ref<number | null>(null);
+const dragOverRowIndex = ref<number | null>(null);
 const uploading = ref(false);
 const uploadProgress = ref(0);
 const uploadError = ref('');
 const fileInputRef = ref<HTMLInputElement | null>(null);
+
+const triggerFilePicker = () => {
+  if (uploading.value || atQuotaLimit.value) return;
+  fileInputRef.value?.click();
+};
 
 let pollTimer: ReturnType<typeof setInterval> | null = null;
 
@@ -55,6 +64,8 @@ const formatSize = (bytes: number) =>
 const indexedRemaining = computed(() =>
   data.value ? Math.max(0, data.value.quota.maxIndexedBytes - data.value.quota.indexedBytesUsed) : null,
 );
+
+const hasCustomDictionaries = computed(() => (data.value?.dictionaries.length ?? 0) > 0);
 
 // At the limit, a failed dictionary can still be uploaded again (the server allows it), so the picker stays open.
 const atQuotaLimit = computed(() => {
@@ -157,6 +168,50 @@ function moveRow(index: number, delta: -1 | 1) {
   void persistStack(rows);
 }
 
+function reorderRow(fromIndex: number, toIndex: number) {
+  if (fromIndex === toIndex || saving.value) return;
+  const rows = [...stackRows.value];
+  if (fromIndex < 0 || toIndex < 0 || fromIndex >= rows.length || toIndex >= rows.length) return;
+  const [item] = rows.splice(fromIndex, 1);
+  if (!item) return;
+  rows.splice(toIndex, 0, item);
+  void persistStack(rows);
+}
+
+function onRowDragStart(index: number, event: DragEvent) {
+  if (saving.value) {
+    event.preventDefault();
+    return;
+  }
+  confirmDeleteId.value = null;
+  draggedRowIndex.value = index;
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', String(index));
+  }
+}
+
+function onRowDragOver(index: number, event: DragEvent) {
+  if (draggedRowIndex.value === null || event.dataTransfer?.types.includes('Files')) return;
+  event.preventDefault();
+  if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+  dragOverRowIndex.value = index;
+}
+
+function onRowDrop(index: number, event: DragEvent) {
+  if (draggedRowIndex.value === null || event.dataTransfer?.types.includes('Files')) return;
+  event.preventDefault();
+  const from = draggedRowIndex.value;
+  draggedRowIndex.value = null;
+  dragOverRowIndex.value = null;
+  reorderRow(from, index);
+}
+
+function onRowDragEnd() {
+  draggedRowIndex.value = null;
+  dragOverRowIndex.value = null;
+}
+
 function toggleRow(index: number) {
   const rows = stackRows.value.map((row, i) => (i === index ? { ...row, enabled: !row.enabled } : row));
   void persistStack(rows);
@@ -164,6 +219,7 @@ function toggleRow(index: number) {
 
 async function removeDictionary(dict: UserDictionary) {
   if (deletingId.value !== null) return;
+  confirmDeleteId.value = null;
   deletingId.value = dict.id;
   try {
     await sdk.deleteUserDictionary(dict.id);
@@ -318,9 +374,22 @@ function onFileChange(event: Event) {
   if (file) uploadZipFile(file);
 }
 
+function onCardDragOver(event: DragEvent) {
+  if (draggedRowIndex.value !== null || !event.dataTransfer?.types.includes('Files')) return;
+  event.preventDefault();
+  draggingFile.value = true;
+}
+
+function onCardDragLeave(event: DragEvent) {
+  if (event.currentTarget instanceof Node && event.relatedTarget instanceof Node) {
+    if (event.currentTarget.contains(event.relatedTarget)) return;
+  }
+  draggingFile.value = false;
+}
+
 function onDrop(event: DragEvent) {
   draggingFile.value = false;
-  if (uploading.value) return;
+  if (draggedRowIndex.value !== null || uploading.value) return;
   const file = event.dataTransfer?.files?.[0];
   if (file) uploadZipFile(file);
 }
@@ -334,81 +403,109 @@ onBeforeUnmount(stopPolling);
 
 <template>
   <section class="nd-settings-section" data-testid="dictionary-settings">
-    <div class="mb-2 flex flex-wrap items-end justify-between gap-2 px-1">
-      <div>
+    <div class="mb-2.5 flex flex-wrap items-end justify-between gap-3 px-1">
+      <div class="min-w-0">
         <h2 class="nd-settings-section-label !mb-0 !px-0">{{ t('accountSettings.dictionaries.title') }}</h2>
-        <p class="mt-0.5 text-xs text-ink-muted">{{ t('accountSettings.dictionaries.description') }}</p>
+        <p class="mt-0.5 text-xs text-ink-muted">
+          <span>{{ t('accountSettings.dictionaries.stackHint') }}</span>
+          <template v-if="data">
+            <span aria-hidden="true" class="mx-1.5 text-ink-faint">&middot;</span>
+            <span class="font-medium text-ink">
+              {{ t('accountSettings.dictionaries.quotaUsed', { used: data.quota.used, max: data.quota.max }) }}
+            </span>
+            <span aria-hidden="true" class="mx-1.5 text-ink-faint">&middot;</span>
+            <span data-testid="dictionary-indexed-space">
+              {{
+                t('accountSettings.dictionaries.indexedSpace', {
+                  used: formatSize(data.quota.indexedBytesUsed),
+                  max: formatSize(data.quota.maxIndexedBytes),
+                })
+              }}
+            </span>
+          </template>
+        </p>
       </div>
-      <div v-if="data" class="flex flex-wrap items-center gap-x-2 text-xs text-ink-muted">
-        <span class="font-medium text-ink">
-          {{ t('accountSettings.dictionaries.quotaUsed', { used: data.quota.used, max: data.quota.max }) }}
-        </span>
-        <span aria-hidden="true">&middot;</span>
+
+      <button
+        type="button"
+        class="nd-btn-accent !h-8 !px-3 !text-xs shrink-0"
+        :disabled="uploading || atQuotaLimit"
+        :title="t('accountSettings.dictionaries.description')"
+        data-testid="dictionary-upload-button"
+        @click="triggerFilePicker"
+      >
+        <UiBaseIcon :path="uploading ? mdiLoading : mdiPlus" size="15" :class="{ 'animate-spin': uploading }" />
         <span>
-          {{ t('accountSettings.dictionaries.maxZipSize', { maxMb: Math.round(data.quota.maxZipBytes / (1024 * 1024)) }) }}
+          {{ uploading ? t('accountSettings.dictionaries.uploading', { progress: uploadProgress }) : t('accountSettings.dictionaries.uploadButton') }}
         </span>
-        <span aria-hidden="true">&middot;</span>
-        <span data-testid="dictionary-indexed-space">
-          {{
-            t('accountSettings.dictionaries.indexedSpace', {
-              used: formatSize(data.quota.indexedBytesUsed),
-              max: formatSize(data.quota.maxIndexedBytes),
-            })
-          }}
-        </span>
-      </div>
+      </button>
     </div>
 
-    <div class="nd-settings-group">
-      <!-- Order header -->
-      <div class="nd-settings-item !py-3 bg-lift flex flex-wrap items-center justify-between gap-2">
-        <span class="text-xs font-medium text-ink-muted">{{ t('accountSettings.dictionaries.stackTitle') }}</span>
-        <span class="text-xs text-ink-faint">{{ t('accountSettings.dictionaries.stackHint') }}</span>
+    <input
+      ref="fileInputRef"
+      type="file"
+      accept=".zip,application/zip"
+      class="sr-only"
+      :disabled="uploading || atQuotaLimit"
+      data-testid="dictionary-upload-input"
+      @change="onFileChange"
+    />
+
+    <!-- biome-ignore lint/a11y/noStaticElementInteractions: card accepts dropped .zip files alongside the upload button -->
+    <div
+      class="nd-settings-group relative transition-colors"
+      :class="draggingFile ? '!border-brand-solid ring-1 ring-brand-solid/40' : ''"
+      data-testid="dictionary-upload-dropzone"
+      @dragover="onCardDragOver"
+      @dragleave="onCardDragLeave"
+      @drop.prevent="onDrop"
+    >
+      <!-- Thin upload progress line along top edge when uploading -->
+      <div v-if="uploading" class="h-0.5 w-full bg-lift-strong">
+        <div class="h-full bg-brand-solid transition-all duration-150" :style="{ width: `${uploadProgress}%` }" />
       </div>
 
-      <!-- Stack list -->
+      <!-- Loading state -->
       <div v-if="loading" class="nd-settings-item flex items-center gap-2 text-sm text-ink-muted">
         <UiBaseIcon :path="mdiLoading" size="18" class="animate-spin" />
         <span>{{ t('accountSettings.dictionaries.loading') }}</span>
       </div>
 
+      <!-- Clean dictionary list -->
       <ul
         v-else
-        class="divide-y divide-line-subtle border-t border-line-subtle"
+        :aria-label="t('accountSettings.dictionaries.stackTitle')"
+        class="divide-y divide-line-subtle"
         data-testid="dictionary-stack-list"
       >
         <li
           v-for="(row, index) in stackRows"
           :key="row.stackId"
-          class="flex items-center justify-between gap-4 px-5 py-3.5 transition-opacity"
-          :class="{ 'opacity-55': !row.enabled }"
+          :draggable="!saving"
+          class="group flex items-center justify-between gap-4 px-5 py-3.5 transition-all"
+          :class="[
+            { 'opacity-50': !row.enabled && draggedRowIndex !== index },
+            { 'opacity-35': draggedRowIndex === index },
+            dragOverRowIndex === index && draggedRowIndex !== null && draggedRowIndex !== index
+              ? 'bg-lift ring-1 ring-inset ring-brand-solid/50'
+              : '',
+          ]"
           :data-testid="`dictionary-row-${row.stackId}`"
+          @dragstart="onRowDragStart(index, $event)"
+          @dragover="onRowDragOver(index, $event)"
+          @drop="onRowDrop(index, $event)"
+          @dragend="onRowDragEnd"
         >
           <div class="flex min-w-0 flex-1 items-center gap-3">
-            <div class="flex flex-col gap-0.5 shrink-0">
-              <button
-                type="button"
-                class="rounded p-0.5 text-ink-faint hover:bg-lift-strong hover:text-ink disabled:opacity-25 disabled:pointer-events-none"
-                :disabled="saving || index === 0"
-                :aria-label="t('accountSettings.dictionaries.moveUp')"
-                @click="moveRow(index, -1)"
-              >
-                <UiBaseIcon :path="mdiArrowUp" size="15" />
-              </button>
-              <button
-                type="button"
-                class="rounded p-0.5 text-ink-faint hover:bg-lift-strong hover:text-ink disabled:opacity-25 disabled:pointer-events-none"
-                :disabled="saving || index === stackRows.length - 1"
-                :aria-label="t('accountSettings.dictionaries.moveDown')"
-                @click="moveRow(index, 1)"
-              >
-                <UiBaseIcon :path="mdiArrowDown" size="15" />
-              </button>
-            </div>
+            <span
+              class="hidden sm:inline-flex shrink-0 cursor-grab active:cursor-grabbing text-ink-faint/60 transition-colors group-hover:text-ink-muted"
+              aria-hidden="true"
+            >
+              <UiBaseIcon :path="mdiDragVertical" size="18" />
+            </span>
 
-            <div class="min-w-0 flex-1">
+            <div class="min-w-0 flex-1" :title="row.dict?.revision || undefined">
               <div class="flex flex-wrap items-center gap-2">
-                <UiBaseIcon :path="mdiBookOpenVariantOutline" size="17" class="shrink-0 text-ink-faint" />
                 <span class="truncate text-sm font-medium text-ink">{{ row.title }}</span>
                 <span
                   v-if="row.kind === 'builtin'"
@@ -442,19 +539,19 @@ onBeforeUnmount(stopPolling);
                   </span>
                   <span
                     v-if="row.dict.hasTerms"
-                    class="rounded bg-lift-strong px-1.5 py-0.5 text-[0.65rem] font-medium text-ink-muted"
+                    class="rounded bg-sky-500/15 px-1.5 py-0.5 text-[0.65rem] font-medium text-sky-600 dark:text-sky-300"
                   >
                     {{ t('accountSettings.dictionaries.bankTerms') }}
                   </span>
                   <span
                     v-if="row.dict.hasFrequency"
-                    class="rounded bg-lift-strong px-1.5 py-0.5 text-[0.65rem] font-medium text-ink-muted"
+                    class="rounded bg-emerald-500/15 px-1.5 py-0.5 text-[0.65rem] font-medium text-emerald-600 dark:text-emerald-300"
                   >
                     {{ t('accountSettings.dictionaries.bankFrequency') }}
                   </span>
                   <span
                     v-if="row.dict.hasPitch"
-                    class="rounded bg-lift-strong px-1.5 py-0.5 text-[0.65rem] font-medium text-ink-muted"
+                    class="rounded bg-violet-500/15 px-1.5 py-0.5 text-[0.65rem] font-medium text-violet-600 dark:text-violet-300"
                   >
                     {{ t('accountSettings.dictionaries.bankPitch') }}
                   </span>
@@ -476,10 +573,6 @@ onBeforeUnmount(stopPolling);
                 </span>
                 <span aria-hidden="true" class="text-ink-faint">&middot;</span>
                 <span>{{ formatMb(row.dict.zipBytes) }}</span>
-                <template v-if="row.dict.revision">
-                  <span aria-hidden="true" class="text-ink-faint">&middot;</span>
-                  <span class="truncate text-ink-faint">{{ row.dict.revision }}</span>
-                </template>
               </div>
               <p
                 v-if="row.dict?.status === 'failed'"
@@ -492,94 +585,124 @@ onBeforeUnmount(stopPolling);
             </div>
           </div>
 
-          <div class="flex items-center gap-3 shrink-0">
-            <button
-              type="button"
-              role="switch"
-              :aria-checked="row.enabled"
-              :aria-label="row.enabled ? t('accountSettings.dictionaries.disable') : t('accountSettings.dictionaries.enable')"
-              class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out disabled:opacity-50"
-              :class="row.enabled ? 'bg-brand-solid' : 'bg-gray-600'"
-              :disabled="saving"
-              @click="toggleRow(index)"
-            >
-              <!-- The site's switch, as in Settings → Notifications. -->
-              <span
-                class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
-                :class="row.enabled ? 'translate-x-5' : 'translate-x-0'"
-              />
-            </button>
+          <div class="flex items-center gap-2 shrink-0">
+            <template v-if="row.kind === 'custom' && row.dict && confirmDeleteId === row.dict.id">
+              <button
+                type="button"
+                class="nd-btn !h-7 !px-2.5 !text-xs"
+                :disabled="deletingId === row.dict.id"
+                @click="confirmDeleteId = null"
+              >
+                {{ t('accountSettings.dictionaries.cancelDelete') }}
+              </button>
+              <button
+                type="button"
+                class="nd-btn-danger !h-7 !px-2.5 !text-xs"
+                :disabled="deletingId === row.dict.id"
+                :data-testid="`dictionary-confirm-delete-${row.dict.id}`"
+                @click="removeDictionary(row.dict)"
+              >
+                <UiBaseIcon v-if="deletingId === row.dict.id" :path="mdiLoading" size="14" class="animate-spin" />
+                {{ t('accountSettings.dictionaries.confirmDelete') }}
+              </button>
+            </template>
 
-            <button
-              v-if="row.kind === 'custom' && row.dict"
-              type="button"
-              class="inline-flex size-8 items-center justify-center rounded-md text-ink-faint transition-colors hover:bg-red-500/15 hover:text-red-400 disabled:opacity-40"
-              :disabled="deletingId === row.dict.id"
-              :aria-label="t('accountSettings.dictionaries.delete')"
-              :data-testid="`dictionary-delete-${row.dict.id}`"
-              @click="removeDictionary(row.dict)"
-            >
-              <UiBaseIcon :path="deletingId === row.dict.id ? mdiLoading : mdiDeleteOutline" size="18" :class="{ 'animate-spin': deletingId === row.dict.id }" />
-            </button>
-            <span v-else class="size-8 shrink-0" aria-hidden="true" />
+            <template v-else>
+              <!-- Subtle keyboard/touch reorder controls; appear cleanly on hover or focus -->
+              <div class="flex items-center gap-0.5 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-within:opacity-100 transition-opacity">
+                <button
+                  type="button"
+                  class="inline-flex size-7 items-center justify-center rounded-md text-ink-faint hover:bg-lift-strong hover:text-ink disabled:opacity-25 disabled:pointer-events-none"
+                  :disabled="saving || index === 0"
+                  :aria-label="t('accountSettings.dictionaries.moveUp')"
+                  @click="moveRow(index, -1)"
+                >
+                  <UiBaseIcon :path="mdiArrowUp" size="15" />
+                </button>
+                <button
+                  type="button"
+                  class="inline-flex size-7 items-center justify-center rounded-md text-ink-faint hover:bg-lift-strong hover:text-ink disabled:opacity-25 disabled:pointer-events-none"
+                  :disabled="saving || index === stackRows.length - 1"
+                  :aria-label="t('accountSettings.dictionaries.moveDown')"
+                  @click="moveRow(index, 1)"
+                >
+                  <UiBaseIcon :path="mdiArrowDown" size="15" />
+                </button>
+              </div>
+
+              <button
+                type="button"
+                role="switch"
+                :aria-checked="row.enabled"
+                :aria-label="row.enabled ? t('accountSettings.dictionaries.disable') : t('accountSettings.dictionaries.enable')"
+                class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out disabled:opacity-50"
+                :class="row.enabled ? 'bg-brand-solid' : 'bg-gray-600'"
+                :disabled="saving"
+                @click="toggleRow(index)"
+              >
+                <!-- The site's switch, as in Settings → Notifications. -->
+                <span
+                  class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                  :class="row.enabled ? 'translate-x-5' : 'translate-x-0'"
+                />
+              </button>
+
+              <button
+                v-if="row.kind === 'custom' && row.dict"
+                type="button"
+                class="inline-flex size-8 items-center justify-center rounded-md text-ink-faint transition-colors hover:bg-red-500/15 hover:text-red-400 disabled:opacity-40"
+                :disabled="deletingId === row.dict.id"
+                :aria-label="t('accountSettings.dictionaries.delete')"
+                :data-testid="`dictionary-delete-${row.dict.id}`"
+                @click="confirmDeleteId = row.dict.id"
+              >
+                <UiBaseIcon :path="deletingId === row.dict.id ? mdiLoading : mdiDeleteOutline" size="18" :class="{ 'animate-spin': deletingId === row.dict.id }" />
+              </button>
+              <span v-else class="size-8 shrink-0" aria-hidden="true" />
+            </template>
           </div>
         </li>
       </ul>
 
-      <!-- Compact upload footer -->
-      <div class="nd-settings-item border-t border-line-subtle">
-        <label
-          class="flex flex-col gap-3 rounded-lg border border-dashed px-4 py-3 transition-colors sm:flex-row sm:items-center sm:justify-between"
-          :class="[
-            draggingFile ? 'border-brand-solid nd-accent-bg-faint' : 'border-hairline bg-lift/50',
-            atQuotaLimit || uploading ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:border-line-hover hover:bg-lift',
-          ]"
-          data-testid="dictionary-upload-dropzone"
-          @dragover.prevent="draggingFile = true"
-          @dragleave.prevent="draggingFile = false"
-          @drop.prevent="onDrop"
-        >
-          <input
-            ref="fileInputRef"
-            type="file"
-            accept=".zip,application/zip"
-            class="sr-only"
-            :disabled="uploading || atQuotaLimit"
-            data-testid="dictionary-upload-input"
-            @change="onFileChange"
-          />
-          <div class="flex min-w-0 items-center gap-3">
-            <UiBaseIcon
-              :path="uploading ? mdiLoading : mdiCloudUploadOutline"
-              size="22"
-              :class="{ 'animate-spin': uploading }"
-              class="shrink-0 text-ink-muted"
-            />
-            <div class="min-w-0">
-              <p class="text-sm font-medium text-ink">
-                {{ uploading ? t('accountSettings.dictionaries.uploading', { progress: uploadProgress }) : t('accountSettings.dictionaries.dropPrompt') }}
-              </p>
-              <p class="text-xs text-ink-muted">
-                {{ t('accountSettings.dictionaries.supportedFormats') }}
-              </p>
-            </div>
-          </div>
-          <div v-if="uploading" class="h-1.5 w-full overflow-hidden rounded-full bg-lift-strong sm:w-36 shrink-0">
-            <div class="h-full rounded-full bg-brand-solid transition-all duration-150" :style="{ width: `${uploadProgress}%` }" />
-          </div>
-        </label>
+      <!-- Empty-state upload prompt only when the reader has no custom dictionaries yet -->
+      <button
+        v-if="!loading && !hasCustomDictionaries"
+        type="button"
+        class="flex w-full items-center justify-center gap-2 border-t border-line-subtle px-5 py-4 text-sm text-ink-muted transition-colors hover:bg-lift hover:text-ink disabled:opacity-50"
+        :disabled="uploading || atQuotaLimit"
+        @click="triggerFilePicker"
+      >
+        <UiBaseIcon :path="mdiCloudUploadOutline" size="18" />
+        <span>{{ t('accountSettings.dictionaries.dropPrompt') }}</span>
+      </button>
 
-        <p v-if="uploadError" class="mt-2 text-sm text-red-400" role="alert" data-testid="dictionary-upload-error">
-          {{ uploadError }}
-        </p>
+      <!-- Drag-over overlay when dragging a .zip file onto the card -->
+      <div
+        v-if="draggingFile"
+        class="pointer-events-none absolute inset-0 flex items-center justify-center gap-2 rounded-xl bg-background/85 backdrop-blur-[1px] text-sm font-medium text-ink"
+      >
+        <UiBaseIcon :path="mdiCloudUploadOutline" size="20" class="text-brand" />
+        <span>{{ t('accountSettings.dictionaries.dropPrompt') }}</span>
       </div>
     </div>
 
-    <p v-if="data && !data.quota.isPatron" class="mt-2.5 px-1 text-xs text-ink-muted">
-      {{ t('accountSettings.dictionaries.patronUpsell') }}
-      <NuxtLink :to="`${localePath('/supporters')}#support`" class="text-brand hover:underline">
-        {{ t('accountSettings.account.customTheme.seeSupport') }}
-      </NuxtLink>
+    <p v-if="uploadError" class="mt-2 px-1 text-sm text-red-400" role="alert" data-testid="dictionary-upload-error">
+      {{ uploadError }}
     </p>
+
+    <div class="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-1 text-xs text-ink-faint">
+      <p>
+        {{ t('accountSettings.dictionaries.supportedFormats') }}
+        <template v-if="data">
+          &middot; {{ t('accountSettings.dictionaries.maxZipSize', { maxMb: Math.round(data.quota.maxZipBytes / (1024 * 1024)) }) }}
+        </template>
+      </p>
+      <p v-if="data && !data.quota.isPatron" class="text-ink-muted">
+        {{ t('accountSettings.dictionaries.patronUpsell') }}
+        <NuxtLink :to="`${localePath('/supporters')}#support`" class="text-brand hover:underline">
+          {{ t('accountSettings.account.customTheme.seeSupport') }}
+        </NuxtLink>
+      </p>
+    </div>
   </section>
 </template>

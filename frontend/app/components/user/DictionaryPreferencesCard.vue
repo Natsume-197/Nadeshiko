@@ -52,18 +52,29 @@ const { presets: dictionaryPresets, isDictionaryEnabled, setDictionaryEnabled } 
             <p class="nd-settings-row-title">{{ $t('accountSettings.account.definitionSize') }}</p>
             <p class="nd-settings-row-desc">{{ $t('accountSettings.account.definitionSizeDescription') }}</p>
           </div>
-          <select
+          <fieldset
             :aria-label="$t('accountSettings.account.definitionSize')"
             data-testid="definition-size"
-            :value="definitionTextSize"
-            :disabled="savingPreferences"
-            class="nd-select"
-            @change="updateDefinitionSize(($event.target as HTMLSelectElement).value)"
+            class="inline-flex shrink-0 self-start sm:self-center rounded-lg border border-hairline bg-background p-0.5"
           >
-            <option v-for="size in DEFINITION_SIZES" :key="size" :value="size">
+            <button
+              v-for="size in DEFINITION_SIZES"
+              :key="size"
+              type="button"
+              :aria-pressed="definitionTextSize === size"
+              :disabled="savingPreferences"
+              :data-testid="`definition-size-${size}`"
+              :class="[
+                'rounded-md px-3 py-1 text-xs sm:text-sm transition-colors disabled:opacity-50',
+                definitionTextSize === size
+                  ? 'bg-lift-strong text-ink font-medium shadow-sm'
+                  : 'text-ink-muted hover:text-ink',
+              ]"
+              @click="size !== definitionTextSize && updateDefinitionSize(size)"
+            >
               {{ $t(`accountSettings.account.definitionSizeOptions.${size}`) }}
-            </option>
-          </select>
+            </button>
+          </fieldset>
         </div>
       </div>
 

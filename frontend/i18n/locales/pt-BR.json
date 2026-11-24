@@ -1119,7 +1119,10 @@
       "moveDown": "Mover para baixo",
       "enable": "Ativar dicionário",
       "disable": "Desativar dicionário",
-      "delete": "Excluir dicionário"
+      "delete": "Excluir dicionário",
+      "uploadButton": "Enviar .zip",
+      "confirmDelete": "Excluir",
+      "cancelDelete": "Cancelar"
     },
     "general": {
       "searchSectionTitle": "Busca e conteúdo",

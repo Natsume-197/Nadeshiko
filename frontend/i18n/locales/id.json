@@ -1119,7 +1119,10 @@
       "moveDown": "Pindah ke bawah",
       "enable": "Aktifkan kamus",
       "disable": "Nonaktifkan kamus",
-      "delete": "Hapus kamus"
+      "delete": "Hapus kamus",
+      "uploadButton": "Unggah .zip",
+      "confirmDelete": "Hapus",
+      "cancelDelete": "Batal"
     },
     "general": {
       "searchSectionTitle": "Pencarian dan konten",

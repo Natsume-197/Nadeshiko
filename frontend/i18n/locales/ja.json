@@ -1119,7 +1119,10 @@
       "moveDown": "下へ移動",
       "enable": "辞書を有効化",
       "disable": "辞書を無効化",
-      "delete": "辞書を削除"
+      "delete": "辞書を削除",
+      "uploadButton": ".zip を追加",
+      "confirmDelete": "削除",
+      "cancelDelete": "キャンセル"
     },
     "general": {
       "searchSectionTitle": "検索とコンテンツ",
