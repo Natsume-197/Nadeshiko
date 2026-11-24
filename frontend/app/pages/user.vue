@@ -204,15 +204,13 @@ watch(activeTabRoute, scrollActiveTabIntoView);
         </nav>
       </div>
 
-      <div class="flex-1 min-w-0 md:ps-8 lg:ps-12 pt-1 md:pt-5 pb-20">
-        <div class="w-full max-w-[50rem] mx-auto">
-          <header v-if="activeTab" class="mb-6">
-            <h1 class="text-2xl font-semibold tracking-tight text-ink">
-              {{ activeTab.name }}
-            </h1>
-          </header>
-          <NuxtPage />
-        </div>
+      <div class="flex-1 min-w-0 md:ps-8 lg:ps-10 pt-1 md:pt-5 pb-20">
+        <header v-if="activeTab" class="mb-6">
+          <h1 class="text-2xl font-semibold tracking-tight text-ink">
+            {{ activeTab.name }}
+          </h1>
+        </header>
+        <NuxtPage />
       </div>
     </div>
   </div>
