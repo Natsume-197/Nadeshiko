@@ -233,7 +233,7 @@ export async function enqueueSegmentEsDeletes(segmentIds: number[]): Promise<voi
   }
 }
 
-const escapeLikePattern = (value: string): string => value.replace(/[\\%_]/g, '\\$&');
+export const escapeLikePattern = (value: string): string => value.replace(/[\\%_]/g, '\\$&');
 
 async function resolveUniqueSlug(name: string, excludeMediaId?: number): Promise<string> {
   const baseSlug = slugify(name) || FALLBACK_SLUG;

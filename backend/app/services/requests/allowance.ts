@@ -9,7 +9,7 @@ import {
   patreonQuotaTier,
 } from '@app/models';
 import type { User } from '@app/models';
-import { canUseCustomTheme } from '@app/services/themes/customTheme';
+import { isCurrentPatron } from '@app/services/themes/customTheme';
 
 /** Open requests one account may have waiting at once (decided 2026-11-21). */
 export const OPEN_REQUEST_LIMIT = { free: 10, patron: 30 } as const;
@@ -34,19 +34,25 @@ export function monthStart(now: Date = new Date()): Date {
 }
 
 /**
- * What the Patreon membership earns here. A patron is anyone custom themes call one (`canUseCustomTheme`: an active,
+ * What the Patreon membership earns here. A patron is anyone custom themes call one (`canUseCustomTheme`, via `isCurrentPatron`: an active,
  * recently checked membership, or an admin). Boosts come from the Patreon tier they are entitled to, by tier id
  * (`Tier.monthlyRequestBoosts`); a patron whose tier matches no row is still a patron but earns no boosts until the
  * tier is mapped. Admins get the highest allowance so they can try the flow.
  */
 export async function patronBenefits(user: Pick<User, 'id' | 'role'>): Promise<{ isPatron: boolean; boosts: number }> {
-  const [isPatron, tiers] = await Promise.all([canUseCustomTheme(user), Tier.find()]);
-  if (!isPatron) return { isPatron: false, boosts: 0 };
   if (user.role === UserRoleType.ADMIN) {
+    const tiers = await Tier.find();
     return { isPatron: true, boosts: Math.max(0, ...tiers.map((tier) => tier.monthlyRequestBoosts)) };
   }
-  const connection = await PatreonConnection.findOneBy({ userId: user.id });
+  const [connection, tiers] = await Promise.all([PatreonConnection.findOneBy({ userId: user.id }), Tier.find()]);
+  if (!isCurrentPatron(connection)) return { isPatron: false, boosts: 0 };
   return { isPatron: true, boosts: patreonQuotaTier(tiers, connection)?.monthlyRequestBoosts ?? 0 };
+}
+
+/** Open requests the account may have waiting at once; null means no limit (admins). */
+export function openRequestLimit(user: Pick<User, 'role'>, isPatron: boolean): number | null {
+  if (user.role === UserRoleType.ADMIN) return null;
+  return isPatron ? OPEN_REQUEST_LIMIT.patron : OPEN_REQUEST_LIMIT.free;
 }
 
 export async function openRequestCount(userId: number): Promise<number> {
@@ -66,8 +72,7 @@ export async function requestAllowance(
     openRequestCount(user.id),
     boostsUsedThisMonth(user.id, now),
   ]);
-  const openLimit =
-    user.role === UserRoleType.ADMIN ? null : benefits.isPatron ? OPEN_REQUEST_LIMIT.patron : OPEN_REQUEST_LIMIT.free;
+  const openLimit = openRequestLimit(user, benefits.isPatron);
   return {
     isPatron: benefits.isPatron,
     openCount,

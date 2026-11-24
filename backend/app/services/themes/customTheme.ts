@@ -13,9 +13,13 @@ import { type User, type UserPreferences, UserRoleType } from '@app/models/User'
  */
 export async function canUseCustomTheme(user: Pick<User, 'id' | 'role'>): Promise<boolean> {
   if (user.role === UserRoleType.ADMIN) return true;
-  const connection = await PatreonConnection.findOneBy({ userId: user.id });
+  return isCurrentPatron(await PatreonConnection.findOneBy({ userId: user.id }));
+}
+
+/** An active membership checked within {@link PATREON_QUOTA_STALE_MS}: the stored-membership half of {@link canUseCustomTheme}. */
+export function isCurrentPatron(connection: PatreonConnection | null, now: number = Date.now()): boolean {
   if (!connection?.active) return false;
-  return Date.now() - connection.membershipCheckedAt.getTime() <= PATREON_QUOTA_STALE_MS;
+  return now - connection.membershipCheckedAt.getTime() <= PATREON_QUOTA_STALE_MS;
 }
 
 /** Refuse a new custom theme from someone who may not have one. Clearing it (`null`) is always allowed. `allowed`

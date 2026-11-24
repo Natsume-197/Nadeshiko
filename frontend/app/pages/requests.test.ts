@@ -61,6 +61,8 @@ const allowance = {
   isPatron: true,
   openCount: 1,
   openLimit: 30,
+  ownCount: 0,
+  votedCount: 0,
   boosts: {
     perMonth: 5,
     used: 1,
