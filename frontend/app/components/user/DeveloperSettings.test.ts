@@ -178,7 +178,7 @@ describe('the tier and the Patreon hint', () => {
     expect(hint.exists()).toBe(true);
     expect(hint.text()).toContain('"max":"60000"');
     const links = hint.findAll('a').map((a) => a.attributes('href'));
-    expect(links).toEqual(['/en/supporters#support', '/en/user/settings#connections']);
+    expect(links).toEqual(['/en/supporters#support', '/en/user/connections']);
   });
 
   test('says nothing about Patreon under an override or when `me` failed', async () => {

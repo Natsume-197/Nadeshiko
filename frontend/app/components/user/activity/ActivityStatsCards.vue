@@ -18,7 +18,7 @@ const { formatNumber } = useFormat();
   <div class="nd-settings-card">
     <div class="flex items-center justify-between flex-wrap gap-2">
       <div>
-        <h3 class="nd-settings-title">{{ t('accountSettings.activity.overview.title') }}</h3>
+        <h2 class="nd-settings-title">{{ t('accountSettings.activity.overview.title') }}</h2>
         <p class="text-sm text-gray-400 mt-1">{{ t('accountSettings.activity.overview.description') }}</p>
       </div>
       <div class="flex gap-1 rounded-lg border border-white/10 bg-white/5 p-0.5">

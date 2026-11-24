@@ -24,8 +24,10 @@ const STATIC_PAGES = new Set([
   '/search',
   '/api/v1/docs',
   '/user',
+  '/user/account',
   '/user/activity',
   '/user/collections',
+  '/user/connections',
   '/user/developer',
   // Retain separate series for legacy tabs that redirect to /user/media so old bookmarks remain observable.
   '/user/media',

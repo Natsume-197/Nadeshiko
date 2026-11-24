@@ -26,8 +26,28 @@ export class SettingsPage {
     expect(response?.status(), 'settings navigation should return HTTP 200').toBe(200);
   }
 
+  async gotoSearch() {
+    const response = await this.page.goto('/user/media');
+    expect(response?.status(), 'search settings navigation should return HTTP 200').toBe(200);
+  }
+
+  async gotoAccount() {
+    const response = await this.page.goto('/user/account');
+    expect(response?.status(), 'account navigation should return HTTP 200').toBe(200);
+  }
+
   async expectLoaded() {
     // Visible SSR controls are inert until Vue attaches handlers; wait for the app-owned marker.
+    await expect(this.page.locator('html[data-hydrated="true"]')).toBeAttached({ timeout: 30_000 });
+    await expect(this.page.getByTestId('translation-languages')).toBeVisible({ timeout: 10_000 });
+  }
+
+  async expectSearchLoaded() {
+    await expect(this.page.locator('html[data-hydrated="true"]')).toBeAttached({ timeout: 30_000 });
+    await expect(this.defaultSearchCategory).toBeVisible({ timeout: 10_000 });
+  }
+
+  async expectAccountLoaded() {
     await expect(this.page.locator('html[data-hydrated="true"]')).toBeAttached({ timeout: 30_000 });
     await expect(this.username).toBeVisible({ timeout: 10_000 });
     await expect(this.email).toBeVisible({ timeout: 10_000 });

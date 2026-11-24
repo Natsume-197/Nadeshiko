@@ -33,8 +33,14 @@ test.describe('Accessibility', () => {
     await expectNoStructuralAccessibilityViolations(authenticatedPage);
   });
 
-  test('account settings have no structural WCAG A/AA violations', async ({ authenticatedPage }) => {
+  test('general settings have no structural WCAG A/AA violations', async ({ authenticatedPage }) => {
     await authenticatedPage.goto('/user/settings');
+    await expect(authenticatedPage.getByTestId('translation-languages')).toBeVisible();
+    await expectNoStructuralAccessibilityViolations(authenticatedPage);
+  });
+
+  test('account settings have no structural WCAG A/AA violations', async ({ authenticatedPage }) => {
+    await authenticatedPage.goto('/user/account');
     await expect(authenticatedPage.getByTestId('account-username')).toBeVisible();
     await expectNoStructuralAccessibilityViolations(authenticatedPage);
   });

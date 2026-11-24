@@ -231,68 +231,78 @@ const deactivateApiKey = async (item: ApiKeyListItem) => {
 </script>
 
 <template>
-    <div class="nd-settings-card">
-        <h3 class="nd-settings-title">{{ $t('accountSettings.developer.apiUsageTitle') }}</h3>
-        <div class="mt-4">
-            <div class="flex items-center gap-x-3 whitespace-nowrap">
-                <div class="flex w-full h-6 bg-gray-200 rounded-lg overflow-hidden dark:bg-neutral-600" role="progressbar"
-                    aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">
-                    <div class="flex flex-col justify-center overflow-hidden bg-blue-600 text-xs text-white text-center whitespace-nowrap transition duration-500 dark:bg-gray-300"
-                        :style="{ width: `${quotaPercentage}%` }"></div>
-                </div>
-                <div class="w-8 items-center align-middle text-center flex">
-                    <span class="text-sm text-gray-800 dark:text-white">{{ quotaPercentage.toFixed(0) }}%</span>
-                </div>
-            </div>
+    <section class="nd-settings-section">
+        <div class="mb-2 flex flex-wrap items-center justify-between gap-2 px-1">
+            <h2 class="nd-settings-section-label !mb-0 !px-0">{{ $t('accountSettings.developer.apiUsageTitle') }}</h2>
+            <span class="text-xs text-ink-muted tabular-nums">
+                {{ $t('accountSettings.developer.apiUsageRemaining', {
+                  used: fieldOptions.quota?.quotaUsed,
+                  limit: fieldOptions.quota?.quotaLimit
+                }) }}
+            </span>
         </div>
-        <p class="mt-3 text-gray-300">{{ $t('accountSettings.developer.apiUsageRemaining', {
-          used: fieldOptions.quota?.quotaUsed,
-          limit: fieldOptions.quota?.quotaLimit
-        }) }}</p>
-        <!--
-          The two limits, side by side. They are exhausted independently and
-          answer the same 429, so a page naming only the month leaves a reader
-          who is bursting with no way to read their own error.
-        -->
-        <p v-if="quotaResetsOn" class="mt-1 text-gray-400 text-sm">
-          {{ $t('accountSettings.developer.quotaResets', { date: quotaResetsOn }) }}
-          <span v-if="fieldOptions.quota?.tier">
-            <!-- "Free" is the site's own word and is translated; supporter tiers keep their Patreon names. -->
-            &middot; {{ fieldOptions.quota.tier.id === 'free'
-              ? $t('accountSettings.developer.quotaTierFree')
-              : $t('accountSettings.developer.quotaTier', { tier: fieldOptions.quota.tier.displayName }) }}
-          </span>
-        </p>
-        <!-- Only on the free tier: an override or a Patreon tier already has its answer, and the placeholder shown
-             when /me fails has no tier at all. -->
-        <p v-if="fieldOptions.quota?.tier?.id === 'free'" class="mt-1 text-gray-400 text-sm" data-testid="quota-patreon-hint">
-          {{ $t('accountSettings.developer.patreonHint', { max: formatNumber(HIGHEST_MONTHLY_API_REQUESTS) }) }}
-          <NuxtLink :to="`${localePath('/supporters')}#support`" class="text-brand hover:underline">{{ $t('accountSettings.developer.patreonHintSupport') }}</NuxtLink>
-          &middot;
-          <NuxtLink :to="`${localePath('/user/settings')}#connections`" class="text-brand hover:underline">{{ $t('accountSettings.developer.patreonHintLink') }}</NuxtLink>
-        </p>
-        <p v-if="burstPerMinute" class="mt-1 text-gray-400 text-sm">
-          {{ $t('accountSettings.developer.burstLimit', { max: burstPerMinute }) }}
-        </p>
-        <p class="mt-2 text-gray-400 text-sm">
-          {{ t('accountSettings.developer.usageLimitMessage.prefix') }}
-          <a href="mailto:contact@nadeshiko.co" class="text-brand hover:underline">contact@nadeshiko.co</a>.
-        </p>
-    </div>
 
-    <div class="nd-settings-card">
-        <div class="flex items-center">
-            <div class="flex flex-col">
-                <h3 class="nd-settings-title">{{ $t('accountSettings.developer.apiKeyManagement') }}</h3>
+        <div class="nd-settings-group">
+            <div class="nd-settings-item">
+                <div class="flex items-center gap-x-3 whitespace-nowrap">
+                    <div class="flex w-full h-2.5 bg-lift-strong rounded-full overflow-hidden" role="progressbar"
+                        :aria-valuenow="Math.round(quotaPercentage)" aria-valuemin="0" aria-valuemax="100">
+                        <div class="h-full bg-brand-solid rounded-full transition-all duration-500"
+                            :style="{ width: `${quotaPercentage}%` }"></div>
+                    </div>
+                    <span class="text-xs font-medium text-ink tabular-nums shrink-0">{{ quotaPercentage.toFixed(0) }}%</span>
+                </div>
+
+                <!--
+                  The two limits, side by side. They are exhausted independently and
+                  answer the same 429, so a page naming only the month leaves a reader
+                  who is bursting with no way to read their own error.
+                -->
+                <div v-if="quotaResetsOn || burstPerMinute" class="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink-muted">
+                    <span v-if="quotaResetsOn">
+                        {{ $t('accountSettings.developer.quotaResets', { date: quotaResetsOn }) }}
+                        <span v-if="fieldOptions.quota?.tier">
+                            <!-- "Free" is the site's own word and is translated; supporter tiers keep their Patreon names. -->
+                            &middot; {{ fieldOptions.quota.tier.id === 'free'
+                              ? $t('accountSettings.developer.quotaTierFree')
+                              : $t('accountSettings.developer.quotaTier', { tier: fieldOptions.quota.tier.displayName }) }}
+                        </span>
+                    </span>
+                    <span v-if="quotaResetsOn && burstPerMinute" aria-hidden="true">&middot;</span>
+                    <span v-if="burstPerMinute">
+                        {{ $t('accountSettings.developer.burstLimit', { max: burstPerMinute }) }}
+                    </span>
+                </div>
             </div>
-            <div class="ml-auto">
-                <button type="button"
-                    class="nd-btn-accent" data-testid="add-api-key-button" @click="openCreateModal">
-                    <UiBaseIcon display="inline" :path="mdiPlus" fill="#DDDF" w="w-5" h="h-5" size="20"/>
-                    {{ $t('accountSettings.developer.addApiKey') }}
-                </button>
+
+            <div class="nd-settings-item space-y-1.5 text-xs text-ink-muted">
+                <!-- Only on the free tier: an override or a Patreon tier already has its answer, and the placeholder shown
+                     when /me fails has no tier at all. -->
+                <p v-if="fieldOptions.quota?.tier?.id === 'free'" data-testid="quota-patreon-hint">
+                    {{ $t('accountSettings.developer.patreonHint', { max: formatNumber(HIGHEST_MONTHLY_API_REQUESTS) }) }}
+                    <NuxtLink :to="`${localePath('/supporters')}#support`" class="text-brand hover:underline">{{ $t('accountSettings.developer.patreonHintSupport') }}</NuxtLink>
+                    &middot;
+                    <NuxtLink :to="localePath('/user/connections')" class="text-brand hover:underline">{{ $t('accountSettings.developer.patreonHintLink') }}</NuxtLink>
+                </p>
+                <p>
+                    {{ t('accountSettings.developer.usageLimitMessage.prefix') }}
+                    <a href="mailto:contact@nadeshiko.co" class="text-brand hover:underline">contact@nadeshiko.co</a>.
+                </p>
             </div>
         </div>
+    </section>
+
+    <section class="nd-settings-section">
+        <div class="mb-2 flex items-center justify-between gap-2 px-1">
+            <h2 class="nd-settings-section-label !mb-0 !px-0">{{ $t('accountSettings.developer.apiKeyManagement') }}</h2>
+            <button type="button"
+                class="nd-btn-accent" data-testid="add-api-key-button" @click="openCreateModal">
+                <UiBaseIcon display="inline" :path="mdiPlus" fill="#DDDF" w="w-5" h="h-5" size="20"/>
+                {{ $t('accountSettings.developer.addApiKey') }}
+            </button>
+        </div>
+
+        <div class="nd-settings-card !mb-0">
         <div v-if="generatedApiKey" role="alert" data-testid="api-key-created-alert"
             class="mt-2 rounded-lg border border-green-500 bg-green-50 p-4 dark:border-green-600 dark:bg-green-900">
             <div class="flex items-center gap-2 text-green-800 dark:text-green-100">
@@ -454,7 +464,7 @@ const deactivateApiKey = async (item: ApiKeyListItem) => {
                                         d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                                 </svg>
                             </div>
-                            <h1 class="mt-3 text-lg text-gray-800 dark:text-white">{{ $t('accountSettings.developer.noKeysFound') }}</h1>
+                            <p class="mt-3 text-lg text-gray-800 dark:text-white">{{ $t('accountSettings.developer.noKeysFound') }}</p>
                             <p class="mt-2 text-gray-500 dark:text-gray-400">
                                 {{ $t('accountSettings.developer.noKeysMessage') }}
                             </p>
@@ -463,7 +473,8 @@ const deactivateApiKey = async (item: ApiKeyListItem) => {
                 </section>
             </div>
         </div>
-    </div>
+        </div>
+    </section>
 
     <CommonBaseModal
         data-testid="create-apikey-modal"

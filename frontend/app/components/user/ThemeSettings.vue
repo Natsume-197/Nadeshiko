@@ -144,97 +144,105 @@ const editorStart = computed<CustomTheme>(() => ownTheme.value ?? saved.value ??
 </script>
 
 <template>
-  <div class="nd-settings-card" data-testid="theme-settings">
-    <h3 class="nd-settings-title">{{ t('accountSettings.themes.title') }}</h3>
-    <p class="mt-1 text-sm text-gray-400">{{ t('accountSettings.themes.description') }}</p>
+  <div data-testid="theme-settings">
+    <p class="-mt-4 mb-6 text-sm text-ink-muted">{{ t('accountSettings.themes.description') }}</p>
 
-    <h4 class="mt-6 text-sm font-semibold text-white">{{ t('accountSettings.themes.appearance') }}</h4>
-    <div class="mt-3 flex flex-wrap gap-3 sm:gap-4" data-testid="theme-appearance">
-      <ThemePreviewTile
-        class="w-[8.5rem] sm:w-[9.5rem]"
-        v-for="option in APPEARANCE"
-        :key="option.id"
-        :palette="option.palette"
-        :split="option.split"
-        :label="t(`accountSettings.account.themeOptions.${option.id}`)"
-        :selected="preference === option.id"
-        :data-testid="`theme-option-${option.id}`"
-        @select="setPreference(option.id)"
-      />
-    </div>
+    <section class="nd-settings-section">
+      <h2 class="nd-settings-section-label">{{ t('accountSettings.themes.appearance') }}</h2>
+      <div class="nd-settings-card !mb-0">
+        <div class="flex flex-wrap gap-3 sm:gap-4" data-testid="theme-appearance">
+          <ThemePreviewTile
+            class="w-[8.5rem] sm:w-[9.5rem]"
+            v-for="option in APPEARANCE"
+            :key="option.id"
+            :palette="option.palette"
+            :split="option.split"
+            :label="t(`accountSettings.account.themeOptions.${option.id}`)"
+            :selected="preference === option.id"
+            :data-testid="`theme-option-${option.id}`"
+            @select="setPreference(option.id)"
+          />
+        </div>
+      </div>
+    </section>
 
-    <div class="mt-8 flex items-center gap-2">
-      <h4 class="text-sm font-semibold text-white">{{ t('accountSettings.themes.patronThemes') }}</h4>
-      <span class="rounded bg-[#ff424d] px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide text-on-accent">
-        {{ t('accountSettings.account.customTheme.patronBadge') }}
-      </span>
-    </div>
-    <p class="mt-1 text-sm text-gray-400">{{ t('accountSettings.account.customTheme.description') }}</p>
-
-    <div class="mt-3 flex flex-wrap gap-3 sm:gap-4" data-testid="theme-patron">
-      <ThemePreviewTile
-        class="w-[8.5rem] sm:w-[9.5rem]"
-        v-for="id in PRESET_IDS"
-        :key="id"
-        :palette="paletteOf(CUSTOM_THEME_PRESETS[id])"
-        :label="t(`accountSettings.account.customTheme.presetNames.${id}`)"
-        :selected="isActive(CUSTOM_THEME_PRESETS[id])"
-        :data-testid="`custom-theme-preset-${id}`"
-        @select="applyCustom(CUSTOM_THEME_PRESETS[id])"
-      />
-      <ThemePreviewTile
-        class="w-[8.5rem] sm:w-[9.5rem]"
-        v-if="ownTheme"
-        :palette="paletteOf(ownTheme)"
-        :label="t('accountSettings.themes.yourTheme')"
-        :selected="isActive(ownTheme)"
-        data-testid="custom-theme-own"
-        @select="useOwnTheme(ownTheme)"
-      />
-      <ThemePreviewTile
-        class="w-[8.5rem] sm:w-[9.5rem]"
-        :palette="DARK"
-        :label="t('accountSettings.themes.createOwn')"
-        :selected="editing"
-        dashed
-        data-testid="custom-theme-create"
-        @select="editing = !editing"
-      >
-        <span class="absolute inset-0 grid place-items-center text-gray-400 group-hover:text-white" aria-hidden="true">
-          <UiBaseIcon :path="mdiPlus" size="28" />
+    <section class="nd-settings-section">
+      <div class="mb-2 flex items-center gap-2 px-1">
+        <h2 class="nd-settings-section-label !mb-0 !px-0">{{ t('accountSettings.themes.patronThemes') }}</h2>
+        <span class="rounded bg-[#ff424d] px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide text-on-accent">
+          {{ t('accountSettings.account.customTheme.patronBadge') }}
         </span>
-      </ThemePreviewTile>
-    </div>
+      </div>
 
-    <p
-      v-if="needsPatron"
-      class="mt-4 rounded-lg border border-hairline bg-surface-lift p-3 text-sm text-gray-300"
-      data-testid="custom-theme-needs-patron"
-    >
-      {{ t('accountSettings.account.customTheme.needsPatron') }}
-      <NuxtLink :to="`${localePath('/supporters')}#support`" class="text-brand hover:underline" data-testid="custom-theme-support-link">{{
-        t('accountSettings.account.customTheme.seeSupport')
-      }}</NuxtLink>
-    </p>
+      <div class="nd-settings-card !mb-0">
+        <p class="text-sm text-ink-muted">{{ t('accountSettings.account.customTheme.description') }}</p>
 
-    <CustomThemeEditor
-      v-if="editing"
-      :key="JSON.stringify(editorStart)"
-      :initial="editorStart"
-      :saving="saving"
-      @save="applyCustom"
-      @cancel="editing = false"
-    />
+        <div class="mt-4 flex flex-wrap gap-3 sm:gap-4" data-testid="theme-patron">
+          <ThemePreviewTile
+            class="w-[8.5rem] sm:w-[9.5rem]"
+            v-for="id in PRESET_IDS"
+            :key="id"
+            :palette="paletteOf(CUSTOM_THEME_PRESETS[id])"
+            :label="t(`accountSettings.account.customTheme.presetNames.${id}`)"
+            :selected="isActive(CUSTOM_THEME_PRESETS[id])"
+            :data-testid="`custom-theme-preset-${id}`"
+            @select="applyCustom(CUSTOM_THEME_PRESETS[id])"
+          />
+          <ThemePreviewTile
+            class="w-[8.5rem] sm:w-[9.5rem]"
+            v-if="ownTheme"
+            :palette="paletteOf(ownTheme)"
+            :label="t('accountSettings.themes.yourTheme')"
+            :selected="isActive(ownTheme)"
+            data-testid="custom-theme-own"
+            @select="useOwnTheme(ownTheme)"
+          />
+          <ThemePreviewTile
+            class="w-[8.5rem] sm:w-[9.5rem]"
+            :palette="DARK"
+            :label="t('accountSettings.themes.createOwn')"
+            :selected="editing"
+            dashed
+            data-testid="custom-theme-create"
+            @select="editing = !editing"
+          >
+            <span class="absolute inset-0 grid place-items-center text-gray-400 group-hover:text-white" aria-hidden="true">
+              <UiBaseIcon :path="mdiPlus" size="28" />
+            </span>
+          </ThemePreviewTile>
+        </div>
 
-    <button
-      v-if="saved"
-      type="button"
-      class="mt-4 text-sm text-gray-400 underline-offset-4 hover:text-white hover:underline"
-      :disabled="saving"
-      data-testid="custom-theme-remove"
-      @click="removeCustom"
-    >
-      {{ t('accountSettings.account.customTheme.remove') }}
-    </button>
+        <p
+          v-if="needsPatron"
+          class="mt-4 rounded-lg border border-hairline bg-surface-lift p-3 text-sm text-ink-muted"
+          data-testid="custom-theme-needs-patron"
+        >
+          {{ t('accountSettings.account.customTheme.needsPatron') }}
+          <NuxtLink :to="`${localePath('/supporters')}#support`" class="text-brand hover:underline" data-testid="custom-theme-support-link">{{
+            t('accountSettings.account.customTheme.seeSupport')
+          }}</NuxtLink>
+        </p>
+
+        <CustomThemeEditor
+          v-if="editing"
+          :key="JSON.stringify(editorStart)"
+          :initial="editorStart"
+          :saving="saving"
+          @save="applyCustom"
+          @cancel="editing = false"
+        />
+
+        <button
+          v-if="saved"
+          type="button"
+          class="mt-4 text-sm text-ink-muted underline-offset-4 hover:text-ink hover:underline"
+          :disabled="saving"
+          data-testid="custom-theme-remove"
+          @click="removeCustom"
+        >
+          {{ t('accountSettings.account.customTheme.remove') }}
+        </button>
+      </div>
+    </section>
   </div>
 </template>

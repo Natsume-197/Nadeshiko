@@ -8,6 +8,7 @@ const { isCategoryHidden, canToggleCategory, toggleCategory } = useHiddenCategor
 const posthog = usePostHog();
 
 const categories = ALL_CATEGORIES;
+const hasLockedCategory = computed(() => categories.some((category) => !canToggleCategory(category)));
 
 const categoryLabel = (category: Category): string => t(CATEGORY_LABEL_KEYS[category]);
 
@@ -33,49 +34,56 @@ const onToggle = async (category: Category) => {
 </script>
 
 <template>
-  <div class="nd-settings-card">
-    <h3 class="nd-settings-title">{{ t('accountSettings.account.hiddenCategories') }}</h3>
-    <p class="text-gray-400 text-sm mt-1">{{ t('accountSettings.account.hiddenCategoriesDescription') }}</p>
+  <section class="nd-settings-section">
+    <h2 class="nd-settings-section-label">{{ t('accountSettings.account.hiddenCategories') }}</h2>
 
-    <ul class="mt-4 divide-y divide-white/10">
-      <li
-        v-for="category in categories"
-        :key="category"
-        class="flex items-center justify-between gap-4 py-3"
-        data-testid="hidden-category-row"
-      >
-        <div class="min-w-0">
-          <p class="text-white">{{ categoryLabel(category) }}</p>
-          <p class="text-gray-400 text-sm mt-0.5">{{ categoryDescription(category) }}</p>
-        </div>
+    <div class="nd-settings-group">
+      <div class="nd-settings-item">
+        <p class="nd-settings-row-desc !mt-0">{{ t('accountSettings.account.hiddenCategoriesDescription') }}</p>
+      </div>
 
-        <div class="flex items-center gap-3 shrink-0">
-          <span class="text-xs" :class="isCategoryHidden(category) ? 'text-gray-500' : 'text-gray-300'">
-            {{ isCategoryHidden(category) ? t('accountSettings.account.hiddenCategoryHidden') : t('accountSettings.account.hiddenCategoryShown') }}
-          </span>
-          <!-- biome-ignore lint/a11y/noLabelWithoutControl: named by the bound aria-label -->
-          <label
-            class="relative inline-flex items-center"
-            :class="canToggleCategory(category) ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'"
-            :title="canToggleCategory(category) ? undefined : t('accountSettings.account.hiddenCategoriesLastVisible')"
-          >
-            <input
-              type="checkbox"
-              class="sr-only peer"
-              :checked="!isCategoryHidden(category)"
-              :disabled="!canToggleCategory(category)"
-              :aria-label="categoryLabel(category)"
-              :data-testid="`hidden-category-toggle-${CATEGORY_SLUG_BY_API[category]}`"
-              @change="onToggle(category)"
-            />
-            <div
-              class="w-9 h-5 bg-gray-600 rounded-full peer peer-checked:bg-button-accent-main transition-colors after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full"
-            />
-          </label>
-        </div>
-      </li>
-    </ul>
+      <ul class="divide-y divide-line-subtle border-t border-line-subtle">
+        <li
+          v-for="category in categories"
+          :key="category"
+          class="flex items-center justify-between gap-4 px-5 py-3.5"
+          data-testid="hidden-category-row"
+        >
+          <div class="min-w-0">
+            <p class="nd-settings-row-title">{{ categoryLabel(category) }}</p>
+            <p class="nd-settings-row-desc">{{ categoryDescription(category) }}</p>
+          </div>
 
-    <p class="text-xs text-gray-500 mt-3">{{ t('accountSettings.account.hiddenCategoriesLastVisible') }}</p>
-  </div>
+          <div class="flex items-center gap-3 shrink-0">
+            <span class="text-xs" :class="isCategoryHidden(category) ? 'text-ink-faint' : 'text-ink-muted'">
+              {{ isCategoryHidden(category) ? t('accountSettings.account.hiddenCategoryHidden') : t('accountSettings.account.hiddenCategoryShown') }}
+            </span>
+            <!-- biome-ignore lint/a11y/noLabelWithoutControl: named by the bound aria-label -->
+            <label
+              class="relative inline-flex items-center"
+              :class="canToggleCategory(category) ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'"
+              :title="canToggleCategory(category) ? undefined : t('accountSettings.account.hiddenCategoriesLastVisible')"
+            >
+              <input
+                type="checkbox"
+                class="sr-only peer"
+                :checked="!isCategoryHidden(category)"
+                :disabled="!canToggleCategory(category)"
+                :aria-label="categoryLabel(category)"
+                :data-testid="`hidden-category-toggle-${CATEGORY_SLUG_BY_API[category]}`"
+                @change="onToggle(category)"
+              />
+              <div
+                class="w-9 h-5 bg-gray-600 rounded-full peer peer-checked:bg-button-accent-main transition-colors after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full"
+              />
+            </label>
+          </div>
+        </li>
+      </ul>
+
+      <div v-if="hasLockedCategory" class="nd-settings-item border-t border-line-subtle !py-3">
+        <p class="text-xs text-ink-faint">{{ t('accountSettings.account.hiddenCategoriesLastVisible') }}</p>
+      </div>
+    </div>
+  </section>
 </template>

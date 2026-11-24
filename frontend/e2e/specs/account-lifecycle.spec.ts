@@ -5,8 +5,8 @@ import { SettingsPage } from '../pages/SettingsPage';
 test.describe('Account lifecycle', () => {
   test('downloads a complete data export for the signed-in account', async ({ authenticatedPage, e2eAccount }) => {
     const settings = new SettingsPage(authenticatedPage);
-    await settings.goto();
-    await settings.expectLoaded();
+    await settings.gotoAccount();
+    await settings.expectAccountLoaded();
 
     const downloadEvent = authenticatedPage.waitForEvent('download');
     await authenticatedPage.getByTestId('account-export').click();
@@ -30,8 +30,8 @@ test.describe('Account lifecycle', () => {
 
   test('cancelling account deletion keeps the account and session intact', async ({ authenticatedPage }) => {
     const settings = new SettingsPage(authenticatedPage);
-    await settings.goto();
-    await settings.expectLoaded();
+    await settings.gotoAccount();
+    await settings.expectAccountLoaded();
 
     authenticatedPage.once('dialog', (dialog) => dialog.dismiss());
     await authenticatedPage.getByTestId('account-delete').click();
@@ -50,8 +50,8 @@ test.describe('Account lifecycle', () => {
     try {
       await loginAsE2EUser(page, e2eAccount);
       const settings = new SettingsPage(page);
-      await settings.goto();
-      await settings.expectLoaded();
+      await settings.gotoAccount();
+      await settings.expectAccountLoaded();
 
       await settings.logoutButton.click();
       await expect(page).toHaveURL(/\/(?:en|es|ja|zh|zh-hant|id|pt-BR)\/?$/, { timeout: 10_000 });
@@ -89,7 +89,7 @@ test.describe('Destructive account lifecycle', () => {
         .poll(async () => await (await otherPage.request.get('/v1/auth/get-session')).json(), { timeout: 10_000 })
         .toBeNull();
 
-      await primaryPage.goto('/user/settings');
+      await primaryPage.goto('/user/account');
       await expect(primaryPage.locator('html[data-hydrated="true"]')).toBeAttached({ timeout: 30_000 });
       await expect(primaryPage.getByTestId('account-email')).toHaveText(account.email);
       primaryPage.once('dialog', (dialog) => dialog.accept());

@@ -48,126 +48,133 @@ const displayMediaName = (entry: FamiliarMediaEntry): string =>
 </script>
 
 <template>
-  <div class="nd-settings-card">
-    <h3 class="nd-settings-title">{{ t('accountSettings.activity.privacy.title') }}</h3>
+  <section class="nd-settings-section">
+    <h2 class="nd-settings-section-label">{{ t('accountSettings.activity.privacy.title') }}</h2>
 
-    <div class="mt-4 space-y-4">
-      <div class="flex items-center justify-between gap-4">
-        <div>
-          <p class="text-white font-medium">{{ t('accountSettings.activity.privacy.trackingTitle') }}</p>
-          <p class="text-gray-400 text-sm">{{ t('accountSettings.activity.privacy.trackingDescription') }}</p>
-        </div>
-        <button type="button"
-          data-testid="activity-tracking-toggle"
-          :disabled="toggling"
-          :aria-pressed="trackingEnabled"
-          :class="[
-            'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none',
-            trackingEnabled ? 'bg-brand-solid' : 'bg-gray-600',
-          ]"
-          @click="emit('toggle-tracking')"
-        >
-          <span
+    <div class="nd-settings-group">
+      <div class="nd-settings-item">
+        <div class="flex items-center justify-between gap-4">
+          <div class="min-w-0 flex-1">
+            <p class="nd-settings-row-title">{{ t('accountSettings.activity.privacy.trackingTitle') }}</p>
+            <p class="nd-settings-row-desc">{{ t('accountSettings.activity.privacy.trackingDescription') }}</p>
+          </div>
+          <button
+            type="button"
+            data-testid="activity-tracking-toggle"
+            :disabled="toggling"
+            :aria-pressed="trackingEnabled"
             :class="[
-              'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
-              trackingEnabled ? 'translate-x-5' : 'translate-x-0',
+              'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none',
+              trackingEnabled ? 'bg-brand-solid' : 'bg-gray-600',
             ]"
-          />
-        </button>
-      </div>
-
-      <div class="flex items-center justify-between gap-4">
-        <div>
-          <p class="text-white font-medium">{{ t('accountSettings.activity.privacy.clearHistoryTitle') }}</p>
-          <p class="text-gray-400 text-sm">{{ t('accountSettings.activity.privacy.clearHistoryDescription') }}</p>
+            @click="emit('toggle-tracking')"
+          >
+            <span
+              :class="[
+                'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
+                trackingEnabled ? 'translate-x-5' : 'translate-x-0',
+              ]"
+            />
+          </button>
         </div>
-        <button type="button"
-          data-testid="activity-history-clear"
-          class="nd-btn-accent"
-          :disabled="clearing"
-          @click="emit('clear-history')"
-        >
-          {{ clearing ? t('accountSettings.activity.privacy.clearing') : t('accountSettings.activity.privacy.clearHistoryButton') }}
-        </button>
       </div>
 
-      <div class="border-b border-white/10" />
+      <div class="nd-settings-item">
+        <div class="nd-settings-row">
+          <div class="min-w-0 flex-1">
+            <p class="nd-settings-row-title">{{ t('accountSettings.activity.privacy.clearHistoryTitle') }}</p>
+            <p class="nd-settings-row-desc">{{ t('accountSettings.activity.privacy.clearHistoryDescription') }}</p>
+          </div>
+          <button
+            type="button"
+            data-testid="activity-history-clear"
+            class="nd-btn-accent shrink-0"
+            :disabled="clearing"
+            @click="emit('clear-history')"
+          >
+            {{ clearing ? t('accountSettings.activity.privacy.clearing') : t('accountSettings.activity.privacy.clearHistoryButton') }}
+          </button>
+        </div>
+      </div>
 
       <!-- Its own switch, beside the history one rather than under it: this
            stores a monthly count per title, the other a log of what you searched
            and when. Turning either off leaves the other running, and each is
            described by what it keeps so that is not a surprise. -->
-      <div class="flex items-center justify-between gap-4">
-        <div>
-          <p class="text-white font-medium">{{ t('accountSettings.activity.privacy.familiarTitle') }}</p>
-          <p class="text-gray-400 text-sm">{{ t('accountSettings.activity.privacy.familiarDescription') }}</p>
-        </div>
-        <button type="button"
-          data-testid="familiar-media-toggle"
-          :disabled="togglingFamiliar"
-          :aria-pressed="familiarEnabled"
-          :class="[
-            'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none',
-            familiarEnabled ? 'bg-brand-solid' : 'bg-gray-600',
-          ]"
-          @click="emit('toggle-familiar')"
-        >
-          <span
+      <div class="nd-settings-item">
+        <div class="flex items-center justify-between gap-4">
+          <div class="min-w-0 flex-1">
+            <p class="nd-settings-row-title">{{ t('accountSettings.activity.privacy.familiarTitle') }}</p>
+            <p class="nd-settings-row-desc">{{ t('accountSettings.activity.privacy.familiarDescription') }}</p>
+          </div>
+          <button
+            type="button"
+            data-testid="familiar-media-toggle"
+            :disabled="togglingFamiliar"
+            :aria-pressed="familiarEnabled"
             :class="[
-              'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
-              familiarEnabled ? 'translate-x-5' : 'translate-x-0',
+              'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none',
+              familiarEnabled ? 'bg-brand-solid' : 'bg-gray-600',
             ]"
-          />
-        </button>
-      </div>
-
-      <!-- Everything the tally holds, shown plainly. A switch that says "we
-           remember what you study" is only honest if you can see what it
-           remembered. -->
-      <div>
-        <p class="text-white/90 text-sm font-medium">{{ t('accountSettings.activity.privacy.familiarListTitle') }}</p>
-        <ul v-if="familiarEntries.length > 0" class="mt-2 space-y-1" data-testid="familiar-media-list">
-          <li
-            v-for="entry in familiarEntries"
-            :key="entry.media.publicId"
-            class="flex flex-wrap items-baseline gap-x-4 gap-y-1 text-sm sm:flex-nowrap sm:justify-between"
+            @click="emit('toggle-familiar')"
           >
-            <!-- The title takes a line of its OWN below `sm`, and truncates on it.
-                 The count and the Forget button are both `shrink-0` and together
-                 run to about 300px, so on a phone they left the title roughly one
-                 character of width -- and since CJK breaks between any two
-                 characters, `break-words` then ran the whole name vertically down
-                 the card, one character per line.
-
-                 `min-w-0` still matters on the wide layout: a flex item defaults
-                 to `min-width: auto` and would otherwise refuse to shrink below
-                 its content, overflowing the row instead of ellipsing. -->
             <span
-              lang="ja"
-              class="w-full min-w-0 truncate text-gray-100 sm:w-auto sm:flex-1"
-              :title="displayMediaName(entry)"
-            >{{ displayMediaName(entry) }}</span>
-            <span class="text-gray-400 text-xs shrink-0 sm:ml-auto">
-              {{ familiarCounts(entry) }}
-            </span>
-            <!-- Per title, beside the whole-tally Forget above: a reader who
-                 finds one wrong show in the list should not have to throw the
-                 rest away to be rid of it. -->
-            <button
-              type="button"
-              class="ml-auto shrink-0 text-xs text-gray-500 hover:text-red-400 transition-colors disabled:opacity-40 sm:ml-0"
-              :disabled="forgettingId === entry.media.publicId"
-              :title="t('accountSettings.activity.privacy.forgetTitleHint', { title: displayMediaName(entry) })"
-              :aria-label="t('accountSettings.activity.privacy.forgetTitleHint', { title: displayMediaName(entry) })"
-              :data-testid="`familiar-media-forget-${entry.media.publicId}`"
-              @click="onForget(entry)"
+              :class="[
+                'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
+                familiarEnabled ? 'translate-x-5' : 'translate-x-0',
+              ]"
+            />
+          </button>
+        </div>
+
+        <!-- Everything the tally holds, shown plainly. A switch that says "we
+             remember what you study" is only honest if you can see what it
+             remembered. -->
+        <div class="mt-4 pt-3.5 border-t border-line-subtle">
+          <p class="text-xs font-medium text-ink-muted">{{ t('accountSettings.activity.privacy.familiarListTitle') }}</p>
+          <ul v-if="familiarEntries.length > 0" class="mt-2 space-y-1.5" data-testid="familiar-media-list">
+            <li
+              v-for="entry in familiarEntries"
+              :key="entry.media.publicId"
+              class="flex flex-wrap items-baseline gap-x-4 gap-y-1 text-sm sm:flex-nowrap sm:justify-between"
             >
-              {{ t('accountSettings.activity.privacy.forgetTitle') }}
-            </button>
-          </li>
-        </ul>
-        <p v-else class="mt-2 text-gray-400 text-sm">{{ t('accountSettings.activity.privacy.familiarListEmpty') }}</p>
+              <!-- The title takes a line of its OWN below `sm`, and truncates on it.
+                   The count and the Forget button are both `shrink-0` and together
+                   run to about 300px, so on a phone they left the title roughly one
+                   character of width -- and since CJK breaks between any two
+                   characters, `break-words` then ran the whole name vertically down
+                   the card, one character per line.
+
+                   `min-w-0` still matters on the wide layout: a flex item defaults
+                   to `min-width: auto` and would otherwise refuse to shrink below
+                   its content, overflowing the row instead of ellipsing. -->
+              <span
+                lang="ja"
+                class="w-full min-w-0 truncate text-ink sm:w-auto sm:flex-1"
+                :title="displayMediaName(entry)"
+              >{{ displayMediaName(entry) }}</span>
+              <span class="text-ink-muted text-xs shrink-0 sm:ml-auto">
+                {{ familiarCounts(entry) }}
+              </span>
+              <!-- Per title, beside the whole-tally Forget above: a reader who
+                   finds one wrong show in the list should not have to throw the
+                   rest away to be rid of it. -->
+              <button
+                type="button"
+                class="ml-auto shrink-0 text-xs text-ink-faint hover:text-red-400 transition-colors disabled:opacity-40 sm:ml-0"
+                :disabled="forgettingId === entry.media.publicId"
+                :title="t('accountSettings.activity.privacy.forgetTitleHint', { title: displayMediaName(entry) })"
+                :aria-label="t('accountSettings.activity.privacy.forgetTitleHint', { title: displayMediaName(entry) })"
+                :data-testid="`familiar-media-forget-${entry.media.publicId}`"
+                @click="onForget(entry)"
+              >
+                {{ t('accountSettings.activity.privacy.forgetTitle') }}
+              </button>
+            </li>
+          </ul>
+          <p v-else class="mt-1.5 text-ink-faint text-xs">{{ t('accountSettings.activity.privacy.familiarListEmpty') }}</p>
+        </div>
       </div>
     </div>
-  </div>
+  </section>
 </template>

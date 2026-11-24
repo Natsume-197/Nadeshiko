@@ -40,12 +40,12 @@
       "media": "作品目錄",
       "supporters": "支持者",
       "collections": "例句集",
-      "activity": "學習記錄",
       "language": "語言",
       "logout": "登出",
       "requests": "請求",
       "admin": "管理",
-      "notifications": "通知"
+      "lightMode": "淺色模式",
+      "darkMode": "深色模式"
     }
   },
   "announcementBanner": {
@@ -497,13 +497,13 @@
   },
   "accountSettings": {
     "menu": {
-      "generalTitle": "常規",
-      "advancedTitle": "高階",
-      "adminTitle": "管理",
-      "tabsAriaLabel": "賬戶設定導覽"
+      "tabsAriaLabel": "賬戶設定導覽",
+      "title": "你的設定",
+      "accountTitle": "帳戶",
+      "studyTitle": "學習",
+      "advancedTitle": "高階"
     },
     "themes": {
-      "title": "主題",
       "description": "選擇 Nadeshiko 的外觀。贊助者還可以建立自己的主題。",
       "appearance": "外觀",
       "patronThemes": "贊助者主題",
@@ -512,18 +512,20 @@
       "cancel": "取消"
     },
     "tabs": {
-      "settings": "設定",
-      "themes": "主題",
+      "themes": "外觀",
       "sync": "Anki",
       "collections": "例句集",
       "activity": "學習記錄",
-      "media": "作品管理",
+      "media": "搜尋",
       "developer": "開發者",
       "users": "使用者",
       "reports": "問題回饋",
       "announcement": "公告",
       "dictionaries": "辭典",
-      "notifications": "通知"
+      "notifications": "通知",
+      "general": "一般",
+      "account": "個人資料",
+      "connections": "連結服務"
     },
     "dashboard": {
       "roles": {
@@ -664,13 +666,13 @@
       "privacy": {
         "title": "隱私設定",
         "trackingTitle": "記錄學習活動",
-        "trackingDescription": "記錄搜尋、音訊播放、Anki 匯出和連結分享。最近的搜尋會顯示在搜尋欄中。",
+        "trackingDescription": "記錄搜尋、音訊播放與 Anki 匯出。",
         "clearHistoryTitle": "清空學習記錄",
-        "clearHistoryDescription": "永久刪除賬戶中的全部學習記錄。",
+        "clearHistoryDescription": "永久刪除已儲存的學習記錄。",
         "clearHistoryButton": "清空記錄",
         "clearing": "清空中…",
         "familiarTitle": "記住我學習的作品",
-        "familiarDescription": "按月統計各作品的學習次數，讓常學的作品在搜尋篩選列表中優先顯示。這項統計與學習記錄分開儲存。",
+        "familiarDescription": "在篩選中優先顯示你常學習的作品（與歷史記錄獨立）。",
         "familiarListTitle": "你學習過的作品",
         "familiarListEmpty": "暫無統計。匯出卡片或播放片段後，相應作品就會出現在這裡。",
         "familiarCounts": "{cards} · {plays} · {shares}",
@@ -753,18 +755,17 @@
       "logout": "登出",
       "loggingOut": "正在退出…",
       "additionalTitle": "資料與賬戶管理",
-      "preferencesTitle": "偏好設定",
       "mediaNameLanguage": "作品名稱語言",
-      "mediaNameLanguageDescription": "作品名稱將優先以{language}顯示。例如：",
+      "mediaNameLanguageDescription": "可用時以{language}顯示 — 例如：",
       "mediaNameLanguageOptions": {
         "ENGLISH": "英語",
         "JAPANESE": "日語",
         "ROMAJI": "羅馬字"
       },
       "translationLanguages": "譯文語言",
-      "translationLanguagesDescription": "選擇字幕譯文和詞典釋義的語言，目前支援英語和西班牙語。選擇兩種語言時，還可調整顯示順序。",
+      "translationLanguagesDescription": "字幕與辭典釋義的語言及順序。",
       "definitionSize": "釋義字號",
-      "definitionSizeDescription": "調整詞語彈窗中釋義文字的大小。",
+      "definitionSizeDescription": "詞卡中釋義文字的大小。",
       "definitionSizeOptions": {
         "SMALL": "小",
         "MEDIUM": "中",
@@ -777,7 +778,7 @@
         "ES_EN": "西班牙語優先，其次英語"
       },
       "defaultSearchCategory": "預設搜尋分類",
-      "defaultSearchCategoryDescription": "搜尋時預設使用此分類。如果開啟的連結已指定分類，則以連結為準。",
+      "defaultSearchCategoryDescription": "搜尋時預設開啟的分類。",
       "themeOptions": {
         "dark": "深色",
         "light": "淺色",
@@ -829,7 +830,7 @@
       "defaultSearchCategoryHiddenOption": "{category}（已隱藏）",
       "defaultSearchCategoryHiddenNotice": "你已隱藏“{category}”分類。重新顯示該分類前，搜尋將預設使用“全部”。",
       "dictionaryLinks": "詞典快捷連結",
-      "dictionaryLinksDescription": "選擇詞語彈窗中要顯示的詞典查詢連結。",
+      "dictionaryLinksDescription": "詞卡中顯示的外部辭典連結。",
       "deleteAccount": "刪除賬戶（無法撤銷）",
       "deleteAccountButton": "刪除賬戶",
       "deletingAccount": "刪除中…",
@@ -840,7 +841,6 @@
       "exportDataDescription": "將你的全部資料下載為 JSON 檔案。",
       "exportingData": "匯出中…",
       "questionableContent": "敏感內容",
-      "questionableContentDesc": "含明顯性暗示或露骨色情的內容",
       "contentRatingShow": "顯示",
       "contentRatingBlur": "模糊顯示（預設）",
       "contentRatingHide": "隱藏",
@@ -883,7 +883,7 @@
         }
       },
       "hiddenCategories": "搜尋中顯示的分類",
-      "hiddenCategoriesDescription": "關閉某個分類後，該分類的作品將不再出現在搜尋結果、分類標籤頁和結果數量中。",
+      "hiddenCategoriesDescription": "從搜尋結果中排除整個分類。",
       "hiddenCategoriesLastVisible": "至少需要保留一個可見分類。",
       "hiddenCategoryShown": "顯示",
       "hiddenCategoryHidden": "隱藏",
@@ -919,7 +919,7 @@
       "mediaLookupPlaceholder": "搜尋作品名稱…",
       "mediaLookupNoResults": "未找到符合的作品。",
       "manageMedia": "作品管理",
-      "manageMediaDescription": "收藏作品後，它會優先出現在搜尋篩選列表中；隱藏作品後，它將不再出現在搜尋結果中。搜尋作品目錄以新增標記，或在下方列表中調整已有標記。",
+      "manageMediaDescription": "收藏作品以優先顯示，或將其從搜尋結果中隱藏。",
       "manageMediaEmpty": "暫無收藏或隱藏的作品。可使用上方的搜尋欄查詢作品。",
       "manageMediaTableActions": "操作",
       "mediaFallback": "作品 #{id}"
@@ -1069,7 +1069,7 @@
     },
     "dictionaries": {
       "title": "自訂辭典",
-      "description": "將你的 Yomitan（.zip）辭典上傳至帳號。它們會在所有裝置間同步，並依你設定的順序顯示於單字卡片中。",
+      "description": "上傳 Yomitan（.zip）辭典並同步至你的帳戶。",
       "quotaUsed": "{used} / {max} 本辭典",
       "maxZipSize": "每個 .zip 最大 {maxMb} MB",
       "patronUpsell": "贊助者最多可上傳 6 本辭典（每本最高 95 MB）。",
@@ -1120,6 +1120,11 @@
       "enable": "啟用辭典",
       "disable": "停用辭典",
       "delete": "刪除辭典"
+    },
+    "general": {
+      "searchSectionTitle": "搜尋與內容",
+      "readingSectionTitle": "詞卡與外部連結",
+      "displaySectionTitle": "語言與顯示"
     }
   },
   "blog": {

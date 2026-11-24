@@ -165,167 +165,177 @@ async function toggleEmailCategory(category: NotificationCategory) {
 </script>
 
 <template>
-  <div id="alerts" class="nd-settings-card">
-    <div class="flex items-start justify-between gap-4">
-      <h3 class="nd-settings-title">{{ $t('notifications.alerts.title') }}</h3>
+  <section id="alerts" class="nd-settings-section">
+    <div class="mb-2 flex items-center justify-between gap-4 px-1">
+      <h2 class="nd-settings-section-label !mb-0 !px-0">{{ $t('notifications.alerts.title') }}</h2>
       <span v-if="alerts" class="shrink-0 text-xs text-ink-muted" data-testid="alerts-count">
         {{ $t('notifications.alerts.count', { active: alerts.activeCount, limit: alerts.limit }) }}
       </span>
     </div>
 
-    <p v-if="alertsError" class="mt-4 text-sm text-red-400" role="alert">{{ $t('notifications.alerts.loadError') }}</p>
-    <p v-else-if="alerts && alerts.items.length === 0" class="mt-4 text-sm text-ink-muted">
-      {{ $t('notifications.alerts.empty') }}
-    </p>
+    <div class="nd-settings-group">
+      <div v-if="alertsError" class="nd-settings-item">
+        <p class="text-sm text-red-400" role="alert">{{ $t('notifications.alerts.loadError') }}</p>
+      </div>
+      <div v-else-if="alerts && alerts.items.length === 0" class="nd-settings-item">
+        <p class="text-sm text-ink-muted">{{ $t('notifications.alerts.empty') }}</p>
+      </div>
 
-    <ul v-if="alerts && alerts.items.length > 0" class="mt-4 divide-y divide-white/5" data-testid="alerts-list">
-      <li v-for="alert in alerts.items" :key="alert.id" class="flex flex-wrap items-center gap-3 py-3">
-        <NuxtLink :to="localePath(wordPath(alert))" class="min-w-0 flex-1" data-testid="alert-word">
-          <span class="text-lg font-semibold text-white" lang="ja">{{ alert.query }}</span>
-          <span class="block text-xs text-ink-muted">{{ statusLabel(alert) }}</span>
-        </NuxtLink>
-        <div class="flex items-center gap-2">
+      <ul v-if="alerts && alerts.items.length > 0" class="divide-y divide-line-subtle" data-testid="alerts-list">
+        <li v-for="alert in alerts.items" :key="alert.id" class="flex flex-wrap items-center gap-3 px-5 py-3.5">
+          <NuxtLink :to="localePath(wordPath(alert))" class="min-w-0 flex-1" data-testid="alert-word">
+            <span class="text-base font-semibold text-ink" lang="ja">{{ alert.query }}</span>
+            <span class="block text-xs text-ink-muted mt-0.5">{{ statusLabel(alert) }}</span>
+          </NuxtLink>
+          <div class="flex items-center gap-2">
+            <button
+              v-if="alert.status === 'FULFILLED' && alert.matchMode !== 'CONTAINS'"
+              type="button"
+              class="nd-alert-action"
+              :disabled="busy"
+              data-testid="alert-follow"
+              @click="changeAlert(alert, { mode: 'NEW_SENTENCES' })"
+            >
+              <UiBaseIcon :path="mdiTextBoxSearchOutline" :size="14" w="w-3.5" h="h-3.5" aria-hidden="true" />
+              {{ $t('notifications.alerts.followNew') }}
+            </button>
+            <button
+              v-if="alert.status === 'ACTIVE'"
+              type="button"
+              class="nd-alert-action"
+              :disabled="busy"
+              data-testid="alert-pause"
+              @click="changeAlert(alert, { paused: true })"
+            >
+              <UiBaseIcon :path="mdiPause" :size="14" w="w-3.5" h="h-3.5" aria-hidden="true" />
+              {{ $t('notifications.alerts.pause') }}
+            </button>
+            <button
+              v-if="alert.status === 'PAUSED'"
+              type="button"
+              class="nd-alert-action"
+              :disabled="busy"
+              data-testid="alert-resume"
+              @click="changeAlert(alert, { paused: false })"
+            >
+              <UiBaseIcon :path="mdiPlay" :size="14" w="w-3.5" h="h-3.5" aria-hidden="true" />
+              {{ $t('notifications.alerts.resume') }}
+            </button>
+            <button
+              type="button"
+              class="nd-alert-action"
+              :disabled="busy"
+              :aria-label="$t('notifications.alerts.removeWord', { word: alert.query })"
+              data-testid="alert-remove"
+              @click="removeAlert(alert)"
+            >
+              <UiBaseIcon :path="mdiDeleteOutline" :size="14" w="w-3.5" h="h-3.5" aria-hidden="true" />
+              {{ $t('notifications.alerts.remove') }}
+            </button>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <section data-testid="emails-card" class="nd-settings-section">
+    <h2 class="nd-settings-section-label">{{ $t('notifications.channels.title') }}</h2>
+
+    <div class="nd-settings-group">
+      <div class="nd-settings-item">
+        <div class="flex items-center justify-between gap-4">
+          <div class="min-w-0 flex-1">
+            <p class="nd-settings-row-title">{{ $t('accountSettings.emails.allTitle') }}</p>
+            <p class="nd-settings-row-desc">{{ $t('accountSettings.emails.allDescription') }}</p>
+          </div>
           <button
-            v-if="alert.status === 'FULFILLED' && alert.matchMode !== 'CONTAINS'"
             type="button"
-            class="nd-alert-action"
+            data-testid="product-emails-toggle"
+            :aria-label="$t('accountSettings.emails.allTitle')"
             :disabled="busy"
-            data-testid="alert-follow"
-            @click="changeAlert(alert, { mode: 'NEW_SENTENCES' })"
+            :aria-pressed="emailMasterOn"
+            :class="[
+              'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:cursor-not-allowed',
+              emailMasterOn ? 'bg-brand-solid' : 'bg-gray-600',
+            ]"
+            @click="toggleEmailMaster"
           >
-            <UiBaseIcon :path="mdiTextBoxSearchOutline" :size="14" w="w-3.5" h="h-3.5" aria-hidden="true" />
-            {{ $t('notifications.alerts.followNew') }}
-          </button>
-          <button
-            v-if="alert.status === 'ACTIVE'"
-            type="button"
-            class="nd-alert-action"
-            :disabled="busy"
-            data-testid="alert-pause"
-            @click="changeAlert(alert, { paused: true })"
-          >
-            <UiBaseIcon :path="mdiPause" :size="14" w="w-3.5" h="h-3.5" aria-hidden="true" />
-            {{ $t('notifications.alerts.pause') }}
-          </button>
-          <button
-            v-if="alert.status === 'PAUSED'"
-            type="button"
-            class="nd-alert-action"
-            :disabled="busy"
-            data-testid="alert-resume"
-            @click="changeAlert(alert, { paused: false })"
-          >
-            <UiBaseIcon :path="mdiPlay" :size="14" w="w-3.5" h="h-3.5" aria-hidden="true" />
-            {{ $t('notifications.alerts.resume') }}
-          </button>
-          <button
-            type="button"
-            class="nd-alert-action"
-            :disabled="busy"
-            :aria-label="$t('notifications.alerts.removeWord', { word: alert.query })"
-            data-testid="alert-remove"
-            @click="removeAlert(alert)"
-          >
-            <UiBaseIcon :path="mdiDeleteOutline" :size="14" w="w-3.5" h="h-3.5" aria-hidden="true" />
-            {{ $t('notifications.alerts.remove') }}
+            <span
+              :class="[
+                'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
+                emailMasterOn ? 'translate-x-5' : 'translate-x-0',
+              ]"
+            />
           </button>
         </div>
-      </li>
-    </ul>
-  </div>
-
-  <div data-testid="emails-card" class="nd-settings-card">
-    <h3 class="nd-settings-title">{{ $t('notifications.channels.title') }}</h3>
-
-    <div class="mt-4 flex items-center justify-between gap-4">
-      <div>
-        <p class="font-medium text-white">{{ $t('accountSettings.emails.allTitle') }}</p>
-        <p class="text-sm text-gray-400">{{ $t('accountSettings.emails.allDescription') }}</p>
       </div>
-      <button
-        type="button"
-        data-testid="product-emails-toggle"
-        :aria-label="$t('accountSettings.emails.allTitle')"
-        :disabled="busy"
-        :aria-pressed="emailMasterOn"
-        :class="[
-          'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:cursor-not-allowed',
-          emailMasterOn ? 'bg-brand-solid' : 'bg-gray-600',
-        ]"
-        @click="toggleEmailMaster"
-      >
-        <span
-          :class="[
-            'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
-            emailMasterOn ? 'translate-x-5' : 'translate-x-0',
-          ]"
-        />
-      </button>
-    </div>
 
-    <table class="mt-4 w-full border-t border-white/10 text-sm" data-testid="channels-table">
-      <thead>
-        <tr class="text-left text-xs text-ink-muted">
-          <th class="py-2.5 pr-4" />
-          <th class="py-2.5 px-2 text-center font-medium">{{ $t('notifications.channels.site') }}</th>
-          <th class="py-2.5 pl-2 text-center font-medium">{{ $t('notifications.channels.email') }}</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="category in NOTIFICATION_CATEGORIES" :key="category" class="border-t border-white/5">
-          <td class="py-3 pr-4">
-            <p class="text-white">{{ $t(`accountSettings.emails.${category}Title`) }}</p>
-            <p class="text-xs text-gray-400">{{ $t(`accountSettings.emails.${category}Description`) }}</p>
-          </td>
-          <td class="py-3 px-2 text-center align-middle">
-            <button
-              v-if="hasSiteChannel(category)"
-              type="button"
-              :data-testid="`channel-${category}-site`"
-              :aria-label="`${$t(`accountSettings.emails.${category}Title`)}: ${$t('notifications.channels.site')}`"
-              :aria-pressed="isSiteOn(category)"
-              :disabled="busy"
-              :class="[
-                'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:cursor-not-allowed',
-                isSiteOn(category) ? 'bg-brand-solid' : 'bg-gray-600',
-              ]"
-              @click="toggleSiteChannel(category)"
-            >
-              <span
-                :class="[
-                  'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
-                  isSiteOn(category) ? 'translate-x-5' : 'translate-x-0',
-                ]"
-              />
-            </button>
-            <span v-else class="text-xs text-ink-muted" aria-hidden="true">—</span>
-          </td>
-          <td :class="['py-3 pl-2 text-center align-middle transition-opacity', emailMasterOn ? '' : 'opacity-50']">
-            <button
-              type="button"
-              :data-testid="`email-category-${category}`"
-              :aria-label="`${$t(`accountSettings.emails.${category}Title`)}: ${$t('notifications.channels.email')}`"
-              :aria-pressed="isEmailOn(category)"
-              :disabled="busy || !emailMasterOn"
-              :class="[
-                'relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none',
-                emailMasterOn && !busy ? 'cursor-pointer' : 'cursor-not-allowed',
-                isEmailOn(category) ? 'bg-brand-solid' : 'bg-gray-600',
-              ]"
-              @click="toggleEmailCategory(category)"
-            >
-              <span
-                :class="[
-                  'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
-                  isEmailOn(category) ? 'translate-x-5' : 'translate-x-0',
-                ]"
-              />
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+      <div class="nd-settings-item !py-2">
+        <table class="w-full text-sm" data-testid="channels-table">
+          <thead>
+            <tr class="text-left text-xs text-ink-faint">
+              <th class="py-2.5 pr-4" />
+              <th class="py-2.5 px-2 text-center font-medium">{{ $t('notifications.channels.site') }}</th>
+              <th class="py-2.5 pl-2 text-center font-medium">{{ $t('notifications.channels.email') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="category in NOTIFICATION_CATEGORIES" :key="category" class="border-t border-line-subtle">
+              <td class="py-3.5 pr-4">
+                <p class="nd-settings-row-title">{{ $t(`accountSettings.emails.${category}Title`) }}</p>
+                <p class="nd-settings-row-desc">{{ $t(`accountSettings.emails.${category}Description`) }}</p>
+              </td>
+              <td class="py-3.5 px-2 text-center align-middle">
+                <button
+                  v-if="hasSiteChannel(category)"
+                  type="button"
+                  :data-testid="`channel-${category}-site`"
+                  :aria-label="`${$t(`accountSettings.emails.${category}Title`)}: ${$t('notifications.channels.site')}`"
+                  :aria-pressed="isSiteOn(category)"
+                  :disabled="busy"
+                  :class="[
+                    'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:cursor-not-allowed',
+                    isSiteOn(category) ? 'bg-brand-solid' : 'bg-gray-600',
+                  ]"
+                  @click="toggleSiteChannel(category)"
+                >
+                  <span
+                    :class="[
+                      'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
+                      isSiteOn(category) ? 'translate-x-5' : 'translate-x-0',
+                    ]"
+                  />
+                </button>
+                <span v-else class="text-xs text-ink-muted" aria-hidden="true">—</span>
+              </td>
+              <td :class="['py-3.5 pl-2 text-center align-middle transition-opacity', emailMasterOn ? '' : 'opacity-50']">
+                <button
+                  type="button"
+                  :data-testid="`email-category-${category}`"
+                  :aria-label="`${$t(`accountSettings.emails.${category}Title`)}: ${$t('notifications.channels.email')}`"
+                  :aria-pressed="isEmailOn(category)"
+                  :disabled="busy || !emailMasterOn"
+                  :class="[
+                    'relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none',
+                    emailMasterOn && !busy ? 'cursor-pointer' : 'cursor-not-allowed',
+                    isEmailOn(category) ? 'bg-brand-solid' : 'bg-gray-600',
+                  ]"
+                  @click="toggleEmailCategory(category)"
+                >
+                  <span
+                    :class="[
+                      'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
+                      isEmailOn(category) ? 'translate-x-5' : 'translate-x-0',
+                    ]"
+                  />
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
 </template>
 
 <style scoped>

@@ -40,12 +40,12 @@
       "media": "作品一覧",
       "supporters": "サポーター",
       "collections": "コレクション",
-      "activity": "利用履歴",
       "language": "言語",
       "logout": "ログアウト",
       "requests": "リクエスト",
       "admin": "管理",
-      "notifications": "通知"
+      "lightMode": "ライトモード",
+      "darkMode": "ダークモード"
     }
   },
   "announcementBanner": {
@@ -497,13 +497,13 @@
   },
   "accountSettings": {
     "menu": {
-      "generalTitle": "基本設定",
-      "advancedTitle": "詳細設定",
-      "adminTitle": "管理者",
-      "tabsAriaLabel": "アカウント設定のセクション"
+      "tabsAriaLabel": "アカウント設定のセクション",
+      "title": "設定",
+      "accountTitle": "アカウント",
+      "studyTitle": "学習",
+      "advancedTitle": "詳細設定"
     },
     "themes": {
-      "title": "テーマ",
       "description": "Nadeshiko の見た目を選べます。パトロンは自分だけのテーマも作れます。",
       "appearance": "外観",
       "patronThemes": "パトロン限定テーマ",
@@ -512,18 +512,20 @@
       "cancel": "キャンセル"
     },
     "tabs": {
-      "settings": "設定",
-      "themes": "テーマ",
+      "themes": "外観",
       "sync": "Anki連携",
       "collections": "コレクション",
       "activity": "利用履歴",
-      "media": "作品の管理",
+      "media": "検索",
       "developer": "開発者向け",
       "users": "ユーザー",
       "reports": "問題の報告",
       "announcement": "お知らせ",
       "dictionaries": "辞書",
-      "notifications": "通知"
+      "notifications": "通知",
+      "general": "一般",
+      "account": "プロフィール",
+      "connections": "連携サービス"
     },
     "dashboard": {
       "roles": {
@@ -664,13 +666,13 @@
       "privacy": {
         "title": "プライバシー",
         "trackingTitle": "利用履歴を記録する",
-        "trackingDescription": "検索・音声再生・Ankiへの書き出し・共有の履歴を記録します。最近の検索は検索バーにも表示されます。",
+        "trackingDescription": "検索、音声再生、Anki出力を記録します。",
         "clearHistoryTitle": "履歴を削除",
-        "clearHistoryDescription": "このアカウントの利用履歴をすべて完全に削除します。",
+        "clearHistoryDescription": "保存された利用履歴を完全に削除します。",
         "clearHistoryButton": "履歴を削除",
         "clearing": "削除中...",
         "familiarTitle": "学習に使った作品を記録する",
-        "familiarDescription": "作品ごとに書き出し・再生・共有の回数を月単位で記録します。学習に使った作品は、検索時の作品フィルターの上部に表示されます。利用履歴の記録とは別に設定できます。",
+        "familiarDescription": "学習中の作品をフィルターで優先表示します（利用履歴とは独立）。",
         "familiarListTitle": "学習に使った作品",
         "familiarListEmpty": "まだ記録がありません。カードを書き出したりクリップを再生すると、ここに表示されます。",
         "familiarCounts": "{cards}・{plays}・{shares}",
@@ -753,18 +755,17 @@
       "logout": "ログアウト",
       "loggingOut": "ログアウト中...",
       "additionalTitle": "データとアカウントの管理",
-      "preferencesTitle": "表示・検索の設定",
       "mediaNameLanguage": "作品タイトルの表示言語",
-      "mediaNameLanguageDescription": "対応するタイトルがある場合は、{language}で表示します。例：",
+      "mediaNameLanguageDescription": "利用可能な場合は{language}で表示 — 例:",
       "mediaNameLanguageOptions": {
         "ENGLISH": "英語",
         "JAPANESE": "日本語",
         "ROMAJI": "ローマ字"
       },
       "translationLanguages": "翻訳の表示言語",
-      "translationLanguagesDescription": "字幕の翻訳と辞書の語義を表示する言語を選びます。両方を選ぶ場合は、表示順も指定できます。",
+      "translationLanguagesDescription": "字幕と辞書定義の言語・表示順を選びます。",
       "definitionSize": "語義の文字サイズ",
-      "definitionSizeDescription": "単語を選ぶと開くポップアップで、語義の文字サイズを変更します。",
+      "definitionSizeDescription": "単語カード内の定義テキストの大きさ。",
       "definitionSizeOptions": {
         "SMALL": "小",
         "MEDIUM": "中",
@@ -777,7 +778,7 @@
         "ES_EN": "スペイン語、英語の順"
       },
       "defaultSearchCategory": "検索時の初期カテゴリ",
-      "defaultSearchCategoryDescription": "検索時に最初に表示するカテゴリを選びます。リンクにカテゴリが指定されている場合は、そちらが優先されます。",
+      "defaultSearchCategoryDescription": "検索時に最初に開くカテゴリを選びます。",
       "themeOptions": {
         "dark": "ダーク",
         "light": "ライト",
@@ -829,7 +830,7 @@
       "defaultSearchCategoryHiddenOption": "{category}（非表示）",
       "defaultSearchCategoryHiddenNotice": "{category}は非表示に設定されています。表示をオンにするまで、検索時には「すべて」が選択されます。",
       "dictionaryLinks": "外部辞書へのリンク",
-      "dictionaryLinksDescription": "単語を選ぶと開くポップアップに、どの辞書へのリンクを表示するか選びます。",
+      "dictionaryLinksDescription": "単語カードに表示する外部辞書リンク。",
       "deleteAccount": "アカウント削除（取り消し不可）",
       "deleteAccountButton": "アカウントを削除",
       "deletingAccount": "削除中...",
@@ -840,7 +841,6 @@
       "exportDataDescription": "すべてのデータをJSONファイルとしてダウンロードします。",
       "exportingData": "エクスポート中...",
       "questionableContent": "センシティブな内容の表示",
-      "questionableContentDesc": "性的・露骨な表現を含む画像の扱いを選びます。",
       "contentRatingShow": "表示",
       "contentRatingBlur": "ぼかし（デフォルト）",
       "contentRatingHide": "非表示",
@@ -883,7 +883,7 @@
         }
       },
       "hiddenCategories": "検索に含めるカテゴリ",
-      "hiddenCategoriesDescription": "オフにしたカテゴリは検索対象から除外されます。カテゴリタブが非表示になり、そのカテゴリの作品は検索結果や件数にも含まれなくなります。",
+      "hiddenCategoriesDescription": "カテゴリ単位で検索結果から除外します。",
       "hiddenCategoriesLastVisible": "少なくとも1つのカテゴリは表示したままにする必要があります。",
       "hiddenCategoryShown": "表示中",
       "hiddenCategoryHidden": "非表示",
@@ -919,7 +919,7 @@
       "mediaLookupPlaceholder": "作品のタイトルを検索…",
       "mediaLookupNoResults": "該当する作品が見つかりません。",
       "manageMedia": "作品の管理",
-      "manageMediaDescription": "お気に入りに追加した作品は、検索時の作品フィルターの上部に表示されます。非表示にした作品は検索結果から除外されます。検索して作品を追加するか、下の一覧で設定を変更できます。",
+      "manageMediaDescription": "お気に入りで優先表示、または非表示で検索から除外します。",
       "manageMediaEmpty": "お気に入りまたは非表示に設定した作品はまだありません。上の検索から作品を探してください。",
       "manageMediaTableActions": "操作",
       "mediaFallback": "作品 #{id}"
@@ -1069,7 +1069,7 @@
     },
     "dictionaries": {
       "title": "カスタム辞書",
-      "description": "Yomitan形式（.zip）の辞書をアカウントにアップロードできます。端末間で同期され、設定した順番で単語カードに表示されます。",
+      "description": "Yomitan形式（.zip）の辞書をアカウントに同期します。",
       "quotaUsed": "{used} / {max} 辞書",
       "maxZipSize": "1ファイル最大 {maxMb} MB",
       "patronUpsell": "サポーターは最大6個（各95 MB）までアップロードできます。",
@@ -1120,6 +1120,11 @@
       "enable": "辞書を有効化",
       "disable": "辞書を無効化",
       "delete": "辞書を削除"
+    },
+    "general": {
+      "searchSectionTitle": "検索とコンテンツ",
+      "readingSectionTitle": "単語カードと外部リンク",
+      "displaySectionTitle": "言語と表示"
     }
   },
   "blog": {

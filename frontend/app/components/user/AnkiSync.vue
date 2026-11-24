@@ -407,10 +407,11 @@ watch(canEditProfile, (editable) => {
 </script>
 <template>
   <div class="anki">
-    <div class="nd-settings-card">
-        <h3 class="nd-settings-title">{{ $t('accountSettings.anki.syncStatus') }}</h3>
-        <div class="mt-4">
-          <label :for="`${fieldId}-ankiconnectAddress`" class="block mb-2 font-medium text-white">{{ $t('accountSettings.anki.serverAddressLabel') }}</label>
+    <section class="nd-settings-section">
+      <h2 class="nd-settings-section-label">{{ $t('accountSettings.anki.syncStatus') }}</h2>
+      <div class="nd-settings-card !mb-0">
+        <div>
+          <label :for="`${fieldId}-ankiconnectAddress`" class="block mb-2 text-sm font-medium text-ink">{{ $t('accountSettings.anki.serverAddressLabel') }}</label>
           <div class="flex items-center gap-3">
             <input :id="`${fieldId}-ankiconnectAddress`" v-model="ankiconnectAddress" data-testid="anki-address" :disabled="isLoading"
               @focus="cancelAddressSave" @blur="scheduleAddressSave"
@@ -500,10 +501,12 @@ watch(canEditProfile, (editable) => {
           </div>
         </div>
       </div>
+    </section>
 
-    <div v-if="store.profiles.length > 0" class="nd-settings-card">
-      <h3 class="nd-settings-title">{{ $t('accountSettings.anki.profile') }}</h3>
-      <div class="mt-4 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+    <section v-if="store.profiles.length > 0" class="nd-settings-section">
+      <h2 class="nd-settings-section-label">{{ $t('accountSettings.anki.profile') }}</h2>
+      <div class="nd-settings-card !mb-0">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
         <select
           :value="activeProfileId"
           class="nd-input flex-grow sm:w-auto resize-none"
@@ -545,17 +548,17 @@ watch(canEditProfile, (editable) => {
           </button>
         </div>
       </div>
+      </div>
+    </section>
 
-    </div>
-
-    <template v-if="store.activeProfile">
-      <fieldset :disabled="!canEditProfile" class="nd-settings-card min-w-0" data-testid="anki-config">
-        <h3 class="nd-settings-title">{{ $t('accountSettings.anki.ankiConfig') }}</h3>
+    <section v-if="store.activeProfile" class="nd-settings-section">
+      <h2 class="nd-settings-section-label">{{ $t('accountSettings.anki.ankiConfig') }}</h2>
+      <fieldset :disabled="!canEditProfile" class="nd-settings-card !mb-0 min-w-0" data-testid="anki-config">
         <div
           v-if="!hasKeyField"
           data-testid="anki-key-field-warning"
           role="alert"
-          class="mt-4 rounded bg-amber-50 p-4 dark:bg-amber-900/30">
+          class="mb-4 rounded bg-amber-50 p-4 dark:bg-amber-900/30">
           <p class="font-medium text-amber-900 dark:text-amber-100">
             {{ $t('accountSettings.anki.keyFieldRequiredTitle') }}
           </p>
@@ -824,7 +827,7 @@ watch(canEditProfile, (editable) => {
                       d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                   </svg>
                 </div>
-                <h1 class="mt-3 text-lg text-gray-800 dark:text-white">{{ $t('accountSettings.anki.noFieldsFound') }}</h1>
+                <p class="mt-3 text-lg text-gray-800 dark:text-white">{{ $t('accountSettings.anki.noFieldsFound') }}</p>
                 <p class="mt-2 text-gray-500 dark:text-gray-400">
                   {{ $t('accountSettings.anki.noFieldsMessage') }}
                 </p>
@@ -858,8 +861,7 @@ watch(canEditProfile, (editable) => {
           </div>
         </details>
       </fieldset>
-
-    </template>
+    </section>
 
     <CommonBaseModal
       :open="showNameModal"

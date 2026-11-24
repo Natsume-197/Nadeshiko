@@ -107,7 +107,7 @@ const faq = computed(() => [
           </div>
         </div>
         <NuxtLink
-          :to="`${localePath('/user/settings')}#connections`"
+          :to="localePath('/user/connections')"
           class="inline-flex h-9 shrink-0 items-center justify-center rounded-lg border border-hairline bg-surface-lift px-3.5 text-xs font-semibold text-ink transition-colors hover:border-brand/50 hover:bg-surface-hover"
         >
           {{ t('support.activeBanner.manage') }}
@@ -222,7 +222,7 @@ const faq = computed(() => [
         <NuxtLink
           v-if="store.isLoggedIn"
           data-testid="support-link-settings-cta"
-          :to="`${localePath('/user/settings')}#connections`"
+          :to="localePath('/user/connections')"
           class="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-hairline bg-surface-lift px-3.5 text-xs font-semibold text-ink transition-colors hover:border-brand/50 hover:bg-surface-hover"
         >
           <UiBaseIcon :path="mdiLinkVariant" :size="15" />

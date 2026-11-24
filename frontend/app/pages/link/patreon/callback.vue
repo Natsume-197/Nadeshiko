@@ -37,11 +37,11 @@ onMounted(async () => {
       <div class="flex size-16 items-center justify-center rounded-full bg-green-500/15 text-green-300"><UiBaseIcon :path="mdiCheckBold" size="30" /></div>
       <h1 class="mt-5 text-3xl font-bold">{{ t('patreonCallback.done') }}</h1>
       <p class="mt-2 text-white/50">{{ t('patreonCallback.doneBody') }}</p>
-      <NuxtLink :to="`${localePath('/user/settings')}#connections`" class="nd-btn-accent mt-6">{{ t('patreonCallback.backToSettings') }}</NuxtLink>
+      <NuxtLink :to="localePath('/user/connections')" class="nd-btn-accent mt-6">{{ t('patreonCallback.backToSettings') }}</NuxtLink>
     </template>
     <template v-else>
       <h1 class="text-3xl font-bold">{{ message }}</h1>
-      <NuxtLink :to="`${localePath('/user/settings')}#connections`" class="mt-5 text-brand hover:text-brand-hover">{{ t('patreonCallback.backToSettings') }}</NuxtLink>
+      <NuxtLink :to="localePath('/user/connections')" class="mt-5 text-brand hover:text-brand-hover">{{ t('patreonCallback.backToSettings') }}</NuxtLink>
     </template>
   </div>
 </template>

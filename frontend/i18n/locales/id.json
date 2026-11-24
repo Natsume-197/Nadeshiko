@@ -40,12 +40,12 @@
       "media": "Katalog",
       "supporters": "Pendukung",
       "collections": "Koleksi",
-      "activity": "Aktivitas",
       "language": "Bahasa",
       "logout": "Keluar",
       "requests": "Permintaan",
       "admin": "Admin",
-      "notifications": "Notifikasi"
+      "lightMode": "Mode terang",
+      "darkMode": "Mode gelap"
     }
   },
   "announcementBanner": {
@@ -497,13 +497,13 @@
   },
   "accountSettings": {
     "menu": {
-      "generalTitle": "Umum",
-      "advancedTitle": "Lanjutan",
-      "adminTitle": "Admin",
-      "tabsAriaLabel": "Bagian pengaturan akun"
+      "tabsAriaLabel": "Bagian pengaturan akun",
+      "title": "Pengaturan Anda",
+      "accountTitle": "Akun",
+      "studyTitle": "Belajar",
+      "advancedTitle": "Lanjutan"
     },
     "themes": {
-      "title": "Tema",
       "description": "Pilih tampilan Nadeshiko. Patron juga bisa membuat tema sendiri.",
       "appearance": "Tampilan",
       "patronThemes": "Tema patron",
@@ -512,18 +512,20 @@
       "cancel": "Batal"
     },
     "tabs": {
-      "settings": "Pengaturan",
-      "themes": "Tema",
+      "themes": "Tampilan",
       "sync": "Anki",
       "collections": "Koleksi",
       "activity": "Aktivitas",
-      "media": "Judul",
+      "media": "Pencarian",
       "developer": "Pengembang",
       "users": "Pengguna",
       "reports": "Laporan",
       "announcement": "Pengumuman",
       "dictionaries": "Kamus",
-      "notifications": "Notifikasi"
+      "notifications": "Notifikasi",
+      "general": "Umum",
+      "account": "Profil",
+      "connections": "Koneksi"
     },
     "dashboard": {
       "roles": {
@@ -664,13 +666,13 @@
       "privacy": {
         "title": "Privasi",
         "trackingTitle": "Catat aktivitas",
-        "trackingDescription": "Catat pencarian, pemutaran audio, ekspor ke Anki, dan tautan yang dibagikan. Pencarian terbaru Anda akan muncul di kolom pencarian.",
+        "trackingDescription": "Simpan pencarian, pemutaran audio, dan ekspor Anki.",
         "clearHistoryTitle": "Hapus riwayat",
-        "clearHistoryDescription": "Hapus semua data aktivitas dari akun Anda secara permanen.",
+        "clearHistoryDescription": "Hapus permanen seluruh riwayat aktivitas Anda.",
         "clearHistoryButton": "Hapus riwayat",
         "clearing": "Menghapus…",
         "familiarTitle": "Ingat judul yang saya gunakan untuk belajar",
-        "familiarDescription": "Catat aktivitas bulanan untuk setiap judul agar judul yang Anda gunakan untuk belajar muncul di bagian atas filter judul. Catatan ini terpisah dari riwayat aktivitas.",
+        "familiarDescription": "Prioritaskan judul yang sering Anda pelajari di filter (terpisah dari riwayat).",
         "familiarListTitle": "Judul yang Anda gunakan untuk belajar",
         "familiarListEmpty": "Belum ada data. Ekspor kartu atau putar klip agar judulnya muncul di sini.",
         "familiarCounts": "{cards} · {plays} · {shares}",
@@ -753,18 +755,17 @@
       "logout": "Keluar",
       "loggingOut": "Keluar…",
       "additionalTitle": "Data dan akun",
-      "preferencesTitle": "Preferensi",
       "mediaNameLanguage": "Bahasa judul",
-      "mediaNameLanguageDescription": "Judul akan ditampilkan dalam {language} jika tersedia. Contoh:",
+      "mediaNameLanguageDescription": "Ditampilkan dalam {language} jika tersedia — mis.",
       "mediaNameLanguageOptions": {
         "ENGLISH": "bahasa Inggris",
         "JAPANESE": "bahasa Jepang",
         "ROMAJI": "romaji"
       },
       "translationLanguages": "Bahasa terjemahan",
-      "translationLanguagesDescription": "Pilih bahasa untuk terjemahan subtitle dan definisi kamus: Inggris, Spanyol, atau keduanya. Jika memilih keduanya, Anda juga dapat mengatur urutan tampilannya. Terjemahan subtitle bahasa Indonesia belum tersedia.",
+      "translationLanguagesDescription": "Bahasa dan urutan subtitle serta definisi.",
       "definitionSize": "Ukuran teks definisi",
-      "definitionSizeDescription": "Atur ukuran teks definisi pada panel kata.",
+      "definitionSizeDescription": "Ukuran teks di dalam kartu kata.",
       "definitionSizeOptions": {
         "SMALL": "Kecil",
         "MEDIUM": "Sedang",
@@ -777,7 +778,7 @@
         "ES_EN": "Spanyol, lalu Inggris"
       },
       "defaultSearchCategory": "Kategori pencarian awal",
-      "defaultSearchCategoryDescription": "Pencarian akan dibuka pada kategori ini, kecuali tautan yang Anda buka sudah menentukan kategori lain.",
+      "defaultSearchCategoryDescription": "Kategori yang dibuka otomatis saat mencari.",
       "themeOptions": {
         "dark": "Gelap",
         "light": "Terang",
@@ -829,7 +830,7 @@
       "defaultSearchCategoryHiddenOption": "{category} (disembunyikan)",
       "defaultSearchCategoryHiddenNotice": "Kategori {category} sedang disembunyikan. Pencarian akan dibuka pada Semua hingga kategori tersebut ditampilkan kembali.",
       "dictionaryLinks": "Tautan kamus",
-      "dictionaryLinksDescription": "Pilih kamus yang ditampilkan sebagai tautan pencarian cepat pada panel kata.",
+      "dictionaryLinksDescription": "Tautan kamus eksternal di kartu kata.",
       "deleteAccount": "Hapus akun (tidak dapat dibatalkan)",
       "deleteAccountButton": "Hapus akun",
       "deletingAccount": "Menghapus…",
@@ -840,7 +841,6 @@
       "exportDataDescription": "Unduh semua data Anda sebagai berkas JSON.",
       "exportingData": "Mengekspor…",
       "questionableContent": "Konten sensitif",
-      "questionableContentDesc": "Konten dengan unsur seksual yang kuat atau eksplisit",
       "contentRatingShow": "Tampilkan",
       "contentRatingBlur": "Buramkan (bawaan)",
       "contentRatingHide": "Sembunyikan",
@@ -883,7 +883,7 @@
         }
       },
       "hiddenCategories": "Kategori yang disertakan dalam pencarian",
-      "hiddenCategoriesDescription": "Nonaktifkan kategori untuk menyembunyikannya dari pencarian. Judul dalam kategori tersebut tidak akan muncul dalam hasil, tab kategori, maupun jumlah hasil.",
+      "hiddenCategoriesDescription": "Kecualikan kategori tertentu dari hasil pencarian.",
       "hiddenCategoriesLastVisible": "Setidaknya satu kategori harus tetap ditampilkan.",
       "hiddenCategoryShown": "Ditampilkan",
       "hiddenCategoryHidden": "Disembunyikan",
@@ -919,7 +919,7 @@
       "mediaLookupPlaceholder": "Cari judul…",
       "mediaLookupNoResults": "Tidak ada judul yang cocok dengan pencarian ini.",
       "manageMedia": "Kelola judul",
-      "manageMediaDescription": "Tambahkan judul ke favorit agar muncul di bagian atas filter judul, atau sembunyikan agar tidak muncul dalam hasil pencarian. Cari judul di katalog, atau gunakan daftar di bawah untuk mengubah pilihan yang sudah ada.",
+      "manageMediaDescription": "Bintangi judul untuk memprioritaskannya, atau sembunyikan dari pencarian.",
       "manageMediaEmpty": "Belum ada judul favorit atau tersembunyi. Gunakan pencarian di atas untuk menemukan judul.",
       "manageMediaTableActions": "Tindakan",
       "mediaFallback": "Judul #{id}"
@@ -1069,7 +1069,7 @@
     },
     "dictionaries": {
       "title": "Kamus Kustom",
-      "description": "Unggah kamus Yomitan (.zip) milik Anda ke akun Anda. Kamus tersinkronisasi antar perangkat dan tampil di kartu kata sesuai urutan pilihan Anda.",
+      "description": "Unggah kamus Yomitan (.zip) yang tersinkron dengan akun Anda.",
       "quotaUsed": "{used} / {max} kamus",
       "maxZipSize": "Maksimal {maxMb} MB per .zip",
       "patronUpsell": "Pendukung Patreon dapat mengunggah hingga 6 kamus (95 MB masing-masing).",
@@ -1120,6 +1120,11 @@
       "enable": "Aktifkan kamus",
       "disable": "Nonaktifkan kamus",
       "delete": "Hapus kamus"
+    },
+    "general": {
+      "searchSectionTitle": "Pencarian dan konten",
+      "readingSectionTitle": "Kartu kata dan tautan eksternal",
+      "displaySectionTitle": "Bahasa dan tampilan"
     }
   },
   "blog": {

@@ -120,16 +120,18 @@ const onToggleHidden = async (media: MarkedMedia) => {
 </script>
 
 <template>
-  <div class="nd-settings-card">
-    <div class="flex flex-wrap items-center gap-2 justify-between">
-      <h3 class="nd-settings-title">{{ t('accountSettings.account.manageMedia') }}</h3>
-      <p class="text-sm text-gray-400">
+  <section class="nd-settings-section">
+    <div class="mb-2 flex flex-wrap items-center justify-between gap-2 px-1">
+      <h2 class="nd-settings-section-label !mb-0 !px-0">{{ t('accountSettings.account.manageMedia') }}</h2>
+      <p class="text-xs text-ink-muted">
         {{ t('accountSettings.account.favoriteMediaCount', { count: formatNumber(favoriteItems.length), max: formatNumber(MAX_FAVORITE_MEDIA) }) }}
         &middot;
         {{ t('accountSettings.account.hiddenMediaCount', { count: formatNumber(hiddenMediaIds.length) }) }}
       </p>
     </div>
-    <p class="text-gray-400 text-sm mt-1">{{ t('accountSettings.account.manageMediaDescription') }}</p>
+
+    <div class="nd-settings-card !mb-0">
+      <p class="text-ink-muted text-sm">{{ t('accountSettings.account.manageMediaDescription') }}</p>
 
     <div class="relative mt-4">
       <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -238,5 +240,6 @@ const onToggleHidden = async (media: MarkedMedia) => {
     <p v-else-if="!isSearching" class="mt-3 text-sm text-gray-400">
       {{ t('accountSettings.account.manageMediaEmpty') }}
     </p>
-  </div>
+    </div>
+  </section>
 </template>

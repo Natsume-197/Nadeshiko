@@ -181,22 +181,25 @@ const submitDelete = async () => {
 </script>
 
 <template>
-  <div class="nd-settings-card">
-    <div class="flex flex-wrap items-center gap-2 justify-between">
-      <h3 class="nd-settings-title">{{ t('accountSettings.collections.title') }}</h3>
-      <div class="flex items-center gap-3">
-        <p v-if="collections.length > 0" class="text-sm text-gray-400">{{ t('accountSettings.collections.count', { count: formatNumber(collections.length) }) }}</p>
-        <button
-          type="button"
-          class="nd-btn-accent transition-colors"
-          data-testid="create-collection-button"
-          @click="openCreate"
-        >
-          {{ t('accountSettings.collections.createButton') }}
-        </button>
-      </div>
+  <section class="nd-settings-section">
+    <div class="mb-2 flex flex-wrap items-center justify-between gap-2 px-1">
+      <h2 class="sr-only">{{ t('accountSettings.collections.title') }}</h2>
+      <p v-if="collections.length > 0" class="text-xs text-ink-muted">
+        {{ t('accountSettings.collections.count', { count: formatNumber(collections.length) }) }}
+      </p>
+      <span v-else />
+      <button
+        type="button"
+        class="nd-btn-accent transition-colors"
+        data-testid="create-collection-button"
+        @click="openCreate"
+      >
+        {{ t('accountSettings.collections.createButton') }}
+      </button>
     </div>
-    <div class="mt-4">
+
+    <div class="nd-settings-card !mb-0">
+      <div>
       <!-- This one already drops its two date columns below `sm`/`lg`, so the
            stack only has to deal with four: the name and the menu on one line,
            the count and visibility beneath. The count is a bare number once the
@@ -302,6 +305,7 @@ const submitDelete = async () => {
       </div>
 
       <p v-else class="text-gray-400 text-sm">{{ t('accountSettings.collections.noCollections') }}</p>
+      </div>
     </div>
 
     <CommonBaseModal
@@ -473,5 +477,5 @@ const submitDelete = async () => {
         </button>
       </div>
     </CommonBaseModal>
-  </div>
+  </section>
 </template>

@@ -6,8 +6,8 @@ import { SettingsPage } from '../pages/SettingsPage';
 test.describe('User Settings', () => {
   test('displays correct username and email after login', async ({ authenticatedPage, e2eAccount }) => {
     const settings = new SettingsPage(authenticatedPage);
-    await settings.goto();
-    await settings.expectLoaded();
+    await settings.gotoAccount();
+    await settings.expectAccountLoaded();
 
     await expect(settings.username).toHaveText(e2eAccount.username);
     await expect(settings.email).toHaveText(e2eAccount.email);
@@ -29,8 +29,8 @@ test.describe('User Settings', () => {
       const settings = new SettingsPage(authenticatedPage);
 
       try {
-        await settings.goto();
-        await settings.expectLoaded();
+        await settings.gotoSearch();
+        await settings.expectSearchLoaded();
         await settings.defaultSearchCategory.selectOption('ANIME');
         await expect(authenticatedPage.getByText('Preference saved')).toBeVisible({ timeout: 10_000 });
 

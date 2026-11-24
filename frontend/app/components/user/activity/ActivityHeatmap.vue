@@ -118,7 +118,7 @@ const heatmapMonthGroups = computed<MonthGroup[]>(() => {
   <div class="nd-settings-card">
     <div class="flex items-center justify-between flex-wrap gap-2">
       <div>
-        <h3 class="nd-settings-title">{{ t('accountSettings.activity.heatmap.title') }}</h3>
+        <h2 class="nd-settings-title">{{ t('accountSettings.activity.heatmap.title') }}</h2>
         <p class="text-sm text-gray-400 mt-1">{{ t('accountSettings.activity.heatmap.description', { days: HEATMAP_DAYS }) }}</p>
       </div>
     </div>

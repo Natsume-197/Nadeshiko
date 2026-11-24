@@ -40,12 +40,12 @@
       "media": "Media",
       "supporters": "Supporters",
       "collections": "Collections",
-      "activity": "Activity",
       "language": "Language",
       "logout": "Sign out",
       "requests": "Requests",
       "admin": "Admin",
-      "notifications": "Notifications"
+      "lightMode": "Light mode",
+      "darkMode": "Dark mode"
     }
   },
   "announcementBanner": {
@@ -497,13 +497,13 @@
   },
   "accountSettings": {
     "menu": {
-      "generalTitle": "General",
-      "advancedTitle": "Advanced",
-      "adminTitle": "Admin",
-      "tabsAriaLabel": "Account settings sections"
+      "tabsAriaLabel": "Account settings sections",
+      "title": "Your settings",
+      "accountTitle": "Account",
+      "studyTitle": "Study",
+      "advancedTitle": "Advanced"
     },
     "themes": {
-      "title": "Themes",
       "description": "Choose how Nadeshiko looks. Patrons can also make their own theme.",
       "appearance": "Appearance",
       "patronThemes": "Patron themes",
@@ -512,18 +512,20 @@
       "cancel": "Cancel"
     },
     "tabs": {
-      "settings": "Settings",
-      "themes": "Themes",
+      "themes": "Appearance",
       "sync": "Anki",
       "collections": "Collections",
       "activity": "Activity",
-      "media": "Media",
+      "media": "Search",
       "developer": "Developer",
       "users": "Users",
       "reports": "Reports",
       "announcement": "Announcement",
       "dictionaries": "Dictionaries",
-      "notifications": "Notifications"
+      "notifications": "Notifications",
+      "general": "General",
+      "account": "Profile",
+      "connections": "Connections"
     },
     "dashboard": {
       "roles": {
@@ -664,13 +666,13 @@
       "privacy": {
         "title": "Privacy",
         "trackingTitle": "Activity Tracking",
-        "trackingDescription": "Record searches, audio plays, Anki exports, and shared links. Your recent searches appear in the search bar.",
+        "trackingDescription": "Save searches, audio plays, and Anki exports.",
         "clearHistoryTitle": "Clear History",
-        "clearHistoryDescription": "Permanently delete all activity data from your account.",
+        "clearHistoryDescription": "Permanently delete your saved activity.",
         "clearHistoryButton": "Clear History",
         "clearing": "Clearing...",
         "familiarTitle": "Remember which titles I study",
-        "familiarDescription": "Keeps a monthly count per title so the titles you study sort to the top of the search media filter. Separate from your activity history.",
+        "familiarDescription": "Prioritize titles you study with in filters (separate from history).",
         "familiarListTitle": "Titles we think you like",
         "familiarListEmpty": "Nothing tallied yet. Export a card or play a clip and titles will show up here.",
         "familiarCounts": "{cards} · {plays} · {shares}",
@@ -753,18 +755,17 @@
       "logout": "Sign out",
       "loggingOut": "Logging out...",
       "additionalTitle": "Additional",
-      "preferencesTitle": "Preferences",
       "mediaNameLanguage": "Media Name Language",
-      "mediaNameLanguageDescription": "Media names will appear in {language} when possible. Example:",
+      "mediaNameLanguageDescription": "Shown in {language} when available — e.g.",
       "mediaNameLanguageOptions": {
         "ENGLISH": "English",
         "JAPANESE": "Japanese",
         "ROMAJI": "Romaji"
       },
       "translationLanguages": "Translation languages",
-      "translationLanguagesDescription": "Choose the languages for subtitle translations and dictionary definitions. If you select both, you can also choose their display order.",
+      "translationLanguagesDescription": "Language and order for subtitles and definitions.",
       "definitionSize": "Definition text size",
-      "definitionSizeDescription": "How large the word popup prints its definitions.",
+      "definitionSizeDescription": "Text size inside the word card.",
       "definitionSizeOptions": {
         "SMALL": "Small",
         "MEDIUM": "Medium",
@@ -777,7 +778,7 @@
         "ES_EN": "Spanish, then English"
       },
       "defaultSearchCategory": "Default Search Category",
-      "defaultSearchCategoryDescription": "Searches open on this category. A link that names a category still wins.",
+      "defaultSearchCategoryDescription": "Category opened by default when searching.",
       "themeOptions": {
         "dark": "Dark",
         "light": "Light",
@@ -829,7 +830,7 @@
       "defaultSearchCategoryHiddenOption": "{category} (hidden)",
       "defaultSearchCategoryHiddenNotice": "{category} is hidden under Hide Categories, so searches open on All until you show it again.",
       "dictionaryLinks": "Dictionary integrations",
-      "dictionaryLinksDescription": "Choose which dictionaries appear as quick lookup links in the token popup.",
+      "dictionaryLinksDescription": "External links shown in the word card.",
       "deleteAccount": "Delete account (Irreversible action)",
       "deleteAccountButton": "Delete account",
       "deletingAccount": "Deleting...",
@@ -840,7 +841,6 @@
       "exportDataDescription": "Download all your data as a JSON file.",
       "exportingData": "Exporting...",
       "questionableContent": "Sensitive Content",
-      "questionableContentDesc": "Questionable or explicit content",
       "contentRatingShow": "Show",
       "contentRatingBlur": "Blur (default)",
       "contentRatingHide": "Hide",
@@ -883,7 +883,7 @@
         }
       },
       "hiddenCategories": "Hide Categories",
-      "hiddenCategoriesDescription": "Turn a category off to drop it from search entirely. Its media stop appearing in results, in the category tabs, and in the result counts.",
+      "hiddenCategoriesDescription": "Exclude whole categories from search results.",
       "hiddenCategoriesLastVisible": "At least one category has to stay visible.",
       "hiddenCategoryShown": "Shown",
       "hiddenCategoryHidden": "Hidden",
@@ -919,7 +919,7 @@
       "mediaLookupPlaceholder": "Search for a title...",
       "mediaLookupNoResults": "No media found for this query.",
       "manageMedia": "Manage Media",
-      "manageMediaDescription": "Favorite a title to sort it to the top of the media filter when you search, or hide it to drop it out of search results entirely. Search the catalog to find a title, or use the list below to change one you have already marked.",
+      "manageMediaDescription": "Star titles to prioritize them, or hide them from searches.",
       "manageMediaEmpty": "Nothing favorited or hidden yet. Search above to find a title.",
       "manageMediaTableActions": "Actions",
       "mediaFallback": "Media #{id}"
@@ -1069,7 +1069,7 @@
     },
     "dictionaries": {
       "title": "Custom Dictionaries",
-      "description": "Upload your own Yomitan (.zip) dictionaries to your account. They sync across devices and appear inside word cards in the order you choose.",
+      "description": "Upload Yomitan (.zip) dictionaries synced to your account.",
       "quotaUsed": "{used} / {max} dictionaries",
       "maxZipSize": "Up to {maxMb} MB per .zip",
       "patronUpsell": "Patrons can upload up to 6 dictionaries (95 MB each).",
@@ -1120,6 +1120,11 @@
       "enable": "Enable dictionary",
       "disable": "Disable dictionary",
       "delete": "Delete dictionary"
+    },
+    "general": {
+      "searchSectionTitle": "Search and content",
+      "readingSectionTitle": "Word card and external links",
+      "displaySectionTitle": "Language and display"
     }
   },
   "blog": {

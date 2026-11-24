@@ -1,63 +1,13 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
 
-import type { Category, UserPreferences } from '@brigadasos/nadeshiko-sdk';
-
-import { apiErrorStatus } from '~/utils/apiError';
-import { ALL_CATEGORIES, CATEGORY_LABEL_KEYS } from '~/utils/categories';
-import { MEDIA_CARD_DEFAULTS } from '~/composables/useMediaCardDefault';
-import { MOTION_LEVELS, type MotionLevel } from '~/composables/useMotionPreference';
-import { normalizeTranslationLanguages, type TranslationLanguage } from '~/composables/useTranslationLanguages';
-
 import type { UserSession } from '@/stores/auth';
-import { useToastSuccess } from '~/utils/toast';
 import { handleApiError } from '~/utils/apiError';
-import { DEFINITION_SIZES, definitionSize } from '~/utils/wordPopup';
-import { resolveContextResponse } from '~/utils/resolvers';
-// Explicit, because Nuxt's auto-import names a component after its directory:
-// this one is `UserConnectionsCard`, and `<ConnectionsCard />` would have
-// resolved to nothing and rendered nothing, silently.
-import ConnectionsCard from '~/components/user/ConnectionsCard.vue';
-import { reportError } from '~/utils/reportError';
 
-const { t, locale } = useI18n();
+const { t } = useI18n();
 const { formatDate } = useFormat();
 
 const user_store = userStore();
-
-/** How large the word card prints its definitions. See `~/utils/wordPopup`. */
-const definitionTextSize = computed(() => definitionSize(user_store.preferences?.wordPopup?.definitionSize));
-
-/**
- * Which way the title card starts above a title's sentences. Read through the
- * composable so this select and the card cannot disagree about what the stored
- * value means -- and note this is only a starting position: the card's own row
- * opens and closes it without touching this.
- */
-const { preference: mediaCardDefault } = useMediaCardDefault();
-
-const updateDefinitionSize = async (value: string) => {
-  const size = definitionSize(value);
-
-  savingPreferences.value = true;
-  try {
-    await sdk.updateUserPreferences({ wordPopup: { definitionSize: size } });
-    user_store.preferences = {
-      ...user_store.preferences,
-      wordPopup: { ...user_store.preferences?.wordPopup, definitionSize: size },
-    };
-    posthog?.capture('setting_changed', { setting_name: 'wordPopup.definitionSize', value: size });
-    useToastSuccess(t('accountSettings.account.preferenceSaved'));
-  } catch (error) {
-    handleApiError('account:definition-size-update-failed', error, {
-      toastKey: 'accountSettings.account.preferenceError',
-      context: { 'preference.key': 'wordPopup.definitionSize' },
-    });
-  } finally {
-    savingPreferences.value = false;
-  }
-};
-
 const sdk = useNadeshikoSdk();
 
 const sessionsActionLoading = ref(false);
@@ -66,7 +16,6 @@ const deletingAccount = ref(false);
 const deleteAccountError = ref('');
 const loggingOut = ref(false);
 const exportingData = ref(false);
-const savingPreferences = ref(false);
 
 const editingEmail = ref(false);
 const newEmail = ref('');
@@ -89,140 +38,6 @@ const requestEmailChange = async () => {
     }
   } finally {
     changingEmail.value = false;
-  }
-};
-
-const posthog = usePostHog();
-
-const updatePreference = async (key: string, value: string) => {
-  savingPreferences.value = true;
-  try {
-    await sdk.updateUserPreferences({ [key]: value });
-    user_store.preferences = { ...user_store.preferences, [key]: value };
-    posthog?.capture('setting_changed', { setting_name: key, value });
-    useToastSuccess(t('accountSettings.account.preferenceSaved'));
-  } catch (error) {
-    handleApiError('account:preference-update-failed', error, {
-      toastKey: 'accountSettings.account.preferenceError',
-      context: { 'preference.key': key },
-    });
-  } finally {
-    savingPreferences.value = false;
-  }
-};
-
-const mediaNameExamples: Record<string, string> = {
-  ENGLISH: 'Attack on Titan',
-  JAPANESE: '進撃の巨人',
-  ROMAJI: 'Shingeki no Kyojin',
-};
-
-const mediaNameLanguageLabel = computed(() => {
-  const lang = user_store.preferences?.mediaNameLanguage || 'ENGLISH';
-  return t(`accountSettings.account.mediaNameLanguageOptions.${lang}`);
-});
-
-const mediaNameExample = computed(() => {
-  const lang = user_store.preferences?.mediaNameLanguage || 'ENGLISH';
-  return mediaNameExamples[lang] ?? mediaNameExamples.ENGLISH;
-});
-
-// Curated preview segments can be retired. Ignore 404s and omit the decorative card; report other failures.
-const PREVIEW_SEGMENT_UUID = 'skU_sjEmsvrE';
-const { data: previewData } = await useLazyAsyncData('content-rating-preview', () =>
-  sdk
-    .getSegmentContext({ segmentPublicId: PREVIEW_SEGMENT_UUID, take: 1 })
-    .then((r) => resolveContextResponse(r))
-    // Decorative preview for the content-rating setting: the panel renders fine
-    // without it, so a failure must not interrupt the settings page.
-    .catch((error: unknown) => {
-      const retired = apiErrorStatus(error) === 404;
-      if (!retired) {
-        reportError('account:content-rating-preview-failed', error);
-      }
-      return null;
-    }),
-);
-const previewSegment = computed(() => previewData.value?.segments?.[0] ?? null);
-
-const questionableMode = computed(() => user_store.preferences?.contentRatingPreferences?.nsfw || 'BLUR');
-
-const contentRatingDescription = () => {
-  const value = user_store.preferences?.contentRatingPreferences?.nsfw || 'BLUR';
-  return t(`accountSettings.account.contentRatingHint_${value.toLowerCase()}`);
-};
-
-const updateMediaNameLanguage = (value: string) => updatePreference('mediaNameLanguage', value);
-
-const translationLanguageSelection = computed(() =>
-  normalizeTranslationLanguages(user_store.preferences?.translationLanguages, locale.value).join(','),
-);
-
-const updateTranslationLanguages = async (value: string) => {
-  const languages = value
-    .split(',')
-    .filter((language): language is TranslationLanguage => language === 'EN' || language === 'ES');
-  if (languages.length === 0) return;
-
-  savingPreferences.value = true;
-  try {
-    await sdk.updateUserPreferences({ translationLanguages: languages });
-    user_store.preferences = { ...user_store.preferences, translationLanguages: languages };
-    posthog?.capture('setting_changed', { setting_name: 'translationLanguages', value: languages.join(',') });
-    useToastSuccess(t('accountSettings.account.preferenceSaved'));
-  } catch (error) {
-    handleApiError('account:translation-languages-update-failed', error, {
-      toastKey: 'accountSettings.account.preferenceError',
-      context: { 'preference.key': 'translationLanguages' },
-    });
-  } finally {
-    savingPreferences.value = false;
-  }
-};
-
-const { preference: motionPreference, setPreference: setMotionPreference } = useMotionPreference();
-
-const { storedDefault: defaultSearchCategory, isDefaultCategoryHidden } = useDefaultSearchCategory();
-const { isCategoryHidden } = useHiddenCategories();
-
-const categoryLabel = (category: Category) => t(CATEGORY_LABEL_KEYS[category]);
-
-// A category hidden wholesale is still offered, and still stores: the two
-// settings live on different pages, and refusing the choice here would read as a
-// broken select rather than as a consequence of Hide Categories. It is labelled
-// as hidden, and picking one only means searches open on All until it is shown
-// again.
-const defaultCategoryOptionLabel = (category: Category) =>
-  isCategoryHidden(category)
-    ? t('accountSettings.account.defaultSearchCategoryHiddenOption', { category: categoryLabel(category) })
-    : categoryLabel(category);
-
-const hiddenDefaultCategoryNotice = computed(() => {
-  const stored = defaultSearchCategory.value;
-  if (stored === 'ALL' || !isDefaultCategoryHidden.value) return null;
-  return t('accountSettings.account.defaultSearchCategoryHiddenNotice', { category: categoryLabel(stored) });
-});
-
-const updateDefaultSearchCategory = (value: string) => updatePreference('defaultSearchCategory', value);
-
-const { presets: dictionaryPresets, isDictionaryEnabled, setDictionaryEnabled } = useDictionaryLinks();
-
-type NsfwMode = NonNullable<NonNullable<UserPreferences['contentRatingPreferences']>['nsfw']>;
-
-const updateContentRatingPreference = async (value: NsfwMode) => {
-  savingPreferences.value = true;
-  try {
-    const current = user_store.preferences?.contentRatingPreferences ?? {};
-    const updated = { ...current, nsfw: value };
-    await sdk.updateUserPreferences({ contentRatingPreferences: updated });
-    user_store.preferences = { ...user_store.preferences, contentRatingPreferences: updated };
-    useToastSuccess(t('accountSettings.account.preferenceSaved'));
-  } catch (error) {
-    handleApiError('account:content-rating-update-failed', error, {
-      toastKey: 'accountSettings.account.preferenceError',
-    });
-  } finally {
-    savingPreferences.value = false;
   }
 };
 
@@ -394,90 +209,105 @@ const logoutCurrentUser = async () => {
 </script>
 
 <template>
-  <div class="nd-settings-card">
-    <div class="flex items-center justify-between gap-2">
-      <h3 class="nd-settings-title">{{ $t('accountSettings.account.infoTitle') }}</h3>
-      <button type="button"
-        data-testid="account-sign-out"
-        class="nd-btn-accent"
-        :disabled="loggingOut"
-        @click="logoutCurrentUser"
-      >
-        {{ loggingOut ? $t('accountSettings.account.loggingOut') : $t('accountSettings.account.logout') }}
-      </button>
-    </div>
-    <div class="mt-4">
-      <div class="flex justify-between items-center">
-        <div>
-          <p class="text-gray-400">{{ $t('accountSettings.account.usernameLabel') }}</p>
-          <p data-testid="account-username" class="text-white font-semibold">{{ user_store.userName || $t('accountSettings.account.notAvailable') }}</p>
+  <section class="nd-settings-section">
+    <h2 class="nd-settings-section-label">{{ $t('accountSettings.account.infoTitle') }}</h2>
+
+    <div class="nd-settings-group">
+      <div class="nd-settings-item">
+        <div class="nd-settings-row">
+          <div class="min-w-0 flex-1">
+            <p class="nd-settings-row-desc !mt-0">{{ $t('accountSettings.account.usernameLabel') }}</p>
+            <p data-testid="account-username" class="text-sm font-semibold text-ink mt-0.5">
+              {{ user_store.userName || $t('accountSettings.account.notAvailable') }}
+            </p>
+          </div>
+          <button
+            type="button"
+            data-testid="account-sign-out"
+            class="nd-btn-accent shrink-0"
+            :disabled="loggingOut"
+            @click="logoutCurrentUser"
+          >
+            {{ loggingOut ? $t('accountSettings.account.loggingOut') : $t('accountSettings.account.logout') }}
+          </button>
         </div>
       </div>
-      <div class="flex justify-between items-center mt-3">
-        <div class="flex-1">
-          <p class="text-gray-400">{{ $t('accountSettings.account.emailLabel') }}</p>
-          <template v-if="!editingEmail">
-            <p data-testid="account-email" class="text-white font-semibold">{{ user_store.userEmail || $t('accountSettings.account.notAvailable') }}</p>
-          </template>
-          <template v-else>
-            <div class="flex items-center gap-2 mt-1">
-              <input
-                v-model="newEmail"
-                type="email"
-                :placeholder="$t('accountSettings.account.changeEmailPlaceholder')"
-                class="nd-select flex-1"
-                :disabled="changingEmail"
-                @keyup.enter="requestEmailChange"
-              />
-              <button type="button"
-                class="nd-btn"
-                :disabled="changingEmail || !newEmail.trim()"
-                @click="requestEmailChange"
-              >
-                {{ changingEmail ? $t('accountSettings.account.changeEmailSending') : $t('accountSettings.account.changeEmailSend') }}
-              </button>
-              <button type="button"
-                class="nd-btn"
-                @click="editingEmail = false; changeEmailError = ''"
-              >
-                {{ $t('accountSettings.account.changeEmailCancel') }}
-              </button>
-            </div>
-          </template>
-          <p v-if="changeEmailMessage" class="text-green-400 text-sm mt-1">{{ changeEmailMessage }}</p>
-          <p v-if="changeEmailError" class="text-red-300 text-sm mt-1">{{ changeEmailError }}</p>
+
+      <div class="nd-settings-item">
+        <div class="nd-settings-row">
+          <div class="min-w-0 flex-1">
+            <p class="nd-settings-row-desc !mt-0">{{ $t('accountSettings.account.emailLabel') }}</p>
+            <template v-if="!editingEmail">
+              <p data-testid="account-email" class="text-sm font-semibold text-ink mt-0.5">
+                {{ user_store.userEmail || $t('accountSettings.account.notAvailable') }}
+              </p>
+            </template>
+            <template v-else>
+              <div class="flex flex-wrap items-center gap-2 mt-2">
+                <input
+                  v-model="newEmail"
+                  type="email"
+                  :placeholder="$t('accountSettings.account.changeEmailPlaceholder')"
+                  class="nd-select flex-1 min-w-[12rem]"
+                  :disabled="changingEmail"
+                  @keyup.enter="requestEmailChange"
+                />
+                <button
+                  type="button"
+                  class="nd-btn"
+                  :disabled="changingEmail || !newEmail.trim()"
+                  @click="requestEmailChange"
+                >
+                  {{ changingEmail ? $t('accountSettings.account.changeEmailSending') : $t('accountSettings.account.changeEmailSend') }}
+                </button>
+                <button
+                  type="button"
+                  class="nd-btn"
+                  @click="editingEmail = false; changeEmailError = ''"
+                >
+                  {{ $t('accountSettings.account.changeEmailCancel') }}
+                </button>
+              </div>
+            </template>
+            <p v-if="changeEmailMessage" class="text-green-400 text-sm mt-1.5">{{ changeEmailMessage }}</p>
+            <p v-if="changeEmailError" class="text-red-300 text-sm mt-1.5">{{ changeEmailError }}</p>
+          </div>
+          <button
+            v-if="!editingEmail"
+            type="button"
+            class="nd-btn shrink-0"
+            @click="editingEmail = true; newEmail = ''; changeEmailMessage = ''; changeEmailError = ''"
+          >
+            {{ $t('accountSettings.account.changeEmail') }}
+          </button>
         </div>
-        <button type="button"
-          v-if="!editingEmail"
-          class="nd-btn"
-          @click="editingEmail = true; newEmail = ''; changeEmailMessage = ''; changeEmailError = ''"
-        >
-          {{ $t('accountSettings.account.changeEmail') }}
-        </button>
       </div>
-
     </div>
-  </div>
+  </section>
 
-  <div data-testid="sessions-card" class="nd-settings-card">
-    <div class="flex flex-wrap items-center gap-2 justify-between">
-      <h3 class="nd-settings-title">{{ $t('accountSettings.account.sessions.title') }}</h3>
-      <div class="flex flex-wrap gap-2">
-        <button type="button"
+  <section class="nd-settings-section" data-testid="sessions-card">
+    <h2 class="nd-settings-section-label">{{ $t('accountSettings.account.sessions.title') }}</h2>
+
+    <div class="nd-settings-group">
+      <div class="nd-settings-item flex flex-wrap items-center justify-end gap-2">
+        <button
+          type="button"
           class="nd-btn"
           :disabled="sessionsLoading || sessionsActionLoading"
           @click="refreshSessions()"
         >
           {{ $t('accountSettings.account.sessions.refresh') }}
         </button>
-        <button type="button"
+        <button
+          type="button"
           class="nd-btn"
           :disabled="sessionsLoading || sessionsActionLoading"
           @click="revokeOtherUserSessions"
         >
           {{ $t('accountSettings.account.sessions.logoutOtherDevices') }}
         </button>
-        <button type="button"
+        <button
+          type="button"
           class="nd-btn-accent"
           :disabled="sessionsLoading || sessionsActionLoading"
           @click="revokeAllUserSessions"
@@ -485,285 +315,119 @@ const logoutCurrentUser = async () => {
           {{ $t('accountSettings.account.sessions.logoutAllSessions') }}
         </button>
       </div>
-    </div>
 
-    <p v-if="sessionsError" class="mt-4 text-red-300">{{ sessionsError }}</p>
-    <p v-if="sessionsLoading" data-testid="sessions-loading" class="mt-4 text-gray-300">{{ $t('accountSettings.account.sessions.loading') }}</p>
+      <div class="nd-settings-item">
+        <p v-if="sessionsError" class="text-sm text-red-300 mb-3">{{ sessionsError }}</p>
+        <p v-if="sessionsLoading" data-testid="sessions-loading" class="text-sm text-ink-muted">
+          {{ $t('accountSettings.account.sessions.loading') }}
+        </p>
 
-    <!-- Below `md` a session is a block: the device on its own line, then the
-         two dates labelled (the header that named them is gone), then Revoke.
-         Two full timestamps and a user agent will not share a phone's width. -->
-    <div v-else class="mt-4 md:overflow-x-auto">
-      <table v-if="sessionRows.length > 0" class="block w-full md:table md:min-w-full md:divide-y md:divide-gray-200 md:dark:divide-white/20">
-        <thead class="hidden md:table-header-group">
-          <tr>
-            <th class="py-2 text-left text-xs font-medium text-white/90 uppercase">{{ $t('accountSettings.account.sessions.table.userAgent') }}</th>
-            <th class="py-2 text-left text-xs font-medium text-white/90 uppercase">{{ $t('accountSettings.account.sessions.table.created') }}</th>
-            <th class="py-2 text-left text-xs font-medium text-white/90 uppercase">{{ $t('accountSettings.account.sessions.table.expires') }}</th>
-            <th class="py-2 text-left text-xs font-medium text-white/90 uppercase"></th>
-          </tr>
-        </thead>
-        <tbody class="block md:table-row-group md:divide-y md:divide-gray-200 md:dark:divide-white/10">
-          <tr v-for="session in sessionRows" :key="session.token" :data-testid="isCurrentSession(session.token) ? 'session-row-current' : 'session-row'" :class="['flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-white/10 py-3 last:border-0 md:table-row md:border-0 md:py-0', { 'bg-white/5': isCurrentSession(session.token) }]">
-            <td class="order-1 w-full min-w-0 break-words text-sm text-gray-200 md:w-auto md:table-cell md:py-3">
-              {{ formatUserAgent(session.userAgent) }}
-              <span v-if="isCurrentSession(session.token)" class="ml-2 inline-flex items-center rounded-full bg-green-500/20 px-2 py-0.5 text-xs font-medium text-green-400">
-                {{ $t('accountSettings.account.sessions.current') }}
-              </span>
-            </td>
-            <td class="order-2 text-xs text-gray-400 md:table-cell md:py-3 md:text-sm md:text-gray-200">
-              <span class="md:hidden">{{ $t('accountSettings.account.sessions.table.created') }}: </span>{{ formatDate(session.createdAt, 'dateTime') }}
-            </td>
-            <td class="order-3 w-full text-xs text-gray-400 md:w-auto md:table-cell md:py-3 md:text-sm md:text-gray-200">
-              <span class="md:hidden">{{ $t('accountSettings.account.sessions.table.expires') }}: </span>{{ formatDate(session.expiresAt, 'dateTime') }}
-            </td>
-            <td class="order-4 ml-auto text-sm md:ml-0 md:table-cell md:py-3 md:text-right">
-              <button type="button"
-                v-if="!isCurrentSession(session.token)"
-                class="nd-btn-accent"
-                :disabled="sessionsActionLoading"
-                @click="revokeSingleSession(session.token)"
+        <!-- Below `md` a session is a block: the device on its own line, then the
+             two dates labelled (the header that named them is gone), then Revoke.
+             Two full timestamps and a user agent will not share a phone's width. -->
+        <div v-else class="md:overflow-x-auto">
+          <table v-if="sessionRows.length > 0" class="block w-full md:table md:min-w-full md:divide-y md:divide-line-subtle">
+            <thead class="hidden md:table-header-group">
+              <tr>
+                <th class="pb-2.5 text-left text-xs font-medium text-ink-faint uppercase">
+                  {{ $t('accountSettings.account.sessions.table.userAgent') }}
+                </th>
+                <th class="pb-2.5 text-left text-xs font-medium text-ink-faint uppercase">
+                  {{ $t('accountSettings.account.sessions.table.created') }}
+                </th>
+                <th class="pb-2.5 text-left text-xs font-medium text-ink-faint uppercase">
+                  {{ $t('accountSettings.account.sessions.table.expires') }}
+                </th>
+                <th class="pb-2.5 text-left text-xs font-medium text-ink-faint uppercase" />
+              </tr>
+            </thead>
+            <tbody class="block md:table-row-group md:divide-y md:divide-line-subtle">
+              <tr
+                v-for="session in sessionRows"
+                :key="session.token"
+                :data-testid="isCurrentSession(session.token) ? 'session-row-current' : 'session-row'"
+                :class="[
+                  'flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-line-subtle py-3 last:border-0 md:table-row md:border-0 md:py-0',
+                  { 'bg-lift': isCurrentSession(session.token) },
+                ]"
               >
-                {{ $t('accountSettings.account.sessions.revoke') }}
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+                <td class="order-1 w-full min-w-0 break-words text-sm text-ink md:w-auto md:table-cell md:py-3">
+                  {{ formatUserAgent(session.userAgent) }}
+                  <span
+                    v-if="isCurrentSession(session.token)"
+                    class="ml-2 inline-flex items-center rounded-full bg-green-500/20 px-2 py-0.5 text-xs font-medium text-green-400"
+                  >
+                    {{ $t('accountSettings.account.sessions.current') }}
+                  </span>
+                </td>
+                <td class="order-2 text-xs text-ink-muted md:table-cell md:py-3 md:text-sm">
+                  <span class="md:hidden">{{ $t('accountSettings.account.sessions.table.created') }}: </span>{{ formatDate(session.createdAt, 'dateTime') }}
+                </td>
+                <td class="order-3 w-full text-xs text-ink-muted md:w-auto md:table-cell md:py-3 md:text-sm">
+                  <span class="md:hidden">{{ $t('accountSettings.account.sessions.table.expires') }}: </span>{{ formatDate(session.expiresAt, 'dateTime') }}
+                </td>
+                <td class="order-4 ml-auto text-sm md:ml-0 md:table-cell md:py-3 md:text-right">
+                  <button
+                    v-if="!isCurrentSession(session.token)"
+                    type="button"
+                    class="nd-btn-accent"
+                    :disabled="sessionsActionLoading"
+                    @click="revokeSingleSession(session.token)"
+                  >
+                    {{ $t('accountSettings.account.sessions.revoke') }}
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
 
-      <p v-else data-testid="sessions-empty-state" class="text-gray-300">{{ $t('accountSettings.account.sessions.empty') }}</p>
-    </div>
-  </div>
-
-  <div class="nd-settings-card">
-    <h3 class="nd-settings-title">{{ $t('accountSettings.account.preferencesTitle') }}</h3>
-    <div class="mt-4">
-      <div class="nd-settings-row">
-        <div>
-          <p class="text-white">{{ $t('accountSettings.account.mediaNameLanguage') }}</p>
-          <p class="text-gray-400 text-sm">{{ $t('accountSettings.account.mediaNameLanguageDescription', { language: mediaNameLanguageLabel }) }} <span lang="ja" class="text-white/80 italic">{{ mediaNameExample }}</span></p>
+          <p v-else data-testid="sessions-empty-state" class="text-sm text-ink-muted">
+            {{ $t('accountSettings.account.sessions.empty') }}
+          </p>
         </div>
-        <select
-          :aria-label="$t('accountSettings.account.mediaNameLanguage')"
-          :value="user_store.preferences?.mediaNameLanguage || 'ENGLISH'"
-          @change="updateMediaNameLanguage(($event.target as HTMLSelectElement).value)"
-          :disabled="savingPreferences"
-          class="nd-select"
-        >
-          <option value="ENGLISH">{{ $t('accountSettings.account.mediaNameLanguageOptions.ENGLISH') }}</option>
-          <option value="JAPANESE">{{ $t('accountSettings.account.mediaNameLanguageOptions.JAPANESE') }}</option>
-          <option value="ROMAJI">{{ $t('accountSettings.account.mediaNameLanguageOptions.ROMAJI') }}</option>
-        </select>
       </div>
-      <div class="mt-4">
+    </div>
+  </section>
+
+  <section class="nd-settings-section">
+    <h2 class="nd-settings-section-label">{{ $t('accountSettings.account.additionalTitle') }}</h2>
+
+    <div class="nd-settings-group">
+      <div class="nd-settings-item">
         <div class="nd-settings-row">
-          <div>
-            <p class="text-white">{{ $t('accountSettings.account.defaultSearchCategory') }}</p>
-            <p class="text-gray-400 text-sm">{{ $t('accountSettings.account.defaultSearchCategoryDescription') }}</p>
+          <div class="min-w-0 flex-1">
+            <p class="nd-settings-row-title">{{ $t('accountSettings.account.exportData') }}</p>
+            <p class="nd-settings-row-desc">{{ $t('accountSettings.account.exportDataDescription') }}</p>
           </div>
-          <select
-            :aria-label="$t('accountSettings.account.defaultSearchCategory')"
-            data-testid="default-search-category"
-            :value="defaultSearchCategory"
-            @change="updateDefaultSearchCategory(($event.target as HTMLSelectElement).value)"
-            :disabled="savingPreferences"
-            class="nd-select"
+          <button
+            type="button"
+            data-testid="account-export"
+            class="nd-btn shrink-0"
+            :disabled="exportingData"
+            @click="exportData"
           >
-            <option value="ALL">{{ $t('searchContainer.categoryAll') }}</option>
-            <option v-for="category in ALL_CATEGORIES" :key="category" :value="category">
-              {{ defaultCategoryOptionLabel(category) }}
-            </option>
-          </select>
+            {{ exportingData ? $t('accountSettings.account.exportingData') : $t('accountSettings.account.exportData') }}
+          </button>
         </div>
-        <p v-if="hiddenDefaultCategoryNotice" class="text-amber-300/80 text-sm mt-2">{{ hiddenDefaultCategoryNotice }}</p>
       </div>
 
-      <!-- Motion lives in a cookie rather than the stored preferences, so it
-           applies the moment it is picked and needs no round trip -- and so it
-           is already right in the server's first render. `savingPreferences`
-           therefore does not gate it. -->
-      <div class="mt-4">
+      <div class="nd-settings-item">
         <div class="nd-settings-row">
-          <div>
-            <p class="text-white">{{ $t('accountSettings.account.motion') }}</p>
-            <p class="text-gray-400 text-sm">{{ $t(`accountSettings.account.motionHint_${motionPreference}`) }}</p>
+          <div class="min-w-0 flex-1">
+            <p class="nd-settings-row-title">{{ $t('accountSettings.account.deleteAccount') }}</p>
           </div>
-          <select
-            :aria-label="$t('accountSettings.account.motion')"
-            data-testid="motion-preference"
-            :value="motionPreference"
-            @change="setMotionPreference(($event.target as HTMLSelectElement).value as MotionLevel)"
-            class="nd-select"
+          <button
+            type="button"
+            data-testid="account-delete"
+            class="nd-btn-accent shrink-0"
+            :disabled="deletingAccount"
+            @click="deleteCurrentAccount"
           >
-            <option v-for="option in MOTION_LEVELS" :key="option" :value="option">
-              {{ $t(`accountSettings.account.motionOptions.${option}`) }}
-            </option>
-          </select>
+            {{ deletingAccount ? $t('accountSettings.account.deletingAccount') : $t('accountSettings.account.deleteAccountButton') }}
+          </button>
         </div>
-      </div>
-
-      <!-- The title card above a title's own search results. A starting
-           position only -- the card's row opens and closes it either way, and
-           that is deliberately not stored. -->
-      <div class="nd-settings-row mt-4">
-        <div>
-          <p class="text-white">{{ $t('accountSettings.account.mediaCard') }}</p>
-          <p class="text-gray-400 text-sm">{{ $t(`accountSettings.account.mediaCardHint_${mediaCardDefault}`) }}</p>
-        </div>
-        <select
-          :aria-label="$t('accountSettings.account.mediaCard')"
-          data-testid="media-card-default"
-          :value="mediaCardDefault"
-          @change="updatePreference('mediaCardDefault', ($event.target as HTMLSelectElement).value)"
-          :disabled="savingPreferences"
-          class="nd-select"
-        >
-          <option v-for="option in MEDIA_CARD_DEFAULTS" :key="option" :value="option">
-            {{ $t(`accountSettings.account.mediaCardOptions.${option}`) }}
-          </option>
-        </select>
-      </div>
-
-      <div class="nd-settings-row mt-4">
-        <div>
-          <p class="text-white">{{ $t('accountSettings.account.questionableContent') }}</p>
-          <p class="text-gray-400 text-sm">{{ $t('accountSettings.account.questionableContentDesc') }}. {{ contentRatingDescription() }}</p>
-        </div>
-        <select
-          :aria-label="$t('accountSettings.account.questionableContent')"
-          :value="user_store.preferences?.contentRatingPreferences?.nsfw || 'BLUR'"
-          @change="updateContentRatingPreference(($event.target as HTMLSelectElement).value as NsfwMode)"
-          :disabled="savingPreferences"
-          class="nd-select"
-        >
-          <option value="SHOW">{{ $t('accountSettings.account.contentRatingShow') }}</option>
-          <option value="BLUR">{{ $t('accountSettings.account.contentRatingBlur') }}</option>
-          <option value="HIDE">{{ $t('accountSettings.account.contentRatingHide') }}</option>
-        </select>
-      </div>
-      <div v-if="previewSegment" class="mt-3 rounded-lg bg-white/5 overflow-hidden">
-        <div v-if="questionableMode === 'HIDE'" class="flex items-center justify-center py-6 px-4 bg-neutral-800">
-          <span class="text-gray-500 text-sm">{{ $t('accountSettings.account.contentRatingHiddenDesc') }}</span>
-        </div>
-        <div v-else class="flex flex-col sm:flex-row items-stretch">
-          <div class="relative h-36 sm:h-auto sm:w-48 shrink-0 overflow-hidden">
-            <img
-              :src="previewSegment.segment.urls.imageUrl"
-              :alt="$t('accountSettings.account.contentRatingPreviewAlt')"
-              class="h-full w-full object-cover object-center transition-all duration-300"
-              :class="questionableMode === 'BLUR' ? 'blur-[42px] scale-125' : ''"
-            />
-          </div>
-          <div class="flex-1 px-4 py-3 flex flex-col justify-center gap-1.5">
-            <p lang="ja" class="text-white text-sm leading-snug">{{ previewSegment.segment.textJa.content }}</p>
-            <p class="text-gray-400 text-xs leading-snug">{{ previewSegment.segment.textEn.content }}</p>
-            <p class="text-gray-500 text-xs mt-1">{{ $t('accountSettings.account.contentRatingPreview') }}</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- The two dictionary rows sit last, together, and directly above the
-           dictionaries card below: all three are about where a word's definitions
-           come from, and they were scattered through the list with unrelated
-           settings between them. -->
-      <div class="mt-4">
-        <p class="text-white">{{ $t('accountSettings.account.dictionaryLinks') }}</p>
-        <p class="text-gray-400 text-sm">{{ $t('accountSettings.account.dictionaryLinksDescription') }}</p>
-        <div class="mt-3 flex flex-wrap gap-2">
-          <label
-            v-for="preset in dictionaryPresets"
-            :key="preset.id"
-            class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-control border border-hairline text-sm text-ink-faint cursor-pointer hover:bg-control-hover hover:text-ink"
-          >
-            <input
-              type="checkbox"
-              :checked="isDictionaryEnabled(preset.id)"
-              class="accent-button-primary-main"
-              @change="setDictionaryEnabled(preset.id, ($event.target as HTMLInputElement).checked)"
-            />
-            <span>{{ preset.label }}</span>
-          </label>
-        </div>
-      </div>
-
-      <!-- The word card's own settings, beside the two dictionary rows: all of
-           it is about what happens when a reader taps a word. -->
-      <div class="mt-4 nd-settings-row">
-        <div>
-          <p class="text-white">{{ $t('accountSettings.account.definitionSize') }}</p>
-          <p class="text-gray-400 text-sm">{{ $t('accountSettings.account.definitionSizeDescription') }}</p>
-        </div>
-        <select
-          :aria-label="$t('accountSettings.account.definitionSize')"
-          data-testid="definition-size"
-          :value="definitionTextSize"
-          :disabled="savingPreferences"
-          class="nd-select"
-          @change="updateDefinitionSize(($event.target as HTMLSelectElement).value)"
-        >
-          <option v-for="size in DEFINITION_SIZES" :key="size" :value="size">
-            {{ $t(`accountSettings.account.definitionSizeOptions.${size}`) }}
-          </option>
-        </select>
-      </div>
-
-      <div class="mt-4 nd-settings-row">
-        <div>
-          <p class="text-white">{{ $t('accountSettings.account.translationLanguages') }}</p>
-          <p class="text-gray-400 text-sm">{{ $t('accountSettings.account.translationLanguagesDescription') }}</p>
-        </div>
-        <select
-          :aria-label="$t('accountSettings.account.translationLanguages')"
-          data-testid="translation-languages"
-          :value="translationLanguageSelection"
-          :disabled="savingPreferences"
-          class="nd-select"
-          @change="updateTranslationLanguages(($event.target as HTMLSelectElement).value)"
-        >
-          <option value="EN">{{ $t('accountSettings.account.translationLanguageOptions.EN') }}</option>
-          <option value="ES">{{ $t('accountSettings.account.translationLanguageOptions.ES') }}</option>
-          <option value="EN,ES">{{ $t('accountSettings.account.translationLanguageOptions.EN_ES') }}</option>
-          <option value="ES,EN">{{ $t('accountSettings.account.translationLanguageOptions.ES_EN') }}</option>
-        </select>
+        <p v-if="deleteAccountError" class="text-red-300 text-sm mt-2">{{ deleteAccountError }}</p>
       </div>
     </div>
-  </div>
-
-  <!-- Below preferences because that is what it is: which dictionaries the word
-       card answers from, decided on another site the reader has an account on. -->
-  <ConnectionsCard />
-
-  <div class="nd-settings-card">
-    <h3 class="nd-settings-title">{{ $t('accountSettings.account.additionalTitle') }}</h3>
-    <div class="mt-4 space-y-4">
-      <div class="nd-settings-row">
-        <div>
-          <p class="text-white">{{ $t('accountSettings.account.exportData') }}</p>
-          <p class="text-gray-400 text-sm">{{ $t('accountSettings.account.exportDataDescription') }}</p>
-        </div>
-        <button type="button"
-          data-testid="account-export"
-          class="nd-btn"
-          :disabled="exportingData"
-          @click="exportData"
-        >
-          {{ exportingData ? $t('accountSettings.account.exportingData') : $t('accountSettings.account.exportData') }}
-        </button>
-      </div>
-      <div class="nd-settings-row">
-        <div>
-          <p class="text-white">{{ $t('accountSettings.account.deleteAccount') }}</p>
-        </div>
-        <button type="button"
-          data-testid="account-delete"
-          class="nd-btn-accent"
-          :disabled="deletingAccount"
-          @click="deleteCurrentAccount"
-        >
-          {{ deletingAccount ? $t('accountSettings.account.deletingAccount') : $t('accountSettings.account.deleteAccountButton') }}
-        </button>
-      </div>
-      <p v-if="deleteAccountError" class="text-red-300 text-sm mt-2">{{ deleteAccountError }}</p>
-    </div>
-  </div>
+  </section>
 </template>

@@ -88,7 +88,7 @@ const groupedActivities = computed<GroupedActivity[]>(() => {
   <div class="nd-settings-card">
     <div class="flex items-center justify-between flex-wrap gap-2">
       <div>
-        <h3 class="nd-settings-title">{{ t('accountSettings.activity.history.title') }}</h3>
+        <h2 class="nd-settings-title">{{ t('accountSettings.activity.history.title') }}</h2>
         <p class="text-sm text-gray-400 mt-1">{{ t('accountSettings.activity.history.description') }}</p>
       </div>
 

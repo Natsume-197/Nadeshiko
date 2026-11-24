@@ -10,11 +10,20 @@ const logout = vi.fn();
 const openFeedback = vi.fn();
 const showLoginModal = vi.fn();
 const navigateTo = vi.fn();
+const themePreference = ref('dark');
+const setThemePreference = vi.fn((next: string) => {
+  themePreference.value = next;
+});
 const route = reactive({ fullPath: '/', path: '/', params: {}, query: {} });
 
 vi.stubGlobal('useI18n', () => ({ t: (k: string) => k, locale: ref('en') }));
 vi.stubGlobal('useRoute', () => route);
 vi.stubGlobal('useLocalePath', () => (p: string) => `/en${p}`);
+vi.stubGlobal('useThemePreference', () => ({
+  attribute: themePreference,
+  preference: themePreference,
+  setPreference: setThemePreference,
+}));
 vi.stubGlobal('useLoginModal', () => ({
   openLoginModal: showLoginModal,
   closeLoginModal: vi.fn(),
@@ -99,22 +108,22 @@ describe('what a signed-OUT reader is offered', () => {
     expect(has(wrapper, 'nav-login')).toBe(true);
   });
 
+  test('quick theme toggle switches between dark and light even before signing in', async () => {
+    themePreference.value = 'dark';
+    const wrapper = render();
+
+    await get(wrapper, 'nav-theme-toggle').trigger('click');
+
+    expect(setThemePreference).toHaveBeenCalledWith('light');
+  });
+
   test('and none of the account pages, which would be dead ends', async () => {
     const wrapper = render();
     await openDrawer(wrapper);
 
-    for (const id of ['nav-settings', 'nav-collections', 'nav-activity', 'nav-anki', 'nav-logout']) {
+    for (const id of ['nav-settings', 'nav-collections', 'nav-anki', 'nav-logout']) {
       expect(has(wrapper, id)).toBe(false);
     }
-  });
-
-  test('and not the hidden-media settings either, which live under the account', async () => {
-    // `nav-media` is `/user/media` -- the reader's own hidden-titles list, not
-    // the public catalogue.
-    const wrapper = render();
-    await openDrawer(wrapper);
-
-    expect(has(wrapper, 'nav-media')).toBe(false);
   });
 });
 
@@ -127,7 +136,7 @@ describe('what a signed-IN reader is offered', () => {
     const wrapper = render();
     await openDrawer(wrapper);
 
-    for (const id of ['nav-settings', 'nav-collections', 'nav-activity', 'nav-anki', 'nav-media']) {
+    for (const id of ['nav-settings', 'nav-anki', 'nav-collections']) {
       expect(has(wrapper, id)).toBe(true);
     }
   });

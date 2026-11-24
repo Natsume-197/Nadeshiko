@@ -11,20 +11,33 @@ import {
   mdiCogOutline,
   mdiSync,
   mdiFormatListBulletedSquare,
-  mdiHistory,
   mdiLogin,
   mdiLogout,
   mdiMessageTextOutline,
   mdiHandHeartOutline,
   mdiThumbUpOutline,
   mdiShieldCrownOutline,
-  mdiBellOutline,
+  mdiWeatherNight,
+  mdiWhiteBalanceSunny,
 } from '@mdi/js';
 
 const store = userStore();
 const isAuth = computed(() => store.isLoggedIn);
 const isAdmin = computed(() => store.isAdmin);
 const localePath = useLocalePath();
+const { attribute: themeAttribute, setPreference: setThemePreference } = useThemePreference();
+
+const isLightTheme = computed(() => {
+  if (themeAttribute.value === 'light') return true;
+  if (themeAttribute.value === 'system' && import.meta.client) {
+    return window.matchMedia('(prefers-color-scheme: light)').matches;
+  }
+  return false;
+});
+
+function toggleTheme() {
+  setThemePreference(isLightTheme.value ? 'dark' : 'light');
+}
 
 const { openLoginModal: showLoginModal } = useLoginModal();
 const { openFeedback } = useFeedbackWidget();
@@ -180,25 +193,22 @@ watch(() => route.fullPath, closeNavSidebar);
                                     <NuxtLink v-if="isAuth" :to="localePath('/user/settings')" data-testid="nav-settings" :prefetch="false">
                                         <SearchDropdownItem :text="$t('navbar.buttons.settings')" :icon-path="mdiCogOutline" />
                                     </NuxtLink>
-                                    <NuxtLink v-if="isAuth" :to="localePath('/user/notifications')" data-testid="nav-notifications" :prefetch="false">
-                                        <SearchDropdownItem :text="$t('navbar.buttons.notifications')" :icon-path="mdiBellOutline" />
-                                    </NuxtLink>
                                     <NuxtLink v-if="isAuth" :to="localePath('/user/sync')" data-testid="nav-anki" :prefetch="false">
                                         <SearchDropdownItem :text="$t('accountSettings.tabs.sync')" :icon-path="mdiSync" />
                                     </NuxtLink>
                                     <NuxtLink v-if="isAuth" :to="localePath('/user/collections')" data-testid="nav-collections" :prefetch="false">
                                         <SearchDropdownItem :text="$t('navbar.buttons.collections')" :icon-path="mdiFormatListBulletedSquare" />
                                     </NuxtLink>
-                                    <NuxtLink v-if="isAuth" :to="localePath('/user/activity')" data-testid="nav-activity" :prefetch="false">
-                                        <SearchDropdownItem :text="$t('navbar.buttons.activity')" :icon-path="mdiHistory" />
-                                    </NuxtLink>
-                                    <NuxtLink v-if="isAuth" :to="localePath('/user/media')" data-testid="nav-media" :prefetch="false">
-                                        <SearchDropdownItem :text="$t('accountSettings.tabs.media')" :icon-path="mdiMovieOpenOutline" />
-                                    </NuxtLink>
                                     <NuxtLink v-if="isAdmin" :to="localePath('/admin')" data-testid="nav-admin" :prefetch="false">
                                         <SearchDropdownItem :text="$t('navbar.buttons.admin')" :icon-path="mdiShieldCrownOutline" />
                                     </NuxtLink>
                                     <SearchDropdownItem v-if="!isAuth || isAuth == null" data-testid="nav-login" :icon-path="mdiLogin" @click="openLoginModal" :text="$t('navbar.buttons.login')" />
+                                    <SearchDropdownItem
+                                        data-testid="nav-theme-toggle"
+                                        :icon-path="isLightTheme ? mdiWeatherNight : mdiWhiteBalanceSunny"
+                                        :text="$t(isLightTheme ? 'navbar.buttons.darkMode' : 'navbar.buttons.lightMode')"
+                                        @click="toggleTheme"
+                                    />
                                     <div v-if="isAuth" class="nd-menu-divider" />
                                     <SearchDropdownItem v-if="isAuth" data-testid="nav-logout" :icon-path="mdiLogout" @click="logout" :text="$t('navbar.buttons.logout')" />
                                     <template #fallback>
@@ -315,16 +325,6 @@ watch(() => route.fullPath, closeNavSidebar);
                             <UiBaseIcon :path="mdiFormatListBulletedSquare" :size="18" />
                             {{ $t('navbar.buttons.collections') }}
                         </NuxtLink>
-                        <NuxtLink :to="localePath('/user/activity')"
-                            class="nd-sidebar-link flex items-center gap-3 px-5 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-neutral-300 dark:hover:bg-neutral-700">
-                            <UiBaseIcon :path="mdiHistory" :size="18" />
-                            {{ $t('navbar.buttons.activity') }}
-                        </NuxtLink>
-                        <NuxtLink :to="localePath('/user/media')"
-                            class="nd-sidebar-link flex items-center gap-3 px-5 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-neutral-300 dark:hover:bg-neutral-700">
-                            <UiBaseIcon :path="mdiMovieOpenOutline" :size="18" />
-                            {{ $t('accountSettings.tabs.media') }}
-                        </NuxtLink>
                         <NuxtLink v-if="isAdmin" :to="localePath('/admin')" data-testid="nav-admin-mobile"
                             class="nd-sidebar-link flex items-center gap-3 px-5 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-neutral-300 dark:hover:bg-neutral-700">
                             <UiBaseIcon :path="mdiShieldCrownOutline" :size="18" />
@@ -335,6 +335,11 @@ watch(() => route.fullPath, closeNavSidebar);
                         class="nd-sidebar-link flex items-center gap-3 px-5 py-3 w-full text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-neutral-300 dark:hover:bg-neutral-700">
                         <UiBaseIcon :path="mdiLogin" :size="18" />
                         {{ $t('navbar.buttons.login') }}
+                    </button>
+                    <button type="button" @click="toggleTheme"
+                        class="nd-sidebar-link flex items-center gap-3 px-5 py-3 w-full text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-neutral-300 dark:hover:bg-neutral-700">
+                        <UiBaseIcon :path="isLightTheme ? mdiWeatherNight : mdiWhiteBalanceSunny" :size="18" />
+                        {{ $t(isLightTheme ? 'navbar.buttons.darkMode' : 'navbar.buttons.lightMode') }}
                     </button>
                     <button type="button" v-if="isAuth" @click="logout"
                         class="nd-sidebar-link flex items-center gap-3 px-5 py-3 w-full text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-neutral-300 dark:hover:bg-neutral-700">

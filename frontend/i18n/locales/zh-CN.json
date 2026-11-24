@@ -40,12 +40,12 @@
       "media": "作品目录",
       "supporters": "支持者",
       "collections": "例句集",
-      "activity": "学习记录",
       "language": "语言",
       "logout": "退出登录",
       "requests": "请求",
       "admin": "管理",
-      "notifications": "通知"
+      "lightMode": "浅色模式",
+      "darkMode": "深色模式"
     }
   },
   "announcementBanner": {
@@ -497,13 +497,13 @@
   },
   "accountSettings": {
     "menu": {
-      "generalTitle": "常规",
-      "advancedTitle": "高级",
-      "adminTitle": "管理",
-      "tabsAriaLabel": "账户设置导航"
+      "tabsAriaLabel": "账户设置导航",
+      "title": "你的设置",
+      "accountTitle": "账户",
+      "studyTitle": "学习",
+      "advancedTitle": "高级"
     },
     "themes": {
-      "title": "主题",
       "description": "选择 Nadeshiko 的外观。赞助者还可以创建自己的主题。",
       "appearance": "外观",
       "patronThemes": "赞助者主题",
@@ -512,18 +512,20 @@
       "cancel": "取消"
     },
     "tabs": {
-      "settings": "设置",
-      "themes": "主题",
+      "themes": "外观",
       "sync": "Anki",
       "collections": "例句集",
       "activity": "学习记录",
-      "media": "作品管理",
+      "media": "搜索",
       "developer": "开发者",
       "users": "用户",
       "reports": "问题反馈",
       "announcement": "公告",
       "dictionaries": "词典",
-      "notifications": "通知"
+      "notifications": "通知",
+      "general": "常规",
+      "account": "个人资料",
+      "connections": "关联服务"
     },
     "dashboard": {
       "roles": {
@@ -664,13 +666,13 @@
       "privacy": {
         "title": "隐私设置",
         "trackingTitle": "记录学习活动",
-        "trackingDescription": "记录搜索、音频播放、Anki 导出和链接分享。最近的搜索会显示在搜索栏中。",
+        "trackingDescription": "记录搜索、音频播放和 Anki 导出。",
         "clearHistoryTitle": "清空学习记录",
-        "clearHistoryDescription": "永久删除账户中的全部学习记录。",
+        "clearHistoryDescription": "永久删除已保存的学习记录。",
         "clearHistoryButton": "清空记录",
         "clearing": "清空中…",
         "familiarTitle": "记住我学习的作品",
-        "familiarDescription": "按月统计各作品的学习次数，让常学的作品在搜索筛选列表中优先显示。这项统计与学习记录分开保存。",
+        "familiarDescription": "在筛选中优先显示你常学习的作品（与历史记录独立）。",
         "familiarListTitle": "你学习过的作品",
         "familiarListEmpty": "暂无统计。导出卡片或播放片段后，相应作品就会出现在这里。",
         "familiarCounts": "{cards} · {plays} · {shares}",
@@ -753,18 +755,17 @@
       "logout": "退出登录",
       "loggingOut": "正在退出…",
       "additionalTitle": "数据与账户管理",
-      "preferencesTitle": "偏好设置",
       "mediaNameLanguage": "作品名称语言",
-      "mediaNameLanguageDescription": "作品名称将优先以{language}显示。例如：",
+      "mediaNameLanguageDescription": "可用时以{language}显示 — 例如：",
       "mediaNameLanguageOptions": {
         "ENGLISH": "英语",
         "JAPANESE": "日语",
         "ROMAJI": "罗马字"
       },
       "translationLanguages": "译文语言",
-      "translationLanguagesDescription": "选择字幕译文和词典释义的语言，目前支持英语和西班牙语。选择两种语言时，还可调整显示顺序。",
+      "translationLanguagesDescription": "字幕和词典释义的语言及顺序。",
       "definitionSize": "释义字号",
-      "definitionSizeDescription": "调整词语弹窗中释义文字的大小。",
+      "definitionSizeDescription": "词卡中释义文字的大小。",
       "definitionSizeOptions": {
         "SMALL": "小",
         "MEDIUM": "中",
@@ -777,7 +778,7 @@
         "ES_EN": "西班牙语优先，其次英语"
       },
       "defaultSearchCategory": "默认搜索分类",
-      "defaultSearchCategoryDescription": "搜索时默认使用此分类。如果打开的链接已指定分类，则以链接为准。",
+      "defaultSearchCategoryDescription": "搜索时默认打开的分类。",
       "themeOptions": {
         "dark": "深色",
         "light": "浅色",
@@ -829,7 +830,7 @@
       "defaultSearchCategoryHiddenOption": "{category}（已隐藏）",
       "defaultSearchCategoryHiddenNotice": "你已隐藏“{category}”分类。重新显示该分类前，搜索将默认使用“全部”。",
       "dictionaryLinks": "词典快捷链接",
-      "dictionaryLinksDescription": "选择词语弹窗中要显示的词典查询链接。",
+      "dictionaryLinksDescription": "词卡中显示的外部词典链接。",
       "deleteAccount": "删除账户（无法撤销）",
       "deleteAccountButton": "删除账户",
       "deletingAccount": "删除中…",
@@ -840,7 +841,6 @@
       "exportDataDescription": "将你的全部数据下载为 JSON 文件。",
       "exportingData": "导出中…",
       "questionableContent": "敏感内容",
-      "questionableContentDesc": "含明显性暗示或露骨色情的内容",
       "contentRatingShow": "显示",
       "contentRatingBlur": "模糊显示（默认）",
       "contentRatingHide": "隐藏",
@@ -883,7 +883,7 @@
         }
       },
       "hiddenCategories": "搜索中显示的分类",
-      "hiddenCategoriesDescription": "关闭某个分类后，该分类的作品将不再出现在搜索结果、分类标签页和结果数量中。",
+      "hiddenCategoriesDescription": "从搜索结果中排除整个分类。",
       "hiddenCategoriesLastVisible": "至少需要保留一个可见分类。",
       "hiddenCategoryShown": "显示",
       "hiddenCategoryHidden": "隐藏",
@@ -919,7 +919,7 @@
       "mediaLookupPlaceholder": "搜索作品名称…",
       "mediaLookupNoResults": "未找到匹配的作品。",
       "manageMedia": "作品管理",
-      "manageMediaDescription": "收藏作品后，它会优先出现在搜索筛选列表中；隐藏作品后，它将不再出现在搜索结果中。搜索作品目录以添加标记，或在下方列表中调整已有标记。",
+      "manageMediaDescription": "收藏作品以优先显示，或将其从搜索结果中隐藏。",
       "manageMediaEmpty": "暂无收藏或隐藏的作品。可使用上方的搜索栏查找作品。",
       "manageMediaTableActions": "操作",
       "mediaFallback": "作品 #{id}"
@@ -1069,7 +1069,7 @@
     },
     "dictionaries": {
       "title": "自定义词典",
-      "description": "将你的 Yomitan（.zip）词典上传到账号。它们会在所有设备间同步，并按你设置的顺序显示在单词卡片中。",
+      "description": "上传 Yomitan（.zip）词典并同步至你的账户。",
       "quotaUsed": "{used} / {max} 本词典",
       "maxZipSize": "每个 .zip 最大 {maxMb} MB",
       "patronUpsell": "赞助者最多可上传 6 本词典（每本最高 95 MB）。",
@@ -1120,6 +1120,11 @@
       "enable": "启用词典",
       "disable": "停用词典",
       "delete": "删除词典"
+    },
+    "general": {
+      "searchSectionTitle": "搜索与内容",
+      "readingSectionTitle": "词卡与外部链接",
+      "displaySectionTitle": "语言与显示"
     }
   },
   "blog": {

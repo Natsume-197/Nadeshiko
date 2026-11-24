@@ -338,29 +338,31 @@ onBeforeUnmount(stopPolling);
 </script>
 
 <template>
-  <div class="nd-settings-card" data-testid="dictionary-settings">
-    <div class="flex flex-wrap items-start justify-between gap-3">
-      <div>
-        <h3 class="nd-settings-title">{{ t('accountSettings.dictionaries.title') }}</h3>
-        <p class="mt-1 text-sm text-gray-400">{{ t('accountSettings.dictionaries.description') }}</p>
-      </div>
-      <div v-if="data" class="text-right text-xs text-gray-400">
-        <div class="font-semibold text-white">
+  <section class="nd-settings-section" data-testid="dictionary-settings">
+    <div class="mb-2 flex flex-wrap items-center justify-between gap-2 px-1">
+      <h2 class="nd-settings-section-label !mb-0 !px-0">{{ t('accountSettings.dictionaries.title') }}</h2>
+      <div v-if="data" class="flex flex-wrap items-center gap-x-2 text-xs text-ink-muted">
+        <span class="font-medium text-ink">
           {{ t('accountSettings.dictionaries.quotaUsed', { used: data.quota.used, max: data.quota.max }) }}
-        </div>
-        <div>
+        </span>
+        <span aria-hidden="true">&middot;</span>
+        <span>
           {{ t('accountSettings.dictionaries.maxZipSize', { maxMb: Math.round(data.quota.maxZipBytes / (1024 * 1024)) }) }}
-        </div>
-        <div data-testid="dictionary-indexed-space">
+        </span>
+        <span aria-hidden="true">&middot;</span>
+        <span data-testid="dictionary-indexed-space">
           {{
             t('accountSettings.dictionaries.indexedSpace', {
               used: formatSize(data.quota.indexedBytesUsed),
               max: formatSize(data.quota.maxIndexedBytes),
             })
           }}
-        </div>
+        </span>
       </div>
     </div>
+
+    <div class="nd-settings-card !mb-0">
+      <p class="text-sm text-ink-muted">{{ t('accountSettings.dictionaries.description') }}</p>
 
     <!-- Quota bar -->
     <div v-if="data" class="mt-4">
@@ -574,5 +576,6 @@ onBeforeUnmount(stopPolling);
         </li>
       </ul>
     </div>
-  </div>
+    </div>
+  </section>
 </template>

@@ -40,12 +40,12 @@
       "media": "Catálogo",
       "supporters": "Apoiadores",
       "collections": "Coleções",
-      "activity": "Atividade",
       "language": "Idioma",
       "logout": "Sair",
       "requests": "Pedidos",
       "admin": "Admin",
-      "notifications": "Notificações"
+      "lightMode": "Modo claro",
+      "darkMode": "Modo escuro"
     }
   },
   "announcementBanner": {
@@ -497,13 +497,13 @@
   },
   "accountSettings": {
     "menu": {
-      "generalTitle": "Geral",
-      "advancedTitle": "Avançado",
-      "adminTitle": "Administração",
-      "tabsAriaLabel": "Seções das configurações da conta"
+      "tabsAriaLabel": "Seções das configurações da conta",
+      "title": "Suas configurações",
+      "accountTitle": "Conta",
+      "studyTitle": "Estudo",
+      "advancedTitle": "Avançado"
     },
     "themes": {
-      "title": "Temas",
       "description": "Escolha a aparência do Nadeshiko. Patronos também podem criar o próprio tema.",
       "appearance": "Aparência",
       "patronThemes": "Temas de patrono",
@@ -512,18 +512,20 @@
       "cancel": "Cancelar"
     },
     "tabs": {
-      "settings": "Configurações",
-      "themes": "Temas",
+      "themes": "Aparência",
       "sync": "Anki",
       "collections": "Coleções",
       "activity": "Atividade",
-      "media": "Títulos",
+      "media": "Busca",
       "developer": "Desenvolvedor",
       "users": "Usuários",
       "reports": "Problemas relatados",
       "announcement": "Aviso",
       "dictionaries": "Dicionários",
-      "notifications": "Notificações"
+      "notifications": "Notificações",
+      "general": "Geral",
+      "account": "Perfil",
+      "connections": "Conexões"
     },
     "dashboard": {
       "roles": {
@@ -664,13 +666,13 @@
       "privacy": {
         "title": "Privacidade",
         "trackingTitle": "Registrar atividades",
-        "trackingDescription": "Registre buscas, reproduções de áudio, exportações para o Anki e links compartilhados. Suas buscas recentes aparecem na barra de busca.",
+        "trackingDescription": "Salva buscas, reproduções de áudio e exportações do Anki.",
         "clearHistoryTitle": "Excluir histórico",
-        "clearHistoryDescription": "Exclua permanentemente todos os dados de atividade da sua conta.",
+        "clearHistoryDescription": "Exclui permanentemente sua atividade salva.",
         "clearHistoryButton": "Excluir histórico",
         "clearing": "Excluindo…",
         "familiarTitle": "Lembrar os títulos que uso para estudar",
-        "familiarDescription": "Mantém uma contagem mensal por título para priorizar os que você usa nos estudos no filtro de títulos da busca. Esse registro é separado do histórico de atividades.",
+        "familiarDescription": "Prioriza nos filtros os títulos que você estuda (independente do histórico).",
         "familiarListTitle": "Títulos usados nos seus estudos",
         "familiarListEmpty": "Ainda não há registros. Exporte um cartão ou reproduza um trecho para os títulos aparecerem aqui.",
         "familiarCounts": "{cards} · {plays} · {shares}",
@@ -753,18 +755,17 @@
       "logout": "Sair",
       "loggingOut": "Saindo…",
       "additionalTitle": "Dados e conta",
-      "preferencesTitle": "Preferências",
       "mediaNameLanguage": "Idioma dos títulos",
-      "mediaNameLanguageDescription": "Os nomes dos títulos serão exibidos em {language} quando disponíveis. Exemplo:",
+      "mediaNameLanguageDescription": "Exibido em {language} quando disponível — ex.:",
       "mediaNameLanguageOptions": {
         "ENGLISH": "inglês",
         "JAPANESE": "japonês",
         "ROMAJI": "romaji"
       },
       "translationLanguages": "Idiomas das traduções",
-      "translationLanguagesDescription": "Escolha os idiomas das traduções de legendas e das definições dos dicionários. As traduções de legendas estão disponíveis em inglês e espanhol. Se selecionar os dois, escolha também a ordem de exibição.",
+      "translationLanguagesDescription": "Idioma e ordem das legendas e definições.",
       "definitionSize": "Tamanho do texto das definições",
-      "definitionSizeDescription": "Escolha o tamanho das definições no painel da palavra.",
+      "definitionSizeDescription": "Tamanho do texto no cartão de palavra.",
       "definitionSizeOptions": {
         "SMALL": "Pequeno",
         "MEDIUM": "Médio",
@@ -777,7 +778,7 @@
         "ES_EN": "Espanhol, depois inglês"
       },
       "defaultSearchCategory": "Categoria padrão da busca",
-      "defaultSearchCategoryDescription": "As buscas começam nesta categoria. Se o link já indicar uma categoria, a categoria do link será usada.",
+      "defaultSearchCategoryDescription": "Categoria aberta por padrão ao buscar.",
       "themeOptions": {
         "dark": "Escuro",
         "light": "Claro",
@@ -829,7 +830,7 @@
       "defaultSearchCategoryHiddenOption": "{category} (oculta)",
       "defaultSearchCategoryHiddenNotice": "{category} está desativada em Categorias incluídas na busca. Até você reativá-la, as buscas começarão em Todas.",
       "dictionaryLinks": "Links para dicionários",
-      "dictionaryLinksDescription": "Escolha quais dicionários aparecem como links de consulta no painel da palavra.",
+      "dictionaryLinksDescription": "Links externos exibidos no cartão de palavra.",
       "deleteAccount": "Excluir conta (ação irreversível)",
       "deleteAccountButton": "Excluir conta",
       "deletingAccount": "Excluindo…",
@@ -840,7 +841,6 @@
       "exportDataDescription": "Baixe todos os seus dados em um arquivo JSON.",
       "exportingData": "Exportando…",
       "questionableContent": "Conteúdo sensível",
-      "questionableContentDesc": "Conteúdo de teor sexual ou explícito",
       "contentRatingShow": "Mostrar",
       "contentRatingBlur": "Desfocar (padrão)",
       "contentRatingHide": "Ocultar",
@@ -883,7 +883,7 @@
         }
       },
       "hiddenCategories": "Categorias incluídas na busca",
-      "hiddenCategoriesDescription": "Desative uma categoria para removê-la da busca. Seus títulos deixarão de aparecer nos resultados, nas abas de categorias e nas contagens.",
+      "hiddenCategoriesDescription": "Exclua categorias inteiras dos resultados de busca.",
       "hiddenCategoriesLastVisible": "Pelo menos uma categoria precisa continuar visível.",
       "hiddenCategoryShown": "Visível",
       "hiddenCategoryHidden": "Oculta",
@@ -919,7 +919,7 @@
       "mediaLookupPlaceholder": "Buscar um título…",
       "mediaLookupNoResults": "Nenhum título encontrado para esta busca.",
       "manageMedia": "Gerenciar títulos",
-      "manageMediaDescription": "Favorite um título para priorizá-lo no filtro da busca ou oculte-o para removê-lo dos resultados. Busque no catálogo ou use a lista abaixo para alterar os títulos que você já marcou.",
+      "manageMediaDescription": "Favorite títulos para priorizá-los ou oculte-os das buscas.",
       "manageMediaEmpty": "Você ainda não favoritou nem ocultou nenhum título. Use a busca acima para encontrar um.",
       "manageMediaTableActions": "Ações",
       "mediaFallback": "Título #{id}"
@@ -1069,7 +1069,7 @@
     },
     "dictionaries": {
       "title": "Dicionários personalizados",
-      "description": "Envie seus próprios dicionários Yomitan (.zip) para sua conta. Eles sincronizam entre dispositivos e aparecem nos cartões de palavra na ordem escolhida.",
+      "description": "Envie dicionários Yomitan (.zip) sincronizados com sua conta.",
       "quotaUsed": "{used} / {max} dicionários",
       "maxZipSize": "Até {maxMb} MB por .zip",
       "patronUpsell": "Apoiadores podem enviar até 6 dicionários (95 MB cada).",
@@ -1120,6 +1120,11 @@
       "enable": "Ativar dicionário",
       "disable": "Desativar dicionário",
       "delete": "Excluir dicionário"
+    },
+    "general": {
+      "searchSectionTitle": "Busca e conteúdo",
+      "readingSectionTitle": "Cartão de palavra e links externos",
+      "displaySectionTitle": "Idioma e exibição"
     }
   },
   "blog": {

@@ -76,7 +76,10 @@
    */
   select.nd-input,
   select.nd-select {
-    @apply py-1.5 text-sm font-medium rounded-md whitespace-nowrap;
+    @apply appearance-none py-1.5 text-sm font-medium rounded-md whitespace-nowrap;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
     padding-inline-end: 2.25rem;
     cursor: pointer;
     background-color: var(--control);
@@ -147,25 +150,67 @@
     background: color-mix(in srgb, var(--accent-soft) 13%, transparent);
   }
 
-  /* Account pages. Same well as a media/search card: 20px pad, 12px between
-     cards. `my-6` on each card used to stack into a 48px trough. */
+  /* Account pages: quiet surface framed by a hairline border so cards read
+     cleanly across dark, light and custom patron themes. */
   .nd-settings-card {
-    @apply rounded-lg p-5 mb-3;
+    @apply rounded-xl p-5 mb-4;
     background: var(--card-background);
+    border: 1px solid var(--line-subtle);
   }
 
-  /* Card heading. Sidebar groups are the 12px uppercase labels; these name
-     the card itself, so they stay sentence case. Weight, not size or
-     tracking, is what sets them apart from the 16px body. */
+  /* Titled settings section: muted label above a grouped card. */
+  .nd-settings-section {
+    @apply mb-6 last:mb-0;
+  }
+
+  .nd-settings-section-label {
+    @apply text-[13px] font-semibold mb-2 px-1;
+    color: var(--ink-muted);
+  }
+
+  /* Grouped settings card whose rows sit separated by quiet hairlines. */
+  .nd-settings-group {
+    @apply rounded-xl overflow-hidden;
+    background: var(--card-background);
+    border: 1px solid var(--line-subtle);
+  }
+
+  .nd-settings-item {
+    @apply px-5 py-4;
+  }
+
+  .nd-settings-group > .nd-settings-item + .nd-settings-item {
+    border-top: 1px solid var(--line-subtle);
+  }
+
+  /* Card heading for standalone cards (media, collections, activity, developer). */
   .nd-settings-title {
-    @apply text-base font-semibold text-white;
+    @apply text-base font-semibold;
+    color: var(--ink);
+  }
+
+  .nd-settings-row-title {
+    @apply text-sm font-medium;
+    color: var(--ink);
+  }
+
+  .nd-settings-row-desc {
+    @apply text-xs sm:text-[13px] leading-relaxed mt-0.5;
+    color: var(--ink-muted);
   }
 
   /*
    * Stack descriptions and controls on small screens so neither is squeezed; align them side by side from sm.
    */
   .nd-settings-row {
-    @apply flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4;
+    @apply flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-6;
+  }
+
+  /* Settings selects read as crisp current values inside grouped cards. */
+  .nd-settings-group select.nd-select,
+  .nd-settings-card select.nd-select {
+    @apply rounded-lg shrink-0;
+    color: var(--ink);
   }
 
   .nd-input::placeholder {
@@ -767,7 +812,8 @@
     box-shadow: 0 1px 0 var(--line);
   }
 
-  :root[data-theme="light"] .nd-settings-card {
+  :root[data-theme="light"] .nd-settings-card,
+  :root[data-theme="light"] .nd-settings-group {
     border: 1px solid var(--line);
     box-shadow: var(--shadow-card);
   }
@@ -777,7 +823,8 @@
       box-shadow: 0 1px 0 var(--line);
     }
 
-    :root[data-theme="system"] .nd-settings-card {
+    :root[data-theme="system"] .nd-settings-card,
+    :root[data-theme="system"] .nd-settings-group {
       border: 1px solid var(--line);
       box-shadow: var(--shadow-card);
     }

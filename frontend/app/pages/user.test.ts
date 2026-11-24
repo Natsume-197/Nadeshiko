@@ -73,7 +73,18 @@ describe('which tabs are offered', () => {
   test('the ordinary ones, for any signed-in reader', () => {
     const wrapper = render();
 
-    for (const path of ['/user/settings', '/user/sync', '/user/collections', '/user/activity', '/user/media']) {
+    for (const path of [
+      '/user/settings',
+      '/user/themes',
+      '/user/notifications',
+      '/user/account',
+      '/user/connections',
+      '/user/sync',
+      '/user/collections',
+      '/user/dictionaries',
+      '/user/activity',
+      '/user/media',
+    ]) {
       expect(tabs(wrapper)).toContain(`/en${path}`);
     }
   });

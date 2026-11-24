@@ -58,29 +58,33 @@ async function disconnectPatreon() {
 
 <template>
   <!-- `id` is the target of "link your Patreon account" links from Developer settings and the Support page. -->
-  <div id="connections" class="nd-settings-card scroll-mt-24" data-testid="connections-card">
-    <h3 class="nd-settings-title">{{ t('connections.title') }}</h3>
+  <section id="connections" class="nd-settings-section scroll-mt-24" data-testid="connections-card">
+    <h2 class="nd-settings-section-label">{{ t('connections.title') }}</h2>
 
-    <div class="mt-4">
-      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-        <div class="flex items-center gap-3">
-          <div class="flex size-10 shrink-0 items-center justify-center rounded bg-[#ff424d] text-on-accent" aria-hidden="true"><UiBaseIcon :path="mdiPatreon" size="22" /></div>
-          <div>
-            <p class="text-white">{{ t('connections.patreon.name') }}</p>
-            <p class="text-sm text-gray-400" data-testid="patreon-connection-description">
-              {{ patreonConnection
-                ? t(patreonConnection.active ? 'connections.patreon.active' : 'connections.patreon.inactive', { name: patreonConnection.fullName || t('connections.patreon.member') })
-                : t('connections.patreon.description') }}
-            </p>
+    <div class="nd-settings-group">
+      <div class="nd-settings-item">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[#ff424d] text-on-accent" aria-hidden="true">
+              <UiBaseIcon :path="mdiPatreon" size="22" />
+            </div>
+            <div class="min-w-0">
+              <p class="nd-settings-row-title">{{ t('connections.patreon.name') }}</p>
+              <p class="nd-settings-row-desc" data-testid="patreon-connection-description">
+                {{ patreonConnection
+                  ? t(patreonConnection.active ? 'connections.patreon.active' : 'connections.patreon.inactive', { name: patreonConnection.fullName || t('connections.patreon.member') })
+                  : t('connections.patreon.description') }}
+              </p>
+            </div>
           </div>
-        </div>
-        <div class="flex gap-2">
-          <a v-if="patreonConnection && !patreonConnection.active" :href="patreonUrl" target="_blank" rel="noopener" class="nd-btn-accent">{{ t('connections.patreon.join') }}</a>
-          <button type="button" class="nd-btn grow sm:grow-0" :disabled="patreonWorking" data-testid="patreon-connection-toggle" @click="patreonConnection ? disconnectPatreon() : connectPatreon()">
-            {{ t(patreonConnection ? 'connections.patreon.disconnect' : 'connections.patreon.connect') }}
-          </button>
+          <div class="flex gap-2 shrink-0">
+            <a v-if="patreonConnection && !patreonConnection.active" :href="patreonUrl" target="_blank" rel="noopener" class="nd-btn-accent">{{ t('connections.patreon.join') }}</a>
+            <button type="button" class="nd-btn grow sm:grow-0" :disabled="patreonWorking" data-testid="patreon-connection-toggle" @click="patreonConnection ? disconnectPatreon() : connectPatreon()">
+              {{ t(patreonConnection ? 'connections.patreon.disconnect' : 'connections.patreon.connect') }}
+            </button>
+          </div>
         </div>
       </div>
     </div>
-  </div>
+  </section>
 </template>

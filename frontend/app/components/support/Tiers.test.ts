@@ -121,9 +121,7 @@ describe('Support section', () => {
     const wrapper = await render();
 
     expect(wrapper.find('[data-testid="support-active-banner"]').exists()).toBe(false);
-    expect(wrapper.get('[data-testid="support-link-settings-cta"]').attributes('href')).toBe(
-      '/en/user/settings#connections',
-    );
+    expect(wrapper.get('[data-testid="support-link-settings-cta"]').attributes('href')).toBe('/en/user/connections');
   });
 
   test('highlights the active tier and hides the link strip for signed-in supporters', async () => {

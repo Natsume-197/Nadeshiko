@@ -2,6 +2,8 @@ import { test, expect } from '../fixtures';
 
 const PRIVATE_ROUTES = [
   '/user/settings',
+  '/user/account',
+  '/user/connections',
   '/user/sync',
   '/user/collections',
   '/user/activity',
