@@ -832,35 +832,6 @@ export type t_ReportTargetSegmentInput = {
 
 export type t_ReportTargetType = 'SEGMENT' | 'EPISODE' | 'MEDIA';
 
-export type t_RoadmapItem = {
-  coverUrl: string | null;
-  createdAt: string;
-  description: string;
-  id: string;
-  introducedInVersion: string | null;
-  kind: 'CONTENT' | 'FEATURE';
-  proposerName: string | null;
-  requesterUserId?: number | null;
-  sortOrder: number;
-  sourceUrl: string | null;
-  status: 'PROPOSED' | 'CONSIDERING' | 'PLANNED' | 'IN_PROGRESS' | 'RELEASED' | 'DECLINED';
-  targetDate: string | null;
-  title: string;
-};
-
-export type t_RoadmapItemWrite = {
-  coverUrl?: string | null;
-  description?: string;
-  introducedInVersion?: string | null;
-  kind: 'CONTENT' | 'FEATURE';
-  proposerName?: string | null;
-  sortOrder?: number;
-  sourceUrl?: string | null;
-  status: 'CONSIDERING' | 'PLANNED' | 'IN_PROGRESS' | 'RELEASED';
-  targetDate?: string | null;
-  title: string;
-};
-
 export type t_SearchFilters = {
   category?: t_Category[];
   contentRating?: t_ContentRating[];
@@ -1740,23 +1711,6 @@ export type t_UpdateAdminContentRequestRequestBody = {
 
 export type t_UpdateAdminReportParamSchema = {
   reportId: number;
-};
-
-export type t_UpdateAdminRoadmapItemParamSchema = {
-  itemId: string;
-};
-
-export type t_UpdateAdminRoadmapItemRequestBody = {
-  coverUrl?: string | null;
-  description?: string;
-  introducedInVersion?: string | null;
-  kind?: 'CONTENT' | 'FEATURE';
-  proposerName?: string | null;
-  sortOrder?: number;
-  sourceUrl?: string | null;
-  status?: 'PROPOSED' | 'CONSIDERING' | 'PLANNED' | 'IN_PROGRESS' | 'RELEASED' | 'DECLINED';
-  targetDate?: string | null;
-  title?: string;
 };
 
 export type t_UpdateAdminUserQuotaParamSchema = {

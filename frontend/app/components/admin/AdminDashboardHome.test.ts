@@ -60,14 +60,13 @@ describe('AdminDashboardHome', () => {
     expect(wrapper.find('[data-testid="admin-section-catalogue"]').exists()).toBe(false);
   });
 
-  test('links all six active admin tools under /admin/*', () => {
+  test('links all five active admin tools under /admin/*', () => {
     const wrapper = render();
     const hrefs = wrapper.findAll('a').map((a) => a.attributes('href'));
 
     for (const target of [
       '/en/admin/reports',
       '/en/admin/requests',
-      '/en/admin/roadmap',
       '/en/admin/announcement',
       '/en/admin/users',
       '/en/admin/patreon',

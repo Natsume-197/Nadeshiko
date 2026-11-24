@@ -56,8 +56,6 @@ tags:
   - name: Stats
     description: |
       Statistics endpoints for corpus coverage and word frequency data.
-  - name: Roadmap
-    description: Public content queue and feature roadmap.
   - name: Requests
     x-internal: true
     description: Content requests from readers, with votes and patron boosts.
@@ -78,37 +76,6 @@ tags:
       Recipient-facing controls for the mail we send. Reachable without a session
       because they are used from an email client, not from the site.
 paths:
-  /v1/roadmap:
-    get:
-      tags:
-        - Roadmap
-      x-internal: true
-      operationId: listRoadmap
-      summary: List the public content and feature roadmap
-      description: Returns published roadmap stages only; private proposals and requester identities never appear.
-      security: []
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - items
-                  - patreonUrl
-                properties:
-                  items:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/RoadmapItem'
-                  patreonUrl:
-                    type: string
-                    format: uri
-        '429':
-          $ref: '#/components/responses/TooManyRequests'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
   /v1/requests:
     get:
       tags:
@@ -4876,221 +4843,6 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
-  /v1/admin/roadmap:
-    get:
-      tags:
-        - Admin
-      x-internal: true
-      operationId: listAdminRoadmap
-      summary: List every roadmap item, including pending proposals
-      description: Returns the moderation queue and public items, including requester ids for administrative review.
-      security:
-        - SessionCookie:
-            - ADMIN
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - items
-                properties:
-                  items:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/RoadmapItem'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-    post:
-      tags:
-        - Admin
-      x-internal: true
-      operationId: createAdminRoadmapItem
-      summary: Add content or a feature to the roadmap
-      description: Creates a team-authored item directly in a public roadmap stage.
-      security:
-        - SessionCookie:
-            - ADMIN
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RoadmapItemWrite'
-      responses:
-        '201':
-          description: Created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RoadmapItem'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-    components:
-      schemas:
-        RoadmapItemWrite:
-          type: object
-          required:
-            - kind
-            - status
-            - title
-          properties:
-            kind:
-              type: string
-              enum:
-                - CONTENT
-                - FEATURE
-            status:
-              type: string
-              enum:
-                - CONSIDERING
-                - PLANNED
-                - IN_PROGRESS
-                - RELEASED
-            title:
-              type: string
-              minLength: 1
-              maxLength: 180
-            description:
-              type: string
-              maxLength: 2000
-            sourceUrl:
-              type:
-                - string
-                - 'null'
-              format: uri
-              maxLength: 1000
-              pattern: ^https?://
-            coverUrl:
-              type:
-                - string
-                - 'null'
-              format: uri
-              maxLength: 1000
-            targetDate:
-              type:
-                - string
-                - 'null'
-              format: date
-            introducedInVersion:
-              type:
-                - string
-                - 'null'
-              maxLength: 32
-            sortOrder:
-              type: integer
-            proposerName:
-              type:
-                - string
-                - 'null'
-              maxLength: 80
-  /v1/admin/roadmap/{itemId}:
-    patch:
-      tags:
-        - Admin
-      x-internal: true
-      operationId: updateAdminRoadmapItem
-      summary: Approve, reject, edit, or reorder a roadmap item
-      description: Updates one proposal or roadmap item; moving a proposal to a public stage publishes it.
-      security:
-        - SessionCookie:
-            - ADMIN
-      parameters:
-        - in: path
-          name: itemId
-          description: Public UUID of the roadmap item.
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              minProperties: 1
-              properties:
-                kind:
-                  type: string
-                  enum:
-                    - CONTENT
-                    - FEATURE
-                status:
-                  type: string
-                  enum:
-                    - PROPOSED
-                    - CONSIDERING
-                    - PLANNED
-                    - IN_PROGRESS
-                    - RELEASED
-                    - DECLINED
-                title:
-                  type: string
-                  minLength: 1
-                  maxLength: 180
-                description:
-                  type: string
-                  maxLength: 2000
-                sourceUrl:
-                  type:
-                    - string
-                    - 'null'
-                  format: uri
-                  maxLength: 1000
-                  pattern: ^https?://
-                coverUrl:
-                  type:
-                    - string
-                    - 'null'
-                  format: uri
-                  maxLength: 1000
-                targetDate:
-                  type:
-                    - string
-                    - 'null'
-                  format: date
-                introducedInVersion:
-                  type:
-                    - string
-                    - 'null'
-                  maxLength: 32
-                sortOrder:
-                  type: integer
-                proposerName:
-                  type:
-                    - string
-                    - 'null'
-                  maxLength: 80
-      responses:
-        '200':
-          description: Updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RoadmapItem'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
   /v1/admin/requests:
     get:
       tags:
@@ -5476,165 +5228,6 @@ components:
       name: nadeshiko.session_token
       description: Session authentication via cookie
   schemas:
-    RoadmapItem:
-      type: object
-      required:
-        - id
-        - kind
-        - status
-        - title
-        - description
-        - sourceUrl
-        - coverUrl
-        - targetDate
-        - introducedInVersion
-        - sortOrder
-        - createdAt
-        - proposerName
-      properties:
-        id:
-          type: string
-          format: uuid
-        kind:
-          type: string
-          enum:
-            - CONTENT
-            - FEATURE
-        status:
-          type: string
-          enum:
-            - PROPOSED
-            - CONSIDERING
-            - PLANNED
-            - IN_PROGRESS
-            - RELEASED
-            - DECLINED
-        title:
-          type: string
-          maxLength: 180
-        description:
-          type: string
-          maxLength: 2000
-        sourceUrl:
-          type:
-            - string
-            - 'null'
-          format: uri
-        coverUrl:
-          type:
-            - string
-            - 'null'
-          format: uri
-        targetDate:
-          type:
-            - string
-            - 'null'
-          format: date
-        introducedInVersion:
-          type:
-            - string
-            - 'null'
-          maxLength: 32
-          description: Nadeshiko version that introduced this feature.
-        sortOrder:
-          type: integer
-        createdAt:
-          type: string
-          format: date-time
-        proposerName:
-          type:
-            - string
-            - 'null'
-          maxLength: 80
-          description: Optional public credit chosen by the proposer or an admin.
-        requesterUserId:
-          type:
-            - integer
-            - 'null'
-          description: Present on admin responses only.
-    Error429:
-      type: object
-      description: Too Many Requests error response
-      required:
-        - code
-        - title
-        - detail
-        - status
-      properties:
-        code:
-          type: string
-          description: Specific error code for programmatic handling
-          enum:
-            - RATE_LIMIT_EXCEEDED
-            - QUOTA_EXCEEDED
-        title:
-          type: string
-          minLength: 1
-          description: A short, human-readable summary of the problem
-        detail:
-          type: string
-          minLength: 1
-          description: A human-readable explanation specific to this occurrence
-        type:
-          type: string
-          format: uri
-          minLength: 1
-          description: A URI reference that identifies the problem type (`about:blank` when the problem has no further semantics beyond the HTTP status, per RFC 9457)
-        instance:
-          type: string
-          minLength: 1
-          description: A URI reference that identifies the specific occurrence (e.g., trace ID)
-        status:
-          type: integer
-          description: The HTTP status code
-          enum:
-            - 429
-        errors:
-          type: object
-          additionalProperties:
-            type: string
-          description: Optional map of field names to their error messages (for validation errors)
-    Error500:
-      type: object
-      description: Internal Server Error response
-      required:
-        - code
-        - title
-        - detail
-        - status
-      properties:
-        code:
-          type: string
-          description: Specific error code for programmatic handling
-          enum:
-            - INTERNAL_SERVER_EXCEPTION
-        title:
-          type: string
-          minLength: 1
-          description: A short, human-readable summary of the problem
-        detail:
-          type: string
-          minLength: 1
-          description: A human-readable explanation specific to this occurrence
-        type:
-          type: string
-          format: uri
-          minLength: 1
-          description: A URI reference that identifies the problem type (`about:blank` when the problem has no further semantics beyond the HTTP status, per RFC 9457)
-        instance:
-          type: string
-          minLength: 1
-          description: A URI reference that identifies the specific occurrence (e.g., trace ID)
-        status:
-          type: integer
-          description: The HTTP status code
-          enum:
-            - 500
-        errors:
-          type: object
-          additionalProperties:
-            type: string
-          description: Optional map of field names to their error messages (for validation errors)
     ContentRequest:
       type: object
       description: A reader's request for content, shared by everyone who wants the same title.
@@ -5765,6 +5358,89 @@ components:
           description: The HTTP status code
           enum:
             - 400
+        errors:
+          type: object
+          additionalProperties:
+            type: string
+          description: Optional map of field names to their error messages (for validation errors)
+    Error429:
+      type: object
+      description: Too Many Requests error response
+      required:
+        - code
+        - title
+        - detail
+        - status
+      properties:
+        code:
+          type: string
+          description: Specific error code for programmatic handling
+          enum:
+            - RATE_LIMIT_EXCEEDED
+            - QUOTA_EXCEEDED
+        title:
+          type: string
+          minLength: 1
+          description: A short, human-readable summary of the problem
+        detail:
+          type: string
+          minLength: 1
+          description: A human-readable explanation specific to this occurrence
+        type:
+          type: string
+          format: uri
+          minLength: 1
+          description: A URI reference that identifies the problem type (`about:blank` when the problem has no further semantics beyond the HTTP status, per RFC 9457)
+        instance:
+          type: string
+          minLength: 1
+          description: A URI reference that identifies the specific occurrence (e.g., trace ID)
+        status:
+          type: integer
+          description: The HTTP status code
+          enum:
+            - 429
+        errors:
+          type: object
+          additionalProperties:
+            type: string
+          description: Optional map of field names to their error messages (for validation errors)
+    Error500:
+      type: object
+      description: Internal Server Error response
+      required:
+        - code
+        - title
+        - detail
+        - status
+      properties:
+        code:
+          type: string
+          description: Specific error code for programmatic handling
+          enum:
+            - INTERNAL_SERVER_EXCEPTION
+        title:
+          type: string
+          minLength: 1
+          description: A short, human-readable summary of the problem
+        detail:
+          type: string
+          minLength: 1
+          description: A human-readable explanation specific to this occurrence
+        type:
+          type: string
+          format: uri
+          minLength: 1
+          description: A URI reference that identifies the problem type (`about:blank` when the problem has no further semantics beyond the HTTP status, per RFC 9457)
+        instance:
+          type: string
+          minLength: 1
+          description: A URI reference that identifies the specific occurrence (e.g., trace ID)
+        status:
+          type: integer
+          description: The HTTP status code
+          enum:
+            - 500
         errors:
           type: object
           additionalProperties:
@@ -10488,62 +10164,6 @@ components:
             is reviewable later; the old model's whole problem was that a raised limit
             carried no record of the decision behind it.
           example: 'Support ticket #412 - open-source dictionary integration'
-    RoadmapItemWrite:
-      type: object
-      required:
-        - kind
-        - status
-        - title
-      properties:
-        kind:
-          type: string
-          enum:
-            - CONTENT
-            - FEATURE
-        status:
-          type: string
-          enum:
-            - CONSIDERING
-            - PLANNED
-            - IN_PROGRESS
-            - RELEASED
-        title:
-          type: string
-          minLength: 1
-          maxLength: 180
-        description:
-          type: string
-          maxLength: 2000
-        sourceUrl:
-          type:
-            - string
-            - 'null'
-          format: uri
-          maxLength: 1000
-          pattern: ^https?://
-        coverUrl:
-          type:
-            - string
-            - 'null'
-          format: uri
-          maxLength: 1000
-        targetDate:
-          type:
-            - string
-            - 'null'
-          format: date
-        introducedInVersion:
-          type:
-            - string
-            - 'null'
-          maxLength: 32
-        sortOrder:
-          type: integer
-        proposerName:
-          type:
-            - string
-            - 'null'
-          maxLength: 80
     AdminContentRequest:
       allOf:
         - $ref: '#/components/schemas/ContentRequest'
@@ -10927,6 +10547,28 @@ components:
                   - legacy_column
                   - default
   examples:
+    ValidationFailed:
+      summary: Validation Failed
+      value:
+        code: VALIDATION_FAILED
+        title: Validation Failed
+        detail: The request data did not pass validation rules. Please check the errors field for details.
+        type: about:blank
+        instance: trace-id-placeholder
+        status: 400
+        errors:
+          query: Required
+          limit: Must be a positive integer
+          email: Invalid email format
+    InvalidJson:
+      summary: Invalid JSON
+      value:
+        code: INVALID_JSON
+        title: Invalid JSON
+        detail: The request body contains invalid JSON that could not be parsed. Please check the syntax.
+        type: about:blank
+        instance: trace-id-placeholder
+        status: 400
     RateLimitExceeded:
       summary: Rate Limit Exceeded
       value:
@@ -10954,28 +10596,6 @@ components:
         type: about:blank
         instance: trace-id-placeholder
         status: 500
-    ValidationFailed:
-      summary: Validation Failed
-      value:
-        code: VALIDATION_FAILED
-        title: Validation Failed
-        detail: The request data did not pass validation rules. Please check the errors field for details.
-        type: about:blank
-        instance: trace-id-placeholder
-        status: 400
-        errors:
-          query: Required
-          limit: Must be a positive integer
-          email: Invalid email format
-    InvalidJson:
-      summary: Invalid JSON
-      value:
-        code: INVALID_JSON
-        title: Invalid JSON
-        detail: The request body contains invalid JSON that could not be parsed. Please check the syntax.
-        type: about:blank
-        instance: trace-id-placeholder
-        status: 400
     AuthCredentialsRequired:
       summary: Authentication Credentials Required
       value:
@@ -11049,6 +10669,17 @@ components:
         instance: trace-id-placeholder
         status: 503
   responses:
+    BadRequest:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error400'
+          examples:
+            ValidationFailed:
+              $ref: '#/components/examples/ValidationFailed'
+            InvalidJson:
+              $ref: '#/components/examples/InvalidJson'
     TooManyRequests:
       description: Too Many Requests. The response body indicates whether the request was rejected due to per-minute rate limiting or monthly quota exhaustion.
       content:
@@ -11069,17 +10700,6 @@ components:
           examples:
             InternalServerError:
               $ref: '#/components/examples/InternalServerError'
-    BadRequest:
-      description: Bad Request
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error400'
-          examples:
-            ValidationFailed:
-              $ref: '#/components/examples/ValidationFailed'
-            InvalidJson:
-              $ref: '#/components/examples/InvalidJson'
     Unauthorized:
       description: Unauthorized
       content:

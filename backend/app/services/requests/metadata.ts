@@ -1,7 +1,7 @@
 import { CategoryType } from '@app/models';
 import { config } from '@config/config';
 import { logger } from '@config/log';
-import { getAniListMediaMetadata } from '@app/services/roadmap/anilist';
+import { getAniListMediaMetadata } from '@app/services/requests/anilist';
 import type { ParsedRequestLink } from './links';
 
 export interface RequestMetadata {

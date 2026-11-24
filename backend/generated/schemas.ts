@@ -486,35 +486,6 @@ export const s_ReportTargetSegmentInput = z.object({
 
 export const s_ReportTargetType = z.enum(['SEGMENT', 'EPISODE', 'MEDIA']);
 
-export const s_RoadmapItem = z.object({
-  id: z.string(),
-  kind: z.enum(['CONTENT', 'FEATURE']),
-  status: z.enum(['PROPOSED', 'CONSIDERING', 'PLANNED', 'IN_PROGRESS', 'RELEASED', 'DECLINED']),
-  title: z.string().max(180),
-  description: z.string().max(2000),
-  sourceUrl: z.string().nullable(),
-  coverUrl: z.string().nullable(),
-  targetDate: z.iso.date().nullable(),
-  introducedInVersion: z.string().max(32).nullable(),
-  sortOrder: z.coerce.number(),
-  createdAt: z.iso.datetime({ offset: true }),
-  proposerName: z.string().max(80).nullable(),
-  requesterUserId: z.coerce.number().nullable().optional(),
-});
-
-export const s_RoadmapItemWrite = z.object({
-  kind: z.enum(['CONTENT', 'FEATURE']),
-  status: z.enum(['CONSIDERING', 'PLANNED', 'IN_PROGRESS', 'RELEASED']),
-  title: z.string().min(1).max(180),
-  description: z.string().max(2000).optional(),
-  sourceUrl: z.string().max(1000).regex(new RegExp('^https?://')).nullable().optional(),
-  coverUrl: z.string().max(1000).nullable().optional(),
-  targetDate: z.iso.date().nullable().optional(),
-  introducedInVersion: z.string().max(32).nullable().optional(),
-  sortOrder: z.coerce.number().optional(),
-  proposerName: z.string().max(80).nullable().optional(),
-});
-
 export const s_SearchMultipleQuery = z.object({
   words: z.array(z.string().min(1).max(100)).min(1).max(100),
   exactMatch: PermissiveBoolean.optional().default(false),
@@ -1384,19 +1355,6 @@ export const s_UpdateEmailPreferencesByTokenRequestBody = z.object({
   updates: PermissiveBoolean.optional(),
   requests: PermissiveBoolean.optional(),
   words: PermissiveBoolean.optional(),
-});
-
-export const s_UpdateAdminRoadmapItemRequestBody = z.object({
-  kind: z.enum(['CONTENT', 'FEATURE']).optional(),
-  status: z.enum(['PROPOSED', 'CONSIDERING', 'PLANNED', 'IN_PROGRESS', 'RELEASED', 'DECLINED']).optional(),
-  title: z.string().min(1).max(180).optional(),
-  description: z.string().max(2000).optional(),
-  sourceUrl: z.string().max(1000).regex(new RegExp('^https?://')).nullable().optional(),
-  coverUrl: z.string().max(1000).nullable().optional(),
-  targetDate: z.iso.date().nullable().optional(),
-  introducedInVersion: z.string().max(32).nullable().optional(),
-  sortOrder: z.coerce.number().optional(),
-  proposerName: z.string().max(80).nullable().optional(),
 });
 
 export const s_UpdateAdminContentRequestRequestBody = z.object({

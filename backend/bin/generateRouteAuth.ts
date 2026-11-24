@@ -29,9 +29,6 @@ export const INTENTIONALLY_PUBLIC_OPERATIONS = new Set<string>([
   // preferences.
   'getEmailPreferencesByToken',
   'updateEmailPreferencesByToken',
-  // The roadmap is the public promise this feature exists to make: proposals
-  // and requester identities are filtered out by its controller.
-  'listRoadmap',
   // The request list is public so anyone can see what is asked for before signing in to vote; requester identities
   // are left out by its controller.
   'listContentRequests',

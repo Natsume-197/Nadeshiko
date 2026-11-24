@@ -6,7 +6,6 @@ import {
   mdiOpenInNew,
   mdiShieldCrownOutline,
   mdiThumbUpOutline,
-  mdiTimelineClockOutline,
 } from '@mdi/js';
 import { handleApiError } from '~/utils/apiError';
 
@@ -61,14 +60,6 @@ export const ADMIN_DIRECTORY_ITEMS: readonly AdminDirectoryItem[] = [
       o && o.requests.open > 0
         ? { count: o.requests.open, tone: o.requests.boostedOpen > 0 ? 'warning' : 'brand' }
         : null,
-  },
-  {
-    id: 'roadmap',
-    category: 'community',
-    titleKey: 'roadmap.admin.tab',
-    descriptionKey: 'adminDashboard.items.roadmapDesc',
-    icon: mdiTimelineClockOutline,
-    to: '/admin/roadmap',
   },
   {
     id: 'announcement',

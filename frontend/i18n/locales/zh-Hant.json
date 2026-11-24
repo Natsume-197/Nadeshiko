@@ -1613,70 +1613,8 @@
     "seoDescription": "在 Patreon 上支持 Nadeshiko，了解每個等級的回饋，以及即將加入的作品和功能。",
     "title": "支持者",
     "intro": "例句搜尋、音訊、單字卡與 Anki 匯出永久免費。贊助者的支持用於維持伺服器並讓 Nadeshiko 持續成長。",
-    "tabs": {
-      "tiers": "等級"
-    }
-  },
-  "roadmap": {
-    "title": "路線圖",
     "support": "支持 Nadeshiko",
-    "proposeCta": "請求作品",
-    "featureSoon": "即將推出™",
-    "featureReleased": "已發布",
-    "emptyFeatures": "目前還沒有功能里程碑。",
-    "viewSource": "查看來源",
-    "loadError": "目前無法載入路線圖。",
-    "features": {
-      "searchFilters": {
-        "title": "更好用的搜尋篩選",
-        "description": "可直接按作品名稱、標籤及其他精確條件進行搜尋。"
-      },
-      "publicRoadmap": {
-        "title": "公開路線圖",
-        "description": "集中查看即將加入和已經發布的作品與功能。"
-      },
-      "interfaceLanguages": {
-        "title": "七種介面語言",
-        "description": "除英語、西班牙語和日語外，Nadeshiko 現已支援葡萄牙語、印尼語、簡體中文和繁體中文。"
-      },
-      "youtubePlayback": {
-        "title": "在搜尋中播放 YouTube",
-        "description": "YouTube 例句可直接在搜尋結果中播放，並能連續播放清單，無需離開 Nadeshiko。"
-      },
-      "wordCards": {
-        "title": "單字卡片",
-        "description": "點擊句子中的任意單字，即可查看讀音、釋義、音調、音訊和詞頻標記。"
-      },
-      "ownDictionaries": {
-        "title": "使用你自己的辭典",
-        "description": "上傳 Yomitan 辭典與詞頻辭典後，Nadeshiko 會按你設定的順序使用辭典，包括單語辭典。"
-      },
-      "ankiMining": {
-        "title": "豐富的 Anki 製卡",
-        "description": "建立或更新包含單字、句子、音訊、圖片、振假名、釋義和音調的筆記。"
-      },
-      "searchHistory": {
-        "title": "搜尋紀錄與熟悉的作品",
-        "description": "登入使用者可跨裝置查看最近搜尋，收藏和學過的作品也會影響排序。"
-      },
-      "apiKeys": {
-        "title": "細緻權限的 API 金鑰",
-        "description": "API 金鑰可設為唯讀、完整存取，或僅限明確選擇的權限。"
-      },
-      "contentRequests": {
-        "title": "內容請求",
-        "description": "任何人都可以請求動畫、日劇、有聲書和 YouTube 頻道並投票決定下一步；贊助者還能助推。"
-      }
-    },
-    "callbackDeclined": "Patreon 連結未獲核准。",
-    "callbackFailed": "無法完成 Patreon 連結。",
-    "callbackDone": "已連結 Patreon",
-    "callbackDoneBody": "會員資格已檢查。現在可以返回路線圖。",
-    "backToRoadmap": "返回路線圖",
-    "admin": {
-      "tab": "路線圖",
-      "title": "路線圖佇列"
-    }
+    "proposeCta": "請求作品"
   },
   "feedback": {
     "open": "意見回饋",
@@ -1951,7 +1889,6 @@
     "items": {
       "reportsDesc": "篩選並批次處理待審核的檢舉。",
       "requestsDesc": "管理內容請求、贊助者加速與上線通知。",
-      "roadmapDesc": "建立、排序並更新公開路線圖項目。",
       "announcementDesc": "顯示全站通知、警告或維護橫幅。",
       "usersDesc": "管理帳號、角色、停權與每月 API 配額覆寫。",
       "patreonTitle": "Patreon 與等級",
@@ -2113,5 +2050,12 @@
       "busy": "忙碌中，請稍後再試。",
       "error": "無法儲存。"
     }
+  },
+  "patreonCallback": {
+    "declined": "Patreon 連結未獲核准。",
+    "failed": "無法完成 Patreon 連結。",
+    "done": "已連結 Patreon",
+    "doneBody": "會員資格已檢查。現在可以返回設定。",
+    "backToSettings": "返回設定"
   }
 }

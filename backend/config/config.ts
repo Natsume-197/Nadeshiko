@@ -74,7 +74,7 @@ const envSchema = z.object({
   SUDACHI_URL: optionalString,
 
   // Patreon is a connected account, not a sign-in provider. Its membership is
-  // what unlocks roadmap proposals, so tokens stay server-side and encrypted.
+  // what unlocks patron perks and request boosts, so tokens stay server-side and encrypted.
   PATREON_OAUTH_CLIENT_ID: z.string().default(''),
   PATREON_OAUTH_CLIENT_SECRET: z.string().default(''),
   PATREON_OAUTH_REDIRECT_URI: z.string().default(''),

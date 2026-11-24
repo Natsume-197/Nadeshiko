@@ -134,12 +134,6 @@ import {
 } from '@app/controllers/userDictionaryController';
 import { requireSessionAuth } from '@app/middleware/authentication';
 import {
-  createAdminRoadmapItem,
-  listAdminRoadmap,
-  listRoadmap,
-  updateAdminRoadmapItem,
-} from '@app/controllers/roadmapController';
-import {
   boostContentRequest,
   createContentRequest,
   getContentRequestAllowance,
@@ -162,7 +156,6 @@ import { createRouter as createUserRouter } from 'generated/routes/user';
 import { createRouter as createFeedbackRouter } from 'generated/routes/feedback';
 import { createRouter as createEmailRouter } from 'generated/routes/email';
 import { createRouter as createStatsRouter } from 'generated/routes/stats';
-import { createRouter as createRoadmapRouter } from 'generated/routes/roadmap';
 import { createRouter as createRequestsRouter } from 'generated/routes/requests';
 import { createRouter as createNotificationsRouter } from 'generated/routes/notifications';
 import {
@@ -334,9 +327,6 @@ const AdminRoutes = createAdminRouter({
   listTiers,
   getAdminUserQuota,
   updateAdminUserQuota,
-  listAdminRoadmap,
-  createAdminRoadmapItem,
-  updateAdminRoadmapItem,
   listAdminContentRequests,
   updateAdminContentRequest,
   mergeAdminContentRequest,
@@ -362,8 +352,6 @@ const StatsRoutes = createStatsRouter({
   getCoveredWords,
   triggerCoveredWordsUpdate,
 });
-
-const RoadmapRoutes = createRoadmapRouter({ listRoadmap });
 
 const RequestsRoutes = createRequestsRouter({
   listContentRequests,
@@ -484,7 +472,6 @@ for (const { method, path, middleware } of routeAuth) {
 // Label public no-security routes directly; feedback gets a local limiter here because direct API callers bypass the
 // frontend limiter.
 router.get('/v1/admin/announcement', setRouteTemplate('/v1/admin/announcement'));
-router.get('/v1/roadmap', setRouteTemplate('/v1/roadmap'));
 router.get('/v1/requests', setRouteTemplate('/v1/requests'));
 router.post('/v1/feedback', setRouteTemplate('/v1/feedback'), feedbackRateLimit);
 router.get('/v1/feedback/token', setRouteTemplate('/v1/feedback/token'), feedbackRateLimit);
@@ -500,7 +487,6 @@ router.post(['/v1/search', '/v1/search/stats'], searchInFlightLimit);
 
 router.use('/', SearchRoutes);
 router.use('/', StatsRoutes);
-router.use('/', RoadmapRoutes);
 router.use('/', RequestsRoutes);
 router.use('/', NotificationsRoutes);
 router.use('/', MediaRoutes);
@@ -562,7 +548,6 @@ export {
   MediaRoutes,
   SearchRoutes,
   StatsRoutes,
-  RoadmapRoutes,
   RequestsRoutes,
   NotificationsRoutes,
   ActivityRoutes,

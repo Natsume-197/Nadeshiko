@@ -1613,70 +1613,8 @@
     "seoDescription": "在 Patreon 上支持 Nadeshiko，了解每个档位的回馈，以及即将加入的作品和功能。",
     "title": "支持者",
     "intro": "句子搜索、音频、词卡和 Anki 导出永久免费。赞助者的支持用于维持服务器并让 Nadeshiko 持续成长。",
-    "tabs": {
-      "tiers": "档位"
-    }
-  },
-  "roadmap": {
-    "title": "路线图",
     "support": "支持 Nadeshiko",
-    "proposeCta": "请求作品",
-    "featureSoon": "即将推出™",
-    "featureReleased": "已发布",
-    "emptyFeatures": "目前还没有功能里程碑。",
-    "viewSource": "查看来源",
-    "loadError": "目前无法加载路线图。",
-    "features": {
-      "searchFilters": {
-        "title": "更好用的搜索筛选",
-        "description": "可直接按作品名称、标签及其他精确条件进行搜索。"
-      },
-      "publicRoadmap": {
-        "title": "公开路线图",
-        "description": "集中查看即将加入和已经发布的作品与功能。"
-      },
-      "interfaceLanguages": {
-        "title": "七种界面语言",
-        "description": "除英语、西班牙语和日语外，Nadeshiko 现已支持葡萄牙语、印度尼西亚语、简体中文和繁体中文。"
-      },
-      "youtubePlayback": {
-        "title": "在搜索中播放 YouTube",
-        "description": "YouTube 例句可直接在搜索结果中播放，并能连续播放列表，无需离开 Nadeshiko。"
-      },
-      "wordCards": {
-        "title": "单词卡片",
-        "description": "点击句子中的任意单词，即可查看读音、释义、音调、音频和词频标记。"
-      },
-      "ownDictionaries": {
-        "title": "使用你自己的词典",
-        "description": "上传 Yomitan 词典和词频词典后，Nadeshiko 会按你设定的顺序使用词典，包括单语词典。"
-      },
-      "ankiMining": {
-        "title": "丰富的 Anki 制卡",
-        "description": "创建或更新包含单词、句子、音频、图片、振假名、释义和音调的笔记。"
-      },
-      "searchHistory": {
-        "title": "搜索历史与熟悉的作品",
-        "description": "登录用户可跨设备查看最近搜索，收藏和学过的作品也会影响排序。"
-      },
-      "apiKeys": {
-        "title": "细粒度 API 密钥",
-        "description": "API 密钥可设为只读、完全访问，或仅限明确选择的权限。"
-      },
-      "contentRequests": {
-        "title": "内容请求",
-        "description": "任何人都可以请求动画、日剧、有声书和 YouTube 频道并投票决定下一步；赞助者还能助推。"
-      }
-    },
-    "callbackDeclined": "Patreon 关联未获批准。",
-    "callbackFailed": "无法完成 Patreon 关联。",
-    "callbackDone": "已关联 Patreon",
-    "callbackDoneBody": "会员资格已检查。现在可以返回路线图。",
-    "backToRoadmap": "返回路线图",
-    "admin": {
-      "tab": "路线图",
-      "title": "路线图队列"
-    }
+    "proposeCta": "请求作品"
   },
   "feedback": {
     "open": "意见反馈",
@@ -1951,7 +1889,6 @@
     "items": {
       "reportsDesc": "筛选并批量处理待审核的举报。",
       "requestsDesc": "管理内容请求、赞助者加速与上线通知。",
-      "roadmapDesc": "创建、排序并更新公开路线图条目。",
       "announcementDesc": "显示全站通知、警告或维护横幅。",
       "usersDesc": "管理账号、角色、封禁及每月 API 配额覆盖。",
       "patreonTitle": "Patreon 与等级",
@@ -2113,5 +2050,12 @@
       "busy": "繁忙，请稍后再试。",
       "error": "无法保存。"
     }
+  },
+  "patreonCallback": {
+    "declined": "Patreon 关联未获批准。",
+    "failed": "无法完成 Patreon 关联。",
+    "done": "已关联 Patreon",
+    "doneBody": "会员资格已检查。现在可以返回设置。",
+    "backToSettings": "返回设置"
   }
 }

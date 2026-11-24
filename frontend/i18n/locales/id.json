@@ -1613,70 +1613,8 @@
     "seoDescription": "Dukung Nadeshiko di Patreon, lihat apa yang diberikan setiap tingkatan, dan judul serta fitur apa yang akan datang.",
     "title": "Pendukung",
     "intro": "Pencarian, audio, kartu kata, dan ekspor Anki gratis selamanya. Pendukung menjaga server tetap hidup dan membantu Nadeshiko berkembang.",
-    "tabs": {
-      "tiers": "Tingkatan"
-    }
-  },
-  "roadmap": {
-    "title": "Peta Jalan",
     "support": "Dukung Nadeshiko",
-    "proposeCta": "Minta judul",
-    "featureSoon": "Segera™",
-    "featureReleased": "Telah dirilis",
-    "emptyFeatures": "Belum ada pencapaian fitur.",
-    "viewSource": "Lihat sumber",
-    "loadError": "Peta jalan tidak dapat dimuat saat ini.",
-    "features": {
-      "searchFilters": {
-        "title": "Filter pencarian yang lebih baik",
-        "description": "Cari langsung berdasarkan nama media, tag, dan filter khusus lainnya."
-      },
-      "publicRoadmap": {
-        "title": "Peta jalan publik",
-        "description": "Lihat judul dan fitur yang akan hadir maupun yang sudah dirilis dalam satu tempat."
-      },
-      "interfaceLanguages": {
-        "title": "Tujuh bahasa antarmuka",
-        "description": "Selain Inggris, Spanyol, dan Jepang, Nadeshiko kini mendukung Portugis, Indonesia, Tionghoa Sederhana, dan Tionghoa Tradisional."
-      },
-      "youtubePlayback": {
-        "title": "Pemutaran YouTube dalam pencarian",
-        "description": "Kalimat YouTube diputar langsung di hasil dan berlanjut dalam daftar putar tanpa meninggalkan Nadeshiko."
-      },
-      "wordCards": {
-        "title": "Kartu kata",
-        "description": "Klik kata dalam kalimat untuk melihat cara baca, definisi, aksen nada, audio, dan penanda frekuensi."
-      },
-      "ownDictionaries": {
-        "title": "Kamus Anda sendiri",
-        "description": "Unggah kamus istilah dan frekuensi Yomitan agar Nadeshiko memakai susunan kamus pilihan Anda, termasuk kamus ekabahasa."
-      },
-      "ankiMining": {
-        "title": "Pembuatan kartu Anki yang lengkap",
-        "description": "Buat atau perbarui catatan dengan kata, kalimat, audio, gambar, furigana, definisi, dan aksen nada."
-      },
-      "searchHistory": {
-        "title": "Riwayat pencarian dan judul yang dikenal",
-        "description": "Pencarian terbaru mengikuti pengguna yang masuk di berbagai perangkat, sementara judul favorit dan yang dipelajari memengaruhi peringkat."
-      },
-      "apiKeys": {
-        "title": "Kunci API dengan izin terperinci",
-        "description": "Kunci API dapat bersifat hanya-baca, akses penuh, atau dibatasi pada izin yang dipilih secara khusus."
-      },
-      "contentRequests": {
-        "title": "Permintaan konten",
-        "description": "Siapa pun bisa meminta anime, drama, buku audio, dan kanal YouTube serta memilih yang berikutnya; patron bisa memberi boost."
-      }
-    },
-    "callbackDeclined": "Koneksi Patreon tidak disetujui.",
-    "callbackFailed": "Koneksi Patreon tidak dapat diselesaikan.",
-    "callbackDone": "Patreon terhubung",
-    "callbackDoneBody": "Keanggotaan Anda telah diperiksa. Anda sekarang dapat kembali ke peta jalan.",
-    "backToRoadmap": "Kembali ke peta jalan",
-    "admin": {
-      "tab": "Peta Jalan",
-      "title": "Antrean peta jalan"
-    }
+    "proposeCta": "Minta judul"
   },
   "feedback": {
     "open": "Masukan",
@@ -1951,7 +1889,6 @@
     "items": {
       "reportsDesc": "Tinjau, filter, dan selesaikan laporan secara massal.",
       "requestsDesc": "Kelola permintaan konten, boost patron, dan notifikasi rilis.",
-      "roadmapDesc": "Buat, urutkan, dan perbarui item roadmap publik.",
       "announcementDesc": "Tampilkan banner info, peringatan, atau pemeliharaan situs.",
       "usersDesc": "Kelola akun, peran, pemblokiran, dan kuota API bulanan.",
       "patreonTitle": "Patreon & Tier",
@@ -2113,5 +2050,12 @@
       "busy": "Sibuk. Coba lagi nanti.",
       "error": "Gagal menyimpan."
     }
+  },
+  "patreonCallback": {
+    "declined": "Koneksi Patreon tidak disetujui.",
+    "failed": "Koneksi Patreon tidak dapat diselesaikan.",
+    "done": "Patreon terhubung",
+    "doneBody": "Keanggotaan Anda telah diperiksa. Anda sekarang dapat kembali ke pengaturan.",
+    "backToSettings": "Kembali ke pengaturan"
   }
 }

@@ -1613,70 +1613,8 @@
     "seoDescription": "PatreonでNadeshikoを支援。各ティアの特典と、これから追加される作品や機能を紹介します。",
     "title": "サポーター",
     "intro": "例文検索・音声・単語カード・Anki出力はずっと無料。ご支援はサーバー維持と継続的な開発に使われます。",
-    "tabs": {
-      "tiers": "ティア"
-    }
-  },
-  "roadmap": {
-    "title": "ロードマップ",
     "support": "Nadeshikoを支援する",
-    "proposeCta": "作品をリクエスト",
-    "featureSoon": "近日公開™",
-    "featureReleased": "リリース済み",
-    "emptyFeatures": "機能のマイルストーンはまだありません。",
-    "viewSource": "参照元を見る",
-    "loadError": "現在ロードマップを読み込めません。",
-    "features": {
-      "searchFilters": {
-        "title": "検索フィルターの強化",
-        "description": "作品名やタグなど、目的に合った条件で直接検索できます。"
-      },
-      "publicRoadmap": {
-        "title": "公開ロードマップ",
-        "description": "追加予定とリリース済みの作品・機能を一か所で確認できます。"
-      },
-      "interfaceLanguages": {
-        "title": "7言語のインターフェース",
-        "description": "英語、スペイン語、日本語に加え、ポルトガル語、インドネシア語、簡体字中国語、繁体字中国語に対応しました。"
-      },
-      "youtubePlayback": {
-        "title": "検索結果でYouTubeを再生",
-        "description": "YouTubeの例文を検索結果内で再生し、Nadeshikoを離れずにプレイリストを続けて視聴できます。"
-      },
-      "wordCards": {
-        "title": "単語カード",
-        "description": "例文内の単語をクリックすると、読み方、定義、ピッチアクセント、音声、頻度バッジを確認できます。"
-      },
-      "ownDictionaries": {
-        "title": "自分の辞書を利用",
-        "description": "Yomitanの辞書や頻度辞書をアップロードすると、国語辞典を含む好みの順序でNadeshikoの単語カードに表示できます。"
-      },
-      "ankiMining": {
-        "title": "充実したAnkiマイニング",
-        "description": "単語、例文、音声、画像、ふりがな、定義、ピッチアクセントを含むノートを作成・更新できます。"
-      },
-      "searchHistory": {
-        "title": "検索履歴と学習中の作品",
-        "description": "ログイン中は端末をまたいで最近の検索を確認でき、お気に入りや学習済みの作品が検索順位に反映されます。"
-      },
-      "apiKeys": {
-        "title": "詳細な権限を設定できるAPIキー",
-        "description": "APIキーを読み取り専用、フルアクセス、または明示的に選択した権限のみに制限できます。"
-      },
-      "contentRequests": {
-        "title": "コンテンツリクエスト",
-        "description": "誰でもアニメ、ドラマ、オーディオブック、YouTubeチャンネルをリクエストして投票できます。パトロンはブーストも可能です。"
-      }
-    },
-    "callbackDeclined": "Patreonとの連携が承認されませんでした。",
-    "callbackFailed": "Patreonとの連携を完了できませんでした。",
-    "callbackDone": "Patreonと連携しました",
-    "callbackDoneBody": "メンバーシップを確認しました。ロードマップに戻れます。",
-    "backToRoadmap": "ロードマップに戻る",
-    "admin": {
-      "tab": "ロードマップ",
-      "title": "ロードマップのキュー"
-    }
+    "proposeCta": "作品をリクエスト"
   },
   "feedback": {
     "open": "フィードバック",
@@ -1951,7 +1889,6 @@
     "items": {
       "reportsDesc": "報告の絞り込みや一括処理を行います。",
       "requestsDesc": "コンテンツリクエスト、ブースト、公開通知を管理します。",
-      "roadmapDesc": "公開ロードマップの項目を作成・並び替え・更新します。",
       "announcementDesc": "サイト全体にお知らせやメンテナンスバナーを表示します。",
       "usersDesc": "アカウント、ロール、BAN、月間API上限オーバーライドを管理します。",
       "patreonTitle": "Patreonとティア",
@@ -2113,5 +2050,12 @@
       "busy": "混雑中です。後でお試しください。",
       "error": "保存できませんでした。"
     }
+  },
+  "patreonCallback": {
+    "declined": "Patreonとの連携が承認されませんでした。",
+    "failed": "Patreonとの連携を完了できませんでした。",
+    "done": "Patreonと連携しました",
+    "doneBody": "メンバーシップを確認しました。設定に戻れます。",
+    "backToSettings": "設定に戻る"
   }
 }

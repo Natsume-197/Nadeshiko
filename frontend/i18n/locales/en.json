@@ -1613,70 +1613,8 @@
     "seoDescription": "Support Nadeshiko on Patreon, see what each tier gives back, and see which titles and features are coming next.",
     "title": "Supporters",
     "intro": "Search, audio, word cards, and Anki export stay free forever. Supporters keep the servers running and help Nadeshiko grow.",
-    "tabs": {
-      "tiers": "Tiers"
-    }
-  },
-  "roadmap": {
-    "title": "Roadmap",
     "support": "Support Nadeshiko",
-    "proposeCta": "Request a title",
-    "featureSoon": "Soon™",
-    "featureReleased": "Released",
-    "emptyFeatures": "No feature milestones yet.",
-    "viewSource": "View source",
-    "loadError": "The roadmap could not be loaded right now.",
-    "features": {
-      "searchFilters": {
-        "title": "Better search filters",
-        "description": "Search directly by media name, tags, and other focused filters."
-      },
-      "publicRoadmap": {
-        "title": "Public roadmap",
-        "description": "See upcoming and released titles and features together in one place."
-      },
-      "interfaceLanguages": {
-        "title": "Seven interface languages",
-        "description": "Nadeshiko expanded beyond English, Spanish, and Japanese with Portuguese, Indonesian, Simplified Chinese, and Traditional Chinese."
-      },
-      "youtubePlayback": {
-        "title": "YouTube playback in search",
-        "description": "YouTube sentences play directly inside results and continue through playlists without leaving Nadeshiko."
-      },
-      "wordCards": {
-        "title": "Word cards",
-        "description": "Click a word in any sentence for readings, definitions, pitch accent, audio, and frequency badges."
-      },
-      "ownDictionaries": {
-        "title": "Your own dictionaries",
-        "description": "Upload Yomitan term and frequency dictionaries and Nadeshiko uses your ordered dictionary stack, including monolingual dictionaries."
-      },
-      "ankiMining": {
-        "title": "Rich Anki mining",
-        "description": "Create or update notes with the word, sentence, audio, image, furigana, definitions, and pitch accent."
-      },
-      "searchHistory": {
-        "title": "Search history and familiar titles",
-        "description": "Recent searches follow signed-in readers across devices, while favorite and studied titles influence ranking."
-      },
-      "apiKeys": {
-        "title": "Granular API keys",
-        "description": "API keys can be read-only, full access, or restricted to explicitly selected permissions."
-      },
-      "contentRequests": {
-        "title": "Content requests",
-        "description": "Anyone can request anime, dramas, audiobooks and YouTube channels and vote for what comes next; patrons boost."
-      }
-    },
-    "callbackDeclined": "The Patreon connection was not approved.",
-    "callbackFailed": "That Patreon connection could not be completed.",
-    "callbackDone": "Patreon connected",
-    "callbackDoneBody": "Your membership has been checked. You can now return to the roadmap.",
-    "backToRoadmap": "Back to the roadmap",
-    "admin": {
-      "tab": "Roadmap",
-      "title": "Roadmap queue"
-    }
+    "proposeCta": "Request a title"
   },
   "feedback": {
     "open": "Feedback",
@@ -1951,7 +1889,6 @@
     "items": {
       "reportsDesc": "Review, filter and bulk-resolve open reports.",
       "requestsDesc": "Manage content requests, patron boosts and release notifications.",
-      "roadmapDesc": "Create, order and update public roadmap items.",
       "announcementDesc": "Display a site-wide info, warning or maintenance banner.",
       "usersDesc": "Manage accounts, roles, bans and monthly API quota overrides.",
       "patreonTitle": "Patreon & Tiers",
@@ -2113,5 +2050,12 @@
       "busy": "Busy. Try again soon.",
       "error": "Couldn’t save."
     }
+  },
+  "patreonCallback": {
+    "declined": "The Patreon connection was not approved.",
+    "failed": "That Patreon connection could not be completed.",
+    "done": "Patreon connected",
+    "doneBody": "Your membership has been checked. You can now return to your settings.",
+    "backToSettings": "Back to settings"
   }
 }

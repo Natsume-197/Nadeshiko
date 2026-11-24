@@ -1613,70 +1613,8 @@
     "seoDescription": "Apoya a Nadeshiko en Patreon, mira lo que da cada nivel y qué títulos y funciones llegan pronto.",
     "title": "Mecenas",
     "intro": "Buscar frases, audio, tarjetas y Anki son gratis para siempre. Los mecenas mantienen los servidores vivos y ayudan a que Nadeshiko crezca.",
-    "tabs": {
-      "tiers": "Niveles"
-    }
-  },
-  "roadmap": {
-    "title": "Roadmap",
     "support": "Apoyar a Nadeshiko",
-    "proposeCta": "Pedir un título",
-    "featureSoon": "Próximamente™",
-    "featureReleased": "Publicado",
-    "emptyFeatures": "Aún no hay hitos de funciones.",
-    "viewSource": "Ver fuente",
-    "loadError": "No se ha podido cargar el roadmap.",
-    "features": {
-      "searchFilters": {
-        "title": "Mejores filtros de búsqueda",
-        "description": "Busca directamente por nombre del contenido, etiquetas y otros filtros específicos."
-      },
-      "publicRoadmap": {
-        "title": "Roadmap público",
-        "description": "Consulta en un solo lugar qué títulos y funciones están en camino y cuáles ya se han publicado."
-      },
-      "interfaceLanguages": {
-        "title": "Siete idiomas de interfaz",
-        "description": "Nadeshiko se amplió más allá del inglés, español y japonés con portugués, indonesio, chino simplificado y chino tradicional."
-      },
-      "youtubePlayback": {
-        "title": "Reproducción de YouTube en la búsqueda",
-        "description": "Las frases de YouTube se reproducen directamente en los resultados y continúan por las listas sin salir de Nadeshiko."
-      },
-      "wordCards": {
-        "title": "Fichas de palabras",
-        "description": "Pulsa una palabra de cualquier frase para ver lecturas, definiciones, acento tonal, audio e indicadores de frecuencia."
-      },
-      "ownDictionaries": {
-        "title": "Tus propios diccionarios",
-        "description": "Sube diccionarios de definiciones y frecuencia de Yomitan para que Nadeshiko use tu conjunto ordenado de diccionarios, incluidos los monolingües."
-      },
-      "ankiMining": {
-        "title": "Minería enriquecida para Anki",
-        "description": "Crea o actualiza notas con la palabra, frase, audio, imagen, furigana, definiciones y acento tonal."
-      },
-      "searchHistory": {
-        "title": "Historial de búsqueda y títulos conocidos",
-        "description": "Las búsquedas recientes acompañan a los usuarios conectados entre dispositivos, mientras que sus títulos favoritos y estudiados influyen en el orden."
-      },
-      "apiKeys": {
-        "title": "Claves de API con permisos detallados",
-        "description": "Las claves de API pueden ser de solo lectura, de acceso completo o limitarse a permisos seleccionados expresamente."
-      },
-      "contentRequests": {
-        "title": "Pedidos de contenido",
-        "description": "Cualquiera puede pedir anime, dramas, audiolibros y canales de YouTube y votar por lo siguiente; los mecenas dan boosts."
-      }
-    },
-    "callbackDeclined": "No se ha aprobado la conexión con Patreon.",
-    "callbackFailed": "No se ha podido completar la conexión con Patreon.",
-    "callbackDone": "Patreon conectado",
-    "callbackDoneBody": "Hemos comprobado tu membresía. Ya puedes volver al roadmap.",
-    "backToRoadmap": "Volver al roadmap",
-    "admin": {
-      "tab": "Roadmap",
-      "title": "Cola del roadmap"
-    }
+    "proposeCta": "Pedir un título"
   },
   "feedback": {
     "open": "Comentarios",
@@ -1951,7 +1889,6 @@
     "items": {
       "reportsDesc": "Revisa, filtra y resuelve reportes abiertos en lote.",
       "requestsDesc": "Gestiona pedidos de contenido, boosts de mecenas y avisos de publicación.",
-      "roadmapDesc": "Crea, ordena y actualiza los ítems del roadmap público.",
       "announcementDesc": "Muestra un banner global informativo, de aviso o mantenimiento.",
       "usersDesc": "Gestiona cuentas, roles, baneos y excepciones de cuota mensual de API.",
       "patreonTitle": "Patreon y tiers",
@@ -2113,5 +2050,12 @@
       "busy": "Ocupado. Inténtalo luego.",
       "error": "No se pudo guardar."
     }
+  },
+  "patreonCallback": {
+    "declined": "No se ha aprobado la conexión con Patreon.",
+    "failed": "No se ha podido completar la conexión con Patreon.",
+    "done": "Patreon conectado",
+    "doneBody": "Hemos comprobado tu membresía. Ya puedes volver a los ajustes.",
+    "backToSettings": "Volver a los ajustes"
   }
 }

@@ -58,8 +58,6 @@ export type ReportTargetMediaOutput = z.output<typeof schemas.s_ReportTargetMedi
 export type ReportTargetSegmentOutput = z.output<typeof schemas.s_ReportTargetSegment>;
 export type ReportTargetSegmentInputOutput = z.output<typeof schemas.s_ReportTargetSegmentInput>;
 export type ReportTargetTypeOutput = z.output<typeof schemas.s_ReportTargetType>;
-export type RoadmapItemOutput = z.output<typeof schemas.s_RoadmapItem>;
-export type RoadmapItemWriteOutput = z.output<typeof schemas.s_RoadmapItemWrite>;
 export type SearchMultipleQueryOutput = z.output<typeof schemas.s_SearchMultipleQuery>;
 export type SearchPaginationOutput = z.output<typeof schemas.s_SearchPagination>;
 export type SearchQueryOutput = z.output<typeof schemas.s_SearchQuery>;
@@ -142,7 +140,6 @@ export type ReserveUserDictionaryUploadRequestBodyOutput = z.output<typeof schem
 export type AddExcludedMediaRequestBodyOutput = z.output<typeof schemas.s_AddExcludedMediaRequestBody>;
 export type AddFavoriteMediaRequestBodyOutput = z.output<typeof schemas.s_AddFavoriteMediaRequestBody>;
 export type UpdateEmailPreferencesByTokenRequestBodyOutput = z.output<typeof schemas.s_UpdateEmailPreferencesByTokenRequestBody>;
-export type UpdateAdminRoadmapItemRequestBodyOutput = z.output<typeof schemas.s_UpdateAdminRoadmapItemRequestBody>;
 export type UpdateAdminContentRequestRequestBodyOutput = z.output<typeof schemas.s_UpdateAdminContentRequestRequestBody>;
 export type MergeAdminContentRequestRequestBodyOutput = z.output<typeof schemas.s_MergeAdminContentRequestRequestBody>;
 

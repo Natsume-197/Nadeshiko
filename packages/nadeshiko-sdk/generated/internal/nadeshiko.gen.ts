@@ -4,7 +4,7 @@ import { createClient as createApiClient, createConfig, type Client } from './cl
 import type { Auth } from './core/auth.gen';
 import type { ClientOptions } from './types.gen';
 import type * as Types from './types.gen';
-import { search, getSearchStats, searchWords, searchMedia, getStatsOverview, listMedia, getSegment, getSegmentContext, getMedia, listEpisodes, getEpisode, getMe, createUserApiKey, listExcludedMedia, addExcludedMedia, removeExcludedMedia, listFavoriteMedia, addFavoriteMedia, removeFavoriteMedia, listFamiliarMedia, listUserActivity, getUserActivityHeatmap, getUserActivityStats, listCollections, createCollection, getCollection, deleteCollection, addSegmentToCollection, searchCollectionSegments, removeSegmentFromCollection, listRoadmap, listContentRequests, createContentRequest, getContentRequestAllowance, listMyContentRequests, withdrawContentRequest, voteContentRequest, unvoteContentRequest, boostContentRequest, listNotifications, getUnreadNotificationCount, markNotificationsRead, listWordWatches, setWordWatch, checkWordWatch, updateWordWatch, deleteWordWatch, identifyDictionaryWord, getDictionaryKanjiIndex, getDictionaryKanji, getCoveredWords, triggerCoveredWordsUpdate, createMedia, updateSegment, listSegmentRevisions, restoreSegmentRevision, updateMedia, deleteMedia, createEpisode, updateEpisode, deleteEpisode, listSegments, createSegment, createSegmentsBatch, moderateEpisodeSegments, getPatreonConnection, startPatreonLink, unlinkPatreon, completePatreonLink, listUserDictionaries, updateUserDictionaries, deleteUserDictionary, reserveUserDictionaryUpload, completeUserDictionaryUpload, clearFamiliarMedia, forgetFamiliarMedia, createUserReport, getUserPreferences, updateUserPreferences, trackUserActivity, deleteUserActivity, deleteUserActivityByDate, deleteUserActivityById, exportUserData, createFeedback, getFeedbackFormToken, unsubscribeFromEmail, getEmailPreferencesByToken, updateEmailPreferencesByToken, updateCollection, updateCollectionSegment, getCollectionStats, getAdminOverview, listAdminReports, batchUpdateAdminReports, bulkUpdateAdminReports, bulkDeleteAdminReports, updateAdminReport, deleteAdminReport, getAnnouncement, updateAnnouncement, getAdminUsersWithProviders, listTiers, getAdminUserQuota, updateAdminUserQuota, listAdminRoadmap, createAdminRoadmapItem, updateAdminRoadmapItem, listAdminContentRequests, updateAdminContentRequest, mergeAdminContentRequest, getAdminPatreonOverview, refreshAllAdminPatreonConnections, unlinkAdminPatreonConnection, refreshAdminPatreonConnection, getSession, getSessionPost, signOut, socialSignIn, signInWithMagicLink, signInWithEmailOtp, listUserSessions, authRevokeSession, authRevokeSessions, authRevokeOtherSessions, deleteUser, changeEmail, authApiKeyCreate, authApiKeyList, authApiKeyUpdate, banUser, unbanUser, impersonateUser, authAdminStopImpersonating, type Options } from './sdk.gen';
+import { search, getSearchStats, searchWords, searchMedia, getStatsOverview, listMedia, getSegment, getSegmentContext, getMedia, listEpisodes, getEpisode, getMe, createUserApiKey, listExcludedMedia, addExcludedMedia, removeExcludedMedia, listFavoriteMedia, addFavoriteMedia, removeFavoriteMedia, listFamiliarMedia, listUserActivity, getUserActivityHeatmap, getUserActivityStats, listCollections, createCollection, getCollection, deleteCollection, addSegmentToCollection, searchCollectionSegments, removeSegmentFromCollection, listContentRequests, createContentRequest, getContentRequestAllowance, listMyContentRequests, withdrawContentRequest, voteContentRequest, unvoteContentRequest, boostContentRequest, listNotifications, getUnreadNotificationCount, markNotificationsRead, listWordWatches, setWordWatch, checkWordWatch, updateWordWatch, deleteWordWatch, identifyDictionaryWord, getDictionaryKanjiIndex, getDictionaryKanji, getCoveredWords, triggerCoveredWordsUpdate, createMedia, updateSegment, listSegmentRevisions, restoreSegmentRevision, updateMedia, deleteMedia, createEpisode, updateEpisode, deleteEpisode, listSegments, createSegment, createSegmentsBatch, moderateEpisodeSegments, getPatreonConnection, startPatreonLink, unlinkPatreon, completePatreonLink, listUserDictionaries, updateUserDictionaries, deleteUserDictionary, reserveUserDictionaryUpload, completeUserDictionaryUpload, clearFamiliarMedia, forgetFamiliarMedia, createUserReport, getUserPreferences, updateUserPreferences, trackUserActivity, deleteUserActivity, deleteUserActivityByDate, deleteUserActivityById, exportUserData, createFeedback, getFeedbackFormToken, unsubscribeFromEmail, getEmailPreferencesByToken, updateEmailPreferencesByToken, updateCollection, updateCollectionSegment, getCollectionStats, getAdminOverview, listAdminReports, batchUpdateAdminReports, bulkUpdateAdminReports, bulkDeleteAdminReports, updateAdminReport, deleteAdminReport, getAnnouncement, updateAnnouncement, getAdminUsersWithProviders, listTiers, getAdminUserQuota, updateAdminUserQuota, listAdminContentRequests, updateAdminContentRequest, mergeAdminContentRequest, getAdminPatreonOverview, refreshAllAdminPatreonConnections, unlinkAdminPatreonConnection, refreshAdminPatreonConnection, getSession, getSessionPost, signOut, socialSignIn, signInWithMagicLink, signInWithEmailOtp, listUserSessions, authRevokeSession, authRevokeSessions, authRevokeOtherSessions, deleteUser, changeEmail, authApiKeyCreate, authApiKeyList, authApiKeyUpdate, banUser, unbanUser, impersonateUser, authAdminStopImpersonating, type Options } from './sdk.gen';
 import { withRetry, type RetryOptions } from './retry';
 import { NadeshikoError, buildNadeshikoError, isProblemDetails, type NadeshikoErrorCode, type RateLimitReason } from './errors';
 import { flatPaginate } from './paginate';
@@ -181,10 +181,6 @@ export type NadeshikoClient = {
     removeSegmentFromCollection: {
       (params: Types.RemoveSegmentFromCollectionData['path'] & { throwOnError: false }): Promise<{ data: Types.RemoveSegmentFromCollectionResponse; response: Response; request: Request } | { error: Types.RemoveSegmentFromCollectionErrors; response: Response; request: Request }>;
       (params: Types.RemoveSegmentFromCollectionData['path']): Promise<Types.RemoveSegmentFromCollectionResponse>;
-    };
-    listRoadmap: {
-      (params: { throwOnError: false }): Promise<{ data: Types.ListRoadmapResponse; response: Response; request: Request } | { error: Types.ListRoadmapErrors; response: Response; request: Request }>;
-      (): Promise<Types.ListRoadmapResponse>;
     };
     listContentRequests: {
       (params: NonNullable<Types.ListContentRequestsData['query']> & { throwOnError: false }): Promise<{ data: Types.ListContentRequestsResponse; response: Response; request: Request } | { error: Types.ListContentRequestsErrors; response: Response; request: Request }>;
@@ -506,19 +502,6 @@ export type NadeshikoClient = {
       (id: number): Promise<Types.UpdateAdminUserQuotaResponse>;
       (params: Types.UpdateAdminUserQuotaData['path'] & NonNullable<Types.UpdateAdminUserQuotaData['body']> & { throwOnError: false }): Promise<{ data: Types.UpdateAdminUserQuotaResponse; response: Response; request: Request } | { error: Types.UpdateAdminUserQuotaErrors; response: Response; request: Request }>;
       (params: Types.UpdateAdminUserQuotaData['path'] & NonNullable<Types.UpdateAdminUserQuotaData['body']>): Promise<Types.UpdateAdminUserQuotaResponse>;
-    };
-    listAdminRoadmap: {
-      (params: { throwOnError: false }): Promise<{ data: Types.ListAdminRoadmapResponse; response: Response; request: Request } | { error: Types.ListAdminRoadmapErrors; response: Response; request: Request }>;
-      (): Promise<Types.ListAdminRoadmapResponse>;
-    };
-    createAdminRoadmapItem: {
-      (params: NonNullable<Types.CreateAdminRoadmapItemData['body']> & { throwOnError: false }): Promise<{ data: Types.CreateAdminRoadmapItemResponse; response: Response; request: Request } | { error: Types.CreateAdminRoadmapItemErrors; response: Response; request: Request }>;
-      (params: NonNullable<Types.CreateAdminRoadmapItemData['body']>): Promise<Types.CreateAdminRoadmapItemResponse>;
-    };
-    updateAdminRoadmapItem: {
-      (id: string): Promise<Types.UpdateAdminRoadmapItemResponse>;
-      (params: Types.UpdateAdminRoadmapItemData['path'] & NonNullable<Types.UpdateAdminRoadmapItemData['body']> & { throwOnError: false }): Promise<{ data: Types.UpdateAdminRoadmapItemResponse; response: Response; request: Request } | { error: Types.UpdateAdminRoadmapItemErrors; response: Response; request: Request }>;
-      (params: Types.UpdateAdminRoadmapItemData['path'] & NonNullable<Types.UpdateAdminRoadmapItemData['body']>): Promise<Types.UpdateAdminRoadmapItemResponse>;
     };
     listAdminContentRequests: {
       (params: NonNullable<Types.ListAdminContentRequestsData['query']> & { throwOnError: false }): Promise<{ data: Types.ListAdminContentRequestsResponse; response: Response; request: Request } | { error: Types.ListAdminContentRequestsErrors; response: Response; request: Request }>;
@@ -973,12 +956,6 @@ export function createNadeshikoClient(config: NadeshikoConfig): NadeshikoClient 
   const _removeSegmentFromCollection = (params?: any) => {
     const { throwOnError: tOE, collectionPublicId, segmentPublicId } = params ?? {};
     const p = removeSegmentFromCollection({ path: { collectionPublicId, segmentPublicId }, client: clientInstance, throwOnError: tOE === false ? false : true } as any);
-    return tOE === false ? p : p.then((r: any) => r.data);
-  };
-
-  const _listRoadmap = (params?: any) => {
-    const tOE = params?.throwOnError;
-    const p = listRoadmap({ client: clientInstance, throwOnError: tOE === false ? false : true } as any);
     return tOE === false ? p : p.then((r: any) => r.data);
   };
 
@@ -1536,28 +1513,6 @@ export function createNadeshikoClient(config: NadeshikoConfig): NadeshikoClient 
     return tOE === false ? p : p.then((r: any) => r.data);
   };
 
-  const _listAdminRoadmap = (params?: any) => {
-    const tOE = params?.throwOnError;
-    const p = listAdminRoadmap({ client: clientInstance, throwOnError: tOE === false ? false : true } as any);
-    return tOE === false ? p : p.then((r: any) => r.data);
-  };
-
-  const _createAdminRoadmapItem = (params?: any) => {
-    const { throwOnError: tOE, ...body } = params ?? {};
-    const p = createAdminRoadmapItem({ body, client: clientInstance, throwOnError: tOE === false ? false : true } as any);
-    return tOE === false ? p : p.then((r: any) => r.data);
-  };
-
-  const _updateAdminRoadmapItem = (paramsOrId?: any) => {
-    if (typeof paramsOrId === 'string') {
-      return updateAdminRoadmapItem({ throwOnError: true, path: { itemId: paramsOrId }, client: clientInstance } as any).then((r: any) => r.data);
-    }
-    const params = paramsOrId;
-    const { throwOnError: tOE, itemId, ...body } = params ?? {};
-    const p = updateAdminRoadmapItem({ path: { itemId }, body, client: clientInstance, throwOnError: tOE === false ? false : true } as any);
-    return tOE === false ? p : p.then((r: any) => r.data);
-  };
-
   const _listAdminContentRequests = (params?: any) => {
     const { throwOnError: tOE, ...query } = params ?? {};
     const p = listAdminContentRequests({ ...(Object.keys(query).length > 0 ? { query } : {}), client: clientInstance, throwOnError: tOE === false ? false : true } as any);
@@ -1758,7 +1713,6 @@ export function createNadeshikoClient(config: NadeshikoConfig): NadeshikoClient 
     addSegmentToCollection: _addSegmentToCollection,
     searchCollectionSegments: _searchCollectionSegments,
     removeSegmentFromCollection: _removeSegmentFromCollection,
-    listRoadmap: _listRoadmap,
     listContentRequests: _listContentRequests,
     createContentRequest: _createContentRequest,
     getContentRequestAllowance: _getContentRequestAllowance,
@@ -1833,9 +1787,6 @@ export function createNadeshikoClient(config: NadeshikoConfig): NadeshikoClient 
     listTiers: _listTiers,
     getAdminUserQuota: _getAdminUserQuota,
     updateAdminUserQuota: _updateAdminUserQuota,
-    listAdminRoadmap: _listAdminRoadmap,
-    createAdminRoadmapItem: _createAdminRoadmapItem,
-    updateAdminRoadmapItem: _updateAdminRoadmapItem,
     listAdminContentRequests: _listAdminContentRequests,
     updateAdminContentRequest: _updateAdminContentRequest,
     mergeAdminContentRequest: _mergeAdminContentRequest,

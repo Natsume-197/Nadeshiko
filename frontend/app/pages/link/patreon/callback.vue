@@ -15,7 +15,7 @@ onMounted(async () => {
   const error = String(route.query.error ?? '');
   if (error || !code || !sealed) {
     state.value = 'failed';
-    message.value = error === 'access_denied' ? t('roadmap.callbackDeclined') : t('roadmap.callbackFailed');
+    message.value = error === 'access_denied' ? t('patreonCallback.declined') : t('patreonCallback.failed');
     return;
   }
   try {
@@ -24,7 +24,7 @@ onMounted(async () => {
     state.value = 'done';
   } catch (caught) {
     state.value = 'failed';
-    message.value = t('roadmap.callbackFailed');
+    message.value = t('patreonCallback.failed');
     handleApiError('patreonConnection.callback', caught, { toastKey: false });
   }
 });
@@ -35,13 +35,13 @@ onMounted(async () => {
     <span v-if="state === 'working'" class="nd-spinner" />
     <template v-else-if="state === 'done'">
       <div class="flex size-16 items-center justify-center rounded-full bg-green-500/15 text-green-300"><UiBaseIcon :path="mdiCheckBold" size="30" /></div>
-      <h1 class="mt-5 text-3xl font-bold">{{ t('roadmap.callbackDone') }}</h1>
-      <p class="mt-2 text-white/50">{{ t('roadmap.callbackDoneBody') }}</p>
-      <NuxtLink :to="localePath('/roadmap#propose')" class="nd-btn-accent mt-6">{{ t('roadmap.backToRoadmap') }}</NuxtLink>
+      <h1 class="mt-5 text-3xl font-bold">{{ t('patreonCallback.done') }}</h1>
+      <p class="mt-2 text-white/50">{{ t('patreonCallback.doneBody') }}</p>
+      <NuxtLink :to="`${localePath('/user/settings')}#connections`" class="nd-btn-accent mt-6">{{ t('patreonCallback.backToSettings') }}</NuxtLink>
     </template>
     <template v-else>
       <h1 class="text-3xl font-bold">{{ message }}</h1>
-      <NuxtLink :to="localePath('/roadmap#propose')" class="mt-5 text-brand hover:text-brand-hover">{{ t('roadmap.backToRoadmap') }}</NuxtLink>
+      <NuxtLink :to="`${localePath('/user/settings')}#connections`" class="mt-5 text-brand hover:text-brand-hover">{{ t('patreonCallback.backToSettings') }}</NuxtLink>
     </template>
   </div>
 </template>

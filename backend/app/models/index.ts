@@ -11,7 +11,6 @@ export { UserDictionaryArtifact } from './UserDictionaryArtifact';
 export type { UserDictionaryArtifactStatus } from './UserDictionaryArtifact';
 export { UserDictionaryUpload } from './UserDictionaryUpload';
 export type { UserDictionaryUploadStatus } from './UserDictionaryUpload';
-export { RoadmapItem, RoadmapItemKind, RoadmapItemStatus } from './RoadmapItem';
 export {
   ContentRequest,
   ContentRequestKind,

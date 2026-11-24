@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { getAniListMediaMetadata } from '@app/services/roadmap/anilist';
+import { getAniListMediaMetadata } from '@app/services/requests/anilist';
 
 afterEach(() => vi.restoreAllMocks());
 

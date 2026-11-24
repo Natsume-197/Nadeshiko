@@ -25,7 +25,7 @@ const GOOGLE_FONTS_STATIC_ORIGIN = 'https://fonts.gstatic.com';
 const TYPEKIT_ORIGIN = 'https://use.typekit.net';
 // YouTube supplies thumbnails from both i.ytimg.com and numbered subdomains; allow all image hosts.
 const YOUTUBE_THUMBNAIL_ORIGIN = 'https://*.ytimg.com';
-// Trust the dedicated roadmap image CDN, not AniList scripts or API origins.
+// Trust the AniList image CDN for content request covers, not AniList scripts or API origins.
 const ANILIST_IMAGE_ORIGIN = 'https://s4.anilist.co';
 const MYANIMELIST_IMAGE_ORIGIN = 'https://cdn.myanimelist.net';
 // Chrome Translate needs these stylesheet/icon origins plus its translation API.

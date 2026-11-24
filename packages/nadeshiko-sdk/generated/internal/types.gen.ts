@@ -4,29 +4,77 @@ export type ClientOptions = {
     baseUrl: 'https://api.nadeshiko.co' | (string & {});
 };
 
-export type RoadmapItem = {
+/**
+ * A reader's request for content, shared by everyone who wants the same title.
+ */
+export type ContentRequest = {
     id: string;
-    kind: 'CONTENT' | 'FEATURE';
-    status: 'PROPOSED' | 'CONSIDERING' | 'PLANNED' | 'IN_PROGRESS' | 'RELEASED' | 'DECLINED';
+    category: 'ANIME' | 'JDRAMA' | 'YOUTUBE' | 'AUDIOBOOK';
+    /**
+     * NEW asks for a title not on Nadeshiko; UPDATE asks for more of one that is.
+     */
+    kind: 'NEW' | 'UPDATE';
+    status: 'OPEN' | 'PLANNED' | 'IN_PROGRESS' | 'RELEASED' | 'DECLINED';
     title: string;
-    description: string;
-    sourceUrl: string | null;
+    note: string;
+    sourceUrl: string;
     coverUrl: string | null;
-    targetDate: string | null;
     /**
-     * Nadeshiko version that introduced this feature.
+     * Why a declined request was declined; null otherwise.
      */
-    introducedInVersion: string | null;
-    sortOrder: number;
+    declineReason: string | null;
+    voteCount: number;
+    boostCount: number;
+    /**
+     * Votes plus five per boost.
+     */
+    score: number;
+    /**
+     * The published media this request is for (UPDATE) or produced (RELEASED).
+     */
+    media: {
+        id: string;
+        slug: string;
+        name: string;
+    } | null;
     createdAt: string;
+    releasedAt: string | null;
+};
+
+/**
+ * Bad Request error response
+ */
+export type Error400 = {
     /**
-     * Optional public credit chosen by the proposer or an admin.
+     * Specific error code for programmatic handling
      */
-    proposerName: string | null;
+    code: 'VALIDATION_FAILED' | 'INVALID_JSON' | 'INVALID_REQUEST';
     /**
-     * Present on admin responses only.
+     * A short, human-readable summary of the problem
      */
-    requesterUserId?: number | null;
+    title: string;
+    /**
+     * A human-readable explanation specific to this occurrence
+     */
+    detail: string;
+    /**
+     * A URI reference that identifies the problem type (`about:blank` when the problem has no further semantics beyond the HTTP status, per RFC 9457)
+     */
+    type?: string;
+    /**
+     * A URI reference that identifies the specific occurrence (e.g., trace ID)
+     */
+    instance?: string;
+    /**
+     * The HTTP status code
+     */
+    status: 400;
+    /**
+     * Optional map of field names to their error messages (for validation errors)
+     */
+    errors?: {
+        [key: string]: string;
+    };
 };
 
 /**
@@ -93,79 +141,6 @@ export type Error500 = {
      * The HTTP status code
      */
     status: 500;
-    /**
-     * Optional map of field names to their error messages (for validation errors)
-     */
-    errors?: {
-        [key: string]: string;
-    };
-};
-
-/**
- * A reader's request for content, shared by everyone who wants the same title.
- */
-export type ContentRequest = {
-    id: string;
-    category: 'ANIME' | 'JDRAMA' | 'YOUTUBE' | 'AUDIOBOOK';
-    /**
-     * NEW asks for a title not on Nadeshiko; UPDATE asks for more of one that is.
-     */
-    kind: 'NEW' | 'UPDATE';
-    status: 'OPEN' | 'PLANNED' | 'IN_PROGRESS' | 'RELEASED' | 'DECLINED';
-    title: string;
-    note: string;
-    sourceUrl: string;
-    coverUrl: string | null;
-    /**
-     * Why a declined request was declined; null otherwise.
-     */
-    declineReason: string | null;
-    voteCount: number;
-    boostCount: number;
-    /**
-     * Votes plus five per boost.
-     */
-    score: number;
-    /**
-     * The published media this request is for (UPDATE) or produced (RELEASED).
-     */
-    media: {
-        id: string;
-        slug: string;
-        name: string;
-    } | null;
-    createdAt: string;
-    releasedAt: string | null;
-};
-
-/**
- * Bad Request error response
- */
-export type Error400 = {
-    /**
-     * Specific error code for programmatic handling
-     */
-    code: 'VALIDATION_FAILED' | 'INVALID_JSON' | 'INVALID_REQUEST';
-    /**
-     * A short, human-readable summary of the problem
-     */
-    title: string;
-    /**
-     * A human-readable explanation specific to this occurrence
-     */
-    detail: string;
-    /**
-     * A URI reference that identifies the problem type (`about:blank` when the problem has no further semantics beyond the HTTP status, per RFC 9457)
-     */
-    type?: string;
-    /**
-     * A URI reference that identifies the specific occurrence (e.g., trace ID)
-     */
-    instance?: string;
-    /**
-     * The HTTP status code
-     */
-    status: 400;
     /**
      * Optional map of field names to their error messages (for validation errors)
      */
@@ -3300,19 +3275,6 @@ export type UpdateAccountQuotaRequest = {
     reason?: string;
 };
 
-export type RoadmapItemWrite = {
-    kind: 'CONTENT' | 'FEATURE';
-    status: 'CONSIDERING' | 'PLANNED' | 'IN_PROGRESS' | 'RELEASED';
-    title: string;
-    description?: string;
-    sourceUrl?: string | null;
-    coverUrl?: string | null;
-    targetDate?: string | null;
-    introducedInVersion?: string | null;
-    sortOrder?: number;
-    proposerName?: string | null;
-};
-
 export type AdminContentRequest = ContentRequest & {
     externalSource: 'ANILIST' | 'IMDB' | 'TVDB' | 'TMDB' | 'YOUTUBE' | 'ASIN' | null;
     externalId: string | null;
@@ -3584,38 +3546,6 @@ export type AuthVerificationWritable = {
 export type AuthApikeyWritable = {
     metadata?: string;
 };
-
-export type ListRoadmapData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/v1/roadmap';
-};
-
-export type ListRoadmapErrors = {
-    /**
-     * Too Many Requests. The response body indicates whether the request was rejected due to per-minute rate limiting or monthly quota exhaustion.
-     */
-    429: Error429;
-    /**
-     * Internal Server Error
-     */
-    500: Error500;
-};
-
-export type ListRoadmapError = ListRoadmapErrors[keyof ListRoadmapErrors];
-
-export type ListRoadmapResponses = {
-    /**
-     * OK
-     */
-    200: {
-        items: Array<RoadmapItem>;
-        patreonUrl: string;
-    };
-};
-
-export type ListRoadmapResponse = ListRoadmapResponses[keyof ListRoadmapResponses];
 
 export type ListContentRequestsData = {
     body?: never;
@@ -8601,135 +8531,6 @@ export type UpdateAdminUserQuotaResponses = {
 };
 
 export type UpdateAdminUserQuotaResponse = UpdateAdminUserQuotaResponses[keyof UpdateAdminUserQuotaResponses];
-
-export type ListAdminRoadmapData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/v1/admin/roadmap';
-};
-
-export type ListAdminRoadmapErrors = {
-    /**
-     * Unauthorized
-     */
-    401: Error401;
-    /**
-     * Forbidden
-     */
-    403: Error403;
-    /**
-     * Internal Server Error
-     */
-    500: Error500;
-};
-
-export type ListAdminRoadmapError = ListAdminRoadmapErrors[keyof ListAdminRoadmapErrors];
-
-export type ListAdminRoadmapResponses = {
-    /**
-     * OK
-     */
-    200: {
-        items: Array<RoadmapItem>;
-    };
-};
-
-export type ListAdminRoadmapResponse = ListAdminRoadmapResponses[keyof ListAdminRoadmapResponses];
-
-export type CreateAdminRoadmapItemData = {
-    body: RoadmapItemWrite;
-    path?: never;
-    query?: never;
-    url: '/v1/admin/roadmap';
-};
-
-export type CreateAdminRoadmapItemErrors = {
-    /**
-     * Bad Request
-     */
-    400: Error400;
-    /**
-     * Unauthorized
-     */
-    401: Error401;
-    /**
-     * Forbidden
-     */
-    403: Error403;
-    /**
-     * Internal Server Error
-     */
-    500: Error500;
-};
-
-export type CreateAdminRoadmapItemError = CreateAdminRoadmapItemErrors[keyof CreateAdminRoadmapItemErrors];
-
-export type CreateAdminRoadmapItemResponses = {
-    /**
-     * Created
-     */
-    201: RoadmapItem;
-};
-
-export type CreateAdminRoadmapItemResponse = CreateAdminRoadmapItemResponses[keyof CreateAdminRoadmapItemResponses];
-
-export type UpdateAdminRoadmapItemData = {
-    body: {
-        kind?: 'CONTENT' | 'FEATURE';
-        status?: 'PROPOSED' | 'CONSIDERING' | 'PLANNED' | 'IN_PROGRESS' | 'RELEASED' | 'DECLINED';
-        title?: string;
-        description?: string;
-        sourceUrl?: string | null;
-        coverUrl?: string | null;
-        targetDate?: string | null;
-        introducedInVersion?: string | null;
-        sortOrder?: number;
-        proposerName?: string | null;
-    };
-    path: {
-        /**
-         * Public UUID of the roadmap item.
-         */
-        itemId: string;
-    };
-    query?: never;
-    url: '/v1/admin/roadmap/{itemId}';
-};
-
-export type UpdateAdminRoadmapItemErrors = {
-    /**
-     * Bad Request
-     */
-    400: Error400;
-    /**
-     * Unauthorized
-     */
-    401: Error401;
-    /**
-     * Forbidden
-     */
-    403: Error403;
-    /**
-     * Not Found
-     */
-    404: Error404;
-    /**
-     * Internal Server Error
-     */
-    500: Error500;
-};
-
-export type UpdateAdminRoadmapItemError = UpdateAdminRoadmapItemErrors[keyof UpdateAdminRoadmapItemErrors];
-
-export type UpdateAdminRoadmapItemResponses = {
-    /**
-     * Updated
-     */
-    200: RoadmapItem;
-};
-
-export type UpdateAdminRoadmapItemResponse = UpdateAdminRoadmapItemResponses[keyof UpdateAdminRoadmapItemResponses];
 
 export type ListAdminContentRequestsData = {
     body?: never;

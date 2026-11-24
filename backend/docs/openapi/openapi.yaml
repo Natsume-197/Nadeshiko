@@ -64,8 +64,6 @@ tags:
   - name: Stats
     description: |
       Statistics endpoints for corpus coverage and word frequency data.
-  - name: Roadmap
-    description: Public content queue and feature roadmap.
   - name: Requests
     x-internal: true
     description: Content requests from readers, with votes and patron boosts.
@@ -104,8 +102,6 @@ x-tagGroups:
       - Stats
 
 paths:
-  "/v1/roadmap":
-    $ref: "./paths/roadmap/v1_roadmap.yaml"
   "/v1/requests":
     $ref: "./paths/requests/v1_requests.yaml"
   "/v1/requests/me":
@@ -275,10 +271,6 @@ paths:
     $ref: "./paths/admin/v1_admin_tiers.yaml"
   "/v1/admin/users/{userId}/quota":
     $ref: "./paths/admin/v1_admin_users_id_quota.yaml"
-  "/v1/admin/roadmap":
-    $ref: "./paths/admin/v1_admin_roadmap.yaml"
-  "/v1/admin/roadmap/{itemId}":
-    $ref: "./paths/admin/v1_admin_roadmap_id.yaml"
   "/v1/admin/requests":
     $ref: "./paths/admin/v1_admin_requests.yaml"
   "/v1/admin/requests/{requestId}":
