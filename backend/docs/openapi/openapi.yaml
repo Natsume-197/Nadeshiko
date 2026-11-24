@@ -69,6 +69,9 @@ tags:
   - name: Requests
     x-internal: true
     description: Content requests from readers, with votes and patron boosts.
+  - name: Notifications
+    x-internal: true
+    description: The reader's notification centre and word alerts.
 
   - name: Admin
     x-internal: true
@@ -115,6 +118,18 @@ paths:
     $ref: "./paths/requests/v1_requests_id_vote.yaml"
   "/v1/requests/{requestId}/boost":
     $ref: "./paths/requests/v1_requests_id_boost.yaml"
+  "/v1/notifications":
+    $ref: "./paths/notifications/v1_notifications.yaml"
+  "/v1/notifications/unread-count":
+    $ref: "./paths/notifications/v1_notifications_unread_count.yaml"
+  "/v1/notifications/read":
+    $ref: "./paths/notifications/v1_notifications_read.yaml"
+  "/v1/word-watches":
+    $ref: "./paths/notifications/v1_word_watches.yaml"
+  "/v1/word-watches/check":
+    $ref: "./paths/notifications/v1_word_watches_check.yaml"
+  "/v1/word-watches/{watchId}":
+    $ref: "./paths/notifications/v1_word_watches_id.yaml"
   # Search endpoints
   "/v1/search":
     $ref: "./paths/search/v1_search.yaml"

@@ -44,7 +44,8 @@
       "language": "Idioma",
       "logout": "Sair",
       "requests": "Pedidos",
-      "admin": "Admin"
+      "admin": "Admin",
+      "notifications": "Notificações"
     }
   },
   "announcementBanner": {
@@ -521,7 +522,8 @@
       "users": "Usuários",
       "reports": "Problemas relatados",
       "announcement": "Aviso",
-      "dictionaries": "Dicionários"
+      "dictionaries": "Dicionários",
+      "notifications": "Notificações"
     },
     "dashboard": {
       "roles": {
@@ -1062,7 +1064,9 @@
       "turnedOn": "Envio ativado: {name}",
       "turnedOff": "Envio desativado: {name}",
       "requestsTitle": "Seus pedidos",
-      "requestsDescription": "Novidades dos títulos em que você votou: quando começamos e quando são publicados."
+      "requestsDescription": "Novidades dos títulos em que você votou: quando começamos e quando são publicados.",
+      "wordsTitle": "Alertas de palavras",
+      "wordsDescription": "Palavras novas e resumo semanal."
     },
     "dictionaries": {
       "title": "Dicionários personalizados",
@@ -2058,6 +2062,59 @@
     "tabs": {
       "campaign": "Apoiadores no Patreon ({count})",
       "linked": "Contas vinculadas ({count})"
+    }
+  },
+  "notifications": {
+    "bell": {
+      "label": "Notificações",
+      "labelUnread": "Notificações, {count} não lidas",
+      "unreadDot": "Não lida",
+      "empty": "Nada novo por enquanto.",
+      "loading": "Carregando…",
+      "markAllRead": "Marcar tudo como lido",
+      "settings": "Configurações de notificações",
+      "loadMore": "Ver anteriores"
+    },
+    "kinds": {
+      "wordAvailable": "{word} já está no Nadeshiko",
+      "wordAvailableMany": "{count} das suas palavras já estão no Nadeshiko",
+      "wordDigest": "{count} frases novas de {word}",
+      "wordDigestMany": "Frases novas de {count} das suas palavras",
+      "requestInProgress": "Começamos {title}",
+      "requestReleased": "{title} já está no Nadeshiko"
+    },
+    "alerts": {
+      "title": "Alertas de palavras",
+      "count": "{active}/{limit}",
+      "empty": "Sem alertas.",
+      "loadError": "Não foi possível carregar.",
+      "modeFirst": "Aguardando",
+      "modeNew": "Seguindo",
+      "statusFulfilled": "Apareceu",
+      "statusPaused": "Pausado",
+      "followNew": "Seguir",
+      "pause": "Pausar",
+      "resume": "Retomar",
+      "remove": "Remover",
+      "removeWord": "Remover o alerta de {word}"
+    },
+    "channels": {
+      "title": "Canais",
+      "site": "Site",
+      "email": "E-mail",
+      "emailOff": "E-mail desativado.",
+      "emailOffLink": "Configurações"
+    },
+    "watch": {
+      "notify": "Avise-me quando aparecer",
+      "notifyOn": "Alerta ativo",
+      "follow": "Seguir",
+      "following": "Seguindo",
+      "commonWarning": "{count} frases: virão muitas.",
+      "limit": "Limite de alertas atingido.",
+      "alreadyThere": "Esta palavra já tem frases.",
+      "busy": "Ocupado. Tente depois.",
+      "error": "Não foi possível salvar."
     }
   }
 }

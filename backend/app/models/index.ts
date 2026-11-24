@@ -21,6 +21,9 @@ export {
 } from './ContentRequest';
 export { ContentRequestVote } from './ContentRequestVote';
 export { ContentRequestBoost } from './ContentRequestBoost';
+export { WordWatch, WordWatchMode, WordWatchStatus, WordWatchMatchMode } from './WordWatch';
+export { Notification } from './Notification';
+export type { NotificationKind } from './Notification';
 export { Tier } from './Tier';
 export {
   resolveQuotaLimit,

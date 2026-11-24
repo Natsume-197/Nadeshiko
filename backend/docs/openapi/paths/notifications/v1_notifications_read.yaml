@@ -1,0 +1,33 @@
+post:
+  tags: [Notifications]
+  x-internal: true
+  operationId: markNotificationsRead
+  summary: Mark notifications as read
+  description: Marks the listed entries as read, or all of the reader's entries when `ids` is left out.
+  security:
+    - SessionCookie: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            ids:
+              type: array
+              maxItems: 100
+              items: { type: string, format: uuid }
+  responses:
+    "200":
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [unreadCount]
+            properties:
+              unreadCount: { type: integer }
+    "400": { $ref: "../../components/responses/BadRequest.yaml" }
+    "401": { $ref: "../../components/responses/Unauthorized.yaml" }
+    "429": { $ref: "../../components/responses/TooManyRequests.yaml" }
+    "500": { $ref: "../../components/responses/InternalServerError.yaml" }

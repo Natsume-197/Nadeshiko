@@ -21,7 +21,7 @@ export type SearchStatsRequestInput = Omit<SearchStatsRequestOutput, 'include' |
 };
 
 /** What an unfiltered request searches: live segments across every category. */
-const DEFAULT_FILTERS: ResolvedFilters = {
+export const DEFAULT_FILTERS: ResolvedFilters = {
   status: ['ACTIVE'],
   category: ALL_CATEGORIES,
 };

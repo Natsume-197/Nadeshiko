@@ -1,0 +1,21 @@
+get:
+  tags: [Notifications]
+  x-internal: true
+  operationId: getUnreadNotificationCount
+  summary: How many of the reader's notifications are unread
+  description: What the bell in the header shows. A partial-index lookup, cheap enough to ask on every page load.
+  security:
+    - SessionCookie: []
+  responses:
+    "200":
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [count]
+            properties:
+              count: { type: integer }
+    "401": { $ref: "../../components/responses/Unauthorized.yaml" }
+    "429": { $ref: "../../components/responses/TooManyRequests.yaml" }
+    "500": { $ref: "../../components/responses/InternalServerError.yaml" }

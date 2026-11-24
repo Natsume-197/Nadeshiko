@@ -9,6 +9,8 @@ import {
   buildFeedbackAskEmail,
   buildDormant30Email,
   buildRequestUpdateEmail,
+  buildWordAlertEmail,
+  type WordAlertItem,
   type DormantTitle,
   type RequestUpdateEmailInput,
   type FeedbackEmailInput,
@@ -350,6 +352,40 @@ export async function sendRequestUpdateEmail(
   captureEmailSent({ userId: input.userId, kind: 'request-update', campaign });
 }
 
+/** One email per reader per word-alert sweep (task 52), however many of their words it covers. The job key carries
+ * the campaign, so a re-run of the same day's or week's sweep never mails twice. */
+export async function sendWordAlertEmail(input: {
+  kind: 'word-available' | 'word-digest';
+  userId: number;
+  username: string;
+  email: string;
+  campaign: string;
+  items: WordAlertItem[];
+}): Promise<void> {
+  const { oneClick, page } = unsubscribeUrls(input.userId, 'words');
+  const { subject, html } = await buildWordAlertEmail(input.kind, {
+    username: input.username,
+    items: input.items,
+    campaign: input.campaign,
+    unsubscribeUrl: page,
+  });
+
+  await sendEmailJob(
+    {
+      to: input.email,
+      subject,
+      html,
+      kind: input.kind,
+      campaign: input.campaign,
+      userId: input.userId,
+      unsubscribeUrl: oneClick,
+    },
+    `${input.campaign}-${input.userId}`,
+  );
+
+  captureEmailSent({ userId: input.userId, kind: input.kind, campaign: input.campaign });
+}
+
 export const TEST_EMAIL_TEMPLATES = [
   'welcome',
   'verify-new-email',
@@ -361,6 +397,8 @@ export const TEST_EMAIL_TEMPLATES = [
   'dormant-30-quiet',
   'request-in-progress',
   'request-released',
+  'word-available',
+  'word-digest',
 ] as const;
 
 export type TestEmailTemplate = (typeof TEST_EMAIL_TEMPLATES)[number];
@@ -455,6 +493,36 @@ export async function sendTestEmail(template: TestEmailTemplate, to: string): Pr
       voteCount: 42,
       path: template === 'request-released' ? '/media/frieren' : '/requests',
       unsubscribeUrl: unsubscribeUrls(1, 'requests').page,
+    }));
+  } else if (template === 'word-available' || template === 'word-digest') {
+    const digest = template === 'word-digest';
+    ({ subject, html } = await buildWordAlertEmail(template, {
+      username,
+      campaign: `${template}-preview`,
+      unsubscribeUrl: unsubscribeUrls(1, 'words').page,
+      items: [
+        {
+          word: '憧憬',
+          path: '/search/憧憬',
+          ...(digest ? { newSentences: 12 } : {}),
+          titles: ['Frieren: Beyond Journey’s End', 'Violet Evergarden'],
+          examples: [
+            { text: 'あの人への憧憬は、今も消えない。', title: 'Frieren: Beyond Journey’s End' },
+            { text: '憧憬だけじゃ、何も変わらないよ。', title: 'Violet Evergarden' },
+          ],
+        },
+        ...(digest
+          ? [
+              {
+                word: '食べる',
+                path: '/search/食べる',
+                newSentences: 34,
+                titles: ['Kaguya-sama: Love Is War'],
+                examples: [{ text: '一緒にご飯を食べる？', title: 'Kaguya-sama: Love Is War' }],
+              },
+            ]
+          : []),
+      ],
     }));
   } else {
     ({ subject, html } = await buildMagicLinkEmail(`${config.BASE_URL}/v1/auth/magic-link/verify?token=test-token`));

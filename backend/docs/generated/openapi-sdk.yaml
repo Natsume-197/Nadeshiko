@@ -86,6 +86,9 @@ tags:
   - name: Requests
     x-internal: true
     description: Content requests from readers, with votes and patron boosts.
+  - name: Notifications
+    x-internal: true
+    description: The reader's notification centre and word alerts.
   - name: Admin
     x-internal: true
     description: |
@@ -625,6 +628,376 @@ paths:
           $ref: "#/components/responses/NotFound"
         "409":
           $ref: "#/components/responses/Conflict"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /v1/notifications:
+    get:
+      tags:
+        - Notifications
+      x-internal: true
+      operationId: listNotifications
+      summary: The signed-in reader's notifications, newest first
+      security:
+        - SessionCookie: []
+      parameters:
+        - in: query
+          name: take
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+        - in: query
+          name: before
+          required: false
+          description: Only entries created before this instant (the `createdAt` of the
+            last entry of the previous page).
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - items
+                  - unreadCount
+                  - hasMore
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Notification"
+                  unreadCount:
+                    type: integer
+                  hasMore:
+                    type: boolean
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /v1/notifications/unread-count:
+    get:
+      tags:
+        - Notifications
+      x-internal: true
+      operationId: getUnreadNotificationCount
+      summary: How many of the reader's notifications are unread
+      description: What the bell in the header shows. A partial-index lookup, cheap
+        enough to ask on every page load.
+      security:
+        - SessionCookie: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - count
+                properties:
+                  count:
+                    type: integer
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /v1/notifications/read:
+    post:
+      tags:
+        - Notifications
+      x-internal: true
+      operationId: markNotificationsRead
+      summary: Mark notifications as read
+      description: Marks the listed entries as read, or all of the reader's entries
+        when `ids` is left out.
+      security:
+        - SessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ids:
+                  type: array
+                  maxItems: 100
+                  items:
+                    type: string
+                    format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - unreadCount
+                properties:
+                  unreadCount:
+                    type: integer
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /v1/word-watches:
+    get:
+      tags:
+        - Notifications
+      x-internal: true
+      operationId: listWordWatches
+      summary: The signed-in reader's word alerts
+      security:
+        - SessionCookie: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - items
+                  - activeCount
+                  - limit
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/WordWatch"
+                  activeCount:
+                    type: integer
+                  limit:
+                    type: integer
+                    description: Active alerts this reader may have (more for patrons).
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    post:
+      tags:
+        - Notifications
+      x-internal: true
+      operationId: setWordWatch
+      summary: Watch a word, or switch the alert you have on it
+      description: >
+        Creates the reader's alert on a word, or switches their existing alert
+        on the
+
+        same word and match mode to the asked mode. The word must be one
+        Japanese word
+
+        of up to 16 characters. `FIRST` is refused for a word that already has
+
+        sentences in the reader's search, and `NEW_SENTENCES` for a `CONTAINS`
+        search.
+      security:
+        - SessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - query
+                - mode
+              properties:
+                query:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                matchMode:
+                  type: string
+                  enum:
+                    - WORD
+                    - EXACT
+                    - CONTAINS
+                  default: WORD
+                mode:
+                  type: string
+                  enum:
+                    - FIRST
+                    - NEW_SENTENCES
+      responses:
+        "200":
+          description: An existing alert was switched
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WordWatchSetResponse"
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WordWatchSetResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /v1/word-watches/check:
+    get:
+      tags:
+        - Notifications
+      x-internal: true
+      operationId: checkWordWatch
+      summary: The reader's alert on one word, if any
+      description: What the search page reads to draw its alert button.
+      security:
+        - SessionCookie: []
+      parameters:
+        - in: query
+          name: query
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 64
+        - in: query
+          name: matchMode
+          required: false
+          schema:
+            type: string
+            enum:
+              - WORD
+              - EXACT
+              - CONTAINS
+            default: WORD
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - watch
+                properties:
+                  watch:
+                    oneOf:
+                      - $ref: "#/components/schemas/WordWatch"
+                      - type: "null"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /v1/word-watches/{watchId}:
+    patch:
+      tags:
+        - Notifications
+      x-internal: true
+      operationId: updateWordWatch
+      summary: Pause, resume or switch a word alert
+      description: >
+        `paused: true` pauses the alert. `paused: false` or a new `mode` makes
+        it
+
+        active again and starts counting from now, so a long pause does not
+        arrive
+
+        as one huge digest.
+      security:
+        - SessionCookie: []
+      parameters:
+        - in: path
+          name: watchId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                mode:
+                  type: string
+                  enum:
+                    - FIRST
+                    - NEW_SENTENCES
+                paused:
+                  type: boolean
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WordWatch"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    delete:
+      tags:
+        - Notifications
+      x-internal: true
+      operationId: deleteWordWatch
+      summary: Remove a word alert
+      security:
+        - SessionCookie: []
+      parameters:
+        - in: path
+          name: watchId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Removed
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
         "429":
           $ref: "#/components/responses/TooManyRequests"
         "500":
@@ -3760,6 +4133,7 @@ paths:
                       - checkins
                       - updates
                       - requests
+                      - words
                     properties:
                       recap:
                         type: boolean
@@ -3769,6 +4143,8 @@ paths:
                         type: boolean
                       requests:
                         type: boolean
+                      words:
+                        type: boolean
                   category:
                     type: string
                     nullable: true
@@ -3777,6 +4153,7 @@ paths:
                       - checkins
                       - updates
                       - requests
+                      - words
                     description: >
                       Which category the email carrying this token belonged to,
                       when
@@ -3844,6 +4221,8 @@ paths:
                   type: boolean
                 requests:
                   type: boolean
+                words:
+                  type: boolean
       responses:
         "200":
           description: OK
@@ -3864,6 +4243,7 @@ paths:
                       - checkins
                       - updates
                       - requests
+                      - words
                     properties:
                       recap:
                         type: boolean
@@ -3872,6 +4252,8 @@ paths:
                       updates:
                         type: boolean
                       requests:
+                        type: boolean
+                      words:
                         type: boolean
         "400":
           description: The token could not be read
@@ -8376,6 +8758,166 @@ components:
             type: string
           description: Optional map of field names to their error messages (for validation
             errors)
+    Notification:
+      type: object
+      description: One entry in the reader's notification centre (the bell).
+      required:
+        - id
+        - kind
+        - payload
+        - read
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        kind:
+          type: string
+          enum:
+            - word-available
+            - word-digest
+            - request-update
+          description: >
+            `word-available`: watched words that started returning sentences.
+
+            `word-digest`: new sentences for followed words this week.
+
+            `request-update`: a content request the reader backed started or
+            shipped.
+        payload:
+          type: object
+          additionalProperties: true
+          description: >
+            What the site needs to draw the entry. Word kinds carry `words`, a
+            list of
+
+            `{ query, matchMode, titles, sentences | newSentences }` (the site
+            builds the
+
+            link from the query and match mode); `request-update` carries
+
+            `{ status, title, path }`.
+        read:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+    WordWatch:
+      type: object
+      description: One of the reader's word alerts.
+      required:
+        - id
+        - query
+        - matchMode
+        - mode
+        - status
+        - lastNotifiedAt
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        query:
+          type: string
+          description: The watched word, NFKC-normalised.
+        matchMode:
+          type: string
+          enum:
+            - WORD
+            - EXACT
+            - CONTAINS
+        mode:
+          type: string
+          enum:
+            - FIRST
+            - NEW_SENTENCES
+          description: >
+            `FIRST`: one notice when the word starts returning sentences, then
+            the
+
+            alert is `FULFILLED`. `NEW_SENTENCES`: a weekly digest of new
+            sentences.
+        status:
+          type: string
+          enum:
+            - ACTIVE
+            - FULFILLED
+            - PAUSED
+        lastNotifiedAt:
+          type:
+            - string
+            - "null"
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+    WordWatchSetResponse:
+      type: object
+      required:
+        - watch
+        - outcome
+        - sentenceCount
+        - commonWord
+      properties:
+        watch:
+          $ref: "#/components/schemas/WordWatch"
+        outcome:
+          type: string
+          enum:
+            - created
+            - updated
+        sentenceCount:
+          type: integer
+          description: Sentences the word has in the reader's own search right now.
+        commonWord:
+          type: boolean
+          description: A new-sentences alert on a word so common that the weekly digest
+            will bring a lot; the site warns.
+    Error503:
+      type: object
+      description: Service Unavailable error response
+      required:
+        - code
+        - title
+        - detail
+        - status
+      properties:
+        code:
+          type: string
+          description: Specific error code for programmatic handling
+          enum:
+            - SERVICE_OVERLOADED
+        title:
+          type: string
+          minLength: 1
+          description: A short, human-readable summary of the problem
+        detail:
+          type: string
+          minLength: 1
+          description: A human-readable explanation specific to this occurrence
+        type:
+          type: string
+          format: uri
+          minLength: 1
+          description: A URI reference that identifies the problem type (`about:blank`
+            when the problem has no further semantics beyond the HTTP status,
+            per RFC 9457)
+        instance:
+          type: string
+          minLength: 1
+          description: A URI reference that identifies the specific occurrence (e.g.,
+            trace ID)
+        status:
+          type: integer
+          description: The HTTP status code
+          enum:
+            - 503
+        errors:
+          type: object
+          additionalProperties:
+            type: string
+          description: Optional map of field names to their error messages (for validation
+            errors)
     SearchQuery:
       type: object
       description: What to search for (omit for queryless browse/stats)
@@ -9284,51 +9826,6 @@ components:
                 `include[]=media` is requested.
         pagination:
           $ref: "#/components/schemas/SearchPagination"
-    Error503:
-      type: object
-      description: Service Unavailable error response
-      required:
-        - code
-        - title
-        - detail
-        - status
-      properties:
-        code:
-          type: string
-          description: Specific error code for programmatic handling
-          enum:
-            - SERVICE_OVERLOADED
-        title:
-          type: string
-          minLength: 1
-          description: A short, human-readable summary of the problem
-        detail:
-          type: string
-          minLength: 1
-          description: A human-readable explanation specific to this occurrence
-        type:
-          type: string
-          format: uri
-          minLength: 1
-          description: A URI reference that identifies the problem type (`about:blank`
-            when the problem has no further semantics beyond the HTTP status,
-            per RFC 9457)
-        instance:
-          type: string
-          minLength: 1
-          description: A URI reference that identifies the specific occurrence (e.g.,
-            trace ID)
-        status:
-          type: integer
-          description: The HTTP status code
-          enum:
-            - 503
-        errors:
-          type: object
-          additionalProperties:
-            type: string
-          description: Optional map of field names to their error messages (for validation
-            errors)
     SearchStatsRequest:
       type: object
       description: >
@@ -12205,6 +12702,27 @@ components:
                 work
 
                 started, title released. Absent means follow `enabled`.
+            words:
+              type: boolean
+              description: >
+                Word alerts by email: a watched word first appearing, and the
+                weekly
+
+                digest of new sentences for followed words. Absent means follow
+
+                `enabled`.
+        siteNotifications:
+          type: object
+          description: >
+            The site channel of the notification centre (the bell), per
+            category.
+
+            Absent means on. Email has its own switches in `productEmails`.
+          properties:
+            words:
+              type: boolean
+            requests:
+              type: boolean
         customTheme:
           type:
             - object

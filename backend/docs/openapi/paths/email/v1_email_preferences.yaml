@@ -49,7 +49,7 @@ get:
                   Each category the reader can hold separately. Absent from
                   storage means "follow the master", which is resolved here so
                   the page never has to reason about it.
-                required: [recap, checkins, updates, requests]
+                required: [recap, checkins, updates, requests, words]
                 properties:
                   recap:
                     type: boolean
@@ -59,10 +59,12 @@ get:
                     type: boolean
                   requests:
                     type: boolean
+                  words:
+                    type: boolean
               category:
                 type: string
                 nullable: true
-                enum: [recap, checkins, updates, requests]
+                enum: [recap, checkins, updates, requests, words]
                 description: |
                   Which category the email carrying this token belonged to, when
                   it named one. The page highlights it, because that is the one
@@ -115,6 +117,8 @@ patch:
               type: boolean
             requests:
               type: boolean
+            words:
+              type: boolean
   responses:
     "200":
       description: OK
@@ -128,7 +132,7 @@ patch:
                 type: boolean
               categories:
                 type: object
-                required: [recap, checkins, updates, requests]
+                required: [recap, checkins, updates, requests, words]
                 properties:
                   recap:
                     type: boolean
@@ -137,6 +141,8 @@ patch:
                   updates:
                     type: boolean
                   requests:
+                    type: boolean
+                  words:
                     type: boolean
     "400":
       description: The token could not be read

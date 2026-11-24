@@ -44,7 +44,8 @@
       "language": "语言",
       "logout": "退出登录",
       "requests": "请求",
-      "admin": "管理"
+      "admin": "管理",
+      "notifications": "通知"
     }
   },
   "announcementBanner": {
@@ -521,7 +522,8 @@
       "users": "用户",
       "reports": "问题反馈",
       "announcement": "公告",
-      "dictionaries": "词典"
+      "dictionaries": "词典",
+      "notifications": "通知"
     },
     "dashboard": {
       "roles": {
@@ -1062,7 +1064,9 @@
       "turnedOn": "{name}：已开启",
       "turnedOff": "{name}：已关闭",
       "requestsTitle": "你的请求",
-      "requestsDescription": "你投票的作品的消息：开始制作和正式上线。"
+      "requestsDescription": "你投票的作品的消息：开始制作和正式上线。",
+      "wordsTitle": "单词提醒",
+      "wordsDescription": "新单词和每周汇总。"
     },
     "dictionaries": {
       "title": "自定义词典",
@@ -2058,6 +2062,59 @@
     "tabs": {
       "campaign": "Patreon 赞助者 ({count})",
       "linked": "已绑定账号 ({count})"
+    }
+  },
+  "notifications": {
+    "bell": {
+      "label": "通知",
+      "labelUnread": "通知，{count} 条未读",
+      "unreadDot": "未读",
+      "empty": "暂无新通知。",
+      "loading": "加载中…",
+      "markAllRead": "全部标为已读",
+      "settings": "通知设置",
+      "loadMore": "显示更早的"
+    },
+    "kinds": {
+      "wordAvailable": "{word} 已上线 Nadeshiko",
+      "wordAvailableMany": "你的 {count} 个单词已上线 Nadeshiko",
+      "wordDigest": "{word} 有 {count} 条新句子",
+      "wordDigestMany": "你的 {count} 个单词有新句子",
+      "requestInProgress": "已开始处理 {title}",
+      "requestReleased": "{title} 已上线 Nadeshiko"
+    },
+    "alerts": {
+      "title": "单词提醒",
+      "count": "{active}/{limit}",
+      "empty": "暂无提醒。",
+      "loadError": "无法加载。",
+      "modeFirst": "等待中",
+      "modeNew": "关注中",
+      "statusFulfilled": "已出现",
+      "statusPaused": "已暂停",
+      "followNew": "关注",
+      "pause": "暂停",
+      "resume": "恢复",
+      "remove": "删除",
+      "removeWord": "删除 {word} 的提醒"
+    },
+    "channels": {
+      "title": "通知方式",
+      "site": "网站",
+      "email": "邮件",
+      "emailOff": "邮件已关闭。",
+      "emailOffLink": "设置"
+    },
+    "watch": {
+      "notify": "出现时通知我",
+      "notifyOn": "已设提醒",
+      "follow": "关注",
+      "following": "已关注",
+      "commonWarning": "{count} 条句子：每周会很多。",
+      "limit": "已达提醒上限。",
+      "alreadyThere": "这个单词已有句子。",
+      "busy": "繁忙，请稍后再试。",
+      "error": "无法保存。"
     }
   }
 }

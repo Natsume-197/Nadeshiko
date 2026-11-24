@@ -375,6 +375,114 @@ export async function buildRequestUpdateEmail(
   return { subject, html, campaign };
 }
 
+/** One watched word in a word-alert email (task 52). */
+export interface WordAlertItem {
+  word: string;
+  /** Site path the word links to: its search page. */
+  path: string;
+  /** Digest only: new sentences in the reader's own search since the last notice. */
+  newSentences?: number;
+  /** Titles the new (or first) sentences come from, most first. */
+  titles: string[];
+  /** A few sentences, each with the title it is from. */
+  examples: Array<{ text: string; title: string }>;
+}
+
+/** Shown per word; past this the email links to the search instead. */
+export const WORD_ALERT_EXAMPLES = 3;
+
+/** Shown per email; past this the reader opens their notifications. */
+export const WORD_ALERT_WORDS = 10;
+
+function joinTitles(titles: readonly string[]): string {
+  const named = titles.filter(Boolean).slice(0, 3);
+  if (named.length === 0) return '';
+  const rest = titles.length - named.length;
+  const list = named.length === 1 ? (named[0] ?? '') : `${named.slice(0, -1).join(', ')} and ${named.at(-1)}`;
+  return rest > 0 ? `${list} and ${rest} more` : list;
+}
+
+/** The words as raw generated markup: every value is escaped here, since the template interpolates it unescaped. */
+export function renderWordAlertList(items: readonly WordAlertItem[], campaign: string): string {
+  return items
+    .slice(0, WORD_ALERT_WORDS)
+    .map((item) => {
+      const url = escapeHTML(withCampaignTags(item.path, campaign, 'word'));
+      const titles = joinTitles(item.titles);
+      const meta =
+        item.newSentences !== undefined
+          ? `${item.newSentences} new ${item.newSentences === 1 ? 'sentence' : 'sentences'}${titles ? ` in ${titles}` : ''}`
+          : titles
+            ? `Now in ${titles}`
+            : 'Now on Nadeshiko';
+      const examples = item.examples
+        .slice(0, WORD_ALERT_EXAMPLES)
+        .map(
+          (
+            example,
+          ) => `<p style="font-size: 15px; color: #e8e8e8; margin: 8px 0 0;" lang="ja">${escapeHTML(example.text)}</p>
+                <p style="font-size: 12px; color: #8a8a8a; margin: 2px 0 0;">${escapeHTML(example.title)}</p>`,
+        )
+        .join('\n                ');
+      return `<table role="presentation" class="word" style="width: 100%; border-collapse: separate; background-color: #2c2c2c; border: 1px solid #3c3c3c; border-radius: 10px; margin: 8px 0 12px;">
+            <tr>
+              <td style="padding: 14px 16px;">
+                <a href="${url}" style="font-size: 22px; font-weight: 700; color: #ef5552; text-decoration: none;" lang="ja">${escapeHTML(item.word)}</a>
+                <p style="font-size: 13px; color: #8a8a8a; margin: 2px 0 0;">${escapeHTML(meta)}</p>
+                ${examples}
+              </td>
+            </tr>
+          </table>`;
+    })
+    .join('\n          ');
+}
+
+export interface WordAlertEmailInput {
+  username: string;
+  items: WordAlertItem[];
+  /** The run, e.g. `word-available-2026-11-24`: tags the links and names the send. */
+  campaign: string;
+  unsubscribeUrl: string;
+}
+
+/** The subject of each word-alert kind: one word named, several counted. */
+const WORD_ALERT_SUBJECTS = {
+  'word-available': {
+    one: (word: string) => `${word} is on Nadeshiko`,
+    many: (n: number) => `${n} of your words are on Nadeshiko`,
+  },
+  'word-digest': {
+    one: (word: string) => `New sentences for ${word}`,
+    many: (n: number) => `New sentences for ${n} of your words`,
+  },
+} as const;
+
+/** Both word-alert emails (task 52): a watched word started returning sentences, and the weekly digest of new ones.
+ * One email per reader per sweep, however many words; the kind picks the copy and the subject. */
+export async function buildWordAlertEmail(
+  kind: 'word-available' | 'word-digest',
+  input: WordAlertEmailInput,
+): Promise<{ subject: string; html: string }> {
+  const subjects = WORD_ALERT_SUBJECTS[kind];
+  const subject =
+    input.items.length === 1 ? subjects.one(input.items[0]?.word ?? '') : subjects.many(input.items.length);
+
+  const html = await renderTemplate('word-alert', {
+    ...(await loadCopy(kind)),
+    subject,
+    username: input.username,
+    wordList: renderWordAlertList(input.items, input.campaign),
+    more: input.items.length > WORD_ALERT_WORDS ? `And ${input.items.length - WORD_ALERT_WORDS} more.` : '',
+    ctaUrl: withCampaignTags('/user/notifications', input.campaign, 'cta'),
+    ctaLabel: 'Manage your word alerts',
+    unsubscribeUrl: input.unsubscribeUrl,
+    logoUrl: getLogoUrl(),
+    year: getCurrentYear(),
+  });
+
+  return { subject, html };
+}
+
 export async function renderTemplate(templateName: string, variables: Record<string, string>): Promise<string> {
   const templatePath = path.join(import.meta.dirname, 'templates', `${templateName}.html`);
 

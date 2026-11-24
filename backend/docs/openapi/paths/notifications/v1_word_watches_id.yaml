@@ -1,0 +1,60 @@
+patch:
+  tags: [Notifications]
+  x-internal: true
+  operationId: updateWordWatch
+  summary: Pause, resume or switch a word alert
+  description: |
+    `paused: true` pauses the alert. `paused: false` or a new `mode` makes it
+    active again and starts counting from now, so a long pause does not arrive
+    as one huge digest.
+  security:
+    - SessionCookie: []
+  parameters:
+    - in: path
+      name: watchId
+      required: true
+      schema: { type: string, format: uuid }
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            mode:
+              type: string
+              enum: [FIRST, NEW_SENTENCES]
+            paused:
+              type: boolean
+  responses:
+    "200":
+      description: OK
+      content:
+        application/json:
+          schema: { $ref: "../../components/schemas/WordWatch.yaml" }
+    "400": { $ref: "../../components/responses/BadRequest.yaml" }
+    "401": { $ref: "../../components/responses/Unauthorized.yaml" }
+    "403": { $ref: "../../components/responses/Forbidden.yaml" }
+    "404": { $ref: "../../components/responses/NotFound.yaml" }
+    "429": { $ref: "../../components/responses/TooManyRequests.yaml" }
+    "500": { $ref: "../../components/responses/InternalServerError.yaml" }
+    "503": { $ref: "../../components/responses/ServiceUnavailable.yaml" }
+delete:
+  tags: [Notifications]
+  x-internal: true
+  operationId: deleteWordWatch
+  summary: Remove a word alert
+  security:
+    - SessionCookie: []
+  parameters:
+    - in: path
+      name: watchId
+      required: true
+      schema: { type: string, format: uuid }
+  responses:
+    "204": { description: Removed }
+    "400": { $ref: "../../components/responses/BadRequest.yaml" }
+    "401": { $ref: "../../components/responses/Unauthorized.yaml" }
+    "404": { $ref: "../../components/responses/NotFound.yaml" }
+    "429": { $ref: "../../components/responses/TooManyRequests.yaml" }
+    "500": { $ref: "../../components/responses/InternalServerError.yaml" }

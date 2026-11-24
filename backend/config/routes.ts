@@ -164,6 +164,17 @@ import { createRouter as createEmailRouter } from 'generated/routes/email';
 import { createRouter as createStatsRouter } from 'generated/routes/stats';
 import { createRouter as createRoadmapRouter } from 'generated/routes/roadmap';
 import { createRouter as createRequestsRouter } from 'generated/routes/requests';
+import { createRouter as createNotificationsRouter } from 'generated/routes/notifications';
+import {
+  checkWordWatch,
+  deleteWordWatch,
+  getUnreadNotificationCount,
+  listNotifications,
+  listWordWatches,
+  markNotificationsRead,
+  setWordWatch,
+  updateWordWatch,
+} from '@app/controllers/notificationController';
 
 export const noCache = (_req: Request, res: Response, next: NextFunction) => {
   res.setHeader('Cache-Control', 'no-store');
@@ -365,6 +376,17 @@ const RequestsRoutes = createRequestsRouter({
   boostContentRequest,
 });
 
+const NotificationsRoutes = createNotificationsRouter({
+  listNotifications,
+  getUnreadNotificationCount,
+  markNotificationsRead,
+  listWordWatches,
+  setWordWatch,
+  checkWordWatch,
+  updateWordWatch,
+  deleteWordWatch,
+});
+
 const UserRoutes = createUserRouter({
   getMe,
   createUserApiKey,
@@ -480,6 +502,7 @@ router.use('/', SearchRoutes);
 router.use('/', StatsRoutes);
 router.use('/', RoadmapRoutes);
 router.use('/', RequestsRoutes);
+router.use('/', NotificationsRoutes);
 router.use('/', MediaRoutes);
 router.use('/', ActivityRoutes);
 router.use('/', CollectionsRoutes);
@@ -541,6 +564,7 @@ export {
   StatsRoutes,
   RoadmapRoutes,
   RequestsRoutes,
+  NotificationsRoutes,
   ActivityRoutes,
   CollectionsRoutes,
   AdminRoutes,

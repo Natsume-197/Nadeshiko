@@ -450,7 +450,8 @@ useSchemaOrg(schemaOrgNodes);
                                     :entry="shownWordEntry.entry"
                                     :others="shownWordEntry.others ?? []"
                                     :inflected-from="shownWordEntry.inflected ? searchQuery.trim() : null"
-                                    :kanji-info="wordEntryAnswer?.kanji ?? {}" />
+                                    :kanji-info="wordEntryAnswer?.kanji ?? {}"
+                                    :watch-query="searchQuery.trim()" />
                             </template>
                         </SearchContainer>
                     </div>

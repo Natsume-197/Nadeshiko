@@ -34,8 +34,10 @@ const props = withDefaults(
     inflectedFrom?: string | null;
     /** Each kanji's first reading and meaning, by character (商: ショウ, "make a deal"). */
     kanjiInfo?: Record<string, { reading: string | null; meaning: string | null }>;
+    /** The search, when the reader can follow its new sentences from here (task 52); null hides the button. */
+    watchQuery?: string | null;
   }>(),
-  { others: () => [], inflectedFrom: null, kanjiInfo: () => ({}) },
+  { others: () => [], inflectedFrom: null, kanjiInfo: () => ({}), watchQuery: null },
 );
 
 const { t, locale } = useI18n();
@@ -203,6 +205,7 @@ const kanjiPath = (character: string) => localePath(buildKanjiPath(character));
           <span v-if="reading && furigana.length === 0" class="word-entry__reading" lang="ja">{{ reading }}</span>
 
           <div class="word-entry__badges">
+            <SearchWordWatchButton v-if="watchQuery" :query="watchQuery" mode="NEW_SENTENCES" />
             <span v-if="shown.common" class="word-entry__badge is-common">{{ $t('wordEntry.common') }}</span>
             <span v-if="shown.jlpt" class="word-entry__badge is-jlpt">{{ shown.jlpt }}</span>
             <button

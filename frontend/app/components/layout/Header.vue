@@ -18,6 +18,7 @@ import {
   mdiHandHeartOutline,
   mdiThumbUpOutline,
   mdiShieldCrownOutline,
+  mdiBellOutline,
 } from '@mdi/js';
 
 const store = userStore();
@@ -79,7 +80,10 @@ watch(() => route.fullPath, closeNavSidebar);
                     </NuxtLink>
                 </div>
 
-                <div class="lg:hidden">
+                <div class="lg:hidden flex items-center gap-2">
+                    <ClientOnly>
+                        <NotificationsNotificationBell v-if="isAuth" variant="mobile" />
+                    </ClientOnly>
                     <button type="button"
                         class="relative size-9 flex justify-center items-center rounded-lg bg-white/10 text-white hover:bg-white/20 focus:outline-none focus:bg-white/20"
                         data-testid="hamburger-menu"
@@ -156,6 +160,9 @@ watch(() => route.fullPath, closeNavSidebar);
                         </svg>
                     </a>
                     </div>
+                    <ClientOnly>
+                        <NotificationsNotificationBell v-if="isAuth" />
+                    </ClientOnly>
                     <CommonLanguageSelector />
                     <SearchDropdownContainer data-testid="profile-dropdown" dropdownId="nd-dropdown-profile"
                         dropdownContainerClass="absolute top-full right-0 z-50 min-w-60 mt-1">
@@ -172,6 +179,9 @@ watch(() => route.fullPath, closeNavSidebar);
                                 <ClientOnly>
                                     <NuxtLink v-if="isAuth" :to="localePath('/user/settings')" data-testid="nav-settings" :prefetch="false">
                                         <SearchDropdownItem :text="$t('navbar.buttons.settings')" :icon-path="mdiCogOutline" />
+                                    </NuxtLink>
+                                    <NuxtLink v-if="isAuth" :to="localePath('/user/notifications')" data-testid="nav-notifications" :prefetch="false">
+                                        <SearchDropdownItem :text="$t('navbar.buttons.notifications')" :icon-path="mdiBellOutline" />
                                     </NuxtLink>
                                     <NuxtLink v-if="isAuth" :to="localePath('/user/sync')" data-testid="nav-anki" :prefetch="false">
                                         <SearchDropdownItem :text="$t('accountSettings.tabs.sync')" :icon-path="mdiSync" />

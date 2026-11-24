@@ -53,7 +53,17 @@ export interface UserPreferences {
     updates?: boolean;
     /** News on the content requests they voted for or boosted: work started, title released. */
     requests?: boolean;
+    /** Word alerts (task 52): a watched word first appearing, and the weekly digest of new sentences. */
+    words?: boolean;
   };
+  /** The site channel of the notification centre (task 52), per category. Absent means on; email has its own
+   * switches in `productEmails`. */
+  siteNotifications?: {
+    words?: boolean;
+    requests?: boolean;
+  };
+  /** NSFW display: `HIDE` keeps questionable and explicit sentences out of search, and so out of word alerts. */
+  contentRatingPreferences?: { nsfw?: 'SHOW' | 'BLUR' | 'HIDE' };
   ankiProfiles?: AnkiProfile[];
   /** Store hidden titles by id, but retain the object wrapper for old containers and browser tabs during rolling
    * deploys. */

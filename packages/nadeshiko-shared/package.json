@@ -6,7 +6,8 @@
   "//": "Code that two runtimes have to agree on, byte for byte. Workspace consumers import the TypeScript source directly -- there is no build step -- the way they already do for @brigadasos/nadeshiko-sdk. Nothing here may import a `node:` module or a runtime dependency: the frontend bundles it into the client as well.",
   "exports": {
     "./traffic": "./src/traffic.ts",
-    "./logRedaction": "./src/logRedaction.ts"
+    "./logRedaction": "./src/logRedaction.ts",
+    "./wordQuery": "./src/wordQuery.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",

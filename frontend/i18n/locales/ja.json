@@ -44,7 +44,8 @@
       "language": "言語",
       "logout": "ログアウト",
       "requests": "リクエスト",
-      "admin": "管理"
+      "admin": "管理",
+      "notifications": "通知"
     }
   },
   "announcementBanner": {
@@ -521,7 +522,8 @@
       "users": "ユーザー",
       "reports": "問題の報告",
       "announcement": "お知らせ",
-      "dictionaries": "辞書"
+      "dictionaries": "辞書",
+      "notifications": "通知"
     },
     "dashboard": {
       "roles": {
@@ -1062,7 +1064,9 @@
       "turnedOn": "{name}：オン",
       "turnedOff": "{name}：オフ",
       "requestsTitle": "あなたのリクエスト",
-      "requestsDescription": "投票した作品のお知らせ：作業開始と公開。"
+      "requestsDescription": "投票した作品のお知らせ：作業開始と公開。",
+      "wordsTitle": "単語アラート",
+      "wordsDescription": "新しい単語と週間まとめ。"
     },
     "dictionaries": {
       "title": "カスタム辞書",
@@ -2058,6 +2062,59 @@
     "tabs": {
       "campaign": "Patreon 支援者 ({count})",
       "linked": "連携済みアカウント ({count})"
+    }
+  },
+  "notifications": {
+    "bell": {
+      "label": "通知",
+      "labelUnread": "通知（未読 {count} 件）",
+      "unreadDot": "未読",
+      "empty": "新しい通知はまだありません。",
+      "loading": "読み込み中…",
+      "markAllRead": "すべて既読にする",
+      "settings": "通知設定",
+      "loadMore": "以前の通知を表示"
+    },
+    "kinds": {
+      "wordAvailable": "{word} が Nadeshiko に登場しました",
+      "wordAvailableMany": "{count} 個の単語が Nadeshiko に登場しました",
+      "wordDigest": "{word} の新しい文が {count} 件",
+      "wordDigestMany": "{count} 個の単語に新しい文があります",
+      "requestInProgress": "{title} の作業開始",
+      "requestReleased": "{title} が Nadeshiko に追加されました"
+    },
+    "alerts": {
+      "title": "単語アラート",
+      "count": "{active}/{limit}",
+      "empty": "アラートはありません。",
+      "loadError": "読み込めませんでした。",
+      "modeFirst": "待機中",
+      "modeNew": "フォロー中",
+      "statusFulfilled": "登場済み",
+      "statusPaused": "一時停止中",
+      "followNew": "フォロー",
+      "pause": "一時停止",
+      "resume": "再開",
+      "remove": "削除",
+      "removeWord": "{word} のアラートを削除"
+    },
+    "channels": {
+      "title": "通知方法",
+      "site": "サイト",
+      "email": "メール",
+      "emailOff": "メールはオフです。",
+      "emailOffLink": "設定"
+    },
+    "watch": {
+      "notify": "登場したら知らせる",
+      "notifyOn": "アラート設定済み",
+      "follow": "フォロー",
+      "following": "フォロー中",
+      "commonWarning": "{count} 件：毎週たくさん届きます。",
+      "limit": "アラートの上限です。",
+      "alreadyThere": "この単語にはすでに文があります。",
+      "busy": "混雑中です。後でお試しください。",
+      "error": "保存できませんでした。"
     }
   }
 }

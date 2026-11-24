@@ -741,6 +741,14 @@ export type t_ModerateEpisodeSegmentsRequest = {
   status?: t_SegmentStatus;
 };
 
+export type t_Notification = {
+  createdAt: string;
+  id: string;
+  kind: 'word-available' | 'word-digest' | 'request-update';
+  payload: Record<string, unknown>;
+  read: boolean;
+};
+
 export type t_PatreonConnection = {
   active: boolean;
   entitledAmountCents: number;
@@ -1321,9 +1329,14 @@ export type t_UserPreferences = {
     recap?: boolean;
     requests?: boolean;
     updates?: boolean;
+    words?: boolean;
   };
   searchHistory?: {
     enabled?: boolean;
+  };
+  siteNotifications?: {
+    requests?: boolean;
+    words?: boolean;
   };
   translationLanguages?: ('EN' | 'ES')[];
   translationVisibilityPreferences?: {
@@ -1357,6 +1370,23 @@ export type t_WordMatchMedia = {
   mediaPublicId: string;
 };
 
+export type t_WordWatch = {
+  createdAt: string;
+  id: string;
+  lastNotifiedAt: string | null;
+  matchMode: 'WORD' | 'EXACT' | 'CONTAINS';
+  mode: 'FIRST' | 'NEW_SENTENCES';
+  query: string;
+  status: 'ACTIVE' | 'FULFILLED' | 'PAUSED';
+};
+
+export type t_WordWatchSetResponse = {
+  commonWord: boolean;
+  outcome: 'created' | 'updated';
+  sentenceCount: number;
+  watch: t_WordWatch;
+};
+
 export type t_AddExcludedMediaRequestBody = {
   mediaPublicId: string;
 };
@@ -1371,6 +1401,11 @@ export type t_AddSegmentToCollectionParamSchema = {
 
 export type t_BoostContentRequestParamSchema = {
   requestId: string;
+};
+
+export type t_CheckWordWatchQuerySchema = {
+  matchMode?: 'WORD' | 'EXACT' | 'CONTAINS';
+  query: string;
 };
 
 export type t_CompletePatreonLinkRequestBody = {
@@ -1438,6 +1473,10 @@ export type t_DeleteUserActivityByIdParamSchema = {
 
 export type t_DeleteUserDictionaryParamSchema = {
   id: number;
+};
+
+export type t_DeleteWordWatchParamSchema = {
+  watchId: string;
 };
 
 export type t_ForgetFamiliarMediaParamSchema = {
@@ -1592,6 +1631,11 @@ export type t_ListMyContentRequestsQuerySchema = {
   take?: number;
 };
 
+export type t_ListNotificationsQuerySchema = {
+  before?: string;
+  take?: number;
+};
+
 export type t_ListSegmentRevisionsParamSchema = {
   segmentPublicId: string;
 };
@@ -1611,6 +1655,10 @@ export type t_ListUserActivityQuerySchema = {
   cursor?: string;
   date?: string;
   take?: number;
+};
+
+export type t_MarkNotificationsReadRequestBody = {
+  ids?: string[];
 };
 
 export type t_MergeAdminContentRequestParamSchema = {
@@ -1654,6 +1702,12 @@ export type t_RestoreSegmentRevisionParamSchema = {
 
 export type t_SearchCollectionSegmentsParamSchema = {
   collectionPublicId: string;
+};
+
+export type t_SetWordWatchRequestBody = {
+  matchMode?: 'WORD' | 'EXACT' | 'CONTAINS';
+  mode: 'FIRST' | 'NEW_SENTENCES';
+  query: string;
 };
 
 export type t_UnlinkAdminPatreonConnectionParamSchema = {
@@ -1725,6 +1779,7 @@ export type t_UpdateEmailPreferencesByTokenRequestBody = {
   requests?: boolean;
   token: string;
   updates?: boolean;
+  words?: boolean;
 };
 
 export type t_UpdateEpisodeParamSchema = {
@@ -1745,6 +1800,15 @@ export type t_UpdateUserDictionariesRequestBody = {
     enabled: boolean;
     id: string;
   }[];
+};
+
+export type t_UpdateWordWatchParamSchema = {
+  watchId: string;
+};
+
+export type t_UpdateWordWatchRequestBody = {
+  mode?: 'FIRST' | 'NEW_SENTENCES';
+  paused?: boolean;
 };
 
 export type t_VoteContentRequestParamSchema = {

@@ -44,7 +44,8 @@
       "language": "Language",
       "logout": "Sign out",
       "requests": "Requests",
-      "admin": "Admin"
+      "admin": "Admin",
+      "notifications": "Notifications"
     }
   },
   "announcementBanner": {
@@ -521,7 +522,8 @@
       "users": "Users",
       "reports": "Reports",
       "announcement": "Announcement",
-      "dictionaries": "Dictionaries"
+      "dictionaries": "Dictionaries",
+      "notifications": "Notifications"
     },
     "dashboard": {
       "roles": {
@@ -1062,7 +1064,9 @@
       "turnedOn": "{name}: on",
       "turnedOff": "{name}: off",
       "requestsTitle": "Your requests",
-      "requestsDescription": "News on the titles you voted for: work started, title released."
+      "requestsDescription": "News on the titles you voted for: work started, title released.",
+      "wordsTitle": "Word alerts",
+      "wordsDescription": "New words and weekly digests."
     },
     "dictionaries": {
       "title": "Custom Dictionaries",
@@ -2058,6 +2062,59 @@
     "tabs": {
       "campaign": "Patreon campaign ({count})",
       "linked": "Linked accounts ({count})"
+    }
+  },
+  "notifications": {
+    "bell": {
+      "label": "Notifications",
+      "labelUnread": "Notifications, {count} unread",
+      "unreadDot": "Unread",
+      "empty": "Nothing new yet.",
+      "loading": "Loading…",
+      "markAllRead": "Mark all as read",
+      "settings": "Notification settings",
+      "loadMore": "Show older"
+    },
+    "kinds": {
+      "wordAvailable": "{word} is on Nadeshiko",
+      "wordAvailableMany": "{count} of your words are on Nadeshiko",
+      "wordDigest": "{count} new sentences for {word}",
+      "wordDigestMany": "New sentences for {count} of your words",
+      "requestInProgress": "Work started on {title}",
+      "requestReleased": "{title} is on Nadeshiko"
+    },
+    "alerts": {
+      "title": "Word alerts",
+      "count": "{active}/{limit}",
+      "empty": "No alerts yet.",
+      "loadError": "Couldn’t load your alerts.",
+      "modeFirst": "Waiting",
+      "modeNew": "Following",
+      "statusFulfilled": "Appeared",
+      "statusPaused": "Paused",
+      "followNew": "Follow",
+      "pause": "Pause",
+      "resume": "Resume",
+      "remove": "Remove",
+      "removeWord": "Remove the alert on {word}"
+    },
+    "channels": {
+      "title": "Channels",
+      "site": "Site",
+      "email": "Email",
+      "emailOff": "Email is off.",
+      "emailOffLink": "Settings"
+    },
+    "watch": {
+      "notify": "Notify me when it appears",
+      "notifyOn": "Alert set",
+      "follow": "Follow",
+      "following": "Following",
+      "commonWarning": "{count} sentences: expect a lot.",
+      "limit": "Alert limit reached.",
+      "alreadyThere": "This word already has sentences.",
+      "busy": "Busy. Try again soon.",
+      "error": "Couldn’t save."
     }
   }
 }

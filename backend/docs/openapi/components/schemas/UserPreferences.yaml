@@ -247,6 +247,22 @@ properties:
         description: |
           News on the content requests the reader voted for or boosted: work
           started, title released. Absent means follow `enabled`.
+      words:
+        type: boolean
+        description: |
+          Word alerts by email: a watched word first appearing, and the weekly
+          digest of new sentences for followed words. Absent means follow
+          `enabled`.
+  siteNotifications:
+    type: object
+    description: |
+      The site channel of the notification centre (the bell), per category.
+      Absent means on. Email has its own switches in `productEmails`.
+    properties:
+      words:
+        type: boolean
+      requests:
+        type: boolean
   customTheme:
     type: [object, "null"]
     description: |

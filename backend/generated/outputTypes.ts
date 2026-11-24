@@ -48,6 +48,7 @@ export type IncludeExpansionOutput = z.output<typeof schemas.s_IncludeExpansion>
 export type MediaFilterItemOutput = z.output<typeof schemas.s_MediaFilterItem>;
 export type MediaGlobalStatsOutput = z.output<typeof schemas.s_MediaGlobalStats>;
 export type MediaSearchStatsOutput = z.output<typeof schemas.s_MediaSearchStats>;
+export type NotificationOutput = z.output<typeof schemas.s_Notification>;
 export type PatreonConnectionOutput = z.output<typeof schemas.s_PatreonConnection>;
 export type ReportReasonOutput = z.output<typeof schemas.s_ReportReason>;
 export type ReportSourceOutput = z.output<typeof schemas.s_ReportSource>;
@@ -76,6 +77,7 @@ export type UserDictionaryOutput = z.output<typeof schemas.s_UserDictionary>;
 export type UserMeOutput = z.output<typeof schemas.s_UserMe>;
 export type WordCoverageTierOutput = z.output<typeof schemas.s_WordCoverageTier>;
 export type WordMatchMediaOutput = z.output<typeof schemas.s_WordMatchMedia>;
+export type WordWatchOutput = z.output<typeof schemas.s_WordWatch>;
 export type AdminContentRequestOutput = z.output<typeof schemas.s_AdminContentRequest>;
 export type AdminPatreonOverviewOutput = z.output<typeof schemas.s_AdminPatreonOverview>;
 export type AdminReportGroupItemOutput = z.output<typeof schemas.s_AdminReportGroupItem>;
@@ -108,6 +110,7 @@ export type UserDictionaryUploadResultOutput = z.output<typeof schemas.s_UserDic
 export type UserPreferencesOutput = z.output<typeof schemas.s_UserPreferences>;
 export type UserReportTargetOutput = z.output<typeof schemas.s_UserReportTarget>;
 export type WordMatchOutput = z.output<typeof schemas.s_WordMatch>;
+export type WordWatchSetResponseOutput = z.output<typeof schemas.s_WordWatchSetResponse>;
 export type AdminReportGroupOutput = z.output<typeof schemas.s_AdminReportGroup>;
 export type CollectionListResponseOutput = z.output<typeof schemas.s_CollectionListResponse>;
 export type CreateReportRequestOutput = z.output<typeof schemas.s_CreateReportRequest>;
@@ -129,6 +132,9 @@ export type UserExportCollectionOutput = z.output<typeof schemas.s_UserExportCol
 export type AdminReportListResponseOutput = z.output<typeof schemas.s_AdminReportListResponse>;
 export type UserExportResponseOutput = z.output<typeof schemas.s_UserExportResponse>;
 export type CreateContentRequestRequestBodyOutput = z.output<typeof schemas.s_CreateContentRequestRequestBody>;
+export type MarkNotificationsReadRequestBodyOutput = z.output<typeof schemas.s_MarkNotificationsReadRequestBody>;
+export type SetWordWatchRequestBodyOutput = z.output<typeof schemas.s_SetWordWatchRequestBody>;
+export type UpdateWordWatchRequestBodyOutput = z.output<typeof schemas.s_UpdateWordWatchRequestBody>;
 export type CreateUserApiKeyRequestBodyOutput = z.output<typeof schemas.s_CreateUserApiKeyRequestBody>;
 export type CompletePatreonLinkRequestBodyOutput = z.output<typeof schemas.s_CompletePatreonLinkRequestBody>;
 export type UpdateUserDictionariesRequestBodyOutput = z.output<typeof schemas.s_UpdateUserDictionariesRequestBody>;
@@ -237,6 +243,18 @@ export const listSegmentsQuerySchema = z.object({
     cursor: z.string().optional(),
   });
 export type ListSegmentsQueryOutput = z.output<typeof listSegmentsQuerySchema>;
+
+export const listNotificationsQuerySchema = z.object({
+    take: z.coerce.number().min(1).max(50).optional().default(20),
+    before: z.iso.datetime({ offset: true }).optional(),
+  });
+export type ListNotificationsQueryOutput = z.output<typeof listNotificationsQuerySchema>;
+
+export const checkWordWatchQuerySchema = z.object({
+    query: z.string().min(1).max(64),
+    matchMode: z.enum(['WORD', 'EXACT', 'CONTAINS']).optional().default('WORD'),
+  });
+export type CheckWordWatchQueryOutput = z.output<typeof checkWordWatchQuerySchema>;
 
 export const listContentRequestsQuerySchema = z.object({
     status: z.enum(['ACTIVE', 'IN_PROGRESS', 'RELEASED', 'DECLINED']).optional().default('ACTIVE'),

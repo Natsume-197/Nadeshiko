@@ -1,0 +1,69 @@
+get:
+  tags: [Notifications]
+  x-internal: true
+  operationId: listWordWatches
+  summary: The signed-in reader's word alerts
+  security:
+    - SessionCookie: []
+  responses:
+    "200":
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [items, activeCount, limit]
+            properties:
+              items:
+                type: array
+                items: { $ref: "../../components/schemas/WordWatch.yaml" }
+              activeCount: { type: integer }
+              limit: { type: integer, description: Active alerts this reader may have (more for patrons). }
+    "401": { $ref: "../../components/responses/Unauthorized.yaml" }
+    "429": { $ref: "../../components/responses/TooManyRequests.yaml" }
+    "500": { $ref: "../../components/responses/InternalServerError.yaml" }
+post:
+  tags: [Notifications]
+  x-internal: true
+  operationId: setWordWatch
+  summary: Watch a word, or switch the alert you have on it
+  description: |
+    Creates the reader's alert on a word, or switches their existing alert on the
+    same word and match mode to the asked mode. The word must be one Japanese word
+    of up to 16 characters. `FIRST` is refused for a word that already has
+    sentences in the reader's search, and `NEW_SENTENCES` for a `CONTAINS` search.
+  security:
+    - SessionCookie: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required: [query, mode]
+          properties:
+            query: { type: string, minLength: 1, maxLength: 64 }
+            matchMode:
+              type: string
+              enum: [WORD, EXACT, CONTAINS]
+              default: WORD
+            mode:
+              type: string
+              enum: [FIRST, NEW_SENTENCES]
+  responses:
+    "200":
+      description: An existing alert was switched
+      content:
+        application/json:
+          schema: { $ref: "../../components/schemas/WordWatchSetResponse.yaml" }
+    "201":
+      description: Created
+      content:
+        application/json:
+          schema: { $ref: "../../components/schemas/WordWatchSetResponse.yaml" }
+    "400": { $ref: "../../components/responses/BadRequest.yaml" }
+    "401": { $ref: "../../components/responses/Unauthorized.yaml" }
+    "403": { $ref: "../../components/responses/Forbidden.yaml" }
+    "429": { $ref: "../../components/responses/TooManyRequests.yaml" }
+    "500": { $ref: "../../components/responses/InternalServerError.yaml" }
+    "503": { $ref: "../../components/responses/ServiceUnavailable.yaml" }

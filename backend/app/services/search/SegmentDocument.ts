@@ -16,7 +16,7 @@ import type {
 import { getUnhandledReports } from '@app/services/reports/reportedContent';
 import { SegmentQuery, type MatchMode, type QueryParserMode } from './segmentDocument/SegmentQuery';
 import { SegmentResponse } from './segmentDocument/SegmentResponse';
-import { isQuerySyntaxError, withSafeQueryFallback } from './segmentDocument/errors';
+import { isQuerySyntaxError, isSuccessfulMsearchItem, withSafeQueryFallback } from './segmentDocument/errors';
 import {
   buildRound,
   decodeVarietyCursor,
@@ -96,6 +96,19 @@ function hidesRecurringRepeats(filters: ResolvedFilters): boolean {
     filters.status[0] === SegmentStatus.ACTIVE &&
     !filters.media?.include?.some((item) => item.episodes && item.episodes.length > 0)
   );
+}
+
+/**
+ * What the reader view leaves out beyond the request's filters: reported sentences and recurring repeats. Shared by
+ * the search and the word-alert counts. Kept apart from the hidden-media `must_not`, whose length other code reads.
+ */
+async function readerViewExclusions(filters: ResolvedFilters): Promise<estypes.QueryDslQueryContainer[]> {
+  // Reports change the query; the result is cached, so normal requests pay only a lookup.
+  const reports = await getUnhandledReports();
+  return [
+    ...(reports.segmentIds.size > 0 ? [buildIdsFilter([...reports.segmentIds])] : []),
+    ...(hidesRecurringRepeats(filters) ? [HIDE_RECURRING_REPEATS] : []),
+  ];
 }
 
 export class SegmentDocument {
@@ -196,20 +209,13 @@ export class SegmentDocument {
       highlightFields.textEs = { matched_fields: ['textEs', 'textEs.exact'], type: 'fvh' };
     }
 
-    // Load reports before building the search because they change the query; the result is cached, so normal requests
-    // pay only a lookup.
+    // Reports exclude sentences (in `readerViewExclusions`) and demote titles (below); both read the same cached list.
     const reports = await getUnhandledReports();
-
-    // Keep report exclusions separate from hidden-media `must_not`; other code uses that array length to detect
-    // hidden-media filtering.
-    const excludedByReport = reports.segmentIds.size > 0 ? [buildIdsFilter([...reports.segmentIds])] : [];
-
-    const recurringRepeats = hidesRecurringRepeats(filters) ? [HIDE_RECURRING_REPEATS] : [];
     const coreQuery: estypes.QueryDslQueryContainer = {
       bool: {
         filter: [...filter, ...extraFilters],
         must,
-        must_not: [...must_not, ...excludedByReport, ...recurringRepeats],
+        must_not: [...must_not, ...(await readerViewExclusions(filters))],
       },
     };
     // Plain order: reports demote titles and the reader's stars give a small boost.
@@ -401,6 +407,75 @@ export class SegmentDocument {
       },
     );
   }
+
+  /**
+   * The bool query a word search runs, without scoring or sorting: the request's filters plus the reader-view
+   * exclusions `executeSearch` applies. Word alerts (task 52) count and sample with it, so "the word appeared" means
+   * "the reader's search now returns something".
+   */
+  static async buildWordMatchQuery(
+    word: string,
+    matchMode: MatchMode,
+    filters: ResolvedFilters,
+    parserMode: QueryParserMode = 'strict',
+    extraFilters: estypes.QueryDslQueryContainer[] = [],
+  ): Promise<estypes.QueryDslQueryContainer> {
+    return wordMatchQuery(word, matchMode, filters, parserMode, extraFilters, await readerViewExclusions(filters));
+  }
+
+  /**
+   * How many sentences a word search returns, for several words under one filter set, in one `_msearch`. A word the
+   * strict parser cannot read is counted again with the safe one; null where neither could count it.
+   */
+  static async countWordMatches(
+    words: ReadonlyArray<{ query: string; matchMode: MatchMode }>,
+    filters: ResolvedFilters,
+    parserMode: QueryParserMode = 'strict',
+  ): Promise<Array<number | null>> {
+    if (words.length === 0) return [];
+    // Built once for the batch: the reported-id list is the same for every word.
+    const exclusions = await readerViewExclusions(filters);
+    const response = await client.msearch({
+      index: INDEX_NAME,
+      searches: words.flatMap((word) => [
+        {},
+        {
+          size: 0,
+          track_total_hits: true,
+          query: wordMatchQuery(word.query, word.matchMode, filters, parserMode, [], exclusions),
+        },
+      ]),
+    });
+    const counts = response.responses.map((item) => {
+      if (!isSuccessfulMsearchItem(item)) return null;
+      const total = item.hits?.total;
+      return typeof total === 'number' ? total : (total?.value ?? 0);
+    });
+    if (parserMode === 'safe' || counts.every((count) => count !== null)) return counts;
+
+    const retry = words.filter((_, i) => counts[i] === null);
+    const retried = await SegmentDocument.countWordMatches(retry, filters, 'safe');
+    let next = 0;
+    return counts.map((count) => (count === null ? (retried[next++] ?? null) : count));
+  }
+}
+
+function wordMatchQuery(
+  word: string,
+  matchMode: MatchMode,
+  filters: ResolvedFilters,
+  parserMode: QueryParserMode,
+  extraFilters: estypes.QueryDslQueryContainer[],
+  exclusions: estypes.QueryDslQueryContainer[],
+): estypes.QueryDslQueryContainer {
+  const { filter, must_not } = SegmentQuery.buildCommonFilters(filters);
+  return {
+    bool: {
+      must: [SegmentQuery.buildTermQuery(word, matchMode, parserMode, excludedSearchLanguages(filters.languages))],
+      filter: [...filter, ...extraFilters],
+      must_not: [...must_not, ...exclusions],
+    },
+  };
 }
 
 const VARIETY_ROUNDS_TTL_MS = 10 * 60 * 1000;
