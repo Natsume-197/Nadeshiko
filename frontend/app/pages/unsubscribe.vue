@@ -34,7 +34,7 @@ const announce = (on: boolean, name: string) => {
 
 const failWith = (caught: unknown) => {
   state.value = 'failed';
-  // Invalid tokens point to settings, where the same switches remain available.
+  // Invalid tokens point to notification settings, where the same switches remain available.
   const status =
     (caught as { status?: number; response?: { status?: number } })?.status ??
     (caught as { response?: { status?: number } })?.response?.status;
@@ -111,7 +111,7 @@ const toggleAll = async () => {
         <div class="flex flex-col items-center text-center">
           <img data-testid="error-image" class="mb-6" src="/assets/no-results.gif" :alt="t('errorPage.imageAlt')">
           <h1 class="text-2xl font-semibold text-white md:text-3xl">{{ message }}</h1>
-          <NuxtLink :to="localePath('/user/settings')" class="mt-4 text-lg text-brand transition-colors hover:text-brand-hover">
+          <NuxtLink :to="localePath('/user/notifications')" class="mt-4 text-lg text-brand transition-colors hover:text-brand-hover">
             {{ t('unsubscribe.goToSettings') }}
           </NuxtLink>
         </div>

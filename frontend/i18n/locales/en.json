@@ -1051,7 +1051,6 @@
       }
     },
     "emails": {
-      "title": "Emails",
       "allTitle": "All emails about Nadeshiko",
       "recapTitle": "Monthly recap",
       "recapDescription": "A monthly summary of what you have studied with Nadeshiko.",
@@ -2101,9 +2100,7 @@
     "channels": {
       "title": "Channels",
       "site": "Site",
-      "email": "Email",
-      "emailOff": "Email is off.",
-      "emailOffLink": "Settings"
+      "email": "Email"
     },
     "watch": {
       "notify": "Notify me when it appears",

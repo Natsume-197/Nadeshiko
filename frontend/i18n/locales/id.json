@@ -1051,7 +1051,6 @@
       }
     },
     "emails": {
-      "title": "Email",
       "allTitle": "Semua email tentang Nadeshiko",
       "recapTitle": "Ringkasan bulanan",
       "recapDescription": "Ringkasan bulanan tentang hal yang Anda pelajari dengan Nadeshiko.",
@@ -2101,9 +2100,7 @@
     "channels": {
       "title": "Saluran",
       "site": "Situs",
-      "email": "Email",
-      "emailOff": "Email dimatikan.",
-      "emailOffLink": "Pengaturan"
+      "email": "Email"
     },
     "watch": {
       "notify": "Beri tahu saya saat muncul",

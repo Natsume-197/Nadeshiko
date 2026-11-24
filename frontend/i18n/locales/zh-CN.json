@@ -1051,7 +1051,6 @@
       }
     },
     "emails": {
-      "title": "邮件通知",
       "allTitle": "所有 Nadeshiko 相关邮件",
       "recapTitle": "每月学习回顾",
       "recapDescription": "每月汇总你在 Nadeshiko 上的学习情况。",
@@ -2101,9 +2100,7 @@
     "channels": {
       "title": "通知方式",
       "site": "网站",
-      "email": "邮件",
-      "emailOff": "邮件已关闭。",
-      "emailOffLink": "设置"
+      "email": "邮件"
     },
     "watch": {
       "notify": "出现时通知我",

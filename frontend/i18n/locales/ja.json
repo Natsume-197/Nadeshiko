@@ -1051,7 +1051,6 @@
       }
     },
     "emails": {
-      "title": "メール配信設定",
       "allTitle": "Nadeshikoからのお知らせメール",
       "recapTitle": "毎月の学習の振り返り",
       "recapDescription": "Nadeshikoでの1か月の学習内容をまとめてお届けします。",
@@ -2101,9 +2100,7 @@
     "channels": {
       "title": "通知方法",
       "site": "サイト",
-      "email": "メール",
-      "emailOff": "メールはオフです。",
-      "emailOffLink": "設定"
+      "email": "メール"
     },
     "watch": {
       "notify": "登場したら知らせる",

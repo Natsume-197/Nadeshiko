@@ -1,11 +1,9 @@
 // @vitest-environment happy-dom
 import { mount, flushPromises } from '@vue/test-utils';
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
-import { defineComponent, nextTick, reactive, ref } from 'vue';
+import { defineComponent, reactive, ref } from 'vue';
 
-/** Merge email-category writes over stored preferences; pessimistic switches must not claim a failed
- * unsubscribe succeeded.
- */
+/** Account actions and simple preferences save through to the store and report to analytics. */
 const handleApiError = vi.fn();
 vi.mock('~/utils/apiError', () => ({
   handleApiError: (...a: unknown[]) => handleApiError(...a),
@@ -99,9 +97,6 @@ async function render(prefs: Record<string, unknown> = {}) {
   return wrapper;
 }
 
-/** The switch for one email category. */
-const categoryToggle = (w: ReturnType<typeof mount>, name: string) => w.get(`[data-testid="email-category-${name}"]`);
-
 beforeEach(() => {
   vi.clearAllMocks();
   updateUserPreferences.mockResolvedValue({});
@@ -119,106 +114,6 @@ describe('stable account actions', () => {
     expect(wrapper.get('[data-testid="account-sign-out"]').text()).toBe('accountSettings.account.logout');
     expect(wrapper.get('[data-testid="account-export"]').text()).toBe('accountSettings.account.exportData');
     expect(wrapper.get('[data-testid="account-delete"]').text()).toBe('accountSettings.account.deleteAccountButton');
-  });
-});
-
-describe('the per-category email switches', () => {
-  test('start ON unless the account explicitly turned one off', async () => {
-    // A missing key is a reader who never touched it, and defaulting those to
-    // off would silently unsubscribe everyone with no stored preference.
-    const wrapper = await render({ productEmails: { recap: false } });
-
-    expect(categoryToggle(wrapper, 'recap').attributes('aria-pressed')).toBe('false');
-    expect(categoryToggle(wrapper, 'checkins').attributes('aria-pressed')).toBe('true');
-  });
-
-  test('sends only the key that changed, MERGED over what is stored', async () => {
-    // Posting an object built from local state clears anything set on another
-    // device since this page loaded.
-    const wrapper = await render({ productEmails: { enabled: true, recap: false } });
-
-    await categoryToggle(wrapper, 'checkins').trigger('click');
-    await flushPromises();
-
-    expect(updateUserPreferences).toHaveBeenCalledWith({
-      productEmails: { enabled: true, recap: false, checkins: false },
-    });
-  });
-
-  test('the switch moves only after the server agrees', async () => {
-    const wrapper = await render({ productEmails: {} });
-    updateUserPreferences.mockRejectedValue(new Error('down'));
-
-    await categoryToggle(wrapper, 'recap').trigger('click');
-    await flushPromises();
-
-    expect(categoryToggle(wrapper, 'recap').attributes('aria-pressed')).toBe('true');
-    expect(handleApiError).toHaveBeenCalledWith(
-      'account:product-emails-category-failed',
-      expect.anything(),
-      expect.anything(),
-    );
-  });
-
-  test('names which switch moved, because four of them share one card', async () => {
-    const wrapper = await render({ productEmails: {} });
-
-    await categoryToggle(wrapper, 'recap').trigger('click');
-    await flushPromises();
-
-    expect(toastSuccess).toHaveBeenCalledWith('accountSettings.emails.turnedOff');
-  });
-
-  test('ignores a second switch while one is still saving', async () => {
-    // They write the same object; two in flight would race and the loser's
-    // change would be silently dropped.
-    let release!: () => void;
-    updateUserPreferences.mockReturnValue(new Promise<void>((r) => (release = () => r())));
-    const wrapper = await render({ productEmails: {} });
-
-    await categoryToggle(wrapper, 'recap').trigger('click');
-    await nextTick();
-
-    // Guarded on the BUTTONS as well as in the handler, and it is the buttons a
-    // reader meets: every switch on the card goes dead until the write lands.
-    expect(categoryToggle(wrapper, 'checkins').attributes('disabled')).toBeDefined();
-    await categoryToggle(wrapper, 'checkins').trigger('click');
-    release();
-    await flushPromises();
-
-    expect(updateUserPreferences).toHaveBeenCalledTimes(1);
-  });
-});
-
-describe('the master email switch', () => {
-  test('keeps the per-category settings when it is flipped', async () => {
-    const wrapper = await render({ productEmails: { recap: false } });
-
-    await wrapper.get('[data-testid="product-emails-toggle"]').trigger('click');
-    await flushPromises();
-
-    expect(updateUserPreferences).toHaveBeenCalledWith({
-      productEmails: { recap: false, enabled: false },
-    });
-  });
-
-  test('writes through to the store, so leaving and returning shows the new state', async () => {
-    const wrapper = await render({ productEmails: {} });
-
-    await wrapper.get('[data-testid="product-emails-toggle"]').trigger('click');
-    await flushPromises();
-
-    expect((store.preferences.productEmails as Record<string, unknown>).enabled).toBe(false);
-  });
-
-  test('stays where it was if the write failed', async () => {
-    const wrapper = await render({ productEmails: {} });
-    updateUserPreferences.mockRejectedValue(new Error('down'));
-
-    await wrapper.get('[data-testid="product-emails-toggle"]').trigger('click');
-    await flushPromises();
-
-    expect(wrapper.get('[data-testid="product-emails-toggle"]').attributes('aria-pressed')).toBe('true');
   });
 });
 
