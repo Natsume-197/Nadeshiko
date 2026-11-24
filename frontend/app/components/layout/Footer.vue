@@ -2,9 +2,6 @@
 import { DISCORD_INVITE_URL } from '#shared/utils/socialLinks';
 const config = useRuntimeConfig();
 const localePath = useLocalePath();
-// A second door on desktop, where the floating button is the first: people look
-// for "contact us" in a footer. On a phone the navigation drawer carries it.
-const { openFeedback } = useFeedbackWidget();
 </script>
 
 <template>
@@ -25,20 +22,6 @@ const { openFeedback } = useFeedbackWidget();
         </p>
 
         <div class="flex flex-wrap justify-center -mx-4">
-          <NuxtLink
-            :to="localePath('/')"
-            class="mx-4 text-sm text-gray-600 transition-colors duration-300 hover:text-red-500 dark:text-gray-300 dark:hover:text-red-400"
-          >
-            {{ $t('navbar.buttons.home') }}
-          </NuxtLink>
-
-          <NuxtLink
-            :to="localePath('/about')"
-            class="mx-4 text-sm text-gray-600 transition-colors duration-300 hover:text-red-500 dark:text-gray-300 dark:hover:text-red-400"
-          >
-            {{ $t('navbar.buttons.about') }}
-          </NuxtLink>
-
           <NuxtLink
             :to="localePath('/privacy')"
             class="mx-4 text-sm text-gray-600 transition-colors duration-300 hover:text-red-500 dark:text-gray-300 dark:hover:text-red-400"
@@ -67,31 +50,6 @@ const { openFeedback } = useFeedbackWidget();
           >
             {{ $t('navbar.buttons.sources') }}
           </NuxtLink>
-
-          <NuxtLink
-            :to="localePath('/supporters')"
-            data-testid="footer-supporters"
-            class="mx-4 text-sm text-gray-600 transition-colors duration-300 hover:text-red-500 dark:text-gray-300 dark:hover:text-red-400"
-          >
-            {{ $t('navbar.buttons.supporters') }}
-          </NuxtLink>
-
-          <NuxtLink
-            :to="localePath('/requests')"
-            data-testid="footer-requests"
-            class="mx-4 text-sm text-gray-600 transition-colors duration-300 hover:text-red-500 dark:text-gray-300 dark:hover:text-red-400"
-          >
-            {{ $t('navbar.buttons.requests') }}
-          </NuxtLink>
-
-          <button
-            type="button"
-            data-testid="feedback-footer-link"
-            class="mx-4 text-sm text-gray-600 transition-colors duration-300 hover:text-red-500 dark:text-gray-300 dark:hover:text-red-400"
-            @click="openFeedback()"
-          >
-            {{ $t('feedback.open') }}
-          </button>
         </div>
 
         <div class="flex -mx-2">
