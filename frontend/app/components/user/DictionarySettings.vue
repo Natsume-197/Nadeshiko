@@ -67,6 +67,16 @@ const indexedRemaining = computed(() =>
 
 const hasCustomDictionaries = computed(() => (data.value?.dictionaries.length ?? 0) > 0);
 
+const quotaPercent = computed(() => {
+  if (!data.value || data.value.quota.max <= 0) return 0;
+  return Math.min(100, Math.round((data.value.quota.used / data.value.quota.max) * 100));
+});
+
+const indexedPercent = computed(() => {
+  if (!data.value || data.value.quota.maxIndexedBytes <= 0) return 0;
+  return Math.min(100, Math.round((data.value.quota.indexedBytesUsed / data.value.quota.maxIndexedBytes) * 100));
+});
+
 // At the limit, a failed dictionary can still be uploaded again (the server allows it), so the picker stays open.
 const atQuotaLimit = computed(() => {
   if (!data.value) return false;
@@ -406,24 +416,7 @@ onBeforeUnmount(stopPolling);
     <div class="mb-2.5 flex flex-wrap items-end justify-between gap-3 px-1">
       <div class="min-w-0">
         <h2 class="nd-settings-section-label !mb-0 !px-0">{{ t('accountSettings.dictionaries.title') }}</h2>
-        <p class="mt-0.5 text-xs text-ink-muted">
-          <span>{{ t('accountSettings.dictionaries.stackHint') }}</span>
-          <template v-if="data">
-            <span aria-hidden="true" class="mx-1.5 text-ink-faint">&middot;</span>
-            <span class="font-medium text-ink">
-              {{ t('accountSettings.dictionaries.quotaUsed', { used: data.quota.used, max: data.quota.max }) }}
-            </span>
-            <span aria-hidden="true" class="mx-1.5 text-ink-faint">&middot;</span>
-            <span data-testid="dictionary-indexed-space">
-              {{
-                t('accountSettings.dictionaries.indexedSpace', {
-                  used: formatSize(data.quota.indexedBytesUsed),
-                  max: formatSize(data.quota.maxIndexedBytes),
-                })
-              }}
-            </span>
-          </template>
-        </p>
+        <p class="mt-0.5 text-xs text-ink-muted">{{ t('accountSettings.dictionaries.stackHint') }}</p>
       </div>
 
       <button
@@ -676,6 +669,49 @@ onBeforeUnmount(stopPolling);
         <span>{{ t('accountSettings.dictionaries.dropPrompt') }}</span>
       </button>
 
+      <!-- Quota & limits footer strip -->
+      <div
+        v-if="data"
+        class="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-t border-line-subtle bg-lift px-5 py-3 text-xs"
+      >
+        <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
+          <div class="flex items-center gap-2">
+            <div class="h-1.5 w-14 overflow-hidden rounded-full bg-lift-strong" aria-hidden="true">
+              <div
+                class="h-full rounded-full transition-all duration-300"
+                :class="atQuotaLimit ? 'bg-amber-400' : 'bg-brand-solid'"
+                :style="{ width: `${quotaPercent}%` }"
+              />
+            </div>
+            <span class="font-medium text-ink">
+              {{ t('accountSettings.dictionaries.quotaUsed', { used: data.quota.used, max: data.quota.max }) }}
+            </span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <div class="h-1.5 w-14 overflow-hidden rounded-full bg-lift-strong" aria-hidden="true">
+              <div
+                class="h-full rounded-full transition-all duration-300"
+                :class="indexedPercent >= 90 ? 'bg-amber-400' : 'bg-brand-solid'"
+                :style="{ width: `${indexedPercent}%` }"
+              />
+            </div>
+            <span class="text-ink-muted" data-testid="dictionary-indexed-space">
+              {{
+                t('accountSettings.dictionaries.indexedSpace', {
+                  used: formatSize(data.quota.indexedBytesUsed),
+                  max: formatSize(data.quota.maxIndexedBytes),
+                })
+              }}
+            </span>
+          </div>
+        </div>
+
+        <span class="text-ink-muted">
+          {{ t('accountSettings.dictionaries.maxZipSize', { maxMb: Math.round(data.quota.maxZipBytes / (1024 * 1024)) }) }}
+        </span>
+      </div>
+
       <!-- Drag-over overlay when dragging a .zip file onto the card -->
       <div
         v-if="draggingFile"
@@ -691,12 +727,7 @@ onBeforeUnmount(stopPolling);
     </p>
 
     <div class="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-1 text-xs text-ink-faint">
-      <p>
-        {{ t('accountSettings.dictionaries.supportedFormats') }}
-        <template v-if="data">
-          &middot; {{ t('accountSettings.dictionaries.maxZipSize', { maxMb: Math.round(data.quota.maxZipBytes / (1024 * 1024)) }) }}
-        </template>
-      </p>
+      <p>{{ t('accountSettings.dictionaries.supportedFormats') }}</p>
       <p v-if="data && !data.quota.isPatron" class="text-ink-muted">
         {{ t('accountSettings.dictionaries.patronUpsell') }}
         <NuxtLink :to="`${localePath('/supporters')}#support`" class="text-brand hover:underline">
