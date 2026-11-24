@@ -306,12 +306,15 @@ describe('reportException', () => {
 
     expect(captureExceptionSpy).toHaveBeenCalledWith(
       error,
-      expect.any(String),
       expect.objectContaining({
-        $exception_fingerprint: 'discord:command-failed',
-        error_source: 'discord:command-failed',
-        error_type: 'Error',
-        command: 'search',
+        distinctId: expect.any(String),
+        level: 'error',
+        properties: expect.objectContaining({
+          $exception_fingerprint: 'discord:command-failed',
+          error_source: 'discord:command-failed',
+          error_type: 'Error',
+          command: 'search',
+        }),
       }),
     );
   });
@@ -321,7 +324,7 @@ describe('reportException', () => {
     // third party is a privacy incident, not a bug.
     analytics.reportException(new Error('boom'), 'src', { actor: { userId: 'user-snowflake-123', guildId: null } });
 
-    expect(captureExceptionSpy.mock.calls[0][1]).not.toBe('user-snowflake-123');
+    expect(captureExceptionSpy.mock.calls[0][1].distinctId).not.toBe('user-snowflake-123');
   });
 
   test('attributes an error with no actor to the bot process, without a person profile', () => {
@@ -329,15 +332,21 @@ describe('reportException', () => {
 
     expect(captureExceptionSpy).toHaveBeenCalledWith(
       expect.any(Error),
-      'discord-bot',
-      expect.objectContaining({ $process_person_profile: false }),
+      expect.objectContaining({
+        distinctId: 'discord-bot',
+        level: 'error',
+        properties: expect.objectContaining({ $process_person_profile: false }),
+      }),
     );
   });
 
   test('marks a DM error as such, since a null guild is meaningful', () => {
     analytics.reportException(new Error('boom'), 'src', { actor: { userId: 'u-1', guildId: null } });
 
-    expect(captureExceptionSpy.mock.calls[0][2]).toMatchObject({ in_dm: true, $process_person_profile: true });
+    expect(captureExceptionSpy.mock.calls[0][1].properties).toMatchObject({
+      in_dm: true,
+      $process_person_profile: true,
+    });
   });
 
   test('reporting a failure never becomes a second failure', () => {
@@ -382,7 +391,7 @@ describe('reportFatal', () => {
   test('marks the report as fatal, which is what separates it from a handled error', () => {
     analytics.reportFatal(new Error('boom'), 'src');
 
-    expect(captureExceptionSpy.mock.calls[0][2]).toMatchObject({ fatal: true });
+    expect(captureExceptionSpy.mock.calls[0][1].properties).toMatchObject({ fatal: true });
   });
 });
 

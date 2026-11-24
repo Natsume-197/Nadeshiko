@@ -453,18 +453,21 @@ export function reportException(
   const { actor, properties = {} } = options;
 
   try {
-    posthog.captureException(error, actor ? pseudonymize(actor.userId) : 'discord-bot', {
-      $exception_fingerprint: source,
-      $exception_level: 'error',
-      // Same asymmetry as `capture`: a hashed user is a person worth resolving
-      // a report against, the bot process itself is not.
-      ...(actor
-        ? { $process_person_profile: true, in_dm: actor.guildId === null }
-        : { $process_person_profile: false }),
-      error_source: source,
-      error_type: errorType(error),
-      service: 'nadeshiko-discord',
-      ...properties,
+    posthog.captureException(error, {
+      distinctId: actor ? pseudonymize(actor.userId) : 'discord-bot',
+      level: 'error',
+      properties: {
+        $exception_fingerprint: source,
+        // Same asymmetry as `capture`: a hashed user is a person worth resolving
+        // a report against, the bot process itself is not.
+        ...(actor
+          ? { $process_person_profile: true, in_dm: actor.guildId === null }
+          : { $process_person_profile: false }),
+        error_source: source,
+        error_type: errorType(error),
+        service: 'nadeshiko-discord',
+        ...properties,
+      },
     });
   } catch (captureError) {
     // Reporting a failure must never become a second failure.
