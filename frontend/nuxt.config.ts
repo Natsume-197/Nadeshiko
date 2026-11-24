@@ -262,6 +262,9 @@ export default defineNuxtConfig({
             'frame-ancestors': ["'none'"],
             'base-uri': ["'self'"],
             'form-action': ["'self'"],
+            // Omit upgrade-insecure-requests: WebKit bug 250776 upgrades loopback http://127.0.0.1 requests
+            // (AnkiConnect) to https:// and fails with a TLS error. HSTS and explicit HTTPS-only sources cover the rest.
+            'upgrade-insecure-requests': false,
             // Chrome uses report-to; Firefox/Safari need report-uri. The named endpoint is emitted by
             // 98-html-response-headers.ts. Production only to keep staging noise out of the real PostHog project.
             ...(isProd && {
