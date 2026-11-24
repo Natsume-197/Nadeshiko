@@ -8,6 +8,7 @@ import type { UserReportTarget } from '@brigadasos/nadeshiko-sdk';
 import {
   buildMediaSearchPath,
   buildSentencePath,
+  buildWordSearchPath,
   decodeSearchQuery,
   mediaBrowsePath,
   searchScopeQuery,
@@ -300,7 +301,7 @@ const route = useRoute();
  */
 const handleTokenSearch = (query: string, options?: { contains?: boolean }) => {
   router.push({
-    path: localePath(`/search/${encodeURIComponent(query)}`),
+    path: localePath(buildWordSearchPath(query)),
     query: { ...searchScopeQuery(route.query), ...(options?.contains ? { match: 'contains' } : {}) },
   });
 };

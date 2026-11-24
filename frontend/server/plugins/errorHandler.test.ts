@@ -169,8 +169,10 @@ describe('what gets reported to PostHog', () => {
     '/api/dictionary/word-counts?words=x',
   ])('a handled dictionary outage (%s) stays in metrics and logs without becoming a PostHog issue', async (url) => {
     const fire = await loadPlugin();
+    // `dictionaryUnavailable` marks its 503 as optional enrichment.
+    const error = Object.assign(httpError(503), { data: { optional: true } });
 
-    await fire('error', httpError(503), { event: makeEvent({ url }), tags: ['request'] });
+    await fire('error', error, { event: makeEvent({ url }), tags: ['request'] });
 
     expect(counterAdds).toHaveLength(1);
     expect(logLines.some((line) => line.level === 'error')).toBe(true);

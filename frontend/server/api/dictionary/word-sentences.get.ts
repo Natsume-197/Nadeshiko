@@ -2,7 +2,11 @@ import { createError, setResponseHeader } from 'h3';
 import { stableCacheKey } from '~~/server/utils/cacheKey';
 import { logger } from '~~/server/utils/logger';
 import { interleave, type SearchAnswer, SENTENCES, PER_WORD, wordsOf } from '~~/server/utils/readingSentences';
-import { DICTIONARY_CACHE_SECONDS, dictionaryUnavailable } from '~~/server/utils/dictionaryRoute';
+import {
+  DICTIONARY_CACHE_SECONDS,
+  dictionaryUnavailable,
+  PUBLIC_CONTENT_RATINGS,
+} from '~~/server/utils/dictionaryRoute';
 
 // Sentences for one reading of a kanji, on the kanji's page (task 44): the reading's example words (食事, 給食, 夕食
 // for 食 read ショク), each searched as a word so every sentence uses that reading, then interleaved one word at a
@@ -20,7 +24,7 @@ const handler = defineEventHandler(async (event) => {
         sdk.search({
           query: { search: word },
           take: PER_WORD,
-          filters: { contentRating: ['SAFE', 'SUGGESTIVE'] },
+          filters: { contentRating: PUBLIC_CONTENT_RATINGS },
           include: ['media'],
         }),
       ),

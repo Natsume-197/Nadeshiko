@@ -1,6 +1,6 @@
 import { createError, getRouterParam, setResponseHeader } from 'h3';
 import { stableCacheKey } from '~~/server/utils/cacheKey';
-import { buildInternalBackendHeaders, internalBackendUrl } from '~~/server/utils/internalBackend';
+import { fetchKanjiCard } from '~~/server/utils/kanjiIndexList';
 import { type KanjiOgCard, type KanjiOgLocale, kanjiOgRequest, renderKanjiOgImage } from '~~/server/utils/kanjiOgImage';
 import { logger } from '~~/server/utils/logger';
 
@@ -8,15 +8,10 @@ import { logger } from '~~/server/utils/logger';
 // indexed pages, and the font holds them), so there are at most 2,136 × 2 images; each is drawn once and kept a week.
 
 const CACHE_SECONDS = 60 * 60 * 24 * 7;
-const TIMEOUT_MS = 3000;
 
 const drawImage = defineCachedFunction(
   async (character: string, locale: KanjiOgLocale): Promise<string> => {
-    const config = useRuntimeConfig();
-    const card = await $fetch<KanjiOgCard>(
-      internalBackendUrl(config, `/v1/dictionary/kanji/${encodeURIComponent(character)}`),
-      { query: { locale, related: 'short' }, headers: buildInternalBackendHeaders(config), timeout: TIMEOUT_MS },
-    );
+    const card = await fetchKanjiCard<KanjiOgCard>(character, locale, 'short');
     // Kept as base64: the cache stores strings.
     return Buffer.from(await renderKanjiOgImage(card)).toString('base64');
   },

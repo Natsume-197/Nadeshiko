@@ -5,6 +5,7 @@ import { PostHog } from 'posthog-node';
 import { resolveEventTraffic, trafficAttributes } from '#shared/utils/traffic';
 import { normalizeRoute } from '~~/route-normalization.mjs';
 import { createLogger } from '../utils/logger';
+import { isOptionalFailure } from '../utils/dictionaryRoute';
 
 const logger = createLogger('nitro:http');
 
@@ -109,12 +110,12 @@ export default defineNitroPlugin((nitroApp) => {
       : null;
 
   // Capture reader 5xx failures, not crawler/4xx noise. Event-less process faults always matter.
-  const shouldCapture = (event: any, statusCode: number, url: string): boolean => {
+  const shouldCapture = (error: Error, event: any, statusCode: number): boolean => {
     if (!event) return true;
     if (statusCode < 500) return false;
-    // Dictionary 503s (word card, word entry, kanji, sentences, counts) are optional enrichment the page recovers from;
-    // keep logs/metrics but avoid manufacturing a PostHog issue.
-    if (statusCode === 503 && url.startsWith('/api/dictionary/')) return false;
+    // Optional enrichment the page recovers from (e.g. `dictionaryUnavailable`): keep logs/metrics but avoid
+    // manufacturing a PostHog issue.
+    if (isOptionalFailure(error)) return false;
     return resolveEventTraffic(event).traffic === 'reader';
   };
 
@@ -124,7 +125,7 @@ export default defineNitroPlugin((nitroApp) => {
     details: { fingerprint: string; statusCode: number; method: string; url: string; tags: string[] },
   ): void => {
     if (!posthog || !posthogPublicKey) return;
-    if (!shouldCapture(event, details.statusCode, details.url)) return;
+    if (!shouldCapture(error, event, details.statusCode)) return;
 
     // Reporting must not break error handling after logs and metrics have already been emitted.
     try {

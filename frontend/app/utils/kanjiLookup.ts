@@ -4,6 +4,7 @@
  * are deduplicated, answers (including "no card") are kept for the tab, failures stay retryable.
  */
 
+import { apiErrorStatus } from '~/utils/apiError';
 import { lruRecall, lruRemember } from '~/utils/lruMap';
 
 export interface KanjiCardComponent {
@@ -115,9 +116,7 @@ export function fetchKanji(character: string, locale: 'en' | 'es'): Promise<Kanj
   })
     .then((card): KanjiLookup => remember(key, { card }))
     .catch((error: unknown): KanjiLookup => {
-      const failure = error as { response?: { status?: number }; statusCode?: number };
-      const status = failure?.response?.status ?? failure?.statusCode;
-      if (status === 404) return remember(key, { card: null, reason: 'missing' });
+      if (apiErrorStatus(error) === 404) return remember(key, { card: null, reason: 'missing' });
       return { card: null, reason: 'failed' };
     })
     .finally(() => inFlight.delete(key));
@@ -163,6 +162,11 @@ export function markKanji(text: string, kanji: string): Array<{ text: string; hi
     else runs.push({ text: character, hit });
   }
   return runs;
+}
+
+/** The tag (`EN`) shown when the meanings fell back to another language than the reader's; `null` when they did not. */
+export function meaningsTag(card: KanjiCardData | null | undefined, locale: string): string | null {
+  return card && card.meaningsLanguage !== locale ? card.meaningsLanguage.toUpperCase() : null;
 }
 
 /** The facts row of a kanji (N5, 漢検 9級, grade, strokes, newspaper rank), in the order a learner scans them. */

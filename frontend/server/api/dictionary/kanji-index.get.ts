@@ -3,18 +3,21 @@ import { stableCacheKey } from '~~/server/utils/cacheKey';
 import { logger } from '~~/server/utils/logger';
 import { kanjiIndexGroups, type KanjiIndexGrouping } from '~~/server/utils/kanjiIndex';
 import { fetchKanjiIndexList } from '~~/server/utils/kanjiIndexList';
-import { DICTIONARY_CACHE_SECONDS, dictionaryUnavailable } from '~~/server/utils/dictionaryRoute';
+import {
+  DICTIONARY_CACHE_SECONDS,
+  type DictionaryLocale,
+  dictionaryLocale,
+  dictionaryUnavailable,
+} from '~~/server/utils/dictionaryRoute';
 
 // The kanji index page (task 44): one group of kanji at a time (JLPT N5, or school grade 1, …) with how many each
 // group holds, so the page carries the group it shows and not all 2,383 kanji. Cached a day; the list only changes
 // with a dictionary import.
 
-type Locale = 'en' | 'es';
-
-function input(event: H3Event): { locale: Locale; by: KanjiIndexGrouping; level: string | null } {
+function input(event: H3Event): { locale: DictionaryLocale; by: KanjiIndexGrouping; level: string | null } {
   const params = getQuery(event);
   return {
-    locale: params.locale === 'es' ? 'es' : 'en',
+    locale: dictionaryLocale(params.locale),
     by: params.by === 'grade' ? 'grade' : 'jlpt',
     level: typeof params.level === 'string' && params.level ? params.level : null,
   };

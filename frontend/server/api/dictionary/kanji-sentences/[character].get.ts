@@ -1,7 +1,11 @@
 import { createError, getRouterParam, type H3Event, setResponseHeader } from 'h3';
 import { stableCacheKey } from '~~/server/utils/cacheKey';
 import { logger } from '~~/server/utils/logger';
-import { DICTIONARY_CACHE_SECONDS, dictionaryUnavailable } from '~~/server/utils/dictionaryRoute';
+import {
+  DICTIONARY_CACHE_SECONDS,
+  dictionaryUnavailable,
+  PUBLIC_CONTENT_RATINGS,
+} from '~~/server/utils/dictionaryRoute';
 
 // Example sentences on a kanji's own page (task 44): the corpus searched in the "contains" mode for the kanji, so
 // every word written with it counts. Relevance order already comes in rounds by title, so the first few are spread
@@ -23,7 +27,7 @@ const handler = defineEventHandler(async (event) => {
 
   const sdk = useServerSdk(event);
   const query = { search: kanji, matchMode: 'CONTAINS' as const };
-  const filters = { contentRating: ['SAFE' as const, 'SUGGESTIVE' as const] };
+  const filters = { contentRating: PUBLIC_CONTENT_RATINGS };
   try {
     const [response, stats] = await Promise.all([
       sdk.search({ query, take: KANJI_SENTENCES, filters, include: ['media'] }),

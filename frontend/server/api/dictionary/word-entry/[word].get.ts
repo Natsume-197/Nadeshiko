@@ -5,7 +5,12 @@ import { DictionaryError } from '~~/server/utils/dictionary';
 import { nadeshikoDictionary } from '~~/server/utils/dictionary/nadeshiko';
 import { kanjiBriefs } from '~~/server/utils/kanjiBriefs';
 import { logger } from '~~/server/utils/logger';
-import { DICTIONARY_CACHE_SECONDS, dictionaryUnavailable } from '~~/server/utils/dictionaryRoute';
+import {
+  DICTIONARY_CACHE_SECONDS,
+  type DictionaryLocale,
+  dictionaryLocale,
+  dictionaryUnavailable,
+} from '~~/server/utils/dictionaryRoute';
 
 // The dictionary entry above a word search (`/search/食べる`), from Nadeshiko's own dictionary whatever card provider
 // the reader picked: it is the page's own content, server-rendered for every reader and for search engines alike.
@@ -14,12 +19,10 @@ import { DICTIONARY_CACHE_SECONDS, dictionaryUnavailable } from '~~/server/utils
 // each kanji's first reading and meaning. Same for every reader:
 // cached a day here and in the browser, like the kanji card.
 
-type Locale = 'en' | 'es';
-
-function input(event: H3Event): { word: string; locale: Locale } | null {
+function input(event: H3Event): { word: string; locale: DictionaryLocale } | null {
   const word = getRouterParam(event, 'word')?.trim();
   if (!word || !isWordQuery(word)) return null;
-  const locale: Locale = getQuery(event).locale === 'es' ? 'es' : 'en';
+  const locale = dictionaryLocale(getQuery(event).locale);
   return { word, locale };
 }
 

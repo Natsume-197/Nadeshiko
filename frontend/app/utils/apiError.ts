@@ -51,9 +51,10 @@ export function handleApiError(source: string, err: unknown, options: HandleApiE
  */
 export function apiErrorStatus(err: unknown): number | undefined {
   if (typeof err !== 'object' || err === null) return undefined;
-  const candidate = err as { status?: unknown; statusCode?: unknown };
+  const candidate = err as { status?: unknown; statusCode?: unknown; response?: { status?: unknown } };
   if (typeof candidate.status === 'number') return candidate.status;
   if (typeof candidate.statusCode === 'number') return candidate.statusCode;
+  if (typeof candidate.response?.status === 'number') return candidate.response.status;
   return undefined;
 }
 

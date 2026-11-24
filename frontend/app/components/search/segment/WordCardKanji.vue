@@ -5,6 +5,7 @@ import {
   type KanjiCardExample,
   type KanjiCardWordRef,
   kanjiBadges,
+  meaningsTag as kanjiMeaningsTag,
   splitReading,
 } from '~/utils/kanjiLookup';
 import KanjiStrokes from './KanjiStrokes.vue';
@@ -172,9 +173,7 @@ const related = computed(() => {
 });
 
 /** Meanings fell back to English for a reader who reads Spanish: say so with the same tag the senses use. */
-const meaningsTag = computed(() =>
-  props.card && props.card.meaningsLanguage !== props.locale ? props.card.meaningsLanguage.toUpperCase() : null,
-);
+const meaningsTag = computed(() => kanjiMeaningsTag(props.card, props.locale));
 
 /** A related kanji's tooltip: its reading and meaning. */
 const relatedTitle = (kanji: { reading: string | null; meaning: string | null }) =>
