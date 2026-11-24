@@ -131,23 +131,26 @@ export default defineNitroPlugin((nitroApp) => {
       const identity = event ? readPostHogIdentity(event, posthogPublicKey) : {};
       const requestId = event?.context?.requestId;
 
-      posthog.captureException(error, identity.distinctId ?? requestId, {
-        // Use the metric fingerprint so error-tracking issues correlate with exception spikes.
-        $exception_fingerprint: details.fingerprint,
-        $exception_level: 'error',
-        // Without a reader identity, capture the error without manufacturing a person from a request ID.
-        ...(identity.distinctId ? {} : { $process_person_profile: false }),
-        ...(identity.sessionId ? { $session_id: identity.sessionId } : {}),
-        'http.route': normalizeRoute(details.url),
-        'http.method': details.method,
-        'http.status_code': details.statusCode,
-        'http.url': details.url,
+      posthog.captureException(error, {
+        distinctId: identity.distinctId ?? requestId,
+        level: 'error',
+        properties: {
+          // Use the metric fingerprint so error-tracking issues correlate with exception spikes.
+          $exception_fingerprint: details.fingerprint,
+          // Without a reader identity, capture the error without manufacturing a person from a request ID.
+          ...(identity.distinctId ? {} : { $process_person_profile: false }),
+          ...(identity.sessionId ? { $session_id: identity.sessionId } : {}),
+          'http.route': normalizeRoute(details.url),
+          'http.method': details.method,
+          'http.status_code': details.statusCode,
+          'http.url': details.url,
 
-        'nitro.tags': details.tags.join(','),
-        'service.name': 'nadeshiko-frontend',
-        'service.version': appVersion,
-        request_id: requestId,
-        ...(event ? trafficFields(event) : {}),
+          'nitro.tags': details.tags.join(','),
+          'service.name': 'nadeshiko-frontend',
+          'service.version': appVersion,
+          request_id: requestId,
+          ...(event ? trafficFields(event) : {}),
+        },
       });
     } catch (captureError) {
       logger.warn({ err: captureError }, '[NITRO] failed to report an exception to PostHog');

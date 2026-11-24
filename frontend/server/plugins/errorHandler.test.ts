@@ -242,7 +242,7 @@ describe('who the exception is attributed to', () => {
       tags: ['request'],
     });
 
-    expect(captureException.mock.calls[0][1]).toBe('person-1');
+    expect(captureException.mock.calls[0][1].distinctId).toBe('person-1');
   });
 
   test('ties the exception to the session recording when there is one', async () => {
@@ -254,7 +254,7 @@ describe('who the exception is attributed to', () => {
       tags: ['request'],
     });
 
-    expect(captureException.mock.calls[0][2].$session_id).toBe('sess-9');
+    expect(captureException.mock.calls[0][1].properties.$session_id).toBe('sess-9');
   });
 
   test('does not manufacture a person out of a request id when there is no cookie', async () => {
@@ -262,7 +262,7 @@ describe('who the exception is attributed to', () => {
 
     await fire('error', httpError(500), { event: makeEvent(), tags: ['request'] });
 
-    expect(captureException.mock.calls[0][2].$process_person_profile).toBe(false);
+    expect(captureException.mock.calls[0][1].properties.$process_person_profile).toBe(false);
   });
 
   test.each([
@@ -279,7 +279,7 @@ describe('who the exception is attributed to', () => {
     });
 
     expect(captureException).toHaveBeenCalledTimes(1);
-    expect(captureException.mock.calls[0][2].$session_id).toBeUndefined();
+    expect(captureException.mock.calls[0][1].properties.$session_id).toBeUndefined();
   });
 });
 
@@ -292,7 +292,7 @@ describe('the exception payload', () => {
 
     await fire('error', httpError(500), { event: makeEvent(), tags: ['request'] });
 
-    const sent = captureException.mock.calls[0][2].$exception_fingerprint;
+    const sent = captureException.mock.calls[0][1].properties.$exception_fingerprint;
     expect(sent).toBe(counterAdds[0].attrs['error.fingerprint']);
   });
 
@@ -301,7 +301,7 @@ describe('the exception payload', () => {
 
     await fire('error', httpError(503), { event: makeEvent({ url: '/en/search/neko?page=2' }), tags: ['request'] });
 
-    expect(captureException.mock.calls[0][2]).toMatchObject({
+    expect(captureException.mock.calls[0][1].properties).toMatchObject({
       'http.method': 'GET',
       'http.status_code': 503,
       'http.url': '/en/search/neko?page=2',
@@ -318,7 +318,7 @@ describe('the exception payload', () => {
 
     await fire('error', httpError(500), { event: makeEvent(), tags: ['cache', 'plugin'] });
 
-    expect(captureException.mock.calls[0][2]['nitro.tags']).toBe('cache,plugin');
+    expect(captureException.mock.calls[0][1].properties['nitro.tags']).toBe('cache,plugin');
   });
 });
 
@@ -423,7 +423,7 @@ describe('the request log', () => {
     await fire('request', event);
     await fire('error', httpError(500), { event, tags: [] });
 
-    expect(captureException.mock.calls[0][2].request_id).toBe('req-uuid-1');
+    expect(captureException.mock.calls[0][1].properties.request_id).toBe('req-uuid-1');
   });
 
   test('classifies the traffic on the line, so it is a filter and not a User-Agent grep', async () => {
@@ -495,8 +495,8 @@ describe('credentials in the request URL', () => {
 
     const logged = logLines.find((l) => l.payload.type === 'error')!;
     expect(JSON.stringify(logged)).not.toMatch(/magic-secret|oauth-secret/);
-    expect(captureException.mock.calls[0][2]['http.url']).not.toMatch(/magic-secret|oauth-secret/);
-    expect(captureException.mock.calls[0][2]['http.url']).toContain('token=%5BRedacted%5D');
+    expect(captureException.mock.calls[0][1].properties['http.url']).not.toMatch(/magic-secret|oauth-secret/);
+    expect(captureException.mock.calls[0][1].properties['http.url']).toContain('token=%5BRedacted%5D');
   });
 });
 
