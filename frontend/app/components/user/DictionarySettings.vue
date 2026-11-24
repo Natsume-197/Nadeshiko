@@ -56,11 +56,6 @@ const indexedRemaining = computed(() =>
   data.value ? Math.max(0, data.value.quota.maxIndexedBytes - data.value.quota.indexedBytesUsed) : null,
 );
 
-const quotaPercent = computed(() => {
-  if (!data.value || data.value.quota.max <= 0) return 0;
-  return Math.min(100, Math.round((data.value.quota.used / data.value.quota.max) * 100));
-});
-
 // At the limit, a failed dictionary can still be uploaded again (the server allows it), so the picker stays open.
 const atQuotaLimit = computed(() => {
   if (!data.value) return false;
@@ -339,8 +334,11 @@ onBeforeUnmount(stopPolling);
 
 <template>
   <section class="nd-settings-section" data-testid="dictionary-settings">
-    <div class="mb-2 flex flex-wrap items-center justify-between gap-2 px-1">
-      <h2 class="nd-settings-section-label !mb-0 !px-0">{{ t('accountSettings.dictionaries.title') }}</h2>
+    <div class="mb-2 flex flex-wrap items-end justify-between gap-2 px-1">
+      <div>
+        <h2 class="nd-settings-section-label !mb-0 !px-0">{{ t('accountSettings.dictionaries.title') }}</h2>
+        <p class="mt-0.5 text-xs text-ink-muted">{{ t('accountSettings.dictionaries.description') }}</p>
+      </div>
       <div v-if="data" class="flex flex-wrap items-center gap-x-2 text-xs text-ink-muted">
         <span class="font-medium text-ink">
           {{ t('accountSettings.dictionaries.quotaUsed', { used: data.quota.used, max: data.quota.max }) }}
@@ -361,113 +359,60 @@ onBeforeUnmount(stopPolling);
       </div>
     </div>
 
-    <div class="nd-settings-card !mb-0">
-      <p class="text-sm text-ink-muted">{{ t('accountSettings.dictionaries.description') }}</p>
-
-    <!-- Quota bar -->
-    <div v-if="data" class="mt-4">
-      <div class="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
-        <div
-          class="h-full rounded-full bg-brand-solid transition-all duration-300"
-          :style="{ width: `${quotaPercent}%` }"
-        />
-      </div>
-      <p v-if="!data.quota.isPatron" class="mt-2 text-xs text-gray-400">
-        {{ t('accountSettings.dictionaries.patronUpsell') }}
-        <NuxtLink :to="`${localePath('/supporters')}#support`" class="text-brand hover:underline">
-          {{ t('accountSettings.account.customTheme.seeSupport') }}
-        </NuxtLink>
-      </p>
-    </div>
-
-    <!-- Upload dropzone -->
-    <label
-      class="mt-5 block rounded-lg border-2 border-dashed p-5 text-center transition-colors"
-      :class="[
-        draggingFile ? 'border-brand-solid bg-white/5' : 'border-white/15 bg-white/[0.02]',
-        atQuotaLimit || uploading ? 'opacity-60' : 'cursor-pointer hover:border-white/30',
-      ]"
-      data-testid="dictionary-upload-dropzone"
-      @dragover.prevent="draggingFile = true"
-      @dragleave.prevent="draggingFile = false"
-      @drop.prevent="onDrop"
-    >
-      <input
-        ref="fileInputRef"
-        type="file"
-        accept=".zip,application/zip"
-        class="sr-only"
-        :disabled="uploading || atQuotaLimit"
-        data-testid="dictionary-upload-input"
-        @change="onFileChange"
-      />
-      <div class="mx-auto flex max-w-md flex-col items-center gap-2">
-        <UiBaseIcon :path="uploading ? mdiLoading : mdiCloudUploadOutline" size="28" :class="{ 'animate-spin': uploading }" class="text-gray-300" />
-        <p class="text-sm font-medium text-white">
-          {{ uploading ? t('accountSettings.dictionaries.uploading', { progress: uploadProgress }) : t('accountSettings.dictionaries.dropPrompt') }}
-        </p>
-        <p class="text-xs text-gray-400">
-          {{ t('accountSettings.dictionaries.supportedFormats') }}
-        </p>
-        <div v-if="uploading" class="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
-          <div class="h-full rounded-full bg-brand-solid transition-all duration-150" :style="{ width: `${uploadProgress}%` }" />
-        </div>
-      </div>
-    </label>
-
-    <p v-if="uploadError" class="mt-2 text-sm text-red-400" role="alert" data-testid="dictionary-upload-error">
-      {{ uploadError }}
-    </p>
-
-    <!-- Stack list -->
-    <div class="mt-6">
-      <div class="flex items-center justify-between">
-        <h4 class="text-sm font-semibold text-white">{{ t('accountSettings.dictionaries.stackTitle') }}</h4>
-        <span class="text-xs text-gray-400">{{ t('accountSettings.dictionaries.stackHint') }}</span>
+    <div class="nd-settings-group">
+      <!-- Order header -->
+      <div class="nd-settings-item !py-3 bg-lift flex flex-wrap items-center justify-between gap-2">
+        <span class="text-xs font-medium text-ink-muted">{{ t('accountSettings.dictionaries.stackTitle') }}</span>
+        <span class="text-xs text-ink-faint">{{ t('accountSettings.dictionaries.stackHint') }}</span>
       </div>
 
-      <div v-if="loading" class="mt-4 flex items-center gap-2 text-sm text-gray-400">
+      <!-- Stack list -->
+      <div v-if="loading" class="nd-settings-item flex items-center gap-2 text-sm text-ink-muted">
         <UiBaseIcon :path="mdiLoading" size="18" class="animate-spin" />
         <span>{{ t('accountSettings.dictionaries.loading') }}</span>
       </div>
 
-      <ul v-else class="mt-3 flex flex-col gap-2" data-testid="dictionary-stack-list">
+      <ul
+        v-else
+        class="divide-y divide-line-subtle border-t border-line-subtle"
+        data-testid="dictionary-stack-list"
+      >
         <li
           v-for="(row, index) in stackRows"
           :key="row.stackId"
-          class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2.5"
-          :class="{ 'opacity-60': !row.enabled }"
+          class="flex items-center justify-between gap-4 px-5 py-3.5 transition-opacity"
+          :class="{ 'opacity-55': !row.enabled }"
           :data-testid="`dictionary-row-${row.stackId}`"
         >
-          <div class="flex min-w-0 flex-1 items-start gap-3">
-            <div class="flex flex-col gap-0.5 pt-0.5">
+          <div class="flex min-w-0 flex-1 items-center gap-3">
+            <div class="flex flex-col gap-0.5 shrink-0">
               <button
                 type="button"
-                class="rounded p-0.5 text-gray-400 hover:bg-white/10 hover:text-white disabled:opacity-30"
+                class="rounded p-0.5 text-ink-faint hover:bg-lift-strong hover:text-ink disabled:opacity-25 disabled:pointer-events-none"
                 :disabled="saving || index === 0"
                 :aria-label="t('accountSettings.dictionaries.moveUp')"
                 @click="moveRow(index, -1)"
               >
-                <UiBaseIcon :path="mdiArrowUp" size="16" />
+                <UiBaseIcon :path="mdiArrowUp" size="15" />
               </button>
               <button
                 type="button"
-                class="rounded p-0.5 text-gray-400 hover:bg-white/10 hover:text-white disabled:opacity-30"
+                class="rounded p-0.5 text-ink-faint hover:bg-lift-strong hover:text-ink disabled:opacity-25 disabled:pointer-events-none"
                 :disabled="saving || index === stackRows.length - 1"
                 :aria-label="t('accountSettings.dictionaries.moveDown')"
                 @click="moveRow(index, 1)"
               >
-                <UiBaseIcon :path="mdiArrowDown" size="16" />
+                <UiBaseIcon :path="mdiArrowDown" size="15" />
               </button>
             </div>
 
             <div class="min-w-0 flex-1">
               <div class="flex flex-wrap items-center gap-2">
-                <UiBaseIcon :path="mdiBookOpenVariantOutline" size="18" class="shrink-0 text-gray-400" />
-                <span class="truncate text-sm font-medium text-white">{{ row.title }}</span>
+                <UiBaseIcon :path="mdiBookOpenVariantOutline" size="17" class="shrink-0 text-ink-faint" />
+                <span class="truncate text-sm font-medium text-ink">{{ row.title }}</span>
                 <span
                   v-if="row.kind === 'builtin'"
-                  class="rounded bg-white/10 px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide text-gray-300"
+                  class="rounded bg-lift-strong px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide text-ink-muted"
                 >
                   {{ t('accountSettings.dictionaries.builtinBadge') }}
                 </span>
@@ -491,35 +436,35 @@ onBeforeUnmount(stopPolling);
                   </span>
                   <span
                     v-else-if="row.dict.status === 'failed'"
-                    class="rounded bg-red-500/20 px-1.5 py-0.5 text-[0.65rem] font-semibold text-red-300"
+                    class="rounded bg-red-500/20 px-1.5 py-0.5 text-[0.65rem] font-semibold text-red-400"
                   >
                     {{ t('accountSettings.dictionaries.statusFailed') }}
                   </span>
                   <span
                     v-if="row.dict.hasTerms"
-                    class="rounded bg-white/10 px-1.5 py-0.5 text-[0.65rem] font-medium text-gray-300"
+                    class="rounded bg-lift-strong px-1.5 py-0.5 text-[0.65rem] font-medium text-ink-muted"
                   >
                     {{ t('accountSettings.dictionaries.bankTerms') }}
                   </span>
                   <span
                     v-if="row.dict.hasFrequency"
-                    class="rounded bg-white/10 px-1.5 py-0.5 text-[0.65rem] font-medium text-gray-300"
+                    class="rounded bg-lift-strong px-1.5 py-0.5 text-[0.65rem] font-medium text-ink-muted"
                   >
                     {{ t('accountSettings.dictionaries.bankFrequency') }}
                   </span>
                   <span
                     v-if="row.dict.hasPitch"
-                    class="rounded bg-white/10 px-1.5 py-0.5 text-[0.65rem] font-medium text-gray-300"
+                    class="rounded bg-lift-strong px-1.5 py-0.5 text-[0.65rem] font-medium text-ink-muted"
                   >
                     {{ t('accountSettings.dictionaries.bankPitch') }}
                   </span>
                 </template>
               </div>
 
-              <p v-if="row.kind === 'builtin'" class="mt-0.5 text-xs text-gray-400">
+              <p v-if="row.kind === 'builtin'" class="mt-0.5 text-xs text-ink-muted">
                 {{ t('accountSettings.dictionaries.builtinDescription') }}
               </p>
-              <div v-else-if="row.dict" class="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-gray-400">
+              <div v-else-if="row.dict" class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-ink-muted">
                 <span v-if="row.dict.termCount > 0">
                   {{ t('accountSettings.dictionaries.termCount', { count: formatNumber(row.dict.termCount) }) }}
                 </span>
@@ -529,8 +474,12 @@ onBeforeUnmount(stopPolling);
                 <span v-if="row.dict.pitchCount > 0">
                   {{ t('accountSettings.dictionaries.pitchCount', { count: formatNumber(row.dict.pitchCount) }) }}
                 </span>
+                <span aria-hidden="true" class="text-ink-faint">&middot;</span>
                 <span>{{ formatMb(row.dict.zipBytes) }}</span>
-                <span v-if="row.dict.revision" class="truncate opacity-75">{{ row.dict.revision }}</span>
+                <template v-if="row.dict.revision">
+                  <span aria-hidden="true" class="text-ink-faint">&middot;</span>
+                  <span class="truncate text-ink-faint">{{ row.dict.revision }}</span>
+                </template>
               </div>
               <p
                 v-if="row.dict?.status === 'failed'"
@@ -543,7 +492,7 @@ onBeforeUnmount(stopPolling);
             </div>
           </div>
 
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-3 shrink-0">
             <button
               type="button"
               role="switch"
@@ -554,7 +503,7 @@ onBeforeUnmount(stopPolling);
               :disabled="saving"
               @click="toggleRow(index)"
             >
-              <!-- The site's switch, as in Settings → Emails. -->
+              <!-- The site's switch, as in Settings → Notifications. -->
               <span
                 class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
                 :class="row.enabled ? 'translate-x-5' : 'translate-x-0'"
@@ -564,7 +513,7 @@ onBeforeUnmount(stopPolling);
             <button
               v-if="row.kind === 'custom' && row.dict"
               type="button"
-              class="rounded p-1.5 text-gray-400 hover:bg-red-500/15 hover:text-red-400 disabled:opacity-40"
+              class="inline-flex size-8 items-center justify-center rounded-md text-ink-faint transition-colors hover:bg-red-500/15 hover:text-red-400 disabled:opacity-40"
               :disabled="deletingId === row.dict.id"
               :aria-label="t('accountSettings.dictionaries.delete')"
               :data-testid="`dictionary-delete-${row.dict.id}`"
@@ -572,10 +521,65 @@ onBeforeUnmount(stopPolling);
             >
               <UiBaseIcon :path="deletingId === row.dict.id ? mdiLoading : mdiDeleteOutline" size="18" :class="{ 'animate-spin': deletingId === row.dict.id }" />
             </button>
+            <span v-else class="size-8 shrink-0" aria-hidden="true" />
           </div>
         </li>
       </ul>
+
+      <!-- Compact upload footer -->
+      <div class="nd-settings-item border-t border-line-subtle">
+        <label
+          class="flex flex-col gap-3 rounded-lg border border-dashed px-4 py-3 transition-colors sm:flex-row sm:items-center sm:justify-between"
+          :class="[
+            draggingFile ? 'border-brand-solid nd-accent-bg-faint' : 'border-hairline bg-lift/50',
+            atQuotaLimit || uploading ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:border-line-hover hover:bg-lift',
+          ]"
+          data-testid="dictionary-upload-dropzone"
+          @dragover.prevent="draggingFile = true"
+          @dragleave.prevent="draggingFile = false"
+          @drop.prevent="onDrop"
+        >
+          <input
+            ref="fileInputRef"
+            type="file"
+            accept=".zip,application/zip"
+            class="sr-only"
+            :disabled="uploading || atQuotaLimit"
+            data-testid="dictionary-upload-input"
+            @change="onFileChange"
+          />
+          <div class="flex min-w-0 items-center gap-3">
+            <UiBaseIcon
+              :path="uploading ? mdiLoading : mdiCloudUploadOutline"
+              size="22"
+              :class="{ 'animate-spin': uploading }"
+              class="shrink-0 text-ink-muted"
+            />
+            <div class="min-w-0">
+              <p class="text-sm font-medium text-ink">
+                {{ uploading ? t('accountSettings.dictionaries.uploading', { progress: uploadProgress }) : t('accountSettings.dictionaries.dropPrompt') }}
+              </p>
+              <p class="text-xs text-ink-muted">
+                {{ t('accountSettings.dictionaries.supportedFormats') }}
+              </p>
+            </div>
+          </div>
+          <div v-if="uploading" class="h-1.5 w-full overflow-hidden rounded-full bg-lift-strong sm:w-36 shrink-0">
+            <div class="h-full rounded-full bg-brand-solid transition-all duration-150" :style="{ width: `${uploadProgress}%` }" />
+          </div>
+        </label>
+
+        <p v-if="uploadError" class="mt-2 text-sm text-red-400" role="alert" data-testid="dictionary-upload-error">
+          {{ uploadError }}
+        </p>
+      </div>
     </div>
-    </div>
+
+    <p v-if="data && !data.quota.isPatron" class="mt-2.5 px-1 text-xs text-ink-muted">
+      {{ t('accountSettings.dictionaries.patronUpsell') }}
+      <NuxtLink :to="`${localePath('/supporters')}#support`" class="text-brand hover:underline">
+        {{ t('accountSettings.account.customTheme.seeSupport') }}
+      </NuxtLink>
+    </p>
   </section>
 </template>

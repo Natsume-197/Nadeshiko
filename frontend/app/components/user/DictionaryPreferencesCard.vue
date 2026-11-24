@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { mdiCheck } from '@mdi/js';
 import { useI18n } from 'vue-i18n';
 
 import { handleApiError } from '~/utils/apiError';
@@ -73,13 +74,25 @@ const { presets: dictionaryPresets, isDictionaryEnabled, setDictionaryEnabled } 
           <label
             v-for="preset in dictionaryPresets"
             :key="preset.id"
-            class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-control border border-hairline text-sm text-ink-muted cursor-pointer hover:bg-control-hover hover:text-ink"
+            :class="[
+              'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm cursor-pointer transition-colors select-none focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-brand/60',
+              isDictionaryEnabled(preset.id)
+                ? 'nd-accent-bg-faint border-brand/50 text-ink font-medium'
+                : 'border-line-subtle bg-transparent text-ink-muted hover:border-hairline hover:bg-lift hover:text-ink',
+            ]"
           >
             <input
               type="checkbox"
               :checked="isDictionaryEnabled(preset.id)"
-              class="accent-button-primary-main"
+              class="sr-only"
               @change="setDictionaryEnabled(preset.id, ($event.target as HTMLInputElement).checked)"
+            />
+            <UiBaseIcon
+              v-if="isDictionaryEnabled(preset.id)"
+              :path="mdiCheck"
+              size="15"
+              class="shrink-0 text-brand"
+              aria-hidden="true"
             />
             <span>{{ preset.label }}</span>
           </label>
