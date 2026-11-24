@@ -10,6 +10,7 @@ import {
   type CustomTheme,
   type CustomThemePresetId,
   customThemeVariables,
+  encodeCustomTheme,
   isCustomTheme,
 } from '~/utils/customTheme';
 import CustomThemeEditor from '~/components/user/CustomThemeEditor.vue';
@@ -68,10 +69,7 @@ function paletteOf(theme: CustomTheme): ThemePreviewPalette {
 }
 
 const sameColours = (a: CustomTheme | null | undefined, b: CustomTheme) =>
-  !!a &&
-  a.base === b.base &&
-  a.accent.toLowerCase() === b.accent.toLowerCase() &&
-  a.background.toLowerCase() === b.background.toLowerCase();
+  !!a && encodeCustomTheme(a) === encodeCustomTheme(b);
 
 /** The theme on the account, if the server returned one (it does only while the reader may have it). */
 const saved = computed<CustomTheme | null>(() => {

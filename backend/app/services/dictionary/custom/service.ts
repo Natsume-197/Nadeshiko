@@ -715,7 +715,6 @@ export async function updateUserDictionaryStack(
       row.enabled = item.enabled;
       row.sortOrder = customIndex;
       customIndex += 1;
-      await manager.save(row);
     }
 
     // Keep any unmentioned dictionaries (e.g. concurrent upload in another tab) appended in their previous order.
@@ -723,8 +722,9 @@ export async function updateUserDictionaryStack(
       if (seenCustom.has(row.id)) continue;
       row.sortOrder = customIndex;
       customIndex += 1;
-      await manager.save(row);
     }
+    // Every row was renumbered above, so one save writes them all.
+    await manager.save(existing);
 
     if (builtinEnabled !== undefined || builtinPosition !== undefined) {
       const dbUser = await manager.findOne(User, { where: { id: user.id } });

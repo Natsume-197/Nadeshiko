@@ -1,4 +1,4 @@
-import { toHiragana, toKatakana } from '@app/services/parser/combine/kana';
+import { hasHanScript, toHiragana, toKatakana } from '@app/services/parser/combine/kana';
 import type { JMdictWord, JMnedictWord, Xref } from '@scriptin/jmdict-simplified-types';
 
 /** Upstream entries reduced to what `dict.*` stores. Pure functions, so the import can be tested without a file
@@ -136,13 +136,9 @@ export function fromJmnedict(word: JMnedictWord): ImportEntry {
 // The parser's kana helpers, re-exported: the dictionary code imports them from here.
 export { toHiragana, toKatakana };
 
-const HAN = /\p{Script=Han}/u;
-
 /** Whether the text has a character of the Han script (々 and 〆 included). Kana are never Han, so a kana check is
  * not needed alongside it. Not the parser's `hasKanji` (parser/combine/kana), which tests narrower code-point ranges. */
-export function hasKanji(text: string): boolean {
-  return HAN.test(text);
-}
+export const hasKanji = hasHanScript;
 
 /** The keys a spelling is found under: itself and its hiragana, deduplicated. */
 export function lookupKeys(text: string): string[] {

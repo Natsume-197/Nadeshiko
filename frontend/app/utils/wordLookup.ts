@@ -1,3 +1,4 @@
+import { apiErrorStatus } from '~/utils/apiError';
 import { lruRecall, lruRemember } from '~/utils/lruMap';
 import type { DictionaryCandidate } from '~/utils/wordCard';
 import type { WordRef } from '~/utils/tokenEnrichment';
@@ -118,14 +119,9 @@ export function fetchWord(ref: WordRef, locale: string): Promise<WordLookup> {
       return remember(answerKey, lookup);
     })
     .catch((error: unknown): WordLookup => {
-      // 404 means no entry; other failures describe the request. Support both status locations used by
-      // ofetch.
-      const failure = error as { response?: { status?: number }; statusCode?: number };
-      const status = failure?.response?.status ?? failure?.statusCode;
-
       // A 404 is an answer and is worth keeping: this word has no entry today
       // and will have none on the next hover either.
-      if (status === 404) return remember(key, { candidates: [], reason: 'missing' });
+      if (apiErrorStatus(error) === 404) return remember(key, { candidates: [], reason: 'missing' });
 
       // Do not cache transient failures: the next hover must be able to recover without a page reload.
       return { candidates: [], reason: 'failed' };

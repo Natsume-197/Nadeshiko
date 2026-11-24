@@ -31,24 +31,42 @@ type Replacement = string | ((match: RegExpExecArray) => string);
 
 /** Text as units, rewritten by regular expressions over its normalised form. */
 class UnitText {
-  units: Unit[];
+  #units: Unit[];
+  /** The normalised text and the unit index of each of its code points; rebuilt only after a replacement. */
+  #view: { text: string; visible: number[] } | undefined;
 
   constructor(text: string) {
-    this.units = [...text].map((char) => ({ n: char, o: char }));
+    this.#units = [...text].map((char) => ({ n: char, o: char }));
+  }
+
+  get units(): Unit[] {
+    return this.#units;
+  }
+
+  set units(units: Unit[]) {
+    this.#units = units;
+    this.#view = undefined;
   }
 
   get text(): string {
-    return this.units.map((unit) => unit.n).join('');
+    return this.view().text;
+  }
+
+  /** Normalised code-point positions mapped to unit indexes; units with n === '' sit between positions. */
+  private view(): { text: string; visible: number[] } {
+    if (!this.#view) {
+      const visible: number[] = [];
+      this.#units.forEach((unit, index) => {
+        if (unit.n !== '') visible.push(index);
+      });
+      this.#view = { text: visible.map((index) => (this.#units[index] as Unit).n).join(''), visible };
+    }
+    return this.#view;
   }
 
   /** Replaces every match of `pattern` (a global regex) in the normalised text. */
   replace(pattern: RegExp, replacement: Replacement): void {
-    // Map normalised code-point positions to unit indexes; units with n === '' sit between positions.
-    const visible: number[] = [];
-    this.units.forEach((unit, index) => {
-      if (unit.n !== '') visible.push(index);
-    });
-    const text = visible.map((index) => (this.units[index] as Unit).n).join('');
+    const { text, visible } = this.view();
     // Most of the ~130 patterns match nothing: skip the position map for them.
     pattern.lastIndex = 0;
     if (!pattern.test(text)) return;

@@ -24,6 +24,7 @@ import {
   ContentRequestVote,
 } from '@app/models';
 import { assertUser } from '@app/middleware/authentication';
+import { escapeLikePattern } from '@app/controllers/mediaController';
 import { requestAllowance } from '@app/services/requests/allowance';
 import {
   boostRequest,
@@ -42,7 +43,7 @@ const OPEN_TAB_STATUSES: readonly ContentRequestStatus[] = [ContentRequestStatus
 
 /** `%` and `_` typed by a reader are text, not wildcards. */
 function titleLike(q: string): string {
-  return `%${q.trim().replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
+  return `%${escapeLikePattern(q.trim())}%`;
 }
 
 function applyRequestFilters(
@@ -127,9 +128,9 @@ export const createContentRequest: CreateContentRequest = async ({ body }, respo
 
 export const getContentRequestAllowance: GetContentRequestAllowance = async (_params, respond, req) => {
   const user = assertUser(req);
-  const allowance = await requestAllowance(user);
   const active = In([...ACTIVE_REQUEST_STATUSES]);
-  const [votes, boosts, own, ownCount, votedCount] = await Promise.all([
+  const [allowance, votes, boosts, own, ownCount, votedCount] = await Promise.all([
+    requestAllowance(user),
     ContentRequestVote.find({
       where: { userId: user.id, request: { status: active } },
       relations: { request: true },
@@ -183,10 +184,8 @@ export const listAdminContentRequests: ListAdminContentRequests = async ({ query
     .leftJoinAndSelect('r.requester', 'requester')
     .leftJoinAndSelect('r.possibleDuplicateOf', 'duplicateOf')
     .where('1 = 1');
-  if (query.status) qb.andWhere('r.status = :status', { status: query.status });
-  if (query.category) qb.andWhere('r.category = :category', { category: query.category });
+  applyRequestFilters(qb, { status: query.status, category: query.category, q: query.q });
   if (query.flagged) qb.andWhere('r.possibleDuplicateOfId IS NOT NULL');
-  if (query.q?.trim()) qb.andWhere('r.title ILIKE :q', { q: titleLike(query.q) });
   const [items, total] = await qb
     .orderBy('r.score', 'DESC')
     .addOrderBy('r.createdAt', 'ASC')

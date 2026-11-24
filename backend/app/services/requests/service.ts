@@ -10,12 +10,20 @@ import {
   ExternalSourceType,
   Media,
   MediaExternalId,
+  REQUEST_BOOST_WEIGHT,
   UserRoleType,
 } from '@app/models';
 import type { User } from '@app/models';
 import { AccessDeniedError, DuplicateKeyError, InvalidRequestError, NotFoundError } from '@app/errors';
 import { logger } from '@config/log';
-import { DAILY_REQUEST_LIMIT, OPEN_REQUEST_LIMIT, monthStart, openRequestCount, patronBenefits } from './allowance';
+import {
+  DAILY_REQUEST_LIMIT,
+  OPEN_REQUEST_LIMIT,
+  monthStart,
+  openRequestCount,
+  openRequestLimit,
+  patronBenefits,
+} from './allowance';
 import { parseRequestLink } from './links';
 import { lookupRequestMetadata } from './metadata';
 import { notifyRequestSubscribers } from './notifications';
@@ -63,7 +71,7 @@ export function toRequestJSON(request: ContentRequest): ContentRequestJSON {
     declineReason: request.status === ContentRequestStatus.DECLINED ? request.declineReason : null,
     voteCount: request.voteCount,
     boostCount: request.boostCount,
-    score: request.score ?? request.voteCount + request.boostCount * 5,
+    score: request.score ?? request.voteCount + request.boostCount * REQUEST_BOOST_WEIGHT,
     media: request.media
       ? { id: request.media.publicId, slug: request.media.slug, name: request.media.nameEn || request.media.nameRomaji }
       : null,
@@ -151,7 +159,8 @@ export async function createRequest(
     );
   }
 
-  const metadata = await lookupRequestMetadata(link, input.title);
+  // The allowance depends only on the account, so read it while the external metadata loads.
+  const [metadata, benefits] = await Promise.all([lookupRequestMetadata(link, input.title), patronBenefits(user)]);
   const resolvedId = link.externalId ?? metadata.externalId ?? null;
   // The identity a request is matched on: the same pair `MediaExternalId` stores for published media.
   const identity = resolvedId && link.externalSource ? { source: link.externalSource, id: resolvedId } : null;
@@ -165,9 +174,7 @@ export async function createRequest(
       })
     : null;
 
-  const benefits = await patronBenefits(user);
-  const openLimit =
-    user.role === UserRoleType.ADMIN ? null : benefits.isPatron ? OPEN_REQUEST_LIMIT.patron : OPEN_REQUEST_LIMIT.free;
+  const openLimit = openRequestLimit(user, benefits.isPatron);
 
   const result = await ContentRequest.getRepository().manager.transaction(async (manager) => {
     await lockAccount(manager, user.id);
@@ -407,22 +414,23 @@ export async function mergeRequests(duplicatePublicId: string, intoPublicId: str
  */
 export async function startRequestsForMedia(mediaId: number): Promise<number> {
   try {
-    const ids = await MediaExternalId.findBy({ mediaId });
-    if (!ids.length) return 0;
+    const externalIds = await MediaExternalId.findBy({ mediaId });
+    if (!externalIds.length) return 0;
     const requests = await ContentRequest.find({
-      where: ids.map((id) => ({
+      where: externalIds.map((id) => ({
         externalSource: id.source,
         externalId: id.externalId,
         kind: ContentRequestKind.NEW,
         status: In([ContentRequestStatus.OPEN, ContentRequestStatus.PLANNED]),
       })),
     });
-    for (const request of requests) {
-      const previous = request.status;
-      request.status = ContentRequestStatus.IN_PROGRESS;
-      request.mediaId = mediaId;
-      await request.save();
-      void notifyRequestSubscribers(await loadRequest({ id: request.id }), previous);
+    if (!requests.length) return 0;
+    const ids = requests.map((request) => request.id);
+    await ContentRequest.update({ id: In(ids) }, { status: ContentRequestStatus.IN_PROGRESS, mediaId });
+    const started = await ContentRequest.find({ where: { id: In(ids) }, relations: { media: true } });
+    const previous = new Map(requests.map((request) => [request.id, request.status]));
+    for (const request of started) {
+      void notifyRequestSubscribers(request, previous.get(request.id) ?? ContentRequestStatus.OPEN);
     }
     return requests.length;
   } catch (err) {

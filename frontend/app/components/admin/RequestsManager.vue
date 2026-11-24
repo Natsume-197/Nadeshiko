@@ -10,13 +10,17 @@ import {
   mdiOpenInNew,
   mdiThumbUpOutline,
 } from '@mdi/js';
+import { useTimeoutFn } from '@vueuse/core';
+import type { AdminContentRequest as AdminRequest } from '@brigadasos/nadeshiko-sdk';
 import RequestMediaPicker from '~/components/admin/RequestMediaPicker.vue';
 import RequestCover from '~/components/requests/RequestCover.vue';
 import { handleApiError } from '~/utils/apiError';
 import {
+  REQUEST_BOOST_WEIGHT,
   REQUEST_CATEGORIES as CATEGORIES,
   REQUEST_CATEGORY_ICONS as CATEGORY_ICONS,
   type RequestCategory as Category,
+  formatRequestDate,
   type RequestStatus as Status,
 } from '~/utils/contentRequests';
 import { httpUrl } from '~/utils/strings';
@@ -26,28 +30,6 @@ import { httpUrl } from '~/utils/strings';
  * statuses (IN_PROGRESS and RELEASED email voters), declining with a public reason, linking published media, and
  * merging duplicates. English only, like the rest of the admin panel.
  */
-
-interface AdminRequest {
-  id: string;
-  category: Category;
-  kind: 'NEW' | 'UPDATE';
-  status: Status;
-  title: string;
-  note: string;
-  sourceUrl: string;
-  coverUrl: string | null;
-  declineReason: string | null;
-  voteCount: number;
-  boostCount: number;
-  score: number;
-  media: { id: string; slug: string; name: string } | null;
-  createdAt: string;
-  releasedAt: string | null;
-  externalSource: string | null;
-  externalId: string | null;
-  requester: { id: number; username: string } | null;
-  possibleDuplicateOf: { id: string; title: string; status: Status } | null;
-}
 
 interface EditDraft {
   status: Status;
@@ -106,13 +88,10 @@ const STATUS_META: ReadonlyArray<{
   },
 ];
 
-const STATUS_META_BY_STATUS: Record<Status, (typeof STATUS_META)[number]> = {
-  OPEN: STATUS_META[0] as (typeof STATUS_META)[number],
-  PLANNED: STATUS_META[1] as (typeof STATUS_META)[number],
-  IN_PROGRESS: STATUS_META[2] as (typeof STATUS_META)[number],
-  RELEASED: STATUS_META[3] as (typeof STATUS_META)[number],
-  DECLINED: STATUS_META[4] as (typeof STATUS_META)[number],
-};
+const STATUS_META_BY_STATUS = Object.fromEntries(STATUS_META.map((meta) => [meta.status, meta])) as Record<
+  Status,
+  (typeof STATUS_META)[number]
+>;
 
 const CATEGORY_LABELS: Record<Category, string> = {
   ANIME: 'Anime',
@@ -135,16 +114,14 @@ const filters = reactive({
   q: '',
 });
 const searchInput = ref('');
-let searchTimer: ReturnType<typeof setTimeout> | undefined;
-watch(searchInput, (value) => {
-  clearTimeout(searchTimer);
-  searchTimer = setTimeout(() => {
-    filters.q = value.trim();
-  }, 250);
-});
-onScopeDispose(() => {
-  clearTimeout(searchTimer);
-});
+const { start: scheduleSearch, stop: cancelSearch } = useTimeoutFn(
+  () => {
+    filters.q = searchInput.value.trim();
+  },
+  250,
+  { immediate: false },
+);
+watch(searchInput, () => scheduleSearch());
 
 const page = ref(1);
 const items = ref<AdminRequest[]>([]);
@@ -232,14 +209,8 @@ function plural(count: number, one: string, many: string): string {
   return `${count} ${count === 1 ? one : many}`;
 }
 
-const shortDateFormat = new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric', timeZone: 'UTC' });
-const fullDateFormat = new Intl.DateTimeFormat('en', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' });
 function formatShortDate(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
-  return date.getUTCFullYear() === new Date().getUTCFullYear()
-    ? shortDateFormat.format(date)
-    : fullDateFormat.format(date);
+  return formatRequestDate(value, 'en');
 }
 
 function syncDraft(item: AdminRequest) {
@@ -460,7 +431,7 @@ async function copyId(id: string) {
 }
 
 function clearSearch() {
-  clearTimeout(searchTimer);
+  cancelSearch();
   searchInput.value = '';
   filters.q = '';
 }
@@ -627,7 +598,7 @@ function clearSearch() {
                   <span
                     class="inline-flex shrink-0 items-center gap-0.5 text-xs font-bold tabular-nums"
                     :class="item.boostCount > 0 ? 'text-amber-300' : 'text-ink-muted'"
-                    :title="`${plural(item.voteCount, 'vote', 'votes')}${item.boostCount ? ` + ${plural(item.boostCount, 'boost', 'boosts')} (+${item.boostCount * 5})` : ''}`"
+                    :title="`${plural(item.voteCount, 'vote', 'votes')}${item.boostCount ? ` + ${plural(item.boostCount, 'boost', 'boosts')} (+${item.boostCount * REQUEST_BOOST_WEIGHT})` : ''}`"
                   >
                     <UiBaseIcon :path="item.boostCount > 0 ? mdiChevronDoubleUp : mdiThumbUpOutline" w="w-3.5" h="h-3.5" size="12" />
                     {{ item.score }}

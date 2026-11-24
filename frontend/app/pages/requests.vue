@@ -18,11 +18,19 @@ import {
   mdiThumbUpOutline,
   mdiViewColumnOutline,
 } from '@mdi/js';
+import { useTimeoutFn } from '@vueuse/core';
+import type {
+  ContentRequest,
+  GetContentRequestAllowanceResponse as Allowance,
+} from '@brigadasos/nadeshiko-sdk';
 import RequestCover from '~/components/requests/RequestCover.vue';
 import { apiErrorStatus, handleApiError } from '~/utils/apiError';
 import {
+  ACTIVE_REQUEST_STATUSES,
+  REQUEST_BOOST_WEIGHT,
   REQUEST_CATEGORIES as CATEGORIES,
   REQUEST_CATEGORY_ICONS as CATEGORY_ICONS,
+  formatRequestDate,
   type RequestCategory as Category,
   type RequestStatus as Status,
 } from '~/utils/contentRequests';
@@ -38,37 +46,7 @@ type PublicTab = 'ACTIVE' | 'IN_PROGRESS' | 'RELEASED' | 'DECLINED';
 type PersonalTab = 'MINE' | 'VOTED';
 type PersonalStatus = 'ALL' | PublicTab;
 type ListStatus = PublicTab | PersonalTab;
-interface ContentRequest {
-  id: string;
-  category: Category;
-  kind: 'NEW' | 'UPDATE';
-  status: Status;
-  title: string;
-  note: string;
-  sourceUrl: string;
-  coverUrl: string | null;
-  declineReason: string | null;
-  voteCount: number;
-  boostCount: number;
-  score: number;
-  media: { id: string; slug: string; name: string } | null;
-  createdAt: string;
-  releasedAt: string | null;
-}
-interface Allowance {
-  isPatron: boolean;
-  openCount: number;
-  openLimit: number | null;
-  ownCount?: number;
-  votedCount?: number;
-  boosts: { perMonth: number; used: number; remaining: number; resetsAt: string };
-  votedIds: string[];
-  boostedIds: string[];
-  ownIds: string[];
-}
-
 const PAGE_SIZE = 24;
-const BOOST_WEIGHT = 5;
 const PUBLIC_TABS: readonly PublicTab[] = ['ACTIVE', 'IN_PROGRESS', 'RELEASED', 'DECLINED'];
 const PERSONAL_TABS: readonly PersonalTab[] = ['MINE', 'VOTED'];
 const PERSONAL_STATUSES: readonly PersonalStatus[] = ['ALL', 'ACTIVE', 'IN_PROGRESS', 'RELEASED', 'DECLINED'];
@@ -78,7 +56,7 @@ function isPersonalTab(status: ListStatus): status is PersonalTab {
 }
 
 function isActiveItem(item: ContentRequest): boolean {
-  return item.status === 'OPEN' || item.status === 'PLANNED' || item.status === 'IN_PROGRESS';
+  return ACTIVE_REQUEST_STATUSES.includes(item.status);
 }
 /** The "how requests work" cards, in order, with their semantic icon and accent tint. */
 const HOW_ITEMS = [
@@ -117,17 +95,15 @@ const filters = reactive({
   page: 1,
 });
 const search = ref(initialQuery);
-let searchTimer: ReturnType<typeof setTimeout> | undefined;
-watch(search, (value) => {
-  clearTimeout(searchTimer);
-  searchTimer = setTimeout(() => {
-    filters.q = value.trim();
+const { start: scheduleSearch, stop: cancelSearch } = useTimeoutFn(
+  () => {
+    filters.q = search.value.trim();
     filters.page = 1;
-  }, 300);
-});
-onScopeDispose(() => {
-  clearTimeout(searchTimer);
-});
+  },
+  300,
+  { immediate: false },
+);
+watch(search, () => scheduleSearch());
 
 const { data, error, pending, refresh } = await useAsyncData(
   'content-requests',
@@ -196,7 +172,7 @@ function setSort(sort: 'TOP' | 'RECENT') {
 }
 
 function clearSearch() {
-  clearTimeout(searchTimer);
+  cancelSearch();
   search.value = '';
   filters.q = '';
   filters.page = 1;
@@ -234,8 +210,7 @@ watch(
 
 function personalCount(tab: PersonalTab): number {
   if (!allowance.value) return 0;
-  if (tab === 'MINE') return allowance.value.ownCount ?? own.value.size;
-  return allowance.value.votedCount ?? new Set([...allowance.value.votedIds, ...allowance.value.boostedIds]).size;
+  return tab === 'MINE' ? allowance.value.ownCount : allowance.value.votedCount;
 }
 
 // The form, help modal, confirmation dialogs, and non-patron boost nudge.
@@ -260,33 +235,24 @@ function normalizedLink(raw: string): string {
   return /^(B0[0-9A-Z]{8}|\d{9}[\dX])$/i.test(value) ? `https://www.audible.co.jp/pd/${value.toUpperCase()}` : value;
 }
 
-const SUPPORTED_HOSTS =
-  /^(?:www\.|m\.)?(?:anilist\.co|themoviedb\.org|mydramalist\.com|audible\.[a-z.]+|amazon\.[a-z.]+|youtube\.com|youtu\.be|music\.youtube\.com)$/i;
-
-function isSupportedLink(raw: string): boolean {
+/** The category a supported link (or bare ASIN) files under, or null for an unsupported or malformed link. */
+function categoryOf(raw: string): Category | null {
   try {
     const url = new URL(normalizedLink(raw));
-    return (url.protocol === 'https:' || url.protocol === 'http:') && SUPPORTED_HOSTS.test(url.hostname);
-  } catch {
-    return false;
-  }
-}
-
-/** Live category hint for the request form as the reader pastes a link or ASIN. */
-const detectedCategory = computed<Category | null>(() => {
-  try {
-    const url = new URL(normalizedLink(sourceUrl.value));
     if (url.protocol !== 'https:' && url.protocol !== 'http:') return null;
     const host = url.hostname.toLowerCase().replace(/^(?:www\.|m\.)/, '');
     if (host === 'anilist.co') return 'ANIME';
     if (host === 'themoviedb.org' || host === 'mydramalist.com') return 'JDRAMA';
-    if (host.startsWith('audible.') || host.startsWith('amazon.')) return 'AUDIOBOOK';
+    if (/^(?:audible|amazon)\.[a-z.]+$/.test(host)) return 'AUDIOBOOK';
     if (host === 'youtube.com' || host === 'youtu.be' || host === 'music.youtube.com') return 'YOUTUBE';
     return null;
   } catch {
     return null;
   }
-});
+}
+
+/** Live category hint for the request form as the reader pastes a link or ASIN. */
+const detectedCategory = computed(() => categoryOf(sourceUrl.value));
 
 function rankTone(rank: number | null): string {
   if (rank === 1) return 'text-amber-300';
@@ -326,7 +292,7 @@ function resetForm() {
 
 async function submitRequest() {
   formError.value = null;
-  if (!isSupportedLink(sourceUrl.value)) {
+  if (!detectedCategory.value) {
     formError.value = t('requests.form.unsupported');
     return;
   }
@@ -410,9 +376,7 @@ async function toggleVote(item: ContentRequest) {
     allowance.value = {
       ...allowance.value,
       votedIds: [...nextVoted],
-      ...(allowance.value.votedCount !== undefined && !alreadyBoosted
-        ? { votedCount: Math.max(0, allowance.value.votedCount + delta) }
-        : {}),
+      ...(alreadyBoosted ? {} : { votedCount: Math.max(0, allowance.value.votedCount + delta) }),
     };
   }
   if (!remove && !canBoost.value && !boostNudgeDismissed.value && item.status !== 'IN_PROGRESS') {
@@ -500,8 +464,6 @@ function showBoostControl(item: ContentRequest): boolean {
 }
 const dateFormats = computed(() => ({
   longMonthDay: new Intl.DateTimeFormat(locale.value, { month: 'long', day: 'numeric', timeZone: 'UTC' }),
-  short: new Intl.DateTimeFormat(locale.value, { month: 'short', day: 'numeric', timeZone: 'UTC' }),
-  full: new Intl.DateTimeFormat(locale.value, { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' }),
 }));
 
 const resetDate = computed(() =>
@@ -509,11 +471,7 @@ const resetDate = computed(() =>
 );
 
 function formatShortDate(iso: string): string {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return '';
-  return date.getUTCFullYear() === new Date().getUTCFullYear()
-    ? dateFormats.value.short.format(date)
-    : dateFormats.value.full.format(date);
+  return formatRequestDate(iso, locale.value);
 }
 
 function rowDate(item: ContentRequest): { iso: string; label: string } | null {
@@ -539,7 +497,7 @@ function statusLabel(status: Status) {
 function scoreBreakdown(item: ContentRequest): string {
   const votes = t('requests.votes', { count: item.voteCount });
   if (!item.boostCount) return votes;
-  return `${votes} + ${t('requests.boosts', { count: item.boostCount })} (+${item.boostCount * BOOST_WEIGHT})`;
+  return `${votes} + ${t('requests.boosts', { count: item.boostCount })} (+${item.boostCount * REQUEST_BOOST_WEIGHT})`;
 }
 
 /** Place in the most-wanted ranking, shown on the poster; only meaningful for open requests sorted by score. */

@@ -13,7 +13,7 @@ import {
   known,
   SECTION,
 } from '../group';
-import { deconjugationKey } from '../kana';
+import { deconjugationKey, GODAN_RENYOU_TO_DICT_END } from '../kana';
 import type { CombineContext, Group, WordClass } from '../types';
 
 const VIA = 'CombineInflections';
@@ -24,18 +24,7 @@ const findEndingWith = (forms: readonly DeconjugatedForm[], suffix: string) =>
 /** `TryGodanDictForm`: a godan 連用形 ending back to its dictionary ending (切り → 切る). */
 export function tryGodanDictForm(text: string): string | null {
   if (text.length < 2) return null;
-  const ending: Record<string, string> = {
-    い: 'う',
-    き: 'く',
-    ぎ: 'ぐ',
-    し: 'す',
-    ち: 'つ',
-    に: 'ぬ',
-    び: 'ぶ',
-    み: 'む',
-    り: 'る',
-  };
-  const dict = ending[text.at(-1) as string];
+  const dict = GODAN_RENYOU_TO_DICT_END[text.at(-1) as string];
   return dict ? text.slice(0, -1) + dict : null;
 }
 

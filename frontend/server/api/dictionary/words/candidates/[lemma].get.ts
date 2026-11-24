@@ -9,13 +9,10 @@ import {
 } from '~~/server/utils/dictionary';
 import { customDictionaryStack, readerCookie } from '~~/server/utils/dictionaryReader';
 import { distinctNameAnswers, withoutNameEntries } from '~~/server/utils/dictionaryNames';
-import { DICTIONARY_CACHE_SECONDS, dictionaryUnavailable } from '~~/server/utils/dictionaryRoute';
+import { DICTIONARY_CACHE_SECONDS, dictionaryLocale, dictionaryUnavailable } from '~~/server/utils/dictionaryRoute';
 
 // Identify with reading/POS hints: bare-lemma lookup ignores homograph context. Return ranked alternatives because
 // the reader may need to choose. This route owns caching, custom-dictionary bypass and HTTP statuses.
-
-// Clamp label locales to supported values; definitions include all languages and callers select their own.
-const LABEL_LOCALES = new Set<WordQuery['locale']>(['en', 'es']);
 
 // Everything the answer depends on. The cache key is built from this alone, so parameters the handler never
 // reads (including the browser's `stack` key) cannot split shared entries.
@@ -24,8 +21,8 @@ function lookupQuery(event: H3Event): WordQuery | null {
   if (!lemma) return null;
 
   const params = getQuery(event);
-  const requested = String(params.locale ?? '') as WordQuery['locale'];
-  const locale = LABEL_LOCALES.has(requested) ? requested : 'en';
+  // Clamp label locales to supported values; definitions include all languages and callers select their own.
+  const locale = dictionaryLocale(params.locale);
 
   // Omit blank hints; unknown differs from an explicit empty value.
   const query: WordQuery = { lemma, locale };

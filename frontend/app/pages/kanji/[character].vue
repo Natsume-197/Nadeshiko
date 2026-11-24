@@ -4,7 +4,13 @@ import KanjiStrokes from '~/components/search/segment/KanjiStrokes.vue';
 import WordCardKanji from '~/components/search/segment/WordCardKanji.vue';
 import { stripUnreadTokenFields } from '~/composables/useSearchFetch';
 import MarkedKanji from '~/components/search/segment/MarkedKanji.vue';
-import { type KanjiCardData, type KanjiCardWordRef, kanjiBadges, splitReading } from '~/utils/kanjiLookup';
+import {
+  type KanjiCardData,
+  type KanjiCardWordRef,
+  kanjiBadges,
+  meaningsTag as kanjiMeaningsTag,
+  splitReading,
+} from '~/utils/kanjiLookup';
 import { DEFAULT_OG_IMAGE_PATH } from '~/utils/metaTags';
 import { buildKanjiPath, buildWordSearchPath } from '~/utils/routes';
 import { glossLanguageFor } from '~/utils/wordCard';
@@ -107,9 +113,7 @@ const { formatNumber } = useFormat();
 useRobotsRule(isJoyoKanji(character.value) ? undefined : 'noindex, follow');
 
 const badges = computed(() => (card.value ? kanjiBadges(card.value, t) : []));
-const meaningsTag = computed(() =>
-  card.value && card.value.meaningsLanguage !== glossLocale.value ? card.value.meaningsLanguage.toUpperCase() : null,
-);
+const meaningsTag = computed(() => kanjiMeaningsTag(card.value, glossLocale.value));
 /** A still from the first sentence, for link previews only. */
 const shareImage = computed(() => allSentences.value?.results[0]?.segment.urls.imageUrl ?? null);
 
@@ -172,7 +176,7 @@ const sentences = computed(() => (activeTab.value === null ? allSentences.value 
 const allWords = ref(false);
 /** The frequent words, less those the readings list already shows as examples. */
 const otherWords = computed(() => {
-  const shown = new Set((card.value?.readings ?? []).flatMap((entry) => entry.examples.map((example) => example.headword)));
+  const shown = new Set(readingWords);
   return (card.value?.words ?? []).filter((word) => !shown.has(word.headword));
 });
 const shownWords = computed(() => (allWords.value ? otherWords.value : otherWords.value.slice(0, WORDS_SHOWN)));

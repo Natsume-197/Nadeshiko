@@ -22,7 +22,12 @@
  *    repair).
  */
 
-import { GODAN_VERB_ENDINGS, GODAN_VOLITIONAL_O_KANA, VERB_INDICATING_AUXILIARIES } from '../data/ruleData';
+import {
+  CASE_PARTICLES,
+  GODAN_VERB_ENDINGS,
+  GODAN_VOLITIONAL_O_KANA,
+  VERB_INDICATING_AUXILIARIES,
+} from '../data/ruleData';
 import { deconj, isNonWordToken, isNounClass, isSymbolClass, known, knownVerbOrAdjective } from '../group';
 import {
   deconjugationKey,
@@ -38,6 +43,7 @@ import {
   toHiragana,
   toKatakana,
   vowelRow,
+  GODAN_RENYOU_TO_DICT_END,
 } from '../kana';
 import { type Piece, recut, scanRewrite } from '../recut';
 import { chars, cpLength, dropLast, lastChar } from '../text';
@@ -582,7 +588,6 @@ export function repairNounReadAsTeForm(groups: Group[], ctx: CombineContext): Gr
   });
 }
 
-const CASE_PARTICLES = new Set(['に', 'を', 'が', 'へ', 'で', 'と', 'は', 'も', 'か', 'から', 'より', 'まで', 'の']);
 const COMMON_TE_FORM_VERBS = new Set([
   'なる',
   'する',
@@ -829,10 +834,7 @@ export function repairQuotativeTte(groups: Group[], ctx: CombineContext): Group[
         (prev.cls === 'Particle' && ['が', 'に', 'は', 'も'].includes(prev.s)))
     ) {
       result.push(
-        ...recut(groups, i, 1, [
-          { s: 'いた', from: word, d: 'いる', n: 'いる', cls: 'Verb', r: 'イタ' },
-          { s: 'って', from: word, d: 'って', n: 'って', cls: 'Particle', r: 'ッテ' },
-        ]),
+        ...recut(groups, i, 1, [{ s: 'いた', from: word, d: 'いる', n: 'いる', cls: 'Verb', r: 'イタ' }, tte(word)]),
       );
       changed = true;
       continue;
@@ -1609,18 +1611,6 @@ export function repairFusedInterjectionParticle(groups: Group[], ctx: CombineCon
   });
 }
 
-const RENYOU_TO_DICT_END: Record<string, string> = {
-  し: 'す',
-  り: 'る',
-  き: 'く',
-  ぎ: 'ぐ',
-  み: 'む',
-  び: 'ぶ',
-  に: 'ぬ',
-  ち: 'つ',
-  い: 'う',
-};
-
 /** RepairOrphanedAuxiliary: a verb Sudachi read into the noun before an auxiliary (言い出し|た, 首|吊ら|れる
  * read as 首吊|ら|れる) gets its verb back. */
 export function repairOrphanedAuxiliary(groups: Group[], ctx: CombineContext): Group[] {
@@ -1644,7 +1634,7 @@ export function repairOrphanedAuxiliary(groups: Group[], ctx: CombineContext): G
       cpLength(prev.s) >= 2 &&
       prev.d === prev.s
     ) {
-      const end = RENYOU_TO_DICT_END[lastChar(prev.s)];
+      const end = GODAN_RENYOU_TO_DICT_END[lastChar(prev.s)];
       if (end) {
         const verbDict = dropLast(prev.s) + end;
         if (/[一-龯]/.test(verbDict) && known(ctx, verbDict)) {
@@ -1807,12 +1797,7 @@ export function repairTteNani(groups: Group[], _ctx: CombineContext): Group[] {
   return scanRewrite(groups, (list, i, emit) => {
     const word = list[i] as Group;
     if (word.s === 'ってな' && list[i + 1]?.s === 'に') {
-      emit().push(
-        ...recut(list, i, 2, [
-          { s: 'って', from: word, d: 'って', n: 'って', r: 'ッテ', cls: 'Particle' },
-          nani(list[i + 1] as Group),
-        ]),
-      );
+      emit().push(...recut(list, i, 2, [tte(word), nani(list[i + 1] as Group)]));
       return 2;
     }
     if (word.s === 'って' && list[i + 1]?.s === 'な' && list[i + 2]?.s === 'に') {

@@ -187,6 +187,23 @@ export const LEXICALIZED_ADVERB_PAIRS: ReadonlySet<string> = new Set([
 
 export const NOUN_COMPOUND_EXCLUSIONS: ReadonlySet<string> = new Set(['おつもり', 'ものたち', '雪の下']);
 
+/** Case and binding particles a special-case or repair rule stops at. */
+export const CASE_PARTICLES: ReadonlySet<string> = new Set([
+  'に',
+  'を',
+  'が',
+  'へ',
+  'で',
+  'と',
+  'は',
+  'も',
+  'か',
+  'から',
+  'より',
+  'まで',
+  'の',
+]);
+
 export const HONORIFIC_SUFFIXES: ReadonlySet<string> = new Set(['さん', 'くん', 'ちゃん', '様', '殿', '氏']);
 
 export const SPECIAL_CASES_3: ReadonlyArray<readonly [string, string, string, WordClass]> = [
@@ -364,6 +381,28 @@ export const SPECIAL_CASES_2: ReadonlyArray<readonly [string, string, WordClass]
   ['いい', 'ぞ', 'Interjection'],
   ['に', 'よって', 'Expression'],
 ];
+
+/** SPECIAL_CASES_2 indexed by first token, in file order: what `CombineFinal` and the special-case stage look up. */
+export const SPECIAL_2: ReadonlyMap<string, ReadonlyArray<{ second: string; cls: WordClass }>> = (() => {
+  const index = new Map<string, Array<{ second: string; cls: WordClass }>>();
+  for (const [first, second, cls] of SPECIAL_CASES_2) {
+    const list = index.get(first) ?? [];
+    list.push({ second, cls });
+    index.set(first, list);
+  }
+  return index;
+})();
+
+/** SPECIAL_CASES_3 indexed by first token, in file order. */
+export const SPECIAL_3: ReadonlyMap<string, ReadonlyArray<{ second: string; third: string; cls: WordClass }>> = (() => {
+  const index = new Map<string, Array<{ second: string; third: string; cls: WordClass }>>();
+  for (const [first, second, third, cls] of SPECIAL_CASES_3) {
+    const list = index.get(first) ?? [];
+    list.push({ second, third, cls });
+    index.set(first, list);
+  }
+  return index;
+})();
 
 /** `AuxiliaryVerbStems`: the stem a split-off auxiliary verb's surface must start with. */
 export const AUXILIARY_VERB_STEMS: ReadonlyMap<string, string> = new Map([

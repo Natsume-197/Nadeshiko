@@ -278,7 +278,7 @@ function readingOf(word: StoredWord, headword: StoredForm, query: IdentifyQuery)
 }
 
 /** English senses only, in upstream order; one definition per gloss, as the card expects. */
-function sensesOf(word: StoredWord, _locale: 'en' | 'es', tags: Record<string, string>) {
+function sensesOf(word: StoredWord, tags: Record<string, string>) {
   const label = (code: string) => tags[code] ?? code;
   const ordered = word.senses.filter((sense) => sense.lang === 'eng').sort((a, b) => a.idx - b.idx);
   return ordered.map((sense, position) => {
@@ -343,14 +343,11 @@ function interleaved(forms: StoredForm[]): StoredForm[] {
 /** One stored word in the card's shape. `furigana` maps "spelling\0reading" to its ruby and `pitch` to its
  * downsteps. */
 function toCandidate(
-  word: StoredWord,
-  query: IdentifyQuery,
+  { word, headword, reading }: { word: StoredWord; headword?: StoredForm; reading?: StoredForm },
   tags: Record<string, string>,
   furigana: Map<string, Array<{ text: string; ruby?: string }>>,
   pitch: Map<string, number[]> = new Map(),
 ): DictionaryCandidate {
-  const headword = headwordOf(word, query);
-  const reading = headword ? readingOf(word, headword, query) : undefined;
   // A kana headword gets one ruby-less segment: the card then prints the word alone instead of
   // repeating it in katakana beside itself.
   const ruby =
@@ -385,7 +382,7 @@ function toCandidate(
       script: form.kana ? ('kana' as const) : ('kanji' as const),
       common: form.common,
     })),
-    entries: [{ dictionary: word.source, dictionaryName, senses: sensesOf(word, query.locale, tags) }],
+    entries: [{ dictionary: word.source, dictionaryName, senses: sensesOf(word, tags) }],
   };
 }
 
@@ -520,9 +517,11 @@ export function asciiVariants(text: string): string[] {
 
 /** Ranked candidates for one token, best first; empty when nothing matches. */
 export async function identifyWord(dataSource: DataSource, query: IdentifyQuery): Promise<DictionaryCandidate[]> {
-  const [lemmaWords, surfaceWords] = await Promise.all([
+  // The words the surface may be an inflection of depend only on the query, so they load alongside the rest.
+  const [lemmaWords, surfaceWords, baseWords] = await Promise.all([
     loadWords(dataSource, lookupKeys(query.lemma)),
     query.surface && query.surface !== query.lemma ? loadWords(dataSource, lookupKeys(query.surface)) : [],
+    baseFormWords(dataSource, query),
   ]);
   let words = lemmaWords;
   // A lemma the dictionary does not know (Sudachi's lemma for a merged token, say) can still be found by surface.
@@ -536,7 +535,7 @@ export async function identifyWord(dataSource: DataSource, query: IdentifyQuery)
   // caller can say "a form of 食べる" rather than present 食べる as what was looked up.
   let fromBase = new Set<number>();
   if (words.length === 0) {
-    words = await baseFormWords(dataSource, query, new Set());
+    words = baseWords;
     fromBase = new Set(words.map((word) => word.id));
   }
   if (words.length === 0) return [];
@@ -556,7 +555,8 @@ export async function identifyWord(dataSource: DataSource, query: IdentifyQuery)
 
   ranked.splice(0, ranked.length, ...rowFilter(ranked));
   // Other words the surface may be an inflection of, after ours: 分かった can also be 分かつ, 食べられない 食べられる.
-  const others = await baseFormWords(dataSource, query, new Set(ranked.map((word) => word.id)));
+  const rankedIds = new Set(ranked.map((word) => word.id));
+  const others = baseWords.filter((word) => !rankedIds.has(word.id));
   for (const word of others) if (ranked.length < MAX_CANDIDATES) ranked.push(word);
 
   const picks = ranked.map((word) => {
@@ -574,7 +574,7 @@ export async function identifyWord(dataSource: DataSource, query: IdentifyQuery)
   );
   type RubyRow = { text: string; reading: string; segments: Array<{ text: string; ruby?: string }> };
   type PitchRow = { text: string; reading: string; downsteps: number[] };
-  const [tags, rubyRows, pitchRows] = await Promise.all([
+  const [tags, rubyRows, pitchRows, parts, byCategory] = await Promise.all([
     tagLabels(dataSource),
     pairs.length === 0
       ? ([] as RubyRow[])
@@ -597,21 +597,19 @@ export async function identifyWord(dataSource: DataSource, query: IdentifyQuery)
             ORDER BY p.source = 'unidic'`,
           [JSON.stringify(pitchPairs)],
         ) as Promise<PitchRow[]>),
-  ]);
-  const furigana = new Map(rubyRows.map((row) => [pairKey(row.text, row.reading), row.segments]));
-  const pitch = new Map(pitchRows.map((row) => [pairKey(row.text, row.reading), row.downsteps]));
-
-  const candidates = ranked.map((word) => toCandidate(word, queryFor(word), tags, furigana, pitch));
-  const [parts, byCategory] = await Promise.all([
     partsOf(
       dataSource,
-      candidates.map((candidate) => candidate.headword),
+      picks.map(({ headword }) => headword?.text ?? ''),
     ),
     categoryFrequency(
       dataSource,
       ranked.map((word) => word.id),
     ),
   ]);
+  const furigana = new Map(rubyRows.map((row) => [pairKey(row.text, row.reading), row.segments]));
+  const pitch = new Map(pitchRows.map((row) => [pairKey(row.text, row.reading), row.downsteps]));
+
+  const candidates = picks.map((pick) => toCandidate(pick, tags, furigana, pitch));
   return candidates.map((candidate, index) => {
     const found = parts[index];
     const split = byCategory.get(ranked[index]?.id ?? -1);
@@ -696,11 +694,11 @@ export function rowFilter(ranked: StoredWord[]): StoredWord[] {
 }
 
 /**
- * JMdict words the token's surface is an inflection of, other than the ones already ranked: every base form the
+ * JMdict words the token's surface is an inflection of, best first: every base form the
  * deconjugator reaches whose grammatical tag one of the word's senses carries (分かった: 分かつ v5t; 食べられない:
  * 食べられる v1; 初めて: 初める), offered in the candidate row. Stems and made-up forms (分かう) find nothing.
  */
-async function baseFormWords(dataSource: DataSource, query: IdentifyQuery, ranked: Set<number>): Promise<StoredWord[]> {
+async function baseFormWords(dataSource: DataSource, query: IdentifyQuery): Promise<StoredWord[]> {
   // The surface as met, or the lemma when the token is already a dictionary form: 初めて can still be 初める's
   // te-form, 本当に 本当 with に.
   const surface = query.surface || query.lemma;
@@ -720,7 +718,7 @@ async function baseFormWords(dataSource: DataSource, query: IdentifyQuery, ranke
   if (tagsByText.size === 0) return [];
   const words = await loadWords(dataSource, [...tagsByText.keys()]);
   return words
-    .filter((word) => word.source === 'jmdict' && word.active && !ranked.has(word.id) && !isName(word))
+    .filter((word) => word.source === 'jmdict' && word.active && !isName(word))
     .map((word) => {
       const text = [...tagsByText.keys()].find((key) => word.forms.some((form) => form.text === key && usable(form)));
       const tags = text ? tagsByText.get(text) : undefined;

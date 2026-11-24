@@ -49,7 +49,7 @@ export function collocationParticle(text: string): string | undefined {
   return ['を', 'に', 'が', 'で', 'から', 'と', 'へ', 'まで'].includes(text) ? text : undefined;
 }
 
-const collocationKey = (noun: string, particle: string, verbKana: string) =>
+export const collocationKey = (noun: string, particle: string, verbKana: string) =>
   `${noun}\u0000${particle}\u0000${verbKana}`;
 
 /** One JMdict word under a kanji spelling: the kana readings that apply to that spelling, in JMdict order. The

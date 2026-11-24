@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import type { Kanjidic2, Kanjidic2Character, Kradfile } from '@scriptin/jmdict-simplified-types';
 import type { DataSource } from 'typeorm';
 import { inTransaction, recordSource } from './db';
+import { hasKanji } from './entries';
 
 /**
  * The kanji card's data (task 44), one importer per upstream source. Each replaces its own table in one transaction
@@ -94,7 +95,7 @@ export function kanjiVgCharacter(fileName: string): string | null {
   if (!match?.[1]) return null;
   const character = String.fromCodePoint(Number.parseInt(match[1], 16));
   // Only CJK ideographs; KanjiVG also draws kana, Latin letters and punctuation.
-  return /\p{Script=Han}/u.test(character) ? character : null;
+  return hasKanji(character) ? character : null;
 }
 
 async function replaceTable(

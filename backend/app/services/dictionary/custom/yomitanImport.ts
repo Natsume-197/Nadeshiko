@@ -108,6 +108,21 @@ export function parseYomitanIndexJson(rawText: string): YomitanIndex {
   };
 }
 
+/** The archive's `index.json` entry (at the root or one folder down) and its parsed contents. */
+async function readIndex(
+  reader: ZipReader,
+  entries: readonly ZipEntry[],
+): Promise<{ indexEntry: ZipEntry; index: YomitanIndex }> {
+  const indexEntry = reader.getEntry('index.json') ?? entries.find((e) => e.name.endsWith('/index.json'));
+  if (!indexEntry) {
+    throw new YomitanValidationError('Archive is missing index.json');
+  }
+  return { indexEntry, index: parseYomitanIndexJson(await reader.readEntryText(indexEntry, MAX_INDEX_BYTES)) };
+}
+
+const noSupportedBanks = () =>
+  new YomitanValidationError('Archive contains no supported Yomitan banks (term_bank_*.json or term_meta_bank_*.json)');
+
 /**
  * Quickly inspects `index.json` and verifies the archive contains at least one supported bank (`term_bank_*.json` or
  * `term_meta_bank_*.json`) without decompressing any bank files.
@@ -116,19 +131,11 @@ export async function inspectYomitanZip(zipPath: string): Promise<YomitanIndex> 
   const reader = await ZipReader.open(zipPath);
   try {
     const entries = reader.listEntries();
-    const indexEntry = reader.getEntry('index.json') ?? entries.find((e) => e.name.endsWith('/index.json'));
-    if (!indexEntry) {
-      throw new YomitanValidationError('Archive is missing index.json');
-    }
-
-    const indexText = await reader.readEntryText(indexEntry, MAX_INDEX_BYTES);
-    const index = parseYomitanIndexJson(indexText);
+    const { indexEntry, index } = await readIndex(reader, entries);
 
     const hasSupportedBank = entries.some((e) => TERM_BANK_RE.test(e.name) || TERM_META_BANK_RE.test(e.name));
     if (!hasSupportedBank) {
-      throw new YomitanValidationError(
-        'Archive contains no supported Yomitan banks (term_bank_*.json or term_meta_bank_*.json)',
-      );
+      throw noSupportedBanks();
     }
 
     return index;
@@ -232,6 +239,11 @@ function parsePitchPayload(raw: unknown): ParsedPitchMeta | null {
   return { reading, pitches };
 }
 
+/** The entries `re` matches, in bank-number order. */
+function banks(entries: readonly ZipEntry[], re: RegExp): ZipEntry[] {
+  return entries.filter((e) => re.test(e.name)).sort((a, b) => bankNumber(a.name, re) - bankNumber(b.name, re));
+}
+
 function bankNumber(name: string, re: RegExp): number {
   const match = re.exec(name);
   return match ? Number(match[1]) : 0;
@@ -262,28 +274,14 @@ export async function importYomitanZipToSqlite(
 
   try {
     const entries = reader.listEntries();
-    const indexEntry = reader.getEntry('index.json') ?? entries.find((e) => e.name.endsWith('/index.json'));
-    if (!indexEntry) {
-      throw new YomitanValidationError('Archive is missing index.json');
-    }
+    const { indexEntry, index } = await readIndex(reader, entries);
 
-    const indexText = await reader.readEntryText(indexEntry, MAX_INDEX_BYTES);
-    const index = parseYomitanIndexJson(indexText);
-
-    const tagBanks = entries
-      .filter((e) => TAG_BANK_RE.test(e.name))
-      .sort((a, b) => bankNumber(a.name, TAG_BANK_RE) - bankNumber(b.name, TAG_BANK_RE));
-    const termBanks = entries
-      .filter((e) => TERM_BANK_RE.test(e.name))
-      .sort((a, b) => bankNumber(a.name, TERM_BANK_RE) - bankNumber(b.name, TERM_BANK_RE));
-    const metaBanks = entries
-      .filter((e) => TERM_META_BANK_RE.test(e.name))
-      .sort((a, b) => bankNumber(a.name, TERM_META_BANK_RE) - bankNumber(b.name, TERM_META_BANK_RE));
+    const tagBanks = banks(entries, TAG_BANK_RE);
+    const termBanks = banks(entries, TERM_BANK_RE);
+    const metaBanks = banks(entries, TERM_META_BANK_RE);
 
     if (termBanks.length === 0 && metaBanks.length === 0) {
-      throw new YomitanValidationError(
-        'Archive contains no supported Yomitan banks (term_bank_*.json or term_meta_bank_*.json)',
-      );
+      throw noSupportedBanks();
     }
 
     // Declared sizes first, so an oversized archive fails before any work (they can lie; inflation re-checks).

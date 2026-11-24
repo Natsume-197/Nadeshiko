@@ -1,6 +1,6 @@
 import type { DataSource, EntityManager } from 'typeorm';
 import type { SlimToken } from '@app/models/Segment';
-import { collocationParticle, type Lexicon } from '@app/services/parser/combine/lexicon';
+import { collocationKey, collocationParticle, type Lexicon } from '@app/services/parser/combine/lexicon';
 import type { DeconjugatedForm } from '@app/services/parser/deconjugator';
 import { insertChunks, recordSource } from './import/db';
 import { hasKanji, toHiragana } from './import/entries';
@@ -30,8 +30,6 @@ export interface CollocationRow {
 
 /** Counts per (noun, particle, verb reading), per kanji verb. */
 export type CollocationCounts = Map<string, Map<string, number>>;
-
-const keyOf = (noun: string, particle: string, verbKana: string) => `${noun}\u0000${particle}\u0000${verbKana}`;
 
 /**
  * The reading a kanji verb token is in: the one of its JMdict readings its own surface reading deconjugates to
@@ -67,7 +65,7 @@ export function countCollocations(
     if (!filed) continue;
     const kana = verbReading(verb, lexicon, deconjugate);
     if (!kana) continue;
-    const key = keyOf(noun.d, filed, kana);
+    const key = collocationKey(noun.d, filed, kana);
     let byVerb = counts.get(key);
     if (!byVerb) {
       byVerb = new Map();
@@ -93,7 +91,8 @@ export function collocationRows(counts: CollocationCounts): CollocationRow[] {
   }
   return rows.sort(
     (a, b) =>
-      b.total - a.total || (keyOf(a.noun, a.particle, a.verb_kana) < keyOf(b.noun, b.particle, b.verb_kana) ? -1 : 1),
+      b.total - a.total ||
+      (collocationKey(a.noun, a.particle, a.verb_kana) < collocationKey(b.noun, b.particle, b.verb_kana) ? -1 : 1),
   );
 }
 
@@ -180,7 +179,7 @@ export function convertExternalCollocations(
     );
     for (const nounText of new Set(noun.forms.map((form) => form.text))) {
       for (const verbKana of shared) {
-        const key = keyOf(nounText, particle, verbKana);
+        const key = collocationKey(nounText, particle, verbKana);
         const seen = kept.get(key);
         if (seen && (seen.verb === verb || seen.total >= row.total)) continue;
         kept.set(key, { noun: nounText, particle, verb_kana: verbKana, verb, count: row.count, total: row.total });

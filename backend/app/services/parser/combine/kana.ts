@@ -10,6 +10,19 @@ export function toHiragana(text: string): string {
   return out;
 }
 
+/** A godan 連用形 ending to its dictionary ending (切り → 切る, 書き → 書く). */
+export const GODAN_RENYOU_TO_DICT_END: Readonly<Record<string, string>> = {
+  い: 'う',
+  き: 'く',
+  ぎ: 'ぐ',
+  し: 'す',
+  ち: 'つ',
+  に: 'ぬ',
+  び: 'ぶ',
+  み: 'む',
+  り: 'る',
+};
+
 const VOWEL_OF = new Map<string, string>();
 for (const [vowel, row] of [
   ['う', 'おこそとのほもよろをごぞどぼぽょオコソトノホモヨロヲゴゾドボポョ'],
@@ -53,6 +66,13 @@ export function isKana(char: string | undefined): boolean {
 export function hasKanji(text: string): boolean {
   for (const char of text) if (isKanji(char)) return true;
   return false;
+}
+
+const HAN = /\p{Script=Han}/u;
+
+/** Whether the text has a character of the Han script (々 and 〆 included); wider than `hasKanji`'s ranges. */
+export function hasHanScript(text: string): boolean {
+  return HAN.test(text);
 }
 
 /** ASCII digits to full-width, the form the AmountCombinations table is written in. */
@@ -126,3 +146,7 @@ export function vowelRow(char: string | undefined): number {
 export function isNumeralChar(char: string | undefined): boolean {
   return char !== undefined && /^[0-9０-９一二三四五六七八九十百千万億兆〇零]$/.test(char);
 }
+
+/** `TakesOrdinalMeAfterTsu`: a numeral before つ目, except 一つ目/二つ目, which have their own ordinal entries. */
+export const takesOrdinalMeAfterTsu = (char: string | undefined) =>
+  char !== '一' && char !== '二' && char !== '１' && char !== '２' && isNumeralChar(char);

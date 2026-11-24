@@ -73,6 +73,12 @@ export function hasSection(group: Group, label: string): boolean {
   return group.sec[0] === label || group.sec[1] === label || group.sec[2] === label;
 }
 
+/** `IsNaAdjectiveToken`. */
+export const isNaAdjectiveToken = (group: Group) =>
+  group.cls === 'NaAdjective' ||
+  hasSection(group, SECTION.PossibleNaAdjective) ||
+  hasSection(group, SECTION.NaAdjectiveLike);
+
 /** `PosMapper.IsNameLikeSudachiNoun`. */
 export function isNameLike(group: Group): boolean {
   return group.cls === 'Noun' && group.sec.some((section) => NAME_SECTIONS.has(section));
