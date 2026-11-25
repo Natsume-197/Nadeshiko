@@ -8,10 +8,39 @@ import {
   type TrackerProviderId,
   type TrackerSettings,
   type TrackerState,
+  trackerTitleStatus,
 } from '~/utils/trackerFilter';
 
 // Remembered per browser so the list filter survives reloads and new searches.
 const FILTER_STORAGE_KEY = 'nd-tracker-filter';
+// Titles shown in full despite the spoiler guard or Plan to Watch hiding, per browser like the filter.
+const UNLOCKED_STORAGE_KEY = 'nd-tracker-unlocked';
+
+function readStoredUnlocked(): string[] {
+  if (!import.meta.client) return [];
+  try {
+    const parsed: unknown = JSON.parse(window.localStorage.getItem(UNLOCKED_STORAGE_KEY) ?? '[]');
+    return Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+function storeUnlocked(ids: readonly string[]): void {
+  if (!import.meta.client) return;
+  try {
+    if (ids.length) window.localStorage.setItem(UNLOCKED_STORAGE_KEY, JSON.stringify(ids));
+    else window.localStorage.removeItem(UNLOCKED_STORAGE_KEY);
+  } catch {
+    // Storage blocked: the choice still holds for this page view.
+  }
+}
+
+/** Tracker events are rare (a few per reader), so they stay well inside the PostHog event budget. */
+function captureTrackerEvent(event: string, properties: Record<string, unknown>): void {
+  if (!import.meta.client) return;
+  usePostHog()?.capture(event, properties);
+}
 
 function readStoredFilterMode(): TrackerFilterMode {
   if (!import.meta.client) return 'all';
@@ -43,14 +72,21 @@ export function useTrackerSync() {
   const working = useState<boolean>('tracker-sync-working', () => false);
   const filterMode = useState<TrackerFilterMode>('tracker-search-filter', () => 'all');
   const promptDismissed = useState<boolean>('tracker-spoiler-prompt-dismissed', () => false);
+  const unlockedIds = useState<string[]>('tracker-unlocked-titles', () => []);
 
   const isConnected = computed(() => Boolean(user.isLoggedIn && state.value?.connection));
+  const unlockedTitles = computed(() => new Set(unlockedIds.value));
 
   const searchFilters = computed(() =>
     user.isLoggedIn
-      ? buildTrackerSearchMediaFilters(state.value, filterMode.value)
+      ? buildTrackerSearchMediaFilters(state.value, filterMode.value, unlockedTitles.value)
       : buildTrackerSearchMediaFilters(null, 'all'),
   );
+
+  /** Where the tracker stands on one title: status, progress and what it hides. */
+  function titleStatus(mediaPublicId: string | null) {
+    return user.isLoggedIn ? trackerTitleStatus(state.value, mediaPublicId, unlockedTitles.value) : null;
+  }
 
   async function load(force = false): Promise<TrackerState | null> {
     if (!user.isLoggedIn) {
@@ -75,6 +111,7 @@ export function useTrackerSync() {
       } else if (filterMode.value === 'all') {
         filterMode.value = readStoredFilterMode();
       }
+      unlockedIds.value = data.connection ? readStoredUnlocked() : [];
       // Reset a custom-list filter if the reader's membership lapsed or the list disappeared.
       if (filterMode.value.startsWith('custom:')) {
         const listName = filterMode.value.slice('custom:'.length);
@@ -112,6 +149,12 @@ export function useTrackerSync() {
     });
     state.value = data;
     loadedForUser.value = String(user.userId ?? 'signed-in');
+    captureTrackerEvent('tracker_connected', {
+      provider,
+      list_size: data.coverage?.total ?? 0,
+      in_catalog: data.coverage?.inCatalog ?? 0,
+      patron: data.canUsePatronPerks,
+    });
     return data;
   }
 
@@ -137,6 +180,9 @@ export function useTrackerSync() {
         body: patch,
       });
       state.value = data;
+      for (const [setting, enabled] of Object.entries(patch)) {
+        captureTrackerEvent('tracker_setting_changed', { setting, enabled });
+      }
       return true;
     } catch (error) {
       handleApiError('trackerConnection.settings', error);
@@ -150,6 +196,9 @@ export function useTrackerSync() {
     working.value = true;
     try {
       await $fetch('/v1/user/connections/tracker', { method: 'DELETE' });
+      captureTrackerEvent('tracker_disconnected', { provider: state.value?.connection?.provider ?? null });
+      unlockedIds.value = [];
+      storeUnlocked([]);
       if (state.value) {
         state.value = {
           ...state.value,
@@ -172,9 +221,28 @@ export function useTrackerSync() {
   }
 
   function setFilterMode(mode: TrackerFilterMode): void {
+    if (mode !== filterMode.value) {
+      captureTrackerEvent('tracker_filter_changed', {
+        mode: mode.startsWith('custom:') ? 'custom-list' : mode,
+      });
+    }
     filterMode.value = mode;
     storeFilterMode(mode);
     if (mode !== 'all') promptDismissed.value = false;
+  }
+
+  /** Show one title in full (`true`) or put its spoiler guard / Plan to Watch hiding back (`false`). */
+  function setTitleUnlocked(mediaPublicId: string, unlock: boolean): void {
+    const next = unlock
+      ? [...new Set([...unlockedIds.value, mediaPublicId])]
+      : unlockedIds.value.filter((id) => id !== mediaPublicId);
+    if (next.length === unlockedIds.value.length) return;
+    unlockedIds.value = next;
+    storeUnlocked(next);
+    captureTrackerEvent('tracker_title_unlocked', {
+      unlocked: unlock,
+      status: state.value?.entries.find((entry) => entry.mediaPublicId === mediaPublicId)?.status ?? null,
+    });
   }
 
   function dismissPrompt(): void {
@@ -197,5 +265,7 @@ export function useTrackerSync() {
     disconnect,
     setFilterMode,
     dismissPrompt,
+    titleStatus,
+    setTitleUnlocked,
   };
 }

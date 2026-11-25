@@ -29,6 +29,15 @@ function pickList(event: Event) {
   emit('selected');
   setFilterMode(name ? customListMode(name) : 'my-anime');
 }
+
+/** Signed in, tracker state loaded, no tracker linked, and the server can link one: offer it where the switch goes. */
+const canInviteToConnect = computed(
+  () => !isConnected.value && !!state.value && (state.value.configuredProviders?.length ?? 0) > 0,
+);
+
+function onConnectClick() {
+  usePostHog()?.capture('tracker_connect_prompt_clicked', { source: 'search-filter' });
+}
 </script>
 
 <template>
@@ -86,5 +95,22 @@ function pickList(event: Event) {
         <option v-for="name in customLists" :key="name" :value="name">{{ name }}</option>
       </select>
     </div>
+  </div>
+
+  <div
+    v-else-if="canInviteToConnect"
+    data-testid="tracker-filter-connect"
+    class="flex w-full items-center gap-2.5 rounded-lg border border-hairline bg-button-primary-main py-2.5 pl-4 pr-3 text-sm"
+  >
+    <UiBaseIcon :path="mdiPlaylistCheck" size="18" class="shrink-0 text-ink-muted" />
+    <span class="min-w-0 flex-1 font-semibold text-ink-muted">{{ t('trackerFilter.onlySeen') }}</span>
+    <NuxtLink
+      :to="localePath('/user/connections#anime-tracker')"
+      data-testid="tracker-filter-connect-link"
+      class="shrink-0 font-semibold text-brand hover:underline"
+      @click="onConnectClick()"
+    >
+      {{ t('trackerFilter.connect') }}
+    </NuxtLink>
   </div>
 </template>

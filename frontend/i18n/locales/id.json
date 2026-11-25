@@ -198,7 +198,8 @@
     "imdbButton": "IMDb",
     "youtubeButton": "YouTube",
     "audibleButton": "Audible",
-    "vocabularyButton": "Kosakata"
+    "vocabularyButton": "Kosakata",
+    "malButton": "MyAnimeList"
   },
   "hiddenCategories": {
     "updateError": "Gagal memperbarui kategori yang disembunyikan. Silakan coba lagi."
@@ -2132,6 +2133,23 @@
     "spoilerPromptMultiple": "Menampilkan {title} dan {others} lainnya setelah progresmu",
     "spoilerPromptCta": "Sembunyikan dengan Patreon",
     "spoilerPromptCtaWithPlanning": "Sembunyikan beserta Rencana Ditonton dengan Patreon",
-    "dismissPrompt": "Tutup pemberitahuan"
+    "dismissPrompt": "Tutup pemberitahuan",
+    "connect": "Hubungkan"
+  },
+  "trackerTitle": {
+    "status": {
+      "WATCHING": "Sedang ditonton",
+      "COMPLETED": "Selesai",
+      "PAUSED": "Dijeda",
+      "DROPPED": "Berhenti",
+      "PLANNING": "Rencana ditonton"
+    },
+    "progress": "Ep {progress}/{total}",
+    "progressOnly": "Ep {progress}",
+    "hiddenAfter": "Disembunyikan setelah ep {progress}",
+    "hiddenTitle": "Disembunyikan di pencarian",
+    "shown": "Spoiler ditampilkan",
+    "show": "Tampilkan",
+    "hide": "Sembunyikan"
   }
 }

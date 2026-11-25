@@ -198,7 +198,8 @@
     "imdbButton": "IMDb",
     "youtubeButton": "YouTube",
     "audibleButton": "Audible",
-    "vocabularyButton": "語彙"
+    "vocabularyButton": "語彙",
+    "malButton": "MyAnimeList"
   },
   "hiddenCategories": {
     "updateError": "非表示カテゴリを更新できませんでした。もう一度お試しください。"
@@ -2132,6 +2133,23 @@
     "spoilerPromptMultiple": "{title} ほか {others} 作品の視聴済みより先も表示中",
     "spoilerPromptCta": "Patreon で隠す",
     "spoilerPromptCtaWithPlanning": "Patreon で視聴予定と一緒に隠す",
-    "dismissPrompt": "閉じる"
+    "dismissPrompt": "閉じる",
+    "connect": "連携"
+  },
+  "trackerTitle": {
+    "status": {
+      "WATCHING": "視聴中",
+      "COMPLETED": "視聴完了",
+      "PAUSED": "一時停止",
+      "DROPPED": "視聴中止",
+      "PLANNING": "視聴予定"
+    },
+    "progress": "{progress}/{total}話",
+    "progressOnly": "{progress}話",
+    "hiddenAfter": "{progress}話以降を非表示",
+    "hiddenTitle": "検索で非表示",
+    "shown": "ネタバレ表示中",
+    "show": "表示",
+    "hide": "隠す"
   }
 }

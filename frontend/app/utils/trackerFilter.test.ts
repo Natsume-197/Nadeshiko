@@ -8,6 +8,7 @@ import {
   parseTrackerFilterMode,
   type TrackerMissingAnime,
   type TrackerState,
+  trackerTitleStatus,
 } from '~/utils/trackerFilter';
 
 function makeState(overrides: Partial<TrackerState> = {}): TrackerState {
@@ -131,6 +132,64 @@ describe('buildTrackerSearchMediaFilters', () => {
       { mediaPublicId: 'media-pause1' },
       { mediaPublicId: 'media-drop01' },
     ]);
+  });
+
+  it('shows an unlocked title in full while the guard keeps protecting the rest', () => {
+    const unlocked = new Set(['media-watch1', 'media-plan01']);
+    const result = buildTrackerSearchMediaFilters(makePatronState(), 'my-anime', unlocked);
+
+    expect(result.include).toEqual([{ mediaPublicId: 'media-comp01' }, { mediaPublicId: 'media-watch1' }]);
+    expect(result.exclude).toEqual([{ mediaPublicId: 'media-watch0' }]);
+    expect(result.activeSpoilerProtectionCount).toBe(1);
+    expect(result.planToWatchCount).toBe(1);
+  });
+});
+
+function makePatronState(): TrackerState {
+  return makeState({
+    canUsePatronPerks: true,
+    connection: {
+      ...makeState().connection!,
+      settings: { autoSyncEnabled: true, spoilerGuardEnabled: true, hidePlanToWatch: true },
+      effectiveSettings: { autoSyncEnabled: true, spoilerGuardEnabled: true, hidePlanToWatch: true },
+    },
+  });
+}
+
+describe('trackerTitleStatus', () => {
+  it('is null for titles off the list and when no tracker is linked', () => {
+    expect(trackerTitleStatus(makeState(), 'media-other1')).toBeNull();
+    expect(trackerTitleStatus(null, 'media-watch1')).toBeNull();
+    expect(trackerTitleStatus(makeState(), null)).toBeNull();
+  });
+
+  it('reports what the guard hides on each title', () => {
+    const state = makePatronState();
+    expect(trackerTitleStatus(state, 'media-watch1')).toEqual({
+      status: 'WATCHING',
+      progress: 6,
+      hidden: 'episodes',
+      unlocked: false,
+    });
+    expect(trackerTitleStatus(state, 'media-watch0')?.hidden).toBe('title');
+    expect(trackerTitleStatus(state, 'media-plan01')?.hidden).toBe('title');
+    expect(trackerTitleStatus(state, 'media-comp01')?.hidden).toBeNull();
+    expect(trackerTitleStatus(state, 'media-watch1', new Set(['media-watch1']))?.unlocked).toBe(true);
+  });
+
+  it('hides nothing for a free reader, whose stored guard settings do not apply', () => {
+    const state = makeState({
+      connection: {
+        ...makeState().connection!,
+        settings: { autoSyncEnabled: true, spoilerGuardEnabled: true, hidePlanToWatch: true },
+      },
+    });
+    expect(trackerTitleStatus(state, 'media-watch1')).toEqual({
+      status: 'WATCHING',
+      progress: 6,
+      hidden: null,
+      unlocked: false,
+    });
   });
 });
 

@@ -447,6 +447,10 @@ export function anilistAnimeUrl(anilistId: string): string {
   return `https://anilist.co/anime/${anilistId}`;
 }
 
+export function malAnimeUrl(malId: string): string {
+  return `https://myanimelist.net/anime/${malId}`;
+}
+
 export function imdbTitleUrl(imdbId: string): string {
   return `https://www.imdb.com/title/${imdbId}`;
 }
@@ -462,6 +466,7 @@ export function tmdbUrl(tmdbId: string, airingFormat: AiringFormat): string {
 
 type CatalogExternalIds = {
   anilist?: string | null;
+  mal?: string | null;
   imdb?: string | null;
   tmdb?: string | null;
   youtube?: string | null;
@@ -479,6 +484,7 @@ export function mediaSameAsUrls(
   const ids = media?.externalIds;
   const urls: string[] = [];
   if (ids?.anilist) urls.push(anilistAnimeUrl(ids.anilist));
+  if (ids?.mal) urls.push(malAnimeUrl(ids.mal));
   if (ids?.imdb) urls.push(imdbTitleUrl(ids.imdb));
   if (ids?.tmdb && media?.airingFormat) urls.push(tmdbUrl(ids.tmdb, media.airingFormat));
   if (ids?.youtube) urls.push(youtubeChannelUrl(ids.youtube));

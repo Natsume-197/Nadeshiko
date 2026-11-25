@@ -198,7 +198,8 @@
     "imdbButton": "IMDb",
     "youtubeButton": "YouTube",
     "audibleButton": "Audible",
-    "vocabularyButton": "Vocabulario"
+    "vocabularyButton": "Vocabulario",
+    "malButton": "MyAnimeList"
   },
   "hiddenCategories": {
     "updateError": "No se pudieron actualizar tus categorías ocultas. Inténtalo de nuevo."
@@ -2132,6 +2133,23 @@
     "spoilerPromptMultiple": "Se ven episodios de {title} y {others} más después de tu progreso",
     "spoilerPromptCta": "Ocúltalos con Patreon",
     "spoilerPromptCtaWithPlanning": "Oculta esos y «Planeo ver» con Patreon",
-    "dismissPrompt": "Cerrar aviso"
+    "dismissPrompt": "Cerrar aviso",
+    "connect": "Conectar"
+  },
+  "trackerTitle": {
+    "status": {
+      "WATCHING": "Viendo",
+      "COMPLETED": "Completado",
+      "PAUSED": "En pausa",
+      "DROPPED": "Abandonado",
+      "PLANNING": "Pendiente"
+    },
+    "progress": "Ep {progress}/{total}",
+    "progressOnly": "Ep {progress}",
+    "hiddenAfter": "Oculto tras el ep {progress}",
+    "hiddenTitle": "Oculto en la búsqueda",
+    "shown": "Spoilers visibles",
+    "show": "Mostrar",
+    "hide": "Ocultar"
   }
 }

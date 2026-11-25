@@ -108,6 +108,7 @@ const catalogLinks = computed(() => {
     href: string;
     labelKey:
       | 'animeList.anilistButton'
+      | 'animeList.malButton'
       | 'animeList.tmdbButton'
       | 'animeList.imdbButton'
       | 'animeList.youtubeButton'
@@ -119,6 +120,13 @@ const catalogLinks = computed(() => {
       href: anilistAnimeUrl(ids.anilist),
       labelKey: 'animeList.anilistButton',
       testId: 'media-anilist-link',
+    });
+  }
+  if (ids?.mal) {
+    links.push({
+      href: malAnimeUrl(ids.mal),
+      labelKey: 'animeList.malButton',
+      testId: 'media-mal-link',
     });
   }
   if (ids?.tmdb) {
@@ -223,6 +231,8 @@ const detailsId = `media-header-details-${useId()}`;
           <span class="dark:text-gray-500"> · </span>
           <MediaCountLabel :media="media" />
         </p>
+
+        <MediaTrackerStatus :media="media" />
 
         <!--
           Collapsed by a grid row rather than by height, which is what lets it

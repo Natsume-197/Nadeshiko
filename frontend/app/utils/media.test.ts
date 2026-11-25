@@ -7,6 +7,7 @@ import {
   describeAudioFetchFailure,
   fetchAudioSegment,
   imdbTitleUrl,
+  malAnimeUrl,
   mediaSameAsUrls,
   tmdbUrl,
   youtubeChannelUrl,
@@ -128,6 +129,12 @@ describe('anilistAnimeUrl', () => {
   });
 });
 
+describe('malAnimeUrl', () => {
+  it('points at the anime page for that id', () => {
+    expect(malAnimeUrl('36296')).toBe('https://myanimelist.net/anime/36296');
+  });
+});
+
 describe('tmdbUrl', () => {
   it('uses /movie/ only for movies', () => {
     expect(tmdbUrl('550', 'MOVIE')).toBe('https://www.themoviedb.org/movie/550');
@@ -150,10 +157,11 @@ describe('mediaSameAsUrls', () => {
     expect(
       mediaSameAsUrls({
         airingFormat: 'TV',
-        externalIds: { anilist: '100077', imdb: 'tt8299938', tmdb: '233452', youtube: 'UCabc' },
+        externalIds: { anilist: '100077', mal: '36296', imdb: 'tt8299938', tmdb: '233452', youtube: 'UCabc' },
       }),
     ).toEqual([
       'https://anilist.co/anime/100077',
+      'https://myanimelist.net/anime/36296',
       'https://www.imdb.com/title/tt8299938',
       'https://www.themoviedb.org/tv/233452',
       'https://www.youtube.com/channel/UCabc',

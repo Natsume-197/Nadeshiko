@@ -134,6 +134,8 @@ export function parseTrackerFilterMode(raw: string | null | undefined): TrackerF
 export function buildTrackerSearchMediaFilters(
   state: TrackerState | null,
   mode: TrackerFilterMode,
+  /** Titles the reader chose to see in full: no spoiler guard and no Plan to Watch hiding for them. */
+  unlocked: ReadonlySet<string> = new Set(),
 ): ComputedTrackerSearchFilters {
   if (!state?.connection) {
     return {
@@ -155,6 +157,10 @@ export function buildTrackerSearchMediaFilters(
   let activeSpoilerProtectionCount = 0;
 
   for (const entry of state.entries) {
+    if (unlocked.has(entry.mediaPublicId)) {
+      if (entry.status === 'PLANNING') planToWatchCount += 1;
+      continue;
+    }
     if (entry.status === 'PLANNING') {
       planToWatchCount += 1;
       if (hidePlanToWatch) {
@@ -206,7 +212,7 @@ export function buildTrackerSearchMediaFilters(
 
   const include: MediaFilterItem[] = [];
   for (const entry of matchingEntries) {
-    if (entry.status === 'WATCHING' && spoilerGuard) {
+    if (entry.status === 'WATCHING' && spoilerGuard && !unlocked.has(entry.mediaPublicId)) {
       if (entry.progress > 0) {
         include.push({ mediaPublicId: entry.mediaPublicId, maxEpisode: entry.progress });
       }
@@ -224,6 +230,36 @@ export function buildTrackerSearchMediaFilters(
     planToWatchCount,
     activeSpoilerProtectionCount,
   };
+}
+
+/** What the tracker does to one title, for the line on its page. */
+export interface TrackerTitleStatus {
+  status: WatchStatus;
+  progress: number;
+  /** `episodes`: episodes after `progress` are hidden; `title`: the whole title is hidden; `null`: nothing hidden. */
+  hidden: 'episodes' | 'title' | null;
+  /** The reader lifted the guard for this title; `hidden` is what would apply without that. */
+  unlocked: boolean;
+}
+
+export function trackerTitleStatus(
+  state: TrackerState | null,
+  mediaPublicId: string | null,
+  unlocked: ReadonlySet<string> = new Set(),
+): TrackerTitleStatus | null {
+  if (!state?.connection || !mediaPublicId) return null;
+  const entry = state.entries.find((item) => item.mediaPublicId === mediaPublicId);
+  if (!entry) return null;
+
+  const effective = state.connection.effectiveSettings;
+  let hidden: TrackerTitleStatus['hidden'] = null;
+  if (entry.status === 'WATCHING' && effective.spoilerGuardEnabled) {
+    hidden = entry.progress > 0 ? 'episodes' : 'title';
+  } else if (entry.status === 'PLANNING' && effective.hidePlanToWatch) {
+    hidden = 'title';
+  }
+
+  return { status: entry.status, progress: entry.progress, hidden, unlocked: unlocked.has(mediaPublicId) };
 }
 
 /**

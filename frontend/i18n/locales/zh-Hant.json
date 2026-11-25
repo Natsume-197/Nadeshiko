@@ -198,7 +198,8 @@
     "imdbButton": "IMDb",
     "youtubeButton": "YouTube",
     "audibleButton": "Audible",
-    "vocabularyButton": "詞彙"
+    "vocabularyButton": "詞彙",
+    "malButton": "MyAnimeList"
   },
   "hiddenCategories": {
     "updateError": "無法更新隱藏的分類，請重試。"
@@ -2132,6 +2133,23 @@
     "spoilerPromptMultiple": "正在顯示 {title} 等 {others} 部超出進度的內容",
     "spoilerPromptCta": "透過 Patreon 隱藏",
     "spoilerPromptCtaWithPlanning": "透過 Patreon 隱藏這些和想看",
-    "dismissPrompt": "關閉提示"
+    "dismissPrompt": "關閉提示",
+    "connect": "連結"
+  },
+  "trackerTitle": {
+    "status": {
+      "WATCHING": "在看",
+      "COMPLETED": "看過",
+      "PAUSED": "擱置",
+      "DROPPED": "棄番",
+      "PLANNING": "想看"
+    },
+    "progress": "{progress}/{total}集",
+    "progressOnly": "第{progress}集",
+    "hiddenAfter": "已隱藏第{progress}集之後",
+    "hiddenTitle": "已在搜尋中隱藏",
+    "shown": "顯示劇透",
+    "show": "顯示",
+    "hide": "隱藏"
   }
 }

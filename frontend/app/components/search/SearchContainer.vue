@@ -629,6 +629,9 @@ const trackSearch = (response: SearchResponse) => {
     episode_number: episode.value,
     results_count: resultsCount,
     match_mode: matchMode.value === 'CONTAINS' ? 'contains' : 'word',
+    // Properties, not events: how much the anime tracker shapes searches costs nothing extra in PostHog.
+    tracker_filter: trackerFilterMode.value.startsWith('custom:') ? 'custom-list' : trackerFilterMode.value,
+    tracker_guarded_titles: trackerSearchFilters.value.activeSpoilerProtectionCount,
   };
 
   // Recording happens here, on arrival at results, rather than on submit: most
