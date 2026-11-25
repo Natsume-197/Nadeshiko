@@ -1623,7 +1623,7 @@
       "malDescription": "Sincronize sua lista do MyAnimeList com os mesmos controles.",
       "comingSoon": "Em breve",
       "connect": "Conectar AniList",
-      "unavailable": "Não configurado",
+      "unavailable": "Indisponível",
       "linkedAs": "{provider} · {username}",
       "defaultAccount": "sua conta",
       "lastSynced": "Última sincronização: {date}",
@@ -1631,23 +1631,22 @@
       "syncNow": "Sincronizar agora",
       "syncCooldown": "Próxima às {time}",
       "cooldownHint": "A sincronização manual estará disponível novamente às {time}.",
+      "syncFailed": "Falha ao sincronizar. Tente de novo.",
       "disconnect": "Desconectar",
       "confirmDisconnect": "Desconectar seu tracker de anime e remover o progresso sincronizado do Nadeshiko?",
-      "coverageTitle": "{inCatalog} de {total} animes estão no Nadeshiko",
-      "coverageBreakdown": "{watching} assistindo · {completed} concluídos · {planning} planejados",
+      "coverageTitle": "{inCatalog} dos seus {total} animes estão no Nadeshiko",
       "showMissing": "Ver {count} títulos ausentes",
       "hideMissing": "Ocultar títulos ausentes",
       "requestTitle": "Pedir",
+      "requested": "Pedido",
       "patronSectionTitle": "Sincronização automática e anti-spoilers",
-      "unlockPatron": "Benefício de apoiador",
-      "lapsedNotice": "Suas opções de apoiador estão pausadas enquanto o Patreon estiver inativo e voltam automaticamente ao renovar.",
+      "unlockPatron": "Patreon",
       "autoSyncLabel": "Sincronização automática diária",
       "autoSyncDesc": "Mantém sua lista e progresso de episódios atualizados todos os dias em segundo plano.",
       "spoilerGuardLabel": "Anti-spoilers por episódio",
       "spoilerGuardDesc": "Oculta episódios além do seu progresso atual nos animes que você está assistindo.",
       "hidePlanningLabel": "Ocultar «Planejo assistir» automaticamente",
-      "hidePlanningDesc": "Remove automaticamente das buscas os animes que você planeja assistir.",
-      "customListsLocked": "{count} listas personalizadas do AniList detectadas — filtre por elas como apoiador."
+      "hidePlanningDesc": "Remove automaticamente das buscas os animes que você planeja assistir."
     }
   },
   "supporters": {
@@ -1762,6 +1761,15 @@
       "apiRequests": "{count} solicitações à API por mês",
       "customThemes": "Temas personalizados",
       "requestBoosts": "{count} boost de pedido por mês | {count} boosts de pedidos por mês"
+    },
+    "shared": {
+      "title": "Todos os níveis incluem",
+      "dictionaries": "{patron} dicionários próprios (grátis: {free})",
+      "openRequests": "{patron} pedidos abertos (grátis: {free})",
+      "spoilerGuard": "Antispoiler por episódio a partir da sua lista de anime",
+      "hidePlanning": "Ocultar Planejo assistir das buscas",
+      "autoSync": "Sincronização automática diária da sua lista de anime",
+      "customLists": "Listas personalizadas do AniList como filtro"
     },
     "faq": {
       "title": "Perguntas",
@@ -2107,21 +2115,19 @@
     "failed": "Não foi possível concluir a conexão com o AniList.",
     "done": "AniList conectado",
     "doneBody": "{inCatalog} de {total} animes da sua lista foram sincronizados no Nadeshiko.",
+    "startSearching": "Começar a buscar",
     "backToSettings": "Voltar para conexões"
   },
   "trackerFilter": {
-    "all": "Todos os animes",
-    "myAnime": "Meus animes (Concluídos e Assistindo)",
-    "myAnimeShort": "Meus animes",
-    "completed": "Apenas concluídos",
-    "watching": "Apenas assistindo",
+    "onlySeen": "Só animes que já assisti",
+    "settings": "Configurações do tracker de anime",
+    "clear": "Remover filtro",
     "customListsHeading": "Listas personalizadas",
-    "customListsLocked": "{count} listas personalizadas (Apoiador)",
-    "manage": "Gerenciar sync e anti-spoilers",
-    "spoilerPromptSingle": "Mostrando todos os episódios de {title} (ep. {episode})",
-    "spoilerPromptMultiple": "Mostrando todos os episódios de {title} (ep. {episode}) e mais {others}",
-    "spoilerPromptCta": "Oculte episódios futuros como apoiador",
-    "spoilerPromptCtaWithPlanning": "Oculte episódios futuros e Planejados como apoiador",
+    "allLists": "Todas as listas",
+    "spoilerPromptSingle": "Mostrando {title} depois do episódio {episode}",
+    "spoilerPromptMultiple": "Mostrando {title} e mais {others} depois do seu progresso",
+    "spoilerPromptCta": "Oculte com o Patreon",
+    "spoilerPromptCtaWithPlanning": "Oculte junto com Planejo assistir no Patreon",
     "dismissPrompt": "Dispensar aviso"
   }
 }

@@ -3,11 +3,34 @@ import { userStore } from '~/stores/auth';
 import { handleApiError } from '~/utils/apiError';
 import {
   buildTrackerSearchMediaFilters,
+  parseTrackerFilterMode,
   type TrackerFilterMode,
   type TrackerProviderId,
   type TrackerSettings,
   type TrackerState,
 } from '~/utils/trackerFilter';
+
+// Remembered per browser so the list filter survives reloads and new searches.
+const FILTER_STORAGE_KEY = 'nd-tracker-filter';
+
+function readStoredFilterMode(): TrackerFilterMode {
+  if (!import.meta.client) return 'all';
+  try {
+    return parseTrackerFilterMode(window.localStorage.getItem(FILTER_STORAGE_KEY));
+  } catch {
+    return 'all';
+  }
+}
+
+function storeFilterMode(mode: TrackerFilterMode): void {
+  if (!import.meta.client) return;
+  try {
+    if (mode === 'all') window.localStorage.removeItem(FILTER_STORAGE_KEY);
+    else window.localStorage.setItem(FILTER_STORAGE_KEY, mode);
+  } catch {
+    // Storage blocked: the filter still works for this page view.
+  }
+}
 
 /**
  * Shared client state for the reader's linked anime tracker (AniList / MAL), catalog coverage, and search filters.
@@ -47,11 +70,16 @@ export function useTrackerSync() {
       const data = await $fetch<TrackerState>('/v1/user/connections/tracker');
       state.value = data;
       loadedForUser.value = userKey;
+      if (!data.connection) {
+        filterMode.value = 'all';
+      } else if (filterMode.value === 'all') {
+        filterMode.value = readStoredFilterMode();
+      }
       // Reset a custom-list filter if the reader's membership lapsed or the list disappeared.
       if (filterMode.value.startsWith('custom:')) {
         const listName = filterMode.value.slice('custom:'.length);
         if (!data.canUsePatronPerks || !data.customLists.includes(listName)) {
-          filterMode.value = 'all';
+          setFilterMode('all');
         }
       }
       return data;
@@ -133,7 +161,7 @@ export function useTrackerSync() {
           missingAnime: [],
         };
       }
-      filterMode.value = 'all';
+      setFilterMode('all');
       return true;
     } catch (error) {
       handleApiError('trackerConnection.unlink', error);
@@ -145,6 +173,7 @@ export function useTrackerSync() {
 
   function setFilterMode(mode: TrackerFilterMode): void {
     filterMode.value = mode;
+    storeFilterMode(mode);
     if (mode !== 'all') promptDismissed.value = false;
   }
 

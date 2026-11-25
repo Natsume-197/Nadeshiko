@@ -1623,7 +1623,7 @@
       "malDescription": "Sinkronkan daftar MyAnimeList Anda dengan kontrol yang sama.",
       "comingSoon": "Segera hadir",
       "connect": "Hubungkan AniList",
-      "unavailable": "Belum dikonfigurasi",
+      "unavailable": "Tidak tersedia",
       "linkedAs": "{provider} · {username}",
       "defaultAccount": "akun Anda",
       "lastSynced": "Terakhir disinkronkan: {date}",
@@ -1631,23 +1631,22 @@
       "syncNow": "Sinkronkan sekarang",
       "syncCooldown": "Tersedia pukul {time}",
       "cooldownHint": "Sinkronisasi manual akan tersedia kembali pukul {time}.",
+      "syncFailed": "Sinkronisasi gagal. Coba lagi.",
       "disconnect": "Putuskan",
       "confirmDisconnect": "Putuskan pelacak anime Anda dan hapus progres tersinkronisasi dari Nadeshiko?",
-      "coverageTitle": "{inCatalog} dari {total} anime tersedia di Nadeshiko",
-      "coverageBreakdown": "{watching} ditonton · {completed} selesai · {planning} rencana tonton",
+      "coverageTitle": "{inCatalog} dari {total} anime kamu ada di Nadeshiko",
       "showMissing": "Lihat {count} judul yang belum ada",
       "hideMissing": "Sembunyikan judul yang belum ada",
       "requestTitle": "Minta",
+      "requested": "Diminta",
       "patronSectionTitle": "Sinkronisasi otomatis & anti-spoiler",
-      "unlockPatron": "Fitur pendukung",
-      "lapsedNotice": "Pengaturan pendukung Anda dijeda selama Patreon tidak aktif dan akan aktif kembali secara otomatis saat diperpanjang.",
+      "unlockPatron": "Patreon",
       "autoSyncLabel": "Sinkronisasi otomatis harian",
       "autoSyncDesc": "Perbarui daftar anime dan progres episode Anda setiap hari di latar belakang.",
       "spoilerGuardLabel": "Anti-spoiler per episode",
       "spoilerGuardDesc": "Sembunyikan episode di atas progres Anda saat ini untuk anime yang sedang ditonton.",
       "hidePlanningLabel": "Otomatis sembunyikan Rencana Tonton",
-      "hidePlanningDesc": "Keluarkan anime dalam daftar rencana tonton dari hasil pencarian secara otomatis.",
-      "customListsLocked": "{count} daftar kustom AniList ditemukan — filter sebagai pendukung."
+      "hidePlanningDesc": "Keluarkan anime dalam daftar rencana tonton dari hasil pencarian secara otomatis."
     }
   },
   "supporters": {
@@ -1762,6 +1761,15 @@
       "apiRequests": "{count} permintaan API per bulan",
       "customThemes": "Tema kustom",
       "requestBoosts": "{count} boost permintaan per bulan"
+    },
+    "shared": {
+      "title": "Semua tingkat juga mendapat",
+      "dictionaries": "{patron} kamus sendiri (gratis: {free})",
+      "openRequests": "{patron} permintaan terbuka (gratis: {free})",
+      "spoilerGuard": "Anti-spoiler per episode dari daftar animemu",
+      "hidePlanning": "Sembunyikan Rencana Ditonton dari pencarian",
+      "autoSync": "Sinkronisasi otomatis harian daftar animemu",
+      "customLists": "Daftar kustom AniList sebagai filter"
     },
     "faq": {
       "title": "Pertanyaan",
@@ -2107,21 +2115,19 @@
     "failed": "Koneksi AniList tidak dapat diselesaikan.",
     "done": "AniList terhubung",
     "doneBody": "Menyinkronkan {inCatalog} dari {total} anime dari daftar Anda ke Nadeshiko.",
+    "startSearching": "Mulai mencari",
     "backToSettings": "Kembali ke koneksi"
   },
   "trackerFilter": {
-    "all": "Semua anime",
-    "myAnime": "Anime saya (Selesai & Ditonton)",
-    "myAnimeShort": "Anime saya",
-    "completed": "Hanya selesai",
-    "watching": "Hanya ditonton",
+    "onlySeen": "Hanya anime yang sudah kutonton",
+    "settings": "Pengaturan pelacak anime",
+    "clear": "Hapus filter",
     "customListsHeading": "Daftar kustom",
-    "customListsLocked": "{count} daftar kustom (Pendukung)",
-    "manage": "Kelola sinkronisasi & anti-spoiler",
-    "spoilerPromptSingle": "Menampilkan semua episode {title} (ep. {episode})",
-    "spoilerPromptMultiple": "Menampilkan semua episode {title} (ep. {episode}) +{others} lainnya",
-    "spoilerPromptCta": "Sembunyikan episode mendatang dengan Pendukung",
-    "spoilerPromptCtaWithPlanning": "Sembunyikan episode mendatang & Rencana Tonton dengan Pendukung",
+    "allLists": "Semua daftar",
+    "spoilerPromptSingle": "Menampilkan {title} setelah episode {episode}",
+    "spoilerPromptMultiple": "Menampilkan {title} dan {others} lainnya setelah progresmu",
+    "spoilerPromptCta": "Sembunyikan dengan Patreon",
+    "spoilerPromptCtaWithPlanning": "Sembunyikan beserta Rencana Ditonton dengan Patreon",
     "dismissPrompt": "Tutup pemberitahuan"
   }
 }

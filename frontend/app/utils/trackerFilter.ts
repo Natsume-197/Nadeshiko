@@ -1,4 +1,5 @@
-import type { MediaFilterItem } from '~/types/search';
+import type { Category } from '@brigadasos/nadeshiko-sdk';
+import type { MediaFilterItem, ResolvedCategoryCount, ResolvedMediaStats } from '~/types/search';
 
 export type TrackerProviderId = 'ANILIST' | 'MAL';
 export type WatchStatus = 'WATCHING' | 'COMPLETED' | 'PAUSED' | 'DROPPED' | 'PLANNING';
@@ -37,12 +38,38 @@ export interface TrackerProgressEntry {
   customLists: string[];
 }
 
+export interface TrackerMissingRequest {
+  publicId: string;
+  status: 'OPEN' | 'PLANNED' | 'IN_PROGRESS' | 'DECLINED';
+  voteCount: number;
+  /** The reader already voted (filing a request counts as one). */
+  voted: boolean;
+}
+
 export interface TrackerMissingAnime {
   externalSource: TrackerProviderId;
   externalId: string;
   title: string;
   status: WatchStatus;
   sourceUrl: string;
+  /** The request already filed for this title, so the card offers a vote instead of a duplicate. */
+  request: TrackerMissingRequest | null;
+}
+
+/** What the card offers for a missing title. */
+export type MissingAnimeAction =
+  | { kind: 'request' }
+  | { kind: 'vote'; voteCount: number }
+  | { kind: 'requested'; status: TrackerMissingRequest['status'] }
+  | { kind: 'declined' };
+
+/** `filedHere` is true once the reader requested or voted from the card in this page view. */
+export function missingAnimeAction(item: TrackerMissingAnime, filedHere: boolean): MissingAnimeAction {
+  const request = item.request;
+  if (request?.status === 'DECLINED') return { kind: 'declined' };
+  if (filedHere || request?.voted) return { kind: 'requested', status: request?.status ?? 'OPEN' };
+  if (request) return { kind: 'vote', voteCount: request.voteCount };
+  return { kind: 'request' };
 }
 
 export interface TrackerState {
@@ -56,7 +83,8 @@ export interface TrackerState {
   missingAnime: TrackerMissingAnime[];
 }
 
-export type TrackerFilterMode = 'all' | 'my-anime' | 'completed' | 'watching' | `custom:${string}`;
+/** `my-anime` is the search switch (every started title); `custom:` narrows it to one AniList custom list. */
+export type TrackerFilterMode = 'all' | 'my-anime' | `custom:${string}`;
 
 export interface WatchingPromptTitle {
   mediaPublicId: string;
@@ -67,7 +95,7 @@ export interface WatchingPromptTitle {
 export interface ComputedTrackerSearchFilters {
   include: MediaFilterItem[];
   exclude: MediaFilterItem[];
-  /** True when the reader picked a narrowing filter (e.g. Watching only) that matched 0 catalog titles. */
+  /** True when the switch is on but none of the reader's titles are in the catalog. */
   emptyIncludeMatch: boolean;
   /** Matched Watching titles with episode progress > 0, surfaced to free readers as a contextual spoiler-guard prompt. */
   watchingPromptTitles: WatchingPromptTitle[];
@@ -86,10 +114,20 @@ export function customListMode(name: string): `custom:${string}` {
   return `${CUSTOM_LIST_PREFIX}${name}`;
 }
 
+const FILTER_MODES = new Set(['all', 'my-anime']);
+
+/** Parses a stored filter mode, falling back to `all` for anything unknown. */
+export function parseTrackerFilterMode(raw: string | null | undefined): TrackerFilterMode {
+  if (!raw) return 'all';
+  if (FILTER_MODES.has(raw)) return raw as TrackerFilterMode;
+  if (raw.startsWith(CUSTOM_LIST_PREFIX) && raw.length > CUSTOM_LIST_PREFIX.length) return raw as TrackerFilterMode;
+  return 'all';
+}
+
 /**
  * Derive search `media.include` and `media.exclude` entries from the reader's synced tracker state.
  *
- * Free readers get series-level inclusion (`my-anime`, `completed`, `watching`). Patrons also get episode-level
+ * Free readers get series-level inclusion (`my-anime` = every started title). Patrons also get episode-level
  * spoiler guard (`maxEpisode` on included Watching titles, `minEpisode` on global excludes), automatic
  * `PLANNING` exclusion, and custom tracker lists.
  */
@@ -135,7 +173,7 @@ export function buildTrackerSearchMediaFilters(
   }
 
   const watchingPromptTitles: WatchingPromptTitle[] =
-    !state.canUsePatronPerks && (mode === 'my-anime' || mode === 'watching')
+    !state.canUsePatronPerks && mode !== 'all'
       ? state.entries
           .filter((entry) => entry.status === 'WATCHING' && entry.progress > 0)
           .map((entry) => ({
@@ -158,9 +196,8 @@ export function buildTrackerSearchMediaFilters(
 
   const customList = customListNameFromMode(mode);
   const matchingEntries = state.entries.filter((entry) => {
-    if (mode === 'my-anime') return entry.status === 'COMPLETED' || entry.status === 'WATCHING';
-    if (mode === 'completed') return entry.status === 'COMPLETED';
-    if (mode === 'watching') return entry.status === 'WATCHING';
+    // Everything the reader has started: Paused and Dropped titles still have watched episodes.
+    if (mode === 'my-anime') return entry.status !== 'PLANNING';
     if (customList !== null) {
       return state.canUsePatronPerks && entry.customLists.includes(customList);
     }
@@ -187,4 +224,21 @@ export function buildTrackerSearchMediaFilters(
     planToWatchCount,
     activeSpoilerProtectionCount,
   };
+}
+
+/**
+ * Category tab counts for a search narrowed to the reader's list.
+ *
+ * The stats endpoint counts categories with `media.include` lifted (so a picked title never empties its own tab),
+ * which would make the tabs count the whole catalog while the results only show the list. The media rows are
+ * already narrowed, so the tabs are summed from them instead.
+ */
+export function categoryCountsFromMedia(media: readonly ResolvedMediaStats[]): ResolvedCategoryCount[] {
+  const totals = new Map<Category, number>();
+  for (const row of media) {
+    totals.set(row.category, (totals.get(row.category) ?? 0) + row.matchCount);
+  }
+  return [...totals]
+    .filter(([, count]) => count > 0)
+    .map(([category, count]) => ({ category, count, realCount: count }));
 }

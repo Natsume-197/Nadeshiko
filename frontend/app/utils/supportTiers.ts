@@ -25,6 +25,16 @@ export interface SupportTier {
   customThemes: boolean;
 }
 
+/**
+ * What every paid tier adds on top of a free account, beyond the per-tier numbers above. Mirrors of backend limits:
+ * custom dictionaries (`services/dictionary/custom/quotas.ts`) and open content requests
+ * (`services/requests/allowance.ts`). Change them there and here together.
+ */
+export const PATRON_LIMITS = {
+  customDictionaries: { free: 2, patron: 6 },
+  openRequests: { free: 10, patron: 30 },
+} as const;
+
 /** The limit every account has without a membership; the backend `free` tier. */
 export const FREE_MONTHLY_API_REQUESTS = 5000;
 

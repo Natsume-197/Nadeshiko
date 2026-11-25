@@ -87,6 +87,22 @@ describe('Support section', () => {
     expect(cards[2]?.text()).toContain('support.perks.requestBoosts({"count":10})');
   });
 
+  test('lists the perks every paid tier shares once, under the cards', async () => {
+    const wrapper = await render();
+    const shared = wrapper.get('[data-testid="support-shared-perks"]').text();
+
+    expect(shared).toContain('support.perks.customThemes');
+    expect(shared).toContain('support.shared.dictionaries({"free":2,"patron":6})');
+    expect(shared).toContain('support.shared.openRequests({"free":10,"patron":30})');
+    expect(shared).toContain('support.shared.spoilerGuard');
+    expect(shared).toContain('support.shared.hidePlanning');
+    expect(shared).toContain('support.shared.autoSync');
+    expect(shared).toContain('support.shared.customLists');
+    for (const card of wrapper.findAll('[data-testid="support-tier-cards"] > li')) {
+      expect(card.text()).not.toContain('support.perks.customThemes');
+    }
+  });
+
   test('links each tier card directly to its Patreon checkout URL', async () => {
     const links = (await render()).findAll('[data-testid="support-patreon-link"]');
 

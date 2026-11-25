@@ -52,9 +52,14 @@ onMounted(async () => {
       <p class="mt-2 text-white/50">
         {{ t('trackerCallback.doneBody', { inCatalog: matchedCount, total: totalCount }) }}
       </p>
-      <NuxtLink :to="localePath('/user/connections')" class="nd-btn-accent mt-6">
-        {{ t('trackerCallback.backToSettings') }}
-      </NuxtLink>
+      <div class="mt-6 flex flex-wrap justify-center gap-3">
+        <NuxtLink :to="localePath('/')" class="nd-btn-accent" data-testid="anilist-callback-search">
+          {{ t('trackerCallback.startSearching') }}
+        </NuxtLink>
+        <NuxtLink :to="localePath('/user/connections')" class="nd-btn">
+          {{ t('trackerCallback.backToSettings') }}
+        </NuxtLink>
+      </div>
     </template>
     <template v-else>
       <h1 class="text-3xl font-bold">{{ message }}</h1>

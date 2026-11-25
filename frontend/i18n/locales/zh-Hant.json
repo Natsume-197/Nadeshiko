@@ -1623,7 +1623,7 @@
       "malDescription": "使用同一套追蹤器控制項同步你的 MyAnimeList 清單。",
       "comingSoon": "即將推出",
       "connect": "連結 AniList",
-      "unavailable": "未設定",
+      "unavailable": "無法使用",
       "linkedAs": "{provider} · {username}",
       "defaultAccount": "你的帳號",
       "lastSynced": "上次同步：{date}",
@@ -1631,23 +1631,22 @@
       "syncNow": "立即同步",
       "syncCooldown": "{time} 後可同步",
       "cooldownHint": "手動同步將於 {time} 再次開放。",
+      "syncFailed": "同步失敗，請重試。",
       "disconnect": "中斷連結",
       "confirmDisconnect": "確定要中斷動畫追蹤器並移除 Nadeshiko 中已同步的進度嗎？",
-      "coverageTitle": "你的 {total} 部動畫中有 {inCatalog} 部已收錄",
-      "coverageBreakdown": "在看 {watching} · 看過 {completed} · 想看 {planning}",
+      "coverageTitle": "你的 {total} 部動畫中有 {inCatalog} 部在 Nadeshiko",
       "showMissing": "查看未收錄的 {count} 部作品",
       "hideMissing": "收起未收錄作品",
       "requestTitle": "請求收錄",
+      "requested": "已請求",
       "patronSectionTitle": "自動同步與防劇透",
-      "unlockPatron": "贊助者權益",
-      "lapsedNotice": "Patreon 未啟用期間你的贊助者設定會暫停，續訂後將自動恢復。",
+      "unlockPatron": "Patreon",
       "autoSyncLabel": "每日自動同步",
       "autoSyncDesc": "每天在背景自動保持觀看清單與集數進度最新。",
       "spoilerGuardLabel": "依集數防劇透",
       "spoilerGuardDesc": "自動隱藏正在觀看動畫中超過目前進度的集數。",
       "hidePlanningLabel": "自動隱藏「想看」清單",
-      "hidePlanningDesc": "自動將計畫觀看的動畫從搜尋結果中排除。",
-      "customListsLocked": "偵測到 {count} 個 AniList 自訂清單 — 贊助後可依清單篩選。"
+      "hidePlanningDesc": "自動將計畫觀看的動畫從搜尋結果中排除。"
     }
   },
   "supporters": {
@@ -1762,6 +1761,15 @@
       "apiRequests": "每月 {count} 次 API 請求",
       "customThemes": "自訂主題",
       "requestBoosts": "每月 {count} 次請求助推"
+    },
+    "shared": {
+      "title": "所有方案皆包含",
+      "dictionaries": "{patron} 本自訂詞典（免費：{free} 本）",
+      "openRequests": "{patron} 個進行中的請求（免費：{free} 個）",
+      "spoilerGuard": "依你的動畫清單逐集防劇透",
+      "hidePlanning": "在搜尋中隱藏想看",
+      "autoSync": "每日自動同步你的動畫清單",
+      "customLists": "用 AniList 自訂清單篩選"
     },
     "faq": {
       "title": "常見問題",
@@ -2107,21 +2115,19 @@
     "failed": "無法完成 AniList 連結。",
     "done": "已連結 AniList",
     "doneBody": "已從你的清單中同步 {inCatalog} / {total} 部動畫到 Nadeshiko。",
+    "startSearching": "開始搜尋",
     "backToSettings": "返回連結設定"
   },
   "trackerFilter": {
-    "all": "全部動畫",
-    "myAnime": "我的動畫（看過與在看）",
-    "myAnimeShort": "我的動畫",
-    "completed": "僅看過的",
-    "watching": "僅在看的",
+    "onlySeen": "只看我看過的動畫",
+    "settings": "動畫追蹤設定",
+    "clear": "清除篩選",
     "customListsHeading": "自訂清單",
-    "customListsLocked": "{count} 個自訂清單（贊助者）",
-    "manage": "管理同步與防劇透",
-    "spoilerPromptSingle": "目前顯示《{title}》（看到第 {episode} 集）的全部集數",
-    "spoilerPromptMultiple": "目前顯示《{title}》（看到第 {episode} 集）等 {others} 部作品的全部集數",
-    "spoilerPromptCta": "贊助即可隱藏未看集數",
-    "spoilerPromptCtaWithPlanning": "贊助即可隱藏未看集數與「想看」清單",
+    "allLists": "全部清單",
+    "spoilerPromptSingle": "正在顯示 {title} 第 {episode} 集之後的內容",
+    "spoilerPromptMultiple": "正在顯示 {title} 等 {others} 部超出進度的內容",
+    "spoilerPromptCta": "透過 Patreon 隱藏",
+    "spoilerPromptCtaWithPlanning": "透過 Patreon 隱藏這些和想看",
     "dismissPrompt": "關閉提示"
   }
 }

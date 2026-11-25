@@ -1,7 +1,26 @@
 <script setup lang="ts">
-import { mdiCheck, mdiCheckCircleOutline, mdiChevronDown, mdiLinkVariant, mdiPatreon } from '@mdi/js';
+import {
+  mdiBookOpenPageVariantOutline,
+  mdiCheck,
+  mdiCheckCircleOutline,
+  mdiChevronDown,
+  mdiEyeOffOutline,
+  mdiFormatListChecks,
+  mdiLinkVariant,
+  mdiPalette,
+  mdiPatreon,
+  mdiPlaylistPlus,
+  mdiShieldLockOutline,
+  mdiSync,
+} from '@mdi/js';
 import { handleApiError } from '~/utils/apiError';
-import { FREE_MONTHLY_API_REQUESTS, SUPPORT_TIERS, tierCheckoutUrl, type SupportTier } from '~/utils/supportTiers';
+import {
+  FREE_MONTHLY_API_REQUESTS,
+  PATRON_LIMITS,
+  SUPPORT_TIERS,
+  tierCheckoutUrl,
+  type SupportTier,
+} from '~/utils/supportTiers';
 
 /**
  * The support tab of the Supporters page (`/supporters#support`):
@@ -62,9 +81,27 @@ function perks(tier: SupportTier, index: number): string[] {
     t('support.perks.requestBoosts', { count: tier.requestBoostsPerMonth }),
     ...(tier.talkToDevs ? [t('support.perks.talkToDevs')] : []),
     t('support.perks.apiRequests', { count: formatNumber(tier.monthlyApiRequests) }),
-    t('support.perks.customThemes'),
   ];
 }
+
+/** What every paid tier unlocks, listed once under the cards instead of on each of them. */
+const sharedPerks = computed(() => [
+  { key: 'themes', icon: mdiPalette, label: t('support.perks.customThemes') },
+  {
+    key: 'dictionaries',
+    icon: mdiBookOpenPageVariantOutline,
+    label: t('support.shared.dictionaries', PATRON_LIMITS.customDictionaries),
+  },
+  {
+    key: 'requests',
+    icon: mdiPlaylistPlus,
+    label: t('support.shared.openRequests', PATRON_LIMITS.openRequests),
+  },
+  { key: 'spoilers', icon: mdiShieldLockOutline, label: t('support.shared.spoilerGuard') },
+  { key: 'planning', icon: mdiEyeOffOutline, label: t('support.shared.hidePlanning') },
+  { key: 'sync', icon: mdiSync, label: t('support.shared.autoSync') },
+  { key: 'lists', icon: mdiFormatListChecks, label: t('support.shared.customLists') },
+]);
 
 const faq = computed(() => [
   {
@@ -202,6 +239,17 @@ const faq = computed(() => [
           </div>
         </li>
       </ul>
+
+      <!-- Every paid tier: listed once rather than repeated on each card. -->
+      <div data-testid="support-shared-perks" class="mt-6 rounded-xl border border-hairline bg-card-background px-5 py-4">
+        <p class="text-sm font-semibold text-ink">{{ t('support.shared.title') }}</p>
+        <ul class="mt-3 grid gap-x-6 gap-y-2.5 text-sm text-ink sm:grid-cols-2">
+          <li v-for="perk in sharedPerks" :key="perk.key" class="flex items-start gap-2.5">
+            <UiBaseIcon :path="perk.icon" :size="16" class="mt-0.5 shrink-0 text-brand" />
+            <span>{{ perk.label }}</span>
+          </li>
+        </ul>
+      </div>
 
       <!-- Already a patron? Link Patreon in Settings (hidden once already active) -->
       <div

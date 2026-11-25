@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { mdiLockOutline, mdiRefresh, mdiShieldLockOutline, mdiSync } from '@mdi/js';
+import { mdiCheck, mdiLockOutline, mdiRefresh, mdiShieldLockOutline, mdiThumbUpOutline } from '@mdi/js';
 import { useTrackerSync } from '~/composables/useTrackerSync';
-import type { TrackerSettings } from '~/utils/trackerFilter';
+import { apiErrorStatus, handleApiError } from '~/utils/apiError';
+import { useToastError } from '~/utils/toast';
+import { missingAnimeAction, type TrackerMissingAnime, type TrackerSettings } from '~/utils/trackerFilter';
 import {
   ANILIST_ICON_PATH,
   MYANIMELIST_ICON_PATH,
@@ -55,21 +57,69 @@ const formattedNextSync = computed(() => {
   }
 });
 
-const hasPausedPatronSettings = computed(() => {
-  if (!connection.value || canUsePatronPerks.value) return false;
-  const s = connection.value.settings;
-  return s.autoSyncEnabled || s.spoilerGuardEnabled || s.hidePlanToWatch;
-});
-
 async function handleDisconnect() {
   if (!confirm(t('connections.tracker.confirmDisconnect'))) return;
   await disconnect();
 }
 
+/** The patron settings, shown to everyone: free readers see them locked as a preview. */
+const PATRON_SETTINGS: ReadonlyArray<{ key: keyof TrackerSettings; label: string; desc: string; testId: string }> = [
+  {
+    key: 'spoilerGuardEnabled',
+    label: 'connections.tracker.spoilerGuardLabel',
+    desc: 'connections.tracker.spoilerGuardDesc',
+    testId: 'tracker-toggle-spoiler-guard',
+  },
+  {
+    key: 'hidePlanToWatch',
+    label: 'connections.tracker.hidePlanningLabel',
+    desc: 'connections.tracker.hidePlanningDesc',
+    testId: 'tracker-toggle-hide-planning',
+  },
+  {
+    key: 'autoSyncEnabled',
+    label: 'connections.tracker.autoSyncLabel',
+    desc: 'connections.tracker.autoSyncDesc',
+    testId: 'tracker-toggle-autosync',
+  },
+];
+
+/** Missing titles requested or voted from this card in this page view, keyed by AniList id. The server reports
+ * the ones from before (`item.request`). */
+const requested = ref<Record<string, 'busy' | 'done'>>({});
+
+const missingRows = computed(() =>
+  (state.value?.missingAnime ?? []).map((item) => ({
+    item,
+    action: missingAnimeAction(item, requested.value[item.externalId] === 'done'),
+  })),
+);
+
+/**
+ * Files the request straight from the tracker entry: the AniList link is all `/v1/requests` needs, and the server
+ * fills the title in. When the title is already requested, the same call adds the reader's vote instead.
+ */
+async function requestMissing(item: TrackerMissingAnime) {
+  if (requested.value[item.externalId]) return;
+  requested.value = { ...requested.value, [item.externalId]: 'busy' };
+  try {
+    await $fetch('/v1/requests', { method: 'POST', body: { sourceUrl: item.sourceUrl, title: item.title } });
+    requested.value = { ...requested.value, [item.externalId]: 'done' };
+  } catch (caught) {
+    const { [item.externalId]: _dropped, ...rest } = requested.value;
+    requested.value = rest;
+    if (apiErrorStatus(caught) === 403) {
+      const allowance = await $fetch<{ openLimit: number }>('/v1/requests/me').catch(() => null);
+      useToastError(t('requests.form.limit', { limit: allowance?.openLimit ?? 10 }));
+    } else {
+      handleApiError('trackerConnection.request', caught);
+    }
+  }
+}
+
 async function toggleSetting(key: keyof TrackerSettings) {
-  if (!connection.value) return;
+  if (!connection.value || !canUsePatronPerks.value) return;
   const current = connection.value.effectiveSettings[key];
-  if (!current && !canUsePatronPerks.value) return;
   await updateSettings({ [key]: !current });
 }
 </script>
@@ -194,8 +244,9 @@ async function toggleSetting(key: keyof TrackerSettings) {
             class="mt-3 rounded-lg bg-red-500/10 px-3 py-2 text-xs text-red-300"
             role="alert"
             data-testid="tracker-sync-error"
+            :title="connection.lastSyncError"
           >
-            {{ connection.lastSyncError }}
+            {{ t('connections.tracker.syncFailed') }}
           </p>
         </div>
 
@@ -208,15 +259,6 @@ async function toggleSetting(key: keyof TrackerSettings) {
                   t('connections.tracker.coverageTitle', {
                     inCatalog: coverage.inCatalog,
                     total: coverage.total,
-                  })
-                }}
-              </p>
-              <p class="nd-settings-row-desc">
-                {{
-                  t('connections.tracker.coverageBreakdown', {
-                    watching: coverage.byStatus.WATCHING,
-                    completed: coverage.byStatus.COMPLETED,
-                    planning: coverage.byStatus.PLANNING,
                   })
                 }}
               </p>
@@ -244,23 +286,50 @@ async function toggleSetting(key: keyof TrackerSettings) {
 
             <div v-if="showMissing" class="mt-2.5 space-y-1.5 max-h-56 overflow-y-auto pr-1">
               <div
-                v-for="item in state.missingAnime"
+                v-for="{ item, action } in missingRows"
                 :key="`${item.externalSource}-${item.externalId}`"
                 class="flex items-center justify-between gap-3 rounded-lg bg-white/5 px-3 py-1.5 text-xs"
               >
                 <span class="truncate text-white/85">{{ item.title }}</span>
-                <NuxtLink
-                  :to="localePath('/requests')"
-                  class="shrink-0 font-medium text-brand hover:text-brand-hover"
+                <span
+                  v-if="action.kind === 'declined'"
+                  class="shrink-0 font-medium text-ink-faint"
+                  data-testid="tracker-request-declined"
                 >
-                  {{ t('connections.tracker.requestTitle') }}
-                </NuxtLink>
+                  {{ t('requests.status.DECLINED') }}
+                </span>
+                <span
+                  v-else-if="action.kind === 'requested'"
+                  class="inline-flex shrink-0 items-center gap-1 font-medium text-emerald-300"
+                  data-testid="tracker-request-done"
+                >
+                  <UiBaseIcon :path="mdiCheck" size="14" />
+                  {{
+                    action.status === 'OPEN'
+                      ? t('connections.tracker.requested')
+                      : t(`requests.status.${action.status}`)
+                  }}
+                </span>
+                <button
+                  v-else
+                  type="button"
+                  class="inline-flex shrink-0 items-center gap-1 font-medium text-brand hover:text-brand-hover disabled:opacity-50"
+                  :disabled="requested[item.externalId] === 'busy'"
+                  :data-testid="action.kind === 'vote' ? 'tracker-vote-missing' : 'tracker-request-missing'"
+                  @click="requestMissing(item)"
+                >
+                  <template v-if="action.kind === 'vote'">
+                    <UiBaseIcon :path="mdiThumbUpOutline" size="14" />
+                    {{ action.voteCount }}
+                  </template>
+                  <template v-else>{{ t('connections.tracker.requestTitle') }}</template>
+                </button>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Patron automation & anti-spoiler controls -->
+        <!-- Patron automation & anti-spoiler controls. Free readers see the same rows locked, as a preview. -->
         <div class="nd-settings-item space-y-3" data-testid="tracker-patron-settings">
           <div class="flex flex-wrap items-center justify-between gap-2">
             <div class="flex items-center gap-2">
@@ -278,90 +347,48 @@ async function toggleSetting(key: keyof TrackerSettings) {
             </NuxtLink>
           </div>
 
-          <p
-            v-if="hasPausedPatronSettings"
-            class="rounded-lg bg-white/5 px-3 py-2 text-xs text-white/70"
-            data-testid="tracker-lapsed-notice"
-          >
-            {{ t('connections.tracker.lapsedNotice') }}
-          </p>
-
           <div class="space-y-3">
-            <div class="flex items-center justify-between gap-4">
-              <div class="min-w-0">
-                <p class="text-sm font-medium text-ink">{{ t('connections.tracker.autoSyncLabel') }}</p>
-                <p class="text-xs text-ink-muted">{{ t('connections.tracker.autoSyncDesc') }}</p>
+            <template v-for="setting in PATRON_SETTINGS" :key="setting.key">
+              <div v-if="canUsePatronPerks" class="flex items-center justify-between gap-4">
+                <div class="min-w-0">
+                  <p class="text-sm font-medium text-ink">{{ t(setting.label) }}</p>
+                  <p class="text-xs text-ink-muted">{{ t(setting.desc) }}</p>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  :aria-checked="connection.effectiveSettings[setting.key]"
+                  :disabled="working"
+                  class="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors disabled:opacity-40"
+                  :class="connection.effectiveSettings[setting.key] ? 'bg-brand' : 'bg-white/15'"
+                  :data-testid="setting.testId"
+                  @click="toggleSetting(setting.key)"
+                >
+                  <span
+                    class="inline-block size-4 rounded-full bg-white transition-transform"
+                    :class="connection.effectiveSettings[setting.key] ? 'translate-x-6' : 'translate-x-1'"
+                  />
+                </button>
               </div>
-              <button
-                type="button"
-                role="switch"
-                :aria-checked="connection.effectiveSettings.autoSyncEnabled"
-                :disabled="working || (!canUsePatronPerks && !connection.effectiveSettings.autoSyncEnabled)"
-                class="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors disabled:opacity-40"
-                :class="connection.effectiveSettings.autoSyncEnabled ? 'bg-brand' : 'bg-white/15'"
-                data-testid="tracker-toggle-autosync"
-                @click="toggleSetting('autoSyncEnabled')"
+              <NuxtLink
+                v-else
+                :to="localePath('/supporters')"
+                class="-mx-2 flex items-center justify-between gap-4 rounded-lg px-2 py-1 hover:bg-white/5 transition-colors"
+                :data-testid="`${setting.testId}-locked`"
               >
+                <div class="min-w-0">
+                  <p class="text-sm font-medium text-ink/80">{{ t(setting.label) }}</p>
+                  <p class="text-xs text-ink-muted">{{ t(setting.desc) }}</p>
+                </div>
                 <span
-                  class="inline-block size-4 rounded-full bg-white transition-transform"
-                  :class="connection.effectiveSettings.autoSyncEnabled ? 'translate-x-6' : 'translate-x-1'"
-                />
-              </button>
-            </div>
-
-            <div class="flex items-center justify-between gap-4">
-              <div class="min-w-0">
-                <p class="text-sm font-medium text-ink">{{ t('connections.tracker.spoilerGuardLabel') }}</p>
-                <p class="text-xs text-ink-muted">{{ t('connections.tracker.spoilerGuardDesc') }}</p>
-              </div>
-              <button
-                type="button"
-                role="switch"
-                :aria-checked="connection.effectiveSettings.spoilerGuardEnabled"
-                :disabled="working || (!canUsePatronPerks && !connection.effectiveSettings.spoilerGuardEnabled)"
-                class="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors disabled:opacity-40"
-                :class="connection.effectiveSettings.spoilerGuardEnabled ? 'bg-brand' : 'bg-white/15'"
-                data-testid="tracker-toggle-spoiler-guard"
-                @click="toggleSetting('spoilerGuardEnabled')"
-              >
-                <span
-                  class="inline-block size-4 rounded-full bg-white transition-transform"
-                  :class="connection.effectiveSettings.spoilerGuardEnabled ? 'translate-x-6' : 'translate-x-1'"
-                />
-              </button>
-            </div>
-
-            <div class="flex items-center justify-between gap-4">
-              <div class="min-w-0">
-                <p class="text-sm font-medium text-ink">{{ t('connections.tracker.hidePlanningLabel') }}</p>
-                <p class="text-xs text-ink-muted">{{ t('connections.tracker.hidePlanningDesc') }}</p>
-              </div>
-              <button
-                type="button"
-                role="switch"
-                :aria-checked="connection.effectiveSettings.hidePlanToWatch"
-                :disabled="working || (!canUsePatronPerks && !connection.effectiveSettings.hidePlanToWatch)"
-                class="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors disabled:opacity-40"
-                :class="connection.effectiveSettings.hidePlanToWatch ? 'bg-brand' : 'bg-white/15'"
-                data-testid="tracker-toggle-hide-planning"
-                @click="toggleSetting('hidePlanToWatch')"
-              >
-                <span
-                  class="inline-block size-4 rounded-full bg-white transition-transform"
-                  :class="connection.effectiveSettings.hidePlanToWatch ? 'translate-x-6' : 'translate-x-1'"
-                />
-              </button>
-            </div>
+                  class="inline-flex h-6 w-11 shrink-0 items-center justify-center rounded-full bg-white/10 text-ink-muted"
+                  :aria-label="t('connections.tracker.unlockPatron')"
+                >
+                  <UiBaseIcon :path="mdiLockOutline" size="14" />
+                </span>
+              </NuxtLink>
+            </template>
           </div>
-
-          <p
-            v-if="!canUsePatronPerks && (state?.customListCount ?? 0) > 0"
-            class="flex items-center gap-1.5 text-xs text-white/60 pt-1"
-            data-testid="tracker-custom-lists-locked"
-          >
-            <UiBaseIcon :path="mdiSync" size="14" class="shrink-0 text-brand" />
-            <span>{{ t('connections.tracker.customListsLocked', { count: state?.customListCount ?? 0 }) }}</span>
-          </p>
         </div>
       </template>
     </div>

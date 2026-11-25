@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { buildTrackerSearchMediaFilters, customListMode, type TrackerState } from '~/utils/trackerFilter';
+import type { ResolvedMediaStats } from '~/types/search';
+import {
+  buildTrackerSearchMediaFilters,
+  categoryCountsFromMedia,
+  customListMode,
+  missingAnimeAction,
+  parseTrackerFilterMode,
+  type TrackerMissingAnime,
+  type TrackerState,
+} from '~/utils/trackerFilter';
 
 function makeState(overrides: Partial<TrackerState> = {}): TrackerState {
   return {
@@ -99,14 +108,88 @@ describe('buildTrackerSearchMediaFilters', () => {
     expect(allMode.exclude).toHaveLength(3);
   });
 
-  it('flags emptyIncludeMatch when a narrowing mode matches zero catalog titles', () => {
+  it('flags emptyIncludeMatch when the switch matches zero catalog titles', () => {
     const state = makeState({
       entries: [
         { mediaPublicId: 'media-plan01', title: 'Attack on Titan', status: 'PLANNING', progress: 0, customLists: [] },
       ],
     });
-    const result = buildTrackerSearchMediaFilters(state, 'completed');
+    const result = buildTrackerSearchMediaFilters(state, 'my-anime');
     expect(result.include).toEqual([]);
     expect(result.emptyIncludeMatch).toBe(true);
+  });
+
+  it("counts Paused and Dropped titles as part of the reader's list", () => {
+    const state = makeState({
+      entries: [
+        { mediaPublicId: 'media-pause1', title: 'Paused Show', status: 'PAUSED', progress: 8, customLists: [] },
+        { mediaPublicId: 'media-drop01', title: 'Dropped Show', status: 'DROPPED', progress: 2, customLists: [] },
+        { mediaPublicId: 'media-plan01', title: 'Attack on Titan', status: 'PLANNING', progress: 0, customLists: [] },
+      ],
+    });
+    expect(buildTrackerSearchMediaFilters(state, 'my-anime').include).toEqual([
+      { mediaPublicId: 'media-pause1' },
+      { mediaPublicId: 'media-drop01' },
+    ]);
+  });
+});
+
+describe('parseTrackerFilterMode', () => {
+  it('keeps known modes and custom lists, and falls back to all', () => {
+    expect(parseTrackerFilterMode('my-anime')).toBe('my-anime');
+    expect(parseTrackerFilterMode('watching')).toBe('all');
+    expect(parseTrackerFilterMode('custom:Favs')).toBe('custom:Favs');
+    expect(parseTrackerFilterMode('custom:')).toBe('all');
+    expect(parseTrackerFilterMode('bogus')).toBe('all');
+    expect(parseTrackerFilterMode(null)).toBe('all');
+  });
+});
+
+describe('categoryCountsFromMedia', () => {
+  it('sums narrowed media rows per category', () => {
+    const rows = [
+      { mediaPublicId: 'a', category: 'ANIME', matchCount: 3 },
+      { mediaPublicId: 'b', category: 'ANIME', matchCount: 2 },
+      { mediaPublicId: 'c', category: 'JDRAMA', matchCount: 0 },
+    ] as unknown as ResolvedMediaStats[];
+    expect(categoryCountsFromMedia(rows)).toEqual([{ category: 'ANIME', count: 5, realCount: 5 }]);
+  });
+});
+
+describe('missingAnimeAction', () => {
+  const base: TrackerMissingAnime = {
+    externalSource: 'ANILIST',
+    externalId: '1',
+    title: 'Missing Show',
+    status: 'PLANNING',
+    sourceUrl: 'https://anilist.co/anime/1',
+    request: null,
+  };
+  const request = { publicId: 'r1', status: 'OPEN' as const, voteCount: 4, voted: false };
+
+  it('offers a request when nobody asked yet', () => {
+    expect(missingAnimeAction(base, false)).toEqual({ kind: 'request' });
+  });
+
+  it('offers a vote on a request someone else filed', () => {
+    expect(missingAnimeAction({ ...base, request }, false)).toEqual({ kind: 'vote', voteCount: 4 });
+  });
+
+  it('shows it as requested once the reader filed or voted, before or on this page', () => {
+    expect(missingAnimeAction({ ...base, request: { ...request, voted: true } }, false)).toEqual({
+      kind: 'requested',
+      status: 'OPEN',
+    });
+    expect(missingAnimeAction({ ...base, request: { ...request, status: 'IN_PROGRESS' } }, true)).toEqual({
+      kind: 'requested',
+      status: 'IN_PROGRESS',
+    });
+    expect(missingAnimeAction(base, true)).toEqual({ kind: 'requested', status: 'OPEN' });
+  });
+
+  it('never offers a declined title again', () => {
+    expect(missingAnimeAction({ ...base, request: { ...request, status: 'DECLINED' } }, true)).toEqual({
+      kind: 'declined',
+    });
   });
 });

@@ -1623,7 +1623,7 @@
       "malDescription": "Sync your MyAnimeList anime list on the same tracker controls.",
       "comingSoon": "Coming soon",
       "connect": "Connect AniList",
-      "unavailable": "Not configured",
+      "unavailable": "Unavailable",
       "linkedAs": "{provider} · {username}",
       "defaultAccount": "your account",
       "lastSynced": "Last synced: {date}",
@@ -1631,23 +1631,22 @@
       "syncNow": "Sync now",
       "syncCooldown": "Next sync at {time}",
       "cooldownHint": "Manual sync will be available again at {time}.",
+      "syncFailed": "Sync failed. Try again.",
       "disconnect": "Disconnect",
       "confirmDisconnect": "Disconnect your anime tracker and remove synced progress from Nadeshiko?",
-      "coverageTitle": "{inCatalog} of {total} anime in Nadeshiko",
-      "coverageBreakdown": "{watching} watching · {completed} completed · {planning} plan to watch",
+      "coverageTitle": "{inCatalog} of your {total} anime are in Nadeshiko",
       "showMissing": "See {count} missing titles",
       "hideMissing": "Hide missing titles",
       "requestTitle": "Request",
+      "requested": "Requested",
       "patronSectionTitle": "Automatic sync & anti-spoilers",
-      "unlockPatron": "Patron perk",
-      "lapsedNotice": "Your saved patron settings are paused while Patreon is inactive and will turn back on automatically if you renew.",
+      "unlockPatron": "Patreon",
       "autoSyncLabel": "Automatic daily sync",
       "autoSyncDesc": "Keep your watched list and episode progress updated every day in the background.",
       "spoilerGuardLabel": "Episode spoiler guard",
       "spoilerGuardDesc": "Hide episodes beyond your current progress for anime you are watching.",
       "hidePlanningLabel": "Auto-hide Plan to Watch",
-      "hidePlanningDesc": "Keep planned anime out of search results automatically.",
-      "customListsLocked": "{count} custom AniList lists found — filter by them as a patron."
+      "hidePlanningDesc": "Keep planned anime out of search results automatically."
     }
   },
   "supporters": {
@@ -1762,6 +1761,15 @@
       "apiRequests": "{count} API requests a month",
       "customThemes": "Custom themes",
       "requestBoosts": "{count} request boost a month | {count} request boosts a month"
+    },
+    "shared": {
+      "title": "Every tier also includes",
+      "dictionaries": "{patron} custom dictionaries (free: {free})",
+      "openRequests": "{patron} open requests (free: {free})",
+      "spoilerGuard": "Episode anti-spoilers from your anime list",
+      "hidePlanning": "Hide Plan to Watch from searches",
+      "autoSync": "Daily automatic sync of your anime list",
+      "customLists": "AniList custom lists as search filters"
     },
     "faq": {
       "title": "Questions",
@@ -2107,21 +2115,19 @@
     "failed": "That AniList connection could not be completed.",
     "done": "AniList connected",
     "doneBody": "Synced {inCatalog} of {total} anime from your list into Nadeshiko.",
+    "startSearching": "Start searching",
     "backToSettings": "Back to connections"
   },
   "trackerFilter": {
-    "all": "All anime",
-    "myAnime": "My anime (Completed & Watching)",
-    "myAnimeShort": "My anime",
-    "completed": "Completed only",
-    "watching": "Watching only",
+    "onlySeen": "Only anime I've watched",
+    "settings": "Anime tracker settings",
+    "clear": "Clear filter",
     "customListsHeading": "Custom lists",
-    "customListsLocked": "{count} custom lists (Patron)",
-    "manage": "Manage sync & anti-spoilers",
-    "spoilerPromptSingle": "Showing all episodes of {title} (ep. {episode})",
-    "spoilerPromptMultiple": "Showing all episodes of {title} (ep. {episode}) +{others} more",
-    "spoilerPromptCta": "Hide future episodes with Patron",
-    "spoilerPromptCtaWithPlanning": "Hide future episodes & Plan to Watch with Patron",
+    "allLists": "All lists",
+    "spoilerPromptSingle": "Showing {title} past episode {episode}",
+    "spoilerPromptMultiple": "Showing {title} and {others} more past your progress",
+    "spoilerPromptCta": "Hide them with Patreon",
+    "spoilerPromptCtaWithPlanning": "Hide them and Plan to Watch with Patreon",
     "dismissPrompt": "Dismiss notice"
   }
 }

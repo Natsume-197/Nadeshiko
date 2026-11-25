@@ -1,134 +1,90 @@
 <script setup lang="ts">
-import { mdiCheck, mdiLockOutline, mdiShieldCheckOutline } from '@mdi/js';
+import { mdiCogOutline, mdiPlaylistCheck, mdiShieldCheckOutline } from '@mdi/js';
 import { useTrackerSync } from '~/composables/useTrackerSync';
-import { customListMode, customListNameFromMode, type TrackerFilterMode } from '~/utils/trackerFilter';
-import { trackerIconPath } from '~/utils/trackerIcons';
+import { customListMode, customListNameFromMode } from '~/utils/trackerFilter';
 
 const { t } = useI18n();
 const localePath = useLocalePath();
 const { state, isConnected, filterMode, searchFilters, setFilterMode } = useTrackerSync();
 
-const providerId = computed(() => state.value?.connection?.provider ?? 'ANILIST');
-const providerIcon = computed(() => trackerIconPath(providerId.value));
-const providerLabel = computed(() =>
-  providerId.value === 'MAL' ? t('connections.tracker.malName') : t('connections.tracker.anilistName'),
-);
+const emit = defineEmits<{
+  /** The filter changed; the mobile filter drawer closes on it, like Sort. */
+  selected: [];
+}>();
 
-const activeLabel = computed(() => {
-  const mode = filterMode.value;
-  if (mode === 'my-anime') return t('trackerFilter.myAnimeShort');
-  if (mode === 'completed') return t('trackerFilter.completed');
-  if (mode === 'watching') return t('trackerFilter.watching');
-  const custom = customListNameFromMode(mode);
-  if (custom) return custom;
-  return providerLabel.value;
-});
-
-const isFiltering = computed(() => filterMode.value !== 'all');
+const isOn = computed(() => filterMode.value !== 'all');
 const hasSpoilerProtection = computed(() => searchFilters.value.activeSpoilerProtectionCount > 0);
 
-const standardOptions: ReadonlyArray<{ mode: TrackerFilterMode; labelKey: string }> = [
-  { mode: 'all', labelKey: 'trackerFilter.all' },
-  { mode: 'my-anime', labelKey: 'trackerFilter.myAnime' },
-  { mode: 'completed', labelKey: 'trackerFilter.completed' },
-  { mode: 'watching', labelKey: 'trackerFilter.watching' },
-];
+/** Patrons with AniList custom lists can narrow the switch to one of them. */
+const customLists = computed(() => (state.value?.canUsePatronPerks ? (state.value.customLists ?? []) : []));
+const selectedList = computed(() => customListNameFromMode(filterMode.value) ?? '');
 
-function select(mode: TrackerFilterMode) {
-  setFilterMode(mode);
+function toggle() {
+  emit('selected');
+  setFilterMode(isOn.value ? 'all' : 'my-anime');
+}
+
+function pickList(event: Event) {
+  const name = (event.target as HTMLSelectElement).value;
+  emit('selected');
+  setFilterMode(name ? customListMode(name) : 'my-anime');
 }
 </script>
 
 <template>
-  <SearchDropdownContainer
+  <!-- Sits under Sort in the filter panel. `text-sm` is load-bearing on desktop: the sidebar column is
+       `yomitan-ignore` (font-size: 0). -->
+  <div
     v-if="isConnected"
-    dropdown-id="nd-tracker-filter"
-    teleport
-    teleport-align="end"
-    dropdown-container-class="z-[60] w-64 max-w-[calc(100vw-2rem)] p-1.5"
+    data-testid="tracker-filter"
+    class="w-full rounded-lg border bg-button-primary-main text-sm"
+    :class="isOn ? 'border-brand/60' : 'border-hairline'"
   >
-    <template #default="{ toggle, isOpen }">
-      <button
-        type="button"
-        data-testid="tracker-filter-trigger"
-        aria-haspopup="menu"
-        :aria-expanded="isOpen"
-        class="nd-btn inline-flex items-center gap-1.5 max-w-[11rem]"
-        :class="isFiltering ? 'border-brand/60 text-brand' : ''"
-        @click="toggle()"
+    <div class="flex items-stretch">
+    <button
+      type="button"
+      role="switch"
+      :aria-checked="isOn"
+      data-testid="tracker-filter-switch"
+      class="flex min-w-0 flex-1 items-center gap-2.5 py-2.5 pl-4 pr-2 text-left font-semibold text-ink hover:bg-surface-hover rounded-l-lg outline-none"
+      @click="toggle()"
+    >
+      <UiBaseIcon :path="mdiPlaylistCheck" size="18" class="shrink-0" />
+      <span class="min-w-0 flex-1">{{ t('trackerFilter.onlySeen') }}</span>
+      <UiBaseIcon v-if="hasSpoilerProtection" :path="mdiShieldCheckOutline" size="16" class="shrink-0 text-brand" />
+      <span
+        aria-hidden="true"
+        class="relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors"
+        :class="isOn ? 'bg-brand' : 'bg-white/15'"
       >
-        <UiBaseIcon :path="providerIcon" size="16" class="shrink-0" />
-        <span class="truncate">{{ activeLabel }}</span>
-        <UiBaseIcon v-if="hasSpoilerProtection" :path="mdiShieldCheckOutline" size="14" class="shrink-0 text-brand" />
-      </button>
-    </template>
+        <span
+          class="inline-block size-3.5 rounded-full bg-white transition-transform"
+          :class="isOn ? 'translate-x-[1.1rem]' : 'translate-x-[0.2rem]'"
+        />
+      </span>
+    </button>
+    <NuxtLink
+      :to="localePath('/user/connections#anime-tracker')"
+      :aria-label="t('trackerFilter.settings')"
+      :title="t('trackerFilter.settings')"
+      data-testid="tracker-filter-settings"
+      class="flex shrink-0 items-center border-l border-hairline px-3 text-ink-muted hover:text-ink hover:bg-surface-hover rounded-r-lg"
+    >
+      <UiBaseIcon :path="mdiCogOutline" size="18" />
+    </NuxtLink>
+    </div>
 
-    <template #content>
-      <div class="space-y-0.5" role="menu" data-testid="tracker-filter-menu">
-        <p class="px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-ink-faint">
-          {{ providerLabel }}
-        </p>
-
-        <button
-          v-for="option in standardOptions"
-          :key="option.mode"
-          type="button"
-          role="menuitemradio"
-          :aria-checked="filterMode === option.mode"
-          :data-testid="`tracker-filter-option-${option.mode}`"
-          class="flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs text-ink hover:bg-white/10 transition-colors"
-          :class="filterMode === option.mode ? 'bg-white/10 font-medium' : ''"
-          @click="select(option.mode)"
-        >
-          <span class="truncate">{{ t(option.labelKey) }}</span>
-          <UiBaseIcon v-if="filterMode === option.mode" :path="mdiCheck" size="14" class="shrink-0 text-brand" />
-        </button>
-
-        <!-- Custom lists (patrons) or locked hint (free) -->
-        <template v-if="state?.customLists.length">
-          <div class="my-1 border-t border-hairline" />
-          <p class="px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-ink-faint">
-            {{ t('trackerFilter.customListsHeading') }}
-          </p>
-          <button
-            v-for="listName in state.customLists"
-            :key="listName"
-            type="button"
-            role="menuitemradio"
-            :aria-checked="filterMode === customListMode(listName)"
-            class="flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs text-ink hover:bg-white/10 transition-colors"
-            :class="filterMode === customListMode(listName) ? 'bg-white/10 font-medium' : ''"
-            @click="select(customListMode(listName))"
-          >
-            <span class="truncate">{{ listName }}</span>
-            <UiBaseIcon
-              v-if="filterMode === customListMode(listName)"
-              :path="mdiCheck"
-              size="14"
-              class="shrink-0 text-brand"
-            />
-          </button>
-        </template>
-
-        <template v-else-if="!state?.canUsePatronPerks && (state?.customListCount ?? 0) > 0">
-          <div class="my-1 border-t border-hairline" />
-          <NuxtLink
-            :to="localePath('/supporters')"
-            class="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-ink-muted hover:bg-white/10 transition-colors"
-          >
-            <UiBaseIcon :path="mdiLockOutline" size="14" class="shrink-0 text-brand" />
-            <span>{{ t('trackerFilter.customListsLocked', { count: state?.customListCount ?? 0 }) }}</span>
-          </NuxtLink>
-        </template>
-
-        <div class="my-1 border-t border-hairline" />
-        <NuxtLink
-          :to="localePath('/user/connections')"
-          class="block rounded-lg px-2.5 py-1.5 text-xs text-ink-muted hover:text-ink hover:bg-white/10 transition-colors"
-        >
-          {{ t('trackerFilter.manage') }}
-        </NuxtLink>
-      </div>
-    </template>
-  </SearchDropdownContainer>
+    <div v-if="isOn && customLists.length" class="px-4 pb-3">
+      <select
+        :value="selectedList"
+        :aria-label="t('trackerFilter.customListsHeading')"
+        data-testid="tracker-filter-list"
+        class="w-full rounded-md border border-hairline bg-surface px-2 py-1.5 text-xs text-ink"
+        @change="pickList"
+      >
+        <option value="">{{ t('trackerFilter.allLists') }}</option>
+        <option v-for="name in customLists" :key="name" :value="name">{{ name }}</option>
+      </select>
+    </div>
+  </div>
 </template>

@@ -15,6 +15,7 @@ import { isWordQuery } from '#shared/utils/wordEntry';
 import { episodeLabelKey } from '~/utils/media';
 import { EPISODE_HITS_LOADING, type FetchOutcome, type SearchScope } from '~/composables/useSearchFetch';
 import { useTrackerSync } from '~/composables/useTrackerSync';
+import { categoryCountsFromMedia } from '~/utils/trackerFilter';
 import { canRetrySearchFailure, SEARCH_FAILURE_MESSAGES, type SearchFailure } from '~/utils/searchFailure';
 import type { SearchResponse, SearchStatsResponse, ResolvedMediaStats, ResolvedCategoryCount } from '~/types/search';
 
@@ -25,9 +26,11 @@ const { defaultCategorySlug } = useDefaultSearchCategory();
 const searchRecents = useSearchRecents();
 const {
   searchFilters: trackerSearchFilters,
+  filterMode: trackerFilterMode,
   promptDismissed: trackerPromptDismissed,
   load: loadTrackerSync,
   dismissPrompt: dismissTrackerPrompt,
+  setFilterMode: setTrackerFilterMode,
 } = useTrackerSync();
 
 const props = defineProps<{
@@ -181,6 +184,7 @@ const loadHiddenBreakdown = async () => {
     ...searchScope.value,
     hiddenMediaExclude: [],
     hiddenCategories: [],
+    trackerMediaExclude: [],
   });
 
   hiddenBreakdownLoading.value = false;
@@ -193,7 +197,7 @@ const loadHiddenBreakdown = async () => {
 
   // Built from the payload that came back with the filters lifted, which is the
   // only one carrying the hidden titles by name.
-  hiddenBreakdown.value = buildHiddenBreakdown(
+  const rows = buildHiddenBreakdown(
     {
       ...hiddenResultsScope.value,
       categories: outcome.data.categories ?? [],
@@ -201,6 +205,28 @@ const loadHiddenBreakdown = async () => {
     },
     { category: (entry) => t(CATEGORY_LABEL_KEYS[entry]), media: mediaName },
   );
+  hiddenBreakdown.value = [...rows, ...trackerHiddenRows(outcome.data.media ?? [])].sort((a, b) => b.count - a.count);
+};
+
+/**
+ * Titles the tracker's spoiler guard or Plan to Watch hiding kept out of this search. A guarded title only loses
+ * its later episodes, so its row is the hits the lifted search found minus the ones still showing.
+ */
+const trackerHiddenRows = (liftedMedia: readonly ResolvedMediaStats[]): HiddenBreakdownRow[] => {
+  if (media.value) return [];
+  const guarded = new Set(trackerSearchFilters.value.exclude.map((item) => item.mediaPublicId));
+  if (guarded.size === 0) return [];
+  const manual = new Set(hiddenMediaIds.value);
+  const visible = new Map((statsData.value?.media ?? []).map((row) => [row.mediaPublicId, row.matchCount]));
+  return liftedMedia
+    .filter(
+      (row) =>
+        guarded.has(row.mediaPublicId) &&
+        !manual.has(row.mediaPublicId) &&
+        (selectedApiCategory.value === null || row.category === selectedApiCategory.value),
+    )
+    .map((row) => ({ name: mediaName(row), count: row.matchCount - (visible.get(row.mediaPublicId) ?? 0) }))
+    .filter((row) => row.count > 0);
 };
 
 /** SSR strips other titles' episode counts to shrink the payload. Selecting media does not reload whole-query
@@ -232,7 +258,11 @@ const searchData = computed(() => {
   const filteredMedia = hidden.size > 0 ? allMedia.filter((m) => !hidden.has(m.mediaPublicId)) : allMedia;
   const hiddenMediaInPayload = hidden.size > 0 ? allMedia.filter((m) => hidden.has(m.mediaPublicId)) : [];
 
-  const serverCategories = statsPayload?.categories || ([] as ResolvedCategoryCount[]);
+  // Narrowed to the reader's list: count the tabs from the narrowed media rows (see `categoryCountsFromMedia`).
+  const narrowedToList = !media.value && trackerSearchFilters.value.include.length > 0 && !!statsPayload;
+  const serverCategories = narrowedToList
+    ? categoryCountsFromMedia(statsPayload.media ?? [])
+    : statsPayload?.categories || ([] as ResolvedCategoryCount[]);
   const discounted =
     hiddenMediaInPayload.length > 0 ? discountHiddenMedia(serverCategories, hiddenMediaInPayload) : serverCategories;
 
@@ -431,10 +461,18 @@ const hiddenEmptyCheckKey = computed(() => {
     !isLoading.value &&
     !statsFailure.value &&
     searchData.value.categories.length === 0 &&
-    (hiddenMediaIds.value.length > 0 || hiddenCategories.value.length > 0);
+    (hiddenMediaIds.value.length > 0 ||
+      hiddenCategories.value.length > 0 ||
+      trackerSearchFilters.value.exclude.length > 0);
 
   if (!shouldCheck) return null;
-  return [query.value, category.value, hiddenMediaIds.value.join(','), hiddenCategories.value.join(',')].join('\u0000');
+  return [
+    query.value,
+    category.value,
+    hiddenMediaIds.value.join(','),
+    hiddenCategories.value.join(','),
+    trackerFilterFingerprint.value,
+  ].join('\u0000');
 });
 
 watch(
@@ -450,6 +488,7 @@ watch(
       ...searchScope.value,
       hiddenMediaExclude: [],
       hiddenCategories: [],
+      trackerMediaExclude: [],
     });
     if (key !== hiddenEmptyCheckKey.value || outcome.status !== 'ok') return;
 
@@ -1196,6 +1235,14 @@ onBeforeRouteUpdate(async (to, from) => {
                                 {{ $t('searchErrors.retry') }}
                             </template>
                         </UiButtonPrimaryAction>
+                        <button
+                            v-if="!media && trackerFilterMode !== 'all' && !searchData.results.length"
+                            type="button"
+                            data-testid="tracker-filter-clear-empty"
+                            class="nd-btn my-4"
+                            @click="setTrackerFilterMode('all')">
+                            {{ $t('trackerFilter.clear') }}
+                        </button>
                         <!-- Word alerts (task 52): a word with no sentences yet can be watched from its empty search. -->
                         <SearchWordWatchButton
                             v-if="canWatchEmptySearch"
@@ -1235,6 +1282,7 @@ onBeforeRouteUpdate(async (to, from) => {
                     <SearchSegmentFilterContent :searchData="searchData" :categorySelected="category" :activeMediaId="media">
                       <template #before>
                         <SearchSegmentFilterSortContent />
+                        <SearchTrackerFilterMenu />
                       </template>
                     </SearchSegmentFilterContent>
                 </div>

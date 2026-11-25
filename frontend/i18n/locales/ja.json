@@ -1623,7 +1623,7 @@
       "malDescription": "同じトラッカー設定で MyAnimeList のリストを同期できます。",
       "comingSoon": "近日対応",
       "connect": "AniList を連携",
-      "unavailable": "未設定",
+      "unavailable": "利用不可",
       "linkedAs": "{provider} · {username}",
       "defaultAccount": "アカウント",
       "lastSynced": "最終同期: {date}",
@@ -1631,23 +1631,22 @@
       "syncNow": "今すぐ同期",
       "syncCooldown": "次回同期 {time}",
       "cooldownHint": "手動同期は {time} に再び利用できます。",
+      "syncFailed": "同期に失敗しました。もう一度お試しください。",
       "disconnect": "連携を解除",
       "confirmDisconnect": "アニメトラッカーの連携を解除し、同期された進捗を削除しますか？",
-      "coverageTitle": "{total} 作品中 {inCatalog} 作品が Nadeshiko に収録",
-      "coverageBreakdown": "視聴中 {watching} · 視聴済み {completed} · 視聴予定 {planning}",
+      "coverageTitle": "あなたの {total} 作品中 {inCatalog} 作品が Nadeshiko に収録",
       "showMissing": "未収録の {count} 作品を表示",
       "hideMissing": "未収録作品を隠す",
       "requestTitle": "リクエスト",
+      "requested": "リクエスト済み",
       "patronSectionTitle": "自動同期・ネタバレ防止",
-      "unlockPatron": "パトロン特典",
-      "lapsedNotice": "Patreon が無効な間はパトロン設定が一時停止されます。再開すると自動で元に戻ります。",
+      "unlockPatron": "Patreon",
       "autoSyncLabel": "毎日の自動同期",
       "autoSyncDesc": "視聴リストと話数進捗を毎日バックグラウンドで最新に保ちます。",
       "spoilerGuardLabel": "話数ネタバレ防止",
       "spoilerGuardDesc": "視聴中アニメでまだ見ていない話数を検索結果から隠します。",
       "hidePlanningLabel": "「視聴予定」を自動で隠す",
-      "hidePlanningDesc": "視聴予定リストの作品を検索結果から自動的に除外します。",
-      "customListsLocked": "AniList のカスタムリストが {count} 件あります（パトロン特典で絞り込み可能）。"
+      "hidePlanningDesc": "視聴予定リストの作品を検索結果から自動的に除外します。"
     }
   },
   "supporters": {
@@ -1762,6 +1761,15 @@
       "apiRequests": "月 {count} 件の API リクエスト",
       "customThemes": "カスタムテーマ",
       "requestBoosts": "毎月{count}回のリクエストブースト"
+    },
+    "shared": {
+      "title": "すべてのプランに含まれるもの",
+      "dictionaries": "自分の辞書 {patron} 個（無料: {free} 個）",
+      "openRequests": "進行中のリクエスト {patron} 件（無料: {free} 件）",
+      "spoilerGuard": "アニメリストに基づく話数単位のネタバレ防止",
+      "hidePlanning": "視聴予定を検索から隠す",
+      "autoSync": "アニメリストの毎日の自動同期",
+      "customLists": "AniList のカスタムリストで絞り込み"
     },
     "faq": {
       "title": "よくある質問",
@@ -2107,21 +2115,19 @@
     "failed": "AniList との連携を完了できませんでした。",
     "done": "AniList を連携しました",
     "doneBody": "リスト内の {total} 作品中 {inCatalog} 作品を Nadeshiko と同期しました。",
+    "startSearching": "検索を始める",
     "backToSettings": "連携設定へ戻る"
   },
   "trackerFilter": {
-    "all": "すべてのアニメ",
-    "myAnime": "マイアニメ（視聴済み・視聴中）",
-    "myAnimeShort": "マイアニメ",
-    "completed": "視聴済みのみ",
-    "watching": "視聴中のみ",
+    "onlySeen": "見たアニメだけ",
+    "settings": "アニメトラッカーの設定",
+    "clear": "フィルターを解除",
     "customListsHeading": "カスタムリスト",
-    "customListsLocked": "カスタムリスト {count} 件（パトロン）",
-    "manage": "同期・ネタバレ設定を管理",
-    "spoilerPromptSingle": "{title}（{episode}話まで視聴）の全話を表示中",
-    "spoilerPromptMultiple": "{title}（{episode}話まで視聴）ほか{others}作品の全話を表示中",
-    "spoilerPromptCta": "パトロン特典で未視聴話を隠す",
-    "spoilerPromptCtaWithPlanning": "パトロン特典で未視聴話と視聴予定を隠す",
+    "allLists": "すべてのリスト",
+    "spoilerPromptSingle": "{title} の {episode} 話より先も表示中",
+    "spoilerPromptMultiple": "{title} ほか {others} 作品の視聴済みより先も表示中",
+    "spoilerPromptCta": "Patreon で隠す",
+    "spoilerPromptCtaWithPlanning": "Patreon で視聴予定と一緒に隠す",
     "dismissPrompt": "閉じる"
   }
 }

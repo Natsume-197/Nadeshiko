@@ -150,6 +150,7 @@ onUnmounted(() => {
           @preserving-drawer="skipFilterDrawerEnter = true">
           <template #before>
             <SearchSegmentFilterSortContent @sort-selected="isFilterDrawerOpen = false" />
+            <SearchTrackerFilterMenu @selected="isFilterDrawerOpen = false" />
           </template>
         </SearchSegmentFilterContent>
   </div>
