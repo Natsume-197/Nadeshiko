@@ -332,6 +332,11 @@ export default defineNuxtConfig({
       sameAs: ['https://github.com/Natsume-197/Nadeshiko', 'https://www.patreon.com/NadeshikoApp', DISCORD_INVITE_URL],
     },
   },
+  seo: {
+    // Every page sets its own title. The fallback called i18n.t() with a per-URL default message, which
+    // vue-i18n compiles and keeps forever: one entry per crawled URL until the SSR worker ran out of heap.
+    fallbackTitle: false,
+  },
   site: {
     url: SITE_URL,
     name: 'Nadeshiko',
