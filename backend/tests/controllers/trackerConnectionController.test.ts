@@ -409,6 +409,35 @@ describe('anime tracker connection endpoints', () => {
     expect(await UserMediaProgress.countBy({ userId, provider: TrackerProviderType.ANILIST })).toBe(0);
     expect(await TrackerConnection.countBy({ userId })).toBe(1);
 
+    // A request filed with the MyAnimeList link matches the MAL row; an AniList id with the same number does not.
+    await ContentRequest.create({
+      category: CategoryType.ANIME,
+      status: ContentRequestStatus.OPEN,
+      title: 'Same Number On AniList',
+      sourceUrl: 'https://anilist.co/anime/424242',
+      externalSource: ExternalSourceType.ANILIST,
+      externalId: '424242',
+      requesterUserId: fixtures.users.kevin.id,
+      voteCount: 9,
+    }).save();
+    const malRequest = await ContentRequest.create({
+      category: CategoryType.ANIME,
+      status: ContentRequestStatus.OPEN,
+      title: 'Not On Nadeshiko',
+      sourceUrl: 'https://myanimelist.net/anime/424242',
+      externalSource: ExternalSourceType.MAL,
+      externalId: '424242',
+      requesterUserId: fixtures.users.kevin.id,
+      voteCount: 2,
+    }).save();
+    const requestRes = await request(app).get('/v1/user/connections/tracker');
+    expect(requestRes.body.missingAnime[0].request).toEqual({
+      publicId: malRequest.publicId,
+      status: ContentRequestStatus.OPEN,
+      voteCount: 2,
+      voted: false,
+    });
+
     // A token close to expiry is refreshed before the next sync, and the rotated refresh token is stored.
     const connection = await TrackerConnection.findOneByOrFail({ userId });
     connection.accessTokenExpiresAt = new Date(Date.now() + 60 * 60_000);
