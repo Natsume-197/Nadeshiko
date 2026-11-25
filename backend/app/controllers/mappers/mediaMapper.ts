@@ -1,24 +1,14 @@
 import type { t_ExternalId, t_Media } from 'generated/models';
 import type { MediaCreateRequestOutput, MediaUpdateRequestOutput } from 'generated/outputTypes';
 import type { DeepPartial } from 'typeorm';
-import { CategoryType, ExternalSourceType, SegmentStorage, type Media } from '@app/models';
-import { toMediaBaseDTO } from './sharedMapper';
+import { CategoryType, SegmentStorage, type Media } from '@app/models';
+import { EXTERNAL_SOURCE_BY_KEY, toMediaBaseDTO } from './sharedMapper';
 
 export const toMediaDTO = (media: Media): t_Media => toMediaBaseDTO(media);
 
 export const toMediaListDTO = (mediaList: Media[]): t_Media[] => mediaList.map(toMediaDTO);
 
 type ExternalIdInputKey = keyof t_ExternalId;
-
-const EXTERNAL_SOURCE_BY_KEY: Record<ExternalIdInputKey, ExternalSourceType> = {
-  anilist: ExternalSourceType.ANILIST,
-  mal: ExternalSourceType.MAL,
-  imdb: ExternalSourceType.IMDB,
-  tvdb: ExternalSourceType.TVDB,
-  tmdb: ExternalSourceType.TMDB,
-  youtube: ExternalSourceType.YOUTUBE,
-  asin: ExternalSourceType.ASIN,
-};
 
 export const toMediaExternalIdAttributes = (externalIds?: t_ExternalId) =>
   Object.entries(externalIds ?? {})

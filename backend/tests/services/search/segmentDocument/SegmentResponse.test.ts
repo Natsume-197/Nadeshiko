@@ -97,6 +97,26 @@ function makeEsResponse(hits: estypes.SearchHit<SegmentDocumentShape>[]): estype
 }
 
 describe('SegmentResponse', () => {
+  describe('buildMedia', () => {
+    it('carries every external id source, null where the media has none', () => {
+      const info = makeMediaInfoMap(1).results.get(1)!;
+      const media = SegmentResponse.buildMedia({
+        ...info,
+        externalIds: { anilist: '1535', mal: '1535', asin: 'B07PPMBZHX' },
+      });
+
+      expect(media.externalIds).toEqual({
+        anilist: '1535',
+        mal: '1535',
+        imdb: null,
+        tmdb: null,
+        tvdb: null,
+        youtube: null,
+        asin: 'B07PPMBZHX',
+      });
+    });
+  });
+
   describe('buildSearchResultSegments', () => {
     it('names the episode when it has a title, and leaves it null otherwise', () => {
       const titled = makeEsHit('1', { episode: 8 });

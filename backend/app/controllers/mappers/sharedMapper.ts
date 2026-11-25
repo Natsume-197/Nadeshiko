@@ -1,24 +1,33 @@
 import type { t_Media, t_MediaSummary, t_ExternalId } from 'generated/models';
-import type { Media } from '@app/models';
+import { ExternalSourceType, type Media } from '@app/models';
 import type { MediaExternalId } from '@app/models/MediaExternalId';
 import { getMediaCoverUrl, getMediaBannerUrl } from '@lib/utils/storage';
 
-const toExternalIdsMap = (externalIds?: MediaExternalId[]): t_ExternalId => {
-  const map: t_ExternalId = {
-    anilist: null,
-    mal: null,
-    imdb: null,
-    tmdb: null,
-    tvdb: null,
-    youtube: null,
-    asin: null,
-  };
-  for (const ext of externalIds ?? []) {
-    const key = ext.source.toLowerCase() as keyof t_ExternalId;
-    map[key] = ext.externalId;
+/** Every external id source, keyed as the API names it. Typed against `t_ExternalId`, so a source added to the
+ * schema does not compile until it is mapped here, and no response can drop it. */
+export const EXTERNAL_SOURCE_BY_KEY: Record<keyof t_ExternalId, ExternalSourceType> = {
+  anilist: ExternalSourceType.ANILIST,
+  mal: ExternalSourceType.MAL,
+  imdb: ExternalSourceType.IMDB,
+  tvdb: ExternalSourceType.TVDB,
+  tmdb: ExternalSourceType.TMDB,
+  youtube: ExternalSourceType.YOUTUBE,
+  asin: ExternalSourceType.ASIN,
+};
+
+const EXTERNAL_ID_KEYS = Object.keys(EXTERNAL_SOURCE_BY_KEY) as (keyof t_ExternalId)[];
+
+/** The API shape from ids keyed by lowercase source: every key present, null where the media has none. */
+export const toExternalIds = (idsBySource: Readonly<Record<string, string | undefined>>): t_ExternalId => {
+  const map = {} as t_ExternalId;
+  for (const key of EXTERNAL_ID_KEYS) {
+    map[key] = idsBySource[key] ?? null;
   }
   return map;
 };
+
+const toExternalIdsMap = (externalIds?: MediaExternalId[]): t_ExternalId =>
+  toExternalIds(Object.fromEntries((externalIds ?? []).map((ext) => [ext.source.toLowerCase(), ext.externalId])));
 
 export const toMediaSummaryDTO = (media: Media): t_MediaSummary => ({
   publicId: media.publicId,

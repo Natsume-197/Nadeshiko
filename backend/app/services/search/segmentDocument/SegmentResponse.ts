@@ -8,6 +8,7 @@ import type { SegmentDocumentShape } from '../SegmentDocument';
 import type { SlimToken } from '@app/models/Segment';
 import { enhanceHighlight } from './HighlightEnhancer';
 import { isSuccessfulMsearchItem } from './errors';
+import { toExternalIds } from '@app/controllers/mappers/sharedMapper';
 import type {
   SearchPaginationOutput,
   SearchResponseOutput,
@@ -160,13 +161,7 @@ export class SegmentResponse {
     return {
       publicId: mediaInfo.publicId,
       slug: mediaInfo.slug,
-      externalIds: {
-        anilist: mediaInfo.externalIds.anilist ?? null,
-        imdb: mediaInfo.externalIds.imdb ?? null,
-        tmdb: mediaInfo.externalIds.tmdb ?? null,
-        tvdb: mediaInfo.externalIds.tvdb ?? null,
-        youtube: mediaInfo.externalIds.youtube ?? null,
-      },
+      externalIds: toExternalIds(mediaInfo.externalIds),
       nameJa: mediaInfo.nameJa,
       nameRomaji: mediaInfo.nameRomaji,
       nameEn: mediaInfo.nameEn,
