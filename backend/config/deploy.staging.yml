@@ -69,6 +69,13 @@ env:
     - PATREON_CONNECTION_SECRET
     - PATREON_CAMPAIGN_ID
     - PATREON_CREATOR_ACCESS_TOKEN
+    # Anime tracker sync (task 54): AniList and MyAnimeList OAuth clients. TRACKER_CONNECTION_SECRET encrypts the
+    # stored tracker tokens and the OAuth state. All five must exist in SSM before a deploy.
+    - ANILIST_OAUTH_CLIENT_ID
+    - ANILIST_OAUTH_CLIENT_SECRET
+    - MAL_OAUTH_CLIENT_ID
+    - MAL_OAUTH_CLIENT_SECRET
+    - TRACKER_CONNECTION_SECRET
     # Custom Yomitan dictionaries in R2 (task 48). Stored with .kamal/ssm-put-user-dicts staging.
     - USER_DICT_R2_ENDPOINT
     - USER_DICT_R2_BUCKET
@@ -83,6 +90,8 @@ env:
     BASE_URL: https://stg.nadeshiko.co
     PATREON_OAUTH_REDIRECT_URI: https://stg.nadeshiko.co/link/patreon/callback
     PATREON_CAMPAIGN_URL: https://www.patreon.com/c/NadeshikoApp
+    ANILIST_OAUTH_REDIRECT_URI: https://stg.nadeshiko.co/link/anilist/callback
+    MAL_OAUTH_REDIRECT_URI: https://stg.nadeshiko.co/link/mal/callback
 
     # Amazon SES is the only transport. Staging has its own configuration set and topic, so its bounces land in the
     # staging database, not production's (nadeshiko-infra/terraform/aws-ses.tf).
