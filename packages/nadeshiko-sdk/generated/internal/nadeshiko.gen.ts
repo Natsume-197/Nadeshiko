@@ -4,7 +4,7 @@ import { createClient as createApiClient, createConfig, type Client } from './cl
 import type { Auth } from './core/auth.gen';
 import type { ClientOptions } from './types.gen';
 import type * as Types from './types.gen';
-import { search, getSearchStats, searchWords, searchMedia, getStatsOverview, listMedia, getSegment, getSegmentContext, getMedia, listEpisodes, getEpisode, getMe, createUserApiKey, listExcludedMedia, addExcludedMedia, removeExcludedMedia, listFavoriteMedia, addFavoriteMedia, removeFavoriteMedia, listFamiliarMedia, listUserActivity, getUserActivityHeatmap, getUserActivityStats, listCollections, createCollection, getCollection, deleteCollection, addSegmentToCollection, searchCollectionSegments, removeSegmentFromCollection, listContentRequests, createContentRequest, getContentRequestAllowance, listMyContentRequests, withdrawContentRequest, voteContentRequest, unvoteContentRequest, boostContentRequest, listNotifications, getUnreadNotificationCount, markNotificationsRead, listWordWatches, setWordWatch, checkWordWatch, updateWordWatch, deleteWordWatch, identifyDictionaryWord, getDictionaryKanjiIndex, getDictionaryKanji, getCoveredWords, triggerCoveredWordsUpdate, createMedia, updateSegment, listSegmentRevisions, restoreSegmentRevision, updateMedia, deleteMedia, createEpisode, updateEpisode, deleteEpisode, listSegments, createSegment, createSegmentsBatch, moderateEpisodeSegments, getPatreonConnection, startPatreonLink, unlinkPatreon, completePatreonLink, listUserDictionaries, updateUserDictionaries, deleteUserDictionary, reserveUserDictionaryUpload, completeUserDictionaryUpload, clearFamiliarMedia, forgetFamiliarMedia, createUserReport, getUserPreferences, updateUserPreferences, trackUserActivity, deleteUserActivity, deleteUserActivityByDate, deleteUserActivityById, exportUserData, createFeedback, getFeedbackFormToken, unsubscribeFromEmail, getEmailPreferencesByToken, updateEmailPreferencesByToken, updateCollection, updateCollectionSegment, getCollectionStats, getAdminOverview, listAdminReports, batchUpdateAdminReports, bulkUpdateAdminReports, bulkDeleteAdminReports, updateAdminReport, deleteAdminReport, getAnnouncement, updateAnnouncement, getAdminUsersWithProviders, listTiers, getAdminUserQuota, updateAdminUserQuota, listAdminContentRequests, updateAdminContentRequest, mergeAdminContentRequest, getAdminPatreonOverview, refreshAllAdminPatreonConnections, unlinkAdminPatreonConnection, refreshAdminPatreonConnection, getSession, getSessionPost, signOut, socialSignIn, signInWithMagicLink, signInWithEmailOtp, listUserSessions, authRevokeSession, authRevokeSessions, authRevokeOtherSessions, deleteUser, changeEmail, authApiKeyCreate, authApiKeyList, authApiKeyUpdate, banUser, unbanUser, impersonateUser, authAdminStopImpersonating, type Options } from './sdk.gen';
+import { search, getSearchStats, searchWords, searchMedia, getStatsOverview, listMedia, getSegment, getSegmentContext, getMedia, listEpisodes, getEpisode, getMe, createUserApiKey, listExcludedMedia, addExcludedMedia, removeExcludedMedia, listFavoriteMedia, addFavoriteMedia, removeFavoriteMedia, listFamiliarMedia, listUserActivity, getUserActivityHeatmap, getUserActivityStats, listCollections, createCollection, getCollection, deleteCollection, addSegmentToCollection, searchCollectionSegments, removeSegmentFromCollection, listContentRequests, createContentRequest, getContentRequestAllowance, listMyContentRequests, withdrawContentRequest, voteContentRequest, unvoteContentRequest, boostContentRequest, listNotifications, getUnreadNotificationCount, markNotificationsRead, listWordWatches, setWordWatch, checkWordWatch, updateWordWatch, deleteWordWatch, identifyDictionaryWord, getDictionaryKanjiIndex, getDictionaryKanji, getCoveredWords, triggerCoveredWordsUpdate, createMedia, updateSegment, listSegmentRevisions, restoreSegmentRevision, updateMedia, deleteMedia, createEpisode, updateEpisode, deleteEpisode, listSegments, createSegment, createSegmentsBatch, moderateEpisodeSegments, getPatreonConnection, startPatreonLink, unlinkPatreon, completePatreonLink, getTrackerConnection, startTrackerLink, unlinkTracker, completeTrackerLink, syncTrackerConnection, updateTrackerSettings, listUserDictionaries, updateUserDictionaries, deleteUserDictionary, reserveUserDictionaryUpload, completeUserDictionaryUpload, clearFamiliarMedia, forgetFamiliarMedia, createUserReport, getUserPreferences, updateUserPreferences, trackUserActivity, deleteUserActivity, deleteUserActivityByDate, deleteUserActivityById, exportUserData, createFeedback, getFeedbackFormToken, unsubscribeFromEmail, getEmailPreferencesByToken, updateEmailPreferencesByToken, updateCollection, updateCollectionSegment, getCollectionStats, getAdminOverview, listAdminReports, batchUpdateAdminReports, bulkUpdateAdminReports, bulkDeleteAdminReports, updateAdminReport, deleteAdminReport, getAnnouncement, updateAnnouncement, getAdminUsersWithProviders, listTiers, getAdminUserQuota, updateAdminUserQuota, listAdminContentRequests, updateAdminContentRequest, mergeAdminContentRequest, getAdminPatreonOverview, refreshAllAdminPatreonConnections, unlinkAdminPatreonConnection, refreshAdminPatreonConnection, getSession, getSessionPost, signOut, socialSignIn, signInWithMagicLink, signInWithEmailOtp, listUserSessions, authRevokeSession, authRevokeSessions, authRevokeOtherSessions, deleteUser, changeEmail, authApiKeyCreate, authApiKeyList, authApiKeyUpdate, banUser, unbanUser, impersonateUser, authAdminStopImpersonating, type Options } from './sdk.gen';
 import { withRetry, type RetryOptions } from './retry';
 import { NadeshikoError, buildNadeshikoError, isProblemDetails, type NadeshikoErrorCode, type RateLimitReason } from './errors';
 import { flatPaginate } from './paginate';
@@ -346,6 +346,30 @@ export type NadeshikoClient = {
     completePatreonLink: {
       (params: NonNullable<Types.CompletePatreonLinkData['body']> & { throwOnError: false }): Promise<{ data: Types.CompletePatreonLinkResponse; response: Response; request: Request } | { error: Types.CompletePatreonLinkErrors; response: Response; request: Request }>;
       (params: NonNullable<Types.CompletePatreonLinkData['body']>): Promise<Types.CompletePatreonLinkResponse>;
+    };
+    getTrackerConnection: {
+      (params: { throwOnError: false }): Promise<{ data: Types.GetTrackerConnectionResponse; response: Response; request: Request } | { error: Types.GetTrackerConnectionErrors; response: Response; request: Request }>;
+      (): Promise<Types.GetTrackerConnectionResponse>;
+    };
+    startTrackerLink: {
+      (params: NonNullable<Types.StartTrackerLinkData['body']> & { throwOnError: false }): Promise<{ data: Types.StartTrackerLinkResponse; response: Response; request: Request } | { error: Types.StartTrackerLinkErrors; response: Response; request: Request }>;
+      (params: NonNullable<Types.StartTrackerLinkData['body']>): Promise<Types.StartTrackerLinkResponse>;
+    };
+    unlinkTracker: {
+      (params: { throwOnError: false }): Promise<{ data: Types.UnlinkTrackerResponse; response: Response; request: Request } | { error: Types.UnlinkTrackerErrors; response: Response; request: Request }>;
+      (): Promise<Types.UnlinkTrackerResponse>;
+    };
+    completeTrackerLink: {
+      (params: NonNullable<Types.CompleteTrackerLinkData['body']> & { throwOnError: false }): Promise<{ data: Types.CompleteTrackerLinkResponse; response: Response; request: Request } | { error: Types.CompleteTrackerLinkErrors; response: Response; request: Request }>;
+      (params: NonNullable<Types.CompleteTrackerLinkData['body']>): Promise<Types.CompleteTrackerLinkResponse>;
+    };
+    syncTrackerConnection: {
+      (params: { throwOnError: false }): Promise<{ data: Types.SyncTrackerConnectionResponse; response: Response; request: Request } | { error: Types.SyncTrackerConnectionErrors; response: Response; request: Request }>;
+      (): Promise<Types.SyncTrackerConnectionResponse>;
+    };
+    updateTrackerSettings: {
+      (params: NonNullable<Types.UpdateTrackerSettingsData['body']> & { throwOnError: false }): Promise<{ data: Types.UpdateTrackerSettingsResponse; response: Response; request: Request } | { error: Types.UpdateTrackerSettingsErrors; response: Response; request: Request }>;
+      (params?: NonNullable<Types.UpdateTrackerSettingsData['body']>): Promise<Types.UpdateTrackerSettingsResponse>;
     };
     listUserDictionaries: {
       (params: { throwOnError: false }): Promise<{ data: Types.ListUserDictionariesResponse; response: Response; request: Request } | { error: Types.ListUserDictionariesErrors; response: Response; request: Request }>;
@@ -1246,6 +1270,42 @@ export function createNadeshikoClient(config: NadeshikoConfig): NadeshikoClient 
     return tOE === false ? p : p.then((r: any) => r.data);
   };
 
+  const _getTrackerConnection = (params?: any) => {
+    const tOE = params?.throwOnError;
+    const p = getTrackerConnection({ client: clientInstance, throwOnError: tOE === false ? false : true } as any);
+    return tOE === false ? p : p.then((r: any) => r.data);
+  };
+
+  const _startTrackerLink = (params?: any) => {
+    const { throwOnError: tOE, ...body } = params ?? {};
+    const p = startTrackerLink({ body, client: clientInstance, throwOnError: tOE === false ? false : true } as any);
+    return tOE === false ? p : p.then((r: any) => r.data);
+  };
+
+  const _unlinkTracker = (params?: any) => {
+    const tOE = params?.throwOnError;
+    const p = unlinkTracker({ client: clientInstance, throwOnError: tOE === false ? false : true } as any);
+    return tOE === false ? p : p.then((r: any) => r.data);
+  };
+
+  const _completeTrackerLink = (params?: any) => {
+    const { throwOnError: tOE, ...body } = params ?? {};
+    const p = completeTrackerLink({ body, client: clientInstance, throwOnError: tOE === false ? false : true } as any);
+    return tOE === false ? p : p.then((r: any) => r.data);
+  };
+
+  const _syncTrackerConnection = (params?: any) => {
+    const tOE = params?.throwOnError;
+    const p = syncTrackerConnection({ client: clientInstance, throwOnError: tOE === false ? false : true } as any);
+    return tOE === false ? p : p.then((r: any) => r.data);
+  };
+
+  const _updateTrackerSettings = (params?: any) => {
+    const { throwOnError: tOE, ...body } = params ?? {};
+    const p = updateTrackerSettings({ body, client: clientInstance, throwOnError: tOE === false ? false : true } as any);
+    return tOE === false ? p : p.then((r: any) => r.data);
+  };
+
   const _listUserDictionaries = (params?: any) => {
     const tOE = params?.throwOnError;
     const p = listUserDictionaries({ client: clientInstance, throwOnError: tOE === false ? false : true } as any);
@@ -1751,6 +1811,12 @@ export function createNadeshikoClient(config: NadeshikoConfig): NadeshikoClient 
     startPatreonLink: _startPatreonLink,
     unlinkPatreon: _unlinkPatreon,
     completePatreonLink: _completePatreonLink,
+    getTrackerConnection: _getTrackerConnection,
+    startTrackerLink: _startTrackerLink,
+    unlinkTracker: _unlinkTracker,
+    completeTrackerLink: _completeTrackerLink,
+    syncTrackerConnection: _syncTrackerConnection,
+    updateTrackerSettings: _updateTrackerSettings,
     listUserDictionaries: _listUserDictionaries,
     updateUserDictionaries: _updateUserDictionaries,
     deleteUserDictionary: _deleteUserDictionary,

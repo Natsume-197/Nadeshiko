@@ -2612,6 +2612,202 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalServerError'
+  /v1/user/connections/tracker:
+    get:
+      tags:
+        - User
+      x-internal: true
+      operationId: getTrackerConnection
+      summary: Read the linked anime tracker state, catalog coverage, and search filter entries
+      description: Returns the active anime tracker connection (if any), effective patron settings, catalog coverage, and matched progress entries.
+      security:
+        - SessionCookie: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrackerState'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      tags:
+        - User
+      x-internal: true
+      operationId: startTrackerLink
+      summary: Begin anime tracker OAuth linking
+      description: Returns the provider's OAuth authorization URL with sealed state bound to the signed-in reader.
+      security:
+        - SessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - provider
+              properties:
+                provider:
+                  type: string
+                  enum:
+                    - ANILIST
+                    - MAL
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - authorizeUrl
+                  - state
+                properties:
+                  authorizeUrl:
+                    type: string
+                    format: uri
+                  state:
+                    type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+      tags:
+        - User
+      x-internal: true
+      operationId: unlinkTracker
+      summary: Disconnect the linked anime tracker
+      description: Deletes the encrypted tracker credentials and all synced progress rows for the signed-in reader.
+      security:
+        - SessionCookie: []
+      responses:
+        '204':
+          description: No Content
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/user/connections/tracker/callback:
+    post:
+      tags:
+        - User
+      x-internal: true
+      operationId: completeTrackerLink
+      summary: Complete anime tracker OAuth linking
+      description: Exchanges the one-time OAuth code, stores encrypted credentials, replaces any prior tracker, and runs the initial list sync.
+      security:
+        - SessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - provider
+                - code
+                - state
+              properties:
+                provider:
+                  type: string
+                  enum:
+                    - ANILIST
+                    - MAL
+                code:
+                  type: string
+                  minLength: 1
+                state:
+                  type: string
+                  minLength: 1
+      responses:
+        '200':
+          description: Linked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrackerState'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/user/connections/tracker/sync:
+    post:
+      tags:
+        - User
+      x-internal: true
+      operationId: syncTrackerConnection
+      summary: Manually sync the linked anime tracker list
+      description: Fetches the latest anime list from the linked provider and updates catalog matches, subject to tier cooldown.
+      security:
+        - SessionCookie: []
+      responses:
+        '200':
+          description: Synced
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrackerState'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/user/connections/tracker/settings:
+    patch:
+      tags:
+        - User
+      x-internal: true
+      operationId: updateTrackerSettings
+      summary: Update anime tracker sync and spoiler protection settings
+      description: Updates patron-gated tracker settings. Enabling patron perks requires an active Patreon membership; disabling is always allowed.
+      security:
+        - SessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                autoSyncEnabled:
+                  type: boolean
+                spoilerGuardEnabled:
+                  type: boolean
+                hidePlanToWatch:
+                  type: boolean
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrackerState'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /v1/user/dictionaries:
     get:
       tags:
@@ -5840,6 +6036,16 @@ components:
           example:
             - 1
             - 2
+        minEpisode:
+          type: integer
+          minimum: 0
+          description: Inclusive lower episode bound (e.g. exclude episodes above a reader's current progress)
+          example: 7
+        maxEpisode:
+          type: integer
+          minimum: 0
+          description: Inclusive upper episode bound (e.g. include only episodes up to a reader's current progress)
+          example: 6
     Category:
       type: string
       description: Media category type
@@ -5889,7 +6095,7 @@ components:
                 Include only segments from these media (with optional episode filter).
                 A `mediaPublicId` that matches no media is rejected with `400`: dropping it would
                 turn a deliberately narrow request into an unfiltered one.
-              maxItems: 100
+              maxItems: 1000
               items:
                 $ref: '#/components/schemas/MediaFilterItem'
             exclude:
@@ -8518,6 +8724,212 @@ components:
         linkedAt:
           type: string
           format: date-time
+    TrackerState:
+      type: object
+      description: Provider-agnostic anime tracker connection, catalog coverage, and resolved search filter entries.
+      required:
+        - configuredProviders
+        - canUsePatronPerks
+        - connection
+        - coverage
+        - customLists
+        - customListCount
+        - entries
+        - missingAnime
+      properties:
+        configuredProviders:
+          type: array
+          items:
+            type: string
+            enum:
+              - ANILIST
+              - MAL
+        canUsePatronPerks:
+          type: boolean
+        connection:
+          anyOf:
+            - type: object
+              required:
+                - provider
+                - externalUsername
+                - supportsCustomLists
+                - lastSyncedAt
+                - lastSyncError
+                - linkedAt
+                - settings
+                - effectiveSettings
+                - nextManualSyncAt
+                - manualCooldownSeconds
+              properties:
+                provider:
+                  type: string
+                  enum:
+                    - ANILIST
+                    - MAL
+                externalUsername:
+                  type:
+                    - string
+                    - 'null'
+                supportsCustomLists:
+                  type: boolean
+                lastSyncedAt:
+                  type:
+                    - string
+                    - 'null'
+                  format: date-time
+                lastSyncError:
+                  type:
+                    - string
+                    - 'null'
+                linkedAt:
+                  type: string
+                  format: date-time
+                settings:
+                  type: object
+                  required:
+                    - autoSyncEnabled
+                    - spoilerGuardEnabled
+                    - hidePlanToWatch
+                  properties:
+                    autoSyncEnabled:
+                      type: boolean
+                    spoilerGuardEnabled:
+                      type: boolean
+                    hidePlanToWatch:
+                      type: boolean
+                effectiveSettings:
+                  type: object
+                  required:
+                    - autoSyncEnabled
+                    - spoilerGuardEnabled
+                    - hidePlanToWatch
+                  properties:
+                    autoSyncEnabled:
+                      type: boolean
+                    spoilerGuardEnabled:
+                      type: boolean
+                    hidePlanToWatch:
+                      type: boolean
+                nextManualSyncAt:
+                  type:
+                    - string
+                    - 'null'
+                  format: date-time
+                manualCooldownSeconds:
+                  type: integer
+                  minimum: 0
+            - type: 'null'
+        coverage:
+          anyOf:
+            - type: object
+              required:
+                - total
+                - inCatalog
+                - missing
+                - byStatus
+              properties:
+                total:
+                  type: integer
+                  minimum: 0
+                inCatalog:
+                  type: integer
+                  minimum: 0
+                missing:
+                  type: integer
+                  minimum: 0
+                byStatus:
+                  type: object
+                  required:
+                    - WATCHING
+                    - COMPLETED
+                    - PAUSED
+                    - DROPPED
+                    - PLANNING
+                  properties:
+                    WATCHING:
+                      type: integer
+                      minimum: 0
+                    COMPLETED:
+                      type: integer
+                      minimum: 0
+                    PAUSED:
+                      type: integer
+                      minimum: 0
+                    DROPPED:
+                      type: integer
+                      minimum: 0
+                    PLANNING:
+                      type: integer
+                      minimum: 0
+            - type: 'null'
+        customLists:
+          type: array
+          items:
+            type: string
+        customListCount:
+          type: integer
+          minimum: 0
+        entries:
+          type: array
+          items:
+            type: object
+            required:
+              - mediaPublicId
+              - title
+              - status
+              - progress
+              - customLists
+            properties:
+              mediaPublicId:
+                type: string
+              title:
+                type: string
+              status:
+                type: string
+                enum:
+                  - WATCHING
+                  - COMPLETED
+                  - PAUSED
+                  - DROPPED
+                  - PLANNING
+              progress:
+                type: integer
+                minimum: 0
+              customLists:
+                type: array
+                items:
+                  type: string
+        missingAnime:
+          type: array
+          items:
+            type: object
+            required:
+              - externalSource
+              - externalId
+              - title
+              - status
+              - sourceUrl
+            properties:
+              externalSource:
+                type: string
+                enum:
+                  - ANILIST
+                  - MAL
+              externalId:
+                type: string
+              title:
+                type: string
+              status:
+                type: string
+                enum:
+                  - WATCHING
+                  - COMPLETED
+                  - PAUSED
+                  - DROPPED
+                  - PLANNING
+              sourceUrl:
+                type: string
+                format: uri
     UserDictionary:
       type: object
       description: One custom Yomitan dictionary attached to the user's account.

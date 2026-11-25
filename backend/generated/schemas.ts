@@ -393,6 +393,8 @@ export const s_IncludeExpansion = z.literal('media');
 export const s_MediaFilterItem = z.object({
   mediaPublicId: z.string().regex(new RegExp('^[A-Za-z0-9_-]{12}$')),
   episodes: z.array(z.coerce.number().min(0)).max(500).optional(),
+  minEpisode: z.coerce.number().min(0).optional(),
+  maxEpisode: z.coerce.number().min(0).optional(),
 });
 
 export const s_MediaGlobalStats = z.object({
@@ -548,6 +550,67 @@ export const s_Token = z.object({
   f: z.array(z.object({ t: z.string(), r: z.string().optional() })).optional(),
   inflection: z.object({ labels: z.array(z.string()), base: z.string() }).optional(),
   parts: z.array(z.object({ s: z.string(), b: z.coerce.number(), e: z.coerce.number() })).optional(),
+});
+
+export const s_TrackerState = z.object({
+  configuredProviders: z.array(z.enum(['ANILIST', 'MAL'])),
+  canUsePatronPerks: PermissiveBoolean,
+  connection: z
+    .object({
+      provider: z.enum(['ANILIST', 'MAL']),
+      externalUsername: z.string().nullable(),
+      supportsCustomLists: PermissiveBoolean,
+      lastSyncedAt: z.iso.datetime({ offset: true }).nullable(),
+      lastSyncError: z.string().nullable(),
+      linkedAt: z.iso.datetime({ offset: true }),
+      settings: z.object({
+        autoSyncEnabled: PermissiveBoolean,
+        spoilerGuardEnabled: PermissiveBoolean,
+        hidePlanToWatch: PermissiveBoolean,
+      }),
+      effectiveSettings: z.object({
+        autoSyncEnabled: PermissiveBoolean,
+        spoilerGuardEnabled: PermissiveBoolean,
+        hidePlanToWatch: PermissiveBoolean,
+      }),
+      nextManualSyncAt: z.iso.datetime({ offset: true }).nullable(),
+      manualCooldownSeconds: z.coerce.number().min(0),
+    })
+    .nullable(),
+  coverage: z
+    .object({
+      total: z.coerce.number().min(0),
+      inCatalog: z.coerce.number().min(0),
+      missing: z.coerce.number().min(0),
+      byStatus: z.object({
+        WATCHING: z.coerce.number().min(0),
+        COMPLETED: z.coerce.number().min(0),
+        PAUSED: z.coerce.number().min(0),
+        DROPPED: z.coerce.number().min(0),
+        PLANNING: z.coerce.number().min(0),
+      }),
+    })
+    .nullable(),
+  customLists: z.array(z.string()),
+  customListCount: z.coerce.number().min(0),
+  entries: z.array(
+    z.object({
+      mediaPublicId: z.string(),
+      title: z.string(),
+      status: z.enum(['WATCHING', 'COMPLETED', 'PAUSED', 'DROPPED', 'PLANNING']),
+      progress: z.coerce.number().min(0),
+      customLists: z.array(z.string()),
+    }),
+  ),
+  missingAnime: z.array(
+    z.object({
+      externalSource: z.enum(['ANILIST', 'MAL']),
+      externalId: z.string(),
+      title: z.string(),
+      status: z.enum(['WATCHING', 'COMPLETED', 'PAUSED', 'DROPPED', 'PLANNING']),
+      sourceUrl: z.string(),
+    }),
+  ),
 });
 
 export const s_UnsubscribeReceipt = z.object({ unsubscribed: PermissiveBoolean });
@@ -921,7 +984,7 @@ export const s_ReportTarget = z.discriminatedUnion('type', [
 export const s_SearchFilters = z.object({
   media: z
     .object({
-      include: z.array(s_MediaFilterItem).max(100).optional(),
+      include: z.array(s_MediaFilterItem).max(1000).optional(),
       exclude: z.array(s_MediaFilterItem).max(1000).optional(),
     })
     .optional(),
@@ -1332,6 +1395,20 @@ export const s_CreateUserApiKeyRequestBody = z.object({
 });
 
 export const s_CompletePatreonLinkRequestBody = z.object({ code: z.string().min(1), state: z.string().min(1) });
+
+export const s_StartTrackerLinkRequestBody = z.object({ provider: z.enum(['ANILIST', 'MAL']) });
+
+export const s_CompleteTrackerLinkRequestBody = z.object({
+  provider: z.enum(['ANILIST', 'MAL']),
+  code: z.string().min(1),
+  state: z.string().min(1),
+});
+
+export const s_UpdateTrackerSettingsRequestBody = z.object({
+  autoSyncEnabled: PermissiveBoolean.optional(),
+  spoilerGuardEnabled: PermissiveBoolean.optional(),
+  hidePlanToWatch: PermissiveBoolean.optional(),
+});
 
 export const s_UpdateUserDictionariesRequestBody = z.object({
   items: z.array(z.object({ id: z.string().min(1).max(64), enabled: PermissiveBoolean })).max(50),

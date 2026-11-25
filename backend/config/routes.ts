@@ -124,6 +124,14 @@ import {
   unlinkPatreon,
 } from '@app/controllers/patreonConnectionController';
 import {
+  completeTrackerLink,
+  getTrackerConnection,
+  startTrackerLink,
+  syncTrackerConnection,
+  unlinkTracker,
+  updateTrackerSettings,
+} from '@app/controllers/trackerConnectionController';
+import {
   completeUserDictionaryUpload,
   deleteUserDictionary,
   listUserDictionaries,
@@ -382,6 +390,12 @@ const UserRoutes = createUserRouter({
   startPatreonLink,
   completePatreonLink,
   unlinkPatreon,
+  getTrackerConnection,
+  startTrackerLink,
+  completeTrackerLink,
+  syncTrackerConnection,
+  updateTrackerSettings,
+  unlinkTracker,
   listUserDictionaries,
   updateUserDictionaries,
   deleteUserDictionary,

@@ -1,0 +1,126 @@
+type: object
+description: Provider-agnostic anime tracker connection, catalog coverage, and resolved search filter entries.
+required:
+  - configuredProviders
+  - canUsePatronPerks
+  - connection
+  - coverage
+  - customLists
+  - customListCount
+  - entries
+  - missingAnime
+properties:
+  configuredProviders:
+    type: array
+    items:
+      type: string
+      enum: [ANILIST, MAL]
+  canUsePatronPerks:
+    type: boolean
+  connection:
+    anyOf:
+      - type: object
+        required:
+          - provider
+          - externalUsername
+          - supportsCustomLists
+          - lastSyncedAt
+          - lastSyncError
+          - linkedAt
+          - settings
+          - effectiveSettings
+          - nextManualSyncAt
+          - manualCooldownSeconds
+        properties:
+          provider:
+            type: string
+            enum: [ANILIST, MAL]
+          externalUsername:
+            type: [string, "null"]
+          supportsCustomLists:
+            type: boolean
+          lastSyncedAt:
+            type: [string, "null"]
+            format: date-time
+          lastSyncError:
+            type: [string, "null"]
+          linkedAt:
+            type: string
+            format: date-time
+          settings:
+            type: object
+            required: [autoSyncEnabled, spoilerGuardEnabled, hidePlanToWatch]
+            properties:
+              autoSyncEnabled: { type: boolean }
+              spoilerGuardEnabled: { type: boolean }
+              hidePlanToWatch: { type: boolean }
+          effectiveSettings:
+            type: object
+            required: [autoSyncEnabled, spoilerGuardEnabled, hidePlanToWatch]
+            properties:
+              autoSyncEnabled: { type: boolean }
+              spoilerGuardEnabled: { type: boolean }
+              hidePlanToWatch: { type: boolean }
+          nextManualSyncAt:
+            type: [string, "null"]
+            format: date-time
+          manualCooldownSeconds:
+            type: integer
+            minimum: 0
+      - type: "null"
+  coverage:
+    anyOf:
+      - type: object
+        required: [total, inCatalog, missing, byStatus]
+        properties:
+          total: { type: integer, minimum: 0 }
+          inCatalog: { type: integer, minimum: 0 }
+          missing: { type: integer, minimum: 0 }
+          byStatus:
+            type: object
+            required: [WATCHING, COMPLETED, PAUSED, DROPPED, PLANNING]
+            properties:
+              WATCHING: { type: integer, minimum: 0 }
+              COMPLETED: { type: integer, minimum: 0 }
+              PAUSED: { type: integer, minimum: 0 }
+              DROPPED: { type: integer, minimum: 0 }
+              PLANNING: { type: integer, minimum: 0 }
+      - type: "null"
+  customLists:
+    type: array
+    items: { type: string }
+  customListCount:
+    type: integer
+    minimum: 0
+  entries:
+    type: array
+    items:
+      type: object
+      required: [mediaPublicId, title, status, progress, customLists]
+      properties:
+        mediaPublicId: { type: string }
+        title: { type: string }
+        status:
+          type: string
+          enum: [WATCHING, COMPLETED, PAUSED, DROPPED, PLANNING]
+        progress: { type: integer, minimum: 0 }
+        customLists:
+          type: array
+          items: { type: string }
+  missingAnime:
+    type: array
+    items:
+      type: object
+      required: [externalSource, externalId, title, status, sourceUrl]
+      properties:
+        externalSource:
+          type: string
+          enum: [ANILIST, MAL]
+        externalId: { type: string }
+        title: { type: string }
+        status:
+          type: string
+          enum: [WATCHING, COMPLETED, PAUSED, DROPPED, PLANNING]
+        sourceUrl:
+          type: string
+          format: uri

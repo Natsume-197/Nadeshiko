@@ -189,6 +189,14 @@ paths:
     $ref: "./paths/user/v1_user_connections_patreon.yaml"
   "/v1/user/connections/patreon/callback":
     $ref: "./paths/user/v1_user_connections_patreon_callback.yaml"
+  "/v1/user/connections/tracker":
+    $ref: "./paths/user/v1_user_connections_tracker.yaml"
+  "/v1/user/connections/tracker/callback":
+    $ref: "./paths/user/v1_user_connections_tracker_callback.yaml"
+  "/v1/user/connections/tracker/sync":
+    $ref: "./paths/user/v1_user_connections_tracker_sync.yaml"
+  "/v1/user/connections/tracker/settings":
+    $ref: "./paths/user/v1_user_connections_tracker_settings.yaml"
   "/v1/user/dictionaries":
     $ref: "./paths/user/v1_user_dictionaries.yaml"
   "/v1/user/dictionaries/{id}":

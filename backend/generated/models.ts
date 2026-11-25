@@ -677,7 +677,9 @@ export type t_MediaCreateRequest = {
 
 export type t_MediaFilterItem = {
   episodes?: number[];
+  maxEpisode?: number;
   mediaPublicId: string;
+  minEpisode?: number;
 };
 
 export type t_MediaGlobalStats = {
@@ -1099,6 +1101,59 @@ export type t_Token = {
   s: string;
 };
 
+export type t_TrackerState = {
+  canUsePatronPerks: boolean;
+  configuredProviders: ('ANILIST' | 'MAL')[];
+  connection: {
+    effectiveSettings: {
+      autoSyncEnabled: boolean;
+      hidePlanToWatch: boolean;
+      spoilerGuardEnabled: boolean;
+    };
+    externalUsername: string | null;
+    lastSyncError: string | null;
+    lastSyncedAt: string | null;
+    linkedAt: string;
+    manualCooldownSeconds: number;
+    nextManualSyncAt: string | null;
+    provider: 'ANILIST' | 'MAL';
+    settings: {
+      autoSyncEnabled: boolean;
+      hidePlanToWatch: boolean;
+      spoilerGuardEnabled: boolean;
+    };
+    supportsCustomLists: boolean;
+  } | null;
+  coverage: {
+    byStatus: {
+      COMPLETED: number;
+      DROPPED: number;
+      PAUSED: number;
+      PLANNING: number;
+      WATCHING: number;
+    };
+    inCatalog: number;
+    missing: number;
+    total: number;
+  } | null;
+  customListCount: number;
+  customLists: string[];
+  entries: {
+    customLists: string[];
+    mediaPublicId: string;
+    progress: number;
+    status: 'WATCHING' | 'COMPLETED' | 'PAUSED' | 'DROPPED' | 'PLANNING';
+    title: string;
+  }[];
+  missingAnime: {
+    externalId: string;
+    externalSource: 'ANILIST' | 'MAL';
+    sourceUrl: string;
+    status: 'WATCHING' | 'COMPLETED' | 'PAUSED' | 'DROPPED' | 'PLANNING';
+    title: string;
+  }[];
+};
+
 export type t_UnsubscribeReceipt = {
   unsubscribed: boolean;
 };
@@ -1381,6 +1436,12 @@ export type t_CheckWordWatchQuerySchema = {
 
 export type t_CompletePatreonLinkRequestBody = {
   code: string;
+  state: string;
+};
+
+export type t_CompleteTrackerLinkRequestBody = {
+  code: string;
+  provider: 'ANILIST' | 'MAL';
   state: string;
 };
 
@@ -1681,6 +1742,10 @@ export type t_SetWordWatchRequestBody = {
   query: string;
 };
 
+export type t_StartTrackerLinkRequestBody = {
+  provider: 'ANILIST' | 'MAL';
+};
+
 export type t_UnlinkAdminPatreonConnectionParamSchema = {
   userId: number;
 };
@@ -1747,6 +1812,12 @@ export type t_UpdateMediaParamSchema = {
 
 export type t_UpdateSegmentParamSchema = {
   segmentPublicId: string;
+};
+
+export type t_UpdateTrackerSettingsRequestBody = {
+  autoSyncEnabled?: boolean;
+  hidePlanToWatch?: boolean;
+  spoilerGuardEnabled?: boolean;
 };
 
 export type t_UpdateUserDictionariesRequestBody = {

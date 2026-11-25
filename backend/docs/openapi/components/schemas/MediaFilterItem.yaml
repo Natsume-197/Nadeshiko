@@ -16,3 +16,13 @@ properties:
       type: integer
       minimum: 0
     example: [1, 2]
+  minEpisode:
+    type: integer
+    minimum: 0
+    description: Inclusive lower episode bound (e.g. exclude episodes above a reader's current progress)
+    example: 7
+  maxEpisode:
+    type: integer
+    minimum: 0
+    description: Inclusive upper episode bound (e.g. include only episodes up to a reader's current progress)
+    example: 6

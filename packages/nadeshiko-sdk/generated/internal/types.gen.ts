@@ -451,6 +451,14 @@ export type MediaFilterItem = {
      * Specific episodes (omit for all episodes). Use 0 for movies/specials
      */
     episodes?: Array<number>;
+    /**
+     * Inclusive lower episode bound (e.g. exclude episodes above a reader's current progress)
+     */
+    minEpisode?: number;
+    /**
+     * Inclusive upper episode bound (e.g. include only episodes up to a reader's current progress)
+     */
+    maxEpisode?: number;
 };
 
 /**
@@ -2194,6 +2202,62 @@ export type PatreonConnection = {
     entitledAmountCents: number;
     membershipCheckedAt: string;
     linkedAt: string;
+};
+
+/**
+ * Provider-agnostic anime tracker connection, catalog coverage, and resolved search filter entries.
+ */
+export type TrackerState = {
+    configuredProviders: Array<'ANILIST' | 'MAL'>;
+    canUsePatronPerks: boolean;
+    connection: {
+        provider: 'ANILIST' | 'MAL';
+        externalUsername: string | null;
+        supportsCustomLists: boolean;
+        lastSyncedAt: string | null;
+        lastSyncError: string | null;
+        linkedAt: string;
+        settings: {
+            autoSyncEnabled: boolean;
+            spoilerGuardEnabled: boolean;
+            hidePlanToWatch: boolean;
+        };
+        effectiveSettings: {
+            autoSyncEnabled: boolean;
+            spoilerGuardEnabled: boolean;
+            hidePlanToWatch: boolean;
+        };
+        nextManualSyncAt: string | null;
+        manualCooldownSeconds: number;
+    } | null;
+    coverage: {
+        total: number;
+        inCatalog: number;
+        missing: number;
+        byStatus: {
+            WATCHING: number;
+            COMPLETED: number;
+            PAUSED: number;
+            DROPPED: number;
+            PLANNING: number;
+        };
+    } | null;
+    customLists: Array<string>;
+    customListCount: number;
+    entries: Array<{
+        mediaPublicId: string;
+        title: string;
+        status: 'WATCHING' | 'COMPLETED' | 'PAUSED' | 'DROPPED' | 'PLANNING';
+        progress: number;
+        customLists: Array<string>;
+    }>;
+    missingAnime: Array<{
+        externalSource: 'ANILIST' | 'MAL';
+        externalId: string;
+        title: string;
+        status: 'WATCHING' | 'COMPLETED' | 'PAUSED' | 'DROPPED' | 'PLANNING';
+        sourceUrl: string;
+    }>;
 };
 
 /**
@@ -6091,6 +6155,229 @@ export type CompletePatreonLinkResponses = {
 };
 
 export type CompletePatreonLinkResponse = CompletePatreonLinkResponses[keyof CompletePatreonLinkResponses];
+
+export type UnlinkTrackerData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/user/connections/tracker';
+};
+
+export type UnlinkTrackerErrors = {
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Not Found
+     */
+    404: Error404;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type UnlinkTrackerError = UnlinkTrackerErrors[keyof UnlinkTrackerErrors];
+
+export type UnlinkTrackerResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type UnlinkTrackerResponse = UnlinkTrackerResponses[keyof UnlinkTrackerResponses];
+
+export type GetTrackerConnectionData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/user/connections/tracker';
+};
+
+export type GetTrackerConnectionErrors = {
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type GetTrackerConnectionError = GetTrackerConnectionErrors[keyof GetTrackerConnectionErrors];
+
+export type GetTrackerConnectionResponses = {
+    /**
+     * OK
+     */
+    200: TrackerState;
+};
+
+export type GetTrackerConnectionResponse = GetTrackerConnectionResponses[keyof GetTrackerConnectionResponses];
+
+export type StartTrackerLinkData = {
+    body: {
+        provider: 'ANILIST' | 'MAL';
+    };
+    path?: never;
+    query?: never;
+    url: '/v1/user/connections/tracker';
+};
+
+export type StartTrackerLinkErrors = {
+    /**
+     * Bad Request
+     */
+    400: Error400;
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type StartTrackerLinkError = StartTrackerLinkErrors[keyof StartTrackerLinkErrors];
+
+export type StartTrackerLinkResponses = {
+    /**
+     * Created
+     */
+    201: {
+        authorizeUrl: string;
+        state: string;
+    };
+};
+
+export type StartTrackerLinkResponse = StartTrackerLinkResponses[keyof StartTrackerLinkResponses];
+
+export type CompleteTrackerLinkData = {
+    body: {
+        provider: 'ANILIST' | 'MAL';
+        code: string;
+        state: string;
+    };
+    path?: never;
+    query?: never;
+    url: '/v1/user/connections/tracker/callback';
+};
+
+export type CompleteTrackerLinkErrors = {
+    /**
+     * Bad Request
+     */
+    400: Error400;
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type CompleteTrackerLinkError = CompleteTrackerLinkErrors[keyof CompleteTrackerLinkErrors];
+
+export type CompleteTrackerLinkResponses = {
+    /**
+     * Linked
+     */
+    200: TrackerState;
+};
+
+export type CompleteTrackerLinkResponse = CompleteTrackerLinkResponses[keyof CompleteTrackerLinkResponses];
+
+export type SyncTrackerConnectionData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/user/connections/tracker/sync';
+};
+
+export type SyncTrackerConnectionErrors = {
+    /**
+     * Bad Request
+     */
+    400: Error400;
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Not Found
+     */
+    404: Error404;
+    /**
+     * Too Many Requests. The response body indicates whether the request was rejected due to per-minute rate limiting or monthly quota exhaustion.
+     */
+    429: Error429;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type SyncTrackerConnectionError = SyncTrackerConnectionErrors[keyof SyncTrackerConnectionErrors];
+
+export type SyncTrackerConnectionResponses = {
+    /**
+     * Synced
+     */
+    200: TrackerState;
+};
+
+export type SyncTrackerConnectionResponse = SyncTrackerConnectionResponses[keyof SyncTrackerConnectionResponses];
+
+export type UpdateTrackerSettingsData = {
+    body: {
+        autoSyncEnabled?: boolean;
+        spoilerGuardEnabled?: boolean;
+        hidePlanToWatch?: boolean;
+    };
+    path?: never;
+    query?: never;
+    url: '/v1/user/connections/tracker/settings';
+};
+
+export type UpdateTrackerSettingsErrors = {
+    /**
+     * Bad Request
+     */
+    400: Error400;
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Forbidden
+     */
+    403: Error403;
+    /**
+     * Not Found
+     */
+    404: Error404;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type UpdateTrackerSettingsError = UpdateTrackerSettingsErrors[keyof UpdateTrackerSettingsErrors];
+
+export type UpdateTrackerSettingsResponses = {
+    /**
+     * Updated
+     */
+    200: TrackerState;
+};
+
+export type UpdateTrackerSettingsResponse = UpdateTrackerSettingsResponses[keyof UpdateTrackerSettingsResponses];
 
 export type ListUserDictionariesData = {
     body?: never;

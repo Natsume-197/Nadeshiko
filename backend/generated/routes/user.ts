@@ -21,6 +21,7 @@ import type {
   t_AffectedCountResponse,
   t_ApiKeyScope,
   t_CompletePatreonLinkRequestBody,
+  t_CompleteTrackerLinkRequestBody,
   t_CompleteUserDictionaryUploadParamSchema,
   t_CreateReportRequest,
   t_CreateUserApiKeyRequestBody,
@@ -42,6 +43,9 @@ import type {
   t_RemoveFavoriteMediaParamSchema,
   t_Report,
   t_ReserveUserDictionaryUploadRequestBody,
+  t_StartTrackerLinkRequestBody,
+  t_TrackerState,
+  t_UpdateTrackerSettingsRequestBody,
   t_UpdateUserDictionariesRequestBody,
   t_UserActivityRequest,
   t_UserDictionaryListResponse,
@@ -50,7 +54,7 @@ import type {
   t_UserMe,
   t_UserPreferences,
 } from '../models.ts';
-import type { AddExcludedMediaRequestBodyOutput, AddFavoriteMediaRequestBodyOutput, CompletePatreonLinkRequestBodyOutput, CreateReportRequestOutput, CreateUserApiKeyRequestBodyOutput, DeleteUserActivityQueryOutput, ReserveUserDictionaryUploadRequestBodyOutput, UpdateUserDictionariesRequestBodyOutput, UserActivityRequestOutput, UserPreferencesOutput } from '../outputTypes.ts';
+import type { AddExcludedMediaRequestBodyOutput, AddFavoriteMediaRequestBodyOutput, CompletePatreonLinkRequestBodyOutput, CompleteTrackerLinkRequestBodyOutput, CreateReportRequestOutput, CreateUserApiKeyRequestBodyOutput, DeleteUserActivityQueryOutput, ReserveUserDictionaryUploadRequestBodyOutput, StartTrackerLinkRequestBodyOutput, UpdateTrackerSettingsRequestBodyOutput, UpdateUserDictionariesRequestBodyOutput, UserActivityRequestOutput, UserPreferencesOutput } from '../outputTypes.ts';
 import {
   s_ActivityType,
   s_AddExcludedMediaRequestBody,
@@ -58,6 +62,7 @@ import {
   s_AffectedCountResponse,
   s_ApiKeyScope,
   s_CompletePatreonLinkRequestBody,
+  s_CompleteTrackerLinkRequestBody,
   s_CreateReportRequest,
   s_CreateUserApiKeyRequestBody,
   s_Error400,
@@ -71,6 +76,9 @@ import {
   s_PatreonConnection,
   s_Report,
   s_ReserveUserDictionaryUploadRequestBody,
+  s_StartTrackerLinkRequestBody,
+  s_TrackerState,
+  s_UpdateTrackerSettingsRequestBody,
   s_UpdateUserDictionariesRequestBody,
   s_UserActivityRequest,
   s_UserDictionaryListResponse,
@@ -182,6 +190,102 @@ export type CompletePatreonLinkResponder = {
 export type CompletePatreonLink = (
   params: Params<void, void, CompletePatreonLinkRequestBodyOutput, void>,
   respond: CompletePatreonLinkResponder,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
+
+export type GetTrackerConnectionResponder = {
+  with200(): ExpressRuntimeResponse<t_TrackerState>;
+  with401(): ExpressRuntimeResponse<t_Error401>;
+  with500(): ExpressRuntimeResponse<t_Error500>;
+} & ExpressRuntimeResponder;
+
+export type GetTrackerConnection = (
+  params: Params<void, void, void, void>,
+  respond: GetTrackerConnectionResponder,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
+
+export type StartTrackerLinkResponder = {
+  with201(): ExpressRuntimeResponse<{
+    authorizeUrl: string;
+    state: string;
+  }>;
+  with400(): ExpressRuntimeResponse<t_Error400>;
+  with401(): ExpressRuntimeResponse<t_Error401>;
+  with500(): ExpressRuntimeResponse<t_Error500>;
+} & ExpressRuntimeResponder;
+
+export type StartTrackerLink = (
+  params: Params<void, void, StartTrackerLinkRequestBodyOutput, void>,
+  respond: StartTrackerLinkResponder,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
+
+export type UnlinkTrackerResponder = {
+  with204(): ExpressRuntimeResponse<void>;
+  with401(): ExpressRuntimeResponse<t_Error401>;
+  with404(): ExpressRuntimeResponse<t_Error404>;
+  with500(): ExpressRuntimeResponse<t_Error500>;
+} & ExpressRuntimeResponder;
+
+export type UnlinkTracker = (
+  params: Params<void, void, void, void>,
+  respond: UnlinkTrackerResponder,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
+
+export type CompleteTrackerLinkResponder = {
+  with200(): ExpressRuntimeResponse<t_TrackerState>;
+  with400(): ExpressRuntimeResponse<t_Error400>;
+  with401(): ExpressRuntimeResponse<t_Error401>;
+  with500(): ExpressRuntimeResponse<t_Error500>;
+} & ExpressRuntimeResponder;
+
+export type CompleteTrackerLink = (
+  params: Params<void, void, CompleteTrackerLinkRequestBodyOutput, void>,
+  respond: CompleteTrackerLinkResponder,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
+
+export type SyncTrackerConnectionResponder = {
+  with200(): ExpressRuntimeResponse<t_TrackerState>;
+  with400(): ExpressRuntimeResponse<t_Error400>;
+  with401(): ExpressRuntimeResponse<t_Error401>;
+  with404(): ExpressRuntimeResponse<t_Error404>;
+  with429(): ExpressRuntimeResponse<t_Error429>;
+  with500(): ExpressRuntimeResponse<t_Error500>;
+} & ExpressRuntimeResponder;
+
+export type SyncTrackerConnection = (
+  params: Params<void, void, void, void>,
+  respond: SyncTrackerConnectionResponder,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
+
+export type UpdateTrackerSettingsResponder = {
+  with200(): ExpressRuntimeResponse<t_TrackerState>;
+  with400(): ExpressRuntimeResponse<t_Error400>;
+  with401(): ExpressRuntimeResponse<t_Error401>;
+  with403(): ExpressRuntimeResponse<t_Error403>;
+  with404(): ExpressRuntimeResponse<t_Error404>;
+  with500(): ExpressRuntimeResponse<t_Error500>;
+} & ExpressRuntimeResponder;
+
+export type UpdateTrackerSettings = (
+  params: Params<void, void, UpdateTrackerSettingsRequestBodyOutput, void>,
+  respond: UpdateTrackerSettingsResponder,
   req: Request,
   res: Response,
   next: NextFunction,
@@ -561,6 +665,12 @@ export type UserImplementation = {
   startPatreonLink: StartPatreonLink;
   unlinkPatreon: UnlinkPatreon;
   completePatreonLink: CompletePatreonLink;
+  getTrackerConnection: GetTrackerConnection;
+  startTrackerLink: StartTrackerLink;
+  unlinkTracker: UnlinkTracker;
+  completeTrackerLink: CompleteTrackerLink;
+  syncTrackerConnection: SyncTrackerConnection;
+  updateTrackerSettings: UpdateTrackerSettings;
   listUserDictionaries: ListUserDictionaries;
   updateUserDictionaries: UpdateUserDictionaries;
   deleteUserDictionary: DeleteUserDictionary;
@@ -906,6 +1016,303 @@ export function createUserRouter(
         .completePatreonLink(input, responder, req, res, next)
         .catch(handleImplementationError)
         .then(handleResponse(res, completePatreonLinkResponseBodyValidator));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  const getTrackerConnectionResponseBodyValidator = responseValidationFactory(
+    [
+      ['200', s_TrackerState],
+      ['401', s_Error401],
+      ['500', s_Error500],
+    ],
+    undefined,
+  );
+
+  // getTrackerConnection
+  router.get(`/v1/user/connections/tracker`, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const input = {
+        params: undefined,
+        query: undefined,
+        body: undefined,
+        headers: undefined,
+      };
+
+      const responder = {
+        with200() {
+          return new ExpressRuntimeResponse<t_TrackerState>(200);
+        },
+        with401() {
+          return new ExpressRuntimeResponse<t_Error401>(401);
+        },
+        with500() {
+          return new ExpressRuntimeResponse<t_Error500>(500);
+        },
+        withStatus(status: StatusCode) {
+          return new ExpressRuntimeResponse(status);
+        },
+      };
+
+      await implementation
+        .getTrackerConnection(input, responder, req, res, next)
+        .catch(handleImplementationError)
+        .then(handleResponse(res, getTrackerConnectionResponseBodyValidator));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  const startTrackerLinkResponseBodyValidator = responseValidationFactory(
+    [
+      ['201', z.object({ authorizeUrl: z.string(), state: z.string() })],
+      ['400', s_Error400],
+      ['401', s_Error401],
+      ['500', s_Error500],
+    ],
+    undefined,
+  );
+
+  // startTrackerLink
+  router.post(`/v1/user/connections/tracker`, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const input = {
+        params: undefined,
+        query: undefined,
+        body: parseRequestInput(s_StartTrackerLinkRequestBody, req.body, RequestInputType.RequestBody),
+        headers: undefined,
+      };
+
+      const responder = {
+        with201() {
+          return new ExpressRuntimeResponse<{
+            authorizeUrl: string;
+            state: string;
+          }>(201);
+        },
+        with400() {
+          return new ExpressRuntimeResponse<t_Error400>(400);
+        },
+        with401() {
+          return new ExpressRuntimeResponse<t_Error401>(401);
+        },
+        with500() {
+          return new ExpressRuntimeResponse<t_Error500>(500);
+        },
+        withStatus(status: StatusCode) {
+          return new ExpressRuntimeResponse(status);
+        },
+      };
+
+      await implementation
+        .startTrackerLink(input, responder, req, res, next)
+        .catch(handleImplementationError)
+        .then(handleResponse(res, startTrackerLinkResponseBodyValidator));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  const unlinkTrackerResponseBodyValidator = responseValidationFactory(
+    [
+      ['204', z.undefined()],
+      ['401', s_Error401],
+      ['404', s_Error404],
+      ['500', s_Error500],
+    ],
+    undefined,
+  );
+
+  // unlinkTracker
+  router.delete(`/v1/user/connections/tracker`, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const input = {
+        params: undefined,
+        query: undefined,
+        body: undefined,
+        headers: undefined,
+      };
+
+      const responder = {
+        with204() {
+          return new ExpressRuntimeResponse<void>(204);
+        },
+        with401() {
+          return new ExpressRuntimeResponse<t_Error401>(401);
+        },
+        with404() {
+          return new ExpressRuntimeResponse<t_Error404>(404);
+        },
+        with500() {
+          return new ExpressRuntimeResponse<t_Error500>(500);
+        },
+        withStatus(status: StatusCode) {
+          return new ExpressRuntimeResponse(status);
+        },
+      };
+
+      await implementation
+        .unlinkTracker(input, responder, req, res, next)
+        .catch(handleImplementationError)
+        .then(handleResponse(res, unlinkTrackerResponseBodyValidator));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  const completeTrackerLinkResponseBodyValidator = responseValidationFactory(
+    [
+      ['200', s_TrackerState],
+      ['400', s_Error400],
+      ['401', s_Error401],
+      ['500', s_Error500],
+    ],
+    undefined,
+  );
+
+  // completeTrackerLink
+  router.post(`/v1/user/connections/tracker/callback`, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const input = {
+        params: undefined,
+        query: undefined,
+        body: parseRequestInput(s_CompleteTrackerLinkRequestBody, req.body, RequestInputType.RequestBody),
+        headers: undefined,
+      };
+
+      const responder = {
+        with200() {
+          return new ExpressRuntimeResponse<t_TrackerState>(200);
+        },
+        with400() {
+          return new ExpressRuntimeResponse<t_Error400>(400);
+        },
+        with401() {
+          return new ExpressRuntimeResponse<t_Error401>(401);
+        },
+        with500() {
+          return new ExpressRuntimeResponse<t_Error500>(500);
+        },
+        withStatus(status: StatusCode) {
+          return new ExpressRuntimeResponse(status);
+        },
+      };
+
+      await implementation
+        .completeTrackerLink(input, responder, req, res, next)
+        .catch(handleImplementationError)
+        .then(handleResponse(res, completeTrackerLinkResponseBodyValidator));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  const syncTrackerConnectionResponseBodyValidator = responseValidationFactory(
+    [
+      ['200', s_TrackerState],
+      ['400', s_Error400],
+      ['401', s_Error401],
+      ['404', s_Error404],
+      ['429', s_Error429],
+      ['500', s_Error500],
+    ],
+    undefined,
+  );
+
+  // syncTrackerConnection
+  router.post(`/v1/user/connections/tracker/sync`, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const input = {
+        params: undefined,
+        query: undefined,
+        body: undefined,
+        headers: undefined,
+      };
+
+      const responder = {
+        with200() {
+          return new ExpressRuntimeResponse<t_TrackerState>(200);
+        },
+        with400() {
+          return new ExpressRuntimeResponse<t_Error400>(400);
+        },
+        with401() {
+          return new ExpressRuntimeResponse<t_Error401>(401);
+        },
+        with404() {
+          return new ExpressRuntimeResponse<t_Error404>(404);
+        },
+        with429() {
+          return new ExpressRuntimeResponse<t_Error429>(429);
+        },
+        with500() {
+          return new ExpressRuntimeResponse<t_Error500>(500);
+        },
+        withStatus(status: StatusCode) {
+          return new ExpressRuntimeResponse(status);
+        },
+      };
+
+      await implementation
+        .syncTrackerConnection(input, responder, req, res, next)
+        .catch(handleImplementationError)
+        .then(handleResponse(res, syncTrackerConnectionResponseBodyValidator));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  const updateTrackerSettingsResponseBodyValidator = responseValidationFactory(
+    [
+      ['200', s_TrackerState],
+      ['400', s_Error400],
+      ['401', s_Error401],
+      ['403', s_Error403],
+      ['404', s_Error404],
+      ['500', s_Error500],
+    ],
+    undefined,
+  );
+
+  // updateTrackerSettings
+  router.patch(`/v1/user/connections/tracker/settings`, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const input = {
+        params: undefined,
+        query: undefined,
+        body: parseRequestInput(s_UpdateTrackerSettingsRequestBody, req.body, RequestInputType.RequestBody),
+        headers: undefined,
+      };
+
+      const responder = {
+        with200() {
+          return new ExpressRuntimeResponse<t_TrackerState>(200);
+        },
+        with400() {
+          return new ExpressRuntimeResponse<t_Error400>(400);
+        },
+        with401() {
+          return new ExpressRuntimeResponse<t_Error401>(401);
+        },
+        with403() {
+          return new ExpressRuntimeResponse<t_Error403>(403);
+        },
+        with404() {
+          return new ExpressRuntimeResponse<t_Error404>(404);
+        },
+        with500() {
+          return new ExpressRuntimeResponse<t_Error500>(500);
+        },
+        withStatus(status: StatusCode) {
+          return new ExpressRuntimeResponse(status);
+        },
+      };
+
+      await implementation
+        .updateTrackerSettings(input, responder, req, res, next)
+        .catch(handleImplementationError)
+        .then(handleResponse(res, updateTrackerSettingsResponseBodyValidator));
     } catch (error) {
       next(error);
     }

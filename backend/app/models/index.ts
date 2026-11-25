@@ -6,6 +6,8 @@ export { User, UserRoleType } from './User';
 export type { UserPreferences } from './User';
 export { AccountQuotaUsage } from './AccountQuotaUsage';
 export { PatreonConnection } from './PatreonConnection';
+export { TrackerConnection, TrackerProviderType } from './TrackerConnection';
+export { UserMediaProgress, WatchStatus } from './UserMediaProgress';
 export { UserDictionary } from './UserDictionary';
 export { UserDictionaryArtifact } from './UserDictionaryArtifact';
 export type { UserDictionaryArtifactStatus } from './UserDictionaryArtifact';

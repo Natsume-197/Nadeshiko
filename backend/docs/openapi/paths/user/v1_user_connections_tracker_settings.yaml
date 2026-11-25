@@ -1,0 +1,30 @@
+patch:
+  tags: [User]
+  x-internal: true
+  operationId: updateTrackerSettings
+  summary: Update anime tracker sync and spoiler protection settings
+  description: Updates patron-gated tracker settings. Enabling patron perks requires an active Patreon membership; disabling is always allowed.
+  security:
+    - SessionCookie: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            autoSyncEnabled: { type: boolean }
+            spoilerGuardEnabled: { type: boolean }
+            hidePlanToWatch: { type: boolean }
+  responses:
+    "200":
+      description: Updated
+      content:
+        application/json:
+          schema:
+            $ref: "../../components/schemas/TrackerState.yaml"
+    "400": { $ref: "../../components/responses/BadRequest.yaml" }
+    "401": { $ref: "../../components/responses/Unauthorized.yaml" }
+    "403": { $ref: "../../components/responses/Forbidden.yaml" }
+    "404": { $ref: "../../components/responses/NotFound.yaml" }
+    "500": { $ref: "../../components/responses/InternalServerError.yaml" }

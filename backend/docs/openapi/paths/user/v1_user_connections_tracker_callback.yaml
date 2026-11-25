@@ -1,0 +1,31 @@
+post:
+  tags: [User]
+  x-internal: true
+  operationId: completeTrackerLink
+  summary: Complete anime tracker OAuth linking
+  description: Exchanges the one-time OAuth code, stores encrypted credentials, replaces any prior tracker, and runs the initial list sync.
+  security:
+    - SessionCookie: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required: [provider, code, state]
+          properties:
+            provider:
+              type: string
+              enum: [ANILIST, MAL]
+            code: { type: string, minLength: 1 }
+            state: { type: string, minLength: 1 }
+  responses:
+    "200":
+      description: Linked
+      content:
+        application/json:
+          schema:
+            $ref: "../../components/schemas/TrackerState.yaml"
+    "400": { $ref: "../../components/responses/BadRequest.yaml" }
+    "401": { $ref: "../../components/responses/Unauthorized.yaml" }
+    "500": { $ref: "../../components/responses/InternalServerError.yaml" }

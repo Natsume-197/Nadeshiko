@@ -48,16 +48,49 @@ export function expandContentRatingTerms(contentRating: string[]): string[] {
 /** This builder requires resolved internal `mediaId`s; an unresolved wire filter would silently query `mediaId:
  * undefined`. */
 function buildMediaFilter(items: readonly ResolvedMediaFilterItem[]): estypes.QueryDslQueryContainer {
-  const mediaQueries: estypes.QueryDslQueryContainer[] = items.flatMap((item) => {
-    if (!item.episodes || item.episodes.length === 0) {
-      return { bool: { must: [{ term: { mediaId: { value: item.mediaId } } }] } };
+  const plainMediaIds: number[] = [];
+  const scopedQueries: estypes.QueryDslQueryContainer[] = [];
+
+  for (const item of items) {
+    const hasEpisodes = Boolean(item.episodes && item.episodes.length > 0);
+    const hasBounds = item.minEpisode !== undefined || item.maxEpisode !== undefined;
+
+    if (!hasEpisodes && !hasBounds) {
+      plainMediaIds.push(item.mediaId);
+      continue;
     }
-    return item.episodes.map((episode) => ({
-      bool: {
-        must: [{ term: { mediaId: { value: item.mediaId } } }, { term: { episode: { value: episode } } }],
-      },
-    }));
-  });
+
+    if (hasEpisodes && !hasBounds) {
+      for (const episode of item.episodes ?? []) {
+        scopedQueries.push({
+          bool: {
+            must: [{ term: { mediaId: { value: item.mediaId } } }, { term: { episode: { value: episode } } }],
+          },
+        });
+      }
+      continue;
+    }
+
+    const must: estypes.QueryDslQueryContainer[] = [{ term: { mediaId: { value: item.mediaId } } }];
+    if (hasEpisodes) {
+      must.push({ terms: { episode: item.episodes ?? [] } });
+    }
+    const rangeClause = buildRangeClause('episode', { min: item.minEpisode, max: item.maxEpisode });
+    if (rangeClause) must.push(rangeClause);
+
+    scopedQueries.push({ bool: { must } });
+  }
+
+  const mediaQueries: estypes.QueryDslQueryContainer[] = [];
+  const onlyMediaId = plainMediaIds[0];
+  if (plainMediaIds.length === 1 && onlyMediaId !== undefined) {
+    // Keep the single-title clause shape unchanged for existing search/DSL parity.
+    mediaQueries.push({ bool: { must: [{ term: { mediaId: { value: onlyMediaId } } }] } });
+  } else if (plainMediaIds.length > 1) {
+    // Collapse large synced lists into one `terms` clause to stay fast and avoid ES max_clause_count limits.
+    mediaQueries.push({ terms: { mediaId: plainMediaIds } });
+  }
+  mediaQueries.push(...scopedQueries);
 
   return { bool: { should: mediaQueries } };
 }

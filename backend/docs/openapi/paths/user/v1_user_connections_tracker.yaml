@@ -1,0 +1,63 @@
+get:
+  tags: [User]
+  x-internal: true
+  operationId: getTrackerConnection
+  summary: Read the linked anime tracker state, catalog coverage, and search filter entries
+  description: Returns the active anime tracker connection (if any), effective patron settings, catalog coverage, and matched progress entries.
+  security:
+    - SessionCookie: []
+  responses:
+    "200":
+      description: OK
+      content:
+        application/json:
+          schema:
+            $ref: "../../components/schemas/TrackerState.yaml"
+    "401": { $ref: "../../components/responses/Unauthorized.yaml" }
+    "500": { $ref: "../../components/responses/InternalServerError.yaml" }
+post:
+  tags: [User]
+  x-internal: true
+  operationId: startTrackerLink
+  summary: Begin anime tracker OAuth linking
+  description: Returns the provider's OAuth authorization URL with sealed state bound to the signed-in reader.
+  security:
+    - SessionCookie: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required: [provider]
+          properties:
+            provider:
+              type: string
+              enum: [ANILIST, MAL]
+  responses:
+    "201":
+      description: Created
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [authorizeUrl, state]
+            properties:
+              authorizeUrl: { type: string, format: uri }
+              state: { type: string }
+    "400": { $ref: "../../components/responses/BadRequest.yaml" }
+    "401": { $ref: "../../components/responses/Unauthorized.yaml" }
+    "500": { $ref: "../../components/responses/InternalServerError.yaml" }
+delete:
+  tags: [User]
+  x-internal: true
+  operationId: unlinkTracker
+  summary: Disconnect the linked anime tracker
+  description: Deletes the encrypted tracker credentials and all synced progress rows for the signed-in reader.
+  security:
+    - SessionCookie: []
+  responses:
+    "204": { description: No Content }
+    "401": { $ref: "../../components/responses/Unauthorized.yaml" }
+    "404": { $ref: "../../components/responses/NotFound.yaml" }
+    "500": { $ref: "../../components/responses/InternalServerError.yaml" }

@@ -88,6 +88,18 @@ const envSchema = z.object({
       message: 'PATREON_CONNECTION_SECRET must be at least 32 characters (or empty to disable linking)',
     }),
 
+  // Anime tracker OAuth (AniList in Phase 1, MAL in Phase 2). Empty defaults keep linking safely disabled until
+  // credentials are configured in SSM / .env.
+  ANILIST_OAUTH_CLIENT_ID: z.string().default(''),
+  ANILIST_OAUTH_CLIENT_SECRET: z.string().default(''),
+  ANILIST_OAUTH_REDIRECT_URI: z.string().default(''),
+  TRACKER_CONNECTION_SECRET: z
+    .string()
+    .default('')
+    .refine((value) => value === '' || value.length >= 32, {
+      message: 'TRACKER_CONNECTION_SECRET must be at least 32 characters (or empty to disable tracker linking)',
+    }),
+
   // TMDB v3 API key for J-drama request titles and posters. Optional: without it a drama request keeps the title the
   // reader typed and shows no poster.
   TMDB_API_KEY: z.string().default(''),

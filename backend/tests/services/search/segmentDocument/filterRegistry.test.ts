@@ -97,6 +97,42 @@ describe('buildCommonFilters', () => {
         },
       });
     });
+
+    it('collapses multiple whole-media items into a single terms clause alongside episode-bounded items', () => {
+      expect(
+        buildCommonFilters(
+          base({
+            media: {
+              include: [
+                { mediaPublicId: 'a', mediaId: 1 },
+                { mediaPublicId: 'b', mediaId: 2 },
+                { mediaPublicId: 'c', mediaId: 3, maxEpisode: 6 },
+              ],
+              exclude: [{ mediaPublicId: 'c', mediaId: 3, minEpisode: 7 }],
+            },
+          }),
+        ),
+      ).toEqual({
+        filter: [
+          { terms: { status: ['ACTIVE'] } },
+          {
+            bool: {
+              should: [
+                { terms: { mediaId: [1, 2] } },
+                { bool: { must: [{ term: { mediaId: { value: 3 } } }, { range: { episode: { lte: 6 } } }] } },
+              ],
+            },
+          },
+        ],
+        must_not: [
+          {
+            bool: {
+              should: [{ bool: { must: [{ term: { mediaId: { value: 3 } } }, { range: { episode: { gte: 7 } } }] } }],
+            },
+          },
+        ],
+      });
+    });
   });
 
   describe('terms filters', () => {

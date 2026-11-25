@@ -11,7 +11,7 @@ properties:
           Include only segments from these media (with optional episode filter).
           A `mediaPublicId` that matches no media is rejected with `400`: dropping it would
           turn a deliberately narrow request into an unfiltered one.
-        maxItems: 100
+        maxItems: 1000
         items:
           $ref: "./MediaFilterItem.yaml"
       exclude:
