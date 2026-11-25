@@ -183,14 +183,19 @@ const buildFilters = (
 
   filters.contentRating = scope.contentRating;
 
-  if (options.excludeHiddenMedia) {
-    const excludes = [...scope.hiddenMediaExclude, ...(scope.trackerMediaExclude ?? [])];
-    if (excludes.length > 0) {
-      filters.media = {
-        ...(filters.media ?? {}),
-        exclude: [...(filters.media?.exclude ?? []), ...excludes],
-      };
-    }
+  // A title opened by id lifts the hidden lists, but not the spoiler guard's cut-off on its own episodes: reading
+  // its page must not show the episodes after the reader's progress.
+  const excludes = options.excludeHiddenMedia
+    ? [...scope.hiddenMediaExclude, ...(scope.trackerMediaExclude ?? [])]
+    : (scope.trackerMediaExclude ?? []).filter(
+        (item) =>
+          options.withSelectedMedia && item.mediaPublicId === scope.mediaPublicId && item.minEpisode !== undefined,
+      );
+  if (excludes.length > 0) {
+    filters.media = {
+      ...(filters.media ?? {}),
+      exclude: [...(filters.media?.exclude ?? []), ...excludes],
+    };
   }
 
   if (scope.languages) {

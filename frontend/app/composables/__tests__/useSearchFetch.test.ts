@@ -110,6 +110,23 @@ describe('search filters', () => {
     const filters = buildSentenceFilters(scope({ mediaPublicId: 'media-1', episode: 3 }));
     expect(filters.media?.include).toEqual([{ mediaPublicId: 'media-1', episodes: [3] }]);
   });
+
+  it("keeps the spoiler guard's episode cut-off on the title's own page, and lifts the rest", () => {
+    const trackerMediaExclude = [
+      { mediaPublicId: 'media-1', minEpisode: 11 },
+      { mediaPublicId: 'media-2', minEpisode: 4 },
+      { mediaPublicId: 'media-plan' },
+    ];
+
+    expect(buildSentenceFilters(scope({ mediaPublicId: 'media-1', trackerMediaExclude })).media?.exclude).toEqual([
+      { mediaPublicId: 'media-1', minEpisode: 11 },
+    ]);
+    // A whole-title exclusion (Plan to Watch, not started) is lifted when the title is opened on purpose.
+    expect(
+      buildSentenceFilters(scope({ mediaPublicId: 'media-plan', trackerMediaExclude })).media?.exclude,
+    ).toBeUndefined();
+    expect(buildSentenceFilters(scope({ trackerMediaExclude })).media?.exclude).toEqual(trackerMediaExclude);
+  });
 });
 
 describe('search filters with hidden categories', () => {
