@@ -6,6 +6,7 @@ const { t } = useI18n();
 <template>
   <div class="flex items-center gap-3">
     <SearchModalKeyboardShortcuts ref="shortcutsModal" />
+    <SearchTrackerFilterMenu />
     <SearchTranslationVisibilityPreferences />
     <button type="button"
       class="nd-btn hidden lg:inline-flex"

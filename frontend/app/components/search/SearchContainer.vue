@@ -14,6 +14,7 @@ import { decodeSearchQuery, readSearchRouteFilters, splitLocalePrefix } from '~/
 import { isWordQuery } from '#shared/utils/wordEntry';
 import { episodeLabelKey } from '~/utils/media';
 import { EPISODE_HITS_LOADING, type FetchOutcome, type SearchScope } from '~/composables/useSearchFetch';
+import { useTrackerSync } from '~/composables/useTrackerSync';
 import { canRetrySearchFailure, SEARCH_FAILURE_MESSAGES, type SearchFailure } from '~/utils/searchFailure';
 import type { SearchResponse, SearchStatsResponse, ResolvedMediaStats, ResolvedCategoryCount } from '~/types/search';
 
@@ -22,6 +23,12 @@ const { hiddenMediaIds, hiddenMediaExcludeFilter, isMediaHidden } = useHiddenMed
 const { hiddenCategories, isCategoryHidden } = useHiddenCategories();
 const { defaultCategorySlug } = useDefaultSearchCategory();
 const searchRecents = useSearchRecents();
+const {
+  searchFilters: trackerSearchFilters,
+  promptDismissed: trackerPromptDismissed,
+  load: loadTrackerSync,
+  dismissPrompt: dismissTrackerPrompt,
+} = useTrackerSync();
 
 const props = defineProps<{
   initialSentenceOutcome?: FetchOutcome<SearchResponse> | null;
@@ -399,7 +406,17 @@ const searchScope = computed<SearchScope>(() => ({
   // the counts and the sidebar describe the list they are actually reading.
   hiddenMediaExclude: revealHidden.value ? [] : hiddenMediaExcludeFilter.value,
   hiddenCategories: revealHidden.value ? [] : hiddenCategories.value,
+  ...(trackerSearchFilters.value.include.length > 0 ? { trackerMediaInclude: trackerSearchFilters.value.include } : {}),
+  ...(!revealHidden.value && trackerSearchFilters.value.exclude.length > 0
+    ? { trackerMediaExclude: trackerSearchFilters.value.exclude }
+    : {}),
+  ...(trackerSearchFilters.value.emptyIncludeMatch ? { trackerEmptyInclude: true } : {}),
 }));
+
+const trackerFilterFingerprint = computed(() => {
+  const f = trackerSearchFilters.value;
+  return JSON.stringify([f.emptyIncludeMatch, f.include, f.exclude]);
+});
 
 /**
  * An empty visible payload cannot say whether a hidden title matched: its last
@@ -923,6 +940,9 @@ watch(
 
 onMounted(async () => {
   syncSidebarHeight();
+  if (userStore().isLoggedIn) {
+    void loadTrackerSync();
+  }
   if (props.initialSentenceOutcome?.status === 'forbidden' || props.initialStatsOutcome?.status === 'forbidden') {
     await navigateTo(localePath('/'), { redirectCode: 302 });
     return;
@@ -941,6 +961,12 @@ onMounted(async () => {
 const forceSearchCounter = useState('force-search-counter', () => 0);
 
 watch(forceSearchCounter, () => {
+  loadStats();
+  loadSentences({ append: false });
+});
+
+watch(trackerFilterFingerprint, () => {
+  if (!import.meta.client || props.collectionId || uuid.value) return;
   loadStats();
   loadSentences({ append: false });
 });
@@ -1139,6 +1165,11 @@ onBeforeRouteUpdate(async (to, from) => {
                     :query="query"
                     :active="containsNotice === 'active'"
                     @toggle="toggleContainsMatch()" />
+                <SearchTrackerSpoilerPrompt
+                    v-if="!trackerPromptDismissed && !media && trackerSearchFilters.watchingPromptTitles.length > 0"
+                    :watching-titles="trackerSearchFilters.watchingPromptTitles"
+                    :plan-to-watch-count="trackerSearchFilters.planToWatchCount"
+                    @dismiss="dismissTrackerPrompt()" />
                 <SearchSegmentContainer :searchData="searchData" :isLoading="isLoading" :collectionId="collectionId"
                     :failure="sentenceFailure" @remove-from-collection="handleRemoveFromCollection">
                     <template #empty-actions>

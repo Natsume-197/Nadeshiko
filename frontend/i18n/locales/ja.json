@@ -1614,6 +1614,40 @@
       "member": "your Patreon account",
       "join": "Join",
       "confirmDisconnect": "Disconnect your Patreon account from Nadeshiko?"
+    },
+    "tracker": {
+      "title": "アニメトラッカー",
+      "anilistName": "AniList",
+      "anilistDescription": "アニメリストを同期して視聴済み作品で検索を絞り込み、収録状況を確認できます。",
+      "malName": "MyAnimeList",
+      "malDescription": "同じトラッカー設定で MyAnimeList のリストを同期できます。",
+      "comingSoon": "近日対応",
+      "connect": "AniList を連携",
+      "unavailable": "未設定",
+      "linkedAs": "{provider} · {username}",
+      "defaultAccount": "アカウント",
+      "lastSynced": "最終同期: {date}",
+      "neverSynced": "未同期",
+      "syncNow": "今すぐ同期",
+      "syncCooldown": "次回同期 {time}",
+      "cooldownHint": "手動同期は {time} に再び利用できます。",
+      "disconnect": "連携を解除",
+      "confirmDisconnect": "アニメトラッカーの連携を解除し、同期された進捗を削除しますか？",
+      "coverageTitle": "{total} 作品中 {inCatalog} 作品が Nadeshiko に収録",
+      "coverageBreakdown": "視聴中 {watching} · 視聴済み {completed} · 視聴予定 {planning}",
+      "showMissing": "未収録の {count} 作品を表示",
+      "hideMissing": "未収録作品を隠す",
+      "requestTitle": "リクエスト",
+      "patronSectionTitle": "自動同期・ネタバレ防止",
+      "unlockPatron": "パトロン特典",
+      "lapsedNotice": "Patreon が無効な間はパトロン設定が一時停止されます。再開すると自動で元に戻ります。",
+      "autoSyncLabel": "毎日の自動同期",
+      "autoSyncDesc": "視聴リストと話数進捗を毎日バックグラウンドで最新に保ちます。",
+      "spoilerGuardLabel": "話数ネタバレ防止",
+      "spoilerGuardDesc": "視聴中アニメでまだ見ていない話数を検索結果から隠します。",
+      "hidePlanningLabel": "「視聴予定」を自動で隠す",
+      "hidePlanningDesc": "視聴予定リストの作品を検索結果から自動的に除外します。",
+      "customListsLocked": "AniList のカスタムリストが {count} 件あります（パトロン特典で絞り込み可能）。"
     }
   },
   "supporters": {
@@ -2067,5 +2101,27 @@
     "done": "Patreonと連携しました",
     "doneBody": "メンバーシップを確認しました。設定に戻れます。",
     "backToSettings": "設定に戻る"
+  },
+  "trackerCallback": {
+    "declined": "AniList との連携はキャンセルされました。",
+    "failed": "AniList との連携を完了できませんでした。",
+    "done": "AniList を連携しました",
+    "doneBody": "リスト内の {total} 作品中 {inCatalog} 作品を Nadeshiko と同期しました。",
+    "backToSettings": "連携設定へ戻る"
+  },
+  "trackerFilter": {
+    "all": "すべてのアニメ",
+    "myAnime": "マイアニメ（視聴済み・視聴中）",
+    "myAnimeShort": "マイアニメ",
+    "completed": "視聴済みのみ",
+    "watching": "視聴中のみ",
+    "customListsHeading": "カスタムリスト",
+    "customListsLocked": "カスタムリスト {count} 件（パトロン）",
+    "manage": "同期・ネタバレ設定を管理",
+    "spoilerPromptSingle": "{title}（{episode}話まで視聴）の全話を表示中",
+    "spoilerPromptMultiple": "{title}（{episode}話まで視聴）ほか{others}作品の全話を表示中",
+    "spoilerPromptCta": "パトロン特典で未視聴話を隠す",
+    "spoilerPromptCtaWithPlanning": "パトロン特典で未視聴話と視聴予定を隠す",
+    "dismissPrompt": "閉じる"
   }
 }

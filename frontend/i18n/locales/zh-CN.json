@@ -1614,6 +1614,40 @@
       "member": "your Patreon account",
       "join": "Join",
       "confirmDisconnect": "Disconnect your Patreon account from Nadeshiko?"
+    },
+    "tracker": {
+      "title": "动画追踪器",
+      "anilistName": "AniList",
+      "anilistDescription": "同步你的动画列表，按已看作品筛选搜索结果并查看收录覆盖情况。",
+      "malName": "MyAnimeList",
+      "malDescription": "使用同一套追踪器控件同步你的 MyAnimeList 列表。",
+      "comingSoon": "即将推出",
+      "connect": "连接 AniList",
+      "unavailable": "未配置",
+      "linkedAs": "{provider} · {username}",
+      "defaultAccount": "你的账号",
+      "lastSynced": "上次同步：{date}",
+      "neverSynced": "从未",
+      "syncNow": "立即同步",
+      "syncCooldown": "{time} 后可同步",
+      "cooldownHint": "手动同步将在 {time} 再次可用。",
+      "disconnect": "断开连接",
+      "confirmDisconnect": "断开动画追踪器连接并清除 Nadeshiko 中已同步的进度吗？",
+      "coverageTitle": "你的 {total} 部动画中有 {inCatalog} 部已收录",
+      "coverageBreakdown": "在看 {watching} · 看过 {completed} · 想看 {planning}",
+      "showMissing": "查看未收录的 {count} 部作品",
+      "hideMissing": "收起未收录作品",
+      "requestTitle": "请求收录",
+      "patronSectionTitle": "自动同步与防剧透",
+      "unlockPatron": "赞助者权益",
+      "lapsedNotice": "Patreon 未激活期间你的赞助者设置会暂停，续订后将自动恢复。",
+      "autoSyncLabel": "每日自动同步",
+      "autoSyncDesc": "每天在后台自动保持观看列表与集数进度最新。",
+      "spoilerGuardLabel": "按集数防剧透",
+      "spoilerGuardDesc": "自动隐藏正在观看动画中超过当前进度的集数。",
+      "hidePlanningLabel": "自动隐藏「想看」列表",
+      "hidePlanningDesc": "自动将计划观看的动画从搜索结果中排除。",
+      "customListsLocked": "检测到 {count} 个 AniList 自定义列表 — 赞助后可按列表筛选。"
     }
   },
   "supporters": {
@@ -2067,5 +2101,27 @@
     "done": "已关联 Patreon",
     "doneBody": "会员资格已检查。现在可以返回设置。",
     "backToSettings": "返回设置"
+  },
+  "trackerCallback": {
+    "declined": "AniList 连接未获批准。",
+    "failed": "无法完成 AniList 连接。",
+    "done": "已连接 AniList",
+    "doneBody": "已从你的列表中同步 {inCatalog} / {total} 部动画到 Nadeshiko。",
+    "backToSettings": "返回连接设置"
+  },
+  "trackerFilter": {
+    "all": "全部动画",
+    "myAnime": "我的动画（看过和在看）",
+    "myAnimeShort": "我的动画",
+    "completed": "仅看过的",
+    "watching": "仅在看的",
+    "customListsHeading": "自定义列表",
+    "customListsLocked": "{count} 个自定义列表（赞助者）",
+    "manage": "管理同步与防剧透",
+    "spoilerPromptSingle": "当前显示《{title}》（看到第 {episode} 集）的全部集数",
+    "spoilerPromptMultiple": "当前显示《{title}》（看到第 {episode} 集）等 {others} 部作品的全部集数",
+    "spoilerPromptCta": "赞助即可隐藏未看集数",
+    "spoilerPromptCtaWithPlanning": "赞助即可隐藏未看集数和「想看」列表",
+    "dismissPrompt": "关闭提示"
   }
 }

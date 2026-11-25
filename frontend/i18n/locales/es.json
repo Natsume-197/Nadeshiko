@@ -1614,6 +1614,40 @@
       "member": "tu cuenta de Patreon",
       "join": "Unirse",
       "confirmDisconnect": "¿Desconectar tu cuenta de Patreon de Nadeshiko?"
+    },
+    "tracker": {
+      "title": "Tracker de anime",
+      "anilistName": "AniList",
+      "anilistDescription": "Sincroniza tu lista de anime para filtrar búsquedas por lo que ya viste y ver qué títulos están en Nadeshiko.",
+      "malName": "MyAnimeList",
+      "malDescription": "Sincroniza tu lista de MyAnimeList con los mismos controles.",
+      "comingSoon": "Próximamente",
+      "connect": "Conectar AniList",
+      "unavailable": "No configurado",
+      "linkedAs": "{provider} · {username}",
+      "defaultAccount": "tu cuenta",
+      "lastSynced": "Última sincronización: {date}",
+      "neverSynced": "nunca",
+      "syncNow": "Sincronizar ahora",
+      "syncCooldown": "Disponible a las {time}",
+      "cooldownHint": "La sincronización manual volverá a estar disponible a las {time}.",
+      "disconnect": "Desconectar",
+      "confirmDisconnect": "¿Desconectar tu tracker de anime y borrar el progreso sincronizado de Nadeshiko?",
+      "coverageTitle": "{inCatalog} de {total} animes están en Nadeshiko",
+      "coverageBreakdown": "{watching} viendo · {completed} completados · {planning} planeo ver",
+      "showMissing": "Ver {count} títulos que faltan",
+      "hideMissing": "Ocultar títulos que faltan",
+      "requestTitle": "Pedir",
+      "patronSectionTitle": "Sincronización automática y anti-spoilers",
+      "unlockPatron": "Ventaja de mecenas",
+      "lapsedNotice": "Tus ajustes de mecenas están en pausa mientras Patreon no esté activo; se reactivarán solos si renuevas.",
+      "autoSyncLabel": "Sincronización automática diaria",
+      "autoSyncDesc": "Mantiene tu lista y tu episodio actual al día todos los días en segundo plano.",
+      "spoilerGuardLabel": "Anti-spoilers por episodio",
+      "spoilerGuardDesc": "Oculta los episodios posteriores a tu progreso actual en los animes que estás viendo.",
+      "hidePlanningLabel": "Ocultar «Planeo ver» automáticamente",
+      "hidePlanningDesc": "Mantiene fuera de las búsquedas los animes que tienes planeado ver.",
+      "customListsLocked": "Detectamos {count} listas personalizadas de AniList — fíltralas como mecenas."
     }
   },
   "supporters": {
@@ -2067,5 +2101,27 @@
     "done": "Patreon conectado",
     "doneBody": "Hemos comprobado tu membresía. Ya puedes volver a los ajustes.",
     "backToSettings": "Volver a los ajustes"
+  },
+  "trackerCallback": {
+    "declined": "No se aprobó la conexión con AniList.",
+    "failed": "No se pudo completar la conexión con AniList.",
+    "done": "AniList conectado",
+    "doneBody": "Se sincronizaron {inCatalog} de {total} animes de tu lista en Nadeshiko.",
+    "backToSettings": "Volver a conexiones"
+  },
+  "trackerFilter": {
+    "all": "Todo el anime",
+    "myAnime": "Mis animes (Vistos y Viendo)",
+    "myAnimeShort": "Mis animes",
+    "completed": "Solo completados",
+    "watching": "Solo viendo",
+    "customListsHeading": "Listas personalizadas",
+    "customListsLocked": "{count} listas personalizadas (Mecenas)",
+    "manage": "Gestionar sync y anti-spoilers",
+    "spoilerPromptSingle": "Mostrando todos los episodios de {title} (ep. {episode})",
+    "spoilerPromptMultiple": "Mostrando todos los episodios de {title} (ep. {episode}) y {others} más",
+    "spoilerPromptCta": "Oculta episodios futuros como mecenas",
+    "spoilerPromptCtaWithPlanning": "Oculta episodios futuros y «Planeo ver» como mecenas",
+    "dismissPrompt": "Cerrar aviso"
   }
 }

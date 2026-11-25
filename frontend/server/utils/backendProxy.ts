@@ -12,6 +12,7 @@ const PREFERENCE_WRITE_PATHS = [
   /^\/v1\/user\/favorite-media(?:\/|$)/,
   // Custom Yomitan dictionary uploads, reorders, toggles and deletes change the reader's session stack fingerprint.
   /^\/v1\/user\/dictionaries(?:\/|$)/,
+  /^\/v1\/user\/connections\/tracker(?:\/|$)/,
 ];
 
 export function writesPreferences(method: string, pathname: string): boolean {

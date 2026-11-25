@@ -57,6 +57,12 @@ export type SearchScope = {
    * collection choices must not be reordered by it.
    */
   preferMedia?: string[];
+  /** Optional anime tracker inclusion filter (My anime / Completed / Watching / custom list). */
+  trackerMediaInclude?: MediaFilterItem[];
+  /** Optional anime tracker exclusion filter (patron episode spoiler guard & Plan to Watch auto-hide). */
+  trackerMediaExclude?: MediaFilterItem[];
+  /** True when the active tracker filter matched 0 titles in Nadeshiko (short-circuit to empty results). */
+  trackerEmptyInclude?: boolean;
 };
 
 /**
@@ -130,11 +136,21 @@ const mediaInclude = (scope: SearchScope, withSelectedMedia: boolean): MediaFilt
   const include: MediaFilterItem[] = [];
 
   if (withSelectedMedia && scope.mediaPublicId) {
-    include.push(
-      scope.episode !== null
-        ? { mediaPublicId: scope.mediaPublicId, episodes: [scope.episode] }
-        : { mediaPublicId: scope.mediaPublicId },
-    );
+    if (scope.episode !== null) {
+      include.push({ mediaPublicId: scope.mediaPublicId, episodes: [scope.episode] });
+    } else {
+      const trackerMatch = scope.trackerMediaInclude?.find((item) => item.mediaPublicId === scope.mediaPublicId);
+      include.push(
+        trackerMatch?.maxEpisode !== undefined
+          ? { mediaPublicId: scope.mediaPublicId, maxEpisode: trackerMatch.maxEpisode }
+          : { mediaPublicId: scope.mediaPublicId },
+      );
+    }
+    return include;
+  }
+
+  if (scope.trackerMediaInclude && scope.trackerMediaInclude.length > 0) {
+    return [...scope.trackerMediaInclude];
   }
 
   return include;
@@ -167,11 +183,14 @@ const buildFilters = (
 
   filters.contentRating = scope.contentRating;
 
-  if (options.excludeHiddenMedia && scope.hiddenMediaExclude.length > 0) {
-    filters.media = {
-      ...(filters.media ?? {}),
-      exclude: [...(filters.media?.exclude ?? []), ...scope.hiddenMediaExclude],
-    };
+  if (options.excludeHiddenMedia) {
+    const excludes = [...scope.hiddenMediaExclude, ...(scope.trackerMediaExclude ?? [])];
+    if (excludes.length > 0) {
+      filters.media = {
+        ...(filters.media ?? {}),
+        exclude: [...(filters.media?.exclude ?? []), ...excludes],
+      };
+    }
   }
 
   if (scope.languages) {
@@ -362,6 +381,16 @@ export function createSearchFetcher(sdk: NadeshikoClient) {
         return { status: 'ok', data: resolveSearchResponse(result.data) };
       }
 
+      if (!scope.mediaPublicId && scope.trackerEmptyInclude) {
+        return {
+          status: 'ok',
+          data: {
+            results: [],
+            pagination: { hasMore: false, cursor: '', estimatedTotalHits: 0, estimatedTotalHitsRelation: 'EXACT' },
+          },
+        };
+      }
+
       const sort = buildSort(scope.sort, scope.randomSeed);
       const result = await search({
         ...requestOptions(generation),
@@ -413,6 +442,13 @@ export function createSearchFetcher(sdk: NadeshikoClient) {
           return failedResponseOutcome('collection', 'stats', result.response);
         }
         return { status: 'ok', data: resolveStatsResponse(result.data) };
+      }
+
+      if (!options.scopeToSelectedMedia && !scope.mediaPublicId && scope.trackerEmptyInclude) {
+        return {
+          status: 'ok',
+          data: { media: [], categories: [] },
+        };
       }
 
       const result = await getSearchStats({
