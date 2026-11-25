@@ -252,7 +252,7 @@ describe('/requests', () => {
     const wrapper = await render();
     await wrapper.get('[data-testid="requests-new"]').trigger('click');
 
-    await wrapper.get('#request-url').setValue('https://myanimelist.net/anime/21');
+    await wrapper.get('#request-url').setValue('https://kitsu.app/anime/21');
     await wrapper.get('[data-testid="requests-form"]').trigger('submit');
     expect(wrapper.get('[data-testid="requests-form-error"]').text()).toBe('requests.form.unsupported');
 

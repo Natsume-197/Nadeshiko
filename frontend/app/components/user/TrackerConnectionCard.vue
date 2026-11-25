@@ -25,6 +25,7 @@ const connection = computed(() => state.value?.connection ?? null);
 const coverage = computed(() => state.value?.coverage ?? null);
 const canUsePatronPerks = computed(() => Boolean(state.value?.canUsePatronPerks));
 const anilistConfigured = computed(() => state.value?.configuredProviders.includes('ANILIST') ?? false);
+const malConfigured = computed(() => state.value?.configuredProviders.includes('MAL') ?? false);
 
 const coveragePercent = computed(() => {
   if (!coverage.value || coverage.value.total === 0) return 0;
@@ -129,7 +130,7 @@ async function toggleSetting(key: keyof TrackerSettings) {
     <h2 class="nd-settings-section-label">{{ t('connections.tracker.title') }}</h2>
 
     <div class="nd-settings-group">
-      <!-- Disconnected state: AniList (live) + MyAnimeList (Phase 2) -->
+      <!-- Disconnected state: one tracker at a time; linking another replaces it -->
       <template v-if="!connection">
         <div class="nd-settings-item">
           <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
@@ -159,7 +160,7 @@ async function toggleSetting(key: keyof TrackerSettings) {
           </div>
         </div>
 
-        <div class="nd-settings-item opacity-70">
+        <div class="nd-settings-item" :class="{ 'opacity-70': !malConfigured }">
           <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
             <div class="flex items-center gap-3 min-w-0">
               <div
@@ -171,12 +172,26 @@ async function toggleSetting(key: keyof TrackerSettings) {
               <div class="min-w-0">
                 <div class="flex items-center gap-2">
                   <p class="nd-settings-row-title">{{ t('connections.tracker.malName') }}</p>
-                  <span class="rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-medium text-white/70">
+                  <span
+                    v-if="!malConfigured"
+                    class="rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-medium text-white/70"
+                  >
                     {{ t('connections.tracker.comingSoon') }}
                   </span>
                 </div>
                 <p class="nd-settings-row-desc">{{ t('connections.tracker.malDescription') }}</p>
               </div>
+            </div>
+            <div v-if="malConfigured" class="flex gap-2 shrink-0">
+              <button
+                type="button"
+                class="nd-btn-accent grow sm:grow-0"
+                :disabled="working || loading"
+                data-testid="tracker-connect-mal"
+                @click="startLink('MAL')"
+              >
+                {{ t('connections.tracker.connectMal') }}
+              </button>
             </div>
           </div>
         </div>

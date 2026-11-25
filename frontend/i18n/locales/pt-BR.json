@@ -1623,6 +1623,7 @@
       "malDescription": "Sincronize sua lista do MyAnimeList com os mesmos controles.",
       "comingSoon": "Em breve",
       "connect": "Conectar AniList",
+      "connectMal": "Conectar MyAnimeList",
       "unavailable": "Indisponível",
       "linkedAs": "{provider} · {username}",
       "defaultAccount": "sua conta",
@@ -1820,7 +1821,7 @@
     },
     "form": {
       "heading": "Peça um título",
-      "help": "Cole um link do AniList para anime, do TMDB ou MyDramaList para doramas, da Audible ou Amazon (ou só o ASIN) para audiolivros, ou do YouTube para um canal ou vídeo. Se já foi pedido, seu voto é somado a ele.",
+      "help": "Cole um link do AniList ou MyAnimeList para anime, do TMDB ou MyDramaList para doramas, da Audible ou Amazon (ou só o ASIN) para audiolivros, ou do YouTube para um canal ou vídeo. Se já foi pedido, seu voto é somado a ele.",
       "url": "Link",
       "urlPlaceholder": "https://anilist.co/anime/…",
       "titleLabel": "Título",
@@ -1828,7 +1829,7 @@
       "notePlaceholder": "Qual temporada, onde há legendas, o que ajudar.",
       "submit": "Enviar pedido",
       "cancel": "Cancelar",
-      "unsupported": "Use um link do AniList, TMDB, MyDramaList, Audible, Amazon ou YouTube.",
+      "unsupported": "Use um link do AniList, MyAnimeList, TMDB, MyDramaList, Audible, Amazon ou YouTube.",
       "needsTitle": "Não conseguimos ler um título desse link. Escreva um e envie de novo.",
       "limit": "Você chegou ao limite de {limit} pedidos abertos ou ao de pedidos por hoje. Enquanto isso, vote nos que já existem."
     },
@@ -2112,8 +2113,11 @@
   },
   "trackerCallback": {
     "declined": "A conexão com o AniList não foi aprovada.",
+    "malDeclined": "A conexão com o MyAnimeList não foi aprovada.",
     "failed": "Não foi possível concluir a conexão com o AniList.",
+    "malFailed": "Não foi possível concluir a conexão com o MyAnimeList.",
     "done": "AniList conectado",
+    "malDone": "MyAnimeList conectado",
     "doneBody": "{inCatalog} de {total} animes da sua lista foram sincronizados no Nadeshiko.",
     "startSearching": "Começar a buscar",
     "backToSettings": "Voltar para conexões"

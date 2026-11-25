@@ -53,6 +53,7 @@ const STATIC_PAGES = new Set([
   '/auth/callback',
   '/link/patreon/callback',
   '/link/anilist/callback',
+  '/link/mal/callback',
   // Keep unsubscribe failures visible independently; they affect sending reputation.
   '/unsubscribe',
   // Keep legacy email-verification failures visible rather than folding them into generic 404 traffic.

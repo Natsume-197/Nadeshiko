@@ -1623,6 +1623,7 @@
       "malDescription": "同じトラッカー設定で MyAnimeList のリストを同期できます。",
       "comingSoon": "近日対応",
       "connect": "AniList を連携",
+      "connectMal": "MyAnimeList を連携",
       "unavailable": "利用不可",
       "linkedAs": "{provider} · {username}",
       "defaultAccount": "アカウント",
@@ -1820,7 +1821,7 @@
     },
     "form": {
       "heading": "作品をリクエスト",
-      "help": "アニメはAniList、ドラマはTMDBかMyDramaList、オーディオブックはAudibleかAmazon（ASINだけでも可）、チャンネルや動画はYouTubeのリンクを貼ってください。すでにリクエスト済みなら、そのリクエストにあなたの票が加わります。",
+      "help": "アニメはAniListかMyAnimeList、ドラマはTMDBかMyDramaList、オーディオブックはAudibleかAmazon（ASINだけでも可）、チャンネルや動画はYouTubeのリンクを貼ってください。すでにリクエスト済みなら、そのリクエストにあなたの票が加わります。",
       "url": "リンク",
       "urlPlaceholder": "https://anilist.co/anime/…",
       "titleLabel": "タイトル",
@@ -1828,7 +1829,7 @@
       "notePlaceholder": "シーズン、字幕のある場所など、参考になること。",
       "submit": "リクエストを送信",
       "cancel": "キャンセル",
-      "unsupported": "AniList、TMDB、MyDramaList、Audible、Amazon、YouTubeのリンクを使ってください。",
+      "unsupported": "AniList、MyAnimeList、TMDB、MyDramaList、Audible、Amazon、YouTubeのリンクを使ってください。",
       "needsTitle": "そのリンクからタイトルを読み取れませんでした。タイトルを入力してもう一度送信してください。",
       "limit": "オープン中のリクエスト上限（{limit}件）か、1日のリクエスト上限に達しました。その間は既存のリクエストに投票してください。"
     },
@@ -2112,8 +2113,11 @@
   },
   "trackerCallback": {
     "declined": "AniList との連携はキャンセルされました。",
+    "malDeclined": "MyAnimeList との連携はキャンセルされました。",
     "failed": "AniList との連携を完了できませんでした。",
+    "malFailed": "MyAnimeList との連携を完了できませんでした。",
     "done": "AniList を連携しました",
+    "malDone": "MyAnimeList を連携しました",
     "doneBody": "リスト内の {total} 作品中 {inCatalog} 作品を Nadeshiko と同期しました。",
     "startSearching": "検索を始める",
     "backToSettings": "連携設定へ戻る"

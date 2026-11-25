@@ -1623,6 +1623,7 @@
       "malDescription": "Sinkronkan daftar MyAnimeList Anda dengan kontrol yang sama.",
       "comingSoon": "Segera hadir",
       "connect": "Hubungkan AniList",
+      "connectMal": "Hubungkan MyAnimeList",
       "unavailable": "Tidak tersedia",
       "linkedAs": "{provider} · {username}",
       "defaultAccount": "akun Anda",
@@ -1820,7 +1821,7 @@
     },
     "form": {
       "heading": "Minta judul",
-      "help": "Tempel tautan AniList untuk anime, TMDB atau MyDramaList untuk drama, Audible atau Amazon (atau ASIN saja) untuk buku audio, atau YouTube untuk kanal atau video. Jika sudah diminta, suaramu ditambahkan ke permintaan itu.",
+      "help": "Tempel tautan AniList atau MyAnimeList untuk anime, TMDB atau MyDramaList untuk drama, Audible atau Amazon (atau ASIN saja) untuk buku audio, atau YouTube untuk kanal atau video. Jika sudah diminta, suaramu ditambahkan ke permintaan itu.",
       "url": "Tautan",
       "urlPlaceholder": "https://anilist.co/anime/…",
       "titleLabel": "Judul",
@@ -1828,7 +1829,7 @@
       "notePlaceholder": "Musim yang mana, di mana ada subtitle, apa pun yang membantu.",
       "submit": "Kirim permintaan",
       "cancel": "Batal",
-      "unsupported": "Gunakan tautan AniList, TMDB, MyDramaList, Audible, Amazon, atau YouTube.",
+      "unsupported": "Gunakan tautan AniList, MyAnimeList, TMDB, MyDramaList, Audible, Amazon, atau YouTube.",
       "needsTitle": "Kami tidak bisa membaca judul dari tautan itu. Tulis judulnya lalu kirim lagi.",
       "limit": "Kamu sudah mencapai batas {limit} permintaan terbuka, atau batas permintaan hari ini. Sementara itu, pilih permintaan yang sudah ada."
     },
@@ -2112,8 +2113,11 @@
   },
   "trackerCallback": {
     "declined": "Koneksi AniList tidak disetujui.",
+    "malDeclined": "Koneksi MyAnimeList tidak disetujui.",
     "failed": "Koneksi AniList tidak dapat diselesaikan.",
+    "malFailed": "Koneksi MyAnimeList tidak dapat diselesaikan.",
     "done": "AniList terhubung",
+    "malDone": "MyAnimeList terhubung",
     "doneBody": "Menyinkronkan {inCatalog} dari {total} anime dari daftar Anda ke Nadeshiko.",
     "startSearching": "Mulai mencari",
     "backToSettings": "Kembali ke koneksi"

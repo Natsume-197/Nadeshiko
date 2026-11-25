@@ -241,7 +241,7 @@ function categoryOf(raw: string): Category | null {
     const url = new URL(normalizedLink(raw));
     if (url.protocol !== 'https:' && url.protocol !== 'http:') return null;
     const host = url.hostname.toLowerCase().replace(/^(?:www\.|m\.)/, '');
-    if (host === 'anilist.co') return 'ANIME';
+    if (host === 'anilist.co' || host === 'myanimelist.net') return 'ANIME';
     if (host === 'themoviedb.org' || host === 'mydramalist.com') return 'JDRAMA';
     if (/^(?:audible|amazon)\.[a-z.]+$/.test(host)) return 'AUDIOBOOK';
     if (host === 'youtube.com' || host === 'youtu.be' || host === 'music.youtube.com') return 'YOUTUBE';

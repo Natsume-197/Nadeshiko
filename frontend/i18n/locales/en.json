@@ -1623,6 +1623,7 @@
       "malDescription": "Sync your MyAnimeList anime list on the same tracker controls.",
       "comingSoon": "Coming soon",
       "connect": "Connect AniList",
+      "connectMal": "Connect MyAnimeList",
       "unavailable": "Unavailable",
       "linkedAs": "{provider} · {username}",
       "defaultAccount": "your account",
@@ -1820,7 +1821,7 @@
     },
     "form": {
       "heading": "Request a title",
-      "help": "Paste a link to AniList for anime, TMDB or MyDramaList for dramas, Audible or Amazon (or just the ASIN) for audiobooks, or YouTube for a channel or video. If it was already requested, your vote is added to it.",
+      "help": "Paste a link to AniList or MyAnimeList for anime, TMDB or MyDramaList for dramas, Audible or Amazon (or just the ASIN) for audiobooks, or YouTube for a channel or video. If it was already requested, your vote is added to it.",
       "url": "Link",
       "urlPlaceholder": "https://anilist.co/anime/…",
       "titleLabel": "Title",
@@ -1828,7 +1829,7 @@
       "notePlaceholder": "Which season, where subtitles exist, anything that helps.",
       "submit": "Send request",
       "cancel": "Cancel",
-      "unsupported": "Use a link to AniList, TMDB, MyDramaList, Audible, Amazon or YouTube.",
+      "unsupported": "Use a link to AniList, MyAnimeList, TMDB, MyDramaList, Audible, Amazon or YouTube.",
       "needsTitle": "We could not read a title from that link. Add one and send it again.",
       "limit": "You have reached your limit of {limit} open requests, or of requests for today. Vote for existing ones in the meantime."
     },
@@ -2112,8 +2113,11 @@
   },
   "trackerCallback": {
     "declined": "The AniList connection was not approved.",
+    "malDeclined": "The MyAnimeList connection was not approved.",
     "failed": "That AniList connection could not be completed.",
+    "malFailed": "That MyAnimeList connection could not be completed.",
     "done": "AniList connected",
+    "malDone": "MyAnimeList connected",
     "doneBody": "Synced {inCatalog} of {total} anime from your list into Nadeshiko.",
     "startSearching": "Start searching",
     "backToSettings": "Back to connections"

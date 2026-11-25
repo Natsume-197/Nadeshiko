@@ -1623,6 +1623,7 @@
       "malDescription": "使用同一套追踪器控件同步你的 MyAnimeList 列表。",
       "comingSoon": "即将推出",
       "connect": "连接 AniList",
+      "connectMal": "连接 MyAnimeList",
       "unavailable": "不可用",
       "linkedAs": "{provider} · {username}",
       "defaultAccount": "你的账号",
@@ -1820,7 +1821,7 @@
     },
     "form": {
       "heading": "请求作品",
-      "help": "动画请粘贴 AniList 链接，日剧请粘贴 TMDB 或 MyDramaList 链接，有声书请粘贴 Audible 或 Amazon 链接（或只填 ASIN），频道或视频请粘贴 YouTube 链接。如果已经有人请求过，你的票会加到那个请求上。",
+      "help": "动画请粘贴 AniList 或 MyAnimeList 链接，日剧请粘贴 TMDB 或 MyDramaList 链接，有声书请粘贴 Audible 或 Amazon 链接（或只填 ASIN），频道或视频请粘贴 YouTube 链接。如果已经有人请求过，你的票会加到那个请求上。",
       "url": "链接",
       "urlPlaceholder": "https://anilist.co/anime/…",
       "titleLabel": "标题",
@@ -1828,7 +1829,7 @@
       "notePlaceholder": "哪一季、哪里有字幕等有帮助的信息。",
       "submit": "发送请求",
       "cancel": "取消",
-      "unsupported": "请使用 AniList、TMDB、MyDramaList、Audible、Amazon 或 YouTube 的链接。",
+      "unsupported": "请使用 AniList、MyAnimeList、TMDB、MyDramaList、Audible、Amazon 或 YouTube 的链接。",
       "needsTitle": "无法从该链接读取标题。请填写标题后再发送。",
       "limit": "你已达到 {limit} 个开放请求的上限，或今天的请求上限。在此期间，请为已有的请求投票。"
     },
@@ -2112,8 +2113,11 @@
   },
   "trackerCallback": {
     "declined": "AniList 连接未获批准。",
+    "malDeclined": "MyAnimeList 连接未获批准。",
     "failed": "无法完成 AniList 连接。",
+    "malFailed": "无法完成 MyAnimeList 连接。",
     "done": "已连接 AniList",
+    "malDone": "已连接 MyAnimeList",
     "doneBody": "已从你的列表中同步 {inCatalog} / {total} 部动画到 Nadeshiko。",
     "startSearching": "开始搜索",
     "backToSettings": "返回连接设置"
