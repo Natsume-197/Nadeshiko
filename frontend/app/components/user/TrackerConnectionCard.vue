@@ -24,8 +24,13 @@ onMounted(() => {
 const connection = computed(() => state.value?.connection ?? null);
 const coverage = computed(() => state.value?.coverage ?? null);
 const canUsePatronPerks = computed(() => Boolean(state.value?.canUsePatronPerks));
-const anilistConfigured = computed(() => state.value?.configuredProviders.includes('ANILIST') ?? false);
-const malConfigured = computed(() => state.value?.configuredProviders.includes('MAL') ?? false);
+// Until the state arrives nothing is known about the providers: show them as connectable but disabled, rather than
+// flashing "Unavailable" / "Coming soon" at a reader whose server has both.
+const stateLoaded = computed(() => state.value !== null);
+const anilistConfigured = computed(
+  () => !stateLoaded.value || (state.value?.configuredProviders.includes('ANILIST') ?? false),
+);
+const malConfigured = computed(() => !stateLoaded.value || (state.value?.configuredProviders.includes('MAL') ?? false));
 
 const coveragePercent = computed(() => {
   if (!coverage.value || coverage.value.total === 0) return 0;
@@ -150,7 +155,7 @@ async function toggleSetting(key: keyof TrackerSettings) {
               <button
                 type="button"
                 class="nd-btn-accent grow sm:grow-0"
-                :disabled="working || loading || !anilistConfigured"
+                :disabled="working || loading || !stateLoaded || !anilistConfigured"
                 data-testid="tracker-connect-anilist"
                 @click="startLink('ANILIST')"
               >
@@ -186,7 +191,7 @@ async function toggleSetting(key: keyof TrackerSettings) {
               <button
                 type="button"
                 class="nd-btn-accent grow sm:grow-0"
-                :disabled="working || loading"
+                :disabled="working || loading || !stateLoaded"
                 data-testid="tracker-connect-mal"
                 @click="startLink('MAL')"
               >

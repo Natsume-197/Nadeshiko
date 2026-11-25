@@ -67,3 +67,19 @@ describe('MyAnimeList connect row', () => {
     expect(wrapper.text()).toContain('connections.tracker.comingSoon');
   });
 });
+
+describe('before the tracker state arrives', () => {
+  test('shows both connect buttons disabled, never Unavailable or Coming soon', async () => {
+    trackerState.value = null;
+    const wrapper = mount(TrackerConnectionCard, { global: { stubs: { UiBaseIcon: true, NuxtLink: true } } });
+    mounted.push(wrapper);
+    await nextTick();
+
+    const anilist = wrapper.get('[data-testid="tracker-connect-anilist"]');
+    expect(anilist.text()).toBe('connections.tracker.connect');
+    expect(anilist.attributes('disabled')).toBeDefined();
+    expect(wrapper.get('[data-testid="tracker-connect-mal"]').attributes('disabled')).toBeDefined();
+    expect(wrapper.text()).not.toContain('connections.tracker.unavailable');
+    expect(wrapper.text()).not.toContain('connections.tracker.comingSoon');
+  });
+});
