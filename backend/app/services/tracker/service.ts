@@ -25,10 +25,16 @@ import { config } from '@config/config';
 import { logger } from '@config/log';
 import { decryptSecret, encryptSecret } from '@lib/secretBox';
 import { getTrackerProvider, listConfiguredTrackerProviders } from './registry';
-import type { TrackerListEntry, TrackerProvider } from './types';
+import type { TrackerListEntry, TrackerProvider, TrackerTokens } from './types';
 
 const FLOW_TTL_MS = 10 * 60_000;
 const TOKEN_EXPIRY_BUFFER_MS = 60_000;
+/**
+ * Refresh a refreshable token this long before it expires. MAL's refresh token lives about as long as its access
+ * token, so waiting for the access token to expire would leave a dead refresh token; a daily or manual sync inside
+ * this window rotates both while they still work.
+ */
+const TOKEN_REFRESH_AHEAD_MS = 7 * 24 * 60 * 60_000;
 export const FREE_SYNC_COOLDOWN_MS = 6 * 60 * 60_000;
 export const PATRON_SYNC_COOLDOWN_MS = 15 * 60_000;
 const MAX_MISSING_ANIME = 50;
@@ -125,6 +131,12 @@ export interface TrackerSettingsPatch {
   hidePlanToWatch?: boolean;
 }
 
+/** External sources a tracker list entry can carry, for back-linking new media to unmatched progress rows. */
+const TRACKER_EXTERNAL_SOURCES: ReadonlySet<ExternalSourceType> = new Set([
+  ExternalSourceType.ANILIST,
+  ExternalSourceType.MAL,
+]);
+
 const STATUS_PRIORITY: Record<WatchStatus, number> = {
   [WatchStatus.WATCHING]: 0,
   [WatchStatus.COMPLETED]: 1,
@@ -152,19 +164,25 @@ export function startTrackerLink(userId: number, providerId: TrackerProviderType
   const provider = getTrackerProvider(providerId);
   assertProviderConfigured(provider);
 
+  // PKCE verifier (43-128 unreserved characters). It travels inside the encrypted state, so the server stays
+  // stateless and the browser never sees it in clear.
+  const codeVerifier = provider.usesPkce ? randomBytes(48).toString('base64url') : undefined;
+
   const state = encryptSecret(
     JSON.stringify({
       userId,
       provider: provider.id,
       nonce: randomBytes(24).toString('base64url'),
       expiresAt: Date.now() + FLOW_TTL_MS,
+      ...(codeVerifier ? { codeVerifier } : {}),
     } satisfies PendingTrackerFlow),
     connectionSecret(),
     STATE_CONTEXT,
   );
 
   return {
-    authorizeUrl: provider.getAuthUrl(state),
+    // MAL supports only the plain PKCE method, where the challenge is the verifier itself.
+    authorizeUrl: provider.getAuthUrl(state, codeVerifier),
     state,
   };
 }
@@ -183,14 +201,20 @@ function openState(state: string): PendingTrackerFlow {
 
 async function resolveAccessToken(connection: TrackerConnection, provider: TrackerProvider): Promise<string> {
   const expiresAt = connection.accessTokenExpiresAt?.getTime() ?? null;
-  const needsRefresh = expiresAt !== null && expiresAt <= Date.now() + TOKEN_EXPIRY_BUFFER_MS;
+  const now = Date.now();
+  const expired = expiresAt !== null && expiresAt <= now + TOKEN_EXPIRY_BUFFER_MS;
+  const canRefresh = Boolean(provider.refreshTokens && connection.refreshTokenCiphertext);
+  const refreshDue = expiresAt !== null && canRefresh && expiresAt <= now + TOKEN_REFRESH_AHEAD_MS;
 
-  if (!needsRefresh) {
-    return decryptSecret(
+  const currentAccessToken = () =>
+    decryptSecret(
       connection.accessTokenCiphertext,
       connectionSecret(),
       tokenContext('access', connection.userId, connection.provider),
     );
+
+  if (!expired && !refreshDue) {
+    return currentAccessToken();
   }
 
   if (!provider.refreshTokens || !connection.refreshTokenCiphertext) {
@@ -202,7 +226,20 @@ async function resolveAccessToken(connection: TrackerConnection, provider: Track
     connectionSecret(),
     tokenContext('refresh', connection.userId, connection.provider),
   );
-  const tokens = await provider.refreshTokens(refreshToken);
+  let tokens: TrackerTokens;
+  try {
+    tokens = await provider.refreshTokens(refreshToken);
+  } catch (error) {
+    // An early refresh that fails still leaves a working access token; only an expired one forces a reconnect.
+    if (!expired) {
+      logger.warn(
+        { err: error, userId: connection.userId, provider: provider.id },
+        'Early tracker token refresh failed',
+      );
+      return currentAccessToken();
+    }
+    throw error;
+  }
 
   connection.accessTokenCiphertext = encryptSecret(
     tokens.accessToken,
@@ -230,7 +267,7 @@ async function resolveExternalMediaMap(
 ): Promise<Map<string, number>> {
   if (externalIds.length === 0) return new Map();
 
-  // Only query sources present in MediaExternalId's enum (ANILIST in Phase 1; MAL joins in Phase 2).
+  // Only query sources present in MediaExternalId's enum (ANILIST and MAL).
   const enumValues = Object.values(ExternalSourceType) as string[];
   if (!enumValues.includes(source)) return new Map();
 
@@ -573,7 +610,7 @@ export async function linkProgressForMedia(mediaId: number): Promise<number> {
 
     let updated = 0;
     for (const ext of externalIds) {
-      if (ext.source !== ExternalSourceType.ANILIST) continue;
+      if (!TRACKER_EXTERNAL_SOURCES.has(ext.source)) continue;
       const result = await UserMediaProgress.update(
         {
           externalSource: ext.source,

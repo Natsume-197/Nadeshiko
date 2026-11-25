@@ -21,7 +21,7 @@ export type t_AddSegmentToCollectionRequest = {
 
 export type t_AdminContentRequest = t_ContentRequest & {
   externalId: string | null;
-  externalSource: 'ANILIST' | 'IMDB' | 'TVDB' | 'TMDB' | 'YOUTUBE' | 'ASIN' | null;
+  externalSource: 'ANILIST' | 'MAL' | 'IMDB' | 'TVDB' | 'TMDB' | 'YOUTUBE' | 'ASIN' | null;
   possibleDuplicateOf: {
     id: string;
     status: 'OPEN' | 'PLANNED' | 'IN_PROGRESS' | 'RELEASED' | 'DECLINED';
@@ -606,6 +606,7 @@ export type t_ExternalId = {
   anilist: string | null;
   asin?: string | null;
   imdb: string | null;
+  mal?: string | null;
   tmdb: string | null;
   tvdb: string | null;
   youtube: string | null;

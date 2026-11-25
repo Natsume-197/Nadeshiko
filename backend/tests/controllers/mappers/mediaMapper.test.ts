@@ -48,6 +48,7 @@ describe('media.mapper', () => {
       tvdb: null,
       youtube: null,
       asin: null,
+      mal: null,
     });
     expect(dto.publicId).toBe('media-pid-1');
   });

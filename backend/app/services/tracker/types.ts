@@ -35,6 +35,8 @@ export interface TrackerAuthContext {
 export interface TrackerProvider {
   readonly id: TrackerProviderType;
   readonly supportsCustomLists: boolean;
+  /** OAuth2 PKCE: the service sends a code challenge with the authorize URL and the verifier with the code. */
+  readonly usesPkce: boolean;
   isConfigured(): boolean;
   getAuthUrl(state: string, codeChallenge?: string): string;
   exchangeCode(code: string, codeVerifier?: string): Promise<TrackerTokens>;

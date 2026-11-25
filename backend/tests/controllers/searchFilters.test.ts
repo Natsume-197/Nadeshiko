@@ -116,9 +116,9 @@ describe('SearchFilters media ceilings', () => {
     expect(s_SearchFilters.safeParse({ media: { exclude: items(1001) } }).success).toBe(false);
   });
 
-  it('holds include to its own, smaller ceiling', () => {
-    expect(s_SearchFilters.safeParse({ media: { include: items(100) } }).success).toBe(true);
-    expect(s_SearchFilters.safeParse({ media: { include: items(101) } }).success).toBe(false);
+  it('gives include the same ceiling, so a large synced anime list is not rejected', () => {
+    expect(s_SearchFilters.safeParse({ media: { include: items(1000) } }).success).toBe(true);
+    expect(s_SearchFilters.safeParse({ media: { include: items(1001) } }).success).toBe(false);
   });
 
   it('resolves a large hidden-media list without dropping entries it can resolve', async () => {

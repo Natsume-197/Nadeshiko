@@ -12,6 +12,7 @@ export interface ParsedRequestLink {
   /** How the metadata is looked up. */
   lookup:
     | { type: 'anilist'; id: string }
+    | { type: 'mal'; id: string }
     | { type: 'tmdb'; mediaType: 'tv' | 'movie'; id: string; fallbackTitle?: string | null }
     | { type: 'audible'; asin: string; host: string }
     | { type: 'youtube-video'; videoId: string }
@@ -54,6 +55,17 @@ export function parseRequestLink(raw: string): ParsedRequestLink | null {
       externalSource: ExternalSourceType.ANILIST,
       externalId: id,
       lookup: { type: 'anilist', id },
+    };
+  }
+
+  if (host === 'myanimelist.net') {
+    const id = parts[0] === 'anime' && parts[1] && /^\d+$/.test(parts[1]) ? parts[1] : null;
+    if (!id) return null;
+    return {
+      category: CategoryType.ANIME,
+      externalSource: ExternalSourceType.MAL,
+      externalId: id,
+      lookup: { type: 'mal', id },
     };
   }
 

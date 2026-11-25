@@ -6,6 +6,7 @@ import { getMediaCoverUrl, getMediaBannerUrl } from '@lib/utils/storage';
 const toExternalIdsMap = (externalIds?: MediaExternalId[]): t_ExternalId => {
   const map: t_ExternalId = {
     anilist: null,
+    mal: null,
     imdb: null,
     tmdb: null,
     tvdb: null,

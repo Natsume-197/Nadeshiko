@@ -11,6 +11,16 @@ describe('parseRequestLink', () => {
     expect(parseRequestLink('https://anilist.co/manga/30002')).toBeNull();
   });
 
+  it('reads a MyAnimeList anime as ANIME with its MAL id', () => {
+    expect(parseRequestLink('https://myanimelist.net/anime/52991/Sousou_no_Frieren')).toMatchObject({
+      category: 'ANIME',
+      externalSource: 'MAL',
+      externalId: '52991',
+      lookup: { type: 'mal', id: '52991' },
+    });
+    expect(parseRequestLink('https://myanimelist.net/manga/2')).toBeNull();
+  });
+
   it('reads TMDB TV as a drama with the bare id ingest stores, and prefixes movies', () => {
     expect(parseRequestLink('https://www.themoviedb.org/tv/94796-hanzawa-naoki?language=ja')).toMatchObject({
       category: 'JDRAMA',
@@ -60,7 +70,7 @@ describe('parseRequestLink', () => {
   });
 
   it('refuses other sites and non-web schemes', () => {
-    expect(parseRequestLink('https://myanimelist.net/anime/21')).toBeNull();
+    expect(parseRequestLink('https://kitsu.app/anime/21')).toBeNull();
     expect(parseRequestLink('javascript:alert(1)')).toBeNull();
     expect(parseRequestLink('not a url')).toBeNull();
   });

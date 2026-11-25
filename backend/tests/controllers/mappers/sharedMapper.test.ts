@@ -36,6 +36,7 @@ describe('shared.mapper', () => {
       tvdb: null,
       youtube: null,
       asin: null,
+      mal: null,
     });
     expect(dto.startDate).toBe('2024-02-03');
     expect(dto.endDate).toBeNull();

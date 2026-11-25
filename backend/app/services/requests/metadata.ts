@@ -1,7 +1,7 @@
 import { CategoryType } from '@app/models';
 import { config } from '@config/config';
 import { logger } from '@config/log';
-import { getAniListMediaMetadata } from '@app/services/requests/anilist';
+import { getAniListMediaMetadata, getAniListMediaMetadataByMalId } from '@app/services/requests/anilist';
 import type { ParsedRequestLink } from './links';
 
 export interface RequestMetadata {
@@ -176,6 +176,10 @@ export async function lookupRequestMetadata(link: ParsedRequestLink, hintTitle?:
     switch (link.lookup.type) {
       case 'anilist': {
         const media = await getAniListMediaMetadata(`https://anilist.co/anime/${link.lookup.id}`);
+        return media ? { title: clean(media.title, 180), coverUrl: media.coverUrl } : EMPTY;
+      }
+      case 'mal': {
+        const media = await getAniListMediaMetadataByMalId(link.lookup.id);
         return media ? { title: clean(media.title, 180), coverUrl: media.coverUrl } : EMPTY;
       }
       case 'tmdb': {

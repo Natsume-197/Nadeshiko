@@ -9454,7 +9454,8 @@ components:
       type: object
       description: External IDs for this media, keyed by source. Responses always
         carry every source as a key, with null for absent mappings. In requests
-        `asin` may be omitted, so clients that predate it keep working.
+        `asin` and `mal` may be omitted, so clients that predate it keep
+        working.
       required:
         - anilist
         - imdb
@@ -9468,6 +9469,12 @@ components:
           minLength: 1
           description: AniList ID
           example: "21459"
+        mal:
+          type: string
+          nullable: true
+          minLength: 1
+          description: MyAnimeList ID
+          example: "20899"
         imdb:
           type: string
           nullable: true
@@ -13903,6 +13910,7 @@ components:
                 - "null"
               enum:
                 - ANILIST
+                - MAL
                 - IMDB
                 - TVDB
                 - TMDB

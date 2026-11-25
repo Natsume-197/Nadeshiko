@@ -4,6 +4,7 @@ import type { Media } from './Media';
 
 export enum ExternalSourceType {
   ANILIST = 'ANILIST',
+  MAL = 'MAL',
   IMDB = 'IMDB',
   TVDB = 'TVDB',
   TMDB = 'TMDB',

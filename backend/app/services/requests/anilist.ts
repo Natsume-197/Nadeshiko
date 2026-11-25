@@ -22,15 +22,23 @@ const ANILIST_COVER_URL = /^https:\/\/s4\.anilist\.co\/file\/anilistcdn\/media\/
 export async function getAniListMediaMetadata(sourceUrl: string): Promise<AniListMediaMetadata | null> {
   const id = ANILIST_MEDIA_URL.exec(sourceUrl)?.[1];
   if (!id) return null;
+  return queryAniListMedia('id', Number(id));
+}
 
+/** The same metadata for a MyAnimeList anime id, read from AniList's `idMal` mapping. */
+export async function getAniListMediaMetadataByMalId(malId: string): Promise<AniListMediaMetadata | null> {
+  if (!/^\d+$/.test(malId)) return null;
+  return queryAniListMedia('idMal', Number(malId));
+}
+
+async function queryAniListMedia(key: 'id' | 'idMal', value: number): Promise<AniListMediaMetadata | null> {
   try {
     const response = await fetch('https://graphql.anilist.co', {
       method: 'POST',
       headers: { 'content-type': 'application/json', accept: 'application/json' },
       body: JSON.stringify({
-        query:
-          'query ($id: Int!) { Media(id: $id, type: ANIME) { title { english romaji } coverImage { extraLarge } siteUrl } }',
-        variables: { id: Number(id) },
+        query: `query ($value: Int!) { Media(${key}: $value, type: ANIME) { title { english romaji } coverImage { extraLarge } siteUrl } }`,
+        variables: { value },
       }),
       signal: AbortSignal.timeout(4_000),
     });

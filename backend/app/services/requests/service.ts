@@ -155,7 +155,7 @@ export async function createRequest(
   const link = parseRequestLink(input.sourceUrl);
   if (!link) {
     throw new InvalidRequestError(
-      'Use a link to AniList (anime), TMDB or MyDramaList (dramas), Audible or Amazon (audiobooks) or YouTube.',
+      'Use a link to AniList or MyAnimeList (anime), TMDB or MyDramaList (dramas), Audible or Amazon (audiobooks) or YouTube.',
     );
   }
 

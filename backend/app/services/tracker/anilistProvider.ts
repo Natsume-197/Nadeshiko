@@ -135,6 +135,7 @@ export function normalizeAniListCollection(response: AniListMediaListCollectionR
 export const anilistProvider: TrackerProvider = {
   id: TrackerProviderType.ANILIST,
   supportsCustomLists: true,
+  usesPkce: false,
 
   isConfigured(): boolean {
     return Boolean(

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { getAniListMediaMetadata } from '@app/services/requests/anilist';
+import { getAniListMediaMetadata, getAniListMediaMetadataByMalId } from '@app/services/requests/anilist';
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -27,7 +27,7 @@ describe('getAniListMediaMetadata', () => {
       coverUrl: 'https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx1.jpg',
       siteUrl: 'https://anilist.co/anime/1',
     });
-    expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body)).variables).toEqual({ id: 1 });
+    expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body)).variables).toEqual({ value: 1 });
   });
 
   it('does not contact AniList for other URLs', async () => {
@@ -39,5 +39,29 @@ describe('getAniListMediaMetadata', () => {
   it('fails open when the metadata request is unavailable', async () => {
     vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('offline'));
     await expect(getAniListMediaMetadata('https://anilist.co/anime/1')).resolves.toBeNull();
+  });
+
+  it('looks up a MyAnimeList id through AniList idMal', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: {
+            Media: {
+              title: { english: null, romaji: 'Sousou no Frieren' },
+              coverImage: { extraLarge: 'https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx154587.jpg' },
+              siteUrl: 'https://anilist.co/anime/154587',
+            },
+          },
+        }),
+        { status: 200 },
+      ),
+    );
+
+    await expect(getAniListMediaMetadataByMalId('52991')).resolves.toMatchObject({ title: 'Sousou no Frieren' });
+    const body = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body));
+    expect(body.query).toContain('Media(idMal: $value');
+    expect(body.variables).toEqual({ value: 52991 });
+    await expect(getAniListMediaMetadataByMalId('abc')).resolves.toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

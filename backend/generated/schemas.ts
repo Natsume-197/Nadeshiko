@@ -370,6 +370,7 @@ export const s_Error503 = z.object({
 
 export const s_ExternalId = z.object({
   anilist: z.string().min(1).nullable(),
+  mal: z.string().min(1).nullable().optional(),
   imdb: z.string().min(1).nullable(),
   tvdb: z.string().min(1).nullable(),
   tmdb: z.string().min(1).nullable(),
@@ -715,7 +716,7 @@ export const s_WordWatch = z.object({
 });
 
 export const s_AdminContentRequest = s_ContentRequest.extend({
-  externalSource: z.enum(['ANILIST', 'IMDB', 'TVDB', 'TMDB', 'YOUTUBE', 'ASIN']).nullable(),
+  externalSource: z.enum(['ANILIST', 'MAL', 'IMDB', 'TVDB', 'TMDB', 'YOUTUBE', 'ASIN']).nullable(),
   externalId: z.string().nullable(),
   requester: z.object({ id: z.coerce.number(), username: z.string() }).nullable(),
   possibleDuplicateOf: z

@@ -1,10 +1,12 @@
 import { ValidationFailedError } from '@app/errors';
 import { TrackerProviderType } from '@app/models/TrackerConnection';
 import { anilistProvider } from './anilistProvider';
+import { malProvider } from './malProvider';
 import type { TrackerProvider } from './types';
 
 const PROVIDERS: Partial<Record<TrackerProviderType, TrackerProvider>> = {
   [TrackerProviderType.ANILIST]: anilistProvider,
+  [TrackerProviderType.MAL]: malProvider,
 };
 
 export function getTrackerProvider(providerId: TrackerProviderType): TrackerProvider {

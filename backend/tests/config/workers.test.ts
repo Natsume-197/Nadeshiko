@@ -43,6 +43,7 @@ vi.mock('@app/workers/recurringLinesWorker', () => ({ registerRecurringLinesWork
 vi.mock('@app/workers/patreonMembershipRefreshWorker', () => ({ registerPatreonMembershipRefreshWorker: vi.fn() }));
 vi.mock('@app/workers/userDictionaryImportWorker', () => ({ registerUserDictionaryImportWorker: vi.fn() }));
 vi.mock('@app/workers/wordWatchWorker', () => ({ registerWordWatchWorkers: vi.fn() }));
+vi.mock('@app/workers/trackerSyncWorker', () => ({ registerTrackerSyncWorker: vi.fn() }));
 vi.mock('@app/services/dictionary/custom/sqlitePool', () => ({ closeAllArtifactHandles: vi.fn() }));
 vi.mock('@app/workers/recurringLinesQueue', () => ({ sendRecurringSweepJob: vi.fn() }));
 

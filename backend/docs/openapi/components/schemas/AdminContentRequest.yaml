@@ -3,7 +3,7 @@ allOf:
   - type: object
     required: [externalSource, externalId, requester, possibleDuplicateOf]
     properties:
-      externalSource: { type: [string, "null"], enum: [ANILIST, IMDB, TVDB, TMDB, YOUTUBE, ASIN, null] }
+      externalSource: { type: [string, "null"], enum: [ANILIST, MAL, IMDB, TVDB, TMDB, YOUTUBE, ASIN, null] }
       externalId: { type: [string, "null"] }
       requester:
         type: [object, "null"]

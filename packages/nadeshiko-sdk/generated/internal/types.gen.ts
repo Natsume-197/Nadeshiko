@@ -779,13 +779,17 @@ export type Segment = {
 };
 
 /**
- * External IDs for this media, keyed by source. Responses always carry every source as a key, with null for absent mappings. In requests `asin` may be omitted, so clients that predate it keep working.
+ * External IDs for this media, keyed by source. Responses always carry every source as a key, with null for absent mappings. In requests `asin` and `mal` may be omitted, so clients that predate it keep working.
  */
 export type ExternalId = {
     /**
      * AniList ID
      */
     anilist: string;
+    /**
+     * MyAnimeList ID
+     */
+    mal?: string;
     /**
      * IMDB ID
      */
@@ -3352,7 +3356,7 @@ export type UpdateAccountQuotaRequest = {
 };
 
 export type AdminContentRequest = ContentRequest & {
-    externalSource: 'ANILIST' | 'IMDB' | 'TVDB' | 'TMDB' | 'YOUTUBE' | 'ASIN' | null;
+    externalSource: 'ANILIST' | 'MAL' | 'IMDB' | 'TVDB' | 'TMDB' | 'YOUTUBE' | 'ASIN' | null;
     externalId: string | null;
     requester: {
         id: number;

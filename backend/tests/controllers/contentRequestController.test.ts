@@ -214,8 +214,24 @@ describe('filing a request', () => {
   });
 
   it('refuses links from sites requests do not accept', async () => {
-    const res = await request(app).post('/v1/requests').send({ sourceUrl: 'https://myanimelist.net/anime/21' });
+    const res = await request(app).post('/v1/requests').send({ sourceUrl: 'https://kitsu.app/anime/21' });
     expect(res.status).toBe(400);
+  });
+
+  it('files a MyAnimeList link under its MAL id with metadata from AniList', async () => {
+    mockFetch(ANILIST);
+    const res = await request(app)
+      .post('/v1/requests')
+      .send({ sourceUrl: 'https://myanimelist.net/anime/52991/Frieren' });
+
+    expect(res.status).toBe(201);
+    expect(res.body.outcome).toBe('created');
+    expect(res.body.request).toMatchObject({ category: 'ANIME', title: 'Frieren' });
+    const stored = await ContentRequest.findOneByOrFail({ publicId: res.body.request.id });
+    expect(stored).toMatchObject({ externalSource: 'MAL', externalId: '52991' });
+
+    const again = await request(app).post('/v1/requests').send({ sourceUrl: 'https://myanimelist.net/anime/52991' });
+    expect(again.body.outcome).toBe('already_voted');
   });
 
   it('flags a request whose title matches another open one', async () => {

@@ -93,6 +93,9 @@ const envSchema = z.object({
   ANILIST_OAUTH_CLIENT_ID: z.string().default(''),
   ANILIST_OAUTH_CLIENT_SECRET: z.string().default(''),
   ANILIST_OAUTH_REDIRECT_URI: z.string().default(''),
+  MAL_OAUTH_CLIENT_ID: z.string().default(''),
+  MAL_OAUTH_CLIENT_SECRET: z.string().default(''),
+  MAL_OAUTH_REDIRECT_URI: z.string().default(''),
   TRACKER_CONNECTION_SECRET: z
     .string()
     .default('')
