@@ -42,6 +42,7 @@ Examples:
   scripts/remote-db.sh prod prepare ${PROD_FLAG}
   scripts/remote-db.sh prod backfill-session-country ${PROD_FLAG} -- --db ~/GeoLite2-Country.mmdb
   scripts/remote-db.sh prod backfill-last-seen ${PROD_FLAG}
+  scripts/remote-db.sh staging backfill-mal-ids -- --write
 EOF
 }
 
@@ -69,8 +70,8 @@ case "$ENV" in
 esac
 
 case "$CMD" in
-  status|prepare|migrate|reindex|reindex-media|audit-wakati|backfill-session-country|backfill-last-seen|create-service-key) ;;
-  *) echo "error: command must be status, prepare, migrate, reindex, reindex-media, audit-wakati, backfill-session-country, backfill-last-seen or create-service-key (got '$CMD')" >&2; exit 1 ;;
+  status|prepare|migrate|reindex|reindex-media|audit-wakati|backfill-session-country|backfill-last-seen|backfill-mal-ids|create-service-key) ;;
+  *) echo "error: command must be status, prepare, migrate, reindex, reindex-media, audit-wakati, backfill-session-country, backfill-last-seen, backfill-mal-ids or create-service-key (got '$CMD')" >&2; exit 1 ;;
 esac
 
 # Reindex rebuilds Elasticsearch from authoritative PostgreSQL, swaps a versioned alias with zero downtime, and is the
@@ -227,6 +228,11 @@ case "$CMD" in
     # One-time backfill from the last session timestamp; run before session sweeping and touch only null rows. Put
     # --dry-run after --.
     run_with_env node --import tsx scripts/backfill-last-seen.ts "${@:4}"
+    ;;
+  backfill-mal-ids)
+    # One-time MAL ids from AniList idMal for anime tracker sync; only inserts missing rows. Dry run unless --write
+    # comes after --.
+    run_with_env node --import tsx scripts/backfill-mal-ids.ts "${@:4}"
     ;;
   audit-wakati)
     # Read-only: ranks every media by how morpheme-segmented its subtitles look,
