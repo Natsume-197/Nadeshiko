@@ -1148,6 +1148,12 @@ export type t_TrackerState = {
   missingAnime: {
     externalId: string;
     externalSource: 'ANILIST' | 'MAL';
+    request: {
+      publicId: string;
+      status: 'OPEN' | 'PLANNED' | 'IN_PROGRESS' | 'DECLINED';
+      voteCount: number;
+      voted: boolean;
+    } | null;
     sourceUrl: string;
     status: 'WATCHING' | 'COMPLETED' | 'PAUSED' | 'DROPPED' | 'PLANNING';
     title: string;

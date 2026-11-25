@@ -111,7 +111,7 @@ properties:
     type: array
     items:
       type: object
-      required: [externalSource, externalId, title, status, sourceUrl]
+      required: [externalSource, externalId, title, status, sourceUrl, request]
       properties:
         externalSource:
           type: string
@@ -124,3 +124,18 @@ properties:
         sourceUrl:
           type: string
           format: uri
+        request:
+          description: The content request already filed for this title (active or declined), or null.
+          anyOf:
+            - type: object
+              required: [publicId, status, voteCount, voted]
+              properties:
+                publicId: { type: string, format: uuid }
+                status:
+                  type: string
+                  enum: [OPEN, PLANNED, IN_PROGRESS, DECLINED]
+                voteCount: { type: integer, minimum: 0 }
+                voted:
+                  type: boolean
+                  description: The reader already voted for it (filing counts as a vote).
+            - type: "null"

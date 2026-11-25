@@ -609,6 +609,14 @@ export const s_TrackerState = z.object({
       title: z.string(),
       status: z.enum(['WATCHING', 'COMPLETED', 'PAUSED', 'DROPPED', 'PLANNING']),
       sourceUrl: z.string(),
+      request: z
+        .object({
+          publicId: z.string(),
+          status: z.enum(['OPEN', 'PLANNED', 'IN_PROGRESS', 'DECLINED']),
+          voteCount: z.coerce.number().min(0),
+          voted: PermissiveBoolean,
+        })
+        .nullable(),
     }),
   ),
 });

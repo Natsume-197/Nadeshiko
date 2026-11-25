@@ -2257,6 +2257,18 @@ export type TrackerState = {
         title: string;
         status: 'WATCHING' | 'COMPLETED' | 'PAUSED' | 'DROPPED' | 'PLANNING';
         sourceUrl: string;
+        /**
+         * The content request already filed for this title (active or declined), or null.
+         */
+        request: {
+            publicId: string;
+            status: 'OPEN' | 'PLANNED' | 'IN_PROGRESS' | 'DECLINED';
+            voteCount: number;
+            /**
+             * The reader already voted for it (filing counts as a vote).
+             */
+            voted: boolean;
+        } | null;
     }>;
 };
 

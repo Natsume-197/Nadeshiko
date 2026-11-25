@@ -16,6 +16,9 @@ vi.mock('@config/config', async (importOriginal) => {
 
 import {
   CategoryType,
+  ContentRequest,
+  ContentRequestStatus,
+  ContentRequestVote,
   ExternalSourceType,
   Media,
   MediaExternalId,
@@ -191,8 +194,40 @@ describe('anime tracker connection endpoints', () => {
       },
     ]);
     expect(callbackRes.body.missingAnime).toEqual([
-      expect.objectContaining({ externalId: '999999', title: 'Unindexed Anime', status: WatchStatus.PLANNING }),
+      expect.objectContaining({
+        externalId: '999999',
+        title: 'Unindexed Anime',
+        status: WatchStatus.PLANNING,
+        request: null,
+      }),
     ]);
+
+    // Someone else already asked for the missing title: the card offers a vote, not a second request.
+    const existingRequest = await ContentRequest.create({
+      category: CategoryType.ANIME,
+      status: ContentRequestStatus.OPEN,
+      title: 'Unindexed Anime',
+      sourceUrl: 'https://anilist.co/anime/999999',
+      externalSource: ExternalSourceType.ANILIST,
+      externalId: '999999',
+      requesterUserId: fixtures.users.kevin.id,
+      voteCount: 1,
+    }).save();
+    await ContentRequestVote.create({ requestId: existingRequest.id, userId: fixtures.users.kevin.id }).save();
+
+    const othersRes = await request(app).get('/v1/user/connections/tracker');
+    expect(othersRes.status).toBe(200);
+    expect(othersRes.body.missingAnime[0].request).toEqual({
+      publicId: existingRequest.publicId,
+      status: ContentRequestStatus.OPEN,
+      voteCount: 1,
+      voted: false,
+    });
+
+    // Once the reader votes (or files it), it reads as requested.
+    await ContentRequestVote.create({ requestId: existingRequest.id, userId: fixtures.users.regular.id }).save();
+    const votedRes = await request(app).get('/v1/user/connections/tracker');
+    expect(votedRes.body.missingAnime[0].request).toMatchObject({ voted: true });
 
     // Free account cannot enable patron toggles.
     const forbiddenRes = await request(app)

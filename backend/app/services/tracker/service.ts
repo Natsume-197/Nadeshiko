@@ -8,6 +8,10 @@ import {
   ValidationFailedError,
 } from '@app/errors';
 import {
+  ACTIVE_REQUEST_STATUSES,
+  ContentRequest,
+  ContentRequestStatus,
+  ContentRequestVote,
   ExternalSourceType,
   MediaExternalId,
   TrackerConnection,
@@ -83,12 +87,25 @@ export interface TrackerProgressEntryDTO {
   customLists: string[];
 }
 
+/** The content request already filed for a missing title, so the card offers a vote instead of a duplicate. */
+/** Released requests are not reported: their title is on Nadeshiko, so it is not missing. */
+type ReportedRequestStatus = Exclude<ContentRequestStatus, ContentRequestStatus.RELEASED>;
+
+export interface TrackerMissingRequestDTO {
+  publicId: string;
+  status: ReportedRequestStatus;
+  voteCount: number;
+  /** The reader already voted (filing a request counts as a vote). */
+  voted: boolean;
+}
+
 export interface TrackerMissingAnimeDTO {
   externalSource: TrackerProviderType;
   externalId: string;
   title: string;
   status: WatchStatus;
   sourceUrl: string;
+  request: TrackerMissingRequestDTO | null;
 }
 
 export interface TrackerStateDTO {
@@ -473,21 +490,24 @@ export async function getTrackerState(user: Pick<User, 'id' | 'role'>): Promise<
 
   unmatchedRows.sort((a, b) => STATUS_PRIORITY[a.status] - STATUS_PRIORITY[b.status] || a.title.localeCompare(b.title));
 
-  const missingAnime: TrackerMissingAnimeDTO[] = unmatchedRows
+  const missingRows = unmatchedRows
     .filter(
       (row) =>
         row.status === WatchStatus.WATCHING ||
         row.status === WatchStatus.COMPLETED ||
         row.status === WatchStatus.PLANNING,
     )
-    .slice(0, MAX_MISSING_ANIME)
-    .map((row) => ({
-      externalSource: row.provider,
-      externalId: row.externalId,
-      title: row.title,
-      status: row.status,
-      sourceUrl: provider.externalUrl(row.externalId),
-    }));
+    .slice(0, MAX_MISSING_ANIME);
+  const requestsByExternalId = await findMissingAnimeRequests(user.id, missingRows);
+
+  const missingAnime: TrackerMissingAnimeDTO[] = missingRows.map((row) => ({
+    externalSource: row.provider,
+    externalId: row.externalId,
+    title: row.title,
+    status: row.status,
+    sourceUrl: provider.externalUrl(row.externalId),
+    request: requestsByExternalId.get(`${row.externalSource}:${row.externalId}`) ?? null,
+  }));
 
   const cooldownMs = canUsePatronPerks ? PATRON_SYNC_COOLDOWN_MS : FREE_SYNC_COOLDOWN_MS;
   const nextManualSyncMs = connection.lastSyncedAt ? connection.lastSyncedAt.getTime() + cooldownMs : null;
@@ -569,4 +589,52 @@ export async function linkProgressForMedia(mediaId: number): Promise<number> {
     logger.warn({ err, mediaId }, 'Could not back-link tracker progress for newly created media');
     return 0;
   }
+}
+
+/** Statuses a missing title's request is reported in: still waiting, or declined (so it is not asked for again). */
+const REPORTED_REQUEST_STATUSES: readonly ReportedRequestStatus[] = [
+  ...(ACTIVE_REQUEST_STATUSES as readonly ReportedRequestStatus[]),
+  ContentRequestStatus.DECLINED,
+];
+
+/**
+ * The content requests already filed for the reader's missing titles, keyed `<source>:<id>`, with whether the reader
+ * voted on each. Requests carry the same external identity tracker rows do, so this is one lookup, not a title match.
+ * An active request wins over a declined one for the same title.
+ */
+async function findMissingAnimeRequests(
+  userId: number,
+  rows: ReadonlyArray<Pick<UserMediaProgress, 'externalSource' | 'externalId'>>,
+): Promise<Map<string, TrackerMissingRequestDTO>> {
+  const result = new Map<string, TrackerMissingRequestDTO>();
+  if (rows.length === 0) return result;
+
+  const requests = await ContentRequest.find({
+    where: rows.map((row) => ({
+      externalSource: row.externalSource as ExternalSourceType,
+      externalId: row.externalId,
+      status: In([...REPORTED_REQUEST_STATUSES]),
+    })),
+    order: { id: 'DESC' },
+  });
+  if (requests.length === 0) return result;
+
+  const votes = await ContentRequestVote.find({
+    where: { userId, requestId: In(requests.map((request) => request.id)) },
+  });
+  const votedIds = new Set(votes.map((vote) => vote.requestId));
+
+  for (const request of requests) {
+    const key = `${request.externalSource}:${request.externalId}`;
+    const current = result.get(key);
+    if (current && current.status !== ContentRequestStatus.DECLINED) continue;
+    if (current && request.status === ContentRequestStatus.DECLINED) continue;
+    result.set(key, {
+      publicId: request.publicId,
+      status: request.status as ReportedRequestStatus,
+      voteCount: request.voteCount,
+      voted: votedIds.has(request.id),
+    });
+  }
+  return result;
 }
