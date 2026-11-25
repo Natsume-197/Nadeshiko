@@ -18,6 +18,9 @@ import { z } from 'zod/v4';
 import type {
   t_AccountQuotaState,
   t_AdminContentRequest,
+  t_AdminEmailEvent,
+  t_AdminEmailSend,
+  t_AdminEmailSuppression,
   t_AdminOverview,
   t_AdminPatreonConnection,
   t_AdminPatreonOverview,
@@ -36,15 +39,20 @@ import type {
   t_Error409,
   t_Error429,
   t_Error500,
+  t_GetAdminEmailParamSchema,
   t_GetAdminPatreonOverviewQuerySchema,
   t_GetAdminUserQuotaParamSchema,
   t_GetAdminUsersWithProvidersQuerySchema,
+  t_LiftAdminEmailSuppressionRequestBody,
   t_ListAdminContentRequestsQuerySchema,
+  t_ListAdminEmailSuppressionsQuerySchema,
+  t_ListAdminEmailsQuerySchema,
   t_ListAdminReportsQuerySchema,
   t_MergeAdminContentRequestParamSchema,
   t_MergeAdminContentRequestRequestBody,
   t_RefreshAdminPatreonConnectionParamSchema,
   t_Report,
+  t_ResendAdminEmailParamSchema,
   t_Tier,
   t_UnlinkAdminPatreonConnectionParamSchema,
   t_UpdateAccountQuotaRequest,
@@ -54,11 +62,14 @@ import type {
   t_UpdateAdminUserQuotaParamSchema,
   t_UpdateReportRequest,
 } from '../models.ts';
-import type { AnnouncementOutput, BatchUpdateReportsRequestOutput, BulkDeleteReportsRequestOutput, BulkUpdateReportsRequestOutput, GetAdminPatreonOverviewQueryOutput, GetAdminUsersWithProvidersQueryOutput, ListAdminContentRequestsQueryOutput, ListAdminReportsQueryOutput, MergeAdminContentRequestRequestBodyOutput, UpdateAccountQuotaRequestOutput, UpdateAdminContentRequestRequestBodyOutput, UpdateReportRequestOutput } from '../outputTypes.ts';
+import type { AnnouncementOutput, BatchUpdateReportsRequestOutput, BulkDeleteReportsRequestOutput, BulkUpdateReportsRequestOutput, GetAdminPatreonOverviewQueryOutput, GetAdminUsersWithProvidersQueryOutput, LiftAdminEmailSuppressionRequestBodyOutput, ListAdminContentRequestsQueryOutput, ListAdminEmailSuppressionsQueryOutput, ListAdminEmailsQueryOutput, ListAdminReportsQueryOutput, MergeAdminContentRequestRequestBodyOutput, UpdateAccountQuotaRequestOutput, UpdateAdminContentRequestRequestBodyOutput, UpdateReportRequestOutput } from '../outputTypes.ts';
 import {
   PermissiveBoolean,
   s_AccountQuotaState,
   s_AdminContentRequest,
+  s_AdminEmailEvent,
+  s_AdminEmailSend,
+  s_AdminEmailSuppression,
   s_AdminOverview,
   s_AdminPatreonConnection,
   s_AdminPatreonOverview,
@@ -76,6 +87,7 @@ import {
   s_Error409,
   s_Error429,
   s_Error500,
+  s_LiftAdminEmailSuppressionRequestBody,
   s_MergeAdminContentRequestRequestBody,
   s_Report,
   s_ReportSource,
@@ -433,6 +445,109 @@ export type RefreshAdminPatreonConnection = (
   next: NextFunction,
 ) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
 
+export type ListAdminEmailsResponder = {
+  with200(): ExpressRuntimeResponse<{
+    emails: t_AdminEmailSend[];
+    last24h: {
+      bounced: number;
+      failed: number;
+      sent: number;
+      suppressed: number;
+    };
+    total: number;
+  }>;
+  with400(): ExpressRuntimeResponse<t_Error400>;
+  with401(): ExpressRuntimeResponse<t_Error401>;
+  with403(): ExpressRuntimeResponse<t_Error403>;
+  with429(): ExpressRuntimeResponse<t_Error429>;
+  with500(): ExpressRuntimeResponse<t_Error500>;
+} & ExpressRuntimeResponder;
+
+export type ListAdminEmails = (
+  params: Params<void, ListAdminEmailsQueryOutput, void, void>,
+  respond: ListAdminEmailsResponder,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
+
+export type GetAdminEmailResponder = {
+  with200(): ExpressRuntimeResponse<{
+    email: t_AdminEmailSend;
+    events: t_AdminEmailEvent[];
+  }>;
+  with400(): ExpressRuntimeResponse<t_Error400>;
+  with401(): ExpressRuntimeResponse<t_Error401>;
+  with403(): ExpressRuntimeResponse<t_Error403>;
+  with404(): ExpressRuntimeResponse<t_Error404>;
+  with429(): ExpressRuntimeResponse<t_Error429>;
+  with500(): ExpressRuntimeResponse<t_Error500>;
+} & ExpressRuntimeResponder;
+
+export type GetAdminEmail = (
+  params: Params<t_GetAdminEmailParamSchema, void, void, void>,
+  respond: GetAdminEmailResponder,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
+
+export type ResendAdminEmailResponder = {
+  with204(): ExpressRuntimeResponse<void>;
+  with400(): ExpressRuntimeResponse<t_Error400>;
+  with401(): ExpressRuntimeResponse<t_Error401>;
+  with403(): ExpressRuntimeResponse<t_Error403>;
+  with404(): ExpressRuntimeResponse<t_Error404>;
+  with429(): ExpressRuntimeResponse<t_Error429>;
+  with500(): ExpressRuntimeResponse<t_Error500>;
+} & ExpressRuntimeResponder;
+
+export type ResendAdminEmail = (
+  params: Params<t_ResendAdminEmailParamSchema, void, void, void>,
+  respond: ResendAdminEmailResponder,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
+
+export type ListAdminEmailSuppressionsResponder = {
+  with200(): ExpressRuntimeResponse<{
+    suppressions: t_AdminEmailSuppression[];
+    total: number;
+  }>;
+  with400(): ExpressRuntimeResponse<t_Error400>;
+  with401(): ExpressRuntimeResponse<t_Error401>;
+  with403(): ExpressRuntimeResponse<t_Error403>;
+  with429(): ExpressRuntimeResponse<t_Error429>;
+  with500(): ExpressRuntimeResponse<t_Error500>;
+} & ExpressRuntimeResponder;
+
+export type ListAdminEmailSuppressions = (
+  params: Params<void, ListAdminEmailSuppressionsQueryOutput, void, void>,
+  respond: ListAdminEmailSuppressionsResponder,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
+
+export type LiftAdminEmailSuppressionResponder = {
+  with204(): ExpressRuntimeResponse<void>;
+  with400(): ExpressRuntimeResponse<t_Error400>;
+  with401(): ExpressRuntimeResponse<t_Error401>;
+  with403(): ExpressRuntimeResponse<t_Error403>;
+  with404(): ExpressRuntimeResponse<t_Error404>;
+  with429(): ExpressRuntimeResponse<t_Error429>;
+  with500(): ExpressRuntimeResponse<t_Error500>;
+} & ExpressRuntimeResponder;
+
+export type LiftAdminEmailSuppression = (
+  params: Params<void, void, LiftAdminEmailSuppressionRequestBodyOutput, void>,
+  respond: LiftAdminEmailSuppressionResponder,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
+
 export type AdminImplementation = {
   getAdminOverview: GetAdminOverview;
   listAdminReports: ListAdminReports;
@@ -454,6 +569,11 @@ export type AdminImplementation = {
   refreshAllAdminPatreonConnections: RefreshAllAdminPatreonConnections;
   unlinkAdminPatreonConnection: UnlinkAdminPatreonConnection;
   refreshAdminPatreonConnection: RefreshAdminPatreonConnection;
+  listAdminEmails: ListAdminEmails;
+  getAdminEmail: GetAdminEmail;
+  resendAdminEmail: ResendAdminEmail;
+  listAdminEmailSuppressions: ListAdminEmailSuppressions;
+  liftAdminEmailSuppression: LiftAdminEmailSuppression;
 };
 
 export function createAdminRouter(
@@ -1608,6 +1728,339 @@ export function createAdminRouter(
       }
     },
   );
+
+  const listAdminEmailsQuerySchema = z.object({
+    limit: z.coerce.number().min(1).max(100).optional().default(25),
+    offset: z.coerce.number().min(0).optional().default(0),
+    search: z.string().max(320).optional(),
+    kind: z.string().max(32).optional(),
+    status: z.enum(['sent', 'delivered', 'bounced', 'complained', 'failed', 'suppressed']).optional(),
+    days: z.coerce.number().min(1).max(366).optional(),
+  });
+
+  const listAdminEmailsResponseBodyValidator = responseValidationFactory(
+    [
+      [
+        '200',
+        z.object({
+          emails: z.array(s_AdminEmailSend),
+          total: z.coerce.number(),
+          last24h: z.object({
+            sent: z.coerce.number(),
+            failed: z.coerce.number(),
+            bounced: z.coerce.number(),
+            suppressed: z.coerce.number(),
+          }),
+        }),
+      ],
+      ['400', s_Error400],
+      ['401', s_Error401],
+      ['403', s_Error403],
+      ['429', s_Error429],
+      ['500', s_Error500],
+    ],
+    undefined,
+  );
+
+  // listAdminEmails
+  router.get(`/v1/admin/emails`, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const input = {
+        params: undefined,
+        query: parseRequestInput(listAdminEmailsQuerySchema, req.query, RequestInputType.QueryString),
+        body: undefined,
+        headers: undefined,
+      };
+
+      const responder = {
+        with200() {
+          return new ExpressRuntimeResponse<{
+            emails: t_AdminEmailSend[];
+            last24h: {
+              bounced: number;
+              failed: number;
+              sent: number;
+              suppressed: number;
+            };
+            total: number;
+          }>(200);
+        },
+        with400() {
+          return new ExpressRuntimeResponse<t_Error400>(400);
+        },
+        with401() {
+          return new ExpressRuntimeResponse<t_Error401>(401);
+        },
+        with403() {
+          return new ExpressRuntimeResponse<t_Error403>(403);
+        },
+        with429() {
+          return new ExpressRuntimeResponse<t_Error429>(429);
+        },
+        with500() {
+          return new ExpressRuntimeResponse<t_Error500>(500);
+        },
+        withStatus(status: StatusCode) {
+          return new ExpressRuntimeResponse(status);
+        },
+      };
+
+      await implementation
+        .listAdminEmails(input, responder, req, res, next)
+        .catch(handleImplementationError)
+        .then(handleResponse(res, listAdminEmailsResponseBodyValidator));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  const getAdminEmailParamSchema = z.object({ emailId: z.coerce.number().min(1) });
+
+  const getAdminEmailResponseBodyValidator = responseValidationFactory(
+    [
+      ['200', z.object({ email: s_AdminEmailSend, events: z.array(s_AdminEmailEvent) })],
+      ['400', s_Error400],
+      ['401', s_Error401],
+      ['403', s_Error403],
+      ['404', s_Error404],
+      ['429', s_Error429],
+      ['500', s_Error500],
+    ],
+    undefined,
+  );
+
+  // getAdminEmail
+  router.get(`/v1/admin/emails/:emailId`, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const input = {
+        params: parseRequestInput(getAdminEmailParamSchema, req.params, RequestInputType.RouteParam),
+        query: undefined,
+        body: undefined,
+        headers: undefined,
+      };
+
+      const responder = {
+        with200() {
+          return new ExpressRuntimeResponse<{
+            email: t_AdminEmailSend;
+            events: t_AdminEmailEvent[];
+          }>(200);
+        },
+        with400() {
+          return new ExpressRuntimeResponse<t_Error400>(400);
+        },
+        with401() {
+          return new ExpressRuntimeResponse<t_Error401>(401);
+        },
+        with403() {
+          return new ExpressRuntimeResponse<t_Error403>(403);
+        },
+        with404() {
+          return new ExpressRuntimeResponse<t_Error404>(404);
+        },
+        with429() {
+          return new ExpressRuntimeResponse<t_Error429>(429);
+        },
+        with500() {
+          return new ExpressRuntimeResponse<t_Error500>(500);
+        },
+        withStatus(status: StatusCode) {
+          return new ExpressRuntimeResponse(status);
+        },
+      };
+
+      await implementation
+        .getAdminEmail(input, responder, req, res, next)
+        .catch(handleImplementationError)
+        .then(handleResponse(res, getAdminEmailResponseBodyValidator));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  const resendAdminEmailParamSchema = z.object({ emailId: z.coerce.number().min(1) });
+
+  const resendAdminEmailResponseBodyValidator = responseValidationFactory(
+    [
+      ['204', z.undefined()],
+      ['400', s_Error400],
+      ['401', s_Error401],
+      ['403', s_Error403],
+      ['404', s_Error404],
+      ['429', s_Error429],
+      ['500', s_Error500],
+    ],
+    undefined,
+  );
+
+  // resendAdminEmail
+  router.post(`/v1/admin/emails/:emailId/resend`, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const input = {
+        params: parseRequestInput(resendAdminEmailParamSchema, req.params, RequestInputType.RouteParam),
+        query: undefined,
+        body: undefined,
+        headers: undefined,
+      };
+
+      const responder = {
+        with204() {
+          return new ExpressRuntimeResponse<void>(204);
+        },
+        with400() {
+          return new ExpressRuntimeResponse<t_Error400>(400);
+        },
+        with401() {
+          return new ExpressRuntimeResponse<t_Error401>(401);
+        },
+        with403() {
+          return new ExpressRuntimeResponse<t_Error403>(403);
+        },
+        with404() {
+          return new ExpressRuntimeResponse<t_Error404>(404);
+        },
+        with429() {
+          return new ExpressRuntimeResponse<t_Error429>(429);
+        },
+        with500() {
+          return new ExpressRuntimeResponse<t_Error500>(500);
+        },
+        withStatus(status: StatusCode) {
+          return new ExpressRuntimeResponse(status);
+        },
+      };
+
+      await implementation
+        .resendAdminEmail(input, responder, req, res, next)
+        .catch(handleImplementationError)
+        .then(handleResponse(res, resendAdminEmailResponseBodyValidator));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  const listAdminEmailSuppressionsQuerySchema = z.object({
+    limit: z.coerce.number().min(1).max(100).optional().default(25),
+    offset: z.coerce.number().min(0).optional().default(0),
+    search: z.string().max(320).optional(),
+  });
+
+  const listAdminEmailSuppressionsResponseBodyValidator = responseValidationFactory(
+    [
+      ['200', z.object({ suppressions: z.array(s_AdminEmailSuppression), total: z.coerce.number() })],
+      ['400', s_Error400],
+      ['401', s_Error401],
+      ['403', s_Error403],
+      ['429', s_Error429],
+      ['500', s_Error500],
+    ],
+    undefined,
+  );
+
+  // listAdminEmailSuppressions
+  router.get(`/v1/admin/email-suppressions`, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const input = {
+        params: undefined,
+        query: parseRequestInput(listAdminEmailSuppressionsQuerySchema, req.query, RequestInputType.QueryString),
+        body: undefined,
+        headers: undefined,
+      };
+
+      const responder = {
+        with200() {
+          return new ExpressRuntimeResponse<{
+            suppressions: t_AdminEmailSuppression[];
+            total: number;
+          }>(200);
+        },
+        with400() {
+          return new ExpressRuntimeResponse<t_Error400>(400);
+        },
+        with401() {
+          return new ExpressRuntimeResponse<t_Error401>(401);
+        },
+        with403() {
+          return new ExpressRuntimeResponse<t_Error403>(403);
+        },
+        with429() {
+          return new ExpressRuntimeResponse<t_Error429>(429);
+        },
+        with500() {
+          return new ExpressRuntimeResponse<t_Error500>(500);
+        },
+        withStatus(status: StatusCode) {
+          return new ExpressRuntimeResponse(status);
+        },
+      };
+
+      await implementation
+        .listAdminEmailSuppressions(input, responder, req, res, next)
+        .catch(handleImplementationError)
+        .then(handleResponse(res, listAdminEmailSuppressionsResponseBodyValidator));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  const liftAdminEmailSuppressionResponseBodyValidator = responseValidationFactory(
+    [
+      ['204', z.undefined()],
+      ['400', s_Error400],
+      ['401', s_Error401],
+      ['403', s_Error403],
+      ['404', s_Error404],
+      ['429', s_Error429],
+      ['500', s_Error500],
+    ],
+    undefined,
+  );
+
+  // liftAdminEmailSuppression
+  router.post(`/v1/admin/email-suppressions/lift`, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const input = {
+        params: undefined,
+        query: undefined,
+        body: parseRequestInput(s_LiftAdminEmailSuppressionRequestBody, req.body, RequestInputType.RequestBody),
+        headers: undefined,
+      };
+
+      const responder = {
+        with204() {
+          return new ExpressRuntimeResponse<void>(204);
+        },
+        with400() {
+          return new ExpressRuntimeResponse<t_Error400>(400);
+        },
+        with401() {
+          return new ExpressRuntimeResponse<t_Error401>(401);
+        },
+        with403() {
+          return new ExpressRuntimeResponse<t_Error403>(403);
+        },
+        with404() {
+          return new ExpressRuntimeResponse<t_Error404>(404);
+        },
+        with429() {
+          return new ExpressRuntimeResponse<t_Error429>(429);
+        },
+        with500() {
+          return new ExpressRuntimeResponse<t_Error500>(500);
+        },
+        withStatus(status: StatusCode) {
+          return new ExpressRuntimeResponse(status);
+        },
+      };
+
+      await implementation
+        .liftAdminEmailSuppression(input, responder, req, res, next)
+        .catch(handleImplementationError)
+        .then(handleResponse(res, liftAdminEmailSuppressionResponseBodyValidator));
+    } catch (error) {
+      next(error);
+    }
+  });
 
   return router;
 }

@@ -1946,7 +1946,9 @@
       "patreonTitle": "Patreon 与等级",
       "patreonDesc": "查看已绑定的 Patreon 会员、等级限额与同步状态。",
       "statusTitle": "服务状态页",
-      "statusDesc": "在新标签页打开 status.nadeshiko.co。"
+      "statusDesc": "在新标签页打开 status.nadeshiko.co。",
+      "emailsTitle": "邮件",
+      "emailsDesc": "所有已发送邮件、投递状态和被屏蔽的地址。"
     }
   },
   "adminPatreon": {
@@ -2050,6 +2052,72 @@
     "tabs": {
       "campaign": "Patreon 赞助者 ({count})",
       "linked": "已绑定账号 ({count})"
+    }
+  },
+  "adminEmails": {
+    "title": "邮件",
+    "tabs": {
+      "sent": "已发送",
+      "suppressed": "已屏蔽"
+    },
+    "last24h": "最近 24 小时",
+    "kpi": {
+      "sent": "已发送",
+      "failed": "失败",
+      "bounced": "退信",
+      "suppressed": "已屏蔽"
+    },
+    "filters": {
+      "search": "邮箱或用户",
+      "allKinds": "所有类型",
+      "allStatuses": "所有状态",
+      "days": {
+        "1": "最近 24 小时",
+        "7": "最近 7 天",
+        "30": "最近 30 天",
+        "365": "最近一年"
+      }
+    },
+    "table": {
+      "date": "日期",
+      "to": "收件人",
+      "kind": "类型",
+      "subject": "主题",
+      "status": "状态"
+    },
+    "status": {
+      "sent": "已发送",
+      "delivered": "已送达",
+      "bounced": "退信",
+      "complained": "投诉",
+      "failed": "失败",
+      "suppressed": "已屏蔽"
+    },
+    "empty": "暂无内容",
+    "detail": {
+      "campaign": "活动",
+      "user": "用户",
+      "messageId": "SES ID",
+      "error": "错误",
+      "events": "SES 事件",
+      "noEvents": "无事件",
+      "backfill": "重建",
+      "close": "关闭",
+      "resend": "重新发送"
+    },
+    "suppressions": {
+      "address": "地址",
+      "cause": "原因",
+      "reason": "说明",
+      "since": "开始于",
+      "lift": "解除",
+      "permanent": "永久",
+      "causes": {
+        "hard_bounce": "硬退信",
+        "complaint": "投诉",
+        "repeated_soft_bounce": "多次软退信",
+        "manual": "手动"
+      }
     }
   },
   "notifications": {

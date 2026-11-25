@@ -1,0 +1,22 @@
+type: object
+required:
+  - address
+  - cause
+  - reason
+  - suppressedAt
+  - permanent
+properties:
+  address:
+    type: string
+  cause:
+    type: string
+    enum: [hard_bounce, complaint, repeated_soft_bounce, manual]
+  reason:
+    type: string
+    nullable: true
+  suppressedAt:
+    type: string
+    format: date-time
+  permanent:
+    type: boolean
+    description: Complaints are never lifted from the dashboard.

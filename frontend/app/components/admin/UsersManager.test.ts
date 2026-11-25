@@ -32,6 +32,9 @@ vi.stubGlobal('useFormat', () => ({
 }));
 vi.stubGlobal('useToastError', vi.fn());
 vi.stubGlobal('useToastSuccess', vi.fn());
+const navigateTo = vi.fn();
+vi.stubGlobal('navigateTo', navigateTo);
+vi.stubGlobal('useLocalePath', () => (to: unknown) => to);
 
 import UsersManager from './UsersManager.vue';
 
@@ -71,7 +74,10 @@ async function render() {
         UiBaseIcon: true,
         SearchDropdownContainer: { template: '<div><slot /><slot name="content" /></div>' },
         SearchDropdownMainButton: { template: '<button><slot /></button>' },
-        SearchDropdownItem: { template: '<button @click="$emit(\'click\')"><slot /></button>' },
+        SearchDropdownItem: {
+          props: ['text'],
+          template: '<button :data-item="text" @click="$emit(\'click\')"><slot /></button>',
+        },
       },
     },
     attachTo: document.body,
@@ -281,5 +287,14 @@ describe('searching', () => {
 
     expect(rows(wrapper)[0]).toContain('joh-0');
     expect(rows(wrapper)).toHaveLength(2);
+  });
+
+  test("opens the user's email history", async () => {
+    getAdminUsersWithProviders.mockResolvedValue(page('u', 1, 1));
+    const wrapper = await render();
+
+    await wrapper.get('[data-item="adminEmails.title"]').trigger('click');
+
+    expect(navigateTo).toHaveBeenCalledWith({ path: '/admin/emails', query: { q: 'u-0@x.test', days: 365 } });
   });
 });

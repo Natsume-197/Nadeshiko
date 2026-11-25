@@ -37,6 +37,13 @@ import {
   refreshAllAdminPatreonConnections,
   unlinkAdminPatreonConnection,
 } from '@app/controllers/adminPatreonController';
+import {
+  getAdminEmail,
+  liftAdminEmailSuppression,
+  listAdminEmailSuppressions,
+  listAdminEmails,
+  resendAdminEmail,
+} from '@app/controllers/adminEmailController';
 import { handleSesWebhook, WEBHOOK_SES_PATH } from '@app/controllers/webhooks/sesController';
 import { listTiers, getAdminUserQuota, updateAdminUserQuota } from '@app/controllers/adminQuotaController';
 import { getAnnouncement, updateAnnouncement } from '@app/controllers/announcementController';
@@ -342,6 +349,11 @@ const AdminRoutes = createAdminRouter({
   refreshAllAdminPatreonConnections,
   refreshAdminPatreonConnection,
   unlinkAdminPatreonConnection,
+  listAdminEmails,
+  getAdminEmail,
+  resendAdminEmail,
+  listAdminEmailSuppressions,
+  liftAdminEmailSuppression,
 });
 
 const FeedbackRoutes = createFeedbackRouter({

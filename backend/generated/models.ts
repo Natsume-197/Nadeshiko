@@ -33,9 +33,45 @@ export type t_AdminContentRequest = t_ContentRequest & {
   } | null;
 };
 
+export type t_AdminEmailEvent = {
+  diagnosticMessage: string | null;
+  event: string;
+  id: number;
+  occurredAt: string;
+  reason: string | null;
+};
+
+export type t_AdminEmailSend = {
+  address: string;
+  campaign: string | null;
+  error: string | null;
+  id: number;
+  kind: string;
+  resendable: boolean;
+  sentAt: string;
+  sesMessageId: string | null;
+  source: 'live' | 'backfill';
+  status: 'sent' | 'delivered' | 'bounced' | 'complained' | 'failed' | 'suppressed';
+  subject: string | null;
+  userId: number | null;
+  username: string | null;
+};
+
+export type t_AdminEmailSuppression = {
+  address: string;
+  cause: 'hard_bounce' | 'complaint' | 'repeated_soft_bounce' | 'manual';
+  permanent: boolean;
+  reason: string | null;
+  suppressedAt: string;
+};
+
 export type t_AdminOverview = {
   announcement: {
     active: boolean;
+  };
+  emails: {
+    bounced: number;
+    failed: number;
   };
   reports: {
     open: number;
@@ -1522,6 +1558,10 @@ export type t_ForgetFamiliarMediaParamSchema = {
   mediaPublicId: string;
 };
 
+export type t_GetAdminEmailParamSchema = {
+  emailId: number;
+};
+
 export type t_GetAdminPatreonOverviewQuerySchema = {
   refreshCampaign?: boolean;
 };
@@ -1608,6 +1648,10 @@ export type t_IdentifyDictionaryWordQuerySchema = {
   surface?: string;
 };
 
+export type t_LiftAdminEmailSuppressionRequestBody = {
+  address: string;
+};
+
 export type t_ListAdminContentRequestsQuerySchema = {
   category?: 'ANIME' | 'JDRAMA' | 'YOUTUBE' | 'AUDIOBOOK';
   flagged?: boolean;
@@ -1615,6 +1659,21 @@ export type t_ListAdminContentRequestsQuerySchema = {
   q?: string;
   status?: 'OPEN' | 'PLANNED' | 'IN_PROGRESS' | 'RELEASED' | 'DECLINED';
   take?: number;
+};
+
+export type t_ListAdminEmailSuppressionsQuerySchema = {
+  limit?: number;
+  offset?: number;
+  search?: string;
+};
+
+export type t_ListAdminEmailsQuerySchema = {
+  days?: number;
+  kind?: string;
+  limit?: number;
+  offset?: number;
+  search?: string;
+  status?: 'sent' | 'delivered' | 'bounced' | 'complained' | 'failed' | 'suppressed';
 };
 
 export type t_ListAdminReportsQuerySchema = {
@@ -1728,6 +1787,10 @@ export type t_RemoveFavoriteMediaParamSchema = {
 export type t_RemoveSegmentFromCollectionParamSchema = {
   collectionPublicId: string;
   segmentPublicId: string;
+};
+
+export type t_ResendAdminEmailParamSchema = {
+  emailId: number;
 };
 
 export type t_ReserveUserDictionaryUploadRequestBody = {

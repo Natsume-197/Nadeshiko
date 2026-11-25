@@ -23,6 +23,8 @@ export class EmailEvent extends BaseEntity {
   @Column({ name: 'diagnostic_message', type: 'text', nullable: true })
   diagnosticMessage?: string | null;
 
+  /** Indexed: a send's status is looked up by its SES message id. */
+  @Index('IDX_email_event_reference')
   @Column({ name: 'email_reference', type: 'varchar', length: 128, nullable: true })
   emailReference?: string | null;
 

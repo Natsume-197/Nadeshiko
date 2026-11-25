@@ -1,0 +1,48 @@
+get:
+  tags:
+    - Admin
+  x-internal: true
+  operationId: getAdminEmail
+  summary: Get one sent email with its SES events
+  description: |
+    Returns one send from the log together with every event SES reported for it.
+
+  security:
+    - SessionCookie: [ADMIN]
+  parameters:
+    - name: emailId
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+      description: Send log id
+  responses:
+    "200":
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - email
+              - events
+            properties:
+              email:
+                $ref: "../../components/schemas/AdminEmailSend.yaml"
+              events:
+                type: array
+                items:
+                  $ref: "../../components/schemas/AdminEmailEvent.yaml"
+    "400":
+      $ref: "../../components/responses/BadRequest.yaml"
+    "401":
+      $ref: "../../components/responses/Unauthorized.yaml"
+    "403":
+      $ref: "../../components/responses/Forbidden.yaml"
+    "404":
+      $ref: "../../components/responses/NotFound.yaml"
+    "429":
+      $ref: "../../components/responses/TooManyRequests.yaml"
+    "500":
+      $ref: "../../components/responses/InternalServerError.yaml"

@@ -4,7 +4,7 @@ import { createClient as createApiClient, createConfig, type Client } from './cl
 import type { Auth } from './core/auth.gen';
 import type { ClientOptions } from './types.gen';
 import type * as Types from './types.gen';
-import { search, getSearchStats, searchWords, searchMedia, getStatsOverview, listMedia, getSegment, getSegmentContext, getMedia, listEpisodes, getEpisode, getMe, createUserApiKey, listExcludedMedia, addExcludedMedia, removeExcludedMedia, listFavoriteMedia, addFavoriteMedia, removeFavoriteMedia, listFamiliarMedia, listUserActivity, getUserActivityHeatmap, getUserActivityStats, listCollections, createCollection, getCollection, deleteCollection, addSegmentToCollection, searchCollectionSegments, removeSegmentFromCollection, listContentRequests, createContentRequest, getContentRequestAllowance, listMyContentRequests, withdrawContentRequest, voteContentRequest, unvoteContentRequest, boostContentRequest, listNotifications, getUnreadNotificationCount, markNotificationsRead, listWordWatches, setWordWatch, checkWordWatch, updateWordWatch, deleteWordWatch, identifyDictionaryWord, getDictionaryKanjiIndex, getDictionaryKanji, getCoveredWords, triggerCoveredWordsUpdate, createMedia, updateSegment, listSegmentRevisions, restoreSegmentRevision, updateMedia, deleteMedia, createEpisode, updateEpisode, deleteEpisode, listSegments, createSegment, createSegmentsBatch, moderateEpisodeSegments, getPatreonConnection, startPatreonLink, unlinkPatreon, completePatreonLink, getTrackerConnection, startTrackerLink, unlinkTracker, completeTrackerLink, syncTrackerConnection, updateTrackerSettings, listUserDictionaries, updateUserDictionaries, deleteUserDictionary, reserveUserDictionaryUpload, completeUserDictionaryUpload, clearFamiliarMedia, forgetFamiliarMedia, createUserReport, getUserPreferences, updateUserPreferences, trackUserActivity, deleteUserActivity, deleteUserActivityByDate, deleteUserActivityById, exportUserData, createFeedback, getFeedbackFormToken, unsubscribeFromEmail, getEmailPreferencesByToken, updateEmailPreferencesByToken, updateCollection, updateCollectionSegment, getCollectionStats, getAdminOverview, listAdminReports, batchUpdateAdminReports, bulkUpdateAdminReports, bulkDeleteAdminReports, updateAdminReport, deleteAdminReport, getAnnouncement, updateAnnouncement, getAdminUsersWithProviders, listTiers, getAdminUserQuota, updateAdminUserQuota, listAdminContentRequests, updateAdminContentRequest, mergeAdminContentRequest, getAdminPatreonOverview, refreshAllAdminPatreonConnections, unlinkAdminPatreonConnection, refreshAdminPatreonConnection, getSession, getSessionPost, signOut, socialSignIn, signInWithMagicLink, signInWithEmailOtp, listUserSessions, authRevokeSession, authRevokeSessions, authRevokeOtherSessions, deleteUser, changeEmail, authApiKeyCreate, authApiKeyList, authApiKeyUpdate, banUser, unbanUser, impersonateUser, authAdminStopImpersonating, type Options } from './sdk.gen';
+import { search, getSearchStats, searchWords, searchMedia, getStatsOverview, listMedia, getSegment, getSegmentContext, getMedia, listEpisodes, getEpisode, getMe, createUserApiKey, listExcludedMedia, addExcludedMedia, removeExcludedMedia, listFavoriteMedia, addFavoriteMedia, removeFavoriteMedia, listFamiliarMedia, listUserActivity, getUserActivityHeatmap, getUserActivityStats, listCollections, createCollection, getCollection, deleteCollection, addSegmentToCollection, searchCollectionSegments, removeSegmentFromCollection, listContentRequests, createContentRequest, getContentRequestAllowance, listMyContentRequests, withdrawContentRequest, voteContentRequest, unvoteContentRequest, boostContentRequest, listNotifications, getUnreadNotificationCount, markNotificationsRead, listWordWatches, setWordWatch, checkWordWatch, updateWordWatch, deleteWordWatch, identifyDictionaryWord, getDictionaryKanjiIndex, getDictionaryKanji, getCoveredWords, triggerCoveredWordsUpdate, createMedia, updateSegment, listSegmentRevisions, restoreSegmentRevision, updateMedia, deleteMedia, createEpisode, updateEpisode, deleteEpisode, listSegments, createSegment, createSegmentsBatch, moderateEpisodeSegments, getPatreonConnection, startPatreonLink, unlinkPatreon, completePatreonLink, getTrackerConnection, startTrackerLink, unlinkTracker, completeTrackerLink, syncTrackerConnection, updateTrackerSettings, listUserDictionaries, updateUserDictionaries, deleteUserDictionary, reserveUserDictionaryUpload, completeUserDictionaryUpload, clearFamiliarMedia, forgetFamiliarMedia, createUserReport, getUserPreferences, updateUserPreferences, trackUserActivity, deleteUserActivity, deleteUserActivityByDate, deleteUserActivityById, exportUserData, createFeedback, getFeedbackFormToken, unsubscribeFromEmail, getEmailPreferencesByToken, updateEmailPreferencesByToken, updateCollection, updateCollectionSegment, getCollectionStats, getAdminOverview, listAdminReports, batchUpdateAdminReports, bulkUpdateAdminReports, bulkDeleteAdminReports, updateAdminReport, deleteAdminReport, getAnnouncement, updateAnnouncement, getAdminUsersWithProviders, listTiers, getAdminUserQuota, updateAdminUserQuota, listAdminContentRequests, updateAdminContentRequest, mergeAdminContentRequest, getAdminPatreonOverview, refreshAllAdminPatreonConnections, unlinkAdminPatreonConnection, refreshAdminPatreonConnection, listAdminEmails, getAdminEmail, resendAdminEmail, listAdminEmailSuppressions, liftAdminEmailSuppression, getSession, getSessionPost, signOut, socialSignIn, signInWithMagicLink, signInWithEmailOtp, listUserSessions, authRevokeSession, authRevokeSessions, authRevokeOtherSessions, deleteUser, changeEmail, authApiKeyCreate, authApiKeyList, authApiKeyUpdate, banUser, unbanUser, impersonateUser, authAdminStopImpersonating, type Options } from './sdk.gen';
 import { withRetry, type RetryOptions } from './retry';
 import { NadeshikoError, buildNadeshikoError, isProblemDetails, type NadeshikoErrorCode, type RateLimitReason } from './errors';
 import { flatPaginate } from './paginate';
@@ -557,6 +557,28 @@ export type NadeshikoClient = {
       (id: number): Promise<Types.RefreshAdminPatreonConnectionResponse>;
       (params: Types.RefreshAdminPatreonConnectionData['path'] & { throwOnError: false }): Promise<{ data: Types.RefreshAdminPatreonConnectionResponse; response: Response; request: Request } | { error: Types.RefreshAdminPatreonConnectionErrors; response: Response; request: Request }>;
       (params: Types.RefreshAdminPatreonConnectionData['path']): Promise<Types.RefreshAdminPatreonConnectionResponse>;
+    };
+    listAdminEmails: {
+      (params: NonNullable<Types.ListAdminEmailsData['query']> & { throwOnError: false }): Promise<{ data: Types.ListAdminEmailsResponse; response: Response; request: Request } | { error: Types.ListAdminEmailsErrors; response: Response; request: Request }>;
+      (params?: NonNullable<Types.ListAdminEmailsData['query']>): Promise<Types.ListAdminEmailsResponse>;
+    };
+    getAdminEmail: {
+      (id: number): Promise<Types.GetAdminEmailResponse>;
+      (params: Types.GetAdminEmailData['path'] & { throwOnError: false }): Promise<{ data: Types.GetAdminEmailResponse; response: Response; request: Request } | { error: Types.GetAdminEmailErrors; response: Response; request: Request }>;
+      (params: Types.GetAdminEmailData['path']): Promise<Types.GetAdminEmailResponse>;
+    };
+    resendAdminEmail: {
+      (id: number): Promise<Types.ResendAdminEmailResponse>;
+      (params: Types.ResendAdminEmailData['path'] & { throwOnError: false }): Promise<{ data: Types.ResendAdminEmailResponse; response: Response; request: Request } | { error: Types.ResendAdminEmailErrors; response: Response; request: Request }>;
+      (params: Types.ResendAdminEmailData['path']): Promise<Types.ResendAdminEmailResponse>;
+    };
+    listAdminEmailSuppressions: {
+      (params: NonNullable<Types.ListAdminEmailSuppressionsData['query']> & { throwOnError: false }): Promise<{ data: Types.ListAdminEmailSuppressionsResponse; response: Response; request: Request } | { error: Types.ListAdminEmailSuppressionsErrors; response: Response; request: Request }>;
+      (params?: NonNullable<Types.ListAdminEmailSuppressionsData['query']>): Promise<Types.ListAdminEmailSuppressionsResponse>;
+    };
+    liftAdminEmailSuppression: {
+      (params: NonNullable<Types.LiftAdminEmailSuppressionData['body']> & { throwOnError: false }): Promise<{ data: Types.LiftAdminEmailSuppressionResponse; response: Response; request: Request } | { error: Types.LiftAdminEmailSuppressionErrors; response: Response; request: Request }>;
+      (params: NonNullable<Types.LiftAdminEmailSuppressionData['body']>): Promise<Types.LiftAdminEmailSuppressionResponse>;
     };
     getSession: {
       (params: NonNullable<Types.GetSessionData['query']> & { throwOnError: false }): Promise<{ data: Types.GetSessionResponse; response: Response; request: Request } | { error: Types.GetSessionErrors; response: Response; request: Request }>;
@@ -1627,6 +1649,44 @@ export function createNadeshikoClient(config: NadeshikoConfig): NadeshikoClient 
     return tOE === false ? p : p.then((r: any) => r.data);
   };
 
+  const _listAdminEmails = (params?: any) => {
+    const { throwOnError: tOE, ...query } = params ?? {};
+    const p = listAdminEmails({ ...(Object.keys(query).length > 0 ? { query } : {}), client: clientInstance, throwOnError: tOE === false ? false : true } as any);
+    return tOE === false ? p : p.then((r: any) => r.data);
+  };
+
+  const _getAdminEmail = (paramsOrId?: any) => {
+    if (typeof paramsOrId === 'number') {
+      return getAdminEmail({ throwOnError: true, path: { emailId: paramsOrId }, client: clientInstance } as any).then((r: any) => r.data);
+    }
+    const params = paramsOrId;
+    const { throwOnError: tOE, emailId } = params ?? {};
+    const p = getAdminEmail({ path: { emailId }, client: clientInstance, throwOnError: tOE === false ? false : true } as any);
+    return tOE === false ? p : p.then((r: any) => r.data);
+  };
+
+  const _resendAdminEmail = (paramsOrId?: any) => {
+    if (typeof paramsOrId === 'number') {
+      return resendAdminEmail({ throwOnError: true, path: { emailId: paramsOrId }, client: clientInstance } as any).then((r: any) => r.data);
+    }
+    const params = paramsOrId;
+    const { throwOnError: tOE, emailId } = params ?? {};
+    const p = resendAdminEmail({ path: { emailId }, client: clientInstance, throwOnError: tOE === false ? false : true } as any);
+    return tOE === false ? p : p.then((r: any) => r.data);
+  };
+
+  const _listAdminEmailSuppressions = (params?: any) => {
+    const { throwOnError: tOE, ...query } = params ?? {};
+    const p = listAdminEmailSuppressions({ ...(Object.keys(query).length > 0 ? { query } : {}), client: clientInstance, throwOnError: tOE === false ? false : true } as any);
+    return tOE === false ? p : p.then((r: any) => r.data);
+  };
+
+  const _liftAdminEmailSuppression = (params?: any) => {
+    const { throwOnError: tOE, ...body } = params ?? {};
+    const p = liftAdminEmailSuppression({ body, client: clientInstance, throwOnError: tOE === false ? false : true } as any);
+    return tOE === false ? p : p.then((r: any) => r.data);
+  };
+
   const _getSession = (params?: any) => {
     const { throwOnError: tOE, ...query } = params ?? {};
     const p = getSession({ ...(Object.keys(query).length > 0 ? { query } : {}), client: clientInstance, throwOnError: tOE === false ? false : true } as any);
@@ -1860,6 +1920,11 @@ export function createNadeshikoClient(config: NadeshikoConfig): NadeshikoClient 
     refreshAllAdminPatreonConnections: _refreshAllAdminPatreonConnections,
     unlinkAdminPatreonConnection: _unlinkAdminPatreonConnection,
     refreshAdminPatreonConnection: _refreshAdminPatreonConnection,
+    listAdminEmails: _listAdminEmails,
+    getAdminEmail: _getAdminEmail,
+    resendAdminEmail: _resendAdminEmail,
+    listAdminEmailSuppressions: _listAdminEmailSuppressions,
+    liftAdminEmailSuppression: _liftAdminEmailSuppression,
     getSession: _getSession,
     getSessionPost: _getSessionPost,
     signOut: _signOut,

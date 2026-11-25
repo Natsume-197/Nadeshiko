@@ -1,0 +1,24 @@
+type: object
+description: One event SES reported for a message.
+required:
+  - id
+  - event
+  - occurredAt
+  - reason
+  - diagnosticMessage
+properties:
+  id:
+    type: integer
+  event:
+    type: string
+    example: hard_bounce
+  occurredAt:
+    type: string
+    format: date-time
+  reason:
+    type: string
+    nullable: true
+  diagnosticMessage:
+    type: string
+    nullable: true
+    example: 550 5.1.1 User unknown

@@ -1,0 +1,40 @@
+post:
+  tags:
+    - Admin
+  x-internal: true
+  operationId: liftAdminEmailSuppression
+  summary: Lift an email suppression
+  description: |
+    Removes an address from our suppression list and from the SES account-level list, so mail to
+    it is attempted again. Complaints are refused.
+
+  security:
+    - SessionCookie: [ADMIN]
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - address
+          properties:
+            address:
+              type: string
+              minLength: 3
+              maxLength: 320
+  responses:
+    "204":
+      description: Lifted
+    "400":
+      $ref: "../../components/responses/BadRequest.yaml"
+    "401":
+      $ref: "../../components/responses/Unauthorized.yaml"
+    "403":
+      $ref: "../../components/responses/Forbidden.yaml"
+    "404":
+      $ref: "../../components/responses/NotFound.yaml"
+    "429":
+      $ref: "../../components/responses/TooManyRequests.yaml"
+    "500":
+      $ref: "../../components/responses/InternalServerError.yaml"

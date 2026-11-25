@@ -30,11 +30,44 @@ export const s_AddSegmentToCollectionRequest = z.object({
   segmentPublicId: z.string().regex(new RegExp('^[A-Za-z0-9_-]{12}$')),
 });
 
+export const s_AdminEmailEvent = z.object({
+  id: z.coerce.number(),
+  event: z.string(),
+  occurredAt: z.iso.datetime({ offset: true }),
+  reason: z.string().nullable(),
+  diagnosticMessage: z.string().nullable(),
+});
+
+export const s_AdminEmailSend = z.object({
+  id: z.coerce.number(),
+  sentAt: z.iso.datetime({ offset: true }),
+  address: z.string(),
+  userId: z.coerce.number().nullable(),
+  username: z.string().nullable(),
+  kind: z.string(),
+  campaign: z.string().nullable(),
+  subject: z.string().nullable(),
+  status: z.enum(['sent', 'delivered', 'bounced', 'complained', 'failed', 'suppressed']),
+  error: z.string().nullable(),
+  sesMessageId: z.string().nullable(),
+  source: z.enum(['live', 'backfill']),
+  resendable: PermissiveBoolean,
+});
+
+export const s_AdminEmailSuppression = z.object({
+  address: z.string(),
+  cause: z.enum(['hard_bounce', 'complaint', 'repeated_soft_bounce', 'manual']),
+  reason: z.string().nullable(),
+  suppressedAt: z.iso.datetime({ offset: true }),
+  permanent: PermissiveBoolean,
+});
+
 export const s_AdminOverview = z.object({
   reports: z.object({ open: z.coerce.number() }),
   requests: z.object({ open: z.coerce.number(), boostedOpen: z.coerce.number() }),
   users: z.object({ total: z.coerce.number(), activePatrons: z.coerce.number() }),
   announcement: z.object({ active: PermissiveBoolean }),
+  emails: z.object({ failed: z.coerce.number(), bounced: z.coerce.number() }),
 });
 
 export const s_AdminPatreonCampaignMember = z.object({
@@ -1456,3 +1489,5 @@ export const s_UpdateAdminContentRequestRequestBody = z.object({
 });
 
 export const s_MergeAdminContentRequestRequestBody = z.object({ intoId: z.string() });
+
+export const s_LiftAdminEmailSuppressionRequestBody = z.object({ address: z.string().min(3).max(320) });

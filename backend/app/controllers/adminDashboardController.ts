@@ -3,6 +3,7 @@ import type { t_AdminOverview, t_AdminUserWithProviders } from 'generated/models
 import { User, type UserRoleType } from '@app/models';
 import { AppDataSource } from '@config/database';
 import { Cache, createCacheNamespace } from '@lib/cache';
+import { countSendsLast24h } from '@app/services/email/sendLog';
 
 /** Short-lived cache for the admin launcher badges so rapid tab switches do not repeat aggregate scans. */
 export const ADMIN_OVERVIEW_CACHE = createCacheNamespace('adminOverview');
@@ -14,8 +15,9 @@ export const getAdminOverview: GetAdminOverview = async (_params, respond) => {
     'summary',
     OVERVIEW_CACHE_TTL_MS,
     async () => {
-      const [summary] = await User.query(
-        `SELECT
+      const [[summary], emails] = await Promise.all([
+        User.query(
+          `SELECT
            r.reports_open,
            cr.requests_open,
            cr.requests_boosted_open,
@@ -28,7 +30,9 @@ export const getAdminOverview: GetAdminOverview = async (_params, respond) => {
               COUNT(*) FILTER (WHERE status = 'OPEN')::int AS requests_open,
               COUNT(*) FILTER (WHERE status = 'OPEN' AND boost_count > 0)::int AS requests_boosted_open
             FROM "ContentRequest") cr`,
-      );
+        ),
+        countSendsLast24h(),
+      ]);
 
       return {
         reports: { open: Number(summary?.reports_open ?? 0) },
@@ -41,6 +45,7 @@ export const getAdminOverview: GetAdminOverview = async (_params, respond) => {
           activePatrons: Number(summary?.active_patrons ?? 0),
         },
         announcement: { active: Boolean(summary?.announcement_active) },
+        emails: { failed: emails.failed, bounced: emails.bounced },
       };
     },
   );

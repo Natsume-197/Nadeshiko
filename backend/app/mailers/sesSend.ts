@@ -8,6 +8,7 @@ import {
 import { NodeHttpHandler } from '@smithy/node-http-handler';
 import { Agent } from 'node:https';
 import { config } from '@config/config';
+import { APP_ENVIRONMENT, getAppEnvironment } from '@config/environment';
 
 /** Send over the SES HTTPS API, never SMTP: sign-in mail is sent inline, and an SMTP conversation costs a reader
  * seconds per message. One client per process keeps the TLS connection warm between sends. */
@@ -33,6 +34,12 @@ let client: SESv2Client | null = null;
 /** Reset the memoized client in tests; otherwise the first test's credentials stick for the whole run. */
 export function resetSesClientForTests(): void {
   client = null;
+}
+
+/** Deployed environments send and lift over SES; local development opens mail in a browser and has no SES list. Decided
+ * by environment, not by which credentials happen to be set, so missing credentials in production fail loudly. */
+export function usesSes(): boolean {
+  return getAppEnvironment(config.ENVIRONMENT) !== APP_ENVIRONMENT.LOCAL;
 }
 
 function getClient(): SESv2Client {
@@ -71,13 +78,14 @@ function sanitizeTag(value: string): string {
   return value.replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 256) || 'unknown';
 }
 
-export async function sendViaSes(message: OutboundMessage): Promise<void> {
+/** Returns SES's message id, which every later event for this message carries as `mail.messageId`. */
+export async function sendViaSes(message: OutboundMessage): Promise<string | null> {
   if (!config.SES_CONFIGURATION_SET) {
     // Refuse rather than send blind: without the configuration set SES publishes no bounce events at all.
     throw new Error('SES_CONFIGURATION_SET is not configured.');
   }
 
-  await getClient().send(
+  const result = await getClient().send(
     new SendEmailCommand({
       FromEmailAddress: `${message.from.name} <${message.from.address}>`,
       Destination: { ToAddresses: [message.to] },
@@ -107,6 +115,7 @@ export async function sendViaSes(message: OutboundMessage): Promise<void> {
     }),
     { abortSignal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) },
   );
+  return result.MessageId ?? null;
 }
 
 /** Remove an address from SES's account-level suppression list. True when SES no longer holds it, including when it

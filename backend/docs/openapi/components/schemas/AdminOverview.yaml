@@ -4,6 +4,7 @@ required:
   - requests
   - users
   - announcement
+  - emails
 properties:
   reports:
     type: object
@@ -51,3 +52,17 @@ properties:
         type: boolean
         description: Whether a site-wide announcement banner is currently enabled.
         example: false
+  emails:
+    type: object
+    required:
+      - failed
+      - bounced
+    properties:
+      failed:
+        type: integer
+        description: Sends that failed in the last 24 hours.
+        example: 0
+      bounced:
+        type: integer
+        description: Bounces and complaints reported in the last 24 hours.
+        example: 1

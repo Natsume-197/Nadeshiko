@@ -1,0 +1,35 @@
+post:
+  tags:
+    - Admin
+  x-internal: true
+  operationId: resendAdminEmail
+  summary: Send a logged email again
+  description: |
+    Sends a fresh copy of a sign-in link or welcome email to the same address. A sign-in link is
+    minted anew, as if the reader had asked for it. The new send appears in the log.
+
+  security:
+    - SessionCookie: [ADMIN]
+  parameters:
+    - name: emailId
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+      description: Send log id of the email to send again
+  responses:
+    "204":
+      description: Sent again
+    "400":
+      $ref: "../../components/responses/BadRequest.yaml"
+    "401":
+      $ref: "../../components/responses/Unauthorized.yaml"
+    "403":
+      $ref: "../../components/responses/Forbidden.yaml"
+    "404":
+      $ref: "../../components/responses/NotFound.yaml"
+    "429":
+      $ref: "../../components/responses/TooManyRequests.yaml"
+    "500":
+      $ref: "../../components/responses/InternalServerError.yaml"

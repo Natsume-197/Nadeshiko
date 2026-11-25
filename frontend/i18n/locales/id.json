@@ -1946,7 +1946,9 @@
       "patreonTitle": "Patreon & Tier",
       "patreonDesc": "Periksa keanggotaan Patreon tertaut, batas tier, dan status sinkronisasi.",
       "statusTitle": "Halaman Status Publik",
-      "statusDesc": "Buka status.nadeshiko.co di tab baru."
+      "statusDesc": "Buka status.nadeshiko.co di tab baru.",
+      "emailsTitle": "Email",
+      "emailsDesc": "Setiap email terkirim, status pengiriman, dan alamat yang diblokir."
     }
   },
   "adminPatreon": {
@@ -2050,6 +2052,72 @@
     "tabs": {
       "campaign": "Anggota Patreon ({count})",
       "linked": "Akun tertaut ({count})"
+    }
+  },
+  "adminEmails": {
+    "title": "Email",
+    "tabs": {
+      "sent": "Terkirim",
+      "suppressed": "Diblokir"
+    },
+    "last24h": "24 jam terakhir",
+    "kpi": {
+      "sent": "Terkirim",
+      "failed": "Gagal",
+      "bounced": "Memantul",
+      "suppressed": "Diblokir"
+    },
+    "filters": {
+      "search": "Email atau pengguna",
+      "allKinds": "Semua jenis",
+      "allStatuses": "Semua status",
+      "days": {
+        "1": "24 jam terakhir",
+        "7": "7 hari terakhir",
+        "30": "30 hari terakhir",
+        "365": "Setahun terakhir"
+      }
+    },
+    "table": {
+      "date": "Tanggal",
+      "to": "Kepada",
+      "kind": "Jenis",
+      "subject": "Subjek",
+      "status": "Status"
+    },
+    "status": {
+      "sent": "Terkirim",
+      "delivered": "Diterima",
+      "bounced": "Memantul",
+      "complained": "Keluhan",
+      "failed": "Gagal",
+      "suppressed": "Diblokir"
+    },
+    "empty": "Tidak ada apa-apa",
+    "detail": {
+      "campaign": "Kampanye",
+      "user": "Pengguna",
+      "messageId": "ID SES",
+      "error": "Galat",
+      "events": "Peristiwa SES",
+      "noEvents": "Tidak ada peristiwa",
+      "backfill": "Direkonstruksi",
+      "close": "Tutup",
+      "resend": "Kirim ulang"
+    },
+    "suppressions": {
+      "address": "Alamat",
+      "cause": "Penyebab",
+      "reason": "Alasan",
+      "since": "Sejak",
+      "lift": "Buka blokir",
+      "permanent": "Permanen",
+      "causes": {
+        "hard_bounce": "Pantulan permanen",
+        "complaint": "Keluhan",
+        "repeated_soft_bounce": "Pantulan sementara berulang",
+        "manual": "Manual"
+      }
     }
   },
   "notifications": {

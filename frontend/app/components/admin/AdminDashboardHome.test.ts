@@ -42,6 +42,7 @@ beforeEach(() => {
     requests: { open: 11, boostedOpen: 4 },
     users: { total: 4200, activePatrons: 9 },
     announcement: { active: true },
+    emails: { failed: 1, bounced: 2 },
   } as AdminOverview;
   isLoading.value = false;
 });
@@ -60,7 +61,7 @@ describe('AdminDashboardHome', () => {
     expect(wrapper.find('[data-testid="admin-section-catalogue"]').exists()).toBe(false);
   });
 
-  test('links all five active admin tools under /admin/*', () => {
+  test('links all six active admin tools under /admin/*', () => {
     const wrapper = render();
     const hrefs = wrapper.findAll('a').map((a) => a.attributes('href'));
 
@@ -70,6 +71,7 @@ describe('AdminDashboardHome', () => {
       '/en/admin/announcement',
       '/en/admin/users',
       '/en/admin/patreon',
+      '/en/admin/emails',
     ]) {
       expect(hrefs).toContain(target);
     }
@@ -83,6 +85,7 @@ describe('AdminDashboardHome', () => {
     expect(wrapper.get('[data-testid="admin-dir-announcement"]').text()).toContain(
       'adminDashboard.status.bannerActive',
     );
+    expect(wrapper.get('[data-testid="admin-dir-emails"]').text()).toContain('3');
     const status = wrapper.get('[data-testid="admin-dir-status-page"]');
     expect(status.attributes('href')).toBe('https://status.nadeshiko.co');
     expect(status.attributes('target')).toBe('_blank');

@@ -2,6 +2,7 @@ import type { AdminOverview } from '@brigadasos/nadeshiko-sdk';
 import {
   mdiAccountGroupOutline,
   mdiBullhornOutline,
+  mdiEmailOutline,
   mdiHeartOutline,
   mdiOpenInNew,
   mdiShieldCrownOutline,
@@ -89,6 +90,18 @@ export const ADMIN_DIRECTORY_ITEMS: readonly AdminDirectoryItem[] = [
     icon: mdiHeartOutline,
     to: '/admin/patreon',
     badge: (o) => (o && o.users.activePatrons > 0 ? { count: o.users.activePatrons, tone: 'success' } : null),
+  },
+  {
+    id: 'emails',
+    category: 'site',
+    titleKey: 'adminDashboard.items.emailsTitle',
+    descriptionKey: 'adminDashboard.items.emailsDesc',
+    icon: mdiEmailOutline,
+    to: '/admin/emails',
+    badge: (o) => {
+      const problems = (o?.emails?.failed ?? 0) + (o?.emails?.bounced ?? 0);
+      return problems > 0 ? { count: problems, tone: o?.emails?.failed ? 'danger' : 'warning' } : null;
+    },
   },
   {
     id: 'status-page',

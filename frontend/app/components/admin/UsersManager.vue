@@ -8,6 +8,7 @@ const { t } = useI18n();
 const { formatNumber, formatDate, formatRelativeTime } = useFormat();
 const route = useRoute();
 const store = userStore();
+const localePath = useLocalePath();
 
 const users = ref<AdminUser[]>([]);
 const total = ref(0);
@@ -99,6 +100,10 @@ function goToPrev() {
 function goToNext() {
   if (currentOffset.value + limit >= total.value) return;
   fetchUsers(currentOffset.value + limit);
+}
+
+function openEmails(user: AdminUser) {
+  navigateTo(localePath({ path: '/admin/emails', query: { q: user.email, days: 365 } }));
 }
 
 async function handleImpersonate(user: AdminUser) {
@@ -245,6 +250,10 @@ onMounted(() => {
                     <SearchDropdownItem
                       :text="t('accountSettings.dashboard.actions.impersonate')"
                       @click="handleImpersonate(user)"
+                    />
+                    <SearchDropdownItem
+                      :text="t('adminEmails.title')"
+                      @click="openEmails(user)"
                     />
                     <SearchDropdownItem
                       v-if="!user.banned"

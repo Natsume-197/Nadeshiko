@@ -1946,7 +1946,9 @@
       "patreonTitle": "Patreon & Tiers",
       "patreonDesc": "Inspect linked Patreon memberships, tier limits and sync status.",
       "statusTitle": "Public Status Page",
-      "statusDesc": "Open status.nadeshiko.co in a new tab."
+      "statusDesc": "Open status.nadeshiko.co in a new tab.",
+      "emailsTitle": "Emails",
+      "emailsDesc": "Every email sent, its delivery and blocked addresses."
     }
   },
   "adminPatreon": {
@@ -2050,6 +2052,72 @@
     "tabs": {
       "campaign": "Patreon campaign ({count})",
       "linked": "Linked accounts ({count})"
+    }
+  },
+  "adminEmails": {
+    "title": "Emails",
+    "tabs": {
+      "sent": "Sent",
+      "suppressed": "Suppressed"
+    },
+    "last24h": "Last 24 h",
+    "kpi": {
+      "sent": "Sent",
+      "failed": "Failed",
+      "bounced": "Bounced",
+      "suppressed": "Suppressed"
+    },
+    "filters": {
+      "search": "Email or user",
+      "allKinds": "All kinds",
+      "allStatuses": "All statuses",
+      "days": {
+        "1": "Last 24 h",
+        "7": "Last 7 days",
+        "30": "Last 30 days",
+        "365": "Last year"
+      }
+    },
+    "table": {
+      "date": "Date",
+      "to": "To",
+      "kind": "Kind",
+      "subject": "Subject",
+      "status": "Status"
+    },
+    "status": {
+      "sent": "Sent",
+      "delivered": "Delivered",
+      "bounced": "Bounced",
+      "complained": "Complaint",
+      "failed": "Failed",
+      "suppressed": "Suppressed"
+    },
+    "empty": "Nothing here",
+    "detail": {
+      "campaign": "Campaign",
+      "user": "User",
+      "messageId": "SES ID",
+      "error": "Error",
+      "events": "SES events",
+      "noEvents": "No events",
+      "backfill": "Rebuilt",
+      "close": "Close",
+      "resend": "Resend"
+    },
+    "suppressions": {
+      "address": "Address",
+      "cause": "Cause",
+      "reason": "Reason",
+      "since": "Since",
+      "lift": "Lift",
+      "permanent": "Permanent",
+      "causes": {
+        "hard_bounce": "Hard bounce",
+        "complaint": "Complaint",
+        "repeated_soft_bounce": "Repeated soft bounce",
+        "manual": "Manual"
+      }
     }
   },
   "notifications": {

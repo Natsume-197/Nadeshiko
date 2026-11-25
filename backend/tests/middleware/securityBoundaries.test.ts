@@ -89,6 +89,11 @@ describe('admin route protection', () => {
   const adminRoutes = [
     { method: 'get' as const, path: '/v1/admin/overview' },
     { method: 'get' as const, path: '/v1/admin/patreon' },
+    { method: 'get' as const, path: '/v1/admin/emails' },
+    { method: 'get' as const, path: '/v1/admin/emails/1' },
+    { method: 'post' as const, path: '/v1/admin/emails/1/resend' },
+    { method: 'get' as const, path: '/v1/admin/email-suppressions' },
+    { method: 'post' as const, path: '/v1/admin/email-suppressions/lift' },
     { method: 'get' as const, path: '/v1/admin/reports' },
     { method: 'get' as const, path: '/v1/admin/users-with-providers' },
   ];

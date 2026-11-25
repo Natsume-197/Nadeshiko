@@ -293,6 +293,16 @@ paths:
     $ref: "./paths/admin/v1_admin_patreon_connection.yaml"
   "/v1/admin/patreon/connections/{userId}/refresh":
     $ref: "./paths/admin/v1_admin_patreon_connection_refresh.yaml"
+  "/v1/admin/emails":
+    $ref: "./paths/admin/v1_admin_emails.yaml"
+  "/v1/admin/emails/{emailId}":
+    $ref: "./paths/admin/v1_admin_emails_id.yaml"
+  "/v1/admin/emails/{emailId}/resend":
+    $ref: "./paths/admin/v1_admin_emails_id_resend.yaml"
+  "/v1/admin/email-suppressions":
+    $ref: "./paths/admin/v1_admin_email_suppressions.yaml"
+  "/v1/admin/email-suppressions/lift":
+    $ref: "./paths/admin/v1_admin_email_suppressions_lift.yaml"
 
 components:
   securitySchemes:

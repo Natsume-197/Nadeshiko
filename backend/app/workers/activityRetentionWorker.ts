@@ -3,6 +3,7 @@ import { UserActivity } from '@app/models/UserActivity';
 import { LessThan } from 'typeorm';
 import { logger } from '@config/log';
 import { pruneNotifications } from '@app/services/notifications/notify';
+import { pruneEmailSends } from '@app/services/email/sendLog';
 import { ACTIVITY_RETENTION_QUEUE } from './queueNames';
 import { instrumentedHandler } from './workerInstrumentation';
 
@@ -32,6 +33,9 @@ async function handleRetentionCleanup(): Promise<void> {
     // The notification centre's retention (task 52) rides the same nightly delete window.
     const notifications = await pruneNotifications();
     logger.info({ count: notifications }, 'Notification retention cleanup complete');
+
+    const emailSends = await pruneEmailSends();
+    logger.info({ count: emailSends }, 'Email send log retention cleanup complete');
   } catch (error) {
     logger.error({ err: error }, 'Error during activity retention cleanup');
     throw error;

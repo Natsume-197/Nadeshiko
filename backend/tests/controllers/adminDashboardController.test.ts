@@ -215,6 +215,7 @@ describe('GET /v1/admin/overview', () => {
       requests: { open: 1, boostedOpen: 1 },
       users: { total: expectedActiveUsers, activePatrons: 1 },
       announcement: { active: true },
+      emails: { failed: 0, bounced: 0 },
     });
     expect(res.body.users.total).toBeGreaterThanOrEqual(Object.keys(core.users).length);
   });

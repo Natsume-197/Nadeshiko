@@ -117,4 +117,9 @@ export const routeAuth: RouteAuth[] = [
   { method: 'post', path: '/v1/admin/patreon/refresh-all', middleware: requireSession(enforceAdminAccess) },
   { method: 'delete', path: '/v1/admin/patreon/connections/:userId', middleware: requireSession(enforceAdminAccess) },
   { method: 'post', path: '/v1/admin/patreon/connections/:userId/refresh', middleware: requireSession(enforceAdminAccess) },
+  { method: 'get', path: '/v1/admin/emails', middleware: requireSession(enforceAdminAccess) },
+  { method: 'get', path: '/v1/admin/emails/:emailId', middleware: requireSession(enforceAdminAccess) },
+  { method: 'post', path: '/v1/admin/emails/:emailId/resend', middleware: requireSession(enforceAdminAccess) },
+  { method: 'get', path: '/v1/admin/email-suppressions', middleware: requireSession(enforceAdminAccess) },
+  { method: 'post', path: '/v1/admin/email-suppressions/lift', middleware: requireSession(enforceAdminAccess) },
 ];

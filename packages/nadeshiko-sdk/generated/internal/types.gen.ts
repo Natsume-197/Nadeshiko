@@ -3048,6 +3048,16 @@ export type AdminOverview = {
          */
         active: boolean;
     };
+    emails: {
+        /**
+         * Sends that failed in the last 24 hours.
+         */
+        failed: number;
+        /**
+         * Bounces and complaints reported in the last 24 hours.
+         */
+        bounced: number;
+    };
 };
 
 /**
@@ -3499,6 +3509,67 @@ export type AdminPatreonOverview = {
         effectiveQuotaLimit: number;
         quotaSource: 'override' | 'tier' | 'patreon' | 'legacy_column' | 'default';
     }>;
+};
+
+/**
+ * One email the site sent, tried to send, or refused to send.
+ */
+export type AdminEmailSend = {
+    id: number;
+    sentAt: string;
+    address: string;
+    userId: number;
+    /**
+     * The account's username when the send is tied to one.
+     */
+    username: string;
+    kind: string;
+    campaign: string;
+    /**
+     * Null on rows rebuilt from older tables that never stored it.
+     */
+    subject: string;
+    /**
+     * `failed` and `suppressed` never left. A message that left is `sent` until SES reports it
+     * `delivered`, `bounced` or `complained`.
+     *
+     */
+    status: 'sent' | 'delivered' | 'bounced' | 'complained' | 'failed' | 'suppressed';
+    /**
+     * Why sending failed.
+     */
+    error: string;
+    sesMessageId: string;
+    /**
+     * `backfill` rows were rebuilt from older tables when the log started.
+     */
+    source: 'live' | 'backfill';
+    /**
+     * Whether the admin view can send this again (sign-in links, and welcomes tied to an account).
+     */
+    resendable: boolean;
+};
+
+/**
+ * One event SES reported for a message.
+ */
+export type AdminEmailEvent = {
+    id: number;
+    event: string;
+    occurredAt: string;
+    reason: string;
+    diagnosticMessage: string;
+};
+
+export type AdminEmailSuppression = {
+    address: string;
+    cause: 'hard_bounce' | 'complaint' | 'repeated_soft_bounce' | 'manual';
+    reason: string;
+    suppressedAt: string;
+    /**
+     * Complaints are never lifted from the dashboard.
+     */
+    permanent: boolean;
 };
 
 export type AuthUser = {
@@ -9183,6 +9254,294 @@ export type RefreshAdminPatreonConnectionResponses = {
 };
 
 export type RefreshAdminPatreonConnectionResponse = RefreshAdminPatreonConnectionResponses[keyof RefreshAdminPatreonConnectionResponses];
+
+export type ListAdminEmailsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Number of results per page
+         */
+        limit?: number;
+        /**
+         * Number of results to skip
+         */
+        offset?: number;
+        /**
+         * Case-insensitive substring match against the address and username
+         */
+        search?: string;
+        /**
+         * Only this email kind
+         */
+        kind?: string;
+        /**
+         * Only this delivery status
+         */
+        status?: 'sent' | 'delivered' | 'bounced' | 'complained' | 'failed' | 'suppressed';
+        /**
+         * Only sends from the last N days
+         */
+        days?: number;
+    };
+    url: '/v1/admin/emails';
+};
+
+export type ListAdminEmailsErrors = {
+    /**
+     * Bad Request
+     */
+    400: Error400;
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Forbidden
+     */
+    403: Error403;
+    /**
+     * Too Many Requests. The response body indicates whether the request was rejected due to per-minute rate limiting or monthly quota exhaustion.
+     */
+    429: Error429;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type ListAdminEmailsError = ListAdminEmailsErrors[keyof ListAdminEmailsErrors];
+
+export type ListAdminEmailsResponses = {
+    /**
+     * OK
+     */
+    200: {
+        emails: Array<AdminEmailSend>;
+        /**
+         * Sends matching the filters
+         */
+        total: number;
+        last24h: {
+            sent: number;
+            failed: number;
+            /**
+             * Bounces and complaints
+             */
+            bounced: number;
+            suppressed: number;
+        };
+    };
+};
+
+export type ListAdminEmailsResponse = ListAdminEmailsResponses[keyof ListAdminEmailsResponses];
+
+export type GetAdminEmailData = {
+    body?: never;
+    path: {
+        /**
+         * Send log id
+         */
+        emailId: number;
+    };
+    query?: never;
+    url: '/v1/admin/emails/{emailId}';
+};
+
+export type GetAdminEmailErrors = {
+    /**
+     * Bad Request
+     */
+    400: Error400;
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Forbidden
+     */
+    403: Error403;
+    /**
+     * Not Found
+     */
+    404: Error404;
+    /**
+     * Too Many Requests. The response body indicates whether the request was rejected due to per-minute rate limiting or monthly quota exhaustion.
+     */
+    429: Error429;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type GetAdminEmailError = GetAdminEmailErrors[keyof GetAdminEmailErrors];
+
+export type GetAdminEmailResponses = {
+    /**
+     * OK
+     */
+    200: {
+        email: AdminEmailSend;
+        events: Array<AdminEmailEvent>;
+    };
+};
+
+export type GetAdminEmailResponse = GetAdminEmailResponses[keyof GetAdminEmailResponses];
+
+export type ResendAdminEmailData = {
+    body?: never;
+    path: {
+        /**
+         * Send log id of the email to send again
+         */
+        emailId: number;
+    };
+    query?: never;
+    url: '/v1/admin/emails/{emailId}/resend';
+};
+
+export type ResendAdminEmailErrors = {
+    /**
+     * Bad Request
+     */
+    400: Error400;
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Forbidden
+     */
+    403: Error403;
+    /**
+     * Not Found
+     */
+    404: Error404;
+    /**
+     * Too Many Requests. The response body indicates whether the request was rejected due to per-minute rate limiting or monthly quota exhaustion.
+     */
+    429: Error429;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type ResendAdminEmailError = ResendAdminEmailErrors[keyof ResendAdminEmailErrors];
+
+export type ResendAdminEmailResponses = {
+    /**
+     * Sent again
+     */
+    204: void;
+};
+
+export type ResendAdminEmailResponse = ResendAdminEmailResponses[keyof ResendAdminEmailResponses];
+
+export type ListAdminEmailSuppressionsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Number of results per page
+         */
+        limit?: number;
+        /**
+         * Number of results to skip
+         */
+        offset?: number;
+        /**
+         * Case-insensitive substring match against the address
+         */
+        search?: string;
+    };
+    url: '/v1/admin/email-suppressions';
+};
+
+export type ListAdminEmailSuppressionsErrors = {
+    /**
+     * Bad Request
+     */
+    400: Error400;
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Forbidden
+     */
+    403: Error403;
+    /**
+     * Too Many Requests. The response body indicates whether the request was rejected due to per-minute rate limiting or monthly quota exhaustion.
+     */
+    429: Error429;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type ListAdminEmailSuppressionsError = ListAdminEmailSuppressionsErrors[keyof ListAdminEmailSuppressionsErrors];
+
+export type ListAdminEmailSuppressionsResponses = {
+    /**
+     * OK
+     */
+    200: {
+        suppressions: Array<AdminEmailSuppression>;
+        total: number;
+    };
+};
+
+export type ListAdminEmailSuppressionsResponse = ListAdminEmailSuppressionsResponses[keyof ListAdminEmailSuppressionsResponses];
+
+export type LiftAdminEmailSuppressionData = {
+    body: {
+        address: string;
+    };
+    path?: never;
+    query?: never;
+    url: '/v1/admin/email-suppressions/lift';
+};
+
+export type LiftAdminEmailSuppressionErrors = {
+    /**
+     * Bad Request
+     */
+    400: Error400;
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Forbidden
+     */
+    403: Error403;
+    /**
+     * Not Found
+     */
+    404: Error404;
+    /**
+     * Too Many Requests. The response body indicates whether the request was rejected due to per-minute rate limiting or monthly quota exhaustion.
+     */
+    429: Error429;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type LiftAdminEmailSuppressionError = LiftAdminEmailSuppressionErrors[keyof LiftAdminEmailSuppressionErrors];
+
+export type LiftAdminEmailSuppressionResponses = {
+    /**
+     * Lifted
+     */
+    204: void;
+};
+
+export type LiftAdminEmailSuppressionResponse = LiftAdminEmailSuppressionResponses[keyof LiftAdminEmailSuppressionResponses];
 
 export type GetSessionData = {
     body?: never;

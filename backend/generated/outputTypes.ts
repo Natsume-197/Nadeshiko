@@ -10,6 +10,9 @@ import * as schemas from './schemas';
 export type AccountQuotaStateOutput = z.output<typeof schemas.s_AccountQuotaState>;
 export type ActivityTypeOutput = z.output<typeof schemas.s_ActivityType>;
 export type AddSegmentToCollectionRequestOutput = z.output<typeof schemas.s_AddSegmentToCollectionRequest>;
+export type AdminEmailEventOutput = z.output<typeof schemas.s_AdminEmailEvent>;
+export type AdminEmailSendOutput = z.output<typeof schemas.s_AdminEmailSend>;
+export type AdminEmailSuppressionOutput = z.output<typeof schemas.s_AdminEmailSuppression>;
 export type AdminOverviewOutput = z.output<typeof schemas.s_AdminOverview>;
 export type AdminPatreonCampaignMemberOutput = z.output<typeof schemas.s_AdminPatreonCampaignMember>;
 export type AdminPatreonConnectionOutput = z.output<typeof schemas.s_AdminPatreonConnection>;
@@ -146,6 +149,7 @@ export type AddFavoriteMediaRequestBodyOutput = z.output<typeof schemas.s_AddFav
 export type UpdateEmailPreferencesByTokenRequestBodyOutput = z.output<typeof schemas.s_UpdateEmailPreferencesByTokenRequestBody>;
 export type UpdateAdminContentRequestRequestBodyOutput = z.output<typeof schemas.s_UpdateAdminContentRequestRequestBody>;
 export type MergeAdminContentRequestRequestBodyOutput = z.output<typeof schemas.s_MergeAdminContentRequestRequestBody>;
+export type LiftAdminEmailSuppressionRequestBodyOutput = z.output<typeof schemas.s_LiftAdminEmailSuppressionRequestBody>;
 
 // ============================================
 // Inline query schemas and their output types
@@ -199,6 +203,23 @@ export type ListAdminContentRequestsQueryOutput = z.output<typeof listAdminConte
 
 export const getAdminPatreonOverviewQuerySchema = z.object({ refreshCampaign: schemas.PermissiveBoolean.optional().default(false) });
 export type GetAdminPatreonOverviewQueryOutput = z.output<typeof getAdminPatreonOverviewQuerySchema>;
+
+export const listAdminEmailsQuerySchema = z.object({
+    limit: z.coerce.number().min(1).max(100).optional().default(25),
+    offset: z.coerce.number().min(0).optional().default(0),
+    search: z.string().max(320).optional(),
+    kind: z.string().max(32).optional(),
+    status: z.enum(['sent', 'delivered', 'bounced', 'complained', 'failed', 'suppressed']).optional(),
+    days: z.coerce.number().min(1).max(366).optional(),
+  });
+export type ListAdminEmailsQueryOutput = z.output<typeof listAdminEmailsQuerySchema>;
+
+export const listAdminEmailSuppressionsQuerySchema = z.object({
+    limit: z.coerce.number().min(1).max(100).optional().default(25),
+    offset: z.coerce.number().min(0).optional().default(0),
+    search: z.string().max(320).optional(),
+  });
+export type ListAdminEmailSuppressionsQueryOutput = z.output<typeof listAdminEmailSuppressionsQuerySchema>;
 
 export const listCollectionsQuerySchema = z.object({
     visibility: schemas.s_CollectionVisibility.optional(),

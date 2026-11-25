@@ -1946,7 +1946,9 @@
       "patreonTitle": "Patreon y tiers",
       "patreonDesc": "Consulta membresías de Patreon vinculadas, límites por tier y sincronización.",
       "statusTitle": "Página de estado",
-      "statusDesc": "Abre status.nadeshiko.co en una nueva pestaña."
+      "statusDesc": "Abre status.nadeshiko.co en una nueva pestaña.",
+      "emailsTitle": "Correos",
+      "emailsDesc": "Cada correo enviado, su entrega y las direcciones bloqueadas."
     }
   },
   "adminPatreon": {
@@ -2050,6 +2052,72 @@
     "tabs": {
       "campaign": "Mecenas en Patreon ({count})",
       "linked": "Cuentas vinculadas ({count})"
+    }
+  },
+  "adminEmails": {
+    "title": "Correos",
+    "tabs": {
+      "sent": "Enviados",
+      "suppressed": "Bloqueados"
+    },
+    "last24h": "Últimas 24 h",
+    "kpi": {
+      "sent": "Enviados",
+      "failed": "Fallidos",
+      "bounced": "Rebotados",
+      "suppressed": "Bloqueados"
+    },
+    "filters": {
+      "search": "Correo o usuario",
+      "allKinds": "Todos los tipos",
+      "allStatuses": "Todos los estados",
+      "days": {
+        "1": "Últimas 24 h",
+        "7": "Últimos 7 días",
+        "30": "Últimos 30 días",
+        "365": "Último año"
+      }
+    },
+    "table": {
+      "date": "Fecha",
+      "to": "Para",
+      "kind": "Tipo",
+      "subject": "Asunto",
+      "status": "Estado"
+    },
+    "status": {
+      "sent": "Enviado",
+      "delivered": "Entregado",
+      "bounced": "Rebotado",
+      "complained": "Queja",
+      "failed": "Fallido",
+      "suppressed": "Bloqueado"
+    },
+    "empty": "Nada por aquí",
+    "detail": {
+      "campaign": "Campaña",
+      "user": "Usuario",
+      "messageId": "ID de SES",
+      "error": "Error",
+      "events": "Eventos de SES",
+      "noEvents": "Sin eventos",
+      "backfill": "Reconstruido",
+      "close": "Cerrar",
+      "resend": "Reenviar"
+    },
+    "suppressions": {
+      "address": "Dirección",
+      "cause": "Causa",
+      "reason": "Motivo",
+      "since": "Desde",
+      "lift": "Desbloquear",
+      "permanent": "Permanente",
+      "causes": {
+        "hard_bounce": "Rebote permanente",
+        "complaint": "Queja",
+        "repeated_soft_bounce": "Rebotes temporales repetidos",
+        "manual": "Manual"
+      }
     }
   },
   "notifications": {

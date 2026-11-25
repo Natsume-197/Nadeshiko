@@ -1946,7 +1946,9 @@
       "patreonTitle": "Patreon 與等級",
       "patreonDesc": "檢視已連結的 Patreon 會員、等級限額與同步狀態。",
       "statusTitle": "服務狀態頁",
-      "statusDesc": "在新分頁開啟 status.nadeshiko.co。"
+      "statusDesc": "在新分頁開啟 status.nadeshiko.co。",
+      "emailsTitle": "郵件",
+      "emailsDesc": "所有已寄出的郵件、投遞狀態與被封鎖的地址。"
     }
   },
   "adminPatreon": {
@@ -2050,6 +2052,72 @@
     "tabs": {
       "campaign": "Patreon 贊助者 ({count})",
       "linked": "已綁定帳號 ({count})"
+    }
+  },
+  "adminEmails": {
+    "title": "郵件",
+    "tabs": {
+      "sent": "已寄出",
+      "suppressed": "已封鎖"
+    },
+    "last24h": "最近 24 小時",
+    "kpi": {
+      "sent": "已寄出",
+      "failed": "失敗",
+      "bounced": "退信",
+      "suppressed": "已封鎖"
+    },
+    "filters": {
+      "search": "電子郵件或使用者",
+      "allKinds": "所有類型",
+      "allStatuses": "所有狀態",
+      "days": {
+        "1": "最近 24 小時",
+        "7": "最近 7 天",
+        "30": "最近 30 天",
+        "365": "最近一年"
+      }
+    },
+    "table": {
+      "date": "日期",
+      "to": "收件人",
+      "kind": "類型",
+      "subject": "主旨",
+      "status": "狀態"
+    },
+    "status": {
+      "sent": "已寄出",
+      "delivered": "已送達",
+      "bounced": "退信",
+      "complained": "投訴",
+      "failed": "失敗",
+      "suppressed": "已封鎖"
+    },
+    "empty": "沒有內容",
+    "detail": {
+      "campaign": "活動",
+      "user": "使用者",
+      "messageId": "SES ID",
+      "error": "錯誤",
+      "events": "SES 事件",
+      "noEvents": "沒有事件",
+      "backfill": "重建",
+      "close": "關閉",
+      "resend": "重新寄送"
+    },
+    "suppressions": {
+      "address": "地址",
+      "cause": "原因",
+      "reason": "說明",
+      "since": "開始於",
+      "lift": "解除",
+      "permanent": "永久",
+      "causes": {
+        "hard_bounce": "硬退信",
+        "complaint": "投訴",
+        "repeated_soft_bounce": "多次軟退信",
+        "manual": "手動"
+      }
     }
   },
   "notifications": {

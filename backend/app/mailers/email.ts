@@ -17,12 +17,13 @@ import {
 } from './emailTemplates';
 import { createLetterOpenerTransport, getPreviewUrl, LETTER_OPENER_DIR } from './letterOpener';
 import { htmlToPlainText } from './plainText';
-import { sendViaSes, type OutboundMessage } from './sesSend';
+import { sendViaSes, usesSes, type OutboundMessage } from './sesSend';
 import { sendEmailJob } from '@app/workers/emailQueue';
 import { getTracer } from '@config/telemetry';
 import { recordError } from '@lib/errorFingerprint';
 import { LIFECYCLE_KINDS } from '@app/models';
 import { isSuppressed } from '@app/services/email/suppression';
+import { recordSend } from '@app/services/email/sendLog';
 import { mayReallySend } from '@app/services/email/lifecycleGate';
 import { unsubscribeUrls } from '@app/services/email/unsubscribe';
 import { recordEmailBlocked, recordEmailDeliveryError, recordEmailSent } from '@app/services/email/metrics';
@@ -68,15 +69,21 @@ async function getTransporter(): Promise<Transporter> {
 
 /** Local opens mail in a browser; everywhere else it goes over the wire. */
 function usesLetterOpener(): boolean {
-  return getAppEnvironment(config.ENVIRONMENT) === APP_ENVIRONMENT.LOCAL;
+  return !usesSes();
+}
+
+interface Delivered {
+  /** Local only: where letter-opener wrote the message. */
+  previewUrl: string | null;
+  /** SES only: the id its events will carry. */
+  messageId: string | null;
 }
 
 /** Choose delivery by environment, not relay configuration: local previews use letter-opener; deployed sends use
  * SES. */
-async function deliver(message: OutboundMessage): Promise<string | null> {
+async function deliver(message: OutboundMessage): Promise<Delivered> {
   if (!usesLetterOpener()) {
-    await sendViaSes(message);
-    return null;
+    return { previewUrl: null, messageId: await sendViaSes(message) };
   }
 
   const transport = await getTransporter();
@@ -98,7 +105,7 @@ async function deliver(message: OutboundMessage): Promise<string | null> {
     },
   });
 
-  return getPreviewUrl(info);
+  return { previewUrl: getPreviewUrl(info), messageId: null };
 }
 
 /**
@@ -155,8 +162,17 @@ export async function sendEmail(options: EmailOptions): Promise<void> {
 
   // Return rather than throw for a known-bad welcome address, or worker retries turn a delivery policy into a failed
   // job.
+  const logEntry = {
+    address: options.to,
+    userId: options.userId,
+    kind: options.kind,
+    campaign: options.campaign,
+    subject: options.subject,
+  };
+
   if (await isSuppressed(options.to)) {
     recordEmailBlocked();
+    await recordSend({ ...logEntry, status: 'suppressed' });
     logger.info({ 'email.kind': options.kind }, 'Not sending: the recipient is suppressed');
     return;
   }
@@ -171,7 +187,7 @@ export async function sendEmail(options: EmailOptions): Promise<void> {
       const text = htmlToPlainText(options.html);
       const clientReference = options.campaign ? `${options.kind}:${options.campaign}` : options.kind;
 
-      const previewUrl = await deliver({
+      const { previewUrl, messageId } = await deliver({
         from: { address: fromEmail, name: fromName },
         to: options.to,
         subject: options.subject,
@@ -183,6 +199,7 @@ export async function sendEmail(options: EmailOptions): Promise<void> {
       });
 
       recordEmailSent(options.kind);
+      await recordSend({ ...logEntry, status: 'sent', sesMessageId: messageId });
 
       if (previewUrl) {
         logger.info({ 'email.kind': options.kind, previewUrl }, 'Email opened in your browser');
@@ -192,8 +209,14 @@ export async function sendEmail(options: EmailOptions): Promise<void> {
       logger.info({ 'email.kind': options.kind }, 'Email sent');
     } catch (error) {
       // Count relay rejection separately from recipient bounce; the former is our outage, not a verdict on the address.
-      recordEmailDeliveryError(error instanceof Error ? error.name : 'UnknownError');
-      recordError(error instanceof Error ? error : new Error(String(error)), 'email:send', {
+      const err = error instanceof Error ? error : new Error(String(error));
+      recordEmailDeliveryError(error instanceof Error ? err.name : 'UnknownError');
+      await recordSend({
+        ...logEntry,
+        status: 'failed',
+        error: err === error ? `${err.name}: ${err.message}` : String(error),
+      });
+      recordError(err, 'email:send', {
         'email.kind': options.kind,
       });
       logger.error({ err: error, 'email.kind': options.kind }, 'Failed to send email');
@@ -532,7 +555,7 @@ export async function sendTestEmail(template: TestEmailTemplate, to: string): Pr
   const { email: fromEmail, name: fromName } = senderFor(kindOfTestTemplate(template));
 
   // Use `deliver` so previews exercise the environment’s real transport rather than a divergent code path.
-  const previewUrl = await deliver({
+  const { previewUrl } = await deliver({
     from: { address: fromEmail, name: fromName },
     to,
     subject,

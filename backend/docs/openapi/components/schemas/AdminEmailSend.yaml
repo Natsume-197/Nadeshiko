@@ -1,0 +1,65 @@
+type: object
+description: One email the site sent, tried to send, or refused to send.
+required:
+  - id
+  - sentAt
+  - address
+  - userId
+  - username
+  - kind
+  - campaign
+  - subject
+  - status
+  - error
+  - sesMessageId
+  - source
+  - resendable
+properties:
+  id:
+    type: integer
+    example: 1203
+  sentAt:
+    type: string
+    format: date-time
+  address:
+    type: string
+    example: reader@example.com
+  userId:
+    type: integer
+    nullable: true
+    example: 42
+  username:
+    type: string
+    nullable: true
+    description: The account's username when the send is tied to one.
+  kind:
+    type: string
+    example: magic-link
+  campaign:
+    type: string
+    nullable: true
+    example: dormant-30-2026-11
+  subject:
+    type: string
+    nullable: true
+    description: Null on rows rebuilt from older tables that never stored it.
+  status:
+    type: string
+    enum: [sent, delivered, bounced, complained, failed, suppressed]
+    description: |
+      `failed` and `suppressed` never left. A message that left is `sent` until SES reports it
+      `delivered`, `bounced` or `complained`.
+  error:
+    type: string
+    nullable: true
+    description: Why sending failed.
+  sesMessageId:
+    type: string
+    nullable: true
+  source:
+    type: string
+    enum: [live, backfill]
+    description: "`backfill` rows were rebuilt from older tables when the log started."
+  resendable:
+    type: boolean
+    description: Whether the admin view can send this again (sign-in links, and welcomes tied to an account).

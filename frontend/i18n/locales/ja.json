@@ -1946,7 +1946,9 @@
       "patreonTitle": "Patreonとティア",
       "patreonDesc": "連携済みPatreon会員、ティア上限、同期状態を確認します。",
       "statusTitle": "ステータスページ",
-      "statusDesc": "status.nadeshiko.co を新しいタブで開きます。"
+      "statusDesc": "status.nadeshiko.co を新しいタブで開きます。",
+      "emailsTitle": "メール",
+      "emailsDesc": "送信したすべてのメール、配信状況、ブロック中のアドレス。"
     }
   },
   "adminPatreon": {
@@ -2050,6 +2052,72 @@
     "tabs": {
       "campaign": "Patreon 支援者 ({count})",
       "linked": "連携済みアカウント ({count})"
+    }
+  },
+  "adminEmails": {
+    "title": "メール",
+    "tabs": {
+      "sent": "送信済み",
+      "suppressed": "ブロック中"
+    },
+    "last24h": "過去24時間",
+    "kpi": {
+      "sent": "送信",
+      "failed": "失敗",
+      "bounced": "バウンス",
+      "suppressed": "ブロック"
+    },
+    "filters": {
+      "search": "メールまたはユーザー",
+      "allKinds": "すべての種類",
+      "allStatuses": "すべての状態",
+      "days": {
+        "1": "過去24時間",
+        "7": "過去7日間",
+        "30": "過去30日間",
+        "365": "過去1年"
+      }
+    },
+    "table": {
+      "date": "日時",
+      "to": "宛先",
+      "kind": "種類",
+      "subject": "件名",
+      "status": "状態"
+    },
+    "status": {
+      "sent": "送信済み",
+      "delivered": "配信済み",
+      "bounced": "バウンス",
+      "complained": "苦情",
+      "failed": "失敗",
+      "suppressed": "ブロック"
+    },
+    "empty": "該当なし",
+    "detail": {
+      "campaign": "キャンペーン",
+      "user": "ユーザー",
+      "messageId": "SES ID",
+      "error": "エラー",
+      "events": "SESイベント",
+      "noEvents": "イベントなし",
+      "backfill": "復元",
+      "close": "閉じる",
+      "resend": "再送信"
+    },
+    "suppressions": {
+      "address": "アドレス",
+      "cause": "原因",
+      "reason": "理由",
+      "since": "開始",
+      "lift": "解除",
+      "permanent": "永続",
+      "causes": {
+        "hard_bounce": "ハードバウンス",
+        "complaint": "苦情",
+        "repeated_soft_bounce": "ソフトバウンスの繰り返し",
+        "manual": "手動"
+      }
     }
   },
   "notifications": {
