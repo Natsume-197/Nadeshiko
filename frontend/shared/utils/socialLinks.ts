@@ -13,8 +13,8 @@ export const PATREON_URL = 'https://patreon.com/NadeshikoApp';
  * One-time or monthly donations without perks, shown on /supporters. Leave a link empty until its account exists:
  * an empty link hides its button, and the section hides when both are empty.
  */
-export const KOFI_URL: string = 'https://ko-fi.com';
-export const GITHUB_SPONSORS_URL: string = 'https://github.com/sponsors';
+export const KOFI_URL: string = 'https://ko-fi.com/nadeshiko197';
+export const GITHUB_SPONSORS_URL: string = 'https://github.com/sponsors/Natsume-197';
 
 export const DISCORD_BOT_CLIENT_ID = '1064964424684806184';
 
