@@ -176,7 +176,7 @@ const onSentinelVisible = () => {
 </script>
 
 <template>
-  <div class="nd-page px-4 md:px-0 pb-6 text-white">
+  <div class="nd-page-narrow px-4 md:px-0 pb-6 text-white">
     <div class="mb-6">
       <NuxtLink :to="localePath('/stats')" class="text-white/40 hover:text-white/60 text-sm transition-colors">
         &larr; {{ $t('statsWordsPage.back') }}

@@ -16,13 +16,18 @@
    * Align page columns using the smaller of percentage width and absolute maximum from md upward. Pages own
    * horizontal padding; below md is full-bleed. The shared navbar gap belongs to main, not this class.
    */
-  .nd-page {
+  .nd-page,
+  .nd-page-narrow {
     @apply w-full mx-auto;
   }
 
   @screen md {
     .nd-page {
       max-width: min(var(--page-width), var(--page-max-width));
+    }
+    /* Content pages (Supporters, Requests, Stats, blog, About and the other markdown pages) read better narrower. */
+    .nd-page-narrow {
+      max-width: min(var(--page-width), var(--page-narrow-max-width));
     }
   }
 
@@ -723,6 +728,8 @@
     /* Width of the page content column -- see `.nd-page`. */
     --page-width: 90%;
     --page-max-width: 1800px;
+    /* Content pages -- see `.nd-page-narrow`. */
+    --page-narrow-max-width: 72rem;
 
     /* Shared sticky-bar height for sidebar positioning: 69px with pb-3 and py-3 tabs. */
     --search-controls-height: 4.3125rem;

@@ -75,7 +75,7 @@ useHead({
 
 <template>
   <div class="min-h-screen">
-      <div class="nd-page px-4 md:px-0 pb-6">
+      <div class="nd-page-narrow px-4 md:px-0 pb-6">
         <div class="content-markdown">
           <h1>{{ t('blog.title') }}</h1>
 

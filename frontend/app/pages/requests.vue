@@ -508,7 +508,7 @@ function rankOf(index: number): number | null {
 </script>
 
 <template>
-  <div class="requests-page nd-page px-4 pb-16 pt-5 text-ink md:px-0 sm:pt-7">
+  <div class="requests-page nd-page-narrow px-4 pb-16 pt-5 text-ink md:px-0 sm:pt-7">
     <header class="border-b border-hairline">
       <div class="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
         <div class="min-w-0">
