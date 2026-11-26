@@ -7,10 +7,10 @@ vi.stubGlobal('useI18n', () => ({
   t: (k: string, p?: Record<string, unknown>) => (p ? `${k}(${JSON.stringify(p)})` : k),
   locale: ref('en'),
 }));
-vi.stubGlobal('useFormat', () => ({ formatUsdWhole: (n: number) => `$${n}` }));
 vi.stubGlobal('useLocalePath', () => (p: string) => `/en${p}`);
 vi.stubGlobal('useRequestURL', () => new URL('https://nadeshiko.test/supporters'));
 vi.stubGlobal('useSeoMeta', vi.fn());
+vi.stubGlobal('useMotionPreference', () => ({ prefersReducedMotion: () => true }));
 
 import SupportersPage from './supporters.vue';
 
@@ -21,6 +21,7 @@ async function render() {
     attachTo: document.body,
     global: {
       stubs: {
+        SupportHero: { template: '<div data-testid="hero-stub" />' },
         SupportSharedPerks: { template: '<div data-testid="perks-stub" />' },
         SupportTiers: { template: '<div data-testid="tiers-stub" />' },
         UiBaseIcon: true,
@@ -46,10 +47,11 @@ describe('Supporters page', () => {
     expect(html.indexOf('perks-stub')).toBeLessThan(html.indexOf('tiers-stub'));
   });
 
-  test('the hero states the lowest price and links down to the tiers', async () => {
-    const wrapper = await render();
+  test('opens on the hero, with no price before the tiers', async () => {
+    const html = (await render()).html();
 
-    expect(wrapper.text()).toContain('supporters.fromPrice({"price":"$5"})');
-    expect(wrapper.get('[data-testid="supporters-see-tiers"]').attributes('href')).toBe('#support');
+    expect(html.indexOf('hero-stub')).toBeGreaterThan(-1);
+    expect(html.indexOf('hero-stub')).toBeLessThan(html.indexOf('perks-stub'));
+    expect(html).not.toContain('$');
   });
 });

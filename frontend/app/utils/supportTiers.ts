@@ -27,12 +27,14 @@ export interface SupportTier {
 
 /**
  * What every paid tier adds on top of a free account, beyond the per-tier numbers above. Mirrors of backend limits:
- * custom dictionaries (`services/dictionary/custom/quotas.ts`) and open content requests
- * (`services/requests/allowance.ts`). Change them there and here together.
+ * custom dictionaries (`services/dictionary/custom/quotas.ts`), open content requests
+ * (`services/requests/allowance.ts`) and active word alerts (`services/wordWatches/rules.ts`). Change them there and
+ * here together.
  */
 export const PATRON_LIMITS = {
   customDictionaries: { free: 3, patron: 10 },
   openRequests: { free: 10, patron: 30 },
+  wordAlerts: { free: 20, patron: 100 },
 } as const;
 
 /** The limit every account has without a membership; the backend `free` tier. */

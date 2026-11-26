@@ -1654,16 +1654,13 @@
   "supporters": {
     "seoTitle": "支持者 | Nadeshiko",
     "seoDescription": "在 Patreon 上支持 Nadeshiko，了解每个档位的回馈，以及即将加入的作品和功能。",
+    "hero": {
+      "more": "查看权益"
+    },
     "headline": "支持 Nadeshiko，帮助它{accent}",
     "headlineAccent": "持续成长",
-    "note": {
-      "eyebrow": "开发者的话",
-      "title": "Nadeshiko 由一个人运营",
-      "body": "Nadeshiko 由我一个人运营。你的支持用于支付服务器和存储费用，也让我有时间添加新作品、修复问题、开发新工具。"
-    },
     "intro": "句子搜索、音频、词卡和 Anki 导出永久免费。赞助者的支持用于维持服务器并让 Nadeshiko 持续成长。",
-    "fromPrice": "每月 {price} 起",
-    "seeTiers": "查看档位"
+    "fromPrice": "每月 {price} 起"
   },
   "feedback": {
     "open": "意见反馈",
@@ -1748,7 +1745,6 @@
   "support": {
     "title": "支持 Nadeshiko",
     "perMonth": "每月 {price}",
-    "whatsIncluded": "包含内容",
     "discord": "包含 Discord 福利",
     "tierText": {
       "seed": "帮助维持 Nadeshiko 运转，同时解锁感谢福利。",
@@ -1756,8 +1752,6 @@
       "nadeshiko": "最高支持档位，助力收录更多作品并提供最高额度。"
     },
     "tiersIntro": "选择适合你的档位。你可以随时在 Patreon 上更改或取消。",
-    "tiersHeadline": "选择你的{accent}",
-    "tiersHeadlineAccent": "档位",
     "chooseTier": "选择{tier}",
     "tiers": {
       "seed": "Seed",
@@ -1776,17 +1770,35 @@
       "headlineAccent": "所有档位",
       "dictionaries": "自定义词典",
       "openRequests": "进行中的请求",
-      "spoilerGuard": "按你的动画列表逐集防剧透",
       "hidePlanning": "在搜索中隐藏想看",
-      "autoSync": "每日自动同步你的动画列表",
-      "customLists": "用 AniList 自定义列表筛选"
+      "episode": "第 {n} 集",
+      "example": "示例",
+      "tryIt": "试试看！",
+      "titles": {
+        "spoilers": "不剧透",
+        "dictionaries": "你的词典",
+        "planning": "隐藏想看",
+        "sync": "每日同步",
+        "lists": "你的 AniList 列表",
+        "boosts": "助推你的请求"
+      },
+      "descriptions": {
+        "spoilers": "根据你的动画列表，隐藏你还没看过的集数中的画面。",
+        "dictionaries": "上传最多 10 本 Yomitan 词典，在所有设备和 Anki 中使用。",
+        "planning": "只是想看的作品不会出现在搜索结果中。",
+        "sync": "你在 AniList 或 MyAnimeList 的进度每天同步到 Nadeshiko。",
+        "lists": "用你的 AniList 自定义列表缩小任何搜索。",
+        "boosts": "每次助推算作 5 票，你想要的作品会更快上线。",
+        "alerts": "关注最多 100 个单词，有新例句时第一时间知道。"
+      }
     },
     "limits": {
       "headline": "更高的{accent}",
       "headlineAccent": "上限",
       "free": "免费",
       "api": "每月 API 请求",
-      "boosts": "每月请求助推"
+      "boosts": "每月请求助推",
+      "wordAlerts": "进行中的单词提醒"
     },
     "faq": {
       "headline": "常见{accent}",
@@ -1817,10 +1829,14 @@
     },
     "linkStrip": {
       "title": "已经在 Patreon 支持我们了吗？",
-      "loggedInBody": "在设置中绑定您的 Patreon 账号，即可自动解锁 API 额度、自定义主题和请求加速。",
       "loggedInCta": "前往设置绑定 Patreon",
-      "loggedOutBody": "登录并在设置中绑定 Patreon 账号即可激活您的赞助者权益。",
       "loggedOutCta": "登录并绑定"
+    },
+    "allFrom": "以上全部，{price} 起",
+    "allFromPrice": "每月 {price}",
+    "donate": {
+      "title": "一次性捐助",
+      "body": "不需要权益？也可以通过一次性或每月捐助来支持。"
     }
   },
   "requests": {

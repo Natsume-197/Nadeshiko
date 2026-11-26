@@ -1654,16 +1654,13 @@
   "supporters": {
     "seoTitle": "Pendukung | Nadeshiko",
     "seoDescription": "Dukung Nadeshiko di Patreon, lihat apa yang diberikan setiap tingkatan, dan judul serta fitur apa yang akan datang.",
+    "hero": {
+      "more": "Lihat isinya"
+    },
     "headline": "Dukung Nadeshiko dan bantu ia terus {accent}",
     "headlineAccent": "berkembang",
-    "note": {
-      "eyebrow": "Catatan dari pengembang",
-      "title": "Nadeshiko dikelola satu orang",
-      "body": "Saya mengelola Nadeshiko sendiri. Dukunganmu membayar server dan penyimpanan, serta memberi saya waktu untuk menambah judul, memperbaiki bug, dan membuat alat baru."
-    },
     "intro": "Pencarian, audio, kartu kata, dan ekspor Anki gratis selamanya. Pendukung menjaga server tetap hidup dan membantu Nadeshiko berkembang.",
-    "fromPrice": "Mulai {price} per bulan",
-    "seeTiers": "Lihat tingkat"
+    "fromPrice": "Mulai {price} per bulan"
   },
   "feedback": {
     "open": "Masukan",
@@ -1748,7 +1745,6 @@
   "support": {
     "title": "Dukung Nadeshiko",
     "perMonth": "{price}/bulan",
-    "whatsIncluded": "Yang termasuk",
     "discord": "Termasuk manfaat Discord",
     "tierText": {
       "seed": "Bantu Nadeshiko tetap berjalan dan dapatkan bonus terima kasih.",
@@ -1756,8 +1752,6 @@
       "nadeshiko": "Tingkat dukungan tertinggi untuk katalog lebih luas dan batas terbesar."
     },
     "tiersIntro": "Pilih yang paling cocok. Kamu bisa mengubah atau membatalkannya di Patreon kapan saja.",
-    "tiersHeadline": "Pilih {accent}",
-    "tiersHeadlineAccent": "tingkatmu",
     "chooseTier": "Pilih {tier}",
     "tiers": {
       "seed": "Seed",
@@ -1776,17 +1770,35 @@
       "headlineAccent": "semua tingkat",
       "dictionaries": "Kamus sendiri",
       "openRequests": "Permintaan terbuka",
-      "spoilerGuard": "Anti-spoiler per episode dari daftar animemu",
       "hidePlanning": "Sembunyikan Rencana Ditonton dari pencarian",
-      "autoSync": "Sinkronisasi otomatis harian daftar animemu",
-      "customLists": "Daftar kustom AniList sebagai filter"
+      "episode": "Episode {n}",
+      "example": "Contoh",
+      "tryIt": "Coba!",
+      "titles": {
+        "spoilers": "Tanpa spoiler",
+        "dictionaries": "Kamusmu sendiri",
+        "planning": "Sembunyikan Rencana Ditonton",
+        "sync": "Sinkron harian",
+        "lists": "Daftar AniList-mu",
+        "boosts": "Boost permintaanmu"
+      },
+      "descriptions": {
+        "spoilers": "Adegan dari episode yang belum kamu tonton tetap tersembunyi, sesuai daftar animemu.",
+        "dictionaries": "Unggah hingga 10 kamus Yomitan dan pakai di semua perangkat dan di Anki.",
+        "planning": "Judul yang baru rencana ditonton tidak muncul di hasil pencarianmu.",
+        "sync": "Progres AniList atau MyAnimeList-mu masuk ke Nadeshiko setiap hari.",
+        "lists": "Persempit pencarian ke salah satu daftar kustom AniList-mu.",
+        "boosts": "Setiap boost bernilai 5 suara, jadi judul yang kamu mau datang lebih cepat.",
+        "alerts": "Ikuti hingga 100 kata dan dapat kabar saat kalimat baru dengannya tiba."
+      }
     },
     "limits": {
       "headline": "Batas lebih {accent}",
       "headlineAccent": "tinggi",
       "free": "Gratis",
       "api": "Permintaan API per bulan",
-      "boosts": "Boost permintaan per bulan"
+      "boosts": "Boost permintaan per bulan",
+      "wordAlerts": "Peringatan kata aktif"
     },
     "faq": {
       "headline": "Pertanyaan {accent}",
@@ -1817,10 +1829,14 @@
     },
     "linkStrip": {
       "title": "Sudah menjadi pendukung di Patreon?",
-      "loggedInBody": "Tautkan akun Patreon Anda di Pengaturan untuk mengaktifkan batas API, tema kustom, dan boost permintaan secara otomatis.",
       "loggedInCta": "Tautkan Patreon di Pengaturan",
-      "loggedOutBody": "Masuk dan tautkan akun Patreon Anda di Pengaturan untuk mengaktifkan manfaat pendukung.",
       "loggedOutCta": "Masuk untuk menautkan"
+    },
+    "allFrom": "Semua ini mulai dari {price}",
+    "allFromPrice": "{price} per bulan",
+    "donate": {
+      "title": "Donasi sekali",
+      "body": "Tidak butuh fasilitas? Kamu tetap bisa membantu dengan donasi sekali atau bulanan."
     }
   },
   "requests": {

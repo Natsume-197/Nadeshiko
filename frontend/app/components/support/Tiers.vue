@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { mdiCheck, mdiCheckCircleOutline, mdiLinkVariant, mdiPatreon, mdiPlus } from '@mdi/js';
+import { mdiCheck, mdiCheckCircleOutline, mdiHelpCircleOutline, mdiLinkVariant, mdiPatreon, mdiPlus } from '@mdi/js';
 import { handleApiError } from '~/utils/apiError';
 import {
   FREE_MONTHLY_API_REQUESTS,
@@ -11,7 +11,6 @@ import {
 /**
  * The support tab of the Supporters page (`/supporters#support`):
  * 1. Three clean, subgrid-aligned Patreon tier cards + supporter status / link strip
- * 2. Note from the dev (DevNote)
  * 3. Limits, free next to each tier (LimitsTable)
  * 4. FAQ accordion
  * The perks bento (SharedPerks) sits above this section, on the page.
@@ -52,26 +51,13 @@ watch(() => store.isLoggedIn, loadAccountTier);
 const tierName = (tier: SupportTier) => t(`support.tiers.${tier.key}`);
 
 /** Each tier's own colour: a seed sprouts green, a flower blooms pink, the top tier wears the brand. */
-const TIER_ACCENTS: Record<SupportTier['key'], { bar: string; kanji: string; check: string; watermark: string }> = {
-  seed: {
-    bar: 'from-emerald-500/80 to-emerald-300/40',
-    kanji: 'text-emerald-400',
-    check: 'text-emerald-400',
-    watermark: 'text-emerald-400/[0.06]',
-  },
-  flower: {
-    bar: 'from-pink-500/80 to-pink-300/40',
-    kanji: 'text-pink-400',
-    check: 'text-pink-400',
-    watermark: 'text-pink-400/[0.06]',
-  },
-  nadeshiko: {
-    bar: 'from-brand-solid to-brand/40',
-    kanji: 'text-brand',
-    check: 'text-brand',
-    watermark: 'text-brand/[0.07]',
-  },
+const TIER_ACCENTS: Record<SupportTier['key'], { tile: string }> = {
+  seed: { tile: 'bg-emerald-500/15 text-emerald-500' },
+  flower: { tile: 'bg-pink-500/15 text-pink-500' },
+  nadeshiko: { tile: 'bg-brand/15 text-brand' },
 };
+
+const lowestPrice = Math.min(...SUPPORT_TIERS.map((tier) => tier.priceUsd));
 const accent = (tier: SupportTier) => TIER_ACCENTS[tier.key];
 
 /** The Discord mark, as the footer draws it (`@mdi/js` has none). */
@@ -118,12 +104,12 @@ const faq = computed(() => [
     <!-- 1. Tier Cards + Status / Linking Strip -->
     <div>
       <!-- biome-ignore lint/a11y/noHeaderScope: vue-i18n scope, not a table header -->
-      <i18n-t id="support-title" keypath="support.tiersHeadline" tag="h2" scope="global" class="text-center text-2xl font-black tracking-tight text-ink md:text-3xl">
-        <template #accent>
-          <span class="text-brand">{{ t('support.tiersHeadlineAccent') }}</span>
+      <i18n-t id="support-title" keypath="support.allFrom" tag="h2" scope="global" data-reveal class="text-center text-3xl font-bold leading-tight tracking-[-0.03em] text-ink md:text-[2.6rem]">
+        <template #price>
+          <span class="text-brand">{{ t('support.allFromPrice', { price: formatUsdWhole(lowestPrice) }) }}</span>
         </template>
       </i18n-t>
-      <p class="mt-3 text-center text-sm text-ink-muted">{{ t('support.tiersIntro') }}</p>
+      <p class="mt-4 text-center text-base text-ink-muted md:text-lg" data-reveal>{{ t('support.tiersIntro') }}</p>
 
       <div
         v-if="activeSupportTier"
@@ -150,27 +136,19 @@ const faq = computed(() => [
       </div>
 
       <!-- Tiers: 4 aligned internal sections via CSS subgrid on lg+. -->
-      <ul class="tier-cards-grid mt-7 grid gap-5 lg:grid-cols-3" data-testid="support-tier-cards">
+      <ul class="tier-cards-grid mt-12 grid gap-5 lg:grid-cols-3" data-testid="support-tier-cards">
         <li
           v-for="(tier, index) in SUPPORT_TIERS"
           :key="tier.key"
-          class="tier-card relative flex flex-col rounded-2xl border p-6 transition duration-200 hover:-translate-y-1"
+          class="tier-card relative flex flex-col rounded-[1.5rem] p-7 transition-colors"
+          data-reveal
+          :style="{ '--reveal-step': index }"
           :class="
             isActiveTier(tier)
-              ? 'border-emerald-500/50 bg-card-background ring-1 ring-emerald-500/25'
-              : 'border-hairline bg-card-background hover:border-ink-faint/40 hover:shadow-xl hover:shadow-black/20'
+              ? 'bg-card-background ring-2 ring-emerald-500/50'
+              : 'bg-card-background'
           "
         >
-          <!-- Decoration, clipped to the card so the badges above can still overflow it. -->
-          <div class="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl" aria-hidden="true">
-            <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r" :class="accent(tier).bar" />
-            <span
-              lang="ja"
-              class="absolute -right-3 -top-5 select-none text-[7.5rem] font-black leading-none"
-              :class="accent(tier).watermark"
-              >{{ tier.kanji }}</span
-            >
-          </div>
           <span
             v-if="isActiveTier(tier)"
             data-testid="support-current-tier-badge"
@@ -179,35 +157,39 @@ const faq = computed(() => [
             {{ t('support.currentTierBadge') }}
           </span>
 
-          <!-- Row 1: Name, kanji, and clear price -->
-          <div class="relative">
-            <p class="text-lg font-bold tracking-tight text-ink">
-              {{ tierName(tier) }} <span lang="ja" class="font-medium" :class="accent(tier).kanji">{{ tier.kanji }}</span>
-            </p>
-
-            <!-- biome-ignore lint/a11y/noHeaderScope: vue-i18n scope, not a table header -->
-            <i18n-t keypath="support.perMonth" tag="p" scope="global" class="mt-2 flex items-baseline gap-1 text-sm font-medium text-ink-faint">
-              <template #price>
-                <span class="text-3xl font-black tracking-tight tabular-nums text-ink">{{ formatUsdWhole(tier.priceUsd) }}</span>
-              </template>
-            </i18n-t>
+          <!-- Row 1: kanji tile, name and price -->
+          <div class="flex items-center gap-4">
+            <span
+              lang="ja"
+              class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl font-black"
+              :class="[accent(tier).tile, tier.kanji.length > 1 ? 'text-xl' : 'text-2xl']"
+              >{{ tier.kanji }}</span
+            >
+            <div>
+              <p class="text-lg font-bold tracking-tight text-ink">{{ tierName(tier) }}</p>
+              <!-- biome-ignore lint/a11y/noHeaderScope: vue-i18n scope, not a table header -->
+              <i18n-t keypath="support.perMonth" tag="p" scope="global" class="flex items-baseline gap-1 text-sm font-medium text-ink-faint">
+                <template #price>
+                  <span class="text-3xl font-black tracking-tight tabular-nums text-ink">{{ formatUsdWhole(tier.priceUsd) }}</span>
+                </template>
+              </i18n-t>
+            </div>
           </div>
 
           <!-- Row 2: One concise summary line + aligned hairline divider -->
-          <p class="relative mt-4 border-b border-hairline pb-5 text-sm leading-relaxed text-ink-muted">
+          <p class="mt-5 border-b border-hairline pb-6 text-[15px] leading-relaxed text-ink-muted">
             {{ t(`support.tierText.${tier.key}`) }}
           </p>
 
           <!-- Row 3: Perks + Discord -->
-          <div class="relative flex flex-1 flex-col pt-5">
-            <p class="text-xs font-semibold uppercase tracking-wider text-ink-faint">{{ t('support.whatsIncluded') }}</p>
-            <ul class="mt-3 space-y-2.5 text-sm text-ink">
+          <div class="flex flex-1 flex-col pt-5">
+            <ul class="space-y-3 text-[15px] text-ink">
               <li v-for="perk in perks(tier, index)" :key="perk" class="flex items-start gap-2.5">
                 <UiBaseIcon
                   :path="mdiCheck"
                   :size="16"
                   class="mt-0.5 shrink-0"
-                  :class="isActiveTier(tier) ? 'text-emerald-400' : accent(tier).check"
+                  :class="isActiveTier(tier) ? 'text-emerald-400' : 'text-brand'"
                 />
                 <span class="leading-snug">{{ perk }}</span>
               </li>
@@ -221,17 +203,17 @@ const faq = computed(() => [
           </div>
 
           <!-- Row 4: Direct tier checkout CTA -->
-          <div class="relative pt-6">
+          <div class="pt-6">
             <a
               :href="tierCheckoutUrl(tier)"
               target="_blank"
               rel="noopener"
               data-testid="support-patreon-link"
-              class="inline-flex h-10 w-full items-center justify-center rounded-lg text-sm font-semibold transition"
+              class="inline-flex h-12 w-full items-center justify-center rounded-full text-[15px] font-semibold transition"
               :class="
                 tier.priorityRequests
                   ? 'bg-brand-solid text-on-accent hover:bg-brand-hover'
-                  : 'border border-hairline bg-surface-lift text-ink hover:border-brand/50 hover:bg-surface-hover'
+                  : 'bg-surface-lift text-ink hover:bg-surface-hover'
               "
             >
               {{ t('support.chooseTier', { tier: tierName(tier) }) }}
@@ -240,77 +222,70 @@ const faq = computed(() => [
         </li>
       </ul>
 
-      <!-- Already a patron? Link Patreon in Settings (hidden once already active) -->
+      <!-- Already a patron? One line under the cards (hidden once a tier is active). -->
       <div
         v-if="!activeSupportTier"
         data-testid="support-link-strip"
-        class="mt-6 flex flex-col gap-3 rounded-xl border border-hairline bg-card-background px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
+        class="mt-6 flex flex-wrap items-center justify-center gap-x-3 gap-y-2 text-sm text-ink-muted"
       >
-        <div class="flex items-start gap-3">
-          <UiBaseIcon :path="mdiPatreon" :size="20" class="mt-0.5 shrink-0 text-[#ff424d]" />
-          <div>
-            <p class="text-sm font-semibold text-ink">{{ t('support.linkStrip.title') }}</p>
-            <p class="mt-0.5 text-xs text-ink-muted">
-              {{ store.isLoggedIn ? t('support.linkStrip.loggedInBody') : t('support.linkStrip.loggedOutBody') }}
-            </p>
-          </div>
-        </div>
-
+        <UiBaseIcon :path="mdiPatreon" :size="18" class="text-[#ff424d]" />
+        <span>{{ t('support.linkStrip.title') }}</span>
         <NuxtLink
           v-if="store.isLoggedIn"
           data-testid="support-link-settings-cta"
           :to="localePath('/user/connections')"
-          class="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-hairline bg-surface-lift px-3.5 text-xs font-semibold text-ink transition-colors hover:border-brand/50 hover:bg-surface-hover"
+          class="inline-flex items-center gap-1.5 font-semibold text-brand hover:underline"
         >
           <UiBaseIcon :path="mdiLinkVariant" :size="15" />
-          <span>{{ t('support.linkStrip.loggedInCta') }}</span>
+          {{ t('support.linkStrip.loggedInCta') }}
         </NuxtLink>
-
         <button
           v-else
           type="button"
           data-testid="support-link-login-cta"
-          class="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-hairline bg-surface-lift px-3.5 text-xs font-semibold text-ink transition-colors hover:border-brand/50 hover:bg-surface-hover"
+          class="inline-flex items-center gap-1.5 font-semibold text-brand hover:underline"
           @click="openLoginModal()"
         >
           <UiBaseIcon :path="mdiLinkVariant" :size="15" />
-          <span>{{ t('support.linkStrip.loggedOutCta') }}</span>
+          {{ t('support.linkStrip.loggedOutCta') }}
         </button>
       </div>
     </div>
 
-    <!-- 2. Who is behind it, right after the price. -->
-    <SupportDevNote />
+    <!-- Donations without perks, for readers who want to help but need nothing back. -->
+    <SupportDonate />
 
-    <!-- 3. Free next to each tier, for every limit a membership raises. -->
-    <SupportLimitsTable :active-tier-key="activeSupportTier?.key ?? null" />
+    <!-- Limits and questions sit together as two cards. -->
+    <div class="space-y-5">
+      <!-- 3. Free next to each tier, for every limit a membership raises. -->
+      <SupportLimitsTable :active-tier-key="activeSupportTier?.key ?? null" />
 
-    <!-- 4. Questions: one rounded card per question, a + that turns into × when open. -->
-    <div class="mx-auto max-w-3xl">
-      <!-- biome-ignore lint/a11y/noHeaderScope: vue-i18n scope, not a table header -->
-      <i18n-t keypath="support.faq.headline" tag="h2" scope="global" class="text-center text-2xl font-black tracking-tight text-ink md:text-3xl">
-        <template #accent>
-          <span class="text-brand">{{ t('support.faq.headlineAccent') }}</span>
-        </template>
-      </i18n-t>
-      <div class="mt-6 space-y-2">
+      <!-- 4. Questions: one card with its own header, like the limits above; + turns into × when open. -->
+      <div class="mx-auto max-w-4xl overflow-hidden rounded-[1.5rem] bg-card-background" data-testid="support-faq" data-reveal>
+        <div class="flex items-center gap-3 border-b border-hairline px-5 py-5 md:px-7">
+          <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-brand/15 text-brand">
+            <UiBaseIcon :path="mdiHelpCircleOutline" :size="18" />
+          </span>
+          <!-- biome-ignore lint/a11y/noHeaderScope: vue-i18n scope, not a table header -->
+          <i18n-t keypath="support.faq.headline" tag="h2" scope="global" class="text-xl font-bold tracking-tight text-ink">
+            <template #accent>{{ t('support.faq.headlineAccent') }}</template>
+          </i18n-t>
+        </div>
         <details
           v-for="item in faq"
           :key="item.key"
-          class="group rounded-2xl bg-card-background transition-colors hover:bg-surface-hover open:hover:bg-card-background"
+          class="group border-b border-hairline last:border-0"
           :data-testid="`support-faq-${item.key}`"
         >
           <summary
-            class="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-[15px] font-medium text-ink md:px-6 [&::-webkit-details-marker]:hidden"
+            class="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-5 text-base font-medium text-ink transition-colors hover:bg-surface-hover md:px-7 [&::-webkit-details-marker]:hidden"
           >
             {{ item.q }}
-            <span
-              class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface-lift text-ink-muted transition group-open:rotate-45"
-            >
+            <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface-lift text-ink-muted transition group-open:rotate-45">
               <UiBaseIcon :path="mdiPlus" size="16" />
             </span>
           </summary>
-          <div class="-mt-1 px-5 pb-5 text-sm leading-relaxed text-ink-muted md:px-6">
+          <div class="px-5 pb-6 text-[15px] leading-relaxed text-ink-muted md:px-7">
             <template v-if="item.a">{{ item.a }}</template>
             <!-- biome-ignore lint/a11y/noHeaderScope: vue-i18n scope, not a table header -->
             <i18n-t v-else keypath="support.faq.apps.a" tag="span" scope="global">

@@ -15,6 +15,7 @@ const storeState = reactive({ isLoggedIn: false });
 vi.stubGlobal('useNadeshikoSdk', () => ({ getMe }));
 vi.stubGlobal('userStore', () => storeState);
 vi.stubGlobal('useLoginModal', () => ({ openLoginModal }));
+vi.stubGlobal('useMotionPreference', () => ({ prefersReducedMotion: () => true }));
 vi.stubGlobal('useI18n', () => ({
   t: (k: string, p?: Record<string, unknown>) => (p ? `${k}(${JSON.stringify(p)})` : k),
 }));
@@ -25,7 +26,6 @@ vi.stubGlobal('useFormat', () => ({
 vi.stubGlobal('useLocalePath', () => (p: string) => `/en${p}`);
 
 import { SUPPORT_TIERS, tierCheckoutUrl } from '~/utils/supportTiers';
-import SupportDevNote from './DevNote.vue';
 import SupportLimitsTable from './LimitsTable.vue';
 import SupportSharedPerks from './SharedPerks.vue';
 import SupportTiers from './Tiers.vue';
@@ -36,8 +36,9 @@ async function render() {
   const Host = defineComponent({ components: { SupportTiers }, template: '<SupportTiers />' });
   const wrapper = mount(Host, {
     global: {
-      components: { SupportDevNote, SupportLimitsTable },
+      components: { SupportLimitsTable },
       stubs: {
+        SupportTryIt: true,
         NuxtLink: { props: ['to'], template: '<a :href="to"><slot /></a>' },
         UiBaseIcon: true,
         'i18n-t': {
@@ -99,13 +100,9 @@ describe('Support section', () => {
     mounted.push(perks);
     const shared = perks.get('[data-testid="support-shared-perks"]').text();
 
-    expect(shared).toContain('support.perks.customThemes');
-    expect(shared).toContain('support.shared.dictionaries');
-    expect(shared).toContain('support.shared.openRequests');
-    expect(shared).toContain('support.shared.spoilerGuard');
-    expect(shared).toContain('support.shared.hidePlanning');
-    expect(shared).toContain('support.shared.autoSync');
-    expect(shared).toContain('support.shared.customLists');
+    for (const key of ['spoilers', 'dictionaries', 'planning', 'sync', 'lists', 'boosts']) {
+      expect(shared).toContain(`support.shared.titles.${key}`);
+    }
     for (const card of wrapper.findAll('[data-testid="support-tier-cards"] > li')) {
       expect(card.text()).not.toContain('support.perks.customThemes');
     }
@@ -123,6 +120,7 @@ describe('Support section', () => {
     expect(cells('boosts')).toEqual(['—', ...SUPPORT_TIERS.map((tier) => String(tier.requestBoostsPerMonth))]);
     expect(cells('dictionaries')).toEqual(['3', '10', '10', '10']);
     expect(cells('openRequests')).toEqual(['10', '30', '30', '30']);
+    expect(cells('wordAlerts')).toEqual(['20', '100', '100', '100']);
   });
 
   test('links each tier card directly to its Patreon checkout URL', async () => {
