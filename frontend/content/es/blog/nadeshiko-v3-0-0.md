@@ -1,7 +1,7 @@
 ---
 title: "v3.0.0 - Audiolibros, diccionario propio y mucho más"
 description: "Audiolibros, una nueva experiencia de diccionario, mejores resultados de búsqueda, AniList y MyAnimeList, una nueva página de peticiones e integración con Patreon."
-date: 2026-11-25T00:00:00Z
+date: 2026-11-26T00:00:00Z
 ---
 
 # Nadeshiko v3.0.0 - Audiolibros, diccionario propio y mucho más

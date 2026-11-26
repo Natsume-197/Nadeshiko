@@ -9,7 +9,7 @@ What's new in Nadeshiko, newest first. The version in the footer is the release 
 
 We only list what you can see. Work behind a lab or a feature flag stays off this page until it is on for everyone, and dependency bumps, refactors and CI never appear at all. For the commit-level history, see the [releases on GitHub](https://github.com/Natsume-197/Nadeshiko/releases).
 
-## 3.0.0 (2026-11-XX)
+## 3.0.0 (2026-11-26)
 
 Nadeshiko 3.0 is the first major version under new hands. It collects everything that has changed since late October, and from here on this page lists every release again.
 
