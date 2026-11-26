@@ -31,12 +31,12 @@ export interface SupportTier {
  * (`services/requests/allowance.ts`). Change them there and here together.
  */
 export const PATRON_LIMITS = {
-  customDictionaries: { free: 2, patron: 6 },
+  customDictionaries: { free: 3, patron: 10 },
   openRequests: { free: 10, patron: 30 },
 } as const;
 
 /** The limit every account has without a membership; the backend `free` tier. */
-export const FREE_MONTHLY_API_REQUESTS = 5000;
+export const FREE_MONTHLY_API_REQUESTS = 10_000;
 
 export const SUPPORT_TIERS: readonly SupportTier[] = [
   {

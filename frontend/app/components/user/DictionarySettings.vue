@@ -261,7 +261,7 @@ function uploadZipFile(file: File) {
   }
   if (atQuotaLimit.value) {
     uploadError.value = t('accountSettings.dictionaries.quotaReached', {
-      max: data.value?.quota.max ?? 2,
+      max: data.value?.quota.max ?? 3,
     });
     return;
   }

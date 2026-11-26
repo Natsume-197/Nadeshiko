@@ -93,7 +93,7 @@ const { data: apiData, refresh: refreshApiKeys } = await useAsyncData('developer
     keys,
     quota: {
       quotaUsed: meRes?.quota?.used ?? 0,
-      quotaLimit: meRes?.quota?.limit ?? 5000,
+      quotaLimit: meRes?.quota?.limit ?? 10000,
       quotaRemaining: meRes?.quota?.remaining ?? 0,
       periodEnd: meRes?.quota?.periodEnd ?? null,
       tier: meRes?.quota?.tier ?? null,
@@ -108,8 +108,8 @@ const fieldOptions = computed(
       keys: [] as ApiKeyListItem[],
       quota: {
         quotaUsed: 0,
-        quotaLimit: 5000,
-        quotaRemaining: 5000,
+        quotaLimit: 10000,
+        quotaRemaining: 10000,
         periodEnd: null,
         tier: null,
         burst: null,

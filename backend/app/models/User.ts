@@ -147,7 +147,7 @@ export class User extends BaseEntity {
 
   /** @deprecated Use `resolveQuotaLimit(user)`, which applies override then tier. Keep the legacy column so existing
    * limits are not rewritten by migration. */
-  @Column({ name: 'monthly_quota_limit', type: 'int', default: 5000 })
+  @Column({ name: 'monthly_quota_limit', type: 'int', default: 10000 })
   monthlyQuotaLimit!: number;
 
   @Column({ type: 'jsonb', default: '{}' })

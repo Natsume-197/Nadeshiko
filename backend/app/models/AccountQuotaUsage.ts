@@ -12,7 +12,7 @@ export interface AccountQuotaSnapshot {
 @Entity('AccountQuotaUsage')
 @Index(['userId', 'periodYyyymm'], { unique: true })
 export class AccountQuotaUsage extends BaseEntity {
-  static readonly DEFAULT_QUOTA_LIMIT = 5000;
+  static readonly DEFAULT_QUOTA_LIMIT = 10000;
 
   @PrimaryGeneratedColumn({ type: 'int' })
   id!: number;

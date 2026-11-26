@@ -1073,7 +1073,7 @@
       "description": "Envie dicionários Yomitan (.zip) sincronizados com sua conta.",
       "quotaUsed": "{used} / {max} dicionários",
       "maxZipSize": "Até {maxMb} MB por .zip",
-      "patronUpsell": "Apoiadores podem enviar até 6 dicionários (95 MB cada).",
+      "patronUpsell": "Apoiadores podem enviar até 10 dicionários (95 MB cada).",
       "dropPrompt": "Clique para escolher um .zip do Yomitan ou solte aqui",
       "uploading": "Enviando… {progress}%",
       "supportedFormats": "Compatível com dicionários Yomitan v3 de definições, frequência e pitch accent (sem imagens).",

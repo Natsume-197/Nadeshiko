@@ -1073,7 +1073,7 @@
       "description": "Upload Yomitan (.zip) dictionaries synced to your account.",
       "quotaUsed": "{used} / {max} dictionaries",
       "maxZipSize": "Up to {maxMb} MB per .zip",
-      "patronUpsell": "Patrons can upload up to 6 dictionaries (95 MB each).",
+      "patronUpsell": "Patrons can upload up to 10 dictionaries (95 MB each).",
       "dropPrompt": "Click to choose a Yomitan .zip or drop it here",
       "uploading": "Uploading… {progress}%",
       "supportedFormats": "Supports Yomitan v3 term, frequency, and pitch accent dictionaries (without images).",

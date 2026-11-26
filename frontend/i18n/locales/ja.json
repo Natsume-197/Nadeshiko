@@ -1073,7 +1073,7 @@
       "description": "Yomitan形式（.zip）の辞書をアカウントに同期します。",
       "quotaUsed": "{used} / {max} 辞書",
       "maxZipSize": "1ファイル最大 {maxMb} MB",
-      "patronUpsell": "サポーターは最大6個（各95 MB）までアップロードできます。",
+      "patronUpsell": "サポーターは最大10個（各95 MB）までアップロードできます。",
       "dropPrompt": "クリックしてYomitan .zipを選択、またはここにドロップ",
       "uploading": "アップロード中… {progress}%",
       "supportedFormats": "Yomitan v3の語義・頻度・ピッチアクセント辞書に対応しています（画像なし）。",

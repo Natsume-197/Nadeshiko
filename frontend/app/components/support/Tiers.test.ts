@@ -119,9 +119,9 @@ describe('Support section', () => {
         .findAll('td')
         .map((td) => td.text());
 
-    expect(cells('api')).toEqual(['5000', ...SUPPORT_TIERS.map((tier) => String(tier.monthlyApiRequests))]);
+    expect(cells('api')).toEqual(['10000', ...SUPPORT_TIERS.map((tier) => String(tier.monthlyApiRequests))]);
     expect(cells('boosts')).toEqual(['—', ...SUPPORT_TIERS.map((tier) => String(tier.requestBoostsPerMonth))]);
-    expect(cells('dictionaries')).toEqual(['2', '6', '6', '6']);
+    expect(cells('dictionaries')).toEqual(['3', '10', '10', '10']);
     expect(cells('openRequests')).toEqual(['10', '30', '30', '30']);
   });
 
@@ -154,7 +154,7 @@ describe('Support section', () => {
 
   test('guides signed-in free readers to Settings #connections', async () => {
     storeState.isLoggedIn = true;
-    getMe.mockResolvedValue({ quota: { limit: 5000, tier: { id: 'free', displayName: 'Free' } } });
+    getMe.mockResolvedValue({ quota: { limit: 10000, tier: { id: 'free', displayName: 'Free' } } });
 
     const wrapper = await render();
 

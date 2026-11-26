@@ -1073,7 +1073,7 @@
       "description": "Unggah kamus Yomitan (.zip) yang tersinkron dengan akun Anda.",
       "quotaUsed": "{used} / {max} kamus",
       "maxZipSize": "Maksimal {maxMb} MB per .zip",
-      "patronUpsell": "Pendukung Patreon dapat mengunggah hingga 6 kamus (95 MB masing-masing).",
+      "patronUpsell": "Pendukung Patreon dapat mengunggah hingga 10 kamus (95 MB masing-masing).",
       "dropPrompt": "Klik untuk memilih .zip Yomitan atau seret ke sini",
       "uploading": "Mengunggah… {progress}%",
       "supportedFormats": "Mendukung kamus Yomitan v3 untuk definisi, frekuensi, dan pitch accent (tanpa gambar).",

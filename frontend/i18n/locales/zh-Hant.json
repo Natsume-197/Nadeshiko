@@ -1073,7 +1073,7 @@
       "description": "上傳 Yomitan（.zip）辭典並同步至你的帳戶。",
       "quotaUsed": "{used} / {max} 本辭典",
       "maxZipSize": "每個 .zip 最大 {maxMb} MB",
-      "patronUpsell": "贊助者最多可上傳 6 本辭典（每本最高 95 MB）。",
+      "patronUpsell": "贊助者最多可上傳 10 本辭典（每本最高 95 MB）。",
       "dropPrompt": "點擊選擇 Yomitan .zip 檔案或拖曳到此處",
       "uploading": "正在上傳… {progress}%",
       "supportedFormats": "支援 Yomitan v3 釋義、詞頻與音調辭典（不含圖片）。",

@@ -5,15 +5,15 @@ import { canUseCustomTheme } from '@app/services/themes/customTheme';
 /**
  * Per-account custom dictionary quotas (task 48).
  *
- * Free accounts get enough room to try a monolingual + grammar/frequency pair (2 dicts, 60 MB each); active patrons
- * (any paid Patreon tier) and admins get 6 dictionaries up to 95 MB each (safely under Cloudflare Free's 100 MB HTTP
+ * Free accounts get enough room to try a monolingual, a grammar and a frequency dictionary (3 dicts, 60 MB each);
+ * active patrons (any paid Patreon tier) and admins get 10 dictionaries up to 95 MB each (safely under Cloudflare Free's 100 MB HTTP
  * request body cap).
  */
 
-export const FREE_MAX_DICTIONARIES = 2;
+export const FREE_MAX_DICTIONARIES = 3;
 export const FREE_MAX_ZIP_BYTES = 60 * 1024 * 1024;
 
-export const PATRON_MAX_DICTIONARIES = 6;
+export const PATRON_MAX_DICTIONARIES = 10;
 export const PATRON_MAX_ZIP_BYTES = 95 * 1024 * 1024;
 
 /** What an account's dictionaries may take once indexed. The zip says little: 52 MB of PixivLight index to 376 MB.

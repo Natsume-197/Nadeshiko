@@ -46,7 +46,7 @@ properties:
         type: integer
         minimum: 0
         description: Maximum number of API requests allowed per month.
-        example: 5000
+        example: 10000
       remaining:
         type: integer
         minimum: 0
