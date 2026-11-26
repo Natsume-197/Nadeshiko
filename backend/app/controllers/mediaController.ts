@@ -1,4 +1,3 @@
-import { startRequestsForMedia } from '@app/services/requests/service';
 import { linkProgressForMedia } from '@app/services/tracker/service';
 import type {
   ListMedia,
@@ -133,8 +132,6 @@ export const createMedia: CreateMedia = async ({ body }, respond) => {
   Cache.invalidate(MEDIA_INFO_CACHE);
   Cache.invalidate(SegmentDocument.SEARCH_STATS_CACHE);
 
-  // Requests for this title are now being worked on; their voters hear so. Never fails the ingest.
-  await startRequestsForMedia(media.id);
   // Link any reader's previously unmatched tracker progress rows for this anime. Never fails the ingest.
   await linkProgressForMedia(media.id);
 

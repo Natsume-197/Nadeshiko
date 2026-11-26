@@ -28,11 +28,12 @@ import type {
   t_Error500,
   t_ListContentRequestsQuerySchema,
   t_ListMyContentRequestsQuerySchema,
+  t_PreviewContentRequestRequestBody,
   t_UnvoteContentRequestParamSchema,
   t_VoteContentRequestParamSchema,
   t_WithdrawContentRequestParamSchema,
 } from '../models.ts';
-import type { CreateContentRequestRequestBodyOutput, ListContentRequestsQueryOutput, ListMyContentRequestsQueryOutput } from '../outputTypes.ts';
+import type { CreateContentRequestRequestBodyOutput, ListContentRequestsQueryOutput, ListMyContentRequestsQueryOutput, PreviewContentRequestRequestBodyOutput } from '../outputTypes.ts';
 import {
   PermissiveBoolean,
   s_ContentRequest,
@@ -44,6 +45,7 @@ import {
   s_Error409,
   s_Error429,
   s_Error500,
+  s_PreviewContentRequestRequestBody,
 } from '../schemas.ts';
 
 export type ListContentRequestsResponder = {
@@ -113,6 +115,37 @@ export type GetContentRequestAllowanceResponder = {
 export type GetContentRequestAllowance = (
   params: Params<void, void, void, void>,
   respond: GetContentRequestAllowanceResponder,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
+
+export type PreviewContentRequestResponder = {
+  with200(): ExpressRuntimeResponse<{
+    activeRequestId: string | null;
+    category: 'ANIME' | 'JDRAMA' | 'YOUTUBE' | 'AUDIOBOOK';
+    coverUrl: string | null;
+    existing: {
+      complete: boolean;
+      episodes: number;
+      media: {
+        id: string;
+        name: string;
+        slug: string;
+      };
+      totalEpisodes: number | null;
+    } | null;
+    title: string | null;
+  }>;
+  with400(): ExpressRuntimeResponse<t_Error400>;
+  with401(): ExpressRuntimeResponse<t_Error401>;
+  with429(): ExpressRuntimeResponse<t_Error429>;
+  with500(): ExpressRuntimeResponse<t_Error500>;
+} & ExpressRuntimeResponder;
+
+export type PreviewContentRequest = (
+  params: Params<void, void, PreviewContentRequestRequestBodyOutput, void>,
+  respond: PreviewContentRequestResponder,
   req: Request,
   res: Response,
   next: NextFunction,
@@ -211,6 +244,7 @@ export type RequestsImplementation = {
   listContentRequests: ListContentRequests;
   createContentRequest: CreateContentRequest;
   getContentRequestAllowance: GetContentRequestAllowance;
+  previewContentRequest: PreviewContentRequest;
   listMyContentRequests: ListMyContentRequests;
   withdrawContentRequest: WithdrawContentRequest;
   voteContentRequest: VoteContentRequest;
@@ -427,6 +461,88 @@ export function createRequestsRouter(
         .getContentRequestAllowance(input, responder, req, res, next)
         .catch(handleImplementationError)
         .then(handleResponse(res, getContentRequestAllowanceResponseBodyValidator));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  const previewContentRequestResponseBodyValidator = responseValidationFactory(
+    [
+      [
+        '200',
+        z.object({
+          category: z.enum(['ANIME', 'JDRAMA', 'YOUTUBE', 'AUDIOBOOK']),
+          title: z.string().nullable(),
+          coverUrl: z.string().nullable(),
+          existing: z
+            .object({
+              media: z.object({ id: z.string(), slug: z.string(), name: z.string() }),
+              episodes: z.coerce.number(),
+              totalEpisodes: z.coerce.number().nullable(),
+              complete: PermissiveBoolean,
+            })
+            .nullable(),
+          activeRequestId: z.string().nullable(),
+        }),
+      ],
+      ['400', s_Error400],
+      ['401', s_Error401],
+      ['429', s_Error429],
+      ['500', s_Error500],
+    ],
+    undefined,
+  );
+
+  // previewContentRequest
+  router.post(`/v1/requests/preview`, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const input = {
+        params: undefined,
+        query: undefined,
+        body: parseRequestInput(s_PreviewContentRequestRequestBody, req.body, RequestInputType.RequestBody),
+        headers: undefined,
+      };
+
+      const responder = {
+        with200() {
+          return new ExpressRuntimeResponse<{
+            activeRequestId: string | null;
+            category: 'ANIME' | 'JDRAMA' | 'YOUTUBE' | 'AUDIOBOOK';
+            coverUrl: string | null;
+            existing: {
+              complete: boolean;
+              episodes: number;
+              media: {
+                id: string;
+                name: string;
+                slug: string;
+              };
+              totalEpisodes: number | null;
+            } | null;
+            title: string | null;
+          }>(200);
+        },
+        with400() {
+          return new ExpressRuntimeResponse<t_Error400>(400);
+        },
+        with401() {
+          return new ExpressRuntimeResponse<t_Error401>(401);
+        },
+        with429() {
+          return new ExpressRuntimeResponse<t_Error429>(429);
+        },
+        with500() {
+          return new ExpressRuntimeResponse<t_Error500>(500);
+        },
+        withStatus(status: StatusCode) {
+          return new ExpressRuntimeResponse(status);
+        },
+      };
+
+      await implementation
+        .previewContentRequest(input, responder, req, res, next)
+        .catch(handleImplementationError)
+        .then(handleResponse(res, previewContentRequestResponseBodyValidator));
     } catch (error) {
       next(error);
     }

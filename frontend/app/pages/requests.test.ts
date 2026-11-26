@@ -240,6 +240,75 @@ describe('/requests', () => {
     expect(wrapper.find('[data-testid="requests-form"]').exists()).toBe(false);
   });
 
+  test('the form says when a title is already on Nadeshiko: what is missing, or that it is complete', async () => {
+    userState.isLoggedIn = true;
+    const posted: unknown[] = [];
+    const onePiece = {
+      category: 'ANIME',
+      title: 'ONE PIECE',
+      coverUrl: null,
+      existing: {
+        media: { id: 'op', slug: 'one-piece', name: 'ONE PIECE' },
+        episodes: 100,
+        totalEpisodes: null as number | null,
+        complete: false,
+      },
+      activeRequestId: null,
+    };
+    let previewed = onePiece;
+    route({
+      '/v1/requests': () => ({ items: [], total: 0 }),
+      '/v1/requests/me': () => allowance,
+      'POST /v1/requests/preview': () => previewed,
+      'POST /v1/requests': (options) => {
+        posted.push(options?.body);
+        return { request: { ...frieren, kind: 'UPDATE', title: 'ONE PIECE' }, outcome: 'created' };
+      },
+    });
+    const wrapper = await render();
+    await wrapper.get('[data-testid="requests-new"]').trigger('click');
+    await wrapper.get('#request-url').setValue('https://anilist.co/anime/21');
+    await new Promise((resolve) => setTimeout(resolve, 450));
+    await flushPromises();
+
+    const notice = wrapper.get('[data-testid="requests-existing"]');
+    expect(notice.text()).toContain('requests.form.alreadyHere');
+    expect(notice.text()).toContain('requests.form.count.ANIME {"count":100}');
+    expect(notice.get('a').attributes('href')).toBe('/en/media/one-piece');
+
+    await wrapper.get('[data-testid="requests-form"]').trigger('submit');
+    expect(wrapper.get('[data-testid="requests-form-error"]').text()).toBe('requests.form.missingNote');
+    expect(posted).toEqual([]);
+
+    await wrapper.get('[data-testid="requests-note"]').setValue('Episodes 101-200');
+    await wrapper.get('[data-testid="requests-form"]').trigger('submit');
+    await flushPromises();
+    expect(posted).toEqual([{ sourceUrl: 'https://anilist.co/anime/21', note: 'Episodes 101-200' }]);
+
+    previewed = {
+      ...onePiece,
+      title: 'Toradora!',
+      existing: {
+        ...onePiece.existing,
+        media: { id: 'tr', slug: 'toradora', name: 'Toradora!' },
+        episodes: 25,
+        totalEpisodes: 25,
+        complete: true,
+      },
+    };
+    await wrapper.get('[data-testid="requests-new"]').trigger('click');
+    await wrapper.get('#request-url').setValue('https://anilist.co/anime/4224');
+    await new Promise((resolve) => setTimeout(resolve, 450));
+    await flushPromises();
+
+    expect(wrapper.get('[data-testid="requests-existing"]').text()).toContain('requests.form.alreadyComplete');
+    expect(wrapper.get('[data-testid="requests-existing"]').text()).toContain(
+      'requests.form.episodesOf {"count":25,"total":25}',
+    );
+    expect(wrapper.find('[data-testid="requests-note"]').exists()).toBe(false);
+    expect(wrapper.get('[data-testid="requests-form"] button[type="submit"]').attributes('disabled')).toBeDefined();
+  });
+
   test('the form refuses unsupported sites and asks for a title when the link has none', async () => {
     userState.isLoggedIn = true;
     route({

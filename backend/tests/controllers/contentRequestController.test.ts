@@ -5,6 +5,7 @@ import {
   ContentRequestBoost,
   ContentRequestStatus,
   ContentRequestVote,
+  Media,
   MediaExternalId,
   ExternalSourceType,
   PatreonConnection,
@@ -14,7 +15,6 @@ import {
 import { ApiKeyKind, ApiPermission, AuthType } from '@app/models/ApiPermission';
 import * as emailQueueModule from '@app/workers/emailQueue';
 import type { EmailJobData } from '@app/workers/emailQueue';
-import { startRequestsForMedia } from '@app/services/requests/service';
 import { buildApplication } from '@config/application';
 import { AdminRoutes, RequestsRoutes } from '@config/routes';
 import { seedCoreFixtures, type CoreFixtures } from '../fixtures/core';
@@ -66,6 +66,28 @@ const ANILIST = {
     },
   },
 };
+
+function anilistWith(episodes: number | null, status: string) {
+  return {
+    'graphql.anilist.co': {
+      data: { Media: { ...ANILIST['graphql.anilist.co'].data.Media, episodes, status } },
+    },
+  };
+}
+
+/** The fixture show, published with `episodes` episodes and the AniList id the Frieren links carry. */
+async function publishedTitle(episodes: number): Promise<Media> {
+  const { media } = await loadFixtures(['singleMedia']);
+  const published = Object.values(media)[0]!;
+  published.episodeCount = episodes;
+  await published.save();
+  await MediaExternalId.save({
+    mediaId: published.id,
+    source: ExternalSourceType.ANILIST,
+    externalId: '154587',
+  });
+  return published;
+}
 
 async function makeUser(name: string): Promise<User> {
   return User.create({
@@ -157,43 +179,94 @@ describe('filing a request', () => {
     expect(again.body.request.voteCount).toBe(2);
   });
 
-  it('files a request for a title already on Nadeshiko as an UPDATE for it', async () => {
+  it('files a request for a title already on Nadeshiko as an UPDATE for it, saying what is missing', async () => {
     mockFetch(ANILIST);
-    const { media } = await loadFixtures(['singleMedia']);
-    const published = Object.values(media)[0]!;
-    await MediaExternalId.save({
-      mediaId: published.id,
-      source: ExternalSourceType.ANILIST,
-      externalId: '154587',
-    });
+    const published = await publishedTitle(12);
 
-    const res = await request(app).post('/v1/requests').send({ sourceUrl: 'https://anilist.co/anime/154587' });
+    const res = await request(app)
+      .post('/v1/requests')
+      .send({ sourceUrl: 'https://anilist.co/anime/154587', note: 'Episodes 13-28' });
+    expect(res.status).toBe(201);
     expect(res.body.request).toMatchObject({
       kind: 'UPDATE',
+      note: 'Episodes 13-28',
       media: { id: published.publicId },
     });
   });
 
-  it('moves open requests to in progress when ingest creates their media', async () => {
-    mockFetch(ANILIST);
-    const created = await request(app).post('/v1/requests').send({ sourceUrl: 'https://anilist.co/anime/154587' });
-    const { media } = await loadFixtures(['singleMedia']);
-    const published = Object.values(media)[0]!;
-    await MediaExternalId.save({
-      mediaId: published.id,
-      source: ExternalSourceType.ANILIST,
-      externalId: '154587',
+  it('needs a note for a title already on Nadeshiko', async () => {
+    mockFetch(anilistWith(28, 'FINISHED'));
+    await publishedTitle(12);
+
+    const res = await request(app).post('/v1/requests').send({ sourceUrl: 'https://anilist.co/anime/154587' });
+    expect(res.status).toBe(400);
+    expect(await ContentRequest.count()).toBe(0);
+  });
+
+  it('refuses a title Nadeshiko already holds in full', async () => {
+    mockFetch(anilistWith(28, 'FINISHED'));
+    await publishedTitle(28);
+
+    const res = await request(app)
+      .post('/v1/requests')
+      .send({ sourceUrl: 'https://anilist.co/anime/154587', note: 'More please' });
+    expect(res.status).toBe(400);
+    expect(await ContentRequest.count()).toBe(0);
+  });
+
+  it('still lets readers vote on an open update request without a note', async () => {
+    mockFetch(anilistWith(null, 'RELEASING'));
+    await publishedTitle(100);
+    await request(app).post('/v1/requests').send({ sourceUrl: 'https://anilist.co/anime/154587', note: '101 onwards' });
+
+    app.locals.testUser = await makeUser('backer');
+    const res = await request(app).post('/v1/requests').send({ sourceUrl: 'https://anilist.co/anime/154587' });
+    expect(res.status).toBe(200);
+    expect(res.body.outcome).toBe('voted');
+  });
+
+  it('previews a link: new, partly on Nadeshiko, complete, or already requested', async () => {
+    mockFetch(anilistWith(28, 'FINISHED'));
+    const fresh = await request(app)
+      .post('/v1/requests/preview')
+      .send({ sourceUrl: 'https://anilist.co/anime/154587' });
+    expect(fresh.status).toBe(200);
+    expect(fresh.body).toMatchObject({ category: 'ANIME', title: 'Frieren', existing: null, activeRequestId: null });
+
+    const published = await publishedTitle(12);
+    const partial = await request(app)
+      .post('/v1/requests/preview')
+      .send({ sourceUrl: 'https://anilist.co/anime/154587' });
+    expect(partial.body.existing).toEqual({
+      media: { id: published.publicId, slug: published.slug, name: published.nameEn || published.nameRomaji },
+      episodes: 12,
+      totalEpisodes: 28,
+      complete: false,
     });
 
-    expect(await startRequestsForMedia(published.id)).toBe(1);
-    const started = await ContentRequest.findOneByOrFail({
-      publicId: created.body.request.id,
-    });
-    expect(started).toMatchObject({
-      status: 'IN_PROGRESS',
-      mediaId: published.id,
-    });
-    await vi.waitFor(() => expect(emails).toHaveLength(1));
+    published.episodeCount = 28;
+    await published.save();
+    const complete = await request(app)
+      .post('/v1/requests/preview')
+      .send({ sourceUrl: 'https://anilist.co/anime/154587' });
+    expect(complete.body.existing).toMatchObject({ episodes: 28, totalEpisodes: 28, complete: true });
+
+    published.episodeCount = 12;
+    await published.save();
+    const filed = await request(app)
+      .post('/v1/requests')
+      .send({ sourceUrl: 'https://anilist.co/anime/154587', note: 'The rest' });
+    const requested = await request(app)
+      .post('/v1/requests/preview')
+      .send({ sourceUrl: 'https://anilist.co/anime/154587' });
+    expect(requested.body.activeRequestId).toBe(filed.body.request.id);
+  });
+
+  it('never calls an airing show complete', async () => {
+    mockFetch(anilistWith(28, 'RELEASING'));
+    await publishedTitle(28);
+    const res = await request(app).post('/v1/requests/preview').send({ sourceUrl: 'https://anilist.co/anime/154587' });
+    expect(res.body.existing).toMatchObject({ complete: false });
   });
 
   it('asks for a title when the link gives none', async () => {
@@ -506,6 +579,20 @@ describe('the admin side', () => {
 
     const released = await ContentRequest.findOneByOrFail({ publicId: id });
     expect(released.releasedAt).not.toBeNull();
+  });
+
+  it('moves a request without telling its voters when the admin says so', async () => {
+    mockFetch({});
+    const id = await fileRequest('Quiet', 'https://www.themoviedb.org/tv/1');
+
+    app.locals.testUser = core.users.kevin;
+    const started = await request(app).patch(`/v1/admin/requests/${id}`).send({ status: 'IN_PROGRESS', notify: false });
+    expect(started.status).toBe(200);
+    const released = await request(app).patch(`/v1/admin/requests/${id}`).send({ status: 'RELEASED', notify: false });
+    expect(released.body.status).toBe('RELEASED');
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(emails).toHaveLength(0);
   });
 
   it('merges a duplicate, moving its votes without counting anyone twice', async () => {

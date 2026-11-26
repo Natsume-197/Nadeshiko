@@ -1860,6 +1860,18 @@
       "titleLabel": "Judul",
       "note": "Catatan (opsional)",
       "notePlaceholder": "Musim yang mana, di mana ada subtitle, apa pun yang membantu.",
+      "noteMissing": "Apa yang kurang?",
+      "noteMissingPlaceholder": "Episode 101–200, musim 2, video terbaru…",
+      "alreadyHere": "Sudah ada di Nadeshiko",
+      "alreadyComplete": "Sudah lengkap di Nadeshiko",
+      "episodesOf": "{count} dari {total} episode",
+      "count": {
+        "ANIME": "{count} episode",
+        "JDRAMA": "{count} episode",
+        "YOUTUBE": "{count} video",
+        "AUDIOBOOK": "{count} bab"
+      },
+      "missingNote": "Sebutkan apa yang kurang dari judul ini di Nadeshiko.",
       "submit": "Kirim permintaan",
       "cancel": "Batal",
       "unsupported": "Gunakan tautan AniList, MyAnimeList, TMDB, MyDramaList, Audible, Amazon, atau YouTube.",

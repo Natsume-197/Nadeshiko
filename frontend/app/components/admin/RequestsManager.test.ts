@@ -208,6 +208,35 @@ describe('RequestsManager', () => {
     });
   });
 
+  test('moving to a status that emails voters asks whether to send the email', async () => {
+    const open = baseRequest();
+    const patches: unknown[] = [];
+    route({
+      '/v1/admin/requests': () => ({ items: [open], total: 1 }),
+      [`PATCH /v1/admin/requests/${open.id}`]: (opts) => {
+        patches.push(opts?.body);
+        return { ...open, status: (opts?.body as { status: string } | undefined)?.status ?? open.status };
+      },
+    });
+
+    const wrapper = await render();
+    await wrapper.get(`[data-testid="admin-request-${open.id}"]`).trigger('dragstart');
+    await wrapper.get('[data-testid="admin-column-IN_PROGRESS"]').trigger('drop');
+    expect(patches).toHaveLength(0);
+    expect(wrapper.get('[data-testid="admin-move-confirm"]').text()).toBe('Move and email');
+
+    await wrapper.get('[data-testid="admin-move-quiet"]').trigger('click');
+    await flushPromises();
+    expect(patches).toEqual([{ status: 'IN_PROGRESS', declineReason: null, mediaId: null, notify: false }]);
+    expect(toastSuccess).toHaveBeenCalledWith('Moved to In progress, no email sent.');
+
+    await wrapper.get(`[data-testid="admin-request-${open.id}"]`).trigger('dragstart');
+    await wrapper.get('[data-testid="admin-column-RELEASED"]').trigger('drop');
+    await wrapper.get('[data-testid="admin-move-confirm"]').trigger('click');
+    await flushPromises();
+    expect(patches[1]).toEqual({ status: 'RELEASED', declineReason: null, mediaId: null, notify: true });
+  });
+
   test('merges a flagged duplicate via the confirmation modal', async () => {
     const keep = baseRequest({
       id: '99999999-9999-4999-8999-999999999999',

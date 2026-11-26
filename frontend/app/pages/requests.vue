@@ -254,6 +254,56 @@ function categoryOf(raw: string): Category | null {
 /** Live category hint for the request form as the reader pastes a link or ASIN. */
 const detectedCategory = computed(() => categoryOf(sourceUrl.value));
 
+interface RequestPreview {
+  category: Category;
+  title: string | null;
+  coverUrl: string | null;
+  existing: {
+    media: { id: string; slug: string; name: string };
+    episodes: number;
+    totalEpisodes: number | null;
+    complete: boolean;
+  } | null;
+  activeRequestId: string | null;
+}
+
+/** What the pasted link would file, read once the reader stops typing; the form still works without it. */
+const preview = ref<RequestPreview | null>(null);
+let previewTimer: ReturnType<typeof setTimeout> | undefined;
+let previewToken = 0;
+
+watch(sourceUrl, (raw) => {
+  clearTimeout(previewTimer);
+  preview.value = null;
+  const token = ++previewToken;
+  if (!formOpen.value || !categoryOf(raw)) return;
+  previewTimer = setTimeout(async () => {
+    try {
+      const result = await $fetch<RequestPreview>('/v1/requests/preview', {
+        method: 'POST',
+        body: { sourceUrl: normalizedLink(raw) },
+      });
+      if (token === previewToken) preview.value = result;
+    } catch {
+      // A failed preview leaves the plain form; the server still checks on send.
+    }
+  }, 400);
+});
+
+onBeforeUnmount(() => clearTimeout(previewTimer));
+
+/** The title already on Nadeshiko, unless sending would only vote on its open request. */
+const existingTitle = computed(() => (preview.value?.activeRequestId ? null : (preview.value?.existing ?? null)));
+
+const existingCount = computed(() => {
+  const existing = existingTitle.value;
+  if (!existing || !preview.value) return '';
+  if (existing.totalEpisodes !== null && (preview.value.category === 'ANIME' || preview.value.category === 'JDRAMA')) {
+    return t('requests.form.episodesOf', { count: existing.episodes, total: existing.totalEpisodes });
+  }
+  return t(`requests.form.count.${preview.value.category}`, { count: existing.episodes });
+});
+
 function rankTone(rank: number | null): string {
   if (rank === 1) return 'text-amber-300';
   if (rank === 2) return 'text-ink';
@@ -288,12 +338,18 @@ function resetForm() {
   note.value = '';
   needsTitle.value = false;
   formError.value = null;
+  preview.value = null;
 }
 
 async function submitRequest() {
   formError.value = null;
   if (!detectedCategory.value) {
     formError.value = t('requests.form.unsupported');
+    return;
+  }
+  if (existingTitle.value?.complete) return;
+  if (existingTitle.value && !note.value.trim()) {
+    formError.value = t('requests.form.missingNote');
     return;
   }
   submitting.value = true;
@@ -852,18 +908,41 @@ function rankOf(index: number): number | null {
               :placeholder="t('requests.form.urlPlaceholder')"
             >
           </label>
+          <div
+            v-if="existingTitle"
+            data-testid="requests-existing"
+            class="flex items-center justify-between gap-3 rounded-lg border px-4 py-3 text-sm"
+            :class="existingTitle.complete ? 'border-emerald-500/25 bg-emerald-500/10' : 'border-brand/30 bg-brand/10'"
+          >
+            <div class="min-w-0">
+              <p class="font-semibold text-ink">
+                {{ t(existingTitle.complete ? 'requests.form.alreadyComplete' : 'requests.form.alreadyHere') }}
+              </p>
+              <p class="text-ink-muted">{{ existingCount }}</p>
+            </div>
+            <NuxtLink
+              :to="localePath(`/media/${existingTitle.media.slug}`)"
+              class="shrink-0 font-semibold text-brand hover:underline"
+            >
+              {{ t('requests.searchIt') }}
+            </NuxtLink>
+          </div>
           <label v-if="needsTitle" class="block">
             <span class="mb-1.5 block text-sm font-semibold text-ink">{{ t('requests.form.titleLabel') }}</span>
             <input v-model="title" maxlength="180" class="nd-input w-full" data-testid="requests-title">
           </label>
-          <label class="block">
-            <span class="mb-1.5 block text-sm font-semibold text-ink">{{ t('requests.form.note') }}</span>
+          <label v-if="!existingTitle?.complete" class="block">
+            <span class="mb-1.5 block text-sm font-semibold text-ink">
+              {{ t(existingTitle ? 'requests.form.noteMissing' : 'requests.form.note') }}
+            </span>
             <textarea
               v-model="note"
+              data-testid="requests-note"
               maxlength="1000"
               rows="3"
+              :required="!!existingTitle"
               class="nd-input w-full resize-y"
-              :placeholder="t('requests.form.notePlaceholder')"
+              :placeholder="t(existingTitle ? 'requests.form.noteMissingPlaceholder' : 'requests.form.notePlaceholder')"
             />
           </label>
           <p
@@ -875,7 +954,9 @@ function rankOf(index: number): number | null {
           </p>
           <div class="flex justify-end gap-2 pt-1">
             <button type="button" class="nd-btn" @click="closeForm">{{ t('requests.form.cancel') }}</button>
-            <button type="submit" class="nd-btn-accent" :disabled="submitting">{{ t('requests.form.submit') }}</button>
+            <button type="submit" class="nd-btn-accent" :disabled="submitting || !!existingTitle?.complete">
+              {{ t('requests.form.submit') }}
+            </button>
           </div>
         </form>
       </template>

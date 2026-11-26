@@ -1418,6 +1418,11 @@ export const s_CreateContentRequestRequestBody = z.object({
   note: z.string().max(1000).optional(),
 });
 
+export const s_PreviewContentRequestRequestBody = z.object({
+  sourceUrl: z.string().max(1000).regex(new RegExp('^https?://')),
+  title: z.string().min(1).max(180).optional(),
+});
+
 export const s_MarkNotificationsReadRequestBody = z.object({ ids: z.array(z.string()).max(100).optional() });
 
 export const s_SetWordWatchRequestBody = z.object({
@@ -1486,6 +1491,7 @@ export const s_UpdateAdminContentRequestRequestBody = z.object({
   declineReason: z.string().max(500).nullable().optional(),
   mediaId: z.string().max(32).nullable().optional(),
   dismissDuplicate: PermissiveBoolean.optional(),
+  notify: PermissiveBoolean.optional().default(true),
 });
 
 export const s_MergeAdminContentRequestRequestBody = z.object({ intoId: z.string() });

@@ -5,6 +5,7 @@ import type {
   GetContentRequestAllowance,
   ListContentRequests,
   ListMyContentRequests,
+  PreviewContentRequest,
   UnvoteContentRequest,
   VoteContentRequest,
   WithdrawContentRequest,
@@ -30,6 +31,7 @@ import {
   boostRequest,
   createRequest,
   mergeRequests,
+  previewRequest,
   removeVote,
   toAdminRequestJSON,
   toRequestJSON,
@@ -124,6 +126,11 @@ export const createContentRequest: CreateContentRequest = async ({ body }, respo
   const { request, outcome } = await createRequest(user, body);
   if (outcome === 'created') return respond.with201().body({ request: toRequestJSON(request), outcome });
   return respond.with200().body({ request: toRequestJSON(request), outcome });
+};
+
+export const previewContentRequest: PreviewContentRequest = async ({ body }, respond, req) => {
+  assertUser(req);
+  return respond.with200().body(await previewRequest(body));
 };
 
 export const getContentRequestAllowance: GetContentRequestAllowance = async (_params, respond, req) => {
