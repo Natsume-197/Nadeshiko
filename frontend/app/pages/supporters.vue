@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { mdiPatreon } from '@mdi/js';
-import { PATREON_URL } from '#shared/utils/socialLinks';
+import { mdiArrowDown } from '@mdi/js';
 import { DEFAULT_OG_IMAGE_PATH } from '~/utils/metaTags';
+import { SUPPORT_TIERS } from '~/utils/supportTiers';
 
 const { t } = useI18n();
-const localePath = useLocalePath();
+const { formatUsdWhole } = useFormat();
 
 useSeoMeta({
   title: () => t('supporters.seoTitle'),
@@ -14,56 +14,39 @@ useSeoMeta({
   ogImage: `${useRequestURL().origin}${DEFAULT_OG_IMAGE_PATH}`,
   twitterCard: 'summary_large_image',
 });
+
+const lowestPrice = Math.min(...SUPPORT_TIERS.map((tier) => tier.priceUsd));
 </script>
 
 <template>
-  <div class="-mt-3 pb-20 text-ink">
-    <!-- Nadeshiko's Haruhi banner: crisp artwork with only a gentle left-side scrim for text legibility. -->
-    <section
-      class="relative flex min-h-[16rem] items-center overflow-hidden border-b border-hairline bg-[#161214] px-4 py-10 text-white md:min-h-[17.5rem] md:py-12"
-    >
-      <div class="supporters-banner-image absolute inset-0" aria-hidden="true" />
-      <div class="absolute inset-0 bg-gradient-to-r from-black/55 via-black/20 to-transparent" aria-hidden="true" />
-      <div class="nd-page relative">
-        <h1 class="max-w-3xl text-4xl font-black leading-[1.04] tracking-tight text-white drop-shadow-sm md:text-5xl">
-          {{ t('supporters.title') }}
-        </h1>
-        <p class="mt-4 max-w-xl text-base leading-relaxed text-white/90 drop-shadow-sm md:text-lg">
-          {{ t('supporters.intro') }}
-        </p>
-        <div class="mt-6 flex flex-wrap gap-3">
-          <a
-            :href="PATREON_URL"
-            target="_blank"
-            rel="noopener"
-            data-testid="supporters-hero-patreon-cta"
-            class="inline-flex h-10 items-center gap-2 rounded-lg bg-[#ff424d] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#ff5962]"
-          >
-            <UiBaseIcon :path="mdiPatreon" size="18" /> {{ t('supporters.support') }}
-          </a>
-          <NuxtLink
-            :to="localePath('/requests')"
-            data-testid="supporters-requests-cta"
-            class="inline-flex h-10 items-center justify-center rounded-lg border border-white/25 bg-white/10 px-5 text-sm font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/20"
-          >
-            {{ t('supporters.proposeCta') }}
-          </NuxtLink>
-        </div>
+  <div class="pb-20 text-ink">
+    <!-- Hook: headline, the starting price and one way down to the tiers. -->
+    <section class="nd-page-narrow px-4 pb-14 pt-10 text-center md:px-0 md:pt-14">
+      <!-- biome-ignore lint/a11y/noHeaderScope: vue-i18n scope, not a table header -->
+      <i18n-t keypath="supporters.headline" tag="h1" scope="global" class="mx-auto max-w-3xl text-3xl font-black leading-[1.1] tracking-tight text-ink md:text-[2.75rem]">
+        <template #accent>
+          <span class="text-brand">{{ t('supporters.headlineAccent') }}</span>
+        </template>
+      </i18n-t>
+      <p class="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-ink-muted md:text-base">
+        {{ t('supporters.intro') }}
+      </p>
+      <div class="mt-7 flex flex-wrap items-center justify-center gap-3">
+        <span class="text-sm text-ink-muted">{{ t('supporters.fromPrice', { price: formatUsdWhole(lowestPrice) }) }}</span>
+        <a
+          href="#support"
+          data-testid="supporters-see-tiers"
+          class="inline-flex h-10 items-center gap-1.5 rounded-lg bg-brand-solid px-5 text-sm font-semibold text-on-accent transition-colors hover:bg-brand-hover"
+        >
+          {{ t('supporters.seeTiers') }} <UiBaseIcon :path="mdiArrowDown" size="16" />
+        </a>
       </div>
     </section>
 
-    <main class="nd-page px-4 pt-8 md:px-0">
+    <main class="nd-page-narrow space-y-20 px-4 md:px-0">
+      <!-- What you get comes before the price. -->
+      <SupportSharedPerks />
       <SupportTiers />
     </main>
   </div>
 </template>
-
-<style scoped>
-.supporters-banner-image {
-  background-image: url('/assets/supporters-haruhi.webp');
-  background-position: center 82%;
-  background-size: cover;
-  filter: brightness(82%);
-  opacity: 0.78;
-}
-</style>

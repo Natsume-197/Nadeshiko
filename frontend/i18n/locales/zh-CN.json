@@ -1654,10 +1654,16 @@
   "supporters": {
     "seoTitle": "支持者 | Nadeshiko",
     "seoDescription": "在 Patreon 上支持 Nadeshiko，了解每个档位的回馈，以及即将加入的作品和功能。",
-    "title": "支持者",
+    "headline": "支持 Nadeshiko，帮助它{accent}",
+    "headlineAccent": "持续成长",
+    "note": {
+      "eyebrow": "开发者的话",
+      "title": "Nadeshiko 由一个人运营",
+      "body": "Nadeshiko 由我一个人运营。你的支持用于支付服务器和存储费用，也让我有时间添加新作品、修复问题、开发新工具。"
+    },
     "intro": "句子搜索、音频、词卡和 Anki 导出永久免费。赞助者的支持用于维持服务器并让 Nadeshiko 持续成长。",
-    "support": "支持 Nadeshiko",
-    "proposeCta": "请求作品"
+    "fromPrice": "每月 {price} 起",
+    "seeTiers": "查看档位"
   },
   "feedback": {
     "open": "意见反馈",
@@ -1750,7 +1756,8 @@
       "nadeshiko": "最高支持档位，助力收录更多作品并提供最高额度。"
     },
     "tiersIntro": "选择适合你的档位。你可以随时在 Patreon 上更改或取消。",
-    "everythingBadge": "全部包含",
+    "tiersHeadline": "选择你的{accent}",
+    "tiersHeadlineAccent": "档位",
     "chooseTier": "选择{tier}",
     "tiers": {
       "seed": "Seed",
@@ -1765,16 +1772,25 @@
       "requestBoosts": "每月 {count} 次请求助推"
     },
     "shared": {
-      "title": "所有档位均包含",
-      "dictionaries": "{patron} 本自定义词典（免费：{free} 本）",
-      "openRequests": "{patron} 个进行中的请求（免费：{free} 个）",
+      "headline": "{accent}均包含",
+      "headlineAccent": "所有档位",
+      "dictionaries": "自定义词典",
+      "openRequests": "进行中的请求",
       "spoilerGuard": "按你的动画列表逐集防剧透",
       "hidePlanning": "在搜索中隐藏想看",
       "autoSync": "每日自动同步你的动画列表",
       "customLists": "用 AniList 自定义列表筛选"
     },
+    "limits": {
+      "headline": "更高的{accent}",
+      "headlineAccent": "上限",
+      "free": "免费",
+      "api": "每月 API 请求",
+      "boosts": "每月请求助推"
+    },
     "faq": {
-      "title": "常见问题",
+      "headline": "常见{accent}",
+      "headlineAccent": "问题",
       "cancel": {
         "q": "取消赞助后会怎样？",
         "a": "福利随会员资格一同结束，账户恢复为每月 {count} 次 API 请求的免费上限。你创建的自定义主题会保留，再次赞助后即可恢复。"

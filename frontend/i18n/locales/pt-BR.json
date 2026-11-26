@@ -1654,10 +1654,16 @@
   "supporters": {
     "seoTitle": "Apoiadores | Nadeshiko",
     "seoDescription": "Apoie o Nadeshiko no Patreon, veja o que cada nível oferece e quais títulos e recursos vêm por aí.",
-    "title": "Apoiadores",
+    "headline": "Apoie o Nadeshiko e ajude-o a continuar {accent}",
+    "headlineAccent": "crescendo",
+    "note": {
+      "eyebrow": "Um recado do desenvolvedor",
+      "title": "O Nadeshiko é um projeto de uma pessoa só",
+      "body": "Eu cuido do Nadeshiko por conta própria. Seu apoio paga os servidores e o armazenamento, e me dá tempo para adicionar títulos, corrigir bugs e criar novas ferramentas."
+    },
     "intro": "Busca, áudio, cartões e exportação Anki são grátis para sempre. Os apoiadores mantêm os servidores no ar e ajudam o Nadeshiko a crescer.",
-    "support": "Apoiar o Nadeshiko",
-    "proposeCta": "Pedir um título"
+    "fromPrice": "A partir de {price} por mês",
+    "seeTiers": "Ver níveis"
   },
   "feedback": {
     "open": "Feedback",
@@ -1750,7 +1756,8 @@
       "nadeshiko": "Nosso maior nível de apoio para ampliar o catálogo e oferecer os maiores limites."
     },
     "tiersIntro": "Escolha o que combina com você. Dá para mudar ou cancelar no Patreon quando quiser.",
-    "everythingBadge": "Tudo incluído",
+    "tiersHeadline": "Escolha seu {accent}",
+    "tiersHeadlineAccent": "nível",
     "chooseTier": "Escolher {tier}",
     "tiers": {
       "seed": "Seed",
@@ -1765,16 +1772,25 @@
       "requestBoosts": "{count} boost de pedido por mês | {count} boosts de pedidos por mês"
     },
     "shared": {
-      "title": "Todos os níveis incluem",
-      "dictionaries": "{patron} dicionários próprios (grátis: {free})",
-      "openRequests": "{patron} pedidos abertos (grátis: {free})",
+      "headline": "Incluído em {accent}",
+      "headlineAccent": "todos os níveis",
+      "dictionaries": "Dicionários próprios",
+      "openRequests": "Pedidos abertos",
       "spoilerGuard": "Antispoiler por episódio a partir da sua lista de anime",
       "hidePlanning": "Ocultar Planejo assistir das buscas",
       "autoSync": "Sincronização automática diária da sua lista de anime",
       "customLists": "Listas personalizadas do AniList como filtro"
     },
+    "limits": {
+      "headline": "Limites mais {accent}",
+      "headlineAccent": "altos",
+      "free": "Grátis",
+      "api": "Solicitações à API por mês",
+      "boosts": "Boosts de pedidos por mês"
+    },
     "faq": {
-      "title": "Perguntas",
+      "headline": "Perguntas {accent}",
+      "headlineAccent": "frequentes",
       "cancel": {
         "q": "O que acontece se eu cancelar?",
         "a": "Os extras terminam junto com a assinatura, e sua conta volta ao limite gratuito de {count} solicitações à API por mês. Um tema personalizado que você criou fica salvo e volta se você apoiar de novo."

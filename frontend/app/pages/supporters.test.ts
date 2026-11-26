@@ -3,12 +3,15 @@ import { mount, flushPromises } from '@vue/test-utils';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { ref } from 'vue';
 
-vi.stubGlobal('useI18n', () => ({ t: (k: string) => k, locale: ref('en') }));
+vi.stubGlobal('useI18n', () => ({
+  t: (k: string, p?: Record<string, unknown>) => (p ? `${k}(${JSON.stringify(p)})` : k),
+  locale: ref('en'),
+}));
+vi.stubGlobal('useFormat', () => ({ formatUsdWhole: (n: number) => `$${n}` }));
 vi.stubGlobal('useLocalePath', () => (p: string) => `/en${p}`);
 vi.stubGlobal('useRequestURL', () => new URL('https://nadeshiko.test/supporters'));
 vi.stubGlobal('useSeoMeta', vi.fn());
 
-import { PATREON_URL } from '#shared/utils/socialLinks';
 import SupportersPage from './supporters.vue';
 
 const mounted: { unmount: () => void }[] = [];
@@ -18,9 +21,11 @@ async function render() {
     attachTo: document.body,
     global: {
       stubs: {
+        SupportSharedPerks: { template: '<div data-testid="perks-stub" />' },
         SupportTiers: { template: '<div data-testid="tiers-stub" />' },
         UiBaseIcon: true,
         NuxtLink: { props: ['to'], template: '<a :href="to"><slot /></a>' },
+        'i18n-t': { props: ['keypath'], template: '<span>{{ keypath }}<slot name="accent" /></span>' },
       },
     },
   });
@@ -34,11 +39,17 @@ afterEach(() => {
 });
 
 describe('Supporters page', () => {
-  test('renders the tiers section and links hero CTAs to Patreon and content requests', async () => {
+  test('shows what you get before the tiers', async () => {
+    const html = (await render()).html();
+
+    expect(html.indexOf('perks-stub')).toBeGreaterThan(-1);
+    expect(html.indexOf('perks-stub')).toBeLessThan(html.indexOf('tiers-stub'));
+  });
+
+  test('the hero states the lowest price and links down to the tiers', async () => {
     const wrapper = await render();
 
-    expect(wrapper.find('[data-testid="tiers-stub"]').exists()).toBe(true);
-    expect(wrapper.get('[data-testid="supporters-hero-patreon-cta"]').attributes('href')).toBe(PATREON_URL);
-    expect(wrapper.get('[data-testid="supporters-requests-cta"]').attributes('href')).toBe('/en/requests');
+    expect(wrapper.text()).toContain('supporters.fromPrice({"price":"$5"})');
+    expect(wrapper.get('[data-testid="supporters-see-tiers"]').attributes('href')).toBe('#support');
   });
 });

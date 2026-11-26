@@ -1654,10 +1654,16 @@
   "supporters": {
     "seoTitle": "サポーター | Nadeshiko",
     "seoDescription": "PatreonでNadeshikoを支援。各ティアの特典と、これから追加される作品や機能を紹介します。",
-    "title": "サポーター",
+    "headline": "Nadeshikoを応援して、{accent}",
+    "headlineAccent": "これからの成長を支えよう",
+    "note": {
+      "eyebrow": "開発者より",
+      "title": "Nadeshikoは個人で運営しています",
+      "body": "Nadeshikoは私一人で運営しています。ご支援はサーバーとストレージの費用になり、作品の追加、バグ修正、新機能の開発に使う時間になります。"
+    },
     "intro": "例文検索・音声・単語カード・Anki出力はずっと無料。ご支援はサーバー維持と継続的な開発に使われます。",
-    "support": "Nadeshikoを支援する",
-    "proposeCta": "作品をリクエスト"
+    "fromPrice": "月額 {price} から",
+    "seeTiers": "プランを見る"
   },
   "feedback": {
     "open": "フィードバック",
@@ -1750,7 +1756,8 @@
       "nadeshiko": "作品の追加と開発を最も力強く支える最上位プランです。"
     },
     "tiersIntro": "自分に合ったティアを選んでください。Patreonでいつでも変更、解約できます。",
-    "everythingBadge": "すべて込み",
+    "tiersHeadline": "{accent}を選ぶ",
+    "tiersHeadlineAccent": "プラン",
     "chooseTier": "{tier}を選ぶ",
     "tiers": {
       "seed": "Seed",
@@ -1765,16 +1772,25 @@
       "requestBoosts": "毎月{count}回のリクエストブースト"
     },
     "shared": {
-      "title": "すべてのプランに含まれるもの",
-      "dictionaries": "自分の辞書 {patron} 個（無料: {free} 個）",
-      "openRequests": "進行中のリクエスト {patron} 件（無料: {free} 件）",
+      "headline": "{accent}に含まれるもの",
+      "headlineAccent": "すべてのプラン",
+      "dictionaries": "自分の辞書",
+      "openRequests": "進行中のリクエスト",
       "spoilerGuard": "アニメリストに基づく話数単位のネタバレ防止",
       "hidePlanning": "視聴予定を検索から隠す",
       "autoSync": "アニメリストの毎日の自動同期",
       "customLists": "AniList のカスタムリストで絞り込み"
     },
+    "limits": {
+      "headline": "{accent}が上がる",
+      "headlineAccent": "上限",
+      "free": "無料",
+      "api": "月間 API リクエスト",
+      "boosts": "月間リクエストブースト"
+    },
     "faq": {
-      "title": "よくある質問",
+      "headline": "よくある{accent}",
+      "headlineAccent": "質問",
       "cancel": {
         "q": "支援をやめるとどうなりますか？",
         "a": "特典はメンバーシップの終了とともに終わり、アカウントは月 {count} 件の無料の API 上限に戻ります。作成したカスタムテーマは保存され、再び支援すると戻ります。"

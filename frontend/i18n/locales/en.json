@@ -1654,10 +1654,16 @@
   "supporters": {
     "seoTitle": "Supporters | Nadeshiko",
     "seoDescription": "Support Nadeshiko on Patreon, see what each tier gives back, and see which titles and features are coming next.",
-    "title": "Supporters",
+    "headline": "Support Nadeshiko and help it keep {accent}",
+    "headlineAccent": "growing",
+    "note": {
+      "eyebrow": "A note from the dev",
+      "title": "Nadeshiko is a one-person project",
+      "body": "I run Nadeshiko on my own. Your support pays for the servers and storage, and gives me time to add new titles, fix bugs and build new tools."
+    },
     "intro": "Search, audio, word cards, and Anki export stay free forever. Supporters keep the servers running and help Nadeshiko grow.",
-    "support": "Support Nadeshiko",
-    "proposeCta": "Request a title"
+    "fromPrice": "From {price} a month",
+    "seeTiers": "See tiers"
   },
   "feedback": {
     "open": "Feedback",
@@ -1750,7 +1756,8 @@
       "nadeshiko": "Our highest tier — fuels more titles, faster growth, and our largest limits."
     },
     "tiersIntro": "Pick the one that fits. You can change or cancel it on Patreon at any time.",
-    "everythingBadge": "Everything included",
+    "tiersHeadline": "Choose your {accent}",
+    "tiersHeadlineAccent": "tier",
     "chooseTier": "Choose {tier}",
     "tiers": {
       "seed": "Seed",
@@ -1765,16 +1772,25 @@
       "requestBoosts": "{count} request boost a month | {count} request boosts a month"
     },
     "shared": {
-      "title": "Every tier also includes",
-      "dictionaries": "{patron} custom dictionaries (free: {free})",
-      "openRequests": "{patron} open requests (free: {free})",
+      "headline": "Included in {accent}",
+      "headlineAccent": "every tier",
+      "dictionaries": "Custom dictionaries",
+      "openRequests": "Open requests",
       "spoilerGuard": "Episode anti-spoilers from your anime list",
       "hidePlanning": "Hide Plan to Watch from searches",
       "autoSync": "Daily automatic sync of your anime list",
       "customLists": "AniList custom lists as search filters"
     },
+    "limits": {
+      "headline": "Higher {accent}",
+      "headlineAccent": "limits",
+      "free": "Free",
+      "api": "API requests a month",
+      "boosts": "Request boosts a month"
+    },
     "faq": {
-      "title": "Questions",
+      "headline": "Common {accent}",
+      "headlineAccent": "questions",
       "cancel": {
         "q": "What happens if I cancel?",
         "a": "The extras end with the membership, and your account goes back to the free limit of {count} API requests a month. A custom theme you made is kept, and comes back if you join again."

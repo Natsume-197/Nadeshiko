@@ -1654,10 +1654,16 @@
   "supporters": {
     "seoTitle": "Pendukung | Nadeshiko",
     "seoDescription": "Dukung Nadeshiko di Patreon, lihat apa yang diberikan setiap tingkatan, dan judul serta fitur apa yang akan datang.",
-    "title": "Pendukung",
+    "headline": "Dukung Nadeshiko dan bantu ia terus {accent}",
+    "headlineAccent": "berkembang",
+    "note": {
+      "eyebrow": "Catatan dari pengembang",
+      "title": "Nadeshiko dikelola satu orang",
+      "body": "Saya mengelola Nadeshiko sendiri. Dukunganmu membayar server dan penyimpanan, serta memberi saya waktu untuk menambah judul, memperbaiki bug, dan membuat alat baru."
+    },
     "intro": "Pencarian, audio, kartu kata, dan ekspor Anki gratis selamanya. Pendukung menjaga server tetap hidup dan membantu Nadeshiko berkembang.",
-    "support": "Dukung Nadeshiko",
-    "proposeCta": "Minta judul"
+    "fromPrice": "Mulai {price} per bulan",
+    "seeTiers": "Lihat tingkat"
   },
   "feedback": {
     "open": "Masukan",
@@ -1750,7 +1756,8 @@
       "nadeshiko": "Tingkat dukungan tertinggi untuk katalog lebih luas dan batas terbesar."
     },
     "tiersIntro": "Pilih yang paling cocok. Kamu bisa mengubah atau membatalkannya di Patreon kapan saja.",
-    "everythingBadge": "Semua termasuk",
+    "tiersHeadline": "Pilih {accent}",
+    "tiersHeadlineAccent": "tingkatmu",
     "chooseTier": "Pilih {tier}",
     "tiers": {
       "seed": "Seed",
@@ -1765,16 +1772,25 @@
       "requestBoosts": "{count} boost permintaan per bulan"
     },
     "shared": {
-      "title": "Semua tingkat juga mendapat",
-      "dictionaries": "{patron} kamus sendiri (gratis: {free})",
-      "openRequests": "{patron} permintaan terbuka (gratis: {free})",
+      "headline": "Termasuk di {accent}",
+      "headlineAccent": "semua tingkat",
+      "dictionaries": "Kamus sendiri",
+      "openRequests": "Permintaan terbuka",
       "spoilerGuard": "Anti-spoiler per episode dari daftar animemu",
       "hidePlanning": "Sembunyikan Rencana Ditonton dari pencarian",
       "autoSync": "Sinkronisasi otomatis harian daftar animemu",
       "customLists": "Daftar kustom AniList sebagai filter"
     },
+    "limits": {
+      "headline": "Batas lebih {accent}",
+      "headlineAccent": "tinggi",
+      "free": "Gratis",
+      "api": "Permintaan API per bulan",
+      "boosts": "Boost permintaan per bulan"
+    },
     "faq": {
-      "title": "Pertanyaan",
+      "headline": "Pertanyaan {accent}",
+      "headlineAccent": "umum",
       "cancel": {
         "q": "Apa yang terjadi jika aku berhenti?",
         "a": "Bonus berakhir bersama keanggotaan, dan akunmu kembali ke batas gratis {count} permintaan API per bulan. Tema kustom yang kamu buat tetap disimpan dan kembali jika kamu bergabung lagi."
