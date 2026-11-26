@@ -1423,6 +1423,72 @@ export type DictionaryKanji = {
 };
 
 /**
+ * One kanji from the authenticated reader's own kanji dictionaries (Yomitan `kanji_bank` and `kanji_meta_bank`, and
+ * kanji dictionaries shipped as term dictionaries), in their stack order. Empty for a reader without any.
+ *
+ */
+export type DictionaryKanjiCustom = {
+    entries: Array<{
+        dictionary: string;
+        dictionaryName: string;
+        onyomi?: Array<string>;
+        kunyomi?: Array<string>;
+        meanings?: Array<string>;
+        tags: Array<{
+            category: 'partOfSpeech' | 'misc' | 'field' | 'dialect';
+            code: string;
+            label: string;
+        }>;
+        /**
+         * The dictionary's own figures for the kanji (stroke count, grade, index numbers...).
+         */
+        stats?: Array<{
+            code: string;
+            label: string;
+            category: string;
+            value: string;
+        }>;
+        /**
+         * The article of a kanji dictionary shipped as a term dictionary, in the word card's shape.
+         */
+        senses?: Array<{
+            position: number;
+            definitions: Array<{
+                lang: 'en' | 'es' | 'ja';
+                text: string;
+                /**
+                 * Sanitized Yomitan structured-content AST.
+                 */
+                structuredContent?: unknown;
+            }>;
+            tags: Array<{
+                category: 'partOfSpeech' | 'misc' | 'field' | 'dialect';
+                code: string;
+                label: string;
+            }>;
+            notes?: Array<string>;
+        }>;
+    }>;
+    /**
+     * Ranks from the reader's kanji frequency dictionaries.
+     */
+    frequencies: Array<{
+        dictionary: string;
+        dictionaryName: string;
+        value: number;
+        displayValue: string;
+    }>;
+    /**
+     * Fingerprint of the reader's custom dictionary stack.
+     */
+    stackFingerprint?: string;
+    /**
+     * True when the answer lacks one of the reader's enabled dictionaries, still indexing or still being fetched. Such an answer must not be cached.
+     */
+    customDictionariesPending?: boolean;
+};
+
+/**
  * Coverage statistics for a frequency tier
  */
 export type WordCoverageTier = {
@@ -2294,6 +2360,20 @@ export type UserDictionary = {
     termCount: number;
     frequencyCount: number;
     pitchCount: number;
+    /**
+     * Holds kanji entries (Yomitan `kanji_bank`) for the kanji card.
+     */
+    hasKanji: boolean;
+    /**
+     * Holds kanji frequencies (Yomitan `kanji_meta_bank`).
+     */
+    hasKanjiFrequency: boolean;
+    /**
+     * A kanji dictionary shipped as a term dictionary (at least 10% single-kanji headwords): its single-kanji entries answer the kanji card too.
+     */
+    hasKanjiTerms: boolean;
+    kanjiCount: number;
+    kanjiFrequencyCount: number;
     zipBytes: number;
     sqliteBytes: number;
     status: 'processing' | 'ready' | 'failed';
@@ -4889,6 +4969,48 @@ export type GetDictionaryKanjiResponses = {
 };
 
 export type GetDictionaryKanjiResponse = GetDictionaryKanjiResponses[keyof GetDictionaryKanjiResponses];
+
+export type GetDictionaryKanjiCustomData = {
+    body?: never;
+    path: {
+        /**
+         * The kanji, one character (two UTF-16 units outside the BMP).
+         */
+        character: string;
+    };
+    query?: never;
+    url: '/v1/dictionary/kanji/{character}/custom';
+};
+
+export type GetDictionaryKanjiCustomErrors = {
+    /**
+     * Bad Request
+     */
+    400: Error400;
+    /**
+     * Forbidden
+     */
+    403: Error403;
+    /**
+     * Too Many Requests. The response body indicates whether the request was rejected due to per-minute rate limiting or monthly quota exhaustion.
+     */
+    429: Error429;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type GetDictionaryKanjiCustomError = GetDictionaryKanjiCustomErrors[keyof GetDictionaryKanjiCustomErrors];
+
+export type GetDictionaryKanjiCustomResponses = {
+    /**
+     * OK
+     */
+    200: DictionaryKanjiCustom;
+};
+
+export type GetDictionaryKanjiCustomResponse = GetDictionaryKanjiCustomResponses[keyof GetDictionaryKanjiCustomResponses];
 
 export type GetStatsOverviewData = {
     body?: never;

@@ -577,6 +577,18 @@ onBeforeUnmount(stopPolling);
                   >
                     {{ t('accountSettings.dictionaries.bankPitch') }}
                   </span>
+                  <span
+                    v-if="row.dict.hasKanji || row.dict.hasKanjiTerms"
+                    class="rounded bg-amber-500/15 px-1.5 py-0.5 text-[0.65rem] font-medium text-amber-600 dark:text-amber-300"
+                  >
+                    {{ t('accountSettings.dictionaries.bankKanji') }}
+                  </span>
+                  <span
+                    v-if="row.dict.hasKanjiFrequency"
+                    class="rounded bg-teal-500/15 px-1.5 py-0.5 text-[0.65rem] font-medium text-teal-600 dark:text-teal-300"
+                  >
+                    {{ t('accountSettings.dictionaries.bankKanjiFrequency') }}
+                  </span>
                 </template>
               </div>
 
@@ -592,6 +604,16 @@ onBeforeUnmount(stopPolling);
                 </span>
                 <span v-if="row.dict.pitchCount > 0">
                   {{ t('accountSettings.dictionaries.pitchCount', { count: formatNumber(row.dict.pitchCount) }) }}
+                </span>
+                <span v-if="row.dict.kanjiCount > 0">
+                  {{ t('accountSettings.dictionaries.kanjiCount', { count: formatNumber(row.dict.kanjiCount) }) }}
+                </span>
+                <span v-if="row.dict.kanjiFrequencyCount > 0">
+                  {{
+                    t('accountSettings.dictionaries.kanjiFrequencyCount', {
+                      count: formatNumber(row.dict.kanjiFrequencyCount),
+                    })
+                  }}
                 </span>
                 <span aria-hidden="true" class="text-ink-faint">&middot;</span>
                 <span>{{ formatMb(row.dict.zipBytes) }}</span>

@@ -16,6 +16,7 @@ import type { NormalizedGlossaryItem } from './structuredContent';
  *
  * Reads every artifact format: version 1 stored the glossary as JSON text (`glossary_json`), version 2 as a tagged,
  * usually deflated BLOB per row (`glossary`), version 3 in deflated blocks (`glossary_block`, see `glossaryCodec.ts`).
+ * Version 4 added the `kanji` and `kanji_meta` tables; older files have none, and their kanji lookups find nothing.
  */
 
 type GlossaryFormat = 'json' | 'blob' | 'block';
@@ -91,6 +92,15 @@ export interface CustomPitchRow {
   }>;
 }
 
+export interface CustomKanjiRow {
+  character: string;
+  onyomi: string[];
+  kunyomi: string[];
+  tags: string;
+  meanings: string[];
+  stats: Record<string, string>;
+}
+
 interface PooledHandle {
   db: DatabaseSync;
   filePath: string;
@@ -101,6 +111,9 @@ interface PooledHandle {
   byExprHira: StatementSync;
   metaByExpr: StatementSync;
   metaByExprHira: StatementSync;
+  /** Version 4 and later: null for older files, which have no kanji tables. */
+  kanjiByChar: StatementSync | null;
+  kanjiMetaByChar: StatementSync | null;
   tags: Map<string, CustomTagMeta>;
 }
 
@@ -198,6 +211,12 @@ function buildHandle(db: DatabaseSync, filePath: string): PooledHandle {
   } catch {
     // Older/minimal DBs without tag_meta still work cleanly.
   }
+  const hasKanjiTables =
+    (
+      db.prepare("SELECT count(*) AS n FROM sqlite_master WHERE type = 'table' AND name = 'kanji'").get() as {
+        n: number;
+      }
+    ).n > 0;
 
   return {
     db,
@@ -232,6 +251,18 @@ function buildHandle(db: DatabaseSync, filePath: string): PooledHandle {
       ORDER BY id ASC
       LIMIT 30
     `),
+    kanjiByChar: hasKanjiTables
+      ? db.prepare(`
+          SELECT character, onyomi, kunyomi, tags, meanings_json, stats_json
+          FROM kanji
+          WHERE character = ?
+          ORDER BY id ASC
+          LIMIT 5
+        `)
+      : null,
+    kanjiMetaByChar: hasKanjiTables
+      ? db.prepare('SELECT data_json FROM kanji_meta WHERE character = ? AND mode = ? ORDER BY id ASC LIMIT 5')
+      : null,
     tags,
   };
 }
@@ -417,6 +448,55 @@ export function queryArtifactPitches(
         out.push({ expression: row.expression, reading: row.reading, pitches });
       }
     } catch {}
+  }
+  return out;
+}
+
+function parseJson<T>(text: string, fallback: T): T {
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+/** One artifact's `kanji_bank` rows for `character`, and its tag definitions (for tags and stat names). */
+export function queryArtifactKanji(
+  filePath: string,
+  character: string,
+): { rows: CustomKanjiRow[]; tags: Map<string, CustomTagMeta> } {
+  const handle = openHandle(filePath);
+  if (!handle?.kanjiByChar) return { rows: [], tags: new Map() };
+  const raw = handle.kanjiByChar.all(character) as Array<{
+    character: string;
+    onyomi: string;
+    kunyomi: string;
+    tags: string;
+    meanings_json: string;
+    stats_json: string;
+  }>;
+  const rows = raw.map((row) => ({
+    character: row.character,
+    onyomi: row.onyomi ? row.onyomi.split(' ') : [],
+    kunyomi: row.kunyomi ? row.kunyomi.split(' ') : [],
+    tags: row.tags,
+    meanings: parseJson<string[]>(row.meanings_json, []),
+    stats: parseJson<Record<string, string>>(row.stats_json, {}),
+  }));
+  return { rows, tags: handle.tags };
+}
+
+/** One artifact's `kanji_meta_bank` frequencies for `character`. */
+export function queryArtifactKanjiFrequencies(
+  filePath: string,
+  character: string,
+): Array<{ value: number | null; displayValue: string }> {
+  const handle = openHandle(filePath);
+  if (!handle?.kanjiMetaByChar) return [];
+  const out: Array<{ value: number | null; displayValue: string }> = [];
+  for (const row of handle.kanjiMetaByChar.all(character, 'freq') as Array<{ data_json: string }>) {
+    const parsed = parseJson<{ value?: number | null; displayValue?: string } | null>(row.data_json, null);
+    if (parsed?.displayValue) out.push({ value: parsed.value ?? null, displayValue: parsed.displayValue });
   }
   return out;
 }

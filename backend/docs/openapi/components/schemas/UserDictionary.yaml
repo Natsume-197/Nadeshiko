@@ -15,6 +15,11 @@ required:
   - termCount
   - frequencyCount
   - pitchCount
+  - hasKanji
+  - hasKanjiFrequency
+  - hasKanjiTerms
+  - kanjiCount
+  - kanjiFrequencyCount
   - zipBytes
   - sqliteBytes
   - status
@@ -57,6 +62,21 @@ properties:
   frequencyCount:
     type: integer
   pitchCount:
+    type: integer
+  hasKanji:
+    type: boolean
+    description: Holds kanji entries (Yomitan `kanji_bank`) for the kanji card.
+  hasKanjiFrequency:
+    type: boolean
+    description: Holds kanji frequencies (Yomitan `kanji_meta_bank`).
+  hasKanjiTerms:
+    type: boolean
+    description: >-
+      A kanji dictionary shipped as a term dictionary (at least 10% single-kanji headwords): its single-kanji entries
+      answer the kanji card too.
+  kanjiCount:
+    type: integer
+  kanjiFrequencyCount:
     type: integer
   zipBytes:
     type: integer

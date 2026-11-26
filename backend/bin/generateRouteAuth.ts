@@ -38,6 +38,9 @@ export const INTENTIONALLY_PUBLIC_OPERATIONS = new Set<string>([
   // The word card's kanji view (task 44), same reasons as the word lookup above.
   'getDictionaryKanji',
   'getDictionaryKanjiIndex',
+  // The reader's own kanji dictionaries on that view: the session is optional (an anonymous reader gets an empty
+  // answer), and the route is server-only like the two above.
+  'getDictionaryKanjiCustom',
 ]);
 
 /** A security scheme without scopes is malformed; refusing generation prevents a weaker guard from being emitted

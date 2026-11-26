@@ -30,6 +30,7 @@ export type CoveredWordsUpdateResponseOutput = z.output<typeof schemas.s_Covered
 export type CreateFeedbackRequestOutput = z.output<typeof schemas.s_CreateFeedbackRequest>;
 export type CursorPaginationOutput = z.output<typeof schemas.s_CursorPagination>;
 export type DictionaryCandidateOutput = z.output<typeof schemas.s_DictionaryCandidate>;
+export type DictionaryKanjiCustomOutput = z.output<typeof schemas.s_DictionaryKanjiCustom>;
 export type DictionaryKanjiRelatedOutput = z.output<typeof schemas.s_DictionaryKanjiRelated>;
 export type DictionaryKanjiWordRefOutput = z.output<typeof schemas.s_DictionaryKanjiWordRef>;
 export type EpisodeOutput = z.output<typeof schemas.s_Episode>;

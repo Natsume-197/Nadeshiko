@@ -6,6 +6,8 @@
 
 import { apiErrorStatus } from '~/utils/apiError';
 import { lruRecall, lruRemember } from '~/utils/lruMap';
+import type { DictionarySense } from '~/utils/wordCard';
+import { readerStack } from '~/utils/wordLookup';
 
 export interface KanjiCardComponent {
   character: string;
@@ -125,6 +127,70 @@ export function fetchKanji(character: string, locale: 'en' | 'es'): Promise<Kanj
   return request;
 }
 
+/** One kanji from one of the reader's own dictionaries (task 48): a Yomitan kanji entry, or the article of a kanji
+ *  dictionary shipped as a term dictionary (`senses`). */
+export interface CustomKanjiEntry {
+  dictionary: string;
+  dictionaryName: string;
+  onyomi?: string[];
+  kunyomi?: string[];
+  meanings?: string[];
+  tags: Array<{ category: string; code: string; label: string }>;
+  stats?: Array<{ code: string; label: string; category: string; value: string }>;
+  senses?: DictionarySense[];
+}
+
+export interface CustomKanjiFrequency {
+  dictionary: string;
+  dictionaryName: string;
+  value: number | null;
+  displayValue: string;
+}
+
+export interface CustomKanjiData {
+  entries: CustomKanjiEntry[];
+  frequencies: CustomKanjiFrequency[];
+}
+
+const customResolved = new Map<string, CustomKanjiData>();
+const customInFlight = new Map<string, Promise<CustomKanjiData | null>>();
+
+/** The reader's own kanji dictionaries' part of the card, if this tab already has it. */
+export function peekCustomKanji(character: string): CustomKanjiData | undefined {
+  const stack = readerStack();
+  return stack ? lruRecall(customResolved, `${character}:${stack}`) : undefined;
+}
+
+/**
+ * The reader's own kanji dictionaries' part of the card, through `/api/dictionary/kanji/:character/custom`; `null`
+ * without a custom stack or when the request fails (the card then shows only ours). Keyed by the stack, so a change
+ * of dictionaries asks again; an answer still missing a dictionary is not kept.
+ */
+export function fetchCustomKanji(character: string): Promise<CustomKanjiData | null> {
+  const stack = readerStack();
+  if (!stack) return Promise.resolve(null);
+  const key = `${character}:${stack}`;
+  const answered = lruRecall(customResolved, key);
+  if (answered) return Promise.resolve(answered);
+  const pending = customInFlight.get(key);
+  if (pending) return pending;
+
+  const request = $fetch<CustomKanjiData & { pending?: boolean }>(
+    `/api/dictionary/kanji/${encodeURIComponent(character)}/custom`,
+    // `stack` only keys the browser's HTTP cache; the server reads the stack from the session.
+    { query: { stack }, timeout: 8000 },
+  )
+    .then((answer): CustomKanjiData => {
+      const data = { entries: answer?.entries ?? [], frequencies: answer?.frequencies ?? [] };
+      return answer?.pending ? data : lruRemember(customResolved, key, data, CACHE_LIMIT);
+    })
+    .catch(() => null)
+    .finally(() => customInFlight.delete(key));
+
+  customInFlight.set(key, request);
+  return request;
+}
+
 /** A kun reading as KANJIDIC2 writes it (`た.べる`, `-ぼん`), split into the kanji's own part and the okurigana,
  * so the view can set the okurigana apart. The `-` that marks a prefix or suffix is kept. */
 export function splitKunReading(reading: string): { stem: string; okurigana: string } {
@@ -142,7 +208,13 @@ export function splitReading(
   return entry.kind === 'kun' ? splitKunReading(reading) : { stem: reading, okurigana: '' };
 }
 
-export const __kanjiLookupTesting = { CACHE_LIMIT, clear: () => resolved.clear() };
+export const __kanjiLookupTesting = {
+  CACHE_LIMIT,
+  clear: () => {
+    resolved.clear();
+    customResolved.clear();
+  },
+};
 
 export interface KanjiBadge {
   id: string;

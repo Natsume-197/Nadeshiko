@@ -84,7 +84,7 @@ import {
   PATRON_MAX_ZIP_BYTES,
   resolveCustomDictionaryQuota,
 } from '@app/services/dictionary/custom/quotas';
-import { enrichCandidatesWithCustomDictionaries } from '@app/services/dictionary/custom/lookup';
+import { customKanjiFor, enrichCandidatesWithCustomDictionaries } from '@app/services/dictionary/custom/lookup';
 import {
   deleteUserDictionary,
   listUserDictionaries,
@@ -347,6 +347,138 @@ describe('enrichCandidatesWithCustomDictionaries', () => {
     ]);
     expect(noBuiltin.candidates).toEqual([]);
     expect(noBuiltin.pending).toBe(true);
+  });
+});
+
+describe('customKanjiFor', () => {
+  const stackEntry = (stackId: string, sortOrder: number, storageKey: string, title: string, flags: object) => ({
+    userDictionaryId: sortOrder + 1,
+    stackId,
+    sortOrder,
+    artifactId: sortOrder + 10,
+    sha256: String(sortOrder).repeat(64),
+    storageKey,
+    title,
+    frequencyMode: null,
+    hasTerms: false,
+    hasFrequency: false,
+    hasPitch: false,
+    hasKanji: false,
+    hasKanjiFrequency: false,
+    hasKanjiTerms: false,
+    ...flags,
+  });
+
+  it('answers empty without kanji dictionaries, and never touches storage', async () => {
+    loadActiveUserDictionaryStack.mockResolvedValue({
+      dictionaries: [stackEntry('custom:1', 0, 'k-terms', 'Terms', { hasTerms: true })],
+      builtinEnabled: true,
+      builtinPosition: 0,
+      stackFingerprint: 'fp',
+      pendingCount: 0,
+    });
+    expect(await customKanjiFor(1, '本')).toEqual({
+      entries: [],
+      frequencies: [],
+      stackFingerprint: 'fp',
+      pending: false,
+    });
+    expect(resolveArtifactsWithin).not.toHaveBeenCalled();
+  });
+
+  it('merges kanji banks, a 漢和辞典 term article and kanji frequencies in stack order', async () => {
+    const dir = makeTempDir();
+    const build = async (name: string, entries: Array<{ name: string; data: string }>) => {
+      const zipPath = join(dir, `${name}.zip`);
+      const sqlitePath = join(dir, `${name}.sqlite`);
+      writeFileSync(zipPath, buildZip(entries));
+      await importYomitanZipToSqlite(zipPath, sqlitePath);
+      return sqlitePath;
+    };
+    const kanjidic = await build('kanjidic', [
+      { name: 'index.json', data: JSON.stringify({ title: 'KANJIDIC', revision: '1', format: 3 }) },
+      {
+        name: 'tag_bank_1.json',
+        data: JSON.stringify([
+          ['jouyou', 'frequent', 0, 'Jōyō kanji', 0],
+          ['strokes', 'misc', 0, 'Stroke count', 0],
+        ]),
+      },
+      {
+        name: 'kanji_bank_1.json',
+        data: JSON.stringify([['本', 'ホン', 'もと', 'jouyou', ['book', 'main'], { strokes: '5' }]]),
+      },
+    ]);
+    const kanwa = await build('kanwa', [
+      { name: 'index.json', data: JSON.stringify({ title: '漢和', revision: '1', format: 3 }) },
+      {
+        name: 'term_bank_1.json',
+        data: JSON.stringify([
+          ['本', '', '', '', 0, ['【本】 ５画 木部'], 0, ''],
+          ['本当', 'ほんとう', '', '', 0, ['まこと'], 0, ''],
+        ]),
+      },
+    ]);
+    const freq = await build('freq', [
+      { name: 'index.json', data: JSON.stringify({ title: 'Aozora', revision: '1', format: 3 }) },
+      { name: 'kanji_meta_bank_1.json', data: JSON.stringify([['本', 'freq', { value: 29, displayValue: '29' }]]) },
+    ]);
+
+    loadActiveUserDictionaryStack.mockResolvedValue({
+      dictionaries: [
+        stackEntry('custom:3', 2, 'k-freq', 'Aozora', { hasKanjiFrequency: true }),
+        stackEntry('custom:2', 1, 'k-kanwa', '漢和', { hasTerms: true, hasKanjiTerms: true }),
+        stackEntry('custom:1', 0, 'k-kanjidic', 'KANJIDIC', { hasKanji: true }),
+      ],
+      builtinEnabled: true,
+      builtinPosition: 0,
+      stackFingerprint: 'fp-kanji',
+      pendingCount: 0,
+    });
+    resolveArtifactsWithin.mockResolvedValue({
+      paths: new Map([
+        ['k-kanjidic', kanjidic],
+        ['k-kanwa', kanwa],
+        ['k-freq', freq],
+      ]),
+      missing: 0,
+    });
+
+    const answer = await customKanjiFor(1, '本');
+    expect(answer.stackFingerprint).toBe('fp-kanji');
+    expect(answer.pending).toBe(false);
+    expect(answer.entries).toEqual([
+      {
+        dictionary: 'custom:1',
+        dictionaryName: 'KANJIDIC',
+        onyomi: ['ホン'],
+        kunyomi: ['もと'],
+        meanings: ['book', 'main'],
+        tags: [{ category: 'misc', code: 'jouyou', label: 'Jōyō kanji' }],
+        stats: [{ code: 'strokes', label: 'Stroke count', category: 'misc', value: '5' }],
+      },
+      {
+        dictionary: 'custom:2',
+        dictionaryName: '漢和',
+        tags: [],
+        senses: [{ position: 0, definitions: [{ lang: 'ja', text: '【本】 ５画 木部' }], tags: [] }],
+      },
+    ]);
+    expect(answer.frequencies).toEqual([
+      { dictionary: 'custom:3', dictionaryName: 'Aozora', value: 29, displayValue: '29' },
+    ]);
+  });
+
+  it('is pending while a kanji dictionary is still on its way', async () => {
+    loadActiveUserDictionaryStack.mockResolvedValue({
+      dictionaries: [stackEntry('custom:1', 0, 'k-cold', 'KANJIDIC', { hasKanji: true })],
+      builtinEnabled: true,
+      builtinPosition: 0,
+      stackFingerprint: 'fp',
+      pendingCount: 0,
+    });
+    resolveArtifactsWithin.mockResolvedValue({ paths: new Map(), missing: 1 });
+    expect(await customKanjiFor(1, '本')).toMatchObject({ entries: [], pending: true });
   });
 });
 

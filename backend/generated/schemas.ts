@@ -271,6 +271,60 @@ export const s_DictionaryCandidate = z.object({
   ),
 });
 
+export const s_DictionaryKanjiCustom = z.object({
+  entries: z.array(
+    z.object({
+      dictionary: z.string(),
+      dictionaryName: z.string(),
+      onyomi: z.array(z.string()).optional(),
+      kunyomi: z.array(z.string()).optional(),
+      meanings: z.array(z.string()).optional(),
+      tags: z.array(
+        z.object({
+          category: z.enum(['partOfSpeech', 'misc', 'field', 'dialect']),
+          code: z.string(),
+          label: z.string(),
+        }),
+      ),
+      stats: z
+        .array(z.object({ code: z.string(), label: z.string(), category: z.string(), value: z.string() }))
+        .optional(),
+      senses: z
+        .array(
+          z.object({
+            position: z.coerce.number(),
+            definitions: z.array(
+              z.object({
+                lang: z.enum(['en', 'es', 'ja']),
+                text: z.string(),
+                structuredContent: z.unknown().optional(),
+              }),
+            ),
+            tags: z.array(
+              z.object({
+                category: z.enum(['partOfSpeech', 'misc', 'field', 'dialect']),
+                code: z.string(),
+                label: z.string(),
+              }),
+            ),
+            notes: z.array(z.string()).optional(),
+          }),
+        )
+        .optional(),
+    }),
+  ),
+  frequencies: z.array(
+    z.object({
+      dictionary: z.string(),
+      dictionaryName: z.string(),
+      value: z.coerce.number().nullable(),
+      displayValue: z.string(),
+    }),
+  ),
+  stackFingerprint: z.string().nullable().optional(),
+  customDictionariesPending: PermissiveBoolean.optional(),
+});
+
 export const s_DictionaryKanjiRelated = z.object({
   character: z.string(),
   reading: z.string().nullable(),
@@ -701,6 +755,11 @@ export const s_UserDictionary = z.object({
   termCount: z.coerce.number(),
   frequencyCount: z.coerce.number(),
   pitchCount: z.coerce.number(),
+  hasKanji: PermissiveBoolean,
+  hasKanjiFrequency: PermissiveBoolean,
+  hasKanjiTerms: PermissiveBoolean,
+  kanjiCount: z.coerce.number(),
+  kanjiFrequencyCount: z.coerce.number(),
   zipBytes: z.coerce.number(),
   sqliteBytes: z.coerce.number(),
   status: z.enum(['processing', 'ready', 'failed']),

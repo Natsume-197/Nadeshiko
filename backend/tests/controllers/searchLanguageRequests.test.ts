@@ -43,6 +43,7 @@ app.use(
     identifyDictionaryWord: (() => undefined) as any,
     getDictionaryKanji: (() => undefined) as any,
     getDictionaryKanjiIndex: (() => undefined) as any,
+    getDictionaryKanjiCustom: (() => undefined) as any,
   }),
 );
 app.use(handleErrors);

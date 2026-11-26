@@ -1,4 +1,9 @@
-import type { GetDictionaryKanji, GetDictionaryKanjiIndex, IdentifyDictionaryWord } from 'generated/routes/search';
+import type {
+  GetDictionaryKanji,
+  GetDictionaryKanjiCustom,
+  GetDictionaryKanjiIndex,
+  IdentifyDictionaryWord,
+} from 'generated/routes/search';
 import { fromNodeHeaders } from 'better-auth/node';
 import { AppDataSource } from '@config/database';
 import { auth } from '@config/auth';
@@ -7,7 +12,7 @@ import { logger } from '@config/log';
 import { AccessDeniedError, InvalidRequestError, NotFoundError } from '@app/errors';
 import { isInternalProxyRequest } from '@lib/internalProxy';
 import { identifyWord } from '@app/services/dictionary/identify';
-import { enrichCandidatesWithCustomDictionaries } from '@app/services/dictionary/custom/lookup';
+import { customKanjiFor, enrichCandidatesWithCustomDictionaries } from '@app/services/dictionary/custom/lookup';
 import { withPitchAudio } from '@app/services/dictionary/pitchAudio/audioUrl';
 import { isSingleCharacter, kanjiCard, kanjiIndex } from '@app/services/dictionary/kanji';
 
@@ -86,4 +91,26 @@ export const getDictionaryKanjiIndex: GetDictionaryKanjiIndex = async ({ query }
   }
 
   return respond.with200().body({ kanji: await kanjiIndex(AppDataSource, query.locale ?? 'en') });
+};
+
+/** The reader's own kanji dictionaries for one kanji (task 48), the personal part of the kanji card. Separate from
+ * `getDictionaryKanji` so that one stays cached for everyone; an anonymous reader gets an empty answer. */
+export const getDictionaryKanjiCustom: GetDictionaryKanjiCustom = async ({ params }, respond, req) => {
+  if (!isInternalProxyRequest(req)) {
+    throw new AccessDeniedError('This route is only callable by the Nadeshiko frontend server');
+  }
+  if (!isSingleCharacter(params.character)) {
+    throw new InvalidRequestError('character must be a single kanji');
+  }
+
+  const userId = await resolveOptionalSessionUserId(req);
+  if (!userId) return respond.with200().body({ entries: [], frequencies: [] });
+
+  const answer = await customKanjiFor(userId, params.character);
+  return respond.with200().body({
+    entries: answer.entries,
+    frequencies: answer.frequencies,
+    ...(answer.stackFingerprint ? { stackFingerprint: answer.stackFingerprint } : {}),
+    ...(answer.pending ? { customDictionariesPending: true } : {}),
+  });
 };

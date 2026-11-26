@@ -3,9 +3,12 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { r2Client, r2ObjectKey, resolveArtifactsWithin } from '@app/services/dictionary/custom/r2Storage';
+import { DatabaseSync } from 'node:sqlite';
 import {
   closeAllArtifactHandles,
   queryArtifactFrequencies,
+  queryArtifactKanji,
+  queryArtifactKanjiFrequencies,
   queryArtifactPitches,
   queryArtifactTerms,
 } from '@app/services/dictionary/custom/sqlitePool';
@@ -242,6 +245,125 @@ describe('yomitanImport + sqlitePool', () => {
     const akuPitch = queryArtifactPitches(sqlitePath, '開く', 'あく', 'あく');
     expect(akuPitch).toHaveLength(1);
     expect(akuPitch[0]?.pitches[0]?.position).toBe(0);
+    expect(result.hasKanji).toBe(false);
+    expect(result.hasKanjiTerms).toBe(false);
+  });
+
+  it('imports a kanji-only dictionary (kanji_bank, kanji_meta_bank) and answers kanji lookups', async () => {
+    const dir = makeTempDir();
+    const zipPath = join(dir, 'kanjidic.zip');
+    const sqlitePath = join(dir, 'kanjidic.sqlite');
+    writeFileSync(
+      zipPath,
+      buildZip([
+        { name: 'index.json', data: JSON.stringify({ title: 'KANJIDIC', revision: 'k1', format: 3 }) },
+        {
+          name: 'tag_bank_1.json',
+          data: JSON.stringify([
+            ['jouyou', 'frequent', -5, 'included in list of regular-use characters', 0],
+            ['strokes', 'misc', 0, 'Stroke count', 0],
+          ]),
+        },
+        {
+          name: 'kanji_bank_1.json',
+          data: JSON.stringify([
+            ['本', 'ホン', 'もと', 'jouyou', ['book', 'present', 'main'], { strokes: '5', grade: 1 }],
+            ['萬', '', '', '旧字体', ['新字体: 万'], {}],
+            ['', 'ア', '', '', ['dropped: no character'], {}],
+            ['空', '', '', '', [], {}],
+          ]),
+          deflate: true,
+        },
+        {
+          name: 'kanji_meta_bank_1.json',
+          data: JSON.stringify([
+            ['本', 'freq', 10],
+            ['人', 'freq', { value: 2, displayValue: '2 (13223)' }],
+            ['本', 'pitch', {}],
+          ]),
+        },
+      ]),
+    );
+
+    // Admitted without any term bank.
+    expect((await inspectYomitanZip(zipPath)).title).toBe('KANJIDIC');
+    const result = await importYomitanZipToSqlite(zipPath, sqlitePath);
+    expect(result).toMatchObject({
+      hasTerms: false,
+      hasKanji: true,
+      kanjiCount: 2,
+      hasKanjiFrequency: true,
+      kanjiFrequencyCount: 2,
+      hasKanjiTerms: false,
+    });
+
+    const hon = queryArtifactKanji(sqlitePath, '本');
+    expect(hon.rows).toEqual([
+      {
+        character: '本',
+        onyomi: ['ホン'],
+        kunyomi: ['もと'],
+        tags: 'jouyou',
+        meanings: ['book', 'present', 'main'],
+        stats: { strokes: '5', grade: '1' },
+      },
+    ]);
+    expect(hon.tags.get('strokes')?.notes).toBe('Stroke count');
+    expect(queryArtifactKanji(sqlitePath, '空').rows).toEqual([]);
+    expect(queryArtifactKanjiFrequencies(sqlitePath, '人')).toEqual([{ value: 2, displayValue: '2 (13223)' }]);
+    expect(queryArtifactKanjiFrequencies(sqlitePath, '本')).toEqual([{ value: 10, displayValue: '10' }]);
+  });
+
+  it('marks a term dictionary as a kanji dictionary when at least 10% of its headwords are single kanji', async () => {
+    const dir = makeTempDir();
+    const build = (name: string, rows: unknown[]) => {
+      const zipPath = join(dir, `${name}.zip`);
+      writeFileSync(
+        zipPath,
+        buildZip([
+          { name: 'index.json', data: JSON.stringify({ title: name, revision: '1', format: 3 }) },
+          { name: 'term_bank_1.json', data: JSON.stringify(rows) },
+        ]),
+      );
+      return importYomitanZipToSqlite(zipPath, join(dir, `${name}.sqlite`));
+    };
+    const term = (expression: string) => [expression, '', '', '', 0, [`${expression} article`], 0, ''];
+
+    const kanwa = await build('kanwa', [
+      term('猗'),
+      term('𣔎'),
+      ...Array.from({ length: 18 }, (_, i) => term(`熟語${i}`)),
+    ]);
+    expect(kanwa.hasKanjiTerms).toBe(true);
+
+    const general = await build('general', [term('人'), ...Array.from({ length: 19 }, (_, i) => term(`言葉${i}`))]);
+    expect(general.hasKanjiTerms).toBe(false);
+  });
+
+  it('still refuses an archive with no bank it can use', async () => {
+    const dir = makeTempDir();
+    const zipPath = join(dir, 'empty.zip');
+    writeFileSync(
+      zipPath,
+      buildZip([
+        { name: 'index.json', data: JSON.stringify({ title: 'Images', revision: '1', format: 3 }) },
+        { name: 'img/a.png', data: Buffer.from([0x89]) },
+      ]),
+    );
+    await expect(inspectYomitanZip(zipPath)).rejects.toThrow(/no supported Yomitan banks/);
+  });
+
+  it('reads an older artifact without kanji tables as having no kanji', async () => {
+    const dir = makeTempDir();
+    const sqlitePath = join(dir, 'old.sqlite');
+    const db = new DatabaseSync(sqlitePath);
+    db.exec(`CREATE TABLE terms (id INTEGER PRIMARY KEY, expression TEXT, reading TEXT, expression_hira TEXT,
+      definition_tags TEXT, rules TEXT, score INTEGER, glossary_json TEXT, sequence INTEGER, term_tags TEXT);
+      CREATE TABLE term_meta (id INTEGER PRIMARY KEY, expression TEXT, expression_hira TEXT, mode TEXT, reading TEXT,
+      reading_hira TEXT, data_json TEXT);`);
+    db.close();
+    expect(queryArtifactKanji(sqlitePath, '本').rows).toEqual([]);
+    expect(queryArtifactKanjiFrequencies(sqlitePath, '本')).toEqual([]);
   });
 });
 

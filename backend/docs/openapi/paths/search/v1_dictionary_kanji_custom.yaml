@@ -1,0 +1,40 @@
+get:
+  tags:
+    - Search
+  x-internal: true
+  # Server-only: the frontend proxy blocks browsers and the controller re-checks the internal secret.
+  x-server-only: true
+  operationId: getDictionaryKanjiCustom
+  summary: One kanji from the reader's own kanji dictionaries, for our own server only
+  description: |
+    The reader's part of the kanji card: entries and frequencies from their enabled custom kanji dictionaries.
+    Separate from the shared kanji card so that one stays cached for everyone. The frontend server forwards the
+    reader's session cookie; without a session the answer is empty. Refused unless the request came through our own
+    Nitro proxy.
+
+  security: []
+  parameters:
+    - name: character
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 2
+      description: The kanji, one character (two UTF-16 units outside the BMP).
+      example: 本
+  responses:
+    "200":
+      description: OK
+      content:
+        application/json:
+          schema:
+            $ref: "../../components/schemas/DictionaryKanjiCustom.yaml"
+    "400":
+      $ref: "../../components/responses/BadRequest.yaml"
+    "403":
+      $ref: "../../components/responses/Forbidden.yaml"
+    "429":
+      $ref: "../../components/responses/TooManyRequests.yaml"
+    "500":
+      $ref: "../../components/responses/InternalServerError.yaml"

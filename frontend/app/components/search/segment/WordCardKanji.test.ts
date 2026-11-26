@@ -1,12 +1,15 @@
 // @vitest-environment happy-dom
-import { mount } from '@vue/test-utils';
-import { describe, test, expect, vi } from 'vitest';
+import { flushPromises, mount } from '@vue/test-utils';
+import { beforeEach, describe, test, expect, vi } from 'vitest';
 import { ref } from 'vue';
 
 vi.stubGlobal('useI18n', () => ({ t: (key: string) => key, locale: ref('en') }));
+const $fetch = vi.fn();
+vi.stubGlobal('$fetch', $fetch);
 
 import WordCardKanji from './WordCardKanji.vue';
-import type { KanjiCardData } from '~/utils/kanjiLookup';
+import { __kanjiLookupTesting, type KanjiCardData } from '~/utils/kanjiLookup';
+import { setReaderStack } from '~/utils/wordLookup';
 
 const word = (i: number) => ({ id: `jmdict:${i}`, headword: `食${i}`, reading: null, frequency: i, gloss: null });
 const related = (character: string, grade: number | null) => ({ character, reading: null, meaning: null, grade });
@@ -106,5 +109,80 @@ describe('the kanji view', () => {
     const related = part('related');
     expect(related.find('[data-testid="kanji-radical"]').exists()).toBe(false);
     expect(related.find('[data-testid="kanji-same-radical"]').exists()).toBe(true);
+  });
+});
+
+describe("the reader's own kanji dictionaries", () => {
+  const CUSTOM = {
+    entries: [
+      {
+        dictionary: 'custom:1',
+        dictionaryName: 'KANJIDIC',
+        onyomi: ['ショク', 'ジキ'],
+        kunyomi: ['く.う', 'た.べる'],
+        meanings: ['eat', 'food'],
+        tags: [{ category: 'misc', code: 'jouyou', label: 'Jōyō kanji' }],
+        stats: [
+          { code: 'strokes', label: 'Stroke count', category: 'misc', value: '9' },
+          { code: 'heisig', label: 'Heisig index', category: 'index', value: '1472' },
+        ],
+      },
+      {
+        dictionary: 'custom:2',
+        dictionaryName: '漢和',
+        tags: [],
+        senses: [{ position: 0, definitions: [{ lang: 'ja' as const, text: '【食】 ９画' }], tags: [] }],
+      },
+    ],
+    frequencies: [{ dictionary: 'custom:3', dictionaryName: 'Aozora', value: 120, displayValue: '120' }],
+  };
+
+  async function renderWith(full: boolean) {
+    setReaderStack('fp');
+    $fetch.mockResolvedValue(CUSTOM);
+    const wrapper = mount(WordCardKanji, {
+      props: { kanji: '食', card: CARD, state: 'shown', locale: 'en', full },
+      global: { mocks: { $t: (key: string) => key }, stubs: { UiBaseIcon: true } },
+    });
+    await flushPromises();
+    setReaderStack(null);
+    return wrapper;
+  }
+
+  beforeEach(() => {
+    $fetch.mockReset();
+    __kanjiLookupTesting.clear();
+  });
+
+  test('shows each dictionary under its name, its frequencies first, indexes behind a "+N"', async () => {
+    const card = await renderWith(false);
+    const section = card.find('[data-testid="kanji-custom"]');
+    expect(section.exists()).toBe(true);
+    expect(section.find('.kanji-view__custom-freq').text()).toBe('Aozora: 120');
+    const entries = card.findAll('[data-testid="kanji-custom-entry"]');
+    expect(entries.map((e) => e.find('.kanji-view__heading').text())).toEqual(['KANJIDIC', '漢和']);
+    expect(entries[0]!.text()).toContain('ショク、ジキ');
+    expect(entries[0]!.find('.kanji-view__custom-meanings.is-inline').text()).toBe('eat, food');
+    expect(entries[0]!.text()).toContain('Stroke count: 9');
+    expect(entries[0]!.text()).not.toContain('Heisig');
+
+    const more = entries[0]!.find('[data-testid="kanji-custom-stats-more"]');
+    expect(more.text()).toBe('+1');
+    await more.trigger('click');
+    expect(entries[0]!.text()).toContain('Heisig index: 1472');
+
+    expect(entries[1]!.find('.kanji-view__article.is-clamped').exists()).toBe(true);
+    await entries[1]!.find('.kanji-view__more').trigger('click');
+    expect(entries[1]!.find('.kanji-view__article.is-clamped').exists()).toBe(false);
+
+    const page = await renderWith(true);
+    expect(page.find('.kanji-view__article.is-clamped').exists()).toBe(false);
+  });
+
+  test('draws nothing for a reader without custom dictionaries', async () => {
+    const wrapper = render(false);
+    await flushPromises();
+    expect(wrapper.find('[data-testid="kanji-custom"]').exists()).toBe(false);
+    expect($fetch).not.toHaveBeenCalled();
   });
 });

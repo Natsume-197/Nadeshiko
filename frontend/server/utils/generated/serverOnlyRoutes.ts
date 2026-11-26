@@ -17,4 +17,5 @@ export const serverOnlyRoutes: ServerOnlyRoute[] = [
   { method: 'GET', path: '/v1/dictionary/identify' },
   { method: 'GET', path: '/v1/dictionary/kanji' },
   { method: 'GET', path: '/v1/dictionary/kanji/{character}' },
+  { method: 'GET', path: '/v1/dictionary/kanji/{character}/custom' },
 ];
