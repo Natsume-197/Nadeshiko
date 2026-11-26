@@ -43,6 +43,14 @@ env:
     - PATREON_CONNECTION_SECRET
     - PATREON_CAMPAIGN_ID
     - PATREON_CREATOR_ACCESS_TOKEN
+    # Anime tracker sync (task 54): AniList and MyAnimeList OAuth clients. TRACKER_CONNECTION_SECRET encrypts the
+    # stored tracker tokens and the OAuth state. All five must exist in SSM before a deploy. AniList takes one redirect
+    # per client, so prod has its own AniList client; the MAL client is shared with staging.
+    - ANILIST_OAUTH_CLIENT_ID
+    - ANILIST_OAUTH_CLIENT_SECRET
+    - MAL_OAUTH_CLIENT_ID
+    - MAL_OAUTH_CLIENT_SECRET
+    - TRACKER_CONNECTION_SECRET
 
     - EMAIL_API_NADEDB
     - USERNAME_API_NADEDB
@@ -86,6 +94,8 @@ env:
     BASE_URL: https://nadeshiko.co
     PATREON_OAUTH_REDIRECT_URI: https://nadeshiko.co/link/patreon/callback
     PATREON_CAMPAIGN_URL: https://www.patreon.com/c/NadeshikoApp
+    ANILIST_OAUTH_REDIRECT_URI: https://nadeshiko.co/link/anilist/callback
+    MAL_OAUTH_REDIRECT_URI: https://nadeshiko.co/link/mal/callback
 
     # Amazon SES is the only transport. The configuration set publishes this environment's bounces and complaints to
     # the SNS topic below, which delivers them to /v1/webhooks/ses (nadeshiko-infra/terraform/aws-ses.tf).
