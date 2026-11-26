@@ -503,6 +503,49 @@ export type t_DictionaryKanji = {
   }[];
 };
 
+export type t_DictionaryKanjiCustom = {
+  customDictionariesPending?: boolean;
+  entries: {
+    dictionary: string;
+    dictionaryName: string;
+    kunyomi?: string[];
+    meanings?: string[];
+    onyomi?: string[];
+    senses?: {
+      definitions: {
+        lang: 'en' | 'es' | 'ja';
+        structuredContent?: unknown;
+        text: string;
+      }[];
+      notes?: string[];
+      position: number;
+      tags: {
+        category: 'partOfSpeech' | 'misc' | 'field' | 'dialect';
+        code: string;
+        label: string;
+      }[];
+    }[];
+    stats?: {
+      category: string;
+      code: string;
+      label: string;
+      value: string;
+    }[];
+    tags: {
+      category: 'partOfSpeech' | 'misc' | 'field' | 'dialect';
+      code: string;
+      label: string;
+    }[];
+  }[];
+  frequencies: {
+    dictionary: string;
+    dictionaryName: string;
+    displayValue: string;
+    value: number | null;
+  }[];
+  stackFingerprint?: string | null;
+};
+
 export type t_DictionaryKanjiRelated = {
   character: string;
   grade: number | null;
@@ -1259,9 +1302,14 @@ export type t_UserDictionary = {
   frequencyCount: number;
   frequencyMode: string | null;
   hasFrequency: boolean;
+  hasKanji: boolean;
+  hasKanjiFrequency: boolean;
+  hasKanjiTerms: boolean;
   hasPitch: boolean;
   hasTerms: boolean;
   id: number;
+  kanjiCount: number;
+  kanjiFrequencyCount: number;
   pitchCount: number;
   progress: number | null;
   queuePosition: number | null;
@@ -1599,6 +1647,10 @@ export type t_GetDictionaryKanjiParamSchema = {
 export type t_GetDictionaryKanjiQuerySchema = {
   locale?: 'en' | 'es';
   related?: 'short' | 'all';
+};
+
+export type t_GetDictionaryKanjiCustomParamSchema = {
+  character: string;
 };
 
 export type t_GetDictionaryKanjiIndexQuerySchema = {

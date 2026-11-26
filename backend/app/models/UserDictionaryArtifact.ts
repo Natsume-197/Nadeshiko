@@ -63,6 +63,22 @@ export class UserDictionaryArtifact extends BaseEntity {
   @Column({ name: 'pitch_count', type: 'int', default: 0 })
   pitchCount!: number;
 
+  @Column({ name: 'has_kanji', type: 'boolean', default: false })
+  hasKanji!: boolean;
+
+  @Column({ name: 'has_kanji_frequency', type: 'boolean', default: false })
+  hasKanjiFrequency!: boolean;
+
+  /** A 漢和辞典 shipped as a term dictionary: its single-kanji entries answer the kanji card. */
+  @Column({ name: 'has_kanji_terms', type: 'boolean', default: false })
+  hasKanjiTerms!: boolean;
+
+  @Column({ name: 'kanji_count', type: 'int', default: 0 })
+  kanjiCount!: number;
+
+  @Column({ name: 'kanji_frequency_count', type: 'int', default: 0 })
+  kanjiFrequencyCount!: number;
+
   @Column({ name: 'zip_bytes', type: 'bigint' })
   zipBytes!: string;
 

@@ -4,6 +4,8 @@ import { resolveArtifactsWithin } from './r2Storage';
 import { type ActiveUserDictionaryStack, loadActiveUserDictionaryStack } from './service';
 import {
   queryArtifactFrequencies,
+  queryArtifactKanji,
+  queryArtifactKanjiFrequencies,
   queryArtifactPitches,
   queryArtifactTerms,
   type CustomTagMeta,
@@ -13,7 +15,7 @@ import { detectDefinitionLang, type YomitanNode } from './structuredContent';
 
 /**
  * Merges a signed-in reader's enabled custom Yomitan dictionaries (terms, frequency, pitch) into Nadeshiko's
- * `identifyWord` candidates in their configured stack order.
+ * `identifyWord` candidates in their configured stack order, and answers the kanji card from their kanji dictionaries.
  */
 
 export interface CustomDefinition {
@@ -319,4 +321,101 @@ export async function enrichCandidatesWithCustomDictionaries(
   }
 
   return { candidates: finalCandidates, stackFingerprint: stack.stackFingerprint, pending };
+}
+
+export interface CustomKanjiStat {
+  code: string;
+  /** The dictionary's own name for the stat (its tag notes), or the code. */
+  label: string;
+  /** Yomitan's stat category: `freq`, `index`, `code`, `class` or `misc`. */
+  category: string;
+  value: string;
+}
+
+/** One kanji's entry from one of the reader's dictionaries: a `kanji_bank` row, or a 漢和辞典's term entry. */
+export interface CustomKanjiEntry {
+  dictionary: string;
+  dictionaryName: string;
+  onyomi?: string[];
+  kunyomi?: string[];
+  meanings?: string[];
+  tags: CandidateTag[];
+  stats?: CustomKanjiStat[];
+  /** A term dictionary's article for the character, in the word card's shape. */
+  senses?: CardEntry['senses'];
+}
+
+export interface CustomKanjiAnswer {
+  entries: CustomKanjiEntry[];
+  frequencies: CustomFrequencyBadge[];
+  stackFingerprint: string | null;
+  pending: boolean;
+}
+
+function kanjiStats(stats: Record<string, string>, tagMeta: Map<string, CustomTagMeta>): CustomKanjiStat[] {
+  return Object.entries(stats).map(([code, value]) => {
+    const meta = tagMeta.get(code);
+    return { code, label: meta?.notes || code, category: meta?.category || 'misc', value };
+  });
+}
+
+/**
+ * The kanji card's part from the reader's own dictionaries, in their stack order: `kanji_bank` entries, the single-kanji
+ * article of each 漢和辞典 shipped as a term dictionary, and `kanji_meta_bank` frequencies. `pending` as in
+ * `enrichCandidatesWithCustomDictionaries`.
+ */
+export async function customKanjiFor(userId: number, character: string): Promise<CustomKanjiAnswer> {
+  const stack = await loadActiveUserDictionaryStack(userId);
+  const kanjiCapable = stack.dictionaries.filter((d) => d.hasKanji || d.hasKanjiTerms || d.hasKanjiFrequency);
+  if (!stack.stackFingerprint || kanjiCapable.length === 0) {
+    return { entries: [], frequencies: [], stackFingerprint: stack.stackFingerprint, pending: stack.pendingCount > 0 };
+  }
+
+  const { paths, missing } = await resolveArtifactsWithin(
+    kanjiCapable.map((dict) => dict.storageKey),
+    COLD_ARTIFACT_WAIT_MS,
+  );
+  const entries: CustomKanjiEntry[] = [];
+  const frequencies: CustomFrequencyBadge[] = [];
+  const ordered = [...kanjiCapable].sort((a, b) => a.sortOrder - b.sortOrder);
+  for (const dict of ordered) {
+    const path = paths.get(dict.storageKey);
+    if (!path) continue;
+    if (dict.hasKanji) {
+      const { rows, tags } = queryArtifactKanji(path, character);
+      for (const row of rows) {
+        const stats = kanjiStats(row.stats, tags);
+        entries.push({
+          dictionary: dict.stackId,
+          dictionaryName: dict.title,
+          ...(row.onyomi.length > 0 ? { onyomi: row.onyomi } : {}),
+          ...(row.kunyomi.length > 0 ? { kunyomi: row.kunyomi } : {}),
+          ...(row.meanings.length > 0 ? { meanings: row.meanings } : {}),
+          tags: buildTags(row.tags, tags),
+          ...(stats.length > 0 ? { stats } : {}),
+        });
+      }
+    }
+    if (dict.hasKanjiTerms) {
+      const { rows, tags } = queryArtifactTerms(path, character, character, null, MAX_SENSES_PER_CUSTOM_DICT);
+      const own = rows.filter((row) => row.expression === character);
+      const entry = own.length > 0 ? buildCustomEntry(dict.stackId, dict.title, own, tags) : null;
+      if (entry) {
+        entries.push({ dictionary: dict.stackId, dictionaryName: dict.title, tags: [], senses: entry.senses });
+      }
+    }
+    if (dict.hasKanjiFrequency) {
+      const [best] = queryArtifactKanjiFrequencies(path, character);
+      if (best) {
+        frequencies.push({ dictionary: dict.stackId, dictionaryName: dict.title, ...best });
+      }
+    }
+  }
+
+  return {
+    entries,
+    frequencies,
+    stackFingerprint: stack.stackFingerprint,
+    pending: stack.pendingCount > 0 || missing > 0,
+  };
 }

@@ -27,6 +27,7 @@ import { config } from '@config/config';
 import { search, getSearchStats, searchWords } from '@app/controllers/searchController';
 import {
   getDictionaryKanji,
+  getDictionaryKanjiCustom,
   getDictionaryKanjiIndex,
   identifyDictionaryWord,
 } from '@app/controllers/dictionaryController';
@@ -285,6 +286,7 @@ const SearchRoutes = createSearchRouter({
   identifyDictionaryWord,
   getDictionaryKanji,
   getDictionaryKanjiIndex,
+  getDictionaryKanjiCustom,
 });
 
 const MediaRoutes = createMediaRouter({

@@ -4,7 +4,7 @@ import { createClient as createApiClient, createConfig, type Client } from './cl
 import type { Auth } from './core/auth.gen';
 import type { ClientOptions } from './types.gen';
 import type * as Types from './types.gen';
-import { search, getSearchStats, searchWords, searchMedia, getStatsOverview, listMedia, getSegment, getSegmentContext, getMedia, listEpisodes, getEpisode, getMe, createUserApiKey, listExcludedMedia, addExcludedMedia, removeExcludedMedia, listFavoriteMedia, addFavoriteMedia, removeFavoriteMedia, listFamiliarMedia, listUserActivity, getUserActivityHeatmap, getUserActivityStats, listCollections, createCollection, getCollection, deleteCollection, addSegmentToCollection, searchCollectionSegments, removeSegmentFromCollection, listContentRequests, createContentRequest, getContentRequestAllowance, previewContentRequest, listMyContentRequests, withdrawContentRequest, voteContentRequest, unvoteContentRequest, boostContentRequest, listNotifications, getUnreadNotificationCount, markNotificationsRead, listWordWatches, setWordWatch, checkWordWatch, updateWordWatch, deleteWordWatch, identifyDictionaryWord, getDictionaryKanjiIndex, getDictionaryKanji, getCoveredWords, triggerCoveredWordsUpdate, createMedia, updateSegment, listSegmentRevisions, restoreSegmentRevision, updateMedia, deleteMedia, createEpisode, updateEpisode, deleteEpisode, listSegments, createSegment, createSegmentsBatch, moderateEpisodeSegments, getPatreonConnection, startPatreonLink, unlinkPatreon, completePatreonLink, getTrackerConnection, startTrackerLink, unlinkTracker, completeTrackerLink, syncTrackerConnection, updateTrackerSettings, listUserDictionaries, updateUserDictionaries, deleteUserDictionary, reserveUserDictionaryUpload, completeUserDictionaryUpload, clearFamiliarMedia, forgetFamiliarMedia, createUserReport, getUserPreferences, updateUserPreferences, trackUserActivity, deleteUserActivity, deleteUserActivityByDate, deleteUserActivityById, exportUserData, createFeedback, getFeedbackFormToken, unsubscribeFromEmail, getEmailPreferencesByToken, updateEmailPreferencesByToken, updateCollection, updateCollectionSegment, getCollectionStats, getAdminOverview, listAdminReports, batchUpdateAdminReports, bulkUpdateAdminReports, bulkDeleteAdminReports, updateAdminReport, deleteAdminReport, getAnnouncement, updateAnnouncement, getAdminUsersWithProviders, listTiers, getAdminUserQuota, updateAdminUserQuota, listAdminContentRequests, updateAdminContentRequest, mergeAdminContentRequest, getAdminPatreonOverview, refreshAllAdminPatreonConnections, unlinkAdminPatreonConnection, refreshAdminPatreonConnection, listAdminEmails, getAdminEmail, resendAdminEmail, listAdminEmailSuppressions, liftAdminEmailSuppression, getSession, getSessionPost, signOut, socialSignIn, signInWithMagicLink, signInWithEmailOtp, listUserSessions, authRevokeSession, authRevokeSessions, authRevokeOtherSessions, deleteUser, changeEmail, authApiKeyCreate, authApiKeyList, authApiKeyUpdate, banUser, unbanUser, impersonateUser, authAdminStopImpersonating, type Options } from './sdk.gen';
+import { search, getSearchStats, searchWords, searchMedia, getStatsOverview, listMedia, getSegment, getSegmentContext, getMedia, listEpisodes, getEpisode, getMe, createUserApiKey, listExcludedMedia, addExcludedMedia, removeExcludedMedia, listFavoriteMedia, addFavoriteMedia, removeFavoriteMedia, listFamiliarMedia, listUserActivity, getUserActivityHeatmap, getUserActivityStats, listCollections, createCollection, getCollection, deleteCollection, addSegmentToCollection, searchCollectionSegments, removeSegmentFromCollection, listContentRequests, createContentRequest, getContentRequestAllowance, previewContentRequest, listMyContentRequests, withdrawContentRequest, voteContentRequest, unvoteContentRequest, boostContentRequest, listNotifications, getUnreadNotificationCount, markNotificationsRead, listWordWatches, setWordWatch, checkWordWatch, updateWordWatch, deleteWordWatch, identifyDictionaryWord, getDictionaryKanjiIndex, getDictionaryKanji, getDictionaryKanjiCustom, getCoveredWords, triggerCoveredWordsUpdate, createMedia, updateSegment, listSegmentRevisions, restoreSegmentRevision, updateMedia, deleteMedia, createEpisode, updateEpisode, deleteEpisode, listSegments, createSegment, createSegmentsBatch, moderateEpisodeSegments, getPatreonConnection, startPatreonLink, unlinkPatreon, completePatreonLink, getTrackerConnection, startTrackerLink, unlinkTracker, completeTrackerLink, syncTrackerConnection, updateTrackerSettings, listUserDictionaries, updateUserDictionaries, deleteUserDictionary, reserveUserDictionaryUpload, completeUserDictionaryUpload, clearFamiliarMedia, forgetFamiliarMedia, createUserReport, getUserPreferences, updateUserPreferences, trackUserActivity, deleteUserActivity, deleteUserActivityByDate, deleteUserActivityById, exportUserData, createFeedback, getFeedbackFormToken, unsubscribeFromEmail, getEmailPreferencesByToken, updateEmailPreferencesByToken, updateCollection, updateCollectionSegment, getCollectionStats, getAdminOverview, listAdminReports, batchUpdateAdminReports, bulkUpdateAdminReports, bulkDeleteAdminReports, updateAdminReport, deleteAdminReport, getAnnouncement, updateAnnouncement, getAdminUsersWithProviders, listTiers, getAdminUserQuota, updateAdminUserQuota, listAdminContentRequests, updateAdminContentRequest, mergeAdminContentRequest, getAdminPatreonOverview, refreshAllAdminPatreonConnections, unlinkAdminPatreonConnection, refreshAdminPatreonConnection, listAdminEmails, getAdminEmail, resendAdminEmail, listAdminEmailSuppressions, liftAdminEmailSuppression, getSession, getSessionPost, signOut, socialSignIn, signInWithMagicLink, signInWithEmailOtp, listUserSessions, authRevokeSession, authRevokeSessions, authRevokeOtherSessions, deleteUser, changeEmail, authApiKeyCreate, authApiKeyList, authApiKeyUpdate, banUser, unbanUser, impersonateUser, authAdminStopImpersonating, type Options } from './sdk.gen';
 import { withRetry, type RetryOptions } from './retry';
 import { NadeshikoError, buildNadeshikoError, isProblemDetails, type NadeshikoErrorCode, type RateLimitReason } from './errors';
 import { flatPaginate } from './paginate';
@@ -268,6 +268,11 @@ export type NadeshikoClient = {
       (id: string): Promise<Types.GetDictionaryKanjiResponse>;
       (params: Types.GetDictionaryKanjiData['path'] & NonNullable<Types.GetDictionaryKanjiData['query']> & { throwOnError: false }): Promise<{ data: Types.GetDictionaryKanjiResponse; response: Response; request: Request } | { error: Types.GetDictionaryKanjiErrors; response: Response; request: Request }>;
       (params: Types.GetDictionaryKanjiData['path'] & NonNullable<Types.GetDictionaryKanjiData['query']>): Promise<Types.GetDictionaryKanjiResponse>;
+    };
+    getDictionaryKanjiCustom: {
+      (id: string): Promise<Types.GetDictionaryKanjiCustomResponse>;
+      (params: Types.GetDictionaryKanjiCustomData['path'] & { throwOnError: false }): Promise<{ data: Types.GetDictionaryKanjiCustomResponse; response: Response; request: Request } | { error: Types.GetDictionaryKanjiCustomErrors; response: Response; request: Request }>;
+      (params: Types.GetDictionaryKanjiCustomData['path']): Promise<Types.GetDictionaryKanjiCustomResponse>;
     };
     getCoveredWords: {
       (params: NonNullable<Types.GetCoveredWordsData['query']> & { throwOnError: false }): Promise<{ data: Types.GetCoveredWordsResponse; response: Response; request: Request } | { error: Types.GetCoveredWordsErrors; response: Response; request: Request }>;
@@ -1157,6 +1162,16 @@ export function createNadeshikoClient(config: NadeshikoConfig): NadeshikoClient 
     return tOE === false ? p : p.then((r: any) => r.data);
   };
 
+  const _getDictionaryKanjiCustom = (paramsOrId?: any) => {
+    if (typeof paramsOrId === 'string') {
+      return getDictionaryKanjiCustom({ throwOnError: true, path: { character: paramsOrId }, client: clientInstance } as any).then((r: any) => r.data);
+    }
+    const params = paramsOrId;
+    const { throwOnError: tOE, character } = params ?? {};
+    const p = getDictionaryKanjiCustom({ path: { character }, client: clientInstance, throwOnError: tOE === false ? false : true } as any);
+    return tOE === false ? p : p.then((r: any) => r.data);
+  };
+
   const _getCoveredWords = (params?: any) => {
     const { throwOnError: tOE, ...query } = params ?? {};
     const p = getCoveredWords({ ...(Object.keys(query).length > 0 ? { query } : {}), client: clientInstance, throwOnError: tOE === false ? false : true } as any);
@@ -1863,6 +1878,7 @@ export function createNadeshikoClient(config: NadeshikoConfig): NadeshikoClient 
     identifyDictionaryWord: _identifyDictionaryWord,
     getDictionaryKanjiIndex: _getDictionaryKanjiIndex,
     getDictionaryKanji: _getDictionaryKanji,
+    getDictionaryKanjiCustom: _getDictionaryKanjiCustom,
     getCoveredWords: _getCoveredWords,
     triggerCoveredWordsUpdate: _triggerCoveredWordsUpdate,
     createMedia: _createMedia,

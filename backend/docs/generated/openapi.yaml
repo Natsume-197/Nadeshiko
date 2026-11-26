@@ -1404,6 +1404,45 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
+  /v1/dictionary/kanji/{character}/custom:
+    get:
+      tags:
+        - Search
+      x-internal: true
+      x-server-only: true
+      operationId: getDictionaryKanjiCustom
+      summary: One kanji from the reader's own kanji dictionaries, for our own server only
+      description: |
+        The reader's part of the kanji card: entries and frequencies from their enabled custom kanji dictionaries.
+        Separate from the shared kanji card so that one stays cached for everyone. The frontend server forwards the
+        reader's session cookie; without a session the answer is empty. Refused unless the request came through our own
+        Nitro proxy.
+      security: []
+      parameters:
+        - name: character
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 2
+          description: The kanji, one character (two UTF-16 units outside the BMP).
+          example: 本
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DictionaryKanjiCustom'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /v1/stats/overview:
     get:
       tags:
@@ -8016,6 +8055,174 @@ components:
         containedInCount:
           type: integer
           example: 5
+    DictionaryKanjiCustom:
+      type: object
+      description: |
+        One kanji from the authenticated reader's own kanji dictionaries (Yomitan `kanji_bank` and `kanji_meta_bank`, and
+        kanji dictionaries shipped as term dictionaries), in their stack order. Empty for a reader without any.
+      required:
+        - entries
+        - frequencies
+      properties:
+        entries:
+          type: array
+          items:
+            type: object
+            required:
+              - dictionary
+              - dictionaryName
+              - tags
+            properties:
+              dictionary:
+                type: string
+                example: custom:42
+              dictionaryName:
+                type: string
+                example: KANJIDIC
+              onyomi:
+                type: array
+                items:
+                  type: string
+                example:
+                  - ホン
+              kunyomi:
+                type: array
+                items:
+                  type: string
+                example:
+                  - もと
+              meanings:
+                type: array
+                items:
+                  type: string
+                example:
+                  - book
+                  - present
+                  - main
+              tags:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - category
+                    - code
+                    - label
+                  properties:
+                    category:
+                      type: string
+                      enum:
+                        - partOfSpeech
+                        - misc
+                        - field
+                        - dialect
+                    code:
+                      type: string
+                    label:
+                      type: string
+              stats:
+                type: array
+                description: The dictionary's own figures for the kanji (stroke count, grade, index numbers...).
+                items:
+                  type: object
+                  required:
+                    - code
+                    - label
+                    - category
+                    - value
+                  properties:
+                    code:
+                      type: string
+                      example: strokes
+                    label:
+                      type: string
+                      example: Stroke count
+                    category:
+                      type: string
+                      example: misc
+                    value:
+                      type: string
+                      example: '5'
+              senses:
+                type: array
+                description: The article of a kanji dictionary shipped as a term dictionary, in the word card's shape.
+                items:
+                  type: object
+                  required:
+                    - position
+                    - definitions
+                    - tags
+                  properties:
+                    position:
+                      type: integer
+                    definitions:
+                      type: array
+                      items:
+                        type: object
+                        required:
+                          - lang
+                          - text
+                        properties:
+                          lang:
+                            type: string
+                            enum:
+                              - en
+                              - es
+                              - ja
+                          text:
+                            type: string
+                          structuredContent:
+                            description: Sanitized Yomitan structured-content AST.
+                    tags:
+                      type: array
+                      items:
+                        type: object
+                        required:
+                          - category
+                          - code
+                          - label
+                        properties:
+                          category:
+                            type: string
+                            enum:
+                              - partOfSpeech
+                              - misc
+                              - field
+                              - dialect
+                          code:
+                            type: string
+                          label:
+                            type: string
+                    notes:
+                      type: array
+                      items:
+                        type: string
+        frequencies:
+          type: array
+          description: Ranks from the reader's kanji frequency dictionaries.
+          items:
+            type: object
+            required:
+              - dictionary
+              - dictionaryName
+              - value
+              - displayValue
+            properties:
+              dictionary:
+                type: string
+              dictionaryName:
+                type: string
+              value:
+                type: number
+                nullable: true
+              displayValue:
+                type: string
+        stackFingerprint:
+          type: string
+          nullable: true
+          description: Fingerprint of the reader's custom dictionary stack.
+        customDictionariesPending:
+          type: boolean
+          description: True when the answer lacks one of the reader's enabled dictionaries, still indexing or still being fetched. Such an answer must not be cached.
     WordCoverageTier:
       type: object
       description: Coverage statistics for a frequency tier
@@ -9391,6 +9598,11 @@ components:
         - termCount
         - frequencyCount
         - pitchCount
+        - hasKanji
+        - hasKanjiFrequency
+        - hasKanjiTerms
+        - kanjiCount
+        - kanjiFrequencyCount
         - zipBytes
         - sqliteBytes
         - status
@@ -9433,6 +9645,19 @@ components:
         frequencyCount:
           type: integer
         pitchCount:
+          type: integer
+        hasKanji:
+          type: boolean
+          description: Holds kanji entries (Yomitan `kanji_bank`) for the kanji card.
+        hasKanjiFrequency:
+          type: boolean
+          description: Holds kanji frequencies (Yomitan `kanji_meta_bank`).
+        hasKanjiTerms:
+          type: boolean
+          description: 'A kanji dictionary shipped as a term dictionary (at least 10% single-kanji headwords): its single-kanji entries answer the kanji card too.'
+        kanjiCount:
+          type: integer
+        kanjiFrequencyCount:
           type: integer
         zipBytes:
           type: integer

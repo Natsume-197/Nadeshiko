@@ -1,15 +1,19 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import {
+  type CustomKanjiData,
+  fetchCustomKanji,
   type KanjiCardData,
   type KanjiCardExample,
   type KanjiCardWordRef,
   kanjiBadges,
   meaningsTag as kanjiMeaningsTag,
+  peekCustomKanji,
   splitReading,
 } from '~/utils/kanjiLookup';
 import KanjiStrokes from './KanjiStrokes.vue';
 import MarkedKanji from './MarkedKanji.vue';
+import YomitanContent from './YomitanContent.vue';
 import type { KanjiViewState } from '~/composables/useKanjiView';
 
 /**
@@ -20,7 +24,8 @@ import type { KanjiViewState } from '~/composables/useKanjiView';
  *   2. readings, on then kun, each with the words it is heard in;
  *   3. the words written with it that Nadeshiko's subtitles use most;
  *   4. what it is made of: radical and parts;
- *   5. related kanji, kept short.
+ *   5. related kanji, kept short;
+ *   6. after the readings, what the reader's own kanji dictionaries say (task 48), when they uploaded any.
  * Accent colour is kept for what responds to the pointer; at rest everything is ink.
  */
 const props = defineProps<{
@@ -172,6 +177,64 @@ const related = computed(() => {
     }));
 });
 
+/** The reader's own kanji dictionaries for this kanji. Asked in the browser only: the shared card above is cached for
+ *  everyone, this part is the reader's. */
+const custom = ref<CustomKanjiData | null>(null);
+/** Long articles (a 漢和辞典's) open in full on the page; on the card, one at a time on request. */
+const openArticles = ref(new Set<string>());
+
+function loadCustom(character: string) {
+  openArticles.value = new Set();
+  openStats.value = new Set();
+  custom.value = peekCustomKanji(character) ?? null;
+  void fetchCustomKanji(character).then((answer) => {
+    if (props.kanji === character) custom.value = answer;
+  });
+}
+
+onMounted(() => loadCustom(props.kanji));
+watch(
+  () => props.kanji,
+  (character) => {
+    if (import.meta.client) loadCustom(character);
+  },
+);
+
+const hasCustom = computed(() =>
+  Boolean(custom.value && (custom.value.entries.length > 0 || custom.value.frequencies.length > 0)),
+);
+
+type CustomEntry = CustomKanjiData['entries'][number];
+
+const articleKey = (entry: CustomEntry, index: number) => `${entry.dictionary}:${index}`;
+
+/** Entries whose index numbers and codes the reader opened. */
+const openStats = ref(new Set<string>());
+const toggleStats = (key: string) => {
+  const next = new Set(openStats.value);
+  if (next.has(key)) next.delete(key);
+  else next.add(key);
+  openStats.value = next;
+};
+
+/** The figures a learner reads (Yomitan's `misc` stats: strokes, grade, JLPT, frequency) always; index numbers,
+ *  classifications and codes (Heisig, SKIP, JIS...) behind a "+N", since a dictionary like KANJIDIC has dozens. */
+function statRows(entry: CustomEntry, index: number) {
+  const stats = entry.stats ?? [];
+  if (openStats.value.has(articleKey(entry, index))) return { shown: stats, hidden: 0 };
+  const shown = stats.filter((stat) => stat.category === 'misc');
+  return { shown, hidden: stats.length - shown.length };
+}
+
+/** Word-like meanings (KANJIDIC's) read best as one line; sentences (Wiktionary's, variants notes) as a list. */
+const shortMeanings = (meanings: string[]) => meanings.every((meaning) => meaning.length <= 40);
+const toggleArticle = (key: string) => {
+  const next = new Set(openArticles.value);
+  if (next.has(key)) next.delete(key);
+  else next.add(key);
+  openArticles.value = next;
+};
+
 /** Meanings fell back to English for a reader who reads Spanish: say so with the same tag the senses use. */
 const meaningsTag = computed(() => kanjiMeaningsTag(props.card, props.locale));
 
@@ -257,6 +320,80 @@ const relatedTitle = (kanji: { reading: string | null; meaning: string | null })
                 </template>
               </span>
             </template>
+          </template>
+        </div>
+      </section>
+
+      <!-- 6. The reader's own kanji dictionaries, in their order, each under its name. -->
+      <section v-if="shows.readings && hasCustom && custom" class="kanji-view__section" data-testid="kanji-custom">
+        <div v-if="custom.frequencies.length > 0" class="kanji-view__badges kanji-view__custom-freq">
+          <span
+            v-for="freq in custom.frequencies"
+            :key="freq.dictionary"
+            class="kanji-view__badge"
+            :title="freq.dictionaryName"
+          >{{ freq.dictionaryName }}: {{ freq.displayValue }}</span>
+        </div>
+        <div
+          v-for="(entry, index) in custom.entries"
+          :key="articleKey(entry, index)"
+          class="kanji-view__custom"
+          data-testid="kanji-custom-entry"
+        >
+          <h4 class="kanji-view__heading">{{ entry.dictionaryName }}</h4>
+          <div v-if="entry.onyomi || entry.kunyomi" class="kanji-view__facts">
+            <template v-if="entry.onyomi">
+              <span class="kanji-view__label">{{ $t('tokenTooltip.kanjiOn') }}</span>
+              <span class="kanji-view__fact" lang="ja">{{ entry.onyomi.join('、') }}</span>
+            </template>
+            <template v-if="entry.kunyomi">
+              <span class="kanji-view__label">{{ $t('tokenTooltip.kanjiKun') }}</span>
+              <span class="kanji-view__fact" lang="ja">{{ entry.kunyomi.join('、') }}</span>
+            </template>
+          </div>
+          <template v-if="entry.meanings">
+            <p v-if="shortMeanings(entry.meanings)" class="kanji-view__custom-meanings is-inline">{{ entry.meanings.join(', ') }}</p>
+            <ul v-else class="kanji-view__custom-meanings">
+              <li v-for="(meaning, mi) in entry.meanings" :key="mi">{{ meaning }}</li>
+            </ul>
+          </template>
+          <div
+            v-if="entry.tags.length > 0 || (entry.stats && entry.stats.length > 0)"
+            class="kanji-view__badges"
+          >
+            <span v-for="tag in entry.tags" :key="tag.code" class="kanji-view__badge" :title="tag.label">{{ tag.code }}</span>
+            <span
+              v-for="stat in statRows(entry, index).shown"
+              :key="stat.code"
+              class="kanji-view__badge"
+            >{{ stat.label }}: {{ stat.value }}</span>
+            <button
+              v-if="statRows(entry, index).hidden > 0"
+              type="button"
+              class="kanji-view__more-kanji"
+              data-testid="kanji-custom-stats-more"
+              @click="toggleStats(articleKey(entry, index))"
+            >+{{ statRows(entry, index).hidden }}</button>
+          </div>
+          <template v-if="entry.senses">
+            <div
+              class="kanji-view__article"
+              :class="{ 'is-clamped': !full && !openArticles.has(articleKey(entry, index)) }"
+              lang="ja"
+            >
+              <div v-for="sense in entry.senses" :key="sense.position">
+                <template v-for="(definition, di) in sense.definitions" :key="di">
+                  <YomitanContent v-if="definition.structuredContent !== undefined" :content="definition.structuredContent" />
+                  <span v-else class="kanji-view__article-text">{{ definition.text }}</span>
+                </template>
+              </div>
+            </div>
+            <button
+              v-if="!full"
+              type="button"
+              class="kanji-view__more"
+              @click="toggleArticle(articleKey(entry, index))"
+            >{{ openArticles.has(articleKey(entry, index)) ? $t('tokenTooltip.kanjiArticleLess') : $t('tokenTooltip.kanjiArticleMore') }}</button>
           </template>
         </div>
       </section>
@@ -685,6 +822,46 @@ const relatedTitle = (kanji: { reading: string | null; meaning: string | null })
 .kanji-view__more:hover {
   text-decoration: underline;
   text-underline-offset: 2px;
+}
+
+/* 6. The reader's own kanji dictionaries. */
+.kanji-view__custom + .kanji-view__custom,
+.kanji-view__custom-freq + .kanji-view__custom {
+  margin-top: 10px;
+}
+
+.kanji-view__custom > * + * {
+  margin-top: 4px;
+}
+
+.kanji-view__custom-meanings {
+  margin: 0;
+  padding-left: 16px;
+  list-style: disc;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink);
+}
+
+.kanji-view__custom-meanings.is-inline {
+  padding-left: 0;
+}
+
+.kanji-view__article {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.kanji-view__article.is-clamped {
+  max-height: 9em;
+  overflow: hidden;
+  mask-image: linear-gradient(to bottom, #000 70%, transparent);
+}
+
+.kanji-view__article-text {
+  white-space: pre-line;
 }
 
 /* 4 and 5. Label | content rows, aligned like the readings. */

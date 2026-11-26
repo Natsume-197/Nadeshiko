@@ -1,9 +1,12 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
+import { setReaderStack } from './wordLookup';
 import {
   __kanjiLookupTesting,
+  fetchCustomKanji,
   fetchKanji,
   kanjiBadges,
   markKanji,
+  peekCustomKanji,
   peekKanji,
   splitKunReading,
   splitReading,
@@ -121,5 +124,46 @@ describe('markKanji', () => {
     ]);
     expect(markKanji('女の子と女', '女').filter((run) => run.hit)).toHaveLength(2);
     expect(markKanji('ひと', '人')).toEqual([{ text: 'ひと', hit: false }]);
+  });
+});
+
+describe('fetchCustomKanji', () => {
+  const ANSWER = {
+    entries: [{ dictionary: 'custom:1', dictionaryName: 'KANJIDIC', meanings: ['book'], tags: [] }],
+    frequencies: [],
+  };
+
+  test('asks nothing for a reader without custom dictionaries', async () => {
+    setReaderStack(null);
+    expect(await fetchCustomKanji('本')).toBeNull();
+    expect($fetch).not.toHaveBeenCalled();
+  });
+
+  test('asks the frontend server with the stack as cache key, and keeps the answer for that stack', async () => {
+    setReaderStack('fp-1');
+    $fetch.mockResolvedValue(ANSWER);
+
+    expect(await fetchCustomKanji('本')).toEqual(ANSWER);
+    expect($fetch).toHaveBeenCalledWith(`/api/dictionary/kanji/${encodeURIComponent('本')}/custom`, {
+      query: { stack: 'fp-1' },
+      timeout: 8000,
+    });
+    expect(peekCustomKanji('本')).toEqual(ANSWER);
+
+    setReaderStack('fp-2');
+    expect(peekCustomKanji('本')).toBeUndefined();
+    setReaderStack(null);
+  });
+
+  test('does not keep an answer still missing a dictionary, nor a failure', async () => {
+    setReaderStack('fp-1');
+    $fetch.mockResolvedValueOnce({ ...ANSWER, pending: true });
+    expect(await fetchCustomKanji('人')).toEqual(ANSWER);
+    expect(peekCustomKanji('人')).toBeUndefined();
+
+    $fetch.mockRejectedValueOnce({ response: { status: 503 } });
+    expect(await fetchCustomKanji('日')).toBeNull();
+    expect(peekCustomKanji('日')).toBeUndefined();
+    setReaderStack(null);
   });
 });

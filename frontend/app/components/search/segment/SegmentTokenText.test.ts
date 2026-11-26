@@ -9,6 +9,8 @@ const fetchWord = vi.fn();
 vi.mock('~/utils/wordLookup', () => ({
   peekWord: (...a: unknown[]) => peekWord(...a),
   fetchWord: (...a: unknown[]) => fetchWord(...a),
+  // No custom dictionaries: the kanji view asks nothing for the reader's own part.
+  readerStack: () => '',
 }));
 const peekKanji = vi.fn();
 const fetchKanji = vi.fn();

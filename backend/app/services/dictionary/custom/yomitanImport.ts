@@ -10,7 +10,8 @@ import { type ZipEntry, ZipLimitError, ZipReader } from './zipReader';
 /**
  * Parses a Yomitan v3 `.zip` archive into a standalone read-only-optimized SQLite database.
  *
- * Streams each JSON bank row by row (skipping images and unsupported banks) inside batched transactions, so memory
+ * Reads term, term meta (frequency and pitch), kanji and kanji meta (frequency) banks. Streams each JSON bank row by row
+ * (skipping images and unsupported banks) inside batched transactions, so memory
  * follows the largest row rather than the largest bank or the dictionary: 明鏡 第三版 ships one 106 MB bank, 大辞林
  * 第四版 2.7 GB of JSON.
  */
@@ -33,6 +34,14 @@ export interface YomitanImportResult {
   termCount: number;
   frequencyCount: number;
   pitchCount: number;
+  /** `kanji_bank` rows: one character's readings, meanings and stats. */
+  hasKanji: boolean;
+  kanjiCount: number;
+  /** `kanji_meta_bank` frequency rows. */
+  hasKanjiFrequency: boolean;
+  kanjiFrequencyCount: number;
+  /** A 漢和辞典 shipped as a term dictionary: its single-kanji entries also answer the kanji card. */
+  hasKanjiTerms: boolean;
   sqliteBytes: number;
 }
 
@@ -48,7 +57,7 @@ export class YomitanValidationError extends Error {
  * it whenever any of that changes: artifacts are shared by SHA-256 and never rebuilt on their own, so an upload of an
  * artifact built by an older version re-indexes it instead of reusing it (`service.ts`).
  */
-export const IMPORTER_VERSION = 3;
+export const IMPORTER_VERSION = 4;
 
 const MAX_INDEX_BYTES = 1 * 1024 * 1024; // 1 MB
 // Total JSON across banks (zip-bomb defense). Rows are streamed, so this bounds time, not memory: 大辞林 第四版 is
@@ -65,6 +74,21 @@ const ROWS_PER_TRANSACTION = 5_000;
 const TERM_BANK_RE = /^(?:.*\/)?term_bank_(\d+)\.json$/;
 const TERM_META_BANK_RE = /^(?:.*\/)?term_meta_bank_(\d+)\.json$/;
 const TAG_BANK_RE = /^(?:.*\/)?tag_bank_(\d+)\.json$/;
+const KANJI_BANK_RE = /^(?:.*\/)?kanji_bank_(\d+)\.json$/;
+const KANJI_META_BANK_RE = /^(?:.*\/)?kanji_meta_bank_(\d+)\.json$/;
+const SUPPORTED_BANK_RES = [TERM_BANK_RE, TERM_META_BANK_RE, KANJI_BANK_RE, KANJI_META_BANK_RE];
+
+/** One kanji (CJK ideograph, including the extensions outside the BMP, 々 and 〆). */
+export const SINGLE_KANJI_RE = /^[\u3400-\u9fff\uf900-\ufaff\u{20000}-\u{3134f}々〆]$/u;
+/**
+ * Share of single-kanji headwords from which a term dictionary counts as a 漢和辞典. Measured 2026-11-26: 漢和辞典 run
+ * from 12% (漢字源, its 熟語 included) to 100% (TISMKANJI); 大辞林 第四版 has 3.9%.
+ */
+export const KANJI_TERM_SHARE = 0.1;
+// Per kanji_bank row: Wiktionary-style banks put a whole article into the meanings.
+const MAX_KANJI_MEANINGS = 200;
+const MAX_KANJI_MEANING_CHARS = 4000;
+const MAX_KANJI_STATS = 100;
 
 function clampString(val: unknown, maxLen: number): string | null {
   if (typeof val !== 'string') return null;
@@ -121,11 +145,13 @@ async function readIndex(
 }
 
 const noSupportedBanks = () =>
-  new YomitanValidationError('Archive contains no supported Yomitan banks (term_bank_*.json or term_meta_bank_*.json)');
+  new YomitanValidationError(
+    'Archive contains no supported Yomitan banks (term_bank_*.json, term_meta_bank_*.json, kanji_bank_*.json or kanji_meta_bank_*.json)',
+  );
 
 /**
- * Quickly inspects `index.json` and verifies the archive contains at least one supported bank (`term_bank_*.json` or
- * `term_meta_bank_*.json`) without decompressing any bank files.
+ * Quickly inspects `index.json` and verifies the archive contains at least one supported bank (term, term meta, kanji
+ * or kanji meta) without decompressing any bank files.
  */
 export async function inspectYomitanZip(zipPath: string): Promise<YomitanIndex> {
   const reader = await ZipReader.open(zipPath);
@@ -133,7 +159,7 @@ export async function inspectYomitanZip(zipPath: string): Promise<YomitanIndex> 
     const entries = reader.listEntries();
     const { indexEntry, index } = await readIndex(reader, entries);
 
-    const hasSupportedBank = entries.some((e) => TERM_BANK_RE.test(e.name) || TERM_META_BANK_RE.test(e.name));
+    const hasSupportedBank = entries.some((e) => SUPPORTED_BANK_RES.some((re) => re.test(e.name)));
     if (!hasSupportedBank) {
       throw noSupportedBanks();
     }
@@ -239,6 +265,47 @@ function parsePitchPayload(raw: unknown): ParsedPitchMeta | null {
   return { reading, pitches };
 }
 
+/** A space-separated bank cell as its distinct words. */
+function words(value: unknown): string[] {
+  return [...new Set(str(value).split(/\s+/).filter(Boolean))];
+}
+
+interface ParsedKanji {
+  character: string;
+  onyomi: string[];
+  kunyomi: string[];
+  tags: string;
+  meanings: string[];
+  stats: Record<string, string>;
+}
+
+/** One `kanji_bank` row: `[character, onyomi, kunyomi, tags, meanings[], stats{}]`. */
+function parseKanjiRow(row: unknown): ParsedKanji | null {
+  if (!Array.isArray(row) || row.length < 5) return null;
+  const character = str(row[0]);
+  if (!character) return null;
+  const meanings = Array.isArray(row[4])
+    ? row[4]
+        .filter((m): m is string => typeof m === 'string' && m.trim().length > 0)
+        .slice(0, MAX_KANJI_MEANINGS)
+        .map((m) => m.trim().slice(0, MAX_KANJI_MEANING_CHARS))
+    : [];
+  const stats: Record<string, string> = {};
+  const rawStats = row[5];
+  if (rawStats && typeof rawStats === 'object' && !Array.isArray(rawStats)) {
+    for (const [key, value] of Object.entries(rawStats).slice(0, MAX_KANJI_STATS)) {
+      const text = typeof value === 'number' && Number.isFinite(value) ? String(value) : str(value);
+      if (key.trim() && text) stats[key.trim().slice(0, 64)] = text.slice(0, 200);
+    }
+  }
+  const onyomi = words(row[1]);
+  const kunyomi = words(row[2]);
+  if (meanings.length === 0 && onyomi.length === 0 && kunyomi.length === 0 && Object.keys(stats).length === 0) {
+    return null;
+  }
+  return { character, onyomi, kunyomi, tags: str(row[3]), meanings, stats };
+}
+
 /** The entries `re` matches, in bank-number order. */
 function banks(entries: readonly ZipEntry[], re: RegExp): ZipEntry[] {
   return entries.filter((e) => re.test(e.name)).sort((a, b) => bankNumber(a.name, re) - bankNumber(b.name, re));
@@ -253,7 +320,7 @@ function bankNumber(name: string, re: RegExp): number {
  * Builds a complete SQLite database for a Yomitan `.zip` at `targetSqlitePath` atomically (writing to a temporary file
  * first and renaming only on success).
  *
- * Schema (importer version 3): no AUTOINCREMENT, no stored hiragana reading for terms (the reading filter runs on the
+ * Schema (importer version 4, which added `kanji` and `kanji_meta`): no AUTOINCREMENT, no stored hiragana reading for terms (the reading filter runs on the
  * rows a lookup returns), and glossaries packed into deflated blocks (`glossary_block`, see `glossaryCodec.ts`), each
  * term row pointing at its block, offset and length.
  */
@@ -279,13 +346,15 @@ export async function importYomitanZipToSqlite(
     const tagBanks = banks(entries, TAG_BANK_RE);
     const termBanks = banks(entries, TERM_BANK_RE);
     const metaBanks = banks(entries, TERM_META_BANK_RE);
+    const kanjiBanks = banks(entries, KANJI_BANK_RE);
+    const kanjiMetaBanks = banks(entries, KANJI_META_BANK_RE);
 
-    if (termBanks.length === 0 && metaBanks.length === 0) {
+    if (termBanks.length + metaBanks.length + kanjiBanks.length + kanjiMetaBanks.length === 0) {
       throw noSupportedBanks();
     }
 
     // Declared sizes first, so an oversized archive fails before any work (they can lie; inflation re-checks).
-    const declared = [indexEntry, ...tagBanks, ...termBanks, ...metaBanks].reduce(
+    const declared = [indexEntry, ...tagBanks, ...termBanks, ...metaBanks, ...kanjiBanks, ...kanjiMetaBanks].reduce(
       (sum, e) => sum + e.uncompressedSize,
       0,
     );
@@ -340,6 +409,23 @@ export async function importYomitanZipToSqlite(
         mode TEXT NOT NULL,
         reading TEXT NOT NULL DEFAULT '',
         reading_hira TEXT NOT NULL DEFAULT '',
+        data_json TEXT NOT NULL
+      );
+
+      CREATE TABLE kanji (
+        id INTEGER PRIMARY KEY,
+        character TEXT NOT NULL,
+        onyomi TEXT NOT NULL DEFAULT '',
+        kunyomi TEXT NOT NULL DEFAULT '',
+        tags TEXT NOT NULL DEFAULT '',
+        meanings_json TEXT NOT NULL,
+        stats_json TEXT NOT NULL DEFAULT '{}'
+      );
+
+      CREATE TABLE kanji_meta (
+        id INTEGER PRIMARY KEY,
+        character TEXT NOT NULL,
+        mode TEXT NOT NULL,
         data_json TEXT NOT NULL
       );
     `);
@@ -425,6 +511,7 @@ export async function importYomitanZipToSqlite(
     const blocks = new GlossaryBlockWriter((id, data) => insertBlock.run(id, data));
 
     let termCount = 0;
+    let singleKanjiTermCount = 0;
     for (const entry of termBanks) {
       await streamBank(entry, (row) => {
         if (!Array.isArray(row) || row.length < 6) return;
@@ -448,6 +535,7 @@ export async function importYomitanZipToSqlite(
           str(row[7]),
         );
         termCount += 1;
+        if (SINGLE_KANJI_RE.test(expression)) singleKanjiTermCount += 1;
         countRow();
       });
     }
@@ -498,8 +586,52 @@ export async function importYomitanZipToSqlite(
       });
     }
 
-    if (termCount === 0 && frequencyCount === 0 && pitchCount === 0) {
-      throw new YomitanValidationError('No usable term, frequency, or pitch entries were found in the dictionary');
+    // 4. Kanji banks
+    const insertKanji = conn.prepare(
+      'INSERT INTO kanji (character, onyomi, kunyomi, tags, meanings_json, stats_json) VALUES (?, ?, ?, ?, ?, ?)',
+    );
+    let kanjiCount = 0;
+    for (const entry of kanjiBanks) {
+      await streamBank(entry, (row) => {
+        const parsed = parseKanjiRow(row);
+        if (!parsed) return;
+        insertKanji.run(
+          parsed.character,
+          parsed.onyomi.join(' '),
+          parsed.kunyomi.join(' '),
+          parsed.tags,
+          JSON.stringify(parsed.meanings),
+          JSON.stringify(parsed.stats),
+        );
+        kanjiCount += 1;
+        countRow();
+      });
+    }
+
+    // 5. Kanji meta banks (frequency: Yomitan defines no other kanji meta mode)
+    const insertKanjiMeta = conn.prepare('INSERT INTO kanji_meta (character, mode, data_json) VALUES (?, ?, ?)');
+    let kanjiFrequencyCount = 0;
+    for (const entry of kanjiMetaBanks) {
+      await streamBank(entry, (row) => {
+        if (!Array.isArray(row) || row.length < 3) return;
+        const character = str(row[0]);
+        if (!character || str(row[1]) !== 'freq') return;
+        const parsed = parseFrequencyPayload(row[2]);
+        if (!parsed) return;
+        insertKanjiMeta.run(
+          character,
+          'freq',
+          JSON.stringify({ value: parsed.value, displayValue: parsed.displayValue }),
+        );
+        kanjiFrequencyCount += 1;
+        countRow();
+      });
+    }
+
+    if (termCount + frequencyCount + pitchCount + kanjiCount + kanjiFrequencyCount === 0) {
+      throw new YomitanValidationError(
+        'No usable term, frequency, pitch, or kanji entries were found in the dictionary',
+      );
     }
 
     // Create lookup indexes after bulk inserts for speed and compact B-trees.
@@ -508,6 +640,8 @@ export async function importYomitanZipToSqlite(
       CREATE INDEX idx_terms_expr_hira ON terms(expression_hira);
       CREATE INDEX idx_term_meta_expr ON term_meta(expression, mode);
       CREATE INDEX idx_term_meta_hira ON term_meta(expression_hira, mode);
+      CREATE INDEX idx_kanji_char ON kanji(character);
+      CREATE INDEX idx_kanji_meta_char ON kanji_meta(character, mode);
       PRAGMA optimize;
     `);
 
@@ -525,6 +659,11 @@ export async function importYomitanZipToSqlite(
       termCount,
       frequencyCount,
       pitchCount,
+      hasKanji: kanjiCount > 0,
+      kanjiCount,
+      hasKanjiFrequency: kanjiFrequencyCount > 0,
+      kanjiFrequencyCount,
+      hasKanjiTerms: termCount > 0 && singleKanjiTermCount / termCount >= KANJI_TERM_SHARE,
       sqliteBytes: info.size,
     };
   } catch (error) {

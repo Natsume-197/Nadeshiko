@@ -45,6 +45,11 @@ export interface UserDictionaryDto {
   termCount: number;
   frequencyCount: number;
   pitchCount: number;
+  hasKanji: boolean;
+  hasKanjiFrequency: boolean;
+  hasKanjiTerms: boolean;
+  kanjiCount: number;
+  kanjiFrequencyCount: number;
   zipBytes: number;
   sqliteBytes: number;
   status: UserDictionaryArtifactStatus;
@@ -96,6 +101,9 @@ export interface ActiveUserDictionaryStack {
     hasTerms: boolean;
     hasFrequency: boolean;
     hasPitch: boolean;
+    hasKanji: boolean;
+    hasKanjiFrequency: boolean;
+    hasKanjiTerms: boolean;
   }>;
   builtinEnabled: boolean;
   builtinPosition: number;
@@ -153,6 +161,11 @@ function toDto(
     termCount: artifact.termCount,
     frequencyCount: artifact.frequencyCount,
     pitchCount: artifact.pitchCount,
+    hasKanji: artifact.hasKanji,
+    hasKanjiFrequency: artifact.hasKanjiFrequency,
+    hasKanjiTerms: artifact.hasKanjiTerms,
+    kanjiCount: artifact.kanjiCount,
+    kanjiFrequencyCount: artifact.kanjiFrequencyCount,
     zipBytes: Number(artifact.zipBytes),
     sqliteBytes: Number(artifact.sqliteBytes),
     status: artifact.status,
@@ -272,6 +285,9 @@ async function readActiveUserDictionaryStack(userId: number): Promise<ActiveUser
         hasTerms: a.hasTerms,
         hasFrequency: a.hasFrequency,
         hasPitch: a.hasPitch,
+        hasKanji: a.hasKanji,
+        hasKanjiFrequency: a.hasKanjiFrequency,
+        hasKanjiTerms: a.hasKanjiTerms,
       },
     ];
   });
@@ -463,6 +479,11 @@ export async function processArtifactImportJob(artifactId: number, tmpZipPath: s
       termCount: result.termCount,
       frequencyCount: result.frequencyCount,
       pitchCount: result.pitchCount,
+      hasKanji: result.hasKanji,
+      hasKanjiFrequency: result.hasKanjiFrequency,
+      hasKanjiTerms: result.hasKanjiTerms,
+      kanjiCount: result.kanjiCount,
+      kanjiFrequencyCount: result.kanjiFrequencyCount,
       sqliteBytes: String(result.sqliteBytes),
       status: 'ready' as const,
       errorMessage: null,
@@ -485,6 +506,9 @@ export async function processArtifactImportJob(artifactId: number, tmpZipPath: s
         terms: artifact.termCount,
         freq: artifact.frequencyCount,
         pitch: artifact.pitchCount,
+        kanji: artifact.kanjiCount,
+        kanjiFreq: artifact.kanjiFrequencyCount,
+        kanjiTerms: artifact.hasKanjiTerms,
         sqliteBytes: result.sqliteBytes,
       },
       'Indexed custom Yomitan dictionary artifact',
@@ -596,6 +620,11 @@ export async function attachOrQueueUploadedDictionary(
         termCount: 0,
         frequencyCount: 0,
         pitchCount: 0,
+        hasKanji: false,
+        hasKanjiFrequency: false,
+        hasKanjiTerms: false,
+        kanjiCount: 0,
+        kanjiFrequencyCount: 0,
         zipBytes: String(zipBytes),
         sqliteBytes: '0',
         status: 'processing',

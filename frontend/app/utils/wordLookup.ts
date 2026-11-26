@@ -39,7 +39,8 @@ export function setReaderStack(fingerprint: string | null | undefined): void {
   readerStackFingerprint = fingerprint ?? '';
 }
 
-function readerStack(): string {
+/** The reader's custom dictionary stack fingerprint, '' without one. Also keys the kanji card's custom part. */
+export function readerStack(): string {
   return readerStackFingerprint;
 }
 
