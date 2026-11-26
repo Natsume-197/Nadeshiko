@@ -267,6 +267,7 @@ async function patchRequest(
     declineReason?: string | null;
     mediaId?: string | null;
     dismissDuplicate?: boolean;
+    notify?: boolean;
   },
   successMessage?: string,
 ) {
@@ -335,10 +336,16 @@ async function onDrop(targetStatus: Status) {
   if (!updated) replaceItem(previous);
 }
 
-async function confirmPendingMove() {
+/** IN_PROGRESS and RELEASED are the moves that email voters; the admin chooses each time whether they do. */
+function emailsVoters(status: Status): boolean {
+  return status === 'IN_PROGRESS' || status === 'RELEASED';
+}
+
+async function confirmPendingMove(notify = true) {
   const move = pendingMove.value;
   if (!move) return;
   if (move.targetStatus === 'DECLINED' && !move.declineReason.trim()) return;
+  const quiet = emailsVoters(move.targetStatus) && !notify;
   const updated = await patchRequest(
     move.item,
     {
@@ -347,8 +354,9 @@ async function confirmPendingMove() {
       ...(move.coverUrl !== undefined ? { coverUrl: move.coverUrl } : {}),
       declineReason: move.targetStatus === 'DECLINED' ? move.declineReason.trim() : move.declineReason.trim() || null,
       mediaId: move.mediaId.trim() || null,
+      ...(emailsVoters(move.targetStatus) ? { notify } : {}),
     },
-    `Moved to ${statusMeta(move.targetStatus).label}.`,
+    `Moved to ${statusMeta(move.targetStatus).label}${quiet ? ', no email sent' : ''}.`,
   );
   if (updated) {
     pendingMove.value = null;
@@ -447,7 +455,7 @@ function clearSearch() {
             <span class="text-xs font-medium text-ink-faint tabular-nums">{{ total }}</span>
           </div>
           <p class="mt-1 text-sm text-ink-muted">
-            Drag cards across columns to triage. Moving a request to In progress or Released emails its voters.
+            Drag cards across columns to triage. Moving a request to In progress or Released asks whether to email its voters.
           </p>
         </div>
 
@@ -914,7 +922,7 @@ function clearSearch() {
           <p v-else class="text-sm leading-relaxed text-ink-muted">
             Move <strong class="text-ink">“{{ pendingMove.item.title }}”</strong> to
             <strong class="text-ink">{{ statusMeta(pendingMove.targetStatus).label }}</strong>?
-            Everyone who voted for it ({{ plural(pendingMove.item.voteCount, 'voter', 'voters') }}) will receive an email.
+            Email {{ plural(pendingMove.item.voteCount, 'voter', 'voters') }}?
           </p>
 
           <template v-if="pendingMove.targetStatus === 'DECLINED'">
@@ -948,8 +956,18 @@ function clearSearch() {
             search-placeholder="Search Nadeshiko media by title…"
           />
 
-          <div class="flex justify-end gap-2 pt-1">
+          <div class="flex flex-wrap justify-end gap-2 pt-1">
             <button type="button" class="nd-btn" @click="pendingMove = null">Cancel</button>
+            <button
+              v-if="emailsVoters(pendingMove.targetStatus)"
+              type="button"
+              data-testid="admin-move-quiet"
+              class="nd-btn"
+              :disabled="savingId === pendingMove.item.id"
+              @click="confirmPendingMove(false)"
+            >
+              Move without email
+            </button>
             <button
               type="button"
               data-testid="admin-move-confirm"
@@ -958,9 +976,9 @@ function clearSearch() {
                 savingId === pendingMove.item.id ||
                 (pendingMove.targetStatus === 'DECLINED' && !pendingMove.declineReason.trim())
               "
-              @click="confirmPendingMove"
+              @click="confirmPendingMove(true)"
             >
-              {{ pendingMove.targetStatus === 'DECLINED' ? 'Decline request' : `Move to ${statusMeta(pendingMove.targetStatus).label}` }}
+              {{ pendingMove.targetStatus === 'DECLINED' ? 'Decline request' : 'Move and email' }}
             </button>
           </div>
         </div>

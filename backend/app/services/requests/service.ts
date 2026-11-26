@@ -15,7 +15,6 @@ import {
 } from '@app/models';
 import type { User } from '@app/models';
 import { AccessDeniedError, DuplicateKeyError, InvalidRequestError, NotFoundError } from '@app/errors';
-import { logger } from '@config/log';
 import {
   DAILY_REQUEST_LIMIT,
   OPEN_REQUEST_LIMIT,
@@ -144,35 +143,121 @@ export interface CreateRequestInput {
 
 export type CreateRequestOutcome = 'created' | 'voted' | 'already_voted';
 
-/**
- * File a request, or vote on the one already open for the same title. A NEW request for a title that is already on
- * Nadeshiko becomes an UPDATE request for it (more episodes, a new season, new videos).
- */
-export async function createRequest(
-  user: Pick<User, 'id' | 'role'>,
-  input: CreateRequestInput,
-): Promise<{ request: ContentRequest; outcome: CreateRequestOutcome }> {
-  const link = parseRequestLink(input.sourceUrl);
-  if (!link) {
-    throw new InvalidRequestError(
-      'Use a link to AniList or MyAnimeList (anime), TMDB or MyDramaList (dramas), Audible or Amazon (audiobooks) or YouTube.',
-    );
-  }
+const INVALID_LINK_MESSAGE =
+  'Use a link to AniList or MyAnimeList (anime), TMDB or MyDramaList (dramas), Audible or Amazon (audiobooks) or YouTube.';
 
-  // The allowance depends only on the account, so read it while the external metadata loads.
-  const [metadata, benefits] = await Promise.all([lookupRequestMetadata(link, input.title), patronBenefits(user)]);
+/** What Nadeshiko already has of a requested title. `complete` only when the source gives a final episode count. */
+export interface ExistingTitle {
+  media: Media;
+  episodes: number;
+  totalEpisodes: number | null;
+  complete: boolean;
+}
+
+interface ResolvedRequestLink {
+  link: NonNullable<ReturnType<typeof parseRequestLink>>;
+  metadata: Awaited<ReturnType<typeof lookupRequestMetadata>>;
+  identity: { source: ExternalSourceType; id: string } | null;
+  existing: ExistingTitle | null;
+}
+
+/** Parse a request link, read its metadata and find the published title it names, if any. */
+async function resolveRequestLink(sourceUrl: string, hintTitle?: string): Promise<ResolvedRequestLink> {
+  const link = parseRequestLink(sourceUrl);
+  if (!link) throw new InvalidRequestError(INVALID_LINK_MESSAGE);
+
+  const metadata = await lookupRequestMetadata(link, hintTitle);
   const resolvedId = link.externalId ?? metadata.externalId ?? null;
   // The identity a request is matched on: the same pair `MediaExternalId` stores for published media.
   const identity = resolvedId && link.externalSource ? { source: link.externalSource, id: resolvedId } : null;
-  const title = (metadata.title ?? input.title?.trim() ?? '').slice(0, 180);
-  if (!title) throw new InvalidRequestError('We could not read a title from that link. Add one.');
-
-  const existingMedia = identity
+  const external = identity
     ? await MediaExternalId.findOne({
         where: { source: identity.source, externalId: identity.id },
         relations: { media: true },
       })
     : null;
+
+  return { link, metadata, identity, existing: external?.media ? existingTitle(external.media, metadata) : null };
+}
+
+/**
+ * Complete only when the source says the entry finished airing and we hold at least its episode count, so an airing
+ * show, a YouTube channel or an audiobook never reads as complete.
+ */
+export function existingTitle(
+  media: Media,
+  metadata: { totalEpisodes?: number | null; finished?: boolean },
+): ExistingTitle {
+  const totalEpisodes = metadata.totalEpisodes ?? null;
+  const complete =
+    media.category === CategoryType.ANIME &&
+    metadata.finished === true &&
+    totalEpisodes !== null &&
+    media.episodeCount >= totalEpisodes;
+  return { media, episodes: media.episodeCount, totalEpisodes, complete };
+}
+
+export interface RequestPreview {
+  category: CategoryType;
+  title: string | null;
+  coverUrl: string | null;
+  existing: {
+    media: { id: string; slug: string; name: string };
+    episodes: number;
+    totalEpisodes: number | null;
+    complete: boolean;
+  } | null;
+  /** The active request a new one would vote on instead. */
+  activeRequestId: string | null;
+}
+
+/** What filing this link would do, so the form can say it before the reader sends it. */
+export async function previewRequest(input: { sourceUrl: string; title?: string }): Promise<RequestPreview> {
+  const { link, metadata, identity, existing } = await resolveRequestLink(input.sourceUrl, input.title);
+  const active = identity
+    ? await ContentRequest.findOne({
+        where: { externalSource: identity.source, externalId: identity.id, status: In([...ACTIVE_REQUEST_STATUSES]) },
+        select: { id: true, publicId: true },
+      })
+    : null;
+
+  return {
+    category: link.category,
+    title: metadata.title ?? input.title?.trim() ?? null,
+    coverUrl: metadata.coverUrl,
+    existing: existing
+      ? {
+          media: {
+            id: existing.media.publicId,
+            slug: existing.media.slug,
+            name: existing.media.nameEn || existing.media.nameRomaji,
+          },
+          episodes: existing.episodes,
+          totalEpisodes: existing.totalEpisodes,
+          complete: existing.complete,
+        }
+      : null,
+    activeRequestId: active?.publicId ?? null,
+  };
+}
+
+/**
+ * File a request, or vote on the one already open for the same title. A request for a title that is already on
+ * Nadeshiko becomes an UPDATE request for it (more episodes, a new season, new videos): it must say what is missing,
+ * and a title we already hold in full cannot be requested.
+ */
+export async function createRequest(
+  user: Pick<User, 'id' | 'role'>,
+  input: CreateRequestInput,
+): Promise<{ request: ContentRequest; outcome: CreateRequestOutcome }> {
+  // The allowance depends only on the account, so read it while the external metadata loads.
+  const [{ link, metadata, identity, existing }, benefits] = await Promise.all([
+    resolveRequestLink(input.sourceUrl, input.title),
+    patronBenefits(user),
+  ]);
+  const title = (metadata.title ?? input.title?.trim() ?? '').slice(0, 180);
+  if (!title) throw new InvalidRequestError('We could not read a title from that link. Add one.');
+  const note = input.note?.trim() ?? '';
 
   const openLimit = openRequestLimit(user, benefits.isPatron);
 
@@ -187,6 +272,16 @@ export async function createRequest(
         const voted = await addVote(manager, active.id, user.id);
         return { id: active.id, outcome: (voted ? 'voted' : 'already_voted') as CreateRequestOutcome };
       }
+    }
+
+    // Checked after the vote path, so backing an open update request never needs a note.
+    if (existing?.complete) {
+      throw new InvalidRequestError(
+        `${existing.media.nameEn || existing.media.nameRomaji} is already complete on Nadeshiko.`,
+      );
+    }
+    if (existing && !note) {
+      throw new InvalidRequestError('This title is already on Nadeshiko. Say what is missing.');
     }
 
     if (user.role !== UserRoleType.ADMIN) {
@@ -215,15 +310,15 @@ export async function createRequest(
 
     const request = manager.create(ContentRequest, {
       category: link.category,
-      kind: existingMedia ? ContentRequestKind.UPDATE : ContentRequestKind.NEW,
+      kind: existing ? ContentRequestKind.UPDATE : ContentRequestKind.NEW,
       status: ContentRequestStatus.OPEN,
       title,
-      note: input.note?.trim() ?? '',
+      note,
       sourceUrl: input.sourceUrl.trim(),
       externalSource: identity?.source ?? null,
       externalId: identity?.id ?? null,
       coverUrl: metadata.coverUrl,
-      mediaId: existingMedia?.mediaId ?? null,
+      mediaId: existing?.media.id ?? null,
       possibleDuplicateOfId: lookalike?.id ?? null,
       requesterUserId: user.id,
     });
@@ -310,9 +405,14 @@ export interface AdminRequestPatch {
   declineReason?: string | null;
   mediaId?: string | null;
   dismissDuplicate?: boolean;
+  /** False moves the request quietly: no bell entry, no email. */
+  notify?: boolean;
 }
 
-/** Change a request; moving it to IN_PROGRESS or RELEASED tells everyone who voted for or boosted it. */
+/**
+ * Change a request; moving it to IN_PROGRESS or RELEASED tells everyone who voted for or boosted it, unless the admin
+ * chose to move it quietly.
+ */
 export async function updateRequestAsAdmin(publicId: string, patch: AdminRequestPatch): Promise<ContentRequest> {
   const request = await ContentRequest.findOneBy({ publicId });
   if (!request) throw new NotFoundError('Request not found');
@@ -364,7 +464,7 @@ export async function updateRequestAsAdmin(publicId: string, patch: AdminRequest
   }
 
   const saved = await loadRequest({ id: request.id }, true);
-  if (saved.status !== previous) void notifyRequestSubscribers(saved, previous);
+  if (saved.status !== previous && patch.notify !== false) void notifyRequestSubscribers(saved, previous);
   return saved;
 }
 
@@ -405,36 +505,4 @@ export async function mergeRequests(duplicatePublicId: string, intoPublicId: str
     await recount(manager, into.id);
   });
   return loadRequest({ id: into.id }, true);
-}
-
-/**
- * Mark the open NEW requests a newly created media answers as in progress, matched by its external ids, and link them
- * to it. Ingest creates the media before uploading its sentences, so this is "work started", not "released": an admin
- * releases the request once production is checked. Failures are logged and never fail the ingest.
- */
-export async function startRequestsForMedia(mediaId: number): Promise<number> {
-  try {
-    const externalIds = await MediaExternalId.findBy({ mediaId });
-    if (!externalIds.length) return 0;
-    const requests = await ContentRequest.find({
-      where: externalIds.map((id) => ({
-        externalSource: id.source,
-        externalId: id.externalId,
-        kind: ContentRequestKind.NEW,
-        status: In([ContentRequestStatus.OPEN, ContentRequestStatus.PLANNED]),
-      })),
-    });
-    if (!requests.length) return 0;
-    const ids = requests.map((request) => request.id);
-    await ContentRequest.update({ id: In(ids) }, { status: ContentRequestStatus.IN_PROGRESS, mediaId });
-    const started = await ContentRequest.find({ where: { id: In(ids) }, relations: { media: true } });
-    const previous = new Map(requests.map((request) => [request.id, request.status]));
-    for (const request of started) {
-      void notifyRequestSubscribers(request, previous.get(request.id) ?? ContentRequestStatus.OPEN);
-    }
-    return requests.length;
-  } catch (err) {
-    logger.error({ err, mediaId }, 'Could not start the content requests for a new media');
-    return 0;
-  }
 }

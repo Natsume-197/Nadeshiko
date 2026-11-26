@@ -1860,6 +1860,18 @@
       "titleLabel": "標題",
       "note": "備註（選填）",
       "notePlaceholder": "哪一季、哪裡有字幕等有幫助的資訊。",
+      "noteMissing": "缺少什麼？",
+      "noteMissingPlaceholder": "第 101–200 集、第二季、較新的影片…",
+      "alreadyHere": "Nadeshiko 已收錄",
+      "alreadyComplete": "Nadeshiko 已完整收錄",
+      "episodesOf": "{count} / {total} 集",
+      "count": {
+        "ANIME": "{count} 集",
+        "JDRAMA": "{count} 集",
+        "YOUTUBE": "{count} 部影片",
+        "AUDIOBOOK": "{count} 章"
+      },
+      "missingNote": "請說明 Nadeshiko 上的這部作品缺少什麼。",
       "submit": "送出請求",
       "cancel": "取消",
       "unsupported": "請使用 AniList、MyAnimeList、TMDB、MyDramaList、Audible、Amazon 或 YouTube 的連結。",

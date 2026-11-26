@@ -3865,6 +3865,79 @@ export type GetContentRequestAllowanceResponses = {
 
 export type GetContentRequestAllowanceResponse = GetContentRequestAllowanceResponses[keyof GetContentRequestAllowanceResponses];
 
+export type PreviewContentRequestData = {
+    body: {
+        sourceUrl: string;
+        /**
+         * Used when the link gives no title.
+         */
+        title?: string;
+    };
+    path?: never;
+    query?: never;
+    url: '/v1/requests/preview';
+};
+
+export type PreviewContentRequestErrors = {
+    /**
+     * Bad Request
+     */
+    400: Error400;
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Too Many Requests. The response body indicates whether the request was rejected due to per-minute rate limiting or monthly quota exhaustion.
+     */
+    429: Error429;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type PreviewContentRequestError = PreviewContentRequestErrors[keyof PreviewContentRequestErrors];
+
+export type PreviewContentRequestResponses = {
+    /**
+     * OK
+     */
+    200: {
+        category: 'ANIME' | 'JDRAMA' | 'YOUTUBE' | 'AUDIOBOOK';
+        title: string | null;
+        coverUrl: string | null;
+        /**
+         * The published title this link names, or null when it is not on Nadeshiko.
+         */
+        existing: {
+            media: {
+                id: string;
+                slug: string;
+                name: string;
+            };
+            /**
+             * Episodes (or videos
+             */
+            episodes: number;
+            /**
+             * Episodes the source lists (anime only); null when unknown or still airing without a count.
+             */
+            totalEpisodes: number | null;
+            /**
+             * True when the source has finished airing and Nadeshiko holds every episode. Such a title cannot be requested.
+             */
+            complete: boolean;
+        } | null;
+        /**
+         * The open request for the same title; filing adds a vote to it instead.
+         */
+        activeRequestId: string | null;
+    };
+};
+
+export type PreviewContentRequestResponse = PreviewContentRequestResponses[keyof PreviewContentRequestResponses];
+
 export type ListMyContentRequestsData = {
     body?: never;
     path?: never;
@@ -8973,6 +9046,10 @@ export type UpdateAdminContentRequestData = {
          * Clear the possible-duplicate flag.
          */
         dismissDuplicate?: boolean;
+        /**
+         * False moves the request without telling its voters (no bell entry, no email).
+         */
+        notify?: boolean;
     };
     path: {
         /**

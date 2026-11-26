@@ -28,6 +28,14 @@ const YOUTUBE_THUMBNAIL_ORIGIN = 'https://*.ytimg.com';
 // Trust the AniList image CDN for content request covers, not AniList scripts or API origins.
 const ANILIST_IMAGE_ORIGIN = 'https://s4.anilist.co';
 const MYANIMELIST_IMAGE_ORIGIN = 'https://cdn.myanimelist.net';
+// The other covers content request links resolve to: drama posters (TVmaze, TMDB), Audible covers and YouTube
+// channel avatars. Images only.
+const REQUEST_COVER_ORIGINS = [
+  'https://static.tvmaze.com',
+  'https://image.tmdb.org',
+  'https://m.media-amazon.com',
+  'https://yt3.googleusercontent.com',
+];
 // Chrome Translate needs these stylesheet/icon origins plus its translation API.
 // Its privileged script injection does not need a script-src allowance.
 const GSTATIC_ORIGIN = 'https://www.gstatic.com';
@@ -223,6 +231,7 @@ export default defineNuxtConfig({
               YOUTUBE_THUMBNAIL_ORIGIN,
               ANILIST_IMAGE_ORIGIN,
               MYANIMELIST_IMAGE_ORIGIN,
+              ...REQUEST_COVER_ORIGINS,
               GOOGLE_FONTS_STATIC_ORIGIN,
               GOOGLE_TRANSLATE_ORIGIN,
               YANDEX_STATIC_ORIGIN,

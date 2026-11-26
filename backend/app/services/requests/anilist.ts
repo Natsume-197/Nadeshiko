@@ -4,6 +4,8 @@ interface AniListMediaResponse {
       title?: { english?: string | null; romaji?: string | null };
       coverImage?: { extraLarge?: string | null };
       siteUrl?: string | null;
+      episodes?: number | null;
+      status?: string | null;
     } | null;
   };
 }
@@ -12,6 +14,10 @@ export interface AniListMediaMetadata {
   title: string;
   coverUrl: string;
   siteUrl: string;
+  /** Episodes AniList lists for the entry; null while it airs with no announced count. */
+  totalEpisodes: number | null;
+  /** True once AniList marks the entry FINISHED, so `totalEpisodes` is final. */
+  finished: boolean;
 }
 
 const ANILIST_MEDIA_URL = /^https?:\/\/(?:www\.)?anilist\.co\/anime\/(\d+)(?:\/[^?#]*)?(?:[?#].*)?$/i;
@@ -37,7 +43,7 @@ async function queryAniListMedia(key: 'id' | 'idMal', value: number): Promise<An
       method: 'POST',
       headers: { 'content-type': 'application/json', accept: 'application/json' },
       body: JSON.stringify({
-        query: `query ($value: Int!) { Media(${key}: $value, type: ANIME) { title { english romaji } coverImage { extraLarge } siteUrl } }`,
+        query: `query ($value: Int!) { Media(${key}: $value, type: ANIME) { title { english romaji } coverImage { extraLarge } siteUrl episodes status } }`,
         variables: { value },
       }),
       signal: AbortSignal.timeout(4_000),
@@ -49,7 +55,8 @@ async function queryAniListMedia(key: 'id' | 'idMal', value: number): Promise<An
     const coverUrl = media?.coverImage?.extraLarge;
     const siteUrl = media?.siteUrl;
     if (!title || !coverUrl || !siteUrl || !ANILIST_COVER_URL.test(coverUrl)) return null;
-    return { title, coverUrl, siteUrl };
+    const totalEpisodes = typeof media?.episodes === 'number' && media.episodes > 0 ? media.episodes : null;
+    return { title, coverUrl, siteUrl, totalEpisodes, finished: media?.status === 'FINISHED' };
   } catch {
     return null;
   }

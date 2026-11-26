@@ -134,6 +134,7 @@ export type UserExportCollectionOutput = z.output<typeof schemas.s_UserExportCol
 export type AdminReportListResponseOutput = z.output<typeof schemas.s_AdminReportListResponse>;
 export type UserExportResponseOutput = z.output<typeof schemas.s_UserExportResponse>;
 export type CreateContentRequestRequestBodyOutput = z.output<typeof schemas.s_CreateContentRequestRequestBody>;
+export type PreviewContentRequestRequestBodyOutput = z.output<typeof schemas.s_PreviewContentRequestRequestBody>;
 export type MarkNotificationsReadRequestBodyOutput = z.output<typeof schemas.s_MarkNotificationsReadRequestBody>;
 export type SetWordWatchRequestBodyOutput = z.output<typeof schemas.s_SetWordWatchRequestBody>;
 export type UpdateWordWatchRequestBodyOutput = z.output<typeof schemas.s_UpdateWordWatchRequestBody>;

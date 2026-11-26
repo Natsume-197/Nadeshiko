@@ -1772,6 +1772,11 @@ export type t_ModerateEpisodeSegmentsParamSchema = {
   mediaPublicId: string;
 };
 
+export type t_PreviewContentRequestRequestBody = {
+  sourceUrl: string;
+  title?: string;
+};
+
 export type t_RefreshAdminPatreonConnectionParamSchema = {
   userId: number;
 };
@@ -1840,6 +1845,7 @@ export type t_UpdateAdminContentRequestRequestBody = {
   kind?: 'NEW' | 'UPDATE';
   mediaId?: string | null;
   note?: string;
+  notify?: boolean;
   status?: 'OPEN' | 'PLANNED' | 'IN_PROGRESS' | 'RELEASED' | 'DECLINED';
   title?: string;
 };

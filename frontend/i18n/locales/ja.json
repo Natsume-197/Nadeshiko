@@ -1860,6 +1860,18 @@
       "titleLabel": "タイトル",
       "note": "メモ（任意）",
       "notePlaceholder": "シーズン、字幕のある場所など、参考になること。",
+      "noteMissing": "足りないものは？",
+      "noteMissingPlaceholder": "101〜200話、第2期、新しい動画など",
+      "alreadyHere": "Nadeshikoに収録済み",
+      "alreadyComplete": "Nadeshikoに全話収録済み",
+      "episodesOf": "全{total}話中{count}話",
+      "count": {
+        "ANIME": "{count}話",
+        "JDRAMA": "{count}話",
+        "YOUTUBE": "{count}本の動画",
+        "AUDIOBOOK": "{count}章"
+      },
+      "missingNote": "Nadeshikoの作品に足りないものを書いてください。",
       "submit": "リクエストを送信",
       "cancel": "キャンセル",
       "unsupported": "AniList、MyAnimeList、TMDB、MyDramaList、Audible、Amazon、YouTubeのリンクを使ってください。",

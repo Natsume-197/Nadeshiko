@@ -1,7 +1,11 @@
 import { CategoryType } from '@app/models';
 import { config } from '@config/config';
 import { logger } from '@config/log';
-import { getAniListMediaMetadata, getAniListMediaMetadataByMalId } from '@app/services/requests/anilist';
+import {
+  type AniListMediaMetadata,
+  getAniListMediaMetadata,
+  getAniListMediaMetadataByMalId,
+} from '@app/services/requests/anilist';
 import type { ParsedRequestLink } from './links';
 
 export interface RequestMetadata {
@@ -9,6 +13,9 @@ export interface RequestMetadata {
   coverUrl: string | null;
   /** Filled when the lookup finds the identity the link alone does not carry (a YouTube handle's channel id). */
   externalId?: string;
+  /** Anime only (AniList): the episode count the source lists and whether it is final. */
+  totalEpisodes?: number | null;
+  finished?: boolean;
 }
 
 const TIMEOUT_MS = 4_000;
@@ -167,6 +174,15 @@ async function dramaFallback(query: string, mediaType: 'tv' | 'movie' = 'tv'): P
   };
 }
 
+function aniListMetadata(media: AniListMediaMetadata): RequestMetadata {
+  return {
+    title: clean(media.title, 180),
+    coverUrl: media.coverUrl,
+    totalEpisodes: media.totalEpisodes,
+    finished: media.finished,
+  };
+}
+
 /**
  * Title, cover and, for a YouTube handle, the channel id behind a request link. Presentation data only: any failure
  * returns nulls and the request falls back to the title the reader typed.
@@ -176,11 +192,11 @@ export async function lookupRequestMetadata(link: ParsedRequestLink, hintTitle?:
     switch (link.lookup.type) {
       case 'anilist': {
         const media = await getAniListMediaMetadata(`https://anilist.co/anime/${link.lookup.id}`);
-        return media ? { title: clean(media.title, 180), coverUrl: media.coverUrl } : EMPTY;
+        return media ? aniListMetadata(media) : EMPTY;
       }
       case 'mal': {
         const media = await getAniListMediaMetadataByMalId(link.lookup.id);
-        return media ? { title: clean(media.title, 180), coverUrl: media.coverUrl } : EMPTY;
+        return media ? aniListMetadata(media) : EMPTY;
       }
       case 'tmdb': {
         const direct = await tmdb(link.lookup.mediaType, link.lookup.id);

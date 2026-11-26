@@ -5,7 +5,8 @@ patch:
   summary: Change a content request
   description: |
     Edits a request or moves it between statuses. Declining needs a reason, which readers see. Moving a request to
-    IN_PROGRESS or RELEASED emails everyone who voted for or boosted it (unless they opted out of request news).
+    IN_PROGRESS or RELEASED emails everyone who voted for or boosted it (unless they opted out of request news), unless
+    `notify` is false.
   security:
     - SessionCookie: [ADMIN]
   parameters:
@@ -31,6 +32,10 @@ patch:
             declineReason: { type: [string, "null"], maxLength: 500 }
             mediaId: { type: [string, "null"], maxLength: 32, description: Public id of the media the request is for or produced. }
             dismissDuplicate: { type: boolean, description: Clear the possible-duplicate flag. }
+            notify:
+              type: boolean
+              default: true
+              description: False moves the request without telling its voters (no bell entry, no email).
   responses:
     "200":
       description: Updated

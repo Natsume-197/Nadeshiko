@@ -356,6 +356,125 @@ paths:
           $ref: "#/components/responses/TooManyRequests"
         "500":
           $ref: "#/components/responses/InternalServerError"
+  /v1/requests/preview:
+    post:
+      tags:
+        - Requests
+      x-internal: true
+      operationId: previewContentRequest
+      summary: Preview a request link
+      description: >
+        What filing this link would do: the title and cover it names, whether
+        that title is already on Nadeshiko (with the
+
+        episodes we hold and, for anime, the total its source lists) and the
+        open request it would vote on instead.
+
+        Nothing is written.
+      security:
+        - SessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - sourceUrl
+              properties:
+                sourceUrl:
+                  type: string
+                  format: uri
+                  maxLength: 1000
+                  pattern: ^https?://
+                title:
+                  type: string
+                  minLength: 1
+                  maxLength: 180
+                  description: Used when the link gives no title.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - category
+                  - title
+                  - coverUrl
+                  - existing
+                  - activeRequestId
+                properties:
+                  category:
+                    type: string
+                    enum:
+                      - ANIME
+                      - JDRAMA
+                      - YOUTUBE
+                      - AUDIOBOOK
+                  title:
+                    type:
+                      - string
+                      - "null"
+                  coverUrl:
+                    type:
+                      - string
+                      - "null"
+                  existing:
+                    description: The published title this link names, or null when it is not on
+                      Nadeshiko.
+                    type:
+                      - object
+                      - "null"
+                    required:
+                      - media
+                      - episodes
+                      - totalEpisodes
+                      - complete
+                    properties:
+                      media:
+                        type: object
+                        required:
+                          - id
+                          - slug
+                          - name
+                        properties:
+                          id:
+                            type: string
+                          slug:
+                            type: string
+                          name:
+                            type: string
+                      episodes:
+                        type: integer
+                        description: Episodes (or videos
+                        chapters) on Nadeshiko.: null
+                      totalEpisodes:
+                        type:
+                          - integer
+                          - "null"
+                        description: Episodes the source lists (anime only); null when unknown or still
+                          airing without a count.
+                      complete:
+                        type: boolean
+                        description: True when the source has finished airing and Nadeshiko holds every
+                          episode. Such a title cannot be requested.
+                  activeRequestId:
+                    type:
+                      - string
+                      - "null"
+                    format: uuid
+                    description: The open request for the same title; filing adds a vote to it
+                      instead.
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   /v1/requests/mine:
     get:
       tags:
@@ -5524,7 +5643,9 @@ paths:
         which readers see. Moving a request to
 
         IN_PROGRESS or RELEASED emails everyone who voted for or boosted it
-        (unless they opted out of request news).
+        (unless they opted out of request news), unless
+
+        `notify` is false.
       security:
         - SessionCookie:
             - ADMIN
@@ -5592,6 +5713,11 @@ paths:
                 dismissDuplicate:
                   type: boolean
                   description: Clear the possible-duplicate flag.
+                notify:
+                  type: boolean
+                  default: true
+                  description: False moves the request without telling its voters (no bell entry,
+                    no email).
       responses:
         "200":
           description: Updated

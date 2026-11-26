@@ -26,6 +26,8 @@ describe('getAniListMediaMetadata', () => {
       title: 'Cowboy Bebop',
       coverUrl: 'https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx1.jpg',
       siteUrl: 'https://anilist.co/anime/1',
+      totalEpisodes: null,
+      finished: false,
     });
     expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body)).variables).toEqual({ value: 1 });
   });

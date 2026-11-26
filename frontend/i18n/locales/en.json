@@ -1860,6 +1860,18 @@
       "titleLabel": "Title",
       "note": "Note (optional)",
       "notePlaceholder": "Which season, where subtitles exist, anything that helps.",
+      "noteMissing": "What is missing?",
+      "noteMissingPlaceholder": "Episodes 101–200, season 2, newer videos…",
+      "alreadyHere": "Already on Nadeshiko",
+      "alreadyComplete": "Already complete on Nadeshiko",
+      "episodesOf": "{count} of {total} episodes",
+      "count": {
+        "ANIME": "{count} episodes",
+        "JDRAMA": "{count} episodes",
+        "YOUTUBE": "{count} videos",
+        "AUDIOBOOK": "{count} chapters"
+      },
+      "missingNote": "Say what is missing from the title on Nadeshiko.",
       "submit": "Send request",
       "cancel": "Cancel",
       "unsupported": "Use a link to AniList, MyAnimeList, TMDB, MyDramaList, Audible, Amazon or YouTube.",
