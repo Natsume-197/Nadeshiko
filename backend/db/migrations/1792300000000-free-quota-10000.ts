@@ -27,8 +27,6 @@ export class FreeQuota100001792300000000 implements MigrationInterface {
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`UPDATE "User" SET "monthly_quota_limit" = 5000 WHERE "monthly_quota_limit" = 10000`);
     await queryRunner.query(`ALTER TABLE "User" ALTER COLUMN "monthly_quota_limit" SET DEFAULT 5000`);
-    await queryRunner.query(
-      `UPDATE "Tier" SET "monthly_quota_limit" = 5000, "updated_at" = now() WHERE "id" = 'free'`,
-    );
+    await queryRunner.query(`UPDATE "Tier" SET "monthly_quota_limit" = 5000, "updated_at" = now() WHERE "id" = 'free'`);
   }
 }

@@ -160,13 +160,13 @@ describe('direct uploads', () => {
     expect(tooBig.status).toBe(400);
     expect(tooBig.body.detail).toContain('60 MB limit');
 
-    for (const title of ['一つ目', '二つ目']) {
+    for (const title of ['一つ目', '二つ目', '三つ目']) {
       const { uploadId } = await reserveAndPut(dictionaryZip(title));
       expect((await request(app).post(`/v1/user/dictionaries/uploads/${uploadId}/complete`).send()).status).toBe(201);
     }
-    const third = await request(app).post('/v1/user/dictionaries/uploads').send({ sizeBytes: 1000 });
-    expect(third.status).toBe(400);
-    expect(third.body.detail).toContain('limit of 2');
+    const fourth = await request(app).post('/v1/user/dictionaries/uploads').send({ sizeBytes: 1000 });
+    expect(fourth.status).toBe(400);
+    expect(fourth.body.detail).toContain('limit of 3');
   });
 
   it('keeps at most three uploads in progress per account', async () => {

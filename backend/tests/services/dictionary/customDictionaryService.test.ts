@@ -173,7 +173,7 @@ describe('the upload endpoint', () => {
     const list = await request(app).get('/v1/user/dictionaries');
     expect(list.status).toBe(200);
     expect(list.body.dictionaries).toHaveLength(1);
-    expect(list.body.quota).toMatchObject({ used: 1, max: 2, isPatron: false });
+    expect(list.body.quota).toMatchObject({ used: 1, max: 3, isPatron: false });
 
     signInAs(app, fixtures.users.kevin);
     const other = await request(app).get('/v1/user/dictionaries');
@@ -212,19 +212,21 @@ describe('the upload endpoint', () => {
     expect(again.status).toBe(409);
   });
 
-  it("enforces a free account's limit of two", async () => {
+  it("enforces a free account's limit of three", async () => {
     expect((await upload(monolingualZip('一'))).status).toBe(201);
     expect((await upload(monolingualZip('二'))).status).toBe(201);
-    const third = await upload(monolingualZip('三'));
-    expect(third.status).toBe(400);
-    expect(third.body.detail).toContain('limit of 2');
+    expect((await upload(monolingualZip('三'))).status).toBe(201);
+    const fourth = await upload(monolingualZip('四'));
+    expect(fourth.status).toBe(400);
+    expect(fourth.body.detail).toContain('limit of 3');
   });
 
   it('enforces the limit when two uploads race past the first check', async () => {
     expect((await upload(monolingualZip('一'))).status).toBe(201);
-    const [a, b] = await Promise.all([upload(monolingualZip('二')), upload(monolingualZip('三'))]);
+    expect((await upload(monolingualZip('二'))).status).toBe(201);
+    const [a, b] = await Promise.all([upload(monolingualZip('三')), upload(monolingualZip('四'))]);
     expect([a.status, b.status].filter((status) => status === 201).length).toBeLessThanOrEqual(1);
-    expect(await UserDictionary.countBy({ userId: fixtures.users.regular.id })).toBeLessThanOrEqual(2);
+    expect(await UserDictionary.countBy({ userId: fixtures.users.regular.id })).toBeLessThanOrEqual(3);
   });
 
   it('shares one indexed file between accounts that upload the same zip', async () => {

@@ -40,7 +40,7 @@ info:
 
     ### Quota
 
-    Each account has a monthly quota of **5,000 requests**. Once exceeded,
+    Each account has a monthly quota of **10,000 requests**. Once exceeded,
     further requests will be rejected until the next month.
 
     To request a quota increase, reach out via the [contact
@@ -11950,7 +11950,7 @@ components:
               type: integer
               minimum: 0
               description: Maximum number of API requests allowed per month.
-              example: 5000
+              example: 10000
             remaining:
               type: integer
               minimum: 0
