@@ -17,6 +17,7 @@ import {
 import { useTimeoutFn } from '@vueuse/core';
 import type { AnkiConnectFailure, AnkiProfile } from '@/stores/anki';
 import { isAnkiUnavailable } from '@/stores/anki';
+import { isHttpAnkiAddress, isSafariBrowser } from '~/utils/ankiAddress';
 import { ANKI_CARD_CSS } from '~/utils/ankiWord';
 import { copyToClipboard } from '~/utils/media';
 import { handleApiError } from '~/utils/apiError';
@@ -29,6 +30,7 @@ const isError = ref(false);
 const isLoading = ref(false);
 const isSuccess = ref(false);
 const isSaving = ref(false);
+const isSafari = ref(false);
 
 const deckOptions = ref<string[]>([]);
 const modelOptions = ref<string[]>([]);
@@ -268,6 +270,7 @@ async function loadUserDictionaries() {
 }
 
 onMounted(async () => {
+  isSafari.value = isSafariBrowser(navigator.userAgent);
   await store.migrateFromLocalStorage();
   if (store.profiles.length === 0) {
     await store.createProfile(t('accountSettings.anki.defaultProfile'));
@@ -294,6 +297,13 @@ const failureReason = computed<AnkiConnectFailure>(() => store.connectFailure ??
 const failureTitle = computed(() => t(`accountSettings.anki.connectFailure.${failureReason.value}.title`));
 const failureBody = computed(() => t(`accountSettings.anki.connectFailure.${failureReason.value}.body`));
 const showGenericTips = computed(() => failureReason.value === 'unreachable');
+const showSafariNotice = computed(
+  () =>
+    isSafari.value &&
+    !isSuccess.value &&
+    isHttpAnkiAddress(ankiconnectAddress.value) &&
+    store.connectFailure !== 'blocked_by_csp',
+);
 
 const fetchAndLoad = async () => {
   cancelAddressSave();
@@ -464,6 +474,19 @@ watch(canEditProfile, (editable) => {
             </div>
             <p class="mt-2 text-sm text-green-700 dark:text-green-200">
               {{ $t('accountSettings.anki.successMessage') }}
+            </p>
+          </div>
+
+          <div
+            v-if="showSafariNotice"
+            data-testid="anki-safari-warning"
+            role="alert"
+            class="mb-3 rounded bg-amber-50 p-4 dark:bg-amber-900/30">
+            <p class="font-medium text-amber-900 dark:text-amber-100">
+              {{ $t('accountSettings.anki.safariHttpWarningTitle') }}
+            </p>
+            <p class="mt-1 text-sm text-amber-800 dark:text-amber-200">
+              {{ $t('accountSettings.anki.safariHttpWarningMessage') }}
             </p>
           </div>
 

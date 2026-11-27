@@ -1025,6 +1025,8 @@
       "dictionarySubmenu": "释义（指定词典）…",
       "dictionaryBack": "返回",
       "dictionaryGroup": "你的词典",
+      "safariHttpWarningTitle": "Safari 会阻止到 AnkiConnect 的本地 HTTP 连接",
+      "safariHttpWarningMessage": "Safari 不允许 HTTPS 网站通过明文 HTTP（如 http://127.0.0.1:8765）连接 AnkiConnect。请改用 Firefox、Chrome 或 Brave 同步 Anki，或将上方地址指向本地 HTTPS 代理（例如 https://localhost:8766）。",
       "connectFailure": {
         "unreachable": {
           "title": "Anki 没有响应",

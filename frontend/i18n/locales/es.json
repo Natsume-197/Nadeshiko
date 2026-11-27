@@ -1025,6 +1025,8 @@
       "dictionarySubmenu": "Definición (un diccionario)…",
       "dictionaryBack": "Volver",
       "dictionaryGroup": "Tus diccionarios",
+      "safariHttpWarningTitle": "Safari bloquea las conexiones HTTP locales a AnkiConnect",
+      "safariHttpWarningMessage": "Safari impide que los sitios HTTPS se conecten a AnkiConnect por HTTP sin cifrar (como http://127.0.0.1:8765). Usa Firefox, Chrome o Brave para sincronizar con Anki, o apunta la dirección de arriba a un proxy HTTPS local (por ejemplo https://localhost:8766).",
       "connectFailure": {
         "unreachable": {
           "title": "Anki no ha respondido",

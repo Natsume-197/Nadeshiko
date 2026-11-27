@@ -252,6 +252,11 @@ export default defineNuxtConfig({
               'http://127.0.0.1:*',
               'http://localhost:*',
               'http://[::1]:*',
+              // Also allow HTTPS loopback so Safari users who front AnkiConnect with a local TLS proxy
+              // (e.g. mkcert + Caddy) are not blocked by CSP (#642).
+              'https://127.0.0.1:*',
+              'https://localhost:*',
+              'https://[::1]:*',
             ],
             'worker-src': ["'self'", 'blob:'],
             // Allow self-contained inline media as well as object URLs.
