@@ -144,16 +144,38 @@ describe('the VideoObject', () => {
     expect(videoNode()).toBeUndefined();
   });
 
-  test('states the duration to a tenth of a second', async () => {
+  test('states the duration in whole positive seconds', async () => {
     await render();
 
-    expect(videoNode()!.duration).toBe('PT3.4S');
+    expect(videoNode()!.duration).toBe('PT3S');
   });
 
-  test('uses the media’s first airing as the upload date', async () => {
+  test('states positive sub-second clips as PT1S', async () => {
+    await render(segmentPayload({ startTimeMs: 1000, endTimeMs: 1900 }));
+    expect(videoNode()!.duration).toBe('PT1S');
+
+    await render(segmentPayload({ startTimeMs: 1000, endTimeMs: 1200 }));
+    expect(videoNode()!.duration).toBe('PT1S');
+  });
+
+  test('omits duration when the clip has zero or negative length', async () => {
+    await render(segmentPayload({ startTimeMs: 1000, endTimeMs: 1000 }));
+    expect(videoNode()).not.toHaveProperty('duration');
+
+    await render(segmentPayload({ startTimeMs: 2000, endTimeMs: 1000 }));
+    expect(videoNode()).not.toHaveProperty('duration');
+  });
+
+  test('uses the media’s first airing as an ISO 8601 UTC upload date', async () => {
     await render();
 
-    expect(videoNode()!.uploadDate).toBe('2022-10-08');
+    expect(videoNode()!.uploadDate).toBe('2022-10-08T00:00:00Z');
+  });
+
+  test('preserves upload dates that already include a timestamp', async () => {
+    await render(segmentPayload(), mediaPayload({ startDate: '2022-10-08T15:30:00Z' }));
+
+    expect(videoNode()!.uploadDate).toBe('2022-10-08T15:30:00Z');
   });
 
   test('and DROPS the date rather than inventing one', async () => {
@@ -199,6 +221,22 @@ describe('the breadcrumb', () => {
 });
 
 describe('the search container', () => {
+  test.each(['ANIME', 'YOUTUBE'])('preserves %s playback data when rounding the SEO duration', async (category) => {
+    const segment = segmentPayload({
+      startTimeMs: 123400,
+      endTimeMs: 124300,
+      externalVideoId: category === 'YOUTUBE' ? 'youtube-video-id' : null,
+    });
+    const media = mediaPayload({ category });
+    const wrapper = await render(segment, media);
+
+    const outcome = wrapper.findComponent({ name: 'SearchContainer' }).props('initialSentenceOutcome');
+    expect(outcome.data.results[0].segment).toEqual(segment);
+    expect(outcome.data.results[0].media).toEqual(media);
+    expect(videoNode()!.duration).toBe('PT1S');
+    expect(videoNode()!.contentUrl).toBe('v.mp4');
+  });
+
   // Without a primed outcome the container runs its own empty search on mount and the shared
   // sentence never shows (Natsume-197/Nadeshiko#585).
   test('is primed with the sentence the page loaded', async () => {
