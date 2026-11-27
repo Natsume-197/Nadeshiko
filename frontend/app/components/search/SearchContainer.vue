@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { handleApiError } from '~/utils/apiError';
-import { reportError } from '~/utils/reportError';
+import { trackSearchActivity } from '~/utils/searchActivity';
 import { mdiRefresh } from '@mdi/js';
 import type { RouteLocationNormalized } from 'vue-router';
 
@@ -653,20 +653,18 @@ const trackSearch = (response: SearchResponse) => {
   // arriving is the one moment they all share.
   signupNudge.recordSearch();
   if (userStore().isLoggedIn) {
-    // Fire-and-forget telemetry: never let it interrupt or warn about a search that
+    // Fire-and-forget history: never let it interrupt or warn about a search that
     // already rendered its results.
-    sdk
-      .trackUserActivity({
-        activityType: 'SEARCH',
-        searchQuery: query.value,
-        // The scope, so the account's copy of a search knows what the device's
-        // copy knows. `UserActivity` has carried both columns all along -- a
-        // SEARCH row simply never sent them, which is why the history could not
-        // tell a search inside a title from the same search across everything.
-        ...(mediaId ? { mediaPublicId: mediaId } : {}),
-        ...(mediaNameValue ? { mediaName: mediaNameValue } : {}),
-      })
-      .catch((error: unknown) => reportError('search:track-activity-failed', error));
+    void trackSearchActivity(sdk, {
+      activityType: 'SEARCH',
+      searchQuery: query.value,
+      // The scope, so the account's copy of a search knows what the device's
+      // copy knows. `UserActivity` has carried both columns all along -- a
+      // SEARCH row simply never sent them, which is why the history could not
+      // tell a search inside a title from the same search across everything.
+      ...(mediaId ? { mediaPublicId: mediaId } : {}),
+      ...(mediaNameValue ? { mediaName: mediaNameValue } : {}),
+    });
   }
 };
 
