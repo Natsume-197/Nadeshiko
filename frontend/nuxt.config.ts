@@ -88,12 +88,8 @@ const sitemapStaticUrls = (locale: string) => [
 // Share indexed locales with canonical.ts so robots rules and hreflang alternates agree.
 const INDEXED_LOCALES = APP_INDEXED_LOCALES;
 
-const sitemapSources = (
-  locale: (typeof INDEXED_LOCALES)[number],
-): [string, [string, { timeout: number }], string, string] => [
+const sitemapSources = (locale: (typeof INDEXED_LOCALES)[number]): [string, string, string] => [
   `/api/__sitemap__/media?locale=${locale}`,
-  // Sentence sampling makes two lookups per title; allow more time than title enumeration.
-  [`/api/__sitemap__/sentences?locale=${locale}`, { timeout: 90000 }],
   `/api/__sitemap__/blog?locale=${locale}`,
   // The jōyō kanji pages (task 44).
   `/api/__sitemap__/kanji?locale=${locale}`,

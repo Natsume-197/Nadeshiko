@@ -3,6 +3,7 @@
 export const SHARED_CDN_MAX_AGE_DEFAULT = 300;
 export const SHARED_CDN_MAX_AGE_SENTENCE = 60 * 60;
 export const SHARED_CDN_MAX_AGE_SEARCH = 60 * 60;
+export const SHARED_CDN_MAX_AGE_KANJI = 60 * 60;
 
 // Keep non-production cache gating exercised without letting staging/E2E reads see the previous build for an hour.
 export const SHARED_CDN_MAX_AGE_NON_PROD = 10;
@@ -18,6 +19,7 @@ function ttlForPath(path: string): number {
 
   if (withoutLocale.startsWith('/sentence/')) return SHARED_CDN_MAX_AGE_SENTENCE;
   if (withoutLocale === '/search' || withoutLocale.startsWith('/search/')) return SHARED_CDN_MAX_AGE_SEARCH;
+  if (withoutLocale === '/kanji' || withoutLocale.startsWith('/kanji/')) return SHARED_CDN_MAX_AGE_KANJI;
 
   return SHARED_CDN_MAX_AGE_DEFAULT;
 }
