@@ -123,6 +123,25 @@ if (initialSentenceOutcome.value?.status === 'forbidden' || initialStatsOutcome.
   await navigateTo(localePath('/'), { redirectCode: 302 });
 }
 
+if (episodeNumberParam.value != null) {
+  const requestedEpisode = episodeNumberParam.value;
+  const mediaStats = initialStatsData.value?.media?.find((s) => s.mediaPublicId === media.value?.publicId);
+  const episodeHits = mediaStats?.episodeHits;
+  const missingFromEpisodeHits =
+    episodeHits !== undefined &&
+    episodeHits.length > 0 &&
+    !episodeHits.some((hit) => hit.episode === requestedEpisode);
+  const outOfRange =
+    requestedEpisode < 0 ||
+    (media.value.episodeCount != null && requestedEpisode > media.value.episodeCount);
+  const sentenceResults =
+    initialSentenceOutcome.value?.status === 'ok' ? initialSentenceOutcome.value.data.results : null;
+
+  if (outOfRange || (missingFromEpisodeHits && sentenceResults != null && sentenceResults.length === 0)) {
+    throw createError({ statusCode: 404, statusMessage: 'Episode Not Found' });
+  }
+}
+
 const reloadResults = async () => {
   await Promise.all([refreshSentences(), refreshStats()]);
 };

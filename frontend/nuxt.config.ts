@@ -88,13 +88,8 @@ const sitemapStaticUrls = (locale: string) => [
 // Share indexed locales with canonical.ts so robots rules and hreflang alternates agree.
 const INDEXED_LOCALES = APP_INDEXED_LOCALES;
 
-const sitemapSources = (
-  locale: (typeof INDEXED_LOCALES)[number],
-): [string, [string, { timeout: number }], [string, { timeout: number }], string, string] => [
+const sitemapSources = (locale: (typeof INDEXED_LOCALES)[number]): [string, string, string] => [
   `/api/__sitemap__/media?locale=${locale}`,
-  [`/api/__sitemap__/episodes?locale=${locale}`, { timeout: 60000 }],
-  // Sentence sampling makes two lookups per title; allow more time than episode enumeration.
-  [`/api/__sitemap__/sentences?locale=${locale}`, { timeout: 90000 }],
   `/api/__sitemap__/blog?locale=${locale}`,
   // The jōyō kanji pages (task 44).
   `/api/__sitemap__/kanji?locale=${locale}`,
@@ -364,8 +359,7 @@ export default defineNuxtConfig({
         groups: [
           {
             userAgent: '*',
-            // Do not allow /docs/ here: i18n expands it into nonexistent localized paths. The real /docs/** route uses noindex.
-            allow: ['/en/', '/es/'],
+            // Do not add locale-prefixed allow rules here: @nuxtjs/robots expands them with i18n into /en/en/, /es/en/.
             // Keep /ja crawlable until Search Console confirms de-indexing: disallow would hide its existing noindex header.
             // Then restore /ja and /ja/ disallows to save crawl budget.
             disallow: [...PRIVATE_DISALLOW, '/api/', '/v1/', '/_nuxt/'],

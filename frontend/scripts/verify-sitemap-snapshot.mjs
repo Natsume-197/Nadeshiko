@@ -12,7 +12,7 @@ let calls = 0,
 const backend = http.createServer((req, res) => {
   calls++;
   res.setHeader('Content-Type', 'application/json');
-  if (failCatalogue && req.url.includes('/episodes')) {
+  if (failCatalogue && req.url.startsWith('/v1/media')) {
     res.statusCode = 503;
     res.end(JSON.stringify({ message: 'fixture outage' }));
     return;

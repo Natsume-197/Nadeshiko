@@ -113,16 +113,16 @@ describe('which query parameters survive', () => {
     expect((await render()).canonical).toBe('https://nadeshiko.moe/en/media?category=anime&cursor=abc');
   });
 
-  test('a title page keeps the episode, which is its own list of sentences', async () => {
+  test('a title page consolidates episodes onto the title URL', async () => {
     at('/en/media/oshi-no-ko', { episode: '3' });
 
-    expect((await render()).canonical).toBe('https://nadeshiko.moe/en/media/oshi-no-ko?episode=3');
+    expect((await render()).canonical).toBe('https://nadeshiko.moe/en/media/oshi-no-ko');
   });
 
-  test('but not the sort, which would multiply a title into one URL per order', async () => {
+  test('and drops both episode and sort on a title page', async () => {
     at('/en/media/oshi-no-ko', { episode: '3', sort: 'oldest' });
 
-    expect((await render()).canonical).toBe('https://nadeshiko.moe/en/media/oshi-no-ko?episode=3');
+    expect((await render()).canonical).toBe('https://nadeshiko.moe/en/media/oshi-no-ko');
   });
 
   test('the frequency list keeps its TIER, each being a different set of words', async () => {
@@ -196,9 +196,7 @@ describe('the hreflang set', () => {
     at('/en/media/oshi-no-ko', { episode: '3' });
 
     const { alternates } = await render();
-    expect(alternates.find((link) => link.hreflang === 'es')?.href).toBe(
-      'https://nadeshiko.moe/es/media/oshi-no-ko?episode=3',
-    );
+    expect(alternates.find((link) => link.hreflang === 'es')?.href).toBe('https://nadeshiko.moe/es/media/oshi-no-ko');
   });
 
   test('answers x-default with English', async () => {

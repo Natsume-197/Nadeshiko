@@ -7,9 +7,9 @@ const CANONICAL_REWRITES: Record<string, (query: Record<string, string>) => stri
 
 const CANONICAL_PARAMS: Record<string, string[]> = {
   '/search': ['media', 'episode', 'category'],
-  // Keep parameters that change the result set: catalogue query/category, title episode, and catalogue
-  // cursor. Exclude sort, which only reorders the same content.
-  '/media': ['query', 'category', 'episode', 'cursor'],
+  // Keep catalogue parameters that change the title list (query, category, cursor). Drop episode and sort:
+  // episode views consolidate onto the title page rather than competing with it across duplicate titles.
+  '/media': ['query', 'category', 'cursor'],
   // Tier and filter define distinct word sets. Preserve the sitemap's COVERED filter rather than
   // canonicalizing it to noindexed word results.
   '/stats/words': ['tier', 'filter'],

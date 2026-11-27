@@ -84,15 +84,20 @@ function reportBotInstallClick(): void {
                                 <div class="flex-1 md:min-w-[30rem]">
                                     <div class="flex rounded-lg flex-col first-letter:items-left">
                                         <!-- The version is not a heading: keep it out of the document outline and search title. -->
-                                        <div class="inline-flex">
-                                            <h1
-                                                class="text-3xl ml-2 mt-3 md:mt-0 underline underline-offset-8 decoration-4 decoration-accent sm:mt-0 font-bold md:text-4xl md:leading-tight dark:text-white">
-                                                Nadeshiko
+                                        <div class="ml-2 mt-3 md:mt-0 sm:mt-0">
+                                            <div class="inline-flex">
+                                                <span
+                                                    class="text-3xl underline underline-offset-8 decoration-4 decoration-accent font-bold md:text-4xl md:leading-tight dark:text-white">
+                                                    Nadeshiko
+                                                </span>
+                                                <span
+                                                    class="inline-flex ml-2 rounded-full items-end text-base font-medium text-white/80">
+                                                    {{ $t('home.version', { version: config.public.appVersion }) }}
+                                                </span>
+                                            </div>
+                                            <h1 class="mt-3 text-lg md:text-xl font-semibold text-white/90">
+                                                {{ $t('home.heroTagline') }}
                                             </h1>
-                                            <span
-                                                class="inline-flex ml-2 rounded-full items-end text-base font-medium text-white/80">
-                                                {{ $t('home.version', { version: config.public.appVersion }) }}
-                                            </span>
                                         </div>
 
                                         <!-- biome-ignore lint/a11y/noHeaderScope: vue-i18n scope, not a table header -->

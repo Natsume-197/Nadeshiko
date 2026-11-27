@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   SHARED_CDN_MAX_AGE_DEFAULT,
+  SHARED_CDN_MAX_AGE_KANJI,
   SHARED_CDN_MAX_AGE_NON_PROD,
   SHARED_CDN_MAX_AGE_SEARCH,
   SHARED_CDN_MAX_AGE_SENTENCE,
@@ -30,6 +31,14 @@ describe('sharedCdnMaxAge', () => {
 
   it('covers the bare search page as well as a query', () => {
     expect(prod('/en/search')).toBe(SHARED_CDN_MAX_AGE_SEARCH);
+  });
+
+  it.each(['en', 'es', 'ja', 'zh', 'zh-hant', 'id', 'pt-BR'])('gives kanji pages the long TTL under /%s', (locale) => {
+    expect(prod(`/${locale}/kanji/%E9%A3%9F`)).toBe(SHARED_CDN_MAX_AGE_KANJI);
+  });
+
+  it('covers the bare kanji index as well as a character page', () => {
+    expect(prod('/en/kanji')).toBe(SHARED_CDN_MAX_AGE_KANJI);
   });
 
   // These carry "recently added" surfaces, and `/api/home/recent-media` behind
@@ -63,6 +72,7 @@ describe('sharedCdnMaxAge', () => {
     it.each(['development', 'local', undefined])('caps every path at ten seconds under %s', (environment) => {
       expect(sharedCdnMaxAge('/en/search/%E7%8C%AB', environment)).toBe(SHARED_CDN_MAX_AGE_NON_PROD);
       expect(sharedCdnMaxAge('/en/sentence/wy1hTtMJg6Jf', environment)).toBe(SHARED_CDN_MAX_AGE_NON_PROD);
+      expect(sharedCdnMaxAge('/en/kanji/%E9%A3%9F', environment)).toBe(SHARED_CDN_MAX_AGE_NON_PROD);
       expect(sharedCdnMaxAge('/en', environment)).toBe(SHARED_CDN_MAX_AGE_NON_PROD);
     });
 

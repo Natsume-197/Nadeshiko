@@ -343,13 +343,15 @@ test('recomputes media metadata when episode and locale change', async () => {
   );
   const metadata = useHead.mock.calls[0]?.[0];
   expect(unref(metadata)).toEqual(
-    expectedMediaMeta('1,234 Japanese sentences from Bocchi across 2 episodes with English translations.'),
+    expectedMediaMeta(
+      '1,234 Japanese sentences from Bocchi across 2 episodes with audio, English translations and Anki export.',
+    ),
   );
   route.query.episode = '3';
   mediaMetaI18n.locale.value = 'es';
   expect(unref(metadata)).toEqual(
     expectedMediaMeta(
-      'Frases en japonés del episodio 3 de «Bocchi»: 34. Consulta sus traducciones al español.',
+      'Frases en japonés del episodio 3 de «Bocchi»: 34, con audio, traducciones al español y exportación a Anki.',
       undefined,
       'es',
     ),
@@ -431,7 +433,7 @@ test('uses the first result artwork but the requested media stats, not scoped me
   );
   expect(unref(useHead.mock.calls[0]?.[0])).toEqual(
     expectedMediaMeta(
-      '34 Japanese sentences from Bocchi with English translations.',
+      '34 Japanese sentences from Bocchi with audio, English translations and Anki export.',
       'https://images.test/banner.webp',
     ),
   );
@@ -460,7 +462,7 @@ test.each([
     { media: 'm1' },
   );
   expect(unref(useHead.mock.calls[0]?.[0])).toEqual(
-    expectedMediaMeta('0 Japanese sentences from Bocchi with English translations.'),
+    expectedMediaMeta('0 Japanese sentences from Bocchi with audio, English translations and Anki export.'),
   );
 });
 
