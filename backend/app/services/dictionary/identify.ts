@@ -140,6 +140,8 @@ export interface StoredForm {
   active: boolean;
 }
 
+export type StoredXref = [string] | [string, string] | [string, number] | [string, string, number];
+
 export interface StoredSense {
   idx: number;
   lang: 'eng' | 'spa';
@@ -150,6 +152,8 @@ export interface StoredSense {
   info: string[];
   applies_to_kanji: string[];
   applies_to_kana: string[];
+  related?: StoredXref[] | null;
+  antonym?: StoredXref[] | null;
   glosses: Array<{ text: string; type: string | null }>;
 }
 
@@ -277,12 +281,29 @@ function readingOf(word: StoredWord, headword: StoredForm, query: IdentifyQuery)
   return options[0] ?? word.forms.find((form) => form.kana);
 }
 
+function xrefsOf(refs: StoredXref[] | null | undefined): Array<{ text: string; reading?: string }> {
+  if (!Array.isArray(refs) || refs.length === 0) return [];
+  const seen = new Set<string>();
+  const out: Array<{ text: string; reading?: string }> = [];
+  for (const ref of refs) {
+    const text = typeof ref[0] === 'string' ? ref[0].trim() : '';
+    if (!text || seen.has(text)) continue;
+    seen.add(text);
+    const rawReading = typeof ref[1] === 'string' ? ref[1].replace(/・\d+$/, '').trim() : '';
+    const reading = rawReading && rawReading !== text ? rawReading : undefined;
+    out.push(reading ? { text, reading } : { text });
+  }
+  return out;
+}
+
 /** English senses only, in upstream order; one definition per gloss, as the card expects. */
 function sensesOf(word: StoredWord, tags: Record<string, string>) {
   const label = (code: string) => tags[code] ?? code;
   const ordered = word.senses.filter((sense) => sense.lang === 'eng').sort((a, b) => a.idx - b.idx);
   return ordered.map((sense, position) => {
     const notes = sense.info.filter((note) => note.trim());
+    const seeAlso = xrefsOf(sense.related);
+    const antonyms = xrefsOf(sense.antonym);
     return {
       position,
       definitions: sense.glosses.map((gloss) => ({ lang: 'en' as const, text: gloss.text })),
@@ -293,6 +314,8 @@ function sensesOf(word: StoredWord, tags: Record<string, string>) {
         ...sense.dialect.map((code) => ({ category: 'dialect' as const, code, label: label(code) })),
       ],
       ...(notes.length > 0 ? { notes } : {}),
+      ...(seeAlso.length > 0 ? { seeAlso } : {}),
+      ...(antonyms.length > 0 ? { antonyms } : {}),
     };
   });
 }
@@ -430,7 +453,7 @@ export async function loadWords(dataSource: DataSource, keys: string[]): Promise
       [wordIds],
     ) as Promise<Array<StoredForm & { word_id: number }>>,
     dataSource.query(
-      `SELECT word_id, idx, lang, pos, misc, field, dialect, info, applies_to_kanji, applies_to_kana, glosses
+      `SELECT word_id, idx, lang, pos, misc, field, dialect, info, applies_to_kanji, applies_to_kana, related, antonym, glosses
          FROM dict.sense WHERE word_id = ANY($1::int[]) ORDER BY word_id, idx`,
       [wordIds],
     ) as Promise<Array<StoredSense & { word_id: number }>>,

@@ -265,6 +265,8 @@ export const s_DictionaryCandidate = z.object({
             }),
           ),
           notes: z.array(z.string()).optional(),
+          seeAlso: z.array(z.object({ text: z.string(), reading: z.string().optional() })).optional(),
+          antonyms: z.array(z.object({ text: z.string(), reading: z.string().optional() })).optional(),
         }),
       ),
     }),

@@ -347,24 +347,14 @@ describe('filing a request', () => {
     expect(sixth.status).toBe(403);
     expect(sixth.body.detail).toMatch(/a day/);
 
-    // Older filings no longer count against the day; the open limit (10) still applies.
+    // Older filings no longer count against the day; the open limit (5) still applies.
     await ContentRequest.query(`UPDATE "ContentRequest" SET "created_at" = now() - interval '2 days'`);
-    for (let i = 6; i <= 10; i++) {
-      await ContentRequest.query(`UPDATE "ContentRequest" SET "created_at" = now() - interval '2 days'`);
-      await request(app)
-        .post('/v1/requests')
-        .send({
-          sourceUrl: `https://www.themoviedb.org/tv/${i}`,
-          title: `Drama ${i}`,
-        });
-    }
-    await ContentRequest.query(`UPDATE "ContentRequest" SET "created_at" = now() - interval '2 days'`);
-    const eleventh = await request(app).post('/v1/requests').send({
-      sourceUrl: 'https://www.themoviedb.org/tv/11',
-      title: 'Drama 11',
+    const overOpenLimit = await request(app).post('/v1/requests').send({
+      sourceUrl: 'https://www.themoviedb.org/tv/6',
+      title: 'Drama 6',
     });
-    expect(eleventh.status).toBe(403);
-    expect(eleventh.body.detail).toMatch(/10 open requests/);
+    expect(overOpenLimit.status).toBe(403);
+    expect(overOpenLimit.body.detail).toMatch(/5 open requests/);
   });
 });
 
@@ -419,7 +409,7 @@ describe('voting and the public list', () => {
     expect(me.body).toMatchObject({
       isPatron: false,
       openCount: 1,
-      openLimit: 10,
+      openLimit: 5,
       boosts: { perMonth: 0, used: 0, remaining: 0 },
       votedIds: [created.body.request.id],
       boostedIds: [],
@@ -503,7 +493,7 @@ describe('boosts', () => {
     const me = await request(app).get('/v1/requests/me');
     expect(me.body).toMatchObject({
       isPatron: true,
-      openLimit: 30,
+      openLimit: 15,
       boosts: { perMonth: 2, used: 2, remaining: 0 },
     });
 

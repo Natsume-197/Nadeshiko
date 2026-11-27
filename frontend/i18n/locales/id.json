@@ -1199,7 +1199,57 @@
     "showMore": "Tampilkan lebih banyak",
     "dictionaries": "Kamus",
     "others": "Bisa juga",
-    "forms": "Juga ditulis"
+    "forms": "Juga ditulis",
+    "seeAlso": "Lihat juga:",
+    "antonym": "Antonim:",
+    "settings": {
+      "title": "Pengaturan kotak definisi",
+      "collapsed": "Ciutkan secara default",
+      "manageDictionaries": "Kelola kamus kustom",
+      "expand": "Perluas definisi",
+      "collapse": "Ciutkan definisi"
+    },
+    "conjugations": {
+      "button": "Konjugasi",
+      "title": "Konjugasi {word}",
+      "stem": "Akar kata",
+      "ending": "Akhiran",
+      "clickHint": "Klik bentuk apa saja untuk mencari kalimat",
+      "plain": "Biasa",
+      "polite": "Sopan",
+      "affirmative": "Positif",
+      "negative": "Negatif",
+      "classes": {
+        "ichidan": "Kata kerja ichidan",
+        "godan": "Kata kerja godan",
+        "suru": "Kata kerja suru",
+        "kuru": "Kata kerja kuru",
+        "iAdjective": "Kata sifat -i",
+        "naAdjective": "Kata sifat -na"
+      },
+      "groups": {
+        "basics": "Dasar",
+        "volitionCommand": "Keinginan & perintah",
+        "voiceCausation": "Pasif & kausatif",
+        "conditionals": "Kondisional"
+      },
+      "rows": {
+        "nonPast": "Non-lampau",
+        "past": "Lampau",
+        "te": "Bentuk te",
+        "continuative": "Kontinuatif (~i)",
+        "volitional": "Volisional",
+        "imperative": "Imperatif",
+        "potential": "Potensial",
+        "passive": "Pasif",
+        "causative": "Kausatif",
+        "causativePassive": "Kausatif-pasif",
+        "provisional": "Provisional (~eba)",
+        "conditional": "Kondisional (~tara)",
+        "alternative": "Alternatif (~tari)",
+        "adverbial": "Adverbial"
+      }
+    }
   },
   "kanjiIndex": {
     "title": "Kanji",
@@ -1765,7 +1815,7 @@
       "nadeshiko": "Nadeshiko"
     },
     "perks": {
-      "talkToDevs": "Bicara langsung dengan pengembang",
+      "prioritySupport": "Dukungan prioritas",
       "everythingIn": "Semua yang ada di {tier}",
       "apiRequests": "{count} permintaan API per bulan",
       "customThemes": "Tema kustom",
@@ -1804,7 +1854,8 @@
       "free": "Gratis",
       "api": "Permintaan API per bulan",
       "boosts": "Boost permintaan per bulan",
-      "wordAlerts": "Peringatan kata aktif"
+      "wordAlerts": "Peringatan kata aktif",
+      "allPaidTiers": "semua tier berbayar"
     },
     "faq": {
       "headline": "Pertanyaan {accent}",
@@ -1825,6 +1876,22 @@
       "oneAccount": {
         "q": "Bisakah satu akun Patreon membuka beberapa akun Nadeshiko?",
         "a": "Tidak. Satu akun Patreon hanya bisa ditautkan ke satu akun Nadeshiko."
+      },
+      "activate": {
+        "q": "Bagaimana cara mengaktifkan manfaat setelah bergabung di Patreon?",
+        "a": "Bergabunglah di Patreon, lalu masuk ke Nadeshiko dan tautkan akun Patreon Anda di Pengaturan → Koneksi. Manfaat dan batas lebih tinggi langsung aktif."
+      },
+      "freeStaysFree": {
+        "q": "Apakah fitur gratis akan tetap gratis?",
+        "a": "Ya. Pencarian, mining ke Anki, dan semua fitur yang saat ini gratis di Nadeshiko akan tetap gratis. Manfaat supporter membantu membiayai server dan pengembangan berkelanjutan."
+      },
+      "donations": {
+        "q": "Apakah donasi di Ko-fi atau GitHub Sponsors membuka manfaat?",
+        "a": "Tidak. Ko-fi dan GitHub Sponsors hanya untuk donasi. Manfaat keanggotaan dan batas lebih tinggi hanya terhubung melalui Patreon."
+      },
+      "boostRollover": {
+        "q": "Apakah boost permintaan yang tidak terpakai terbawa ke bulan berikutnya?",
+        "a": "Tidak. Boost permintaan bulanan Anda diatur ulang setiap tanggal 1 setiap bulan (UTC)."
       }
     },
     "currentTierBadge": "Tingkat Anda saat ini",

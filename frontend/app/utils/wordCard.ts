@@ -347,6 +347,13 @@ export interface CardTag {
   title: string;
   /** JMdict tag category, so a usage qualifier never reads as a part of speech. */
   category: string;
+  /** Stable JMdict tag code ("n", "vs", "v1", "adj-i"), used for semantic chip colouring. */
+  code?: string;
+}
+
+export interface CardXref {
+  text: string;
+  reading?: string;
 }
 
 export interface CardSense {
@@ -360,6 +367,10 @@ export interface CardSense {
   glosses: CardGlossRow[];
   /** The sense's usage notes, verbatim. Empty when it has none. */
   notes: string[];
+  /** JMdict "see also" cross-references for this sense (e.g. 彼氏 for 彼女). */
+  seeAlso: CardXref[];
+  /** JMdict antonyms for this sense. */
+  antonyms: CardXref[];
   /** Which dictionary wrote this sense. Worth carrying since a reader with custom
    *  dictionaries can have several on one card, in their own order: a
    *  monolingual definition and a JMdict gloss sitting in one numbered list with
@@ -418,7 +429,7 @@ function cardTags(tags: DictionaryTag[], lang: TagLanguage, keep: (tag: Dictiona
     if (!keep(tag)) continue;
     const label = tagLabel(tag.category, tag.code, tag.label, lang);
     if (chips.some((chip) => chip.label === label)) continue;
-    chips.push({ label, title: tag.label, category: tag.category });
+    chips.push({ label, title: tag.label, category: tag.category, ...(tag.code ? { code: tag.code } : {}) });
   }
   return chips;
 }
@@ -491,6 +502,8 @@ export function cardSenses(word: DictionaryWord | null, wanted: GlossPreference,
       // note qualifies the sense it sits on, and carrying one down would state
       // something false about the next.
       notes: (sense.notes ?? []).filter((note) => note.trim().length > 0),
+      seeAlso: sense.seeAlso ?? [],
+      antonyms: sense.antonyms ?? [],
       dictionary,
       dictionarySlug: slug,
       // Placeholders: the numbers depend on the whole run of senses a dictionary

@@ -189,3 +189,21 @@ properties:
               notes:
                 type: array
                 items: { type: string }
+              seeAlso:
+                type: array
+                description: Related cross-referenced JMdict entries for this sense (e.g. 彼氏 for 彼女).
+                items:
+                  type: object
+                  required: [text]
+                  properties:
+                    text: { type: string }
+                    reading: { type: string }
+              antonyms:
+                type: array
+                description: Antonym cross-referenced JMdict entries for this sense.
+                items:
+                  type: object
+                  required: [text]
+                  properties:
+                    text: { type: string }
+                    reading: { type: string }

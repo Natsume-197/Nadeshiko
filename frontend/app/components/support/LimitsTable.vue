@@ -25,6 +25,7 @@ const rows = computed(() => [
     label: t('support.limits.api'),
     free: formatNumber(FREE_MONTHLY_API_REQUESTS),
     tiers: SUPPORT_TIERS.map((tier) => formatNumber(tier.monthlyApiRequests)),
+    shared: null as string | null,
   },
   {
     key: 'boosts',
@@ -32,27 +33,31 @@ const rows = computed(() => [
     label: t('support.limits.boosts'),
     free: '—',
     tiers: SUPPORT_TIERS.map((tier) => formatNumber(tier.requestBoostsPerMonth)),
+    shared: null as string | null,
   },
   {
     key: 'dictionaries',
     icon: mdiBookOpenPageVariantOutline,
     label: t('support.shared.dictionaries'),
     free: formatNumber(PATRON_LIMITS.customDictionaries.free),
-    tiers: SUPPORT_TIERS.map(() => formatNumber(PATRON_LIMITS.customDictionaries.patron)),
+    tiers: null as string[] | null,
+    shared: formatNumber(PATRON_LIMITS.customDictionaries.patron),
   },
   {
     key: 'openRequests',
     icon: mdiThumbUpOutline,
     label: t('support.shared.openRequests'),
     free: formatNumber(PATRON_LIMITS.openRequests.free),
-    tiers: SUPPORT_TIERS.map(() => formatNumber(PATRON_LIMITS.openRequests.patron)),
+    tiers: null as string[] | null,
+    shared: formatNumber(PATRON_LIMITS.openRequests.patron),
   },
   {
     key: 'wordAlerts',
     icon: mdiBellOutline,
     label: t('support.limits.wordAlerts'),
     free: formatNumber(PATRON_LIMITS.wordAlerts.free),
-    tiers: SUPPORT_TIERS.map(() => formatNumber(PATRON_LIMITS.wordAlerts.patron)),
+    tiers: null as string[] | null,
+    shared: formatNumber(PATRON_LIMITS.wordAlerts.patron),
   },
 ]);
 
@@ -102,14 +107,28 @@ const isActive = (tier: SupportTier) => props.activeTierKey === tier.key;
               </span>
             </th>
             <td class="py-3.5 text-center text-[13px] tabular-nums text-ink-faint sm:text-sm">{{ row.free }}</td>
-            <td
-              v-for="(value, i) in row.tiers"
-              :key="SUPPORT_TIERS[i]?.key"
-              class="py-3.5 text-center text-sm font-bold tabular-nums sm:text-base"
-              :class="SUPPORT_TIERS[i] && isActive(SUPPORT_TIERS[i]) ? 'text-emerald-500' : 'text-ink'"
-            >
-              {{ value }}
+            <td v-if="row.shared !== null" :colspan="SUPPORT_TIERS.length" class="px-1.5 py-2.5 text-center sm:px-2">
+              <div
+                class="mx-auto flex items-center justify-center gap-2 rounded-full border border-hairline bg-surface-lift/70 px-3 py-1"
+              >
+                <span
+                  class="text-sm font-bold tabular-nums sm:text-base"
+                  :class="props.activeTierKey ? 'text-emerald-500' : 'text-ink'"
+                  >{{ row.shared }}</span
+                >
+                <span class="text-xs text-ink-faint">{{ t('support.limits.allPaidTiers') }}</span>
+              </div>
             </td>
+            <template v-else>
+              <td
+                v-for="(value, i) in row.tiers"
+                :key="SUPPORT_TIERS[i]?.key"
+                class="py-3.5 text-center text-sm font-bold tabular-nums sm:text-base"
+                :class="SUPPORT_TIERS[i] && isActive(SUPPORT_TIERS[i]) ? 'text-emerald-500' : 'text-ink'"
+              >
+                {{ value }}
+              </td>
+            </template>
           </tr>
         </tbody>
       </table>

@@ -77,12 +77,16 @@ function perks(tier: SupportTier, index: number): string[] {
   }
   return [
     t('support.perks.requestBoosts', { count: tier.requestBoostsPerMonth }),
-    ...(tier.talkToDevs ? [t('support.perks.talkToDevs')] : []),
+    ...(tier.prioritySupport ? [t('support.perks.prioritySupport')] : []),
     t('support.perks.apiRequests', { count: formatNumber(tier.monthlyApiRequests) }),
   ];
 }
 
 const faq = computed(() => [
+  { key: 'activate', q: t('support.faq.activate.q'), a: t('support.faq.activate.a') },
+  { key: 'freeStaysFree', q: t('support.faq.freeStaysFree.q'), a: t('support.faq.freeStaysFree.a') },
+  { key: 'donations', q: t('support.faq.donations.q'), a: t('support.faq.donations.a') },
+  { key: 'boostRollover', q: t('support.faq.boostRollover.q'), a: t('support.faq.boostRollover.a') },
   {
     key: 'cancel',
     q: t('support.faq.cancel.q'),

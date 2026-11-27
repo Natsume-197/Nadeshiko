@@ -404,6 +404,10 @@ export type t_DictionaryCandidate = {
     dictionary: string;
     dictionaryName: string;
     senses: {
+      antonyms?: {
+        reading?: string;
+        text: string;
+      }[];
       definitions: {
         lang: 'en' | 'es' | 'ja';
         structuredContent?: unknown;
@@ -411,6 +415,10 @@ export type t_DictionaryCandidate = {
       }[];
       notes?: string[];
       position: number;
+      seeAlso?: {
+        reading?: string;
+        text: string;
+      }[];
       tags: {
         category: 'partOfSpeech' | 'misc' | 'field' | 'dialect';
         code: string;

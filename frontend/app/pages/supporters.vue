@@ -34,10 +34,6 @@ useSeoMeta({
   margin-inline: calc(50% - 50vw);
   padding: 5.5rem calc(50vw - 50%);
 }
-/* A hint of the brand over the page, for the perks. */
-.supporters-page :deep(.supporters-band-soft) {
-  background: color-mix(in srgb, var(--accent) 6%, var(--background));
-}
 
 /*
  * Blocks marked `data-reveal` fade up as they scroll into view, driven by the scroll itself (no JavaScript).

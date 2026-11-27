@@ -160,12 +160,12 @@ describe('cardSenses', () => {
     // Chips carry the short label keyed off the JMdict code, with JMdict's own
     // wording kept for the tooltip.
     expect(first?.partsOfSpeech).toEqual([
-      { label: 'Ichidan verb', title: 'Ichidan verb', category: 'partOfSpeech' },
-      { label: 'Intransitive verb', title: 'intransitive verb', category: 'partOfSpeech' },
+      { label: 'Ichidan verb', title: 'Ichidan verb', category: 'partOfSpeech', code: 'v1' },
+      { label: 'Intransitive verb', title: 'intransitive verb', category: 'partOfSpeech', code: 'vi' },
     ]);
     expect(first?.tags).toEqual([
-      { label: 'Usually kana', title: 'usually kana', category: 'misc' },
-      { label: 'Food', title: 'food', category: 'field' },
+      { label: 'Usually kana', title: 'usually kana', category: 'misc', code: 'uk' },
+      { label: 'Food', title: 'food', category: 'field', code: 'food' },
     ]);
     // One row per language, badged, rather than one line that changes language
     // halfway through and reads as a single definition.

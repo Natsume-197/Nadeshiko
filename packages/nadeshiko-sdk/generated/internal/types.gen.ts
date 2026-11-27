@@ -1282,6 +1282,20 @@ export type DictionaryCandidate = {
                 label: string;
             }>;
             notes?: Array<string>;
+            /**
+             * Related cross-referenced JMdict entries for this sense (e.g. 彼氏 for 彼女).
+             */
+            seeAlso?: Array<{
+                text: string;
+                reading?: string;
+            }>;
+            /**
+             * Antonym cross-referenced JMdict entries for this sense.
+             */
+            antonyms?: Array<{
+                text: string;
+                reading?: string;
+            }>;
         }>;
     }>;
 };

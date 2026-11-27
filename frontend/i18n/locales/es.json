@@ -1199,7 +1199,57 @@
     "showMore": "Mostrar más",
     "dictionaries": "Diccionarios",
     "others": "También puede ser",
-    "forms": "También se escribe"
+    "forms": "También se escribe",
+    "seeAlso": "Ver también:",
+    "antonym": "Antónimo:",
+    "settings": {
+      "title": "Ajustes del cuadro de definición",
+      "collapsed": "Contraer por defecto",
+      "manageDictionaries": "Gestionar diccionarios propios",
+      "expand": "Expandir definición",
+      "collapse": "Contraer definición"
+    },
+    "conjugations": {
+      "button": "Conjugaciones",
+      "title": "Conjugaciones de {word}",
+      "stem": "Raíz",
+      "ending": "Terminación",
+      "clickHint": "Haz clic en una forma para buscar oraciones",
+      "plain": "Informal",
+      "polite": "Formal",
+      "affirmative": "Afirmativo",
+      "negative": "Negativo",
+      "classes": {
+        "ichidan": "Verbo ichidan",
+        "godan": "Verbo godan",
+        "suru": "Verbo suru",
+        "kuru": "Verbo kuru",
+        "iAdjective": "Adjetivo -i",
+        "naAdjective": "Adjetivo -na"
+      },
+      "groups": {
+        "basics": "Básicas",
+        "volitionCommand": "Volición e imperativo",
+        "voiceCausation": "Voz y causativo",
+        "conditionals": "Condicionales"
+      },
+      "rows": {
+        "nonPast": "No pasado",
+        "past": "Pasado",
+        "te": "Forma te",
+        "continuative": "Continuativa (~i)",
+        "volitional": "Volitiva",
+        "imperative": "Imperativo",
+        "potential": "Potencial",
+        "passive": "Pasiva",
+        "causative": "Causativa",
+        "causativePassive": "Causativa pasiva",
+        "provisional": "Provisional (~eba)",
+        "conditional": "Condicional (~tara)",
+        "alternative": "Alternativa (~tari)",
+        "adverbial": "Adverbial"
+      }
+    }
   },
   "kanjiIndex": {
     "title": "Kanji",
@@ -1765,7 +1815,7 @@
       "nadeshiko": "Nadeshiko"
     },
     "perks": {
-      "talkToDevs": "Habla directamente con el desarrollador",
+      "prioritySupport": "Soporte prioritario",
       "everythingIn": "Todo lo de {tier}",
       "apiRequests": "{count} solicitudes a la API al mes",
       "customThemes": "Temas personalizados",
@@ -1804,7 +1854,8 @@
       "free": "Gratis",
       "api": "Solicitudes a la API al mes",
       "boosts": "Boosts de pedidos al mes",
-      "wordAlerts": "Alertas de palabras activas"
+      "wordAlerts": "Alertas de palabras activas",
+      "allPaidTiers": "todos los niveles de pago"
     },
     "faq": {
       "headline": "Preguntas {accent}",
@@ -1825,6 +1876,22 @@
       "oneAccount": {
         "q": "¿Una cuenta de Patreon puede desbloquear varias cuentas de Nadeshiko?",
         "a": "No. Una cuenta de Patreon se vincula a una sola cuenta de Nadeshiko."
+      },
+      "activate": {
+        "q": "¿Cómo activo mis beneficios después de unirme en Patreon?",
+        "a": "Únete en Patreon, inicia sesión en Nadeshiko y vincula tu cuenta de Patreon en Ajustes → Conexiones. Tus beneficios y límites mayores se activan al instante."
+      },
+      "freeStaysFree": {
+        "q": "¿Las funciones gratuitas seguirán siendo gratis?",
+        "a": "Sí. Buscar, minar a Anki y todo lo que hoy es gratis en Nadeshiko seguirá siendo gratis. Los beneficios para supporters financian los servidores y el desarrollo continuo."
+      },
+      "donations": {
+        "q": "¿Las donaciones en Ko-fi o GitHub Sponsors desbloquean beneficios?",
+        "a": "No. Ko-fi y GitHub Sponsors son solo donaciones. Los beneficios de membresía y los límites mayores se vinculan únicamente a través de Patreon."
+      },
+      "boostRollover": {
+        "q": "¿Los impulsos de pedidos sin usar se acumulan para el mes siguiente?",
+        "a": "No. Tus impulsos mensuales se reinician el día 1 de cada mes (UTC)."
       }
     },
     "currentTierBadge": "Tu nivel actual",

@@ -20,7 +20,7 @@ export interface SupportTier {
   monthlyApiRequests: number;
   /** Content-request boosts a month; the backend `Tier.monthlyRequestBoosts` (task 49 migration) holds the same. */
   requestBoostsPerMonth: number;
-  talkToDevs: boolean;
+  prioritySupport: boolean;
   priorityRequests: boolean;
   customThemes: boolean;
 }
@@ -33,7 +33,7 @@ export interface SupportTier {
  */
 export const PATRON_LIMITS = {
   customDictionaries: { free: 3, patron: 10 },
-  openRequests: { free: 10, patron: 30 },
+  openRequests: { free: 5, patron: 15 },
   wordAlerts: { free: 20, patron: 100 },
 } as const;
 
@@ -49,7 +49,7 @@ export const SUPPORT_TIERS: readonly SupportTier[] = [
     priceUsd: 5,
     monthlyApiRequests: 15_000,
     requestBoostsPerMonth: 3,
-    talkToDevs: false,
+    prioritySupport: false,
     priorityRequests: false,
     customThemes: true,
   },
@@ -61,7 +61,7 @@ export const SUPPORT_TIERS: readonly SupportTier[] = [
     priceUsd: 10,
     monthlyApiRequests: 30_000,
     requestBoostsPerMonth: 5,
-    talkToDevs: true,
+    prioritySupport: true,
     priorityRequests: false,
     customThemes: true,
   },
@@ -73,7 +73,7 @@ export const SUPPORT_TIERS: readonly SupportTier[] = [
     priceUsd: 20,
     monthlyApiRequests: 60_000,
     requestBoostsPerMonth: 10,
-    talkToDevs: true,
+    prioritySupport: true,
     priorityRequests: true,
     customThemes: true,
   },

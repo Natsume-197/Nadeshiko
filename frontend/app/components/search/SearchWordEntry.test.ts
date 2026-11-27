@@ -1,7 +1,8 @@
 // @vitest-environment happy-dom
 import { mount, RouterLinkStub } from '@vue/test-utils';
-import { describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vitest';
 import { ref } from 'vue';
+import { resetWordEntryPreferencesForTest } from '~/composables/useWordEntryPreferences';
 
 const locale = ref('en');
 vi.stubGlobal('useI18n', () => ({ t: (key: string) => key, locale }));
@@ -312,5 +313,29 @@ describe("the word entry with a reader's own dictionaries", () => {
       },
     });
     expect(wrapper.find('[data-testid="word-entry-others"]').text()).toContain('dangerous');
+  });
+});
+
+describe('definition box settings popover', () => {
+  afterEach(() => {
+    window.localStorage.clear();
+    resetWordEntryPreferencesForTest();
+  });
+
+  test('toggles collapse mode and links to custom dictionaries', async () => {
+    const wrapper = render();
+    expect(wrapper.find('[data-testid="word-entry-settings-menu"]').exists()).toBe(false);
+
+    await wrapper.get('[data-testid="word-entry-settings-btn"]').trigger('click');
+    expect(wrapper.find('[data-testid="word-entry-settings-menu"]').exists()).toBe(true);
+    expect(wrapper.get('[data-testid="word-entry-manage-dicts"]').findComponent(RouterLinkStub).props('to')).toBe(
+      '/user/dictionaries',
+    );
+
+    await wrapper.get('[data-testid="word-entry-pref-collapsed"]').setValue(true);
+    expect(wrapper.find('[data-testid="word-entry-senses"]').exists()).toBe(false);
+
+    await wrapper.get('[data-testid="word-entry-collapse"]').trigger('click');
+    expect(wrapper.find('[data-testid="word-entry-senses"]').exists()).toBe(true);
   });
 });

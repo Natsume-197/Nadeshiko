@@ -108,7 +108,7 @@ We have three membership [tiers](/supporters):
 All three tiers also include:
 
 - **Custom themes:** Choose from additional themes or create your own.
-- **Higher limits:** Upload up to 10 custom dictionaries instead of 3, and have up to 30 open content requests instead of 10.
+- **Higher limits:** Upload up to 10 custom dictionaries instead of 3, and have up to 15 open content requests instead of 5.
 - **Advanced anime list features:** Daily automatic syncing with AniList or MyAnimeList, spoiler protection for episodes you haven't watched, the ability to hide Plan to Watch titles from searches, and support for AniList custom lists as filters.
 
 And to everyone who has supported Nadeshiko so far, thank you! Your support not only helps keep the platform running but also gives us the opportunity to keep building something we love and sharing it with everyone.

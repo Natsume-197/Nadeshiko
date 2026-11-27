@@ -146,7 +146,7 @@ const progress = computed(() => (synced.value ? EPISODES : EPISODES - 1));
 </script>
 
 <template>
-  <div id="perks" class="supporters-band supporters-band-soft scroll-mt-16" data-testid="support-shared-perks">
+  <div id="perks" class="supporters-band scroll-mt-16" data-testid="support-shared-perks">
     <!-- biome-ignore lint/a11y/noHeaderScope: vue-i18n scope, not a table header -->
     <i18n-t keypath="support.shared.headline" tag="h2" scope="global" data-reveal class="text-center text-3xl font-bold leading-tight tracking-[-0.03em] text-ink md:text-[2.6rem]">
       <template #accent>

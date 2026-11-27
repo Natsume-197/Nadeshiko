@@ -1199,7 +1199,57 @@
     "showMore": "显示更多",
     "dictionaries": "词典",
     "others": "也可能是",
-    "forms": "其他写法"
+    "forms": "其他写法",
+    "seeAlso": "另见：",
+    "antonym": "反义词：",
+    "settings": {
+      "title": "释义框设置",
+      "collapsed": "默认折叠",
+      "manageDictionaries": "管理自定义词典",
+      "expand": "展开释义",
+      "collapse": "折叠释义"
+    },
+    "conjugations": {
+      "button": "活用变形",
+      "title": "「{word}」的活用变形",
+      "stem": "词干",
+      "ending": "变形词尾",
+      "clickHint": "点击任意形式搜索例句",
+      "plain": "简体",
+      "polite": "敬体",
+      "affirmative": "肯定",
+      "negative": "否定",
+      "classes": {
+        "ichidan": "一段动词",
+        "godan": "五段动词",
+        "suru": "サ变动词",
+        "kuru": "カ变动词",
+        "iAdjective": "い形容词",
+        "naAdjective": "な形容词"
+      },
+      "groups": {
+        "basics": "基础",
+        "volitionCommand": "意志与命令",
+        "voiceCausation": "可能・被动・使役",
+        "conditionals": "条件与列举"
+      },
+      "rows": {
+        "nonPast": "非过去",
+        "past": "过去",
+        "te": "て形",
+        "continuative": "连用形",
+        "volitional": "意志形",
+        "imperative": "命令形",
+        "potential": "可能形",
+        "passive": "被动形",
+        "causative": "使役形",
+        "causativePassive": "使役被动形",
+        "provisional": "假定形（〜ば）",
+        "conditional": "条件形（〜たら）",
+        "alternative": "列举（〜たり）",
+        "adverbial": "副词形"
+      }
+    }
   },
   "kanjiIndex": {
     "title": "汉字",
@@ -1765,7 +1815,7 @@
       "nadeshiko": "Nadeshiko"
     },
     "perks": {
-      "talkToDevs": "直接与开发者交流",
+      "prioritySupport": "优先支持",
       "everythingIn": "包含 {tier} 的全部福利",
       "apiRequests": "每月 {count} 次 API 请求",
       "customThemes": "自定义主题",
@@ -1804,7 +1854,8 @@
       "free": "免费",
       "api": "每月 API 请求",
       "boosts": "每月请求助推",
-      "wordAlerts": "进行中的单词提醒"
+      "wordAlerts": "进行中的单词提醒",
+      "allPaidTiers": "所有付费方案"
     },
     "faq": {
       "headline": "常见{accent}",
@@ -1825,6 +1876,22 @@
       "oneAccount": {
         "q": "一个 Patreon 账户可以解锁多个 Nadeshiko 账户吗？",
         "a": "不可以。一个 Patreon 账户只能关联一个 Nadeshiko 账户。"
+      },
+      "activate": {
+        "q": "加入 Patreon 后如何激活我的权益？",
+        "a": "在 Patreon 加入后，登录 Nadeshiko 并在「设置 → 关联」中绑定你的 Patreon 账户。你的权益和更高额度会立即生效。"
+      },
+      "freeStaysFree": {
+        "q": "免费功能以后还会继续免费吗？",
+        "a": "会的。搜索、导入 Anki 以及 Nadeshiko 目前所有免费功能都会继续免费。赞助者权益用于支持服务器与持续开发。"
+      },
+      "donations": {
+        "q": "在 Ko-fi 或 GitHub Sponsors 捐赠能解锁权益吗？",
+        "a": "不能。Ko-fi 和 GitHub Sponsors 仅用于捐赠。会员权益和更高额度仅通过 Patreon 关联提供。"
+      },
+      "boostRollover": {
+        "q": "未使用的请求加速次数会结转到下个月吗？",
+        "a": "不会。每月的请求加速次数会在每月 1 日（UTC）重置。"
       }
     },
     "currentTierBadge": "当前档位",

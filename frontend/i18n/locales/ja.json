@@ -1199,7 +1199,57 @@
     "showMore": "もっと見る",
     "dictionaries": "辞書",
     "others": "ほかの語",
-    "forms": "別表記"
+    "forms": "別表記",
+    "seeAlso": "参照:",
+    "antonym": "対義語:",
+    "settings": {
+      "title": "定義ボックスの設定",
+      "collapsed": "デフォルトで折りたたむ",
+      "manageDictionaries": "カスタム辞書を管理",
+      "expand": "定義を展開",
+      "collapse": "定義を折りたたむ"
+    },
+    "conjugations": {
+      "button": "活用形",
+      "title": "「{word}」の活用形",
+      "stem": "語幹",
+      "ending": "活用語尾",
+      "clickHint": "クリックするとその形の例文を検索します",
+      "plain": "普通体",
+      "polite": "丁寧体",
+      "affirmative": "肯定",
+      "negative": "否定",
+      "classes": {
+        "ichidan": "一段動詞",
+        "godan": "五段動詞",
+        "suru": "サ変動詞",
+        "kuru": "カ変動詞",
+        "iAdjective": "い形容詞",
+        "naAdjective": "な形容詞"
+      },
+      "groups": {
+        "basics": "基本",
+        "volitionCommand": "意向・命令",
+        "voiceCausation": "可能・受身・使役",
+        "conditionals": "条件・並列"
+      },
+      "rows": {
+        "nonPast": "非過去",
+        "past": "過去",
+        "te": "て形",
+        "continuative": "連用形",
+        "volitional": "意向形",
+        "imperative": "命令形",
+        "potential": "可能形",
+        "passive": "受身形",
+        "causative": "使役形",
+        "causativePassive": "使役受身形",
+        "provisional": "仮定形（〜ば）",
+        "conditional": "条件形（〜たら）",
+        "alternative": "並列（〜たり）",
+        "adverbial": "副詞形"
+      }
+    }
   },
   "kanjiIndex": {
     "title": "漢字",
@@ -1765,7 +1815,7 @@
       "nadeshiko": "Nadeshiko"
     },
     "perks": {
-      "talkToDevs": "開発者と直接話せる",
+      "prioritySupport": "優先サポート",
       "everythingIn": "{tier} の特典すべて",
       "apiRequests": "月 {count} 件の API リクエスト",
       "customThemes": "カスタムテーマ",
@@ -1804,7 +1854,8 @@
       "free": "無料",
       "api": "月間 API リクエスト",
       "boosts": "月間リクエストブースト",
-      "wordAlerts": "有効な単語アラート"
+      "wordAlerts": "有効な単語アラート",
+      "allPaidTiers": "全有料プラン共通"
     },
     "faq": {
       "headline": "よくある{accent}",
@@ -1825,6 +1876,22 @@
       "oneAccount": {
         "q": "1 つの Patreon アカウントで複数の Nadeshiko アカウントを有効にできますか？",
         "a": "いいえ。1 つの Patreon アカウントは 1 つの Nadeshiko アカウントにのみ連携できます。"
+      },
+      "activate": {
+        "q": "Patreon で参加した後、特典はどうやって有効化しますか？",
+        "a": "Patreon で参加したら、Nadeshiko にサインインして「設定 → 連携」から Patreon アカウントを連携してください。特典と上限引き上げはすぐに有効になります。"
+      },
+      "freeStaysFree": {
+        "q": "無料機能は今後も無料のままですか？",
+        "a": "はい。検索や Anki へのマイニングなど、現在無料で利用できる機能は今後も無料のままです。サポーター特典はサーバー維持と継続的な開発を支えるためのものです。"
+      },
+      "donations": {
+        "q": "Ko-fi や GitHub Sponsors での寄付でも特典は有効になりますか？",
+        "a": "いいえ。Ko-fi と GitHub Sponsors は寄付専用です。メンバーシップ特典と上限引き上げは Patreon 経由でのみ連携されます。"
+      },
+      "boostRollover": {
+        "q": "使い切れなかったリクエストブーストは翌月に繰り越されますか？",
+        "a": "いいえ。毎月のリクエストブーストは毎月 1 日（UTC）にリセットされます。"
       }
     },
     "currentTierBadge": "現在のプラン",

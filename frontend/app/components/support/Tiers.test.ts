@@ -87,7 +87,7 @@ describe('Support section', () => {
 
     expect(cards[0]?.text()).toContain('support.perks.requestBoosts({"count":3})');
     expect(cards[1]?.text()).toContain('support.perks.requestBoosts({"count":5})');
-    expect(cards[1]?.text()).toContain('support.perks.talkToDevs');
+    expect(cards[1]?.text()).toContain('support.perks.prioritySupport');
     expect(cards[2]?.text()).toContain('support.perks.everythingIn({"tier":"support.tiers.flower"})');
     expect(cards[2]?.text()).toContain('support.perks.requestBoosts({"count":10})');
   });
@@ -118,9 +118,19 @@ describe('Support section', () => {
 
     expect(cells('api')).toEqual(['10000', ...SUPPORT_TIERS.map((tier) => String(tier.monthlyApiRequests))]);
     expect(cells('boosts')).toEqual(['—', ...SUPPORT_TIERS.map((tier) => String(tier.requestBoostsPerMonth))]);
-    expect(cells('dictionaries')).toEqual(['3', '10', '10', '10']);
-    expect(cells('openRequests')).toEqual(['10', '30', '30', '30']);
-    expect(cells('wordAlerts')).toEqual(['20', '100', '100', '100']);
+
+    for (const [key, free, patron] of [
+      ['dictionaries', '3', '10'],
+      ['openRequests', '5', '15'],
+      ['wordAlerts', '20', '100'],
+    ] as const) {
+      const tds = wrapper.get(`[data-testid="support-limits-${key}"]`).findAll('td');
+      expect(tds).toHaveLength(2);
+      expect(tds[0]?.text()).toBe(free);
+      expect(tds[1]?.attributes('colspan')).toBe(String(SUPPORT_TIERS.length));
+      expect(tds[1]?.text()).toContain(patron);
+      expect(tds[1]?.text()).toContain('support.limits.allPaidTiers');
+    }
   });
 
   test('links each tier card directly to its Patreon checkout URL', async () => {

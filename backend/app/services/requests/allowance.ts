@@ -11,8 +11,8 @@ import {
 import type { User } from '@app/models';
 import { isCurrentPatron } from '@app/services/themes/customTheme';
 
-/** Open requests one account may have waiting at once (decided 2026-11-21). */
-export const OPEN_REQUEST_LIMIT = { free: 10, patron: 30 } as const;
+/** Open requests one account may have waiting at once. */
+export const OPEN_REQUEST_LIMIT = { free: 5, patron: 15 } as const;
 
 /** Requests one account may file in a rolling day, whatever its open count: a brake on pasting a list in one go. */
 export const DAILY_REQUEST_LIMIT = 5;

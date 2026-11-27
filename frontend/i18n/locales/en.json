@@ -1199,7 +1199,57 @@
     "showMore": "Show more",
     "dictionaries": "Dictionaries",
     "others": "Also could be",
-    "forms": "Also written"
+    "forms": "Also written",
+    "seeAlso": "See also:",
+    "antonym": "Antonym:",
+    "settings": {
+      "title": "Definition box settings",
+      "collapsed": "Collapse by default",
+      "manageDictionaries": "Manage custom dictionaries",
+      "expand": "Expand definition",
+      "collapse": "Collapse definition"
+    },
+    "conjugations": {
+      "button": "Conjugations",
+      "title": "Conjugations of {word}",
+      "stem": "Stem",
+      "ending": "Inflected ending",
+      "clickHint": "Click any form to search sentences",
+      "plain": "Plain",
+      "polite": "Polite",
+      "affirmative": "Affirmative",
+      "negative": "Negative",
+      "classes": {
+        "ichidan": "Ichidan verb",
+        "godan": "Godan verb",
+        "suru": "Suru verb",
+        "kuru": "Kuru verb",
+        "iAdjective": "i-adjective",
+        "naAdjective": "na-adjective"
+      },
+      "groups": {
+        "basics": "Basics",
+        "volitionCommand": "Volition & command",
+        "voiceCausation": "Voice & causation",
+        "conditionals": "Conditionals"
+      },
+      "rows": {
+        "nonPast": "Non-past",
+        "past": "Past",
+        "te": "Te-form",
+        "continuative": "Continuative (~i)",
+        "volitional": "Volitional",
+        "imperative": "Imperative",
+        "potential": "Potential",
+        "passive": "Passive",
+        "causative": "Causative",
+        "causativePassive": "Causative-passive",
+        "provisional": "Provisional (~eba)",
+        "conditional": "Conditional (~tara)",
+        "alternative": "Alternative (~tari)",
+        "adverbial": "Adverbial"
+      }
+    }
   },
   "kanjiIndex": {
     "title": "Kanji",
@@ -1765,7 +1815,7 @@
       "nadeshiko": "Nadeshiko"
     },
     "perks": {
-      "talkToDevs": "Talk directly to the dev",
+      "prioritySupport": "Priority support",
       "everythingIn": "Everything in {tier}",
       "apiRequests": "{count} API requests a month",
       "customThemes": "Custom themes",
@@ -1804,7 +1854,8 @@
       "free": "Free",
       "api": "API requests a month",
       "boosts": "Request boosts a month",
-      "wordAlerts": "Active word alerts"
+      "wordAlerts": "Active word alerts",
+      "allPaidTiers": "all paid tiers"
     },
     "faq": {
       "headline": "Common {accent}",
@@ -1825,6 +1876,22 @@
       "oneAccount": {
         "q": "Can one Patreon account unlock several Nadeshiko accounts?",
         "a": "No. One Patreon account links to one Nadeshiko account."
+      },
+      "activate": {
+        "q": "How do I activate my perks after joining on Patreon?",
+        "a": "Join on Patreon, then sign in to Nadeshiko and link your Patreon account in Settings → Connections. Your perks and higher limits unlock right away."
+      },
+      "freeStaysFree": {
+        "q": "Will free features stay free?",
+        "a": "Yes. Searching, mining to Anki, and everything currently free on Nadeshiko stays free. Supporter perks fund servers and ongoing development."
+      },
+      "donations": {
+        "q": "Do Ko-fi or GitHub Sponsors donations unlock perks?",
+        "a": "No. Ko-fi and GitHub Sponsors are donation-only. Membership perks and higher limits are linked through Patreon."
+      },
+      "boostRollover": {
+        "q": "Do unused request boosts roll over to the next month?",
+        "a": "No. Your monthly request boosts reset on the 1st of each month (UTC)."
       }
     },
     "currentTierBadge": "Your current tier",
