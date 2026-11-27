@@ -136,17 +136,25 @@ const videoSchema = computed(() => {
   if (!result?.segment.urls.videoUrl) return null;
 
   const { segment, media } = result;
-  const durationSeconds = Math.max(0, (segment.endTimeMs - segment.startTimeMs) / 1000);
+  const durationMs = segment.endTimeMs - segment.startTimeMs;
+  // Search Console flags sub-second durations as non-positive. Keep this rounding
+  // in the schema so playback retains the original millisecond boundaries.
+  const duration = durationMs > 0 ? `PT${Math.max(1, Math.round(durationMs / 1000))}S` : undefined;
+  // Google recommends a full ISO 8601 timestamp with timezone on uploadDate.
+  const uploadDate = media.startDate
+    ? /^\d{4}-\d{2}-\d{2}$/.test(media.startDate)
+      ? `${media.startDate}T00:00:00Z`
+      : media.startDate
+    : undefined;
 
   return defineVideo({
     name: `${mediaName(media)} - ${seoEpisodeLabel(t, media, segment.episode, segment.episodeTitle)}`,
     description: segment.textJa.content,
     thumbnailUrl: segment.urls.imageUrl,
     contentUrl: segment.urls.videoUrl,
-    // Preserve tenths of a second in the ISO 8601 duration of these short clips.
-    duration: `PT${durationSeconds.toFixed(1)}S`,
+    ...(duration ? { duration } : {}),
     inLanguage: 'ja',
-    ...(media.startDate ? { uploadDate: media.startDate } : {}),
+    ...(uploadDate ? { uploadDate } : {}),
   });
 });
 
