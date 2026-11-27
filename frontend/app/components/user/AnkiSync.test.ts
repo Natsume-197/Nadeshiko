@@ -388,3 +388,42 @@ describe('typing the connection address', () => {
     expect(document.activeElement).toBe(input);
   });
 });
+
+describe('Safari mixed-content warning', () => {
+  const originalUserAgent = navigator.userAgent;
+
+  const setUserAgent = (ua: string) => {
+    Object.defineProperty(window.navigator, 'userAgent', {
+      value: ua,
+      configurable: true,
+    });
+  };
+
+  afterEach(() => {
+    setUserAgent(originalUserAgent);
+  });
+
+  test('warns Safari users when AnkiConnect uses plain HTTP and hides once switched to HTTPS or connected', async () => {
+    setUserAgent(
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/27.2 Safari/605.1.15',
+    );
+    loadAnkiData.mockRejectedValueOnce(new Error('Load failed'));
+    const wrapper = await render();
+
+    expect(wrapper.find('[data-testid="anki-safari-warning"]').exists()).toBe(true);
+
+    await wrapper.get('[data-testid="anki-address"]').setValue('https://localhost:8766');
+    await nextTick();
+    expect(wrapper.find('[data-testid="anki-safari-warning"]').exists()).toBe(false);
+  });
+
+  test('does not show the Safari warning in non-Safari browsers', async () => {
+    setUserAgent(
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36',
+    );
+    loadAnkiData.mockRejectedValueOnce(new Error('Failed to fetch'));
+    const wrapper = await render();
+
+    expect(wrapper.find('[data-testid="anki-safari-warning"]').exists()).toBe(false);
+  });
+});

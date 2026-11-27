@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ANKI_ADDRESS_KINDS, classifyAnkiAddress } from './ankiAddress';
+import { ANKI_ADDRESS_KINDS, classifyAnkiAddress, isHttpAnkiAddress, isSafariBrowser } from './ankiAddress';
 
 describe('classifyAnkiAddress', () => {
   it('classifies the default address as v4 loopback', () => {
@@ -77,5 +77,50 @@ describe('classifyAnkiAddress', () => {
     const secret = 'http://davids-private-desktop.internal:8765';
     expect(classifyAnkiAddress(secret)).toBe('remote');
     expect(JSON.stringify(ANKI_ADDRESS_KINDS)).not.toContain('davids');
+  });
+
+  it('classifies HTTPS loopback proxy addresses the same as HTTP loopback', () => {
+    expect(classifyAnkiAddress('https://127.0.0.1:8766')).toBe('loopback_v4');
+    expect(classifyAnkiAddress('https://localhost:8766')).toBe('localhost');
+    expect(classifyAnkiAddress('https://[::1]:8766')).toBe('loopback_v6');
+  });
+});
+
+describe('isSafariBrowser', () => {
+  it('matches Safari on macOS and iOS', () => {
+    expect(
+      isSafariBrowser(
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/27.2 Safari/605.1.15',
+      ),
+    ).toBe(true);
+    expect(
+      isSafariBrowser(
+        'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1',
+      ),
+    ).toBe(true);
+  });
+
+  it('excludes browsers that include a Safari token in their user agent', () => {
+    const nonSafari = [
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36',
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0',
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:132.0) Gecko/20100101 Firefox/132.0',
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/140.0.0.0 Mobile/15E148 Safari/604.1',
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) FxiOS/132.0 Mobile/15E148 Safari/605.1.15',
+      'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36',
+    ];
+    for (const ua of nonSafari) {
+      expect(isSafariBrowser(ua)).toBe(false);
+    }
+  });
+});
+
+describe('isHttpAnkiAddress', () => {
+  it('returns true for plain HTTP URLs and false for HTTPS or invalid input', () => {
+    expect(isHttpAnkiAddress('http://127.0.0.1:8765')).toBe(true);
+    expect(isHttpAnkiAddress('  http://localhost:8765  ')).toBe(true);
+    expect(isHttpAnkiAddress('https://localhost:8766')).toBe(false);
+    expect(isHttpAnkiAddress('https://127.0.0.1:8766')).toBe(false);
+    expect(isHttpAnkiAddress('not-a-url')).toBe(false);
   });
 });

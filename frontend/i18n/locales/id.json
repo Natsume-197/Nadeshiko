@@ -1025,6 +1025,8 @@
       "dictionarySubmenu": "Definisi (satu kamus)…",
       "dictionaryBack": "Kembali",
       "dictionaryGroup": "KAMUS ANDA",
+      "safariHttpWarningTitle": "Safari memblokir koneksi HTTP lokal ke AnkiConnect",
+      "safariHttpWarningMessage": "Safari mencegah situs HTTPS terhubung ke AnkiConnect melalui HTTP biasa (seperti http://127.0.0.1:8765). Gunakan Firefox, Chrome, atau Brave untuk sinkronisasi dengan Anki, atau arahkan alamat di atas ke proxy HTTPS lokal (misalnya https://localhost:8766).",
       "connectFailure": {
         "unreachable": {
           "title": "Anki tidak merespons",

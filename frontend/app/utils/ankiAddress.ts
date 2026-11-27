@@ -61,3 +61,23 @@ export function classifyAnkiAddress(address: string): AnkiAddressKind {
   if (isLoopbackV6(hostname)) return 'loopback_v6';
   return 'remote';
 }
+
+/**
+ * True for Safari/WebKit browsers (macOS and iOS) that block HTTPS-to-HTTP loopback fetches as mixed content.
+ * Excludes Chromium, Edge, Firefox, Opera, and Android UAs that include a `Safari/` compatibility token.
+ */
+export function isSafariBrowser(userAgent: string): boolean {
+  return (
+    /Safari\//.test(userAgent) &&
+    !/Chrome\/|Chromium\/|CriOS\/|FxiOS\/|Edg\/|EdgA\/|EdgiOS\/|OPR\/|OPiOS\/|Android/.test(userAgent)
+  );
+}
+
+/** True when the configured AnkiConnect address uses plain HTTP (which Safari blocks from HTTPS pages). */
+export function isHttpAnkiAddress(address: string): boolean {
+  try {
+    return new URL(address.trim()).protocol === 'http:';
+  } catch {
+    return false;
+  }
+}

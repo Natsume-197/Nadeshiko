@@ -1025,6 +1025,8 @@
       "dictionarySubmenu": "語義（辞書を指定）…",
       "dictionaryBack": "戻る",
       "dictionaryGroup": "利用中の辞書",
+      "safariHttpWarningTitle": "SafariはAnkiConnectへのローカルHTTP接続をブロックします",
+      "safariHttpWarningMessage": "SafariではHTTPSサイトからHTTPのAnkiConnect（http://127.0.0.1:8765 など）へ接続できません。Ankiと連携するにはFirefox・Chrome・Braveを使うか、上のアドレスにローカルのHTTPSプロキシ（例: https://localhost:8766）を指定してください。",
       "connectFailure": {
         "unreachable": {
           "title": "Ankiから応答がありませんでした",
