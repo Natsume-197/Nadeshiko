@@ -561,6 +561,11 @@ function rankOf(index: number): number | null {
   if (filters.status !== 'ACTIVE' || filters.sort !== 'TOP' || filters.q) return null;
   return (filters.page - 1) * PAGE_SIZE + index + 1;
 }
+
+/** Avoid popping up the mobile virtual keyboard before a reader sees the form instructions. */
+function isTouchDevice(): boolean {
+  return import.meta.client && Boolean(window.matchMedia?.('(pointer: coarse)').matches);
+}
 </script>
 
 <template>
@@ -866,11 +871,11 @@ function rankOf(index: number): number | null {
       :open="formOpen"
       labelledby="request-form-title"
       overlay-class="items-end justify-center sm:items-center bg-fixed-scrim/60"
-      panel-class="w-full max-w-lg flex flex-col bg-background border border-hairline shadow-sm rounded-t-xl sm:rounded-xl"
+      panel-class="w-full max-w-lg max-h-[85dvh] flex flex-col bg-background border border-hairline shadow-sm rounded-t-xl sm:rounded-xl"
       @close="closeForm"
     >
       <template v-if="formOpen">
-        <div class="nd-modal-header">
+        <div class="nd-modal-header shrink-0">
           <h2 id="request-form-title" class="font-bold text-ink">{{ t('requests.form.heading') }}</h2>
           <button
             type="button"
@@ -881,7 +886,11 @@ function rankOf(index: number): number | null {
             <UiBaseIcon :path="mdiClose" :size="18" />
           </button>
         </div>
-        <form data-testid="requests-form" class="flex flex-col gap-4 p-5" @submit.prevent="submitRequest">
+        <form
+          data-testid="requests-form"
+          class="flex flex-col gap-4 overflow-y-auto overscroll-contain p-5"
+          @submit.prevent="submitRequest"
+        >
           <p class="text-sm leading-relaxed text-ink-muted">{{ t('requests.form.help') }}</p>
 
           <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs" aria-hidden="true">
@@ -901,7 +910,7 @@ function rankOf(index: number): number | null {
             <input
               id="request-url"
               v-model="sourceUrl"
-              data-autofocus
+              :data-autofocus="isTouchDevice() ? undefined : ''"
               required
               maxlength="1000"
               class="nd-input w-full"
@@ -1138,10 +1147,40 @@ function rankOf(index: number): number | null {
             </span>
           </div>
 
+          <NuxtLink
+            v-if="item.media"
+            :to="localePath(`/media/${item.media.slug}`)"
+            tabindex="-1"
+            :aria-label="item.title"
+            class="shrink-0"
+          >
+            <RequestCover
+              :category="item.category"
+              :cover-url="item.coverUrl"
+              hover-zoom
+              class="h-[4.25rem] w-14 rounded-lg sm:h-[5.25rem] sm:w-[4.25rem]"
+            />
+          </NuxtLink>
+          <a
+            v-else-if="httpUrl(item.sourceUrl)"
+            :href="httpUrl(item.sourceUrl) ?? undefined"
+            target="_blank"
+            rel="noopener noreferrer"
+            tabindex="-1"
+            :aria-label="item.title"
+            class="shrink-0"
+          >
+            <RequestCover
+              :category="item.category"
+              :cover-url="item.coverUrl"
+              hover-zoom
+              class="h-[4.25rem] w-14 rounded-lg sm:h-[5.25rem] sm:w-[4.25rem]"
+            />
+          </a>
           <RequestCover
+            v-else
             :category="item.category"
             :cover-url="item.coverUrl"
-            hover-zoom
             class="h-[4.25rem] w-14 rounded-lg sm:h-[5.25rem] sm:w-[4.25rem]"
           />
 
@@ -1180,7 +1219,23 @@ function rankOf(index: number): number | null {
             </div>
 
             <h2 class="line-clamp-2 text-[15px] font-bold leading-snug text-ink sm:text-base" :title="item.title">
-              {{ item.title }}
+              <NuxtLink
+                v-if="item.media"
+                :to="localePath(`/media/${item.media.slug}`)"
+                class="transition-colors hover:text-brand hover:underline"
+              >
+                {{ item.title }}
+              </NuxtLink>
+              <a
+                v-else-if="httpUrl(item.sourceUrl)"
+                :href="httpUrl(item.sourceUrl) ?? undefined"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="transition-colors hover:text-brand hover:underline"
+              >
+                {{ item.title }}
+              </a>
+              <template v-else>{{ item.title }}</template>
             </h2>
 
             <p v-if="item.note" class="line-clamp-2 text-[13px] leading-relaxed text-ink-muted">
