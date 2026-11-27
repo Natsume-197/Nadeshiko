@@ -1,5 +1,11 @@
 import { LOCALE_PREFERENCE_COOKIE_NAME } from '~/utils/i18n';
-import { getLocalePrefix, isReservedLocalePath, isSupportedLocale, resolveRootLocale } from '../utils/localeRouting';
+import {
+  getLocalePrefix,
+  isKnownLocalizedPath,
+  isReservedLocalePath,
+  isSupportedLocale,
+  resolveRootLocale,
+} from '../utils/localeRouting';
 
 export default defineEventHandler((event) => {
   const url = getRequestURL(event);
@@ -10,6 +16,9 @@ export default defineEventHandler((event) => {
 
   // Unsupported locale-shaped prefixes must 404, not become unprefixed English routes.
   if (/^\/[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})+(?=\/|$)/.test(path)) return;
+
+  // Only redirect bare links that belong to real app/content routes; unknown legacy URLs fall through to 404 directly.
+  if (!isKnownLocalizedPath(path)) return;
 
   const search = url.search;
 

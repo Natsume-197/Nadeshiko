@@ -42,4 +42,20 @@ describe('locale router', () => {
   test('does not reinterpret an unsupported locale tag as an English path', () => {
     expect(visit('/zh-CN/about')).toBeNull();
   });
+
+  test('redirects the root path and known unprefixed app routes to the default locale', () => {
+    expect(visit('/')).toEqual({ location: '/en', status: 301 });
+    redirects = [];
+    expect(visit('/search/学校')).toEqual({ location: '/en/search/%E5%AD%A6%E6%A0%A1', status: 301 });
+    redirects = [];
+    expect(visit('/about')).toEqual({ location: '/en/about', status: 301 });
+    redirects = [];
+    expect(visit('/auth/callback?code=123')).toEqual({ location: '/en/auth/callback?code=123', status: 301 });
+  });
+
+  test('does not redirect unknown legacy root paths so they 404 directly', () => {
+    expect(visit('/dreamseat-newcastle-unit-test')).toBeNull();
+    expect(visit('/house-of-hampton-sofa')).toBeNull();
+    expect(visit('/wp-content/uploads/file')).toBeNull();
+  });
 });

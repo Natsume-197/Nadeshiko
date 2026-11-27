@@ -25,6 +25,41 @@ export function isReservedLocalePath(path: string): boolean {
   return false;
 }
 
+// Known unprefixed top-level routes that should redirect to the localized equivalent.
+// Unknown root paths (such as legacy spam URLs) skip the locale redirect and fall through to a direct 404.
+export const KNOWN_LOCALIZED_ROOTS = new Set([
+  'about',
+  'admin',
+  'auth',
+  'blog',
+  'changelog',
+  'collection',
+  'dmca',
+  'kanji',
+  'link',
+  'media',
+  'privacy',
+  'reports',
+  'requests',
+  's',
+  'search',
+  'sentence',
+  'settings',
+  'sources',
+  'stats',
+  'supporters',
+  'terms-and-conditions',
+  'unsubscribe',
+  'user',
+  'verify',
+]);
+
+export function isKnownLocalizedPath(path: string): boolean {
+  if (path === '/') return true;
+  const firstSegment = path.slice(1).split('/')[0];
+  return firstSegment !== undefined && firstSegment.length > 0 && KNOWN_LOCALIZED_ROOTS.has(firstSegment);
+}
+
 export function isSupportedLocale(value: string | null | undefined): value is SupportedLocale {
   return value !== null && value !== undefined && (SUPPORTED_LOCALES as readonly string[]).includes(value);
 }

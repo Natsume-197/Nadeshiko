@@ -475,3 +475,68 @@ describe('route-to-scope priming', () => {
     expect(wrapper.findComponent({ name: 'SearchContainer' }).props('mediaPublicId')).toBe('m1');
   });
 });
+
+describe('episode validation', () => {
+  test('returns 404 when the requested episode exceeds episodeCount', async () => {
+    route.query = { episode: '999999' };
+    fetchSentences.mockResolvedValue({ status: 'ok', data: { results: [], pagination: { hasMore: false } } });
+    fetchStats.mockResolvedValue({
+      status: 'ok',
+      data: { media: [{ mediaPublicId: 'm1', matchCount: 200, episodeHits: [{ episode: 1, hitCount: 200 }] }] },
+    });
+
+    await render(media({ episodeCount: 12 }));
+
+    expect(capturedErrors).toHaveLength(1);
+    expect(capturedErrors[0]).toMatchObject({ statusCode: 404, statusMessage: 'Episode Not Found' });
+  });
+
+  test('returns 404 when episodeHits does not contain the requested episode and results are empty', async () => {
+    route.query = { episode: '5' };
+    fetchSentences.mockResolvedValue({ status: 'ok', data: { results: [], pagination: { hasMore: false } } });
+    fetchStats.mockResolvedValue({
+      status: 'ok',
+      data: {
+        media: [
+          {
+            mediaPublicId: 'm1',
+            matchCount: 200,
+            episodeHits: [
+              { episode: 1, hitCount: 100 },
+              { episode: 2, hitCount: 100 },
+            ],
+          },
+        ],
+      },
+    });
+
+    await render(media({ episodeCount: 12 }));
+
+    expect(capturedErrors).toHaveLength(1);
+    expect(capturedErrors[0]).toMatchObject({ statusCode: 404, statusMessage: 'Episode Not Found' });
+  });
+
+  test('renders normally when the requested episode exists in episodeHits', async () => {
+    route.query = { episode: '2' };
+    fetchSentences.mockResolvedValue({ status: 'ok', data: { results: [], pagination: { hasMore: false } } });
+    fetchStats.mockResolvedValue({
+      status: 'ok',
+      data: {
+        media: [
+          {
+            mediaPublicId: 'm1',
+            matchCount: 200,
+            episodeHits: [
+              { episode: 1, hitCount: 100 },
+              { episode: 2, hitCount: 100 },
+            ],
+          },
+        ],
+      },
+    });
+
+    await render(media({ episodeCount: 12 }));
+
+    expect(capturedErrors).toEqual([]);
+  });
+});
