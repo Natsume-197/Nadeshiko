@@ -350,8 +350,10 @@ describe('definition box settings popover', () => {
     });
 
     const formLinks = wrapper.findAll('[data-testid="word-entry-form"]');
-    expect(formLinks.map((a) => a.text())).toEqual(['たべる8%', '喰べる<1%']);
-    expect(formLinks[0]?.attributes('title')).toBe('#1,450');
-    expect(formLinks[1]?.attributes('title')).toBe('#19,000');
+    expect(formLinks.map((a) => a.text())).toEqual(['食べる92%', 'たべる8%', '喰べる<1%']);
+    expect(formLinks[0]?.classes()).toContain('is-current');
+    expect(formLinks[0]?.attributes('title')).toBe('#120');
+    expect(formLinks[1]?.attributes('title')).toBe('#1,450');
+    expect(formLinks[2]?.attributes('title')).toBe('#19,000');
   });
 });

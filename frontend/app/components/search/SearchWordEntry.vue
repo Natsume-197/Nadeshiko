@@ -203,11 +203,20 @@ onBeforeUnmount(() => {
 });
 
 const otherForms = computed(() => cardForms(shown.value).filter((form) => form !== shown.value.headword));
-const otherFormItems = computed(() => {
+const hasFormShares = computed(() => (shown.value.forms ?? []).some((f) => typeof f.share === 'number' && f.share > 0));
+const formItems = computed(() => {
   const byText = new Map((shown.value.forms ?? []).map((f) => [f.text, f]));
-  return otherForms.value.map((text) => {
+  const texts = hasFormShares.value
+    ? [shown.value.headword, ...otherForms.value]
+    : otherForms.value;
+  return texts.map((text) => {
     const meta = byText.get(text);
-    return { text, frequency: meta?.frequency, share: meta?.share };
+    return {
+      text,
+      isCurrent: text === shown.value.headword,
+      frequency: meta?.frequency,
+      share: meta?.share,
+    };
   });
 });
 const formatFormShare = (share?: number): string => {
@@ -555,23 +564,36 @@ function posChipTone(code?: string): 'verb' | 'noun' | 'adj' | 'other' {
           </ul>
         </div>
 
-        <div v-if="otherFormItems.length > 0" class="word-entry__section word-entry__forms">
+        <div v-if="formItems.length > 0" class="word-entry__section word-entry__forms">
           <span class="word-entry__label word-entry__forms-label">{{ $t('wordEntry.forms') }}</span>
           <div class="word-entry__row">
-            <NuxtLink
-              v-for="item in otherFormItems"
-              :key="item.text"
-              :to="wordPath(item.text)"
-              class="word-entry__form"
-              :title="typeof item.frequency === 'number' ? `#${formatNumber(item.frequency)}` : undefined"
-              lang="ja"
-              data-testid="word-entry-form"
-            >
-              <span>{{ item.text }}</span>
-              <span v-if="formatFormShare(item.share)" class="word-entry__form-share">{{
-                formatFormShare(item.share)
-              }}</span>
-            </NuxtLink>
+            <template v-for="item in formItems" :key="item.text">
+              <span
+                v-if="item.isCurrent"
+                class="word-entry__form is-current"
+                :title="typeof item.frequency === 'number' ? `#${formatNumber(item.frequency)}` : undefined"
+                lang="ja"
+                data-testid="word-entry-form"
+              >
+                <span>{{ item.text }}</span>
+                <span v-if="formatFormShare(item.share)" class="word-entry__form-share">{{
+                  formatFormShare(item.share)
+                }}</span>
+              </span>
+              <NuxtLink
+                v-else
+                :to="wordPath(item.text)"
+                class="word-entry__form"
+                :title="typeof item.frequency === 'number' ? `#${formatNumber(item.frequency)}` : undefined"
+                lang="ja"
+                data-testid="word-entry-form"
+              >
+                <span>{{ item.text }}</span>
+                <span v-if="formatFormShare(item.share)" class="word-entry__form-share">{{
+                  formatFormShare(item.share)
+                }}</span>
+              </NuxtLink>
+            </template>
           </div>
         </div>
 
@@ -1257,8 +1279,16 @@ function posChipTone(code?: string): 'verb' | 'noun' | 'adj' | 'other' {
   transition: border-color 0.12s ease, color 0.12s ease;
 }
 
+.word-entry__form.is-current {
+  border-color: color-mix(in srgb, var(--accent-soft) 45%, var(--line));
+  background: color-mix(in srgb, var(--accent-soft) 10%, var(--surface));
+  color: rgb(var(--c-white));
+  font-weight: 600;
+}
+
 .word-entry__form-share {
   font-size: 11px;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
   color: var(--ink-faint);
 }
