@@ -532,4 +532,32 @@ describe('/requests', () => {
     await flushPromises();
     expect(wrapper.get('[data-testid="requests-tab-IN_PROGRESS"]').attributes('aria-selected')).toBe('true');
   });
+
+  test('links request titles to Nadeshiko media when available, otherwise to the external source URL', async () => {
+    const withMedia = {
+      ...frieren,
+      id: '55555555-5555-4555-8555-555555555555',
+      title: 'Dungeon Meshi',
+      media: { id: 'media-1', slug: 'dungeon-meshi', name: 'Dungeon Meshi' },
+    };
+    const withoutUrl = {
+      ...frieren,
+      id: '66666666-6666-4666-8666-666666666666',
+      title: 'Plain Title',
+      sourceUrl: 'javascript:alert(1)',
+    };
+    route({ '/v1/requests': () => ({ items: [withMedia, frieren, withoutUrl], total: 3 }) });
+    const wrapper = await render();
+
+    const mediaHeading = wrapper.get(`[data-testid="request-${withMedia.id}"] h2 a`);
+    expect(mediaHeading.attributes('href')).toBe('/en/media/dungeon-meshi');
+    expect(mediaHeading.text()).toBe('Dungeon Meshi');
+
+    const sourceHeading = wrapper.get(`[data-testid="request-${frieren.id}"] h2 a`);
+    expect(sourceHeading.attributes('href')).toBe('https://anilist.co/anime/154587');
+    expect(sourceHeading.attributes('target')).toBe('_blank');
+
+    expect(wrapper.find(`[data-testid="request-${withoutUrl.id}"] h2 a`).exists()).toBe(false);
+    expect(wrapper.get(`[data-testid="request-${withoutUrl.id}"] h2`).text()).toBe('Plain Title');
+  });
 });
