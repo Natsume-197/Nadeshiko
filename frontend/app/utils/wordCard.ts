@@ -121,7 +121,7 @@ export interface DictionaryWord {
   furigana?: Array<{ text: string; ruby?: string }>;
   /** Every spelling the word is written with. What answers the reader who met
    *  空く and is being shown 開く. */
-  forms?: Array<{ text: string; script?: string; common?: boolean }>;
+  forms?: Array<{ text: string; script?: string; common?: boolean; frequency?: number; share?: number }>;
   entries?: DictionaryEntry[];
   /** The dictionary's own id for this word, and the dictionary it belongs to. */
   sourceId?: string;

@@ -203,6 +203,18 @@ onBeforeUnmount(() => {
 });
 
 const otherForms = computed(() => cardForms(shown.value).filter((form) => form !== shown.value.headword));
+const otherFormItems = computed(() => {
+  const byText = new Map((shown.value.forms ?? []).map((f) => [f.text, f]));
+  return otherForms.value.map((text) => {
+    const meta = byText.get(text);
+    return { text, frequency: meta?.frequency, share: meta?.share };
+  });
+});
+const formatFormShare = (share?: number): string => {
+  if (typeof share !== 'number' || share <= 0) return '';
+  const pct = Math.round(share * 100);
+  return pct < 1 ? '<1%' : `${pct}%`;
+};
 const parts = computed(() => (shown.value.parts ?? []).filter((part) => part.lemma));
 const kanji = computed(() => kanjiIn(shown.value.headword));
 const hasSide = computed(() => otherForms.value.length > 0 || parts.value.length > 0 || kanji.value.length > 0);
@@ -543,10 +555,23 @@ function posChipTone(code?: string): 'verb' | 'noun' | 'adj' | 'other' {
           </ul>
         </div>
 
-        <div v-if="otherForms.length > 0" class="word-entry__section word-entry__forms">
+        <div v-if="otherFormItems.length > 0" class="word-entry__section word-entry__forms">
           <span class="word-entry__label word-entry__forms-label">{{ $t('wordEntry.forms') }}</span>
           <div class="word-entry__row">
-            <NuxtLink v-for="form in otherForms" :key="form" :to="wordPath(form)" class="word-entry__form" lang="ja">{{ form }}</NuxtLink>
+            <NuxtLink
+              v-for="item in otherFormItems"
+              :key="item.text"
+              :to="wordPath(item.text)"
+              class="word-entry__form"
+              :title="typeof item.frequency === 'number' ? `#${formatNumber(item.frequency)}` : undefined"
+              lang="ja"
+              data-testid="word-entry-form"
+            >
+              <span>{{ item.text }}</span>
+              <span v-if="formatFormShare(item.share)" class="word-entry__form-share">{{
+                formatFormShare(item.share)
+              }}</span>
+            </NuxtLink>
           </div>
         </div>
 
@@ -1220,6 +1245,9 @@ function posChipTone(code?: string): 'verb' | 'noun' | 'adj' | 'other' {
 }
 
 .word-entry__form {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
   padding: 2px 8px;
   border: 1px solid var(--line);
   border-radius: 7px;
@@ -1227,6 +1255,12 @@ function posChipTone(code?: string): 'verb' | 'noun' | 'adj' | 'other' {
   font-size: 12px;
   color: var(--ink);
   transition: border-color 0.12s ease, color 0.12s ease;
+}
+
+.word-entry__form-share {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-faint);
 }
 
 .word-entry__form:hover {

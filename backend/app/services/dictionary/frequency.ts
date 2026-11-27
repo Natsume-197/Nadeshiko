@@ -56,6 +56,110 @@ export interface FrequencyReport {
 /** The kinds of media counted apart, in a fixed order: a triple's `byCategory[i]` is its count in `CATEGORIES[i]`. */
 export const CATEGORIES: readonly CategoryType[] = ALL_CATEGORIES;
 
+/** One row of `dict.frequency_form`. */
+export interface FormFrequencyRow {
+  word_id: number;
+  form_text: string;
+  count: number;
+  /** Fraction of this word's attributed occurrences written in this form (0..1). */
+  share: number;
+  rank: number;
+}
+
+function commonPrefixLen(a: string, b: string): number {
+  const limit = Math.min(a.length, b.length);
+  let i = 0;
+  while (i < limit && a[i] === b[i]) i += 1;
+  return i;
+}
+
+const SINGLE_HAN = /\p{Script=Han}/u;
+
+function kanjiSequence(text: string): string {
+  return [...text].filter((ch) => SINGLE_HAN.test(ch)).join('');
+}
+
+/**
+ * Picks which spelling (`dict.form.text`) of `word` a corpus surface (`triple.s`) was written in, handling inflected
+ * verbs and adjectives (e.g. `食べた` -> `食べる`, `たべた` -> `たべる`, `喰べた` -> `喰べる`). Exported for tests.
+ */
+export function attributeForm(triple: Pick<Triple, 's' | 'r'>, word: StoredWord): string | null {
+  const surface = triple.s;
+  if (!surface) return null;
+  const active = word.forms.filter((f) => f.active);
+  if (active.length === 0) return null;
+
+  const exact = active.find((f) => f.text === surface);
+  if (exact) return exact.text;
+
+  if (hasKanji(surface)) {
+    const kanjiForms = active.filter((f) => !f.kana);
+    if (kanjiForms.length === 0) return null;
+    const seq = kanjiSequence(surface);
+    const sameKanji = kanjiForms.filter((f) => kanjiSequence(f.text) === seq);
+    const pool = sameKanji.length > 0 ? sameKanji : kanjiForms;
+    let best = pool[0];
+    let bestPrefix = best ? commonPrefixLen(surface, best.text) : -1;
+    for (let i = 1; i < pool.length; i += 1) {
+      const candidate = pool[i];
+      if (!candidate) continue;
+      const prefix = commonPrefixLen(surface, candidate.text);
+      if (prefix > bestPrefix) {
+        best = candidate;
+        bestPrefix = prefix;
+      }
+    }
+    return best && (sameKanji.length > 0 || bestPrefix > 0) ? best.text : null;
+  }
+
+  const kanaForms = active.filter((f) => f.kana);
+  if (kanaForms.length === 0) return null;
+  const surfaceHira = toHiragana(surface);
+  const exactKana = kanaForms.find((f) => toHiragana(f.text) === surfaceHira);
+  if (exactKana) return exactKana.text;
+  if (triple.r) {
+    const readingHira = toHiragana(triple.r);
+    const byReading = kanaForms.find((f) => toHiragana(f.text) === readingHira);
+    if (byReading) return byReading.text;
+  }
+  let best = kanaForms[0];
+  let bestPrefix = best ? commonPrefixLen(surfaceHira, toHiragana(best.text)) : -1;
+  for (let i = 1; i < kanaForms.length; i += 1) {
+    const candidate = kanaForms[i];
+    if (!candidate) continue;
+    const prefix = commonPrefixLen(surfaceHira, toHiragana(candidate.text));
+    if (prefix > bestPrefix) {
+      best = candidate;
+      bestPrefix = prefix;
+    }
+  }
+  return best?.text ?? null;
+}
+
+/**
+ * Per-spelling counts as table rows: each form gets its share of its word's occurrences (0..1) and its global rank
+ * across all forms. Exported for tests.
+ */
+export function formFrequencyRows(byWordForm: Map<number, Map<string, number>>): FormFrequencyRow[] {
+  const rows: Omit<FormFrequencyRow, 'rank'>[] = [];
+  for (const [word_id, forms] of byWordForm) {
+    const rounded: Array<{ form_text: string; count: number }> = [];
+    let total = 0;
+    for (const [form_text, raw] of forms) {
+      const count = Math.round(raw);
+      if (count <= 0) continue;
+      rounded.push({ form_text, count });
+      total += count;
+    }
+    if (total <= 0) continue;
+    for (const { form_text, count } of rounded) {
+      rows.push({ word_id, form_text, count, share: count / total });
+    }
+  }
+  rows.sort((a, b) => b.count - a.count || a.word_id - b.word_id || a.form_text.localeCompare(b.form_text));
+  return rows.map((row, index) => ({ ...row, rank: index + 1 }));
+}
+
 /** One row of `dict.frequency_category`. */
 export interface CategoryRow {
   word_id: number;
@@ -272,17 +376,29 @@ export async function computeFrequency(
   const forms = [...byForm];
   const counts = new Map<number, number>();
   const byCategory = new Map<number, number[]>();
+  const byWordForm = new Map<number, Map<string, number>>();
   let attributed = 0;
   for (let i = 0; i < forms.length; i += LOOKUP_CONCURRENCY) {
     const slice = forms.slice(i, i + LOOKUP_CONCURRENCY);
     const batch = await Promise.all(slice.map(([form]) => loadWords(dataSource, lookupKeys(form))));
     for (const [index, [, list]] of slice.entries()) {
       const words = batch[index] ?? [];
+      const wordById = new Map(words.map((w) => [w.id, w]));
       for (const triple of list) {
         const owners = attribute(triple, words);
         if (owners.length > 0) attributed += triple.count;
         for (const { id, share } of owners) {
           counts.set(id, (counts.get(id) ?? 0) + share);
+          const ownerWord = wordById.get(id);
+          const formText = ownerWord ? attributeForm(triple, ownerWord) : null;
+          if (formText) {
+            let formCounts = byWordForm.get(id);
+            if (!formCounts) {
+              formCounts = new Map();
+              byWordForm.set(id, formCounts);
+            }
+            formCounts.set(formText, (formCounts.get(formText) ?? 0) + share);
+          }
           if (!triple.byCategory) continue;
           // Shared between tied owners the same way as the total.
           const part = share / triple.count;
@@ -299,6 +415,7 @@ export async function computeFrequency(
     }
   }
   const categoryTable = categoryRows(byCategory, morphemesByCategory);
+  const formTable = formFrequencyRows(byWordForm);
 
   const rows = [...counts]
     .map(([word_id, count]) => ({ word_id, count: Math.max(1, Math.round(count)) }))
@@ -339,6 +456,16 @@ export async function computeFrequency(
          FROM jsonb_to_recordset($1::jsonb)
            AS x(word_id int, category text, count int, per_million real, rank int)`,
       categoryTable,
+      WRITE_BATCH,
+    );
+    await manager.query(`DELETE FROM dict.frequency_form`);
+    await insertChunks(
+      manager,
+      `INSERT INTO dict.frequency_form (word_id, form_text, count, share, rank)
+       SELECT x.word_id, x.form_text, x.count, x.share, x.rank
+         FROM jsonb_to_recordset($1::jsonb)
+           AS x(word_id int, form_text text, count int, share real, rank int)`,
+      formTable,
       WRITE_BATCH,
     );
     await manager.query(`DELETE FROM dict.kanji_frequency`);

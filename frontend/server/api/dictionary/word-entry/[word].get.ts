@@ -56,6 +56,6 @@ export default defineCachedEventHandler(handler, {
   maxAge: DICTIONARY_CACHE_SECONDS,
   getKey: (event) => {
     const query = input(event);
-    return query ? stableCacheKey('word-entry-v6', query.locale, query.word) : 'invalid-word';
+    return query ? stableCacheKey('word-entry-v7', query.locale, query.word) : 'invalid-word';
   },
 });

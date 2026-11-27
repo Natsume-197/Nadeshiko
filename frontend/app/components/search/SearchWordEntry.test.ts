@@ -338,4 +338,20 @@ describe('definition box settings popover', () => {
     await wrapper.get('[data-testid="word-entry-collapse"]').trigger('click');
     expect(wrapper.find('[data-testid="word-entry-senses"]').exists()).toBe(true);
   });
+
+  test('shows per-form usage share and rank tooltip when form frequencies are present', () => {
+    const wrapper = render({
+      ...TABERU,
+      forms: [
+        { text: '食べる', script: 'kanji', common: true, frequency: 120, share: 0.92 },
+        { text: 'たべる', script: 'kana', common: true, frequency: 1450, share: 0.076 },
+        { text: '喰べる', script: 'kanji', common: false, frequency: 19000, share: 0.004 },
+      ],
+    });
+
+    const formLinks = wrapper.findAll('[data-testid="word-entry-form"]');
+    expect(formLinks.map((a) => a.text())).toEqual(['たべる8%', '喰べる<1%']);
+    expect(formLinks[0]?.attributes('title')).toBe('#1,450');
+    expect(formLinks[1]?.attributes('title')).toBe('#19,000');
+  });
 });

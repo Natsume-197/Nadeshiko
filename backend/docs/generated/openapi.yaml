@@ -7726,6 +7726,12 @@ components:
                   - kana
               common:
                 type: boolean
+              frequency:
+                type: integer
+                description: Corpus rank of this specific spelling when enough occurrences exist.
+              share:
+                type: number
+                description: Fraction (0..1) of this word's corpus occurrences written in this spelling.
         entries:
           type: array
           items:

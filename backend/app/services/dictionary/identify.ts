@@ -597,7 +597,7 @@ export async function identifyWord(dataSource: DataSource, query: IdentifyQuery)
   );
   type RubyRow = { text: string; reading: string; segments: Array<{ text: string; ruby?: string }> };
   type PitchRow = { text: string; reading: string; downsteps: number[] };
-  const [tags, rubyRows, pitchRows, parts, byCategory] = await Promise.all([
+  const [tags, rubyRows, pitchRows, parts, byCategory, byFormFreq] = await Promise.all([
     tagLabels(dataSource),
     pairs.length === 0
       ? ([] as RubyRow[])
@@ -628,21 +628,71 @@ export async function identifyWord(dataSource: DataSource, query: IdentifyQuery)
       dataSource,
       ranked.map((word) => word.id),
     ),
+    formFrequency(
+      dataSource,
+      ranked.map((word) => word.id),
+    ),
   ]);
   const furigana = new Map(rubyRows.map((row) => [pairKey(row.text, row.reading), row.segments]));
   const pitch = new Map(pitchRows.map((row) => [pairKey(row.text, row.reading), row.downsteps]));
 
   const candidates = picks.map((pick) => toCandidate(pick, tags, furigana, pitch));
   return candidates.map((candidate, index) => {
+    const wordId = ranked[index]?.id ?? -1;
     const found = parts[index];
-    const split = byCategory.get(ranked[index]?.id ?? -1);
+    const split = byCategory.get(wordId);
+    const formStats = byFormFreq.get(wordId);
+    const forms = formStats
+      ? candidate.forms?.map((f) => {
+          const stats = formStats.get(f.text);
+          return stats ? { ...f, frequency: stats.frequency, share: stats.share } : f;
+        })
+      : candidate.forms;
     return {
       ...candidate,
+      ...(forms ? { forms } : {}),
       ...(found ? { parts: found } : {}),
       ...(split ? { frequencyByCategory: split } : {}),
       ...baseFormFields(query.surface || query.lemma, ranked[index], fromBase),
     };
   });
+}
+
+/** Minimum total occurrences a word needs before showing per-spelling percentages (avoids 100% from 1-2 hits). */
+const MIN_FORM_FREQUENCY_COUNT = 10;
+
+/** Each word's per-spelling rank and share (0..1) in our corpus, when the word has enough occurrences. */
+async function formFrequency(
+  dataSource: DataSource,
+  wordIds: number[],
+): Promise<Map<number, Map<string, { frequency: number; share: number }>>> {
+  const out = new Map<number, Map<string, { frequency: number; share: number }>>();
+  if (wordIds.length === 0) return out;
+  let rows: Array<{ word_id: number; form_text: string; count: number; share: number; rank: number }>;
+  try {
+    rows = await dataSource.query(
+      `SELECT word_id, form_text, count, share, rank FROM dict.frequency_form
+        WHERE word_id = ANY($1::int[])`,
+      [wordIds],
+    );
+  } catch (error) {
+    logger.warn({ err: error }, 'Could not read the per-form frequency; the card goes without it');
+    return out;
+  }
+  const totals = new Map<number, number>();
+  for (const row of rows) {
+    totals.set(row.word_id, (totals.get(row.word_id) ?? 0) + row.count);
+  }
+  for (const row of rows) {
+    if ((totals.get(row.word_id) ?? 0) < MIN_FORM_FREQUENCY_COUNT) continue;
+    let forms = out.get(row.word_id);
+    if (!forms) {
+      forms = new Map();
+      out.set(row.word_id, forms);
+    }
+    forms.set(row.form_text, { frequency: row.rank, share: row.share });
+  }
+  return out;
 }
 
 /** Each word's rank per kind of media, most used kind first (by occurrences per million words of that kind). */

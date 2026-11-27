@@ -246,7 +246,15 @@ export const s_DictionaryCandidate = z.object({
     .optional(),
   parts: z.array(z.object({ text: z.string(), lemma: z.string(), reading: z.string(), id: z.string() })).optional(),
   furigana: z.array(z.object({ text: z.string(), ruby: z.string().optional() })).optional(),
-  forms: z.array(z.object({ text: z.string(), script: z.enum(['kanji', 'kana']), common: PermissiveBoolean })),
+  forms: z.array(
+    z.object({
+      text: z.string(),
+      script: z.enum(['kanji', 'kana']),
+      common: PermissiveBoolean,
+      frequency: z.coerce.number().optional(),
+      share: z.coerce.number().optional(),
+    }),
+  ),
   entries: z.array(
     z.object({
       dictionary: z.string(),

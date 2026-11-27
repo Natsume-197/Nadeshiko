@@ -1262,6 +1262,14 @@ export type DictionaryCandidate = {
         text: string;
         script: 'kanji' | 'kana';
         common: boolean;
+        /**
+         * Corpus rank of this specific spelling when enough occurrences exist.
+         */
+        frequency?: number;
+        /**
+         * Fraction (0..1) of this word's corpus occurrences written in this spelling.
+         */
+        share?: number;
     }>;
     entries: Array<{
         dictionary: string;

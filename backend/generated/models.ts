@@ -428,7 +428,9 @@ export type t_DictionaryCandidate = {
   }[];
   forms: {
     common: boolean;
+    frequency?: number;
     script: 'kanji' | 'kana';
+    share?: number;
     text: string;
   }[];
   frequency: number | null;

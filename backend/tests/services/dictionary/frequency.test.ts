@@ -1,9 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import {
   attribute,
+  attributeForm,
   CATEGORIES,
   categoryRows,
   countKanji,
+  formFrequencyRows,
   type KanjiCount,
   kanjiRows,
   tokenTripleOf,
@@ -161,5 +163,46 @@ describe('categoryRows', () => {
 
   it('leaves out a share under half an occurrence', () => {
     expect(categoryRows(new Map([[1, at({ YOUTUBE: 0.3 })]]), at({ YOUTUBE: 10 }))).toEqual([]);
+  });
+});
+
+describe('attributeForm and formFrequencyRows', () => {
+  const taberu = {
+    id: 1,
+    source: 'jmdict' as const,
+    common: true,
+    active: true,
+    jlpt: 5,
+    forms: [
+      { idx: 0, text: '食べる', kana: false, common: true, tags: [], applies_to_kanji: ['*'], active: true },
+      { idx: 1, text: '喰べる', kana: false, common: false, tags: [], applies_to_kanji: ['*'], active: true },
+      { idx: 2, text: 'たべる', kana: true, common: true, tags: [], applies_to_kanji: ['*'], active: true },
+    ],
+    senses: [],
+  };
+
+  it('attributes inflected kanji and kana surfaces to the matching spelling', () => {
+    expect(attributeForm({ s: '食べた', r: 'タベタ' }, taberu)).toBe('食べる');
+    expect(attributeForm({ s: '喰べた', r: 'タベタ' }, taberu)).toBe('喰べる');
+    expect(attributeForm({ s: 'たべた', r: 'タベタ' }, taberu)).toBe('たべる');
+  });
+
+  it('computes per-word share and global form rank', () => {
+    const byWordForm = new Map<number, Map<string, number>>([
+      [
+        1,
+        new Map([
+          ['食べる', 90],
+          ['たべる', 10],
+        ]),
+      ],
+      [2, new Map([['卒業', 200]])],
+    ]);
+
+    expect(formFrequencyRows(byWordForm)).toEqual([
+      { word_id: 2, form_text: '卒業', count: 200, share: 1, rank: 1 },
+      { word_id: 1, form_text: '食べる', count: 90, share: 0.9, rank: 2 },
+      { word_id: 1, form_text: 'たべる', count: 10, share: 0.1, rank: 3 },
+    ]);
   });
 });
