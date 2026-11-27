@@ -10,9 +10,10 @@ import type { RuntimeContext } from '@config/initializers/types';
 import { logger } from '@config/log';
 import { shutdownTelemetry } from '@config/telemetry';
 
-// Match kamal-proxy's ∞ timeout to prevent half-open connections
-// 120s gives enough buffer for slow clients while preventing connection accumulation
+// Match kamal-proxy's upstream idle pool (Go http.Transport default 90s) to prevent half-open connections.
+// 120s gives enough buffer while preventing connection accumulation; Node requires headersTimeout > keepAliveTimeout.
 const SERVER_KEEP_ALIVE_TIMEOUT_MS = 120000;
+const SERVER_HEADERS_TIMEOUT_MS = SERVER_KEEP_ALIVE_TIMEOUT_MS + 5000;
 
 async function closeServer(server: Server): Promise<void> {
   await new Promise<void>((resolve, reject) => {
@@ -30,6 +31,7 @@ async function startServer(context: RuntimeContext, port: number): Promise<Serve
   return await new Promise<Server>((resolve, reject) => {
     const server = http.createServer(context.app);
     server.keepAliveTimeout = SERVER_KEEP_ALIVE_TIMEOUT_MS;
+    server.headersTimeout = SERVER_HEADERS_TIMEOUT_MS;
     server.listen(port, () => resolve(server));
     server.on('error', reject);
   });
