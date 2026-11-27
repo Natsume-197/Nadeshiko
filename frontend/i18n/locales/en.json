@@ -118,7 +118,8 @@
   "home": {
     "supportOnPatreon": "Support us on Patreon",
     "version": "v{version}",
-    "nadeDbDescription": "Search over a million Japanese sentences from anime, J-drama and YouTube, each with audio, screenshot and translations in context. Built for {sentenceMining}.",
+    "heroTagline": "Japanese sentence search from anime, J-drama, YouTube and audiobooks",
+    "nadeDbDescription": "Search over a million Japanese sentences from anime, J-drama, YouTube and audiobooks, each with audio, screenshot, translations and Anki export. Built for {sentenceMining}.",
     "sentenceMiningLabel": "sentence mining",
     "nadeDbDescriptionJpSearch": "Search in Japanese",
     "nadeDbDescriptionOtherSearch": "Search in English",
@@ -1543,8 +1544,8 @@
       "description": "{kanji} means {meaning}. Readings {readings}, stroke order, radical, JLPT and Kanken level, and the words written with it in anime, drama, audiobooks and YouTube."
     },
     "home": {
-      "title": "Nadeshiko: Search Japanese sentences from anime, J-drama and YouTube",
-      "description": "Search over a million Japanese sentences from anime, J-drama and YouTube, each with audio, screenshot and translations in context. Built for sentence mining."
+      "title": "Japanese Sentence Search — Anime, J-Drama & YouTube | Nadeshiko",
+      "description": "Search over a million Japanese sentences from anime, J-drama, YouTube and audiobooks with audio, screenshots, translations and Anki export for sentence mining."
     },
     "stats": {
       "title": "Stats",
@@ -1557,7 +1558,7 @@
     "media": {
       "title": "Browse Media",
       "description": "Browse anime, J-dramas, and YouTube videos available on Nadeshiko. Search their Japanese subtitles sentence by sentence, with audio and translations.",
-      "pageTitle": "{media}: Japanese subtitles and example sentences"
+      "pageTitle": "{media}: Japanese sentences, audio & Anki mining"
     },
     "blog": {
       "title": "Blog",
@@ -1573,9 +1574,9 @@
       "breakdownWrapper": " ({parts})",
       "descriptionWithResults": "{count} example sentences containing \"{query}\"{breakdown} with English translations.",
       "descriptionNoResults": "Search for \"{query}\" in over 1 million Japanese sentences from anime and J-dramas, with English translations.",
-      "mediaDescription": "{count} Japanese sentences from {media} with English translations.",
-      "mediaDescriptionEpisode": "{count} Japanese sentences from {media} episode {episode} with English translations.",
-      "mediaDescriptionEpisodes": "{count} Japanese sentences from {media} across {episodeCount} episodes with English translations.",
+      "mediaDescription": "{count} Japanese sentences from {media} with audio, English translations and Anki export.",
+      "mediaDescriptionEpisode": "{count} Japanese sentences from {media} episode {episode} with audio, English translations and Anki export.",
+      "mediaDescriptionEpisodes": "{count} Japanese sentences from {media} across {episodeCount} episodes with audio, English translations and Anki export.",
       "wordTitle": "{query}: Japanese example sentences"
     },
     "sentence": {

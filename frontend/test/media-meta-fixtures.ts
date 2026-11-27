@@ -34,33 +34,34 @@ export const mediaMetaCases: Case[] = [
   {
     label: 'zero match count',
     totalResults: 0,
-    description: '0 Japanese sentences from Bocchi with English translations.',
+    description: '0 Japanese sentences from Bocchi with audio, English translations and Anki export.',
   },
   {
     label: 'match count without episode hits',
     totalResults: 12345,
-    description: '12,345 Japanese sentences from Bocchi with English translations.',
+    description: '12,345 Japanese sentences from Bocchi with audio, English translations and Anki export.',
   },
   {
     label: 'all episodes with a banner',
     totalResults: 1234,
     episodeHits,
     bannerUrl: 'https://images.test/banner.webp',
-    description: '1,234 Japanese sentences from Bocchi across 2 episodes with English translations.',
+    description:
+      '1,234 Japanese sentences from Bocchi across 2 episodes with audio, English translations and Anki export.',
   },
   {
     label: 'selected episode',
     totalResults: 1234,
     episodeHits,
     episode: 3,
-    description: '34 Japanese sentences from Bocchi episode 3 with English translations.',
+    description: '34 Japanese sentences from Bocchi episode 3 with audio, English translations and Anki export.',
   },
   {
     label: 'selected episode absent from nonempty hits',
     totalResults: 1234,
     episodeHits,
     episode: 9,
-    description: '0 Japanese sentences from Bocchi episode 9 with English translations.',
+    description: '0 Japanese sentences from Bocchi episode 9 with audio, English translations and Anki export.',
   },
   {
     label: 'selected episode with empty hits',
@@ -68,14 +69,14 @@ export const mediaMetaCases: Case[] = [
     episodeHits: [],
     episode: 3,
     bannerUrl: '',
-    description: '0 Japanese sentences from Bocchi with English translations.',
+    description: '0 Japanese sentences from Bocchi with audio, English translations and Anki export.',
   },
   {
     label: 'selected episode with unavailable hits',
     totalResults: 1234,
     episode: 3,
     bannerUrl: null,
-    description: '1,234 Japanese sentences from Bocchi with English translations.',
+    description: '1,234 Japanese sentences from Bocchi with audio, English translations and Anki export.',
   },
   {
     label: 'duplicate episodes use the first hit even when zero; all entries count as episodes',
@@ -85,7 +86,7 @@ export const mediaMetaCases: Case[] = [
       { episode: 3, hitCount: 34 },
     ],
     episode: 3,
-    description: '0 Japanese sentences from Bocchi episode 3 with English translations.',
+    description: '0 Japanese sentences from Bocchi episode 3 with audio, English translations and Anki export.',
   },
   {
     label: 'episode count includes duplicate and zero-hit entries',
@@ -94,14 +95,16 @@ export const mediaMetaCases: Case[] = [
       { episode: 3, hitCount: 0 },
       { episode: 3, hitCount: 34 },
     ],
-    description: '1,234 Japanese sentences from Bocchi across 2 episodes with English translations.',
+    description:
+      '1,234 Japanese sentences from Bocchi across 2 episodes with audio, English translations and Anki export.',
   },
   {
     label: 'zero episode retains truthy-filter behavior',
     totalResults: 1234,
     episodeHits,
     episode: 0,
-    description: '1,234 Japanese sentences from Bocchi across 2 episodes with English translations.',
+    description:
+      '1,234 Japanese sentences from Bocchi across 2 episodes with audio, English translations and Anki export.',
   },
   {
     label: 'localized title, description and number formatting',
@@ -109,7 +112,7 @@ export const mediaMetaCases: Case[] = [
     episodeHits,
     locale: 'es',
     description:
-      'Frases en japonés de «Bocchi»: 12.345, repartidas en 2 episodios. Consulta sus traducciones al español.',
+      'Frases en japonés de «Bocchi»: 12.345 en 2 episodios, con audio, traducciones al español y exportación a Anki.',
   },
 ];
 
@@ -119,8 +122,8 @@ export function expectedMediaMeta(description: string, bannerUrl?: string | null
   return {
     title:
       locale === 'es'
-        ? 'Bocchi: subtítulos japoneses y frases de ejemplo'
-        : 'Bocchi: Japanese subtitles and example sentences',
+        ? 'Bocchi: frases en japonés, audio y tarjetas de Anki'
+        : 'Bocchi: Japanese sentences, audio & Anki mining',
     meta: [
       { name: 'description', content: description },
       { property: 'og:title', content: 'Bocchi | Nadeshiko' },

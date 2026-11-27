@@ -118,6 +118,7 @@
   "home": {
     "supportOnPatreon": "Apóyanos en Patreon",
     "version": "v{version}",
+    "heroTagline": "Buscador de frases en japonés de anime, series, YouTube y audiolibros",
     "nadeDbDescription": "Busca entre más de un millón de frases en japonés de anime, series y YouTube. Consulta el audio, las imágenes y las traducciones al español, y crea tarjetas de estudio en Anki: ideal para la {sentenceMining}.",
     "sentenceMiningLabel": "minería de frases",
     "nadeDbDescriptionJpSearch": "Buscar en japonés",
@@ -1543,8 +1544,8 @@
       "description": "{kanji} significa {meaning}. Lecturas {readings}, orden de trazos, radical, nivel JLPT y Kanken, y las palabras que lo usan en anime, dramas, audiolibros y YouTube."
     },
     "home": {
-      "title": "Nadeshiko: Frases en japonés de anime, series y YouTube",
-      "description": "Busca entre más de un millón de frases en japonés de anime, series y YouTube. Consulta el audio, las imágenes y las traducciones al español, y crea tarjetas de estudio en Anki."
+      "title": "Buscador de frases en japonés de anime, series y YouTube | Nadeshiko",
+      "description": "Busca entre más de un millón de frases en japonés de anime, series, YouTube y audiolibros con audio, capturas, traducciones al español y exportación a Anki."
     },
     "stats": {
       "title": "Estadísticas",
@@ -1557,7 +1558,7 @@
     "media": {
       "title": "Catálogo",
       "description": "Explora el anime, las series y los vídeos de YouTube de Nadeshiko. Busca frases en sus subtítulos japoneses y consulta el audio y las traducciones al español.",
-      "pageTitle": "{media}: subtítulos japoneses y frases de ejemplo"
+      "pageTitle": "{media}: frases en japonés, audio y tarjetas de Anki"
     },
     "blog": {
       "title": "Blog",
@@ -1573,9 +1574,9 @@
       "breakdownWrapper": " ({parts})",
       "descriptionWithResults": "Frases que contienen «{query}»: {count}{breakdown}. Consulta sus traducciones al español.",
       "descriptionNoResults": "Busca «{query}» entre más de un millón de frases en japonés de anime, series y YouTube, con traducciones al español.",
-      "mediaDescription": "Frases en japonés de «{media}»: {count}. Consulta sus traducciones al español.",
-      "mediaDescriptionEpisode": "Frases en japonés del episodio {episode} de «{media}»: {count}. Consulta sus traducciones al español.",
-      "mediaDescriptionEpisodes": "Frases en japonés de «{media}»: {count}, repartidas en {episodeCount} episodios. Consulta sus traducciones al español.",
+      "mediaDescription": "Frases en japonés de «{media}»: {count}, con audio, traducciones al español y exportación a Anki.",
+      "mediaDescriptionEpisode": "Frases en japonés del episodio {episode} de «{media}»: {count}, con audio, traducciones al español y exportación a Anki.",
+      "mediaDescriptionEpisodes": "Frases en japonés de «{media}»: {count} en {episodeCount} episodios, con audio, traducciones al español y exportación a Anki.",
       "wordTitle": "«{query}»: frases de ejemplo en japonés"
     },
     "sentence": {

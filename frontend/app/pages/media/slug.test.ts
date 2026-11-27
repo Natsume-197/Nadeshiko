@@ -301,7 +301,7 @@ test('recomputes media metadata when episode and locale change', async () => {
   const metadata = useHead.mock.calls[0]?.[0];
   expect(unref(metadata)).toEqual(
     expectedMediaMeta(
-      '1,234 Japanese sentences from Bocchi across 2 episodes with English translations.',
+      '1,234 Japanese sentences from Bocchi across 2 episodes with audio, English translations and Anki export.',
       'https://images.test/banner.webp',
     ),
   );
@@ -309,7 +309,7 @@ test('recomputes media metadata when episode and locale change', async () => {
   mediaMetaI18n.locale.value = 'es';
   expect(unref(metadata)).toEqual(
     expectedMediaMeta(
-      'Frases en japonés del episodio 3 de «Bocchi»: 34. Consulta sus traducciones al español.',
+      'Frases en japonés del episodio 3 de «Bocchi»: 34, con audio, traducciones al español y exportación a Anki.',
       'https://images.test/banner.webp',
       'es',
     ),
@@ -325,7 +325,7 @@ test('retains this caller’s NaN match-count fallback', async () => {
   });
   await render(media({ nameEn: 'Bocchi', coverUrl: 'https://images.test/cover.webp' }));
   expect(unref(useHead.mock.calls[0]?.[0])).toEqual(
-    expectedMediaMeta(' Japanese sentences from Bocchi with English translations.'),
+    expectedMediaMeta(' Japanese sentences from Bocchi with audio, English translations and Anki export.'),
   );
 });
 
@@ -333,12 +333,14 @@ test('recomputes the title and descriptions when the preferred media-name langua
   vi.stubGlobal('useI18n', () => mediaMetaI18n);
   await render(media({ nameEn: 'Bocchi' }));
   const metadata = useHead.mock.calls[0]?.[0];
-  expect(unref(metadata)).toEqual(expectedMediaMeta('0 Japanese sentences from Bocchi with English translations.'));
+  expect(unref(metadata)).toEqual(
+    expectedMediaMeta('0 Japanese sentences from Bocchi with audio, English translations and Anki export.'),
+  );
   language.value = 'JAPANESE';
   const updated = unref(metadata);
   expect({ title: updated.title, description: updated.meta[0].content, social: updated.meta[1].content }).toEqual({
-    title: 'ぼっち・ざ・ろっく: Japanese subtitles and example sentences',
-    description: '0 Japanese sentences from ぼっち・ざ・ろっく with English translations.',
+    title: 'ぼっち・ざ・ろっく: Japanese sentences, audio & Anki mining',
+    description: '0 Japanese sentences from ぼっち・ざ・ろっく with audio, English translations and Anki export.',
     social: 'ぼっち・ざ・ろっく | Nadeshiko',
   });
 });
