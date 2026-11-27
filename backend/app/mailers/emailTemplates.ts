@@ -30,7 +30,7 @@ export function senderVariables(sender: Sender): Record<string, string> {
 
 /** Keep the invite literal here because backend cannot import the frontend constant; the repository sync test keeps
  * both codes aligned. */
-const DISCORD_INVITE_URL = 'https://discord.gg/qRak9MprUS';
+const DISCORD_INVITE_URL = 'https://discord.gg/KBeDmTUKZX';
 
 interface WelcomeStep {
   /** A file under `frontend/public/email/`, or empty for a text-only section. */

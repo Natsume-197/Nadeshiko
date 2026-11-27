@@ -107,7 +107,7 @@ export function mediaSearchUrl(mediaPublicId: string, episode?: number, link?: L
  * Deliberately not routed through `attribute()` -- this link leaves Discord for
  * Discord, so there is no Nadeshiko pageview at the other end to attribute.
  */
-export const DISCORD_INVITE_URL = 'https://discord.gg/qRak9MprUS';
+export const DISCORD_INVITE_URL = 'https://discord.gg/KBeDmTUKZX';
 
 /**
  * Where somebody is sent to install the bot.

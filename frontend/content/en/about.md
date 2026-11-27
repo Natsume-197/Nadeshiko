@@ -66,6 +66,6 @@ For information regarding copyright and DMCA, please see our [DMCA Policy](/dmca
 If you wish to contact us either to leave a comment, suggestion, contribution, or anything else, you can do so via:
 
 - **Email**: contact@nadeshiko.co
-- **Discord**: [Nadeshiko](https://discord.gg/qRak9MprUS)
+- **Discord**: [Nadeshiko](https://discord.gg/KBeDmTUKZX)
 
 This website is under the AGPL-3.0 License.

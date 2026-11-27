@@ -81,6 +81,6 @@ Si tú también sientes lo mismo y quieres ayudar a que Nadeshiko siga funcionan
 
 En las próximas semanas, escribiremos más posts explicando las nuevas funciones con más detalle. Si quieres contactarnos para dejar un comentario, sugerencia, reporte de bug, o cualquier otra cosa, puedes hacerlo a través de:
 - **Email**: contact@nadeshiko.co
-- **Discord**: [Nadeshiko](https://discord.gg/qRak9MprUS)
+- **Discord**: [Nadeshiko](https://discord.gg/KBeDmTUKZX)
 
 Nunca dejéis de estudiar!

@@ -66,6 +66,6 @@ Untuk informasi tentang hak cipta dan DMCA, lihat [Kebijakan DMCA](/dmca).
 Untuk menyampaikan komentar, saran, kontribusi, atau pertanyaan, hubungi kami melalui:
 
 - **Email**: contact@nadeshiko.co
-- **Discord**: [Nadeshiko](https://discord.gg/qRak9MprUS)
+- **Discord**: [Nadeshiko](https://discord.gg/KBeDmTUKZX)
 
 Kode sumber situs ini tersedia dengan lisensi AGPL-3.0.

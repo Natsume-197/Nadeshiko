@@ -66,6 +66,6 @@ Encontrarás más información sobre derechos de autor en nuestra [política DMC
 Si tienes alguna pregunta o sugerencia, o quieres colaborar con el proyecto, puedes contactar con nosotros por estas vías:
 
 - **Correo electrónico**: contact@nadeshiko.co
-- **Discord**: [Nadeshiko](https://discord.gg/qRak9MprUS)
+- **Discord**: [Nadeshiko](https://discord.gg/KBeDmTUKZX)
 
 El código fuente del sitio está publicado bajo la licencia AGPL-3.0.

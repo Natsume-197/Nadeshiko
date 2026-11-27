@@ -61,7 +61,7 @@ describe('Discord invite copies', () => {
 
 // The sibling infra checkout carries the live Gatus check. Skip when absent because CI clones only this repo.
 const GATUS_CONFIG = fileURLToPath(
-  new URL('../../../../brigadasos-infra/machines/monitoring/gatus/config/config.yaml', import.meta.url),
+  new URL('../../../../nadeshiko-infra/machines/nadeshiko/gatus/config/config.yaml', import.meta.url),
 );
 
 describe.skipIf(!existsSync(GATUS_CONFIG))('Gatus invite check', () => {
