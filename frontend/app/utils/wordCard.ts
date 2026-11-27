@@ -47,6 +47,8 @@ export interface DictionarySense {
    *  definition read without it can be understood correctly and still used
    *  wrongly. Absent when the sense has none. */
   notes?: string[];
+  seeAlso?: CardXref[];
+  antonyms?: CardXref[];
 }
 
 export interface DictionaryEntry {
@@ -368,9 +370,9 @@ export interface CardSense {
   /** The sense's usage notes, verbatim. Empty when it has none. */
   notes: string[];
   /** JMdict "see also" cross-references for this sense (e.g. 彼氏 for 彼女). */
-  seeAlso: CardXref[];
+  seeAlso?: CardXref[];
   /** JMdict antonyms for this sense. */
-  antonyms: CardXref[];
+  antonyms?: CardXref[];
   /** Which dictionary wrote this sense. Worth carrying since a reader with custom
    *  dictionaries can have several on one card, in their own order: a
    *  monolingual definition and a JMdict gloss sitting in one numbered list with

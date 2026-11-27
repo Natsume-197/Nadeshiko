@@ -474,7 +474,7 @@ function posChipTone(code?: string): 'verb' | 'noun' | 'adj' | 'other' {
                 </span>
               </div>
               <span v-for="note in sense.notes" :key="note" class="word-entry__note">{{ note }}</span>
-              <span v-if="sense.seeAlso.length > 0" class="word-entry__xrefs" data-testid="word-entry-see-also">
+              <span v-if="sense.seeAlso?.length" class="word-entry__xrefs" data-testid="word-entry-see-also">
                 <span class="word-entry__xref-label">{{ $t('wordEntry.seeAlso') }}</span>
                 <template v-for="(refItem, rIdx) in sense.seeAlso" :key="refItem.text">
                   <span v-if="rIdx > 0" class="word-entry__xref-sep">, </span>
@@ -483,7 +483,7 @@ function posChipTone(code?: string): 'verb' | 'noun' | 'adj' | 'other' {
                   </NuxtLink>
                 </template>
               </span>
-              <span v-if="sense.antonyms.length > 0" class="word-entry__xrefs" data-testid="word-entry-antonyms">
+              <span v-if="sense.antonyms?.length" class="word-entry__xrefs" data-testid="word-entry-antonyms">
                 <span class="word-entry__xref-label">{{ $t('wordEntry.antonym') }}</span>
                 <template v-for="(refItem, rIdx) in sense.antonyms" :key="refItem.text">
                   <span v-if="rIdx > 0" class="word-entry__xref-sep">, </span>
