@@ -163,7 +163,7 @@
     "description2": "Escribe las palabras que quieras buscar en el cuadro de abajo.",
     "description3": "Escribe una palabra por línea o sepáralas con comas.",
     "description4": "Puedes buscar hasta ",
-    "description5": "500 palabras a la vez.",
+    "description5": "100 palabras a la vez.",
     "totalWords": "Total de palabras",
     "search": "Buscar",
     "close": "Cerrar",
@@ -259,7 +259,8 @@
   },
   "modalBatch": {
     "closeSrOnly": "Cerrar",
-    "wordLimitExceeded": "Has superado el límite de palabras: {count} / 500",
+    "wordLimitExceeded": "Has superado el límite de palabras: {count} / {max}",
+    "wordLengthExceeded": "Cada palabra debe tener como máximo {max} caracteres.",
     "inputFormatError": "Usa comas o saltos de línea para separar las palabras, pero no mezcles ambos formatos.",
     "notAvailable": "No disponible",
     "searchError": "No se ha podido completar la búsqueda de palabras. Inténtalo de nuevo.",

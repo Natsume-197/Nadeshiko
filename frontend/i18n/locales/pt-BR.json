@@ -163,7 +163,7 @@
     "description2": "Para começar, digite as palavras no campo abaixo.",
     "description3": "Digite uma palavra por linha ou separe as palavras por vírgulas.",
     "description4": "Você pode buscar até ",
-    "description5": "500 palavras de uma vez",
+    "description5": "100 palavras de uma vez",
     "totalWords": "Total de palavras",
     "search": "Buscar",
     "close": "Fechar",
@@ -259,7 +259,8 @@
   },
   "modalBatch": {
     "closeSrOnly": "Fechar",
-    "wordLimitExceeded": "Limite de palavras excedido: {count} / 500",
+    "wordLimitExceeded": "Limite de palavras excedido: {count} / {max}",
+    "wordLengthExceeded": "Cada palavra deve ter no máximo {max} caracteres.",
     "inputFormatError": "Formato inválido. Separe as palavras por vírgulas ou por quebras de linha, sem misturar os dois formatos.",
     "notAvailable": "Indisponível",
     "searchError": "Não foi possível concluir a busca de palavras. Tente novamente.",
