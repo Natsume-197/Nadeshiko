@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import type { ClipWindow, SearchResult } from '~/types/search';
+import { trackPlayActivity } from '~/utils/playActivity';
 import { reportError } from '~/utils/reportError';
 import { firstNonBlank } from '~/utils/strings';
 
@@ -565,25 +566,23 @@ export const usePlayerStore = defineStore('player', {
       const user = userStore();
       if (user.isLoggedIn) {
         const sdk = useNadeshikoSdk();
-        sdk
-          .trackUserActivity({
-            activityType: 'SEGMENT_PLAY',
-            segmentPublicId: this.currentResult?.segment.publicId,
-            mediaPublicId: this.currentResult?.media.publicId,
-            // Not `media.nameRomaji` on its own: rows without a romaji title sent
-            // `''`, which the API stored and later refused to serialize back.
-            // Locale-independent order -- a store action has no `useI18n` context,
-            // and this name is stored metadata rather than something rendered now.
-            mediaName: firstNonBlank(
-              this.currentResult?.media.nameRomaji,
-              this.currentResult?.media.nameEn,
-              this.currentResult?.media.nameJa,
-            ),
-            japaneseText: this.currentResult?.segment.textJa.content,
-          })
-          // Fire-and-forget telemetry: never let it interrupt or warn about audio
-          // that is already playing.
-          .catch((error: unknown) => reportError('player:track-play-activity-failed', error));
+        // Fire-and-forget telemetry: never let it interrupt or warn about audio
+        // that is already playing.
+        void trackPlayActivity(sdk, {
+          activityType: 'SEGMENT_PLAY',
+          segmentPublicId: this.currentResult?.segment.publicId,
+          mediaPublicId: this.currentResult?.media.publicId,
+          // Not `media.nameRomaji` on its own: rows without a romaji title sent
+          // `''`, which the API stored and later refused to serialize back.
+          // Locale-independent order -- a store action has no `useI18n` context,
+          // and this name is stored metadata rather than something rendered now.
+          mediaName: firstNonBlank(
+            this.currentResult?.media.nameRomaji,
+            this.currentResult?.media.nameEn,
+            this.currentResult?.media.nameJa,
+          ),
+          japaneseText: this.currentResult?.segment.textJa.content,
+        });
       }
     },
 
