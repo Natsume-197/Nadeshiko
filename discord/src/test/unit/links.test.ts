@@ -141,7 +141,7 @@ describe('mediaSearchUrl', () => {
 
 describe('links that leave Discord for Discord', () => {
   test('the invite matches the canonical code the frontend sync test guards', () => {
-    expect(DISCORD_INVITE_URL).toBe('https://discord.gg/qRak9MprUS');
+    expect(DISCORD_INVITE_URL).toBe('https://discord.gg/KBeDmTUKZX');
   });
 
   test('the invite is not attributed -- there is no Nadeshiko pageview at the far end', () => {

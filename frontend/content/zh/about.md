@@ -66,6 +66,6 @@ description: "了解 Nadeshiko、开发团队，以及为项目作出贡献的�
 无论是意见、建议、参与贡献，还是其他问题，都欢迎通过以下方式联系我们：
 
 - **邮箱**：contact@nadeshiko.co
-- **Discord**：[Nadeshiko](https://discord.gg/qRak9MprUS)
+- **Discord**：[Nadeshiko](https://discord.gg/KBeDmTUKZX)
 
 本网站的源代码采用 AGPL-3.0 许可证。

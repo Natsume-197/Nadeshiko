@@ -1,6 +1,6 @@
 // Rotate with a never-expiring invite and update copies named by socialLinks.sync.test.ts. discord.gg returns 200
 // even for revoked codes; Gatus must check the invite API and expected guild, not the landing page.
-export const DISCORD_INVITE_CODE = 'qRak9MprUS';
+export const DISCORD_INVITE_CODE = 'KBeDmTUKZX';
 
 /** The guild the invite must resolve to. Asserted by the Gatus check. */
 export const DISCORD_GUILD_ID = '1483540629676884031';

@@ -66,6 +66,6 @@ description: "Nadeshikoの開発チーム、協力者、使用しているデー
 ご意見・ご提案、開発へのご協力、その他のお問い合わせは、以下の連絡先までお寄せください。
 
 - **メール**: contact@nadeshiko.co
-- **Discord**: [Nadeshiko](https://discord.gg/qRak9MprUS)
+- **Discord**: [Nadeshiko](https://discord.gg/KBeDmTUKZX)
 
 このサイトのソースコードは、AGPL-3.0ライセンスで公開しています。
