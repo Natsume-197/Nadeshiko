@@ -17,6 +17,7 @@ import {
   resolveLostSession,
   writeStoredValue,
 } from '~/utils/authAnalytics';
+import { THEME_COOKIE } from '#shared/utils/preferenceCookies';
 import { onPostHogReady } from '~/utils/posthogClient';
 
 /**
@@ -258,7 +259,17 @@ function currentPersonProperties(store: ReturnType<typeof userStore>) {
     hidden_media_count: store.preferences?.hiddenMedia?.length ?? 0,
     hidden_categories: store.preferences?.hiddenCategories ?? [],
     default_search_category: store.preferences?.defaultSearchCategory ?? 'ALL',
+    has_custom_dictionaries: (store.customDictionariesCount ?? 0) > 0,
+    custom_dictionary_count: store.customDictionariesCount ?? 0,
+    theme: currentThemePreference(),
   };
+}
+
+function currentThemePreference(): string {
+  if (typeof document === 'undefined' || typeof document.cookie !== 'string') return 'dark';
+  const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${THEME_COOKIE}=([^;]+)`));
+  const raw = match?.[1] ? decodeURIComponent(match[1]) : '';
+  return raw === 'light' || raw === 'system' || raw === 'custom' ? raw : 'dark';
 }
 
 /**

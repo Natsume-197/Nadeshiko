@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { mdiCheck, mdiCheckCircleOutline, mdiHelpCircleOutline, mdiLinkVariant, mdiPatreon, mdiPlus } from '@mdi/js';
 import { handleApiError } from '~/utils/apiError';
+import { posthog } from '~/utils/posthogClient';
 import {
   FREE_MONTHLY_API_REQUESTS,
   SUPPORT_TIERS,
@@ -42,7 +43,29 @@ async function loadAccountTier() {
     handleApiError('support:quota-fetch-failed', error, { toastKey: false });
     return null;
   });
-  if (me) quota.value = { tierId: me.quota?.tier?.id ?? null, limit: me.quota?.limit ?? null };
+  if (me) {
+    quota.value = { tierId: me.quota?.tier?.id ?? null, limit: me.quota?.limit ?? null };
+    const tier = SUPPORT_TIERS.find((item) => item.quotaTierId === quota.value?.tierId) ?? null;
+    posthog.setPersonProperties({ is_patron: Boolean(tier), patron_tier: tier?.key ?? 'free' });
+  }
+}
+
+function trackTierClick(tier: SupportTier) {
+  posthog.capture('supporters_tier_clicked', {
+    tier: tier.key,
+    price_usd: tier.priceUsd,
+    is_logged_in: store.isLoggedIn,
+    current_tier: activeSupportTier.value?.key ?? null,
+  });
+}
+
+function trackLinkStripClick(loggedIn: boolean) {
+  posthog.capture('supporters_link_clicked', { logged_in: loggedIn });
+}
+
+function onLinkLoginClick() {
+  trackLinkStripClick(false);
+  openLoginModal('unknown');
 }
 
 onMounted(loadAccountTier);
@@ -219,6 +242,7 @@ const faq = computed(() => [
                   ? 'bg-brand-solid text-on-accent hover:bg-brand-hover'
                   : 'bg-surface-lift text-ink hover:bg-surface-hover'
               "
+              @click="trackTierClick(tier)"
             >
               {{ t('support.chooseTier', { tier: tierName(tier) }) }}
             </a>
@@ -239,6 +263,7 @@ const faq = computed(() => [
           data-testid="support-link-settings-cta"
           :to="localePath('/user/connections')"
           class="inline-flex items-center gap-1.5 font-semibold text-brand hover:underline"
+          @click="trackLinkStripClick(true)"
         >
           <UiBaseIcon :path="mdiLinkVariant" :size="15" />
           {{ t('support.linkStrip.loggedInCta') }}
@@ -248,7 +273,7 @@ const faq = computed(() => [
           type="button"
           data-testid="support-link-login-cta"
           class="inline-flex items-center gap-1.5 font-semibold text-brand hover:underline"
-          @click="openLoginModal()"
+          @click="onLinkLoginClick"
         >
           <UiBaseIcon :path="mdiLinkVariant" :size="15" />
           {{ t('support.linkStrip.loggedOutCta') }}

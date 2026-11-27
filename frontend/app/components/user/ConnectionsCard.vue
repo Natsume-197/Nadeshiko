@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { mdiPatreon } from '@mdi/js';
 import { handleApiError } from '~/utils/apiError';
+import { posthog } from '~/utils/posthogClient';
 
 interface PatreonConnection {
   linked: true;
@@ -22,6 +23,10 @@ async function load() {
     );
     patreonConnection.value = data.connection;
     patreonUrl.value = data.patreonUrl;
+    posthog.setPersonProperties({
+      patreon_linked: Boolean(data.connection),
+      is_patron: Boolean(data.connection?.active),
+    });
   } catch (error) {
     handleApiError('patreonConnection.load', error, { toastKey: false });
   }
@@ -44,10 +49,15 @@ async function connectPatreon() {
 
 async function disconnectPatreon() {
   if (!confirm(t('connections.patreon.confirmDisconnect'))) return;
+  const wasActive = Boolean(patreonConnection.value?.active);
   patreonWorking.value = true;
   try {
     await $fetch('/v1/user/connections/patreon', { method: 'DELETE' });
     patreonConnection.value = null;
+    posthog.capture('patreon_disconnected', {
+      was_active: wasActive,
+      $set: { patreon_linked: false, is_patron: false },
+    });
   } catch (error) {
     handleApiError('patreonConnection.unlink', error);
   } finally {

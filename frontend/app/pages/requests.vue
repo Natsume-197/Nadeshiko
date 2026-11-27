@@ -25,6 +25,7 @@ import type {
 } from '@brigadasos/nadeshiko-sdk';
 import RequestCover from '~/components/requests/RequestCover.vue';
 import { apiErrorStatus, handleApiError } from '~/utils/apiError';
+import { posthog } from '~/utils/posthogClient';
 import {
   ACTIVE_REQUEST_STATUSES,
   REQUEST_BOOST_WEIGHT,
@@ -191,6 +192,7 @@ async function loadAllowance() {
   }
   try {
     allowance.value = await $fetch<Allowance>('/v1/requests/me');
+    posthog.setPersonProperties({ is_patron: Boolean(allowance.value?.isPatron) });
   } catch (caught) {
     handleApiError('requests.allowance', caught, { toastKey: false });
   }
@@ -352,6 +354,8 @@ async function submitRequest() {
     formError.value = t('requests.form.missingNote');
     return;
   }
+  const hasNote = Boolean(note.value.trim());
+  const isExistingMedia = Boolean(existingTitle.value);
   submitting.value = true;
   try {
     const result = await $fetch<{ request: ContentRequest; outcome: 'created' | 'voted' | 'already_voted' }>(
@@ -365,6 +369,12 @@ async function submitRequest() {
         },
       },
     );
+    posthog.capture('content_request_submitted', {
+      category: result.request.category,
+      outcome: result.outcome,
+      has_note: hasNote,
+      is_existing_media: isExistingMedia,
+    });
     useToastSuccess(t(`requests.outcome.${result.outcome}`, { title: result.request.title }));
     resetForm();
     formOpen.value = false;
@@ -443,6 +453,11 @@ async function toggleVote(item: ContentRequest) {
 
   try {
     replaceItem(await $fetch<ContentRequest>(`/v1/requests/${item.id}/vote`, { method: remove ? 'DELETE' : 'POST' }));
+    posthog.capture('content_request_voted', {
+      action: remove ? 'removed' : 'added',
+      category: item.category,
+      status: item.status,
+    });
     if (remove && filters.status === 'VOTED' && !boosted.value.has(item.id)) {
       await Promise.all([refresh(), loadAllowance()]);
     } else {
@@ -482,6 +497,10 @@ async function confirmBoost() {
   busyId.value = item.id;
   try {
     replaceItem(await $fetch<ContentRequest>(`/v1/requests/${item.id}/boost`, { method: 'POST' }));
+    posthog.capture('content_request_boosted', {
+      category: item.category,
+      status: item.status,
+    });
     boostTarget.value = null;
     useToastSuccess(t('requests.boost.done', { title: item.title }));
     await loadAllowance();
@@ -502,6 +521,7 @@ async function confirmWithdraw() {
   busyId.value = item.id;
   try {
     await $fetch(`/v1/requests/${item.id}`, { method: 'DELETE' });
+    posthog.capture('content_request_withdrawn', { category: item.category });
     withdrawTarget.value = null;
     await Promise.all([refresh(), loadAllowance()]);
   } catch (caught) {

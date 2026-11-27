@@ -3,6 +3,7 @@ import { mdiPlus } from '@mdi/js';
 import { useI18n } from 'vue-i18n';
 
 import { apiErrorStatus, handleApiError } from '~/utils/apiError';
+import { posthog } from '~/utils/posthogClient';
 import { useToastSuccess } from '~/utils/toast';
 import {
   BASE_INK,
@@ -90,6 +91,13 @@ const saving = ref(false);
 const needsPatron = ref(false);
 const editing = ref(false);
 
+function selectAppearance(id: 'dark' | 'light' | 'system') {
+  if (preference.value !== id) {
+    posthog.capture('theme_changed', { theme: id, is_custom: false, $set: { theme: id } });
+  }
+  setPreference(id);
+}
+
 async function applyCustom(theme: CustomTheme) {
   if (saving.value) return;
   saving.value = true;
@@ -100,10 +108,18 @@ async function applyCustom(theme: CustomTheme) {
     userStoreInstance.preferences = { ...userStoreInstance.preferences, customTheme: value };
     setCustomTheme(value);
     editing.value = false;
+    posthog.capture('theme_changed', {
+      theme: 'custom',
+      is_custom: true,
+      preset: value.preset ?? 'custom',
+      base: value.base,
+      $set: { theme: 'custom' },
+    });
     useToastSuccess(t('accountSettings.account.customTheme.saved'));
   } catch (error) {
     if (apiErrorStatus(error) === 403) {
       needsPatron.value = true;
+      posthog.capture('custom_theme_patron_gate_hit', { preset: value.preset ?? 'custom' });
     } else {
       handleApiError('account:custom-theme-save-failed', error, {
         toastKey: 'accountSettings.account.preferenceError',
@@ -121,6 +137,7 @@ async function removeCustom() {
     await useNadeshikoSdk().updateUserPreferences({ customTheme: null });
     userStoreInstance.preferences = { ...userStoreInstance.preferences, customTheme: null };
     clearCustomTheme();
+    posthog.capture('custom_theme_removed', { $set: { theme: 'dark' } });
     useToastSuccess(t('accountSettings.account.customTheme.removed'));
   } catch (error) {
     handleApiError('account:custom-theme-remove-failed', error, {
@@ -134,6 +151,15 @@ async function removeCustom() {
 /** Your own theme is already saved, so picking its tile again needs no round trip. */
 function useOwnTheme(theme: CustomTheme) {
   if (saved.value && sameColours(saved.value, theme)) {
+    if (!isActive(saved.value)) {
+      posthog.capture('theme_changed', {
+        theme: 'custom',
+        is_custom: true,
+        preset: 'custom',
+        base: saved.value.base,
+        $set: { theme: 'custom' },
+      });
+    }
     setCustomTheme(saved.value);
     return;
   }
@@ -160,7 +186,7 @@ const editorStart = computed<CustomTheme>(() => ownTheme.value ?? saved.value ??
             :label="t(`accountSettings.account.themeOptions.${option.id}`)"
             :selected="preference === option.id"
             :data-testid="`theme-option-${option.id}`"
-            @select="setPreference(option.id)"
+            @select="selectAppearance(option.id)"
           />
         </div>
       </div>

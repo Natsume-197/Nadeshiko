@@ -1,10 +1,11 @@
 import { ref, onBeforeUnmount } from 'vue';
+import { posthog } from '~/utils/posthogClient';
 
 /**
  * Reuse one Audio element per card across pronunciation clips rather than leaking an element
  * per lookup.
  */
-export function useHeadwordAudio() {
+export function useHeadwordAudio(source: 'word-card' | 'word-entry' = 'word-card') {
   /** The clip playing right now, by URL, so that only the button that started it
    *  lights up. A word read two ways has a button per accent, and a plain boolean
    *  lit both of them over a recording of one. */
@@ -22,6 +23,7 @@ export function useHeadwordAudio() {
 
   const playHeadword = (src: string) => {
     if (!src) return;
+    posthog.capture('pitch_audio_played', { source });
 
     // Assigning `src` on an element that is already playing replaces the clip,
     // which is what re-clicking should do anyway.

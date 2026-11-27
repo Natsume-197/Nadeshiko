@@ -14,6 +14,7 @@ import {
 import { buildConjugationTable } from '~/utils/japaneseConjugator';
 import { inflectionLine as joinInflection } from '~/utils/inflectionLabels';
 import { buildKanjiPath, buildWordSearchPath } from '~/utils/routes';
+import { posthog } from '~/utils/posthogClient';
 import { useWordEntryPreferences } from '~/composables/useWordEntryPreferences';
 import ModalConjugations from '~/components/search/modal/ModalConjugations.vue';
 import PitchPattern from '~/components/search/segment/PitchPattern.vue';
@@ -104,6 +105,13 @@ const shown = computed<DictionaryWord>(() => choices.value[selected.value]?.word
 const isPrimary = computed(() => selected.value === 0);
 
 function choose(index: number) {
+  if (index !== selected.value) {
+    posthog.capture('word_entry_interacted', {
+      action: 'homograph_selected',
+      index,
+      total_choices: choices.value.length,
+    });
+  }
   selected.value = index;
   allSenses.value = false;
   frequencyOpen.value = false;
@@ -123,6 +131,12 @@ const activeSource = computed(() =>
   sources.value.includes(pickedSource.value) ? pickedSource.value : (sources.value[0] ?? ''),
 );
 function pickSource(source: string) {
+  if (source !== activeSource.value) {
+    posthog.capture('word_entry_interacted', {
+      action: 'dictionary_tab_selected',
+      is_custom: source.startsWith('custom:'),
+    });
+  }
   pickedSource.value = source;
   allSenses.value = false;
 }
@@ -149,7 +163,7 @@ const { formatNumber } = useFormat();
 /** In katakana, as the word card draws it, each with its recording when there is one. */
 const pitch = computed(() => pitchPatterns(shown.value, shown.value.reading || shown.value.headword));
 
-const { playingUrl, playHeadword, stopHeadword } = useHeadwordAudio();
+const { playingUrl, playHeadword, stopHeadword } = useHeadwordAudio('word-entry');
 // A clip belongs to the word shown: switching to a homograph stops it.
 watch(shown, stopHeadword);
 
@@ -177,7 +191,25 @@ watch(
 );
 
 function toggleCollapsed() {
-  localCollapsed.value = !isCollapsed.value;
+  const next = !isCollapsed.value;
+  localCollapsed.value = next;
+  posthog.capture('word_entry_interacted', { action: next ? 'collapsed' : 'expanded' });
+}
+
+function toggleFrequency() {
+  const next = !frequencyOpen.value;
+  frequencyOpen.value = next;
+  if (next) {
+    posthog.capture('word_entry_interacted', {
+      action: 'frequency_breakdown_opened',
+      categories: byCategory.value.length,
+    });
+  }
+}
+
+function openConjugations() {
+  conjugationsOpen.value = true;
+  posthog.capture('word_entry_interacted', { action: 'conjugations_opened' });
 }
 
 function onDocumentClick(event: MouseEvent) {
@@ -322,7 +354,7 @@ function posChipTone(code?: string): 'verb' | 'noun' | 'adj' | 'other' {
             :aria-expanded="frequencyOpen"
             :title="$t('tokenTooltip.frequencyByCategory')"
             data-testid="word-entry-rank"
-            @click="frequencyOpen = !frequencyOpen"
+            @click="toggleFrequency"
           >#{{ formatNumber(shown.frequency) }} <span aria-hidden="true">{{ frequencyOpen ? '▴' : '▾' }}</span></button>
           <span v-else-if="typeof shown.frequency === 'number'" class="word-entry__badge is-freq" data-testid="word-entry-rank">
             #{{ formatNumber(shown.frequency) }}
@@ -344,7 +376,7 @@ function posChipTone(code?: string): 'verb' | 'noun' | 'adj' | 'other' {
           :aria-label="$t('wordEntry.conjugations.button')"
           :title="$t('wordEntry.conjugations.button')"
           data-testid="word-entry-conjugations-btn"
-          @click="conjugationsOpen = true"
+          @click="openConjugations"
         >
           <svg class="word-entry__icon-svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <path :d="mdiTable" />

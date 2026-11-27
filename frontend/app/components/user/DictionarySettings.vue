@@ -13,6 +13,7 @@ import {
 import type { UserDictionary, UserDictionaryListResponse } from '@brigadasos/nadeshiko-sdk';
 import { useI18n } from 'vue-i18n';
 import { handleApiError } from '~/utils/apiError';
+import { posthog } from '~/utils/posthogClient';
 import { useToastError, useToastSuccess } from '~/utils/toast';
 
 /**
@@ -150,8 +151,8 @@ async function fetchDictionaries(silent = false) {
   }
 }
 
-async function persistStack(rows: StackRow[]) {
-  if (saving.value) return;
+async function persistStack(rows: StackRow[]): Promise<boolean> {
+  if (saving.value) return false;
   saving.value = true;
   try {
     const res = await sdk.updateUserDictionaries({
@@ -160,11 +161,13 @@ async function persistStack(rows: StackRow[]) {
     data.value = res;
     syncStoreFingerprint(res);
     ensurePolling(res);
+    return true;
   } catch (error) {
     handleApiError('account:dictionaries-update-failed', error, {
       toastKey: 'accountSettings.dictionaries.saveError',
     });
     await fetchDictionaries(true);
+    return false;
   } finally {
     saving.value = false;
   }
@@ -224,9 +227,14 @@ function onRowDragEnd() {
   dragOverRowIndex.value = null;
 }
 
-function toggleRow(index: number) {
-  const rows = stackRows.value.map((row, i) => (i === index ? { ...row, enabled: !row.enabled } : row));
-  void persistStack(rows);
+async function toggleRow(index: number) {
+  const target = stackRows.value[index];
+  if (!target) return;
+  const nextEnabled = !target.enabled;
+  const rows = stackRows.value.map((row, i) => (i === index ? { ...row, enabled: nextEnabled } : row));
+  if (await persistStack(rows)) {
+    posthog.capture('custom_dictionary_toggled', { kind: target.kind, enabled: nextEnabled });
+  }
 }
 
 async function removeDictionary(dict: UserDictionary) {
@@ -235,6 +243,7 @@ async function removeDictionary(dict: UserDictionary) {
   deletingId.value = dict.id;
   try {
     await sdk.deleteUserDictionary(dict.id);
+    posthog.capture('custom_dictionary_deleted', { status: dict.status, has_terms: dict.hasTerms });
     useToastSuccess(t('accountSettings.dictionaries.deletedToast', { title: dict.title }));
     await fetchDictionaries(true);
   } catch (error) {
@@ -282,6 +291,7 @@ function uploadZipFile(file: File) {
 function failUpload(error: unknown) {
   endUpload();
   const message = (error as { detail?: string } | null)?.detail ?? (error instanceof Error ? error.message : '');
+  posthog.capture('custom_dictionary_upload_failed', { reason: dictionaryImportError(message) });
   uploadError.value = uploadFailureText(message);
   useToastError(uploadError.value);
 }
@@ -302,6 +312,12 @@ function endUpload() {
 /** A finished upload: says whether the dictionary is ready or still being indexed, then refreshes the list. */
 async function finishUpload(dictionary: UserDictionary | undefined, file: File) {
   endUpload();
+  posthog.capture('custom_dictionary_uploaded', {
+    status: dictionary?.status ?? 'unknown',
+    has_terms: Boolean(dictionary?.hasTerms),
+    size_mb: Number((file.size / (1024 * 1024)).toFixed(2)),
+    direct_upload: Boolean(data.value?.directUpload),
+  });
   const title = dictionary?.title ?? file.name;
   useToastSuccess(
     dictionary?.status === 'ready'

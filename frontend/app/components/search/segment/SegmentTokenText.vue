@@ -321,6 +321,7 @@ function reportCardOutcome(token: EnrichedToken, answer: WordLookup, fromCache: 
     // different result from a sentence of twenty that gets two, and only this
     // separates them.
     askable_tokens: enrichedTokens.value.filter(isAskable).length,
+    has_custom_dictionaries: (userStore().customDictionariesCount ?? 0) > 0,
   });
 }
 

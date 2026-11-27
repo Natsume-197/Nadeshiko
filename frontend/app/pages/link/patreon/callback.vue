@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { mdiCheckBold } from '@mdi/js';
 import { handleApiError } from '~/utils/apiError';
+import { posthog } from '~/utils/posthogClient';
 
 const { t } = useI18n();
 const route = useRoute();
@@ -19,7 +20,16 @@ onMounted(async () => {
     return;
   }
   try {
-    await $fetch('/v1/user/connections/patreon/callback', { method: 'POST', body: { code, state: sealed } });
+    const data = await $fetch<{ connection?: { active?: boolean; patronStatus?: string | null } }>(
+      '/v1/user/connections/patreon/callback',
+      { method: 'POST', body: { code, state: sealed } },
+    );
+    const active = Boolean(data?.connection?.active);
+    posthog.capture('patreon_connected', {
+      active,
+      patron_status: data?.connection?.patronStatus ?? null,
+      $set: { patreon_linked: true, is_patron: active },
+    });
     await router.replace({ path: route.path, query: {} });
     state.value = 'done';
   } catch (caught) {

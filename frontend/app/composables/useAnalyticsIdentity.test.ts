@@ -32,6 +32,7 @@ const user = reactive({
 vi.stubGlobal('userStore', () => user);
 vi.stubGlobal('usePostHog', () => posthog);
 
+import { THEME_COOKIE } from '#shared/utils/preferenceCookies';
 import {
   ANALYTICS_DELIBERATE_SIGN_OUT_KEY,
   ANALYTICS_IDENTITY_KEY,
@@ -115,6 +116,18 @@ describe('a signed-in reader', () => {
 
     const props = posthog.identify.mock.calls[0]?.[1] as Record<string, unknown> | undefined;
     expect(props?.$name).toBe('Reader');
+  });
+
+  test('includes custom dictionary count and theme on person properties', async () => {
+    vi.stubGlobal('document', { referrer: '', cookie: `${THEME_COOKIE}=light` });
+    signedIn({ customDictionariesCount: 2 } as Partial<typeof user>);
+
+    (await loadComposable())({ viaCallback: false });
+
+    const props = posthog.identify.mock.calls[0]?.[1] as Record<string, unknown> | undefined;
+    expect(props?.has_custom_dictionaries).toBe(true);
+    expect(props?.custom_dictionary_count).toBe(2);
+    expect(props?.theme).toBe('light');
   });
 
   test('omits $name when the store has no display name, rather than clearing an existing one', async () => {

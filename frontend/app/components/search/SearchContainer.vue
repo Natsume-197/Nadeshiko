@@ -600,7 +600,7 @@ const trackSearch = (response: SearchResponse) => {
   // The separator is a NUL as an escape, never as a raw byte: written literally it
   // makes this file binary to `grep -r`, `rg` and `file`, which then skip it
   // silently -- the whole component drops out of every repo-wide search.
-  const trackedKey = `${query.value}\u0000${media.value ?? ''}\u0000${matchMode.value ?? ''}`;
+  const trackedKey = `${query.value}\u0000${media.value ?? ''}\u0000${matchMode.value ?? ''}\u0000${sort.value ?? ''}`;
   if (!import.meta.client || !query.value || trackedKey === lastTrackedQuery.value) {
     return;
   }
@@ -629,6 +629,7 @@ const trackSearch = (response: SearchResponse) => {
     episode_number: episode.value,
     results_count: resultsCount,
     match_mode: matchMode.value === 'CONTAINS' ? 'contains' : 'word',
+    sort: sort.value ?? 'default',
     // Properties, not events: how much the anime tracker shapes searches costs nothing extra in PostHog.
     tracker_filter: trackerFilterMode.value.startsWith('custom:') ? 'custom-list' : trackerFilterMode.value,
     tracker_guarded_titles: trackerSearchFilters.value.activeSpoilerProtectionCount,
