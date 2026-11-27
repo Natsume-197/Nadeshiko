@@ -973,12 +973,14 @@ export const ankiStore = defineStore('anki', {
         posthog?.capture('anki_export_completed', {
           media_name: mediaName(sentence.media),
           media_id: sentence.media.publicId,
+          media_category: sentence.media.category ?? null,
           export_method: exportMethod,
           // Measure dictionary-pick usage separately from context-only exports.
           picked_dictionaries: withWordFields ? (minedWord?.pickedDictionaries ?? 0) : 0,
           // Which word-card button made it (#541): the dictionary form or the
           // sentence's own form. Null when no word fields were written.
           word_form: withWordFields ? (minedWord?.form ?? null) : null,
+          has_pitch_audio: Boolean(wordAudioResult?.result),
         });
 
         useToastSuccess($i18n.t('anki.toast.cardAdded'));

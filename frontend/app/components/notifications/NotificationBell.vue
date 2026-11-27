@@ -2,6 +2,7 @@
 import { onClickOutside, onKeyStroke } from '@vueuse/core';
 import { mdiBellOutline, mdiCogOutline } from '@mdi/js';
 import { useNotifications, type NotificationEntry } from '~/composables/useNotifications';
+import { posthog } from '~/utils/posthogClient';
 
 /**
  * The bell in the header (task 52). Shows the unread count, refreshed on navigation at most once a minute. The
@@ -39,7 +40,10 @@ watch(
 
 async function toggle() {
   open.value = !open.value;
-  if (open.value) await load().catch(() => undefined);
+  if (open.value) {
+    posthog.capture('notification_bell_opened', { unread_count: unreadCount.value });
+    await load().catch(() => undefined);
+  }
 }
 
 async function loadOlder() {
@@ -48,6 +52,7 @@ async function loadOlder() {
 
 function onEntryOpen(entry: NotificationEntry) {
   open.value = false;
+  posthog.capture('notification_clicked', { kind: entry.kind, was_unread: !entry.read });
   if (!entry.read) void markRead([entry.id]).catch(() => undefined);
 }
 

@@ -5,6 +5,7 @@ import { CATEGORY_API_MAPPING } from '~/utils/categories';
 import { episodeLabel } from '~/utils/media';
 import { EPISODE_HITS_LOADING } from '~/composables/useSearchFetch';
 import { compareMediaRows, MEDIA_SORT_MODES, type MediaSortMode } from '~/utils/mediaFilterSort';
+import { posthog } from '~/utils/posthogClient';
 import type { ResolvedMediaStats, SearchSidebarData } from '~/types/search';
 
 /** One title in the media filter list. */
@@ -30,6 +31,11 @@ const { mediaName: getMediaName } = useMediaName();
 const { favoriteMediaIds } = useFavoriteMedia();
 const { inferredRank } = useFamiliarMedia();
 const { mode: sortMode, setMode: setSortMode } = useMediaFilterSort();
+const selectSortMode = (mode: MediaSortMode) => {
+  if (sortMode.value === mode) return;
+  setSortMode(mode);
+  posthog.capture('media_filter_sort_changed', { mode });
+};
 // Static keys, so the locale checker sees them used.
 const SORT_MODE_LABEL_KEYS: Record<MediaSortMode, string> = {
   alphabetical: 'filterContent.sort.alphabetical',
@@ -304,7 +310,7 @@ const applyPendingFocus = () => {
                     :class="sortMode === option
                         ? 'bg-control-hover text-ink font-semibold shadow-sm'
                         : 'text-ink-faint hover:text-ink'"
-                    @click="setSortMode(option)">
+                    @click="selectSortMode(option)">
                     {{ $t(SORT_MODE_LABEL_KEYS[option]) }}
                 </button>
             </fieldset>

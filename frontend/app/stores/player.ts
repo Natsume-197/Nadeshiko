@@ -536,6 +536,7 @@ export const usePlayerStore = defineStore('player', {
       posthog?.capture('segment_played', {
         media_id: this.currentResult?.media.publicId,
         media_name: this.currentResult?.media.nameRomaji,
+        media_category: this.currentResult?.media.category ?? null,
         segment_id: this.currentResult?.segment.publicId,
         playlist_position: this.currentIndex,
         playlist_size: this.playlist.length,
