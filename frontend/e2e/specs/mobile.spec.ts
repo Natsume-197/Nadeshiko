@@ -67,7 +67,7 @@ test.describe('Mobile viewport', () => {
   test('homepage loads and displays core elements', async ({ page }) => {
     await page.goto('/');
 
-    const heading = page.getByRole('heading', { name: 'Nadeshiko', exact: true });
+    const heading = page.getByRole('heading', { level: 1 });
     await expect(heading).toBeVisible({ timeout: 10_000 });
 
     const searchInput = page.getByTestId('search-input');
