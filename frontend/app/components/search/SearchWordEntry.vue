@@ -228,6 +228,14 @@ const parts = computed(() => (shown.value.parts ?? []).filter((part) => part.lem
 const kanji = computed(() => kanjiIn(shown.value.headword));
 const hasSide = computed(() => otherForms.value.length > 0 || parts.value.length > 0 || kanji.value.length > 0);
 const firstGlossPreview = computed(() => sourceSenses.value[0]?.glosses[0]?.text ?? '');
+const hasHeaderMeta = computed(
+  () =>
+    pitch.value.length > 0 ||
+    Boolean(shown.value.common) ||
+    Boolean(shown.value.jlpt) ||
+    typeof shown.value.frequency === 'number' ||
+    (isCollapsed.value && Boolean(firstGlossPreview.value)),
+);
 
 const wordPath = (word: string) => localePath(buildWordSearchPath(word));
 const kanjiPath = (character: string) => localePath(buildKanjiPath(character));
@@ -269,78 +277,61 @@ function posChipTone(code?: string): 'verb' | 'noun' | 'adj' | 'other' {
     </fieldset>
 
     <div class="word-entry__header" :class="{ 'is-collapsed': isCollapsed }">
-      <div class="word-entry__header-main">
-        <div class="word-entry__head">
-          <span class="word-entry__word" lang="ja">
-            <template v-if="furigana.length > 0">
-              <template v-for="(segment, index) in furigana" :key="index">
-                <ruby v-if="segment.reading">{{ segment.text }}<rt>{{ segment.reading }}</rt></ruby>
-                <template v-else>{{ segment.text }}</template>
-              </template>
+      <div class="word-entry__title">
+        <span class="word-entry__word" lang="ja">
+          <template v-if="furigana.length > 0">
+            <template v-for="(segment, index) in furigana" :key="index">
+              <ruby v-if="segment.reading">{{ segment.text }}<rt>{{ segment.reading }}</rt></ruby>
+              <template v-else>{{ segment.text }}</template>
             </template>
-            <template v-else>{{ shown.headword }}</template>
-          </span>
-          <span v-if="reading && furigana.length === 0" class="word-entry__reading" lang="ja">{{ reading }}</span>
+          </template>
+          <template v-else>{{ shown.headword }}</template>
+        </span>
+        <span v-if="reading && furigana.length === 0" class="word-entry__reading" lang="ja">{{ reading }}</span>
+      </div>
 
-          <!-- How the word is said, on the word's line: the card's graph, smaller. -->
-          <span
-            v-if="pitch.length > 0"
-            class="word-entry__pitch-line"
-            :title="$t('tokenTooltip.pitchAccent')"
-            data-testid="word-entry-pitch"
-          >
-            <PitchPattern
-              v-for="(pattern, index) in pitch"
-              :key="index"
-              class="word-entry__pitch-pattern"
-              :pattern="pattern"
-              :playing="playingUrl === pattern.audioUrl"
-              :scale="0.8"
-              @play="playHeadword"
-            />
-          </span>
+      <div v-if="hasHeaderMeta" class="word-entry__meta">
+        <!-- How the word is said, on the word's line: the card's graph, smaller. -->
+        <span
+          v-if="pitch.length > 0"
+          class="word-entry__pitch-line"
+          :title="$t('tokenTooltip.pitchAccent')"
+          data-testid="word-entry-pitch"
+        >
+          <PitchPattern
+            v-for="(pattern, index) in pitch"
+            :key="index"
+            class="word-entry__pitch-pattern"
+            :pattern="pattern"
+            :playing="playingUrl === pattern.audioUrl"
+            :scale="0.8"
+            @play="playHeadword"
+          />
+        </span>
 
-          <div
-            v-if="shown.common || shown.jlpt || typeof shown.frequency === 'number'"
-            class="word-entry__badges"
-          >
-            <span v-if="shown.common" class="word-entry__badge is-common">{{ $t('wordEntry.common') }}</span>
-            <span v-if="shown.jlpt" class="word-entry__badge is-jlpt">{{ shown.jlpt }}</span>
-            <button
-              v-if="typeof shown.frequency === 'number' && byCategory.length > 0"
-              type="button"
-              class="word-entry__badge is-freq word-entry__badge--button"
-              :aria-expanded="frequencyOpen"
-              :title="$t('tokenTooltip.frequencyByCategory')"
-              data-testid="word-entry-rank"
-              @click="frequencyOpen = !frequencyOpen"
-            >#{{ formatNumber(shown.frequency) }} <span aria-hidden="true">{{ frequencyOpen ? '▴' : '▾' }}</span></button>
-            <span v-else-if="typeof shown.frequency === 'number'" class="word-entry__badge is-freq" data-testid="word-entry-rank">
-              #{{ formatNumber(shown.frequency) }}
-            </span>
-          </div>
-
-          <span v-if="isCollapsed && firstGlossPreview" class="word-entry__collapsed-gloss">
-            {{ firstGlossPreview }}
+        <div
+          v-if="shown.common || shown.jlpt || typeof shown.frequency === 'number'"
+          class="word-entry__badges"
+        >
+          <span v-if="shown.common" class="word-entry__badge is-common">{{ $t('wordEntry.common') }}</span>
+          <span v-if="shown.jlpt" class="word-entry__badge is-jlpt">{{ shown.jlpt }}</span>
+          <button
+            v-if="typeof shown.frequency === 'number' && byCategory.length > 0"
+            type="button"
+            class="word-entry__badge is-freq word-entry__badge--button"
+            :aria-expanded="frequencyOpen"
+            :title="$t('tokenTooltip.frequencyByCategory')"
+            data-testid="word-entry-rank"
+            @click="frequencyOpen = !frequencyOpen"
+          >#{{ formatNumber(shown.frequency) }} <span aria-hidden="true">{{ frequencyOpen ? '▴' : '▾' }}</span></button>
+          <span v-else-if="typeof shown.frequency === 'number'" class="word-entry__badge is-freq" data-testid="word-entry-rank">
+            #{{ formatNumber(shown.frequency) }}
           </span>
         </div>
 
-        <!-- A conjugated search (食べた) says what the conjugation does, as the card does for a word met in a
-             sentence: "past", "negative · polite". Same labels, from the same parser. -->
-        <p v-if="!isCollapsed && isPrimary && inflectedFrom && inflectionLine" class="word-entry__inflection" data-testid="word-entry-inflected">
-          {{ inflectionLine }}
-        </p>
-
-        <ul
-          v-if="!isCollapsed && frequencyOpen && byCategory.length > 0"
-          class="word-entry__freq-split"
-          :aria-label="$t('tokenTooltip.frequencyByCategory')"
-          data-testid="word-entry-ranks"
-        >
-          <li v-for="split in byCategory" :key="split.category">
-            {{ t(split.labelKey) }} <strong>#{{ formatNumber(split.rank) }}</strong>
-          </li>
-        </ul>
+        <span v-if="isCollapsed && firstGlossPreview" class="word-entry__collapsed-gloss">
+          {{ firstGlossPreview }}
+        </span>
       </div>
 
       <div class="word-entry__header-actions">
@@ -429,6 +420,27 @@ function posChipTone(code?: string): 'verb' | 'noun' | 'adj' | 'other' {
           </div>
         </div>
       </div>
+
+      <!-- A conjugated search (食べた) says what the conjugation does, as the card does for a word met in a
+           sentence: "past", "negative · polite". Same labels, from the same parser. -->
+      <p
+        v-if="!isCollapsed && isPrimary && inflectedFrom && inflectionLine"
+        class="word-entry__inflection"
+        data-testid="word-entry-inflected"
+      >
+        {{ inflectionLine }}
+      </p>
+
+      <ul
+        v-if="!isCollapsed && frequencyOpen && byCategory.length > 0"
+        class="word-entry__freq-split"
+        :aria-label="$t('tokenTooltip.frequencyByCategory')"
+        data-testid="word-entry-ranks"
+      >
+        <li v-for="split in byCategory" :key="split.category">
+          {{ t(split.labelKey) }} <strong>#{{ formatNumber(split.rank) }}</strong>
+        </li>
+      </ul>
     </div>
 
     <div v-if="!isCollapsed" class="word-entry__body">
@@ -626,6 +638,8 @@ function posChipTone(code?: string): 'verb' | 'noun' | 'adj' | 'other' {
 /* Colours and chips are the word card's (SegmentTokenText.vue, `.token-tooltip__*`); sizes are larger, for a page. */
 .word-entry {
   position: relative;
+  min-width: 0;
+  max-width: 100%;
   margin: 8px 16px 12px;
   background: var(--surface);
   border: 1px solid var(--line);
@@ -700,12 +714,12 @@ function posChipTone(code?: string): 'verb' | 'noun' | 'adj' | 'other' {
   font-size: 12px;
 }
 
-/* Header bar: single compact row with word + pitch + badges on left, Follow + collapse + settings on right */
+/* Header bar: word + actions on row 1 and meta full-width below on small screens; single compact row on >= 640px */
 .word-entry__header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px 14px;
+  gap: 8px 12px;
   padding: 10px 14px;
   border-bottom: 1px solid color-mix(in srgb, var(--line) 75%, transparent);
 }
@@ -714,22 +728,53 @@ function posChipTone(code?: string): 'verb' | 'noun' | 'adj' | 'other' {
   border-bottom: 0;
 }
 
-@media (min-width: 768px) {
-  .word-entry__header {
-    padding: 11px 18px;
-  }
+.word-entry__title {
+  order: 1;
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  min-width: 0;
 }
 
-.word-entry__header-main {
+.word-entry__meta {
+  order: 3;
+  flex: 1 0 100%;
   min-width: 0;
-  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
 }
 
 .word-entry__header-actions {
+  order: 2;
+  margin-left: auto;
   display: flex;
   align-items: center;
   gap: 6px;
   flex-shrink: 0;
+}
+
+@media (min-width: 640px) {
+  .word-entry__header {
+    gap: 6px 12px;
+  }
+
+  .word-entry__meta {
+    order: 2;
+    flex: 1 1 0%;
+  }
+
+  .word-entry__header-actions {
+    order: 3;
+  }
+}
+
+@media (min-width: 768px) {
+  .word-entry__header {
+    padding: 11px 18px;
+  }
 }
 
 .word-entry__icon-btn {
@@ -880,8 +925,8 @@ function posChipTone(code?: string): 'verb' | 'noun' | 'adj' | 'other' {
 
 .word-entry__side {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  flex-direction: column;
+  align-items: stretch;
   gap: 8px 18px;
   padding: 9px 14px;
   border-top: 1px solid color-mix(in srgb, var(--line) 75%, transparent);
@@ -889,18 +934,18 @@ function posChipTone(code?: string): 'verb' | 'noun' | 'adj' | 'other' {
   background: color-mix(in srgb, var(--background) 28%, transparent);
 }
 
+@media (min-width: 640px) {
+  .word-entry__side {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+}
+
 @media (min-width: 768px) {
   .word-entry__side {
     padding: 9px 18px;
   }
-}
-
-/* Head: word + pitch + badges on one tight line */
-.word-entry__head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px 12px;
 }
 
 .word-entry__word {
@@ -930,7 +975,9 @@ function posChipTone(code?: string): 'verb' | 'noun' | 'adj' | 'other' {
 }
 
 .word-entry__collapsed-gloss {
+  flex: 1 1 160px;
   min-width: 0;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -939,7 +986,9 @@ function posChipTone(code?: string): 'verb' | 'noun' | 'adj' | 'other' {
 }
 
 .word-entry__inflection {
-  margin: 5px 0 0;
+  order: 4;
+  flex: 1 0 100%;
+  margin: 0;
   font-size: 12px;
   color: var(--ink-faint);
 }
@@ -989,10 +1038,12 @@ function posChipTone(code?: string): 'verb' | 'noun' | 'adj' | 'other' {
 }
 
 .word-entry__freq-split {
+  order: 5;
+  flex: 1 0 100%;
   display: flex;
   flex-wrap: wrap;
   gap: 4px 14px;
-  margin: 8px 0 0;
+  margin: 2px 0 0;
   padding: 6px 10px;
   border: 1px solid color-mix(in srgb, var(--line) 75%, transparent);
   border-radius: 8px;
@@ -1108,6 +1159,7 @@ function posChipTone(code?: string): 'verb' | 'noun' | 'adj' | 'other' {
   flex-wrap: wrap;
   align-items: baseline;
   gap: 4px 8px;
+  min-width: 0;
 }
 
 .word-entry__gloss {
@@ -1167,6 +1219,8 @@ function posChipTone(code?: string): 'verb' | 'noun' | 'adj' | 'other' {
 
 .word-entry__gloss-row {
   display: inline;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .word-entry__gloss-row + .word-entry__gloss-row {
@@ -1247,8 +1301,17 @@ function posChipTone(code?: string): 'verb' | 'noun' | 'adj' | 'other' {
 }
 
 .word-entry__section + .word-entry__section {
-  padding-left: 14px;
-  border-left: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+  padding-top: 8px;
+  border-top: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+}
+
+@media (min-width: 640px) {
+  .word-entry__section + .word-entry__section {
+    padding-top: 0;
+    border-top: 0;
+    padding-left: 14px;
+    border-left: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+  }
 }
 
 .word-entry__label {
@@ -1388,13 +1451,21 @@ function posChipTone(code?: string): 'verb' | 'noun' | 'adj' | 'other' {
   flex-wrap: wrap;
   align-items: center;
   gap: 4px 12px;
-  padding-left: 12px;
-  border-left: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+@media (min-width: 640px) {
+  .word-entry__pitch-line {
+    padding-left: 12px;
+    border-left: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+  }
 }
 
 .word-entry__pitch-pattern {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  max-width: 100%;
 }
 </style>

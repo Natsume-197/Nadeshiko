@@ -1072,7 +1072,7 @@ onBeforeRouteUpdate(async (to, from) => {
             </div>
         </section>
     </div>
-    <div v-else class="flex-1 mx-auto">
+    <div v-else class="flex-1 min-w-0 mx-auto">
         <!-- Tabs. Sticky so the category tabs and the EN/ES/furigana controls
              stay reachable while reading results: they sit where the search bar
              leaves off, and the title sidebar starts below them. -->
@@ -1181,7 +1181,7 @@ onBeforeRouteUpdate(async (to, from) => {
             <slot name="below-tabs" />
         </div>
         <div class="flex mx-auto w-full">
-            <div class="flex-1 mx-auto w-full">
+            <div class="flex-1 min-w-0 mx-auto w-full">
                 <!-- Inside the results column, so what goes here (a word's dictionary entry) shares the row with
                      the title filter instead of pushing it down. -->
                 <slot name="above-results" />
