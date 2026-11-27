@@ -871,7 +871,7 @@ function isTouchDevice(): boolean {
       :open="formOpen"
       labelledby="request-form-title"
       overlay-class="items-end justify-center sm:items-center bg-fixed-scrim/60"
-      panel-class="w-full max-w-lg max-h-[85dvh] flex flex-col bg-background border border-hairline shadow-sm rounded-t-xl sm:rounded-xl"
+      panel-class="w-full max-w-lg max-h-[85dvh] flex flex-col overflow-hidden bg-background border border-b-0 sm:border-b border-hairline shadow-sm rounded-t-2xl sm:rounded-xl"
       @close="closeForm"
     >
       <template v-if="formOpen">
