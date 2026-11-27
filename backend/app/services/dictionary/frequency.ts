@@ -80,11 +80,12 @@ function kanjiSequence(text: string): string {
 }
 
 /**
- * Picks which spelling (`dict.form.text`) of `word` a corpus surface (`triple.s`) was written in, handling inflected
- * verbs and adjectives (e.g. `食べた` -> `食べる`, `たべた` -> `たべる`, `喰べた` -> `喰べる`). Exported for tests.
+ * Picks which spelling (`dict.form.text`) of `word` a corpus occurrence was written in, handling both kanji surfaces
+ * (`triple.s`, including inflected verbs/adjectives like `食べた` -> `食べる`, `喰べた` -> `喰べる`) and kana-only
+ * occurrences (where `tripleOf` sets `triple.kana` instead of `triple.s`). Exported for tests.
  */
-export function attributeForm(triple: Pick<Triple, 's' | 'r'>, word: StoredWord): string | null {
-  const surface = triple.s;
+export function attributeForm(triple: Pick<Triple, 's' | 'r' | 'kana'>, word: StoredWord): string | null {
+  const surface = triple.s ?? triple.kana;
   if (!surface) return null;
   const active = word.forms.filter((f) => f.active);
   if (active.length === 0) return null;

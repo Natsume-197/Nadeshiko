@@ -185,6 +185,14 @@ describe('attributeForm and formFrequencyRows', () => {
     expect(attributeForm({ s: '食べた', r: 'タベタ' }, taberu)).toBe('食べる');
     expect(attributeForm({ s: '喰べた', r: 'タベタ' }, taberu)).toBe('喰べる');
     expect(attributeForm({ s: 'たべた', r: 'タベタ' }, taberu)).toBe('たべる');
+    // Kana occurrences produced by tripleOf() set `kana` (dictionary form in hiragana) instead of `s`.
+    expect(attributeForm({ kana: 'たべる' }, taberu)).toBe('たべる');
+    const ramen = {
+      ...taberu,
+      id: 2,
+      forms: [{ idx: 0, text: 'ラーメン', kana: true, common: true, tags: [], applies_to_kanji: ['*'], active: true }],
+    };
+    expect(attributeForm({ kana: 'らーめん' }, ramen)).toBe('ラーメン');
   });
 
   it('computes per-word share and global form rank', () => {
