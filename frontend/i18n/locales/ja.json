@@ -118,7 +118,6 @@
   "home": {
     "supportOnPatreon": "Patreonで支援する",
     "version": "v{version}",
-    "heroTagline": "アニメ・ドラマ・YouTube・オーディオブックの日本語例文検索",
     "nadeDbDescription": "アニメ・ドラマ・YouTubeの日本語例文を100万件以上収録。音声や画像、翻訳で使い方を確認し、Ankiの学習カードに取り込めます。{sentenceMining}に最適です。",
     "sentenceMiningLabel": "例文採集（センテンスマイニング）",
     "nadeDbDescriptionJpSearch": "日本語で検索",

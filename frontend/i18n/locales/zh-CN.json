@@ -118,7 +118,6 @@
   "home": {
     "supportOnPatreon": "在 Patreon 上支持我们",
     "version": "v{version}",
-    "heroTagline": "动漫、日剧、YouTube 与有声书日语例句搜索",
     "nadeDbDescription": "搜索动画、日剧和 YouTube 中的百万余条日语例句，查看原声、截图和上下文，轻松进行{sentenceMining}。例句译文目前提供英语和西班牙语，暂不提供中文。",
     "sentenceMiningLabel": "例句采集（Sentence Mining）",
     "nadeDbDescriptionJpSearch": "用日语搜索",

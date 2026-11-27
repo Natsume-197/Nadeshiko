@@ -86,18 +86,15 @@ function reportBotInstallClick(): void {
                                         <!-- The version is not a heading: keep it out of the document outline and search title. -->
                                         <div class="ml-2 mt-3 md:mt-0 sm:mt-0">
                                             <div class="inline-flex">
-                                                <span
+                                                <h1
                                                     class="text-3xl underline underline-offset-8 decoration-4 decoration-accent font-bold md:text-4xl md:leading-tight dark:text-white">
                                                     Nadeshiko
-                                                </span>
+                                                </h1>
                                                 <span
                                                     class="inline-flex ml-2 rounded-full items-end text-base font-medium text-white/80">
                                                     {{ $t('home.version', { version: config.public.appVersion }) }}
                                                 </span>
                                             </div>
-                                            <h1 class="mt-3 text-lg md:text-xl font-semibold text-white/90">
-                                                {{ $t('home.heroTagline') }}
-                                            </h1>
                                         </div>
 
                                         <!-- biome-ignore lint/a11y/noHeaderScope: vue-i18n scope, not a table header -->
