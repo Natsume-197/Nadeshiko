@@ -10,7 +10,7 @@ export class HomePage {
 
   constructor(page: Page) {
     this.page = page;
-    this.heading = page.getByRole('heading', { name: 'Nadeshiko', exact: true });
+    this.heading = page.getByRole('heading', { level: 1 });
     this.searchInput = page.getByTestId('search-input');
     this.searchButton = page.getByTestId('search-button');
     this.mediaCards = page.getByTestId('media-card');
