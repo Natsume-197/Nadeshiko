@@ -163,7 +163,7 @@
     "description2": "To start, enter words in the box below.",
     "description3": "Enter one word per line, or separate words with commas.",
     "description4": "You can only search up to ",
-    "description5": "500 words at once",
+    "description5": "100 words at once",
     "totalWords": "Total words",
     "search": "Search",
     "close": "Close",
@@ -259,7 +259,8 @@
   },
   "modalBatch": {
     "closeSrOnly": "Close",
-    "wordLimitExceeded": "The word limit has been exceeded: {count} / 500",
+    "wordLimitExceeded": "The word limit has been exceeded: {count} / {max}",
+    "wordLengthExceeded": "Each word must be {max} characters or fewer.",
     "inputFormatError": "The input format is incorrect. Check if there are commas and line breaks simultaneously.",
     "notAvailable": "Not available",
     "searchError": "The word search could not be completed. Please try again.",

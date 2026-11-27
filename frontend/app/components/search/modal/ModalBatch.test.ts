@@ -183,3 +183,69 @@ describe('the match mode', () => {
     expect(sdk.searchWords).toHaveBeenCalledWith({ query: { words: ['憬'], matchMode: 'CONTAINS' } });
   });
 });
+
+describe('input parsing and validation', () => {
+  async function openWithRaw(raw: string) {
+    const wrapper = mount(ModalBatch, {
+      props: { open: true },
+      global: {
+        mocks: { $t: (key: string) => key },
+        stubs: { NuxtLink: { props: ['to'], template: '<a :href="to"><slot /></a>' }, BaseModal: false },
+      },
+      attachTo: document.body,
+    });
+    mounted.push(wrapper);
+
+    await wrapper.find('textarea').setValue(raw);
+    await nextTick();
+    return wrapper;
+  }
+
+  function submitButton(wrapper: Awaited<ReturnType<typeof openWithRaw>>) {
+    const submit = wrapper.findAll('button').find((button) => button.text().trim() === 'batchSearch.search');
+    if (!submit) throw new Error('the submit button was not found');
+    return submit;
+  }
+
+  test('splits Japanese ideographic commas (、) and fullwidth commas (，)', async () => {
+    const wrapper = await openWithRaw('食べる、飲む，走る, 泳ぐ\n');
+    expect(wrapper.find('[data-testid="batch-error"]').exists()).toBe(false);
+
+    await search(wrapper);
+
+    expect(sdk.searchWords).toHaveBeenCalledWith({ query: { words: ['食べる', '飲む', '走る', '泳ぐ'] } });
+  });
+
+  test('allows up to 100 words and blocks 101 words inline', async () => {
+    const hundred = Array.from({ length: 100 }, (_, i) => `語${i}`);
+    const wrapper = await openWith(hundred);
+    expect(wrapper.find('[data-testid="batch-error"]').exists()).toBe(false);
+    expect(submitButton(wrapper).attributes('disabled')).toBeUndefined();
+
+    await wrapper.find('textarea').setValue([...hundred, '語100'].join('\n'));
+    await nextTick();
+
+    expect(wrapper.get('[data-testid="batch-error"]').text()).toBe('modalBatch.wordLimitExceeded');
+    expect(submitButton(wrapper).attributes('disabled')).toBeDefined();
+    await search(wrapper);
+    expect(sdk.searchWords).not.toHaveBeenCalled();
+  });
+
+  test('blocks words longer than 100 characters inline', async () => {
+    const wrapper = await openWithRaw(`食べる\n${'あ'.repeat(101)}`);
+
+    expect(wrapper.get('[data-testid="batch-error"]').text()).toBe('modalBatch.wordLengthExceeded');
+    expect(submitButton(wrapper).attributes('disabled')).toBeDefined();
+    await search(wrapper);
+    expect(sdk.searchWords).not.toHaveBeenCalled();
+  });
+
+  test('blocks mixed CJK commas and line breaks inline', async () => {
+    const wrapper = await openWithRaw('食べる、飲む\n走る');
+
+    expect(wrapper.get('[data-testid="batch-error"]').text()).toBe('modalBatch.inputFormatError');
+    expect(submitButton(wrapper).attributes('disabled')).toBeDefined();
+    await search(wrapper);
+    expect(sdk.searchWords).not.toHaveBeenCalled();
+  });
+});

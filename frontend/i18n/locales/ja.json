@@ -163,7 +163,7 @@
     "description2": "下の入力欄に調べたい単語を入力してください。",
     "description3": "1行に1単語、またはカンマ区切りで入力してください。",
     "description4": "一度に検索できるのは",
-    "description5": "500語までです。",
+    "description5": "100語までです。",
     "totalWords": "入力した単語数",
     "search": "検索",
     "close": "閉じる",
@@ -259,7 +259,8 @@
   },
   "modalBatch": {
     "closeSrOnly": "閉じる",
-    "wordLimitExceeded": "単語数の上限を超えています：{count}語（上限500語）",
+    "wordLimitExceeded": "単語数の上限を超えています：{count}語（上限{max}語）",
+    "wordLengthExceeded": "各単語は{max}文字以内で入力してください。",
     "inputFormatError": "入力形式が正しくありません。カンマと改行が同時に含まれていないか確認してください。",
     "notAvailable": "利用不可",
     "searchError": "単語検索を完了できませんでした。もう一度お試しください。",

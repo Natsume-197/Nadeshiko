@@ -163,7 +163,7 @@
     "description2": "Masukkan kata-kata pada kotak di bawah untuk memulai.",
     "description3": "Masukkan satu kata per baris, atau pisahkan kata dengan koma.",
     "description4": "Anda dapat mencari hingga ",
-    "description5": "500 kata sekaligus",
+    "description5": "100 kata sekaligus",
     "totalWords": "Jumlah kata",
     "search": "Cari",
     "close": "Tutup",
@@ -259,7 +259,8 @@
   },
   "modalBatch": {
     "closeSrOnly": "Tutup",
-    "wordLimitExceeded": "Jumlah kata melebihi batas: {count} / 500",
+    "wordLimitExceeded": "Jumlah kata melebihi batas: {count} / {max}",
+    "wordLengthExceeded": "Setiap kata maksimal {max} karakter.",
     "inputFormatError": "Format masukan tidak sesuai. Gunakan koma atau baris baru sebagai pemisah, jangan keduanya sekaligus.",
     "notAvailable": "Tidak tersedia",
     "searchError": "Pencarian kata gagal diselesaikan. Silakan coba lagi.",

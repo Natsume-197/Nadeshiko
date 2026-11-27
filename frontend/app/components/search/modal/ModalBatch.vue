@@ -17,12 +17,19 @@ const closeModal = () => {
   emit('close');
 };
 
+/** Matches `SearchMultipleQuery.yaml` (`maxItems: 100`, `items.maxLength: 100`). */
+const MAX_WORDS = 100;
+const MAX_WORD_LENGTH = 100;
+const COMMA_PATTERN = /[,、，]/;
+const SEPARATOR_PATTERN = /[\n\r,、，]+/;
+
 /** Parsed from `inputText` by the watcher below; the API takes the words as a list. */
 const words = ref<string[]>([]);
 const inputText = ref('');
 /** Shows the parsed word count, or a "not available" label when the input is malformed. */
 const wordCount = ref<number | string>(0);
 const errorMessage = ref('');
+const canSearch = computed(() => words.value.length > 0 && !errorMessage.value);
 const wordsMatch = ref<MultiSearchResult[]>([]);
 const totalWordsSearched = ref(0);
 /** Whole words (the default), the exact phrase, or inside longer words (`憬` in `憧憬`); the two toggles exclude each other. */
@@ -70,7 +77,7 @@ const sortedWordsMatch = computed(() => {
 });
 
 const getWordMatch = async () => {
-  if (words.value.length === 0 || words.value.length > 500) {
+  if (!canSearch.value) {
     return;
   }
 
@@ -117,22 +124,29 @@ const wordsFound = computed(() => {
 });
 
 watch(inputText, (newValue) => {
-  words.value = newValue
-    .replace(/[\n\r]+/g, ',')
+  const parsedWords = newValue
     .replace(/[-*]/g, '')
-    .split(',')
+    .split(SEPARATOR_PATTERN)
     .map((word) => word.trim())
     .filter((word) => word !== '');
+  words.value = parsedWords;
 
-  if (words.value.length > 500) {
-    errorMessage.value = t('modalBatch.wordLimitExceeded', { count: words.value.length });
-    wordCount.value = words.value.length;
-  } else if (newValue.includes(',') && newValue.includes('\n')) {
+  const trimmedInput = newValue.trim();
+  const hasMixedSeparators = COMMA_PATTERN.test(trimmedInput) && /[\n\r]/.test(trimmedInput);
+  const hasTooLongWord = parsedWords.some((word) => word.length > MAX_WORD_LENGTH);
+
+  if (parsedWords.length > MAX_WORDS) {
+    errorMessage.value = t('modalBatch.wordLimitExceeded', { count: parsedWords.length, max: MAX_WORDS });
+    wordCount.value = parsedWords.length;
+  } else if (hasMixedSeparators) {
     errorMessage.value = t('modalBatch.inputFormatError');
     wordCount.value = t('modalBatch.notAvailable');
+  } else if (hasTooLongWord) {
+    errorMessage.value = t('modalBatch.wordLengthExceeded', { max: MAX_WORD_LENGTH });
+    wordCount.value = parsedWords.length;
   } else {
     errorMessage.value = '';
-    wordCount.value = words.value.length;
+    wordCount.value = parsedWords.length;
   }
 });
 </script>
@@ -220,9 +234,9 @@ watch(inputText, (newValue) => {
                   </div>
                 </div>
               </div>
-              <div v-if="errorMessage" class="p-4 sm:p-6 ml-auto text-red-500">{{ errorMessage }}</div>
+              <div v-if="errorMessage" role="alert" data-testid="batch-error" class="p-4 sm:p-6 ml-auto text-red-500">{{ errorMessage }}</div>
               <div v-if="!errorMessage" class="p-4 sm:p-6  leading-relaxed text-gray-500 dark:text-gray-400 ml-auto">
-                {{ t("batchSearch.totalWords") }}: {{ wordCount }} / 500
+                {{ t("batchSearch.totalWords") }}: {{ wordCount }} / {{ MAX_WORDS }}
               </div>
             </div>
           </div>
@@ -303,8 +317,8 @@ watch(inputText, (newValue) => {
 
         <div class="flex justify-end items-center gap-x-2 py-3 px-4 border-t dark:border-modal-border">
           <template v-if="!showResults">
-            <button type="button" @click="getWordMatch"
-              class="h-14 lg:h-12 py-3 px-4 inline-flex justify-center items-center gap-2 rounded-md border font-medium bg-sgray text-gray-700 shadow-sm align-middle hover:bg-sgrayhover transition-all text-sm dark:border-modal-border dark:text-white dark:hover:text-white">
+            <button type="button" :disabled="!canSearch" @click="getWordMatch"
+              class="h-14 lg:h-12 py-3 px-4 inline-flex justify-center items-center gap-2 rounded-md border font-medium bg-sgray text-gray-700 shadow-sm align-middle hover:bg-sgrayhover transition-all text-sm dark:border-modal-border dark:text-white dark:hover:text-white disabled:opacity-50 disabled:cursor-not-allowed">
               {{ t("batchSearch.search") }}
             </button>
             <button type="button"
