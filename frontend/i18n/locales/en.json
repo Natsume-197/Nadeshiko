@@ -118,7 +118,6 @@
   "home": {
     "supportOnPatreon": "Support us on Patreon",
     "version": "v{version}",
-    "heroTagline": "Japanese sentence search from anime, J-drama, YouTube and audiobooks",
     "nadeDbDescription": "Search over a million Japanese sentences from anime, J-drama, YouTube and audiobooks, each with audio, screenshot, translations and Anki export. Built for {sentenceMining}.",
     "sentenceMiningLabel": "sentence mining",
     "nadeDbDescriptionJpSearch": "Search in Japanese",

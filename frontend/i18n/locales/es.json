@@ -118,7 +118,6 @@
   "home": {
     "supportOnPatreon": "Apóyanos en Patreon",
     "version": "v{version}",
-    "heroTagline": "Buscador de frases en japonés de anime, series, YouTube y audiolibros",
     "nadeDbDescription": "Busca entre más de un millón de frases en japonés de anime, series y YouTube. Consulta el audio, las imágenes y las traducciones al español, y crea tarjetas de estudio en Anki: ideal para la {sentenceMining}.",
     "sentenceMiningLabel": "minería de frases",
     "nadeDbDescriptionJpSearch": "Buscar en japonés",
