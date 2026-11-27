@@ -11,8 +11,15 @@ vi.mock('h3', async (importOriginal) => ({
 }));
 vi.stubGlobal('defineEventHandler', (fn: unknown) => fn);
 
-const handler = (await import('./10-rate-limit-dictionary')).default as (event: { url: URL }) => Promise<void>;
-const visit = (path: string) => handler({ url: new URL(`https://nadeshiko.co${path}`) });
+const handler = (await import('./10-rate-limit-dictionary')).default as (event: {
+  url: URL;
+  node?: { req?: { headers?: Record<string, string>; socket?: { remoteAddress?: string } } };
+}) => Promise<void>;
+const visit = (path: string, remoteAddress: string | null = '172.18.0.1') =>
+  handler({
+    url: new URL(`https://nadeshiko.co${path}`),
+    node: { req: { headers: {}, socket: remoteAddress ? { remoteAddress } : {} } },
+  });
 
 beforeEach(() => enforceIpRateLimit.mockReset());
 
@@ -25,6 +32,11 @@ describe('the dictionary lookup rate limit', () => {
   it('counts the kanji view lookups too', async () => {
     await visit('/api/dictionary/kanji/%E6%9C%AC?locale=en');
     expect(enforceIpRateLimit).toHaveBeenCalledWith(expect.anything(), { route: 'api.dictionary' });
+  });
+
+  it('skips internal SSR sub-requests without a peer socket or client IP header', async () => {
+    await visit('/api/dictionary/kanji/%E6%9C%AC?locale=en&related=all', null);
+    expect(enforceIpRateLimit).not.toHaveBeenCalled();
   });
 
   it.each(['/api/announcement', '/en/search/neko', '/api/dictionary'])('leaves %s alone', async (path) => {
