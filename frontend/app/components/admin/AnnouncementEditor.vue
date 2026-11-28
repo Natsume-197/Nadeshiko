@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { mdiBullhornOutline } from '@mdi/js';
 import type { Announcement as AnnouncementData } from '@brigadasos/nadeshiko-sdk';
 import { announcementTitle } from '~/utils/announcement';
 import { handleApiError } from '~/utils/apiError';
@@ -19,10 +20,14 @@ const { data: existing } = await useAsyncData(
   async () => {
     try {
       const data = await sdk.getAnnouncement();
-      return data ? ({ message: data.message, type: data.type, active: data.active } as AnnouncementData) : null;
+      return data && typeof data === 'object' && 'message' in data
+        ? ({
+            message: data.message ?? '',
+            type: data.type ?? 'INFO',
+            active: Boolean(data.active),
+          } as AnnouncementData)
+        : null;
     } catch (error) {
-      // No announcement configured is the normal case and also throws here, so the
-      // form still opens blank -- but the failure must not vanish entirely.
       handleApiError('admin:announcement-fetch-failed', error, { toastKey: false });
       return null;
     }
@@ -33,9 +38,9 @@ const { data: existing } = await useAsyncData(
 );
 
 if (existing.value) {
-  form.message = existing.value.message;
-  form.type = existing.value.type;
-  form.active = existing.value.active;
+  form.message = existing.value.message ?? '';
+  form.type = existing.value.type ?? 'INFO';
+  form.active = Boolean(existing.value.active);
 }
 
 const hasChanges = computed(() => {
@@ -103,103 +108,126 @@ const previewTitle = computed(() => announcementTitle(t, form.type));
 </script>
 
 <template>
-  <div class="nd-settings-card">
-    <h3 class="nd-settings-title">{{ t('accountSettings.announcement.title') }}</h3>
-    <p class="text-gray-400 text-sm mt-1">
-      {{ t('accountSettings.announcement.description') }}
-    </p>
-    <div class="mt-4 space-y-4">
-      <div>
-        <label :for="`${fieldId}-message`" class="block text-sm text-gray-300 mb-1">{{ t('accountSettings.announcement.fields.message') }}</label>
-        <textarea
-          :id="`${fieldId}-message`"
-          v-model="form.message"
-          maxlength="500"
-          rows="3"
-          :placeholder="t('accountSettings.announcement.placeholders.message')"
-          class="nd-input resize-none"
-        />
-        <!-- The count is of what is typed, markup included, because that is what
-             the 500-character limit measures. -->
-        <div class="mt-1 flex items-start justify-between gap-4">
-          <p class="text-xs text-gray-500">{{ t('accountSettings.announcement.markdownHint') }}</p>
-          <p class="text-xs text-gray-500 shrink-0">{{ form.message?.length ?? 0 }}/500</p>
-        </div>
-      </div>
-
-      <fieldset class="min-w-0">
-        <legend class="block text-sm text-gray-300 mb-1">{{ t('accountSettings.announcement.fields.type') }}</legend>
-        <div class="flex gap-2">
-          <button type="button"
-            v-for="opt in typeOptions"
-            :key="opt.value"
-            :class="[
-              'px-3 py-1.5 text-sm rounded-lg border transition-colors',
-              form.type === opt.value
-                ? 'border-red-400 text-white bg-neutral-700'
-                : 'border-hairline text-ink-muted hover:text-ink hover:border-line-hover',
-            ]"
-            @click="form.type = opt.value"
-          >
-            <span :class="[opt.color, 'inline-block size-2 rounded-full mr-1.5']" />
-            {{ opt.label }}
-          </button>
-        </div>
-      </fieldset>
-
-      <div class="flex items-center justify-between">
+  <div class="space-y-5">
+    <!-- PostHog-style header -->
+    <div class="flex items-center justify-between gap-3 border-b border-hairline pb-4">
+      <div class="flex items-center gap-2.5">
+        <UiBaseIcon :path="mdiBullhornOutline" :size="18" class="text-brand" />
         <div>
-          <span class="text-sm text-gray-300">{{ t('accountSettings.announcement.fields.active') }}</span>
-          <p class="text-xs text-gray-500">{{ t('accountSettings.announcement.activeDescription') }}</p>
+          <h1 class="text-lg font-semibold tracking-tight text-ink">{{ t('accountSettings.announcement.title') }}</h1>
+          <p class="text-xs text-ink-muted">{{ t('accountSettings.announcement.description') }}</p>
         </div>
-        <button type="button"
-          :class="[
-            'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none',
-            form.active ? 'bg-brand-solid' : 'bg-gray-600',
-          ]"
-          @click="form.active = !form.active"
-        >
-          <span
-            :class="[
-              'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
-              form.active ? 'translate-x-5' : 'translate-x-0',
-            ]"
-          />
-        </button>
       </div>
 
-      <div v-if="form.message?.trim()" class="mt-2">
-        <p class="block text-sm text-gray-300 mb-1">{{ t('accountSettings.announcement.fields.preview') }}</p>
-        <div class="rounded-xl border border-red-500/30 bg-red-500/10 px-5 py-4">
-          <div class="flex items-center gap-2 mb-1.5">
-            <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5 text-red-400 shrink-0">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
-            </svg>
-            <span class="font-semibold text-white text-sm">{{ previewTitle }}</span>
-          </div>
-          <p class="text-sm text-white/80 leading-relaxed">
-            <CommonAnnouncementText :message="form.message" />
-          </p>
-        </div>
-      </div>
+      <span
+        :class="[
+          'rounded-full border px-2.5 py-0.5 text-[11px] font-semibold',
+          form.active
+            ? 'border-emerald-500/30 bg-emerald-500/15 text-emerald-300'
+            : 'border-hairline bg-surface-lift text-ink-faint',
+        ]"
+      >
+        {{ form.active ? 'Active' : 'Inactive' }}
+      </span>
     </div>
 
-    <div class="mt-4 flex gap-3">
-      <button type="button"
-        :disabled="saving || !hasChanges || !form.message?.trim()"
-        class="px-4 py-2 text-sm rounded-lg bg-red-500 hover:bg-red-600 text-on-accent font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-        @click="save"
-      >
-        {{ saving ? t('accountSettings.announcement.saving') : t('accountSettings.announcement.save') }}
-      </button>
-      <button type="button"
-        v-if="existing?.active"
-        :disabled="saving"
-        class="px-4 py-2 text-sm rounded-lg bg-neutral-700 hover:bg-neutral-600 text-white font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-        @click="clear"
-      >
-        {{ t('accountSettings.announcement.deactivate') }}
-      </button>
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-12">
+      <!-- Editor -->
+      <div class="space-y-4 rounded-lg border border-hairline bg-card-background p-4 lg:col-span-7">
+        <div>
+          <label :for="`${fieldId}-message`" class="mb-1 block text-xs font-medium text-ink-muted">
+            {{ t('accountSettings.announcement.fields.message') }}
+          </label>
+          <textarea
+            :id="`${fieldId}-message`"
+            v-model="form.message"
+            maxlength="500"
+            rows="3"
+            :placeholder="t('accountSettings.announcement.placeholders.message')"
+            class="nd-input resize-none"
+          />
+          <div class="mt-1 flex items-start justify-between gap-4">
+            <p class="text-[11px] text-ink-faint">{{ t('accountSettings.announcement.markdownHint') }}</p>
+            <p class="shrink-0 text-[11px] text-ink-faint tabular-nums">{{ form.message?.length ?? 0 }}/500</p>
+          </div>
+        </div>
+
+        <fieldset class="min-w-0">
+          <legend class="mb-1.5 block text-xs font-medium text-ink-muted">
+            {{ t('accountSettings.announcement.fields.type') }}
+          </legend>
+          <div class="flex flex-wrap gap-1.5">
+            <button
+              v-for="opt in typeOptions"
+              :key="opt.value"
+              type="button"
+              :class="[
+                'rounded-md border px-3 py-1.5 text-xs font-medium transition-colors',
+                form.type === opt.value
+                  ? 'border-brand-solid bg-brand/15 text-brand'
+                  : 'border-hairline bg-surface text-ink-muted hover:bg-surface-hover hover:text-ink',
+              ]"
+              @click="form.type = opt.value"
+            >
+              <span :class="[opt.color, 'mr-1.5 inline-block size-2 rounded-full']" />
+              {{ opt.label }}
+            </button>
+          </div>
+        </fieldset>
+
+        <div class="flex items-center justify-between border-t border-hairline pt-4">
+          <div>
+            <span class="text-xs font-medium text-ink">{{ t('accountSettings.announcement.fields.active') }}</span>
+            <p class="text-[11px] text-ink-faint">{{ t('accountSettings.announcement.activeDescription') }}</p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            :aria-checked="form.active"
+            :class="[
+              'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none',
+              form.active ? 'bg-brand-solid' : 'bg-gray-600',
+            ]"
+            @click="form.active = !form.active"
+          >
+            <span
+              :class="[
+                'pointer-events-none inline-block size-5 transform rounded-full bg-white shadow transition duration-200 ease-in-out',
+                form.active ? 'translate-x-5' : 'translate-x-0',
+              ]"
+            />
+          </button>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 border-t border-hairline pt-3">
+          <button v-if="existing?.active" type="button" :disabled="saving" class="nd-btn !h-8 text-xs" @click="clear">
+            {{ t('accountSettings.announcement.deactivate') }}
+          </button>
+          <button
+            type="button"
+            :disabled="saving || !(form.message ?? '').trim() || !hasChanges"
+            class="nd-btn-accent !h-8 text-xs"
+            @click="save"
+          >
+            {{ saving ? t('accountSettings.announcement.saving') : t('accountSettings.announcement.save') }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Live preview -->
+      <div class="space-y-2 lg:col-span-5">
+        <div class="text-[11px] font-semibold uppercase tracking-wider text-ink-faint">
+          {{ t('accountSettings.announcement.preview') }}
+        </div>
+        <div class="rounded-lg border border-hairline bg-card-background p-4">
+          <div class="rounded-md border border-hairline bg-surface px-3.5 py-2.5 text-xs">
+            <div class="font-semibold text-ink">{{ previewTitle }}</div>
+            <p class="mt-0.5 text-ink-muted">
+              {{ form.message || t('accountSettings.announcement.placeholders.message') }}
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>

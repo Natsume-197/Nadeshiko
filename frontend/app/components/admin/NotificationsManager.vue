@@ -25,9 +25,17 @@ type BroadcastItem = ListAdminNotificationBroadcastsResponse['items'][number];
 const { t } = useI18n();
 const { formatDate, formatNumber } = useFormat();
 const route = useRoute();
+const router = useRouter();
 const sdk = useNadeshikoSdk();
 
 const activeTab = ref<Tab>(route.query.tab === 'registry' ? 'registry' : 'send');
+
+function selectTab(tab: Tab) {
+  activeTab.value = tab;
+  if (route.query.tab !== tab) {
+    void router.replace({ query: { ...route.query, tab } });
+  }
+}
 const isLoading = ref(false);
 
 // Send form state
@@ -186,40 +194,50 @@ function statusTone(status: BroadcastItem['status']): string {
 }
 
 onMounted(loadData);
+
+watch(
+  () => route.query.tab,
+  (tab) => {
+    if (tab === 'send' || tab === 'registry') {
+      activeTab.value = tab;
+    }
+  },
+);
 </script>
 
 <template>
-  <div data-testid="admin-notifications" class="space-y-5">
-    <!-- Header -->
-    <div class="flex items-end justify-between gap-3">
+  <div data-testid="admin-notifications" class="space-y-4">
+    <!-- PostHog-style compact header -->
+    <div class="flex items-center justify-between gap-3 border-b border-hairline pb-3">
       <div>
-        <h1 class="text-2xl font-bold tracking-tight text-ink">{{ t('adminNotifications.title') }}</h1>
-        <p class="mt-0.5 text-sm text-ink-muted">{{ t('adminNotifications.subtitle') }}</p>
+        <h1 class="text-lg font-semibold tracking-tight text-ink">{{ t('adminNotifications.title') }}</h1>
+        <p class="text-xs text-ink-muted">{{ t('adminNotifications.subtitle') }}</p>
       </div>
       <button
         type="button"
         :disabled="isLoading"
         :aria-label="t('adminDashboard.nav.refresh')"
         :title="t('adminDashboard.nav.refresh')"
-        class="inline-flex size-8 items-center justify-center rounded-lg border border-hairline bg-surface text-ink-muted transition-colors hover:bg-surface-hover hover:text-ink disabled:opacity-50"
+        class="nd-btn !h-8 text-xs"
         @click="loadData"
       >
-        <UiBaseIcon :path="mdiRefresh" :size="16" :class="{ 'animate-spin': isLoading }" />
+        <UiBaseIcon :path="mdiRefresh" :size="14" :class="{ 'animate-spin': isLoading }" />
+        <span>Reload</span>
       </button>
     </div>
 
-    <!-- Main container with pill tabs matching EmailsManager -->
-    <section class="space-y-5 rounded-xl border border-hairline bg-card-background p-4 sm:p-5">
-      <div class="flex flex-wrap items-center gap-1.5 border-b border-hairline pb-3" role="tablist">
+    <!-- Flush underline tabs -->
+    <section class="space-y-5">
+      <div class="flex flex-wrap items-center gap-4 border-b border-hairline" role="tablist">
         <button
           type="button"
           role="tab"
           :aria-selected="activeTab === 'send'"
           :class="[
-            'rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors',
-            activeTab === 'send' ? 'bg-brand/15 text-brand' : 'text-ink-muted hover:bg-surface-hover hover:text-ink',
+            '-mb-px border-b-2 pb-2 text-xs font-semibold transition-colors',
+            activeTab === 'send' ? 'border-brand-solid text-ink' : 'border-transparent text-ink-muted hover:text-ink',
           ]"
-          @click="activeTab = 'send'"
+          @click="selectTab('send')"
         >
           {{ t('adminNotifications.tabs.send') }}
         </button>
@@ -228,10 +246,10 @@ onMounted(loadData);
           role="tab"
           :aria-selected="activeTab === 'registry'"
           :class="[
-            'rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors',
-            activeTab === 'registry' ? 'bg-brand/15 text-brand' : 'text-ink-muted hover:bg-surface-hover hover:text-ink',
+            '-mb-px border-b-2 pb-2 text-xs font-semibold transition-colors',
+            activeTab === 'registry' ? 'border-brand-solid text-ink' : 'border-transparent text-ink-muted hover:text-ink',
           ]"
-          @click="activeTab = 'registry'"
+          @click="selectTab('registry')"
         >
           {{ t('adminNotifications.tabs.registry') }}
         </button>

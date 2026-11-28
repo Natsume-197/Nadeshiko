@@ -36,12 +36,32 @@ const { t } = useI18n();
 const { formatNumber, formatDate } = useFormat();
 const localePath = useLocalePath();
 const route = useRoute();
+const router = typeof useRouter === 'function' ? useRouter() : null;
+const templatesTabRef = ref<{ refresh: () => Promise<void> } | null>(null);
+const broadcastsTabRef = ref<{ refresh: () => Promise<void> } | null>(null);
 
 const activeTab = ref<Tab>(
   route.query.tab === 'suppressed' || route.query.tab === 'types' || route.query.tab === 'broadcasts'
     ? (route.query.tab as Tab)
     : 'sent',
 );
+
+function selectTab(tab: Tab) {
+  activeTab.value = tab;
+  if (router && route.query.tab !== tab) {
+    void router.replace({ query: { ...route.query, tab } });
+  }
+}
+
+function handleRefresh() {
+  if (activeTab.value === 'types') {
+    void templatesTabRef.value?.refresh();
+  } else if (activeTab.value === 'broadcasts') {
+    void broadcastsTabRef.value?.refresh();
+  } else {
+    void fetchPage();
+  }
+}
 const search = ref(typeof route.query.q === 'string' ? route.query.q : '');
 const kind = ref('');
 const campaign = ref(typeof route.query.campaign === 'string' ? route.query.campaign : '');
@@ -139,6 +159,14 @@ function fetchNow() {
 
 watch(search, () => scheduleSearch());
 watch([kind, campaign, status, days], fetchNow);
+watch(
+  () => route.query.tab,
+  (tab) => {
+    if (tab === 'sent' || tab === 'suppressed' || tab === 'types' || tab === 'broadcasts') {
+      activeTab.value = tab;
+    }
+  },
+);
 watch(activeTab, () => {
   total.value = 0;
   fetchNow();
@@ -147,7 +175,7 @@ watch(activeTab, () => {
 function openCampaignLog(campaignKey: string) {
   campaign.value = campaignKey;
   kind.value = 'broadcast';
-  activeTab.value = 'sent';
+  selectTab('sent');
 }
 
 async function openDetail(email: AdminEmailSend) {
@@ -206,35 +234,45 @@ onMounted(() => fetchPage(0));
 </script>
 
 <template>
-  <div data-testid="admin-emails" class="space-y-5">
-    <div class="flex items-center justify-between gap-3">
-      <h1 class="text-2xl font-bold tracking-tight text-ink">{{ t('adminEmails.title') }}</h1>
+  <div data-testid="admin-emails" class="space-y-4">
+    <!-- PostHog-style compact header -->
+    <div class="flex items-center justify-between gap-3 border-b border-hairline pb-3">
+      <div>
+        <h1 class="text-lg font-semibold tracking-tight text-ink">{{ t('adminEmails.title') }}</h1>
+      </div>
       <button
         type="button"
         data-testid="emails-refresh"
         :disabled="isLoading"
         :aria-label="t('adminDashboard.nav.refresh')"
         :title="t('adminDashboard.nav.refresh')"
-        class="inline-flex size-8 items-center justify-center rounded-lg border border-hairline bg-surface text-ink-muted transition-colors hover:bg-surface-hover hover:text-ink disabled:opacity-50"
-        @click="fetchPage()"
+        class="nd-btn !h-8 text-xs"
+        @click="handleRefresh()"
       >
-        <UiBaseIcon :path="mdiRefresh" :size="16" :class="{ 'animate-spin': isLoading }" />
+        <UiBaseIcon :path="mdiRefresh" :size="14" :class="{ 'animate-spin': isLoading }" />
+        <span>Reload</span>
       </button>
     </div>
 
-    <div v-if="kpis.length" data-testid="emails-kpis" class="grid grid-cols-2 gap-3 lg:grid-cols-4">
-      <div v-for="kpi in kpis" :key="kpi.id" class="rounded-xl border border-hairline bg-card-background px-4 py-3">
+    <!-- Joined PostHog KPI strip -->
+    <div
+      v-if="kpis.length"
+      data-testid="emails-kpis"
+      class="grid grid-cols-2 divide-y divide-hairline overflow-hidden rounded-lg border border-hairline bg-card-background sm:grid-cols-4 sm:divide-y-0 sm:divide-x"
+    >
+      <div v-for="kpi in kpis" :key="kpi.id" class="px-4 py-2.5">
         <div class="text-[11px] font-medium text-ink-faint">
           {{ t(`adminEmails.kpi.${kpi.id}`) }} · {{ t('adminEmails.last24h') }}
         </div>
-        <div :data-testid="`emails-kpi-${kpi.id}`" :class="['mt-1 text-2xl font-bold tabular-nums', kpi.tone]">
+        <div :data-testid="`emails-kpi-${kpi.id}`" :class="['mt-0.5 text-xl font-bold tabular-nums', kpi.tone]">
           {{ formatNumber(kpi.value) }}
         </div>
       </div>
     </div>
 
-    <section class="space-y-4 rounded-xl border border-hairline bg-card-background p-4">
-      <div class="flex flex-wrap items-center gap-1.5 border-b border-hairline pb-3" role="tablist">
+    <!-- Flush underline tabs -->
+    <section class="space-y-4">
+      <div class="flex flex-wrap items-center gap-4 border-b border-hairline" role="tablist">
         <button
           v-for="tab in (['sent', 'suppressed', 'types', 'broadcasts'] as const)"
           :key="tab"
@@ -243,17 +281,23 @@ onMounted(() => fetchPage(0));
           :data-testid="`emails-tab-${tab}`"
           :aria-selected="activeTab === tab"
           :class="[
-            'rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors',
-            activeTab === tab ? 'bg-brand/15 text-brand' : 'text-ink-muted hover:bg-surface-hover hover:text-ink',
+            '-mb-px border-b-2 pb-2 text-xs font-semibold transition-colors',
+            activeTab === tab
+              ? 'border-brand-solid text-ink'
+              : 'border-transparent text-ink-muted hover:text-ink',
           ]"
-          @click="activeTab = tab"
+          @click="selectTab(tab)"
         >
           {{ t(`adminEmails.tabs.${tab}`) }}
         </button>
       </div>
 
-      <AdminEmailTemplatesTab v-if="activeTab === 'types'" />
-      <AdminEmailBroadcastsTab v-else-if="activeTab === 'broadcasts'" @open-campaign-log="openCampaignLog" />
+      <AdminEmailTemplatesTab v-if="activeTab === 'types'" ref="templatesTabRef" />
+      <AdminEmailBroadcastsTab
+        v-else-if="activeTab === 'broadcasts'"
+        ref="broadcastsTabRef"
+        @open-campaign-log="openCampaignLog"
+      />
 
       <template v-else>
       <div class="flex flex-wrap items-center gap-2">

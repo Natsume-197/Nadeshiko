@@ -1,5 +1,14 @@
 <script setup lang="ts">
-import { mdiOpenInNew, mdiRefresh } from '@mdi/js';
+import {
+  mdiAccountGroupOutline,
+  mdiArrowRight,
+  mdiEmailOutline,
+  mdiHeartOutline,
+  mdiOpenInNew,
+  mdiRefresh,
+  mdiShieldCrownOutline,
+  mdiThumbUpOutline,
+} from '@mdi/js';
 import {
   ADMIN_CATEGORIES,
   ADMIN_DIRECTORY_ITEMS,
@@ -12,6 +21,58 @@ const { formatNumber } = useFormat();
 const localePath = useLocalePath();
 
 const { overview, isLoading, refresh } = useAdminOverview();
+
+const pulseCards = computed(() => {
+  const o = overview.value;
+  const emailProblems = (o?.emails?.failed ?? 0) + (o?.emails?.bounced ?? 0);
+  return [
+    {
+      id: 'reports',
+      label: t('accountSettings.tabs.reports'),
+      value: o ? formatNumber(o.reports.open) : '—',
+      sub: 'open reports',
+      icon: mdiShieldCrownOutline,
+      to: '/admin/reports',
+      tone: o && o.reports.open > 0 ? 'text-brand' : 'text-ink',
+    },
+    {
+      id: 'requests',
+      label: t('requests.admin.tab'),
+      value: o ? formatNumber(o.requests.open) : '—',
+      sub: o && o.requests.boostedOpen > 0 ? `${o.requests.boostedOpen} boosted` : 'open requests',
+      icon: mdiThumbUpOutline,
+      to: '/admin/requests',
+      tone: o && o.requests.boostedOpen > 0 ? 'text-amber-300' : 'text-ink',
+    },
+    {
+      id: 'users',
+      label: t('accountSettings.tabs.users'),
+      value: o ? formatNumber(o.users.total) : '—',
+      sub: 'total accounts',
+      icon: mdiAccountGroupOutline,
+      to: '/admin/users',
+      tone: 'text-ink',
+    },
+    {
+      id: 'patrons',
+      label: t('adminDashboard.items.patreonTitle'),
+      value: o ? formatNumber(o.users.activePatrons) : '—',
+      sub: 'active patrons',
+      icon: mdiHeartOutline,
+      to: '/admin/patreon',
+      tone: o && o.users.activePatrons > 0 ? 'text-emerald-300' : 'text-ink',
+    },
+    {
+      id: 'emails',
+      label: t('adminEmails.title'),
+      value: o ? formatNumber(emailProblems) : '—',
+      sub: '24h issues',
+      icon: mdiEmailOutline,
+      to: '/admin/emails',
+      tone: o?.emails?.failed ? 'text-red-300' : emailProblems > 0 ? 'text-amber-300' : 'text-emerald-300',
+    },
+  ];
+});
 
 function itemsForCategory(category: AdminCategoryId) {
   return ADMIN_DIRECTORY_ITEMS.filter((item) => item.category === category).map((item) => ({
@@ -41,14 +102,14 @@ function badgeClasses(tone: 'brand' | 'warning' | 'danger' | 'success' | 'neutra
 </script>
 
 <template>
-  <div data-testid="admin-dashboard-home" class="space-y-8">
-    <!-- Title + refresh -->
-    <div class="flex items-end justify-between gap-3">
+  <div data-testid="admin-dashboard-home" class="space-y-6">
+    <!-- PostHog-style compact page header -->
+    <div class="flex items-center justify-between gap-3 border-b border-hairline pb-4">
       <div>
-        <h1 class="text-2xl font-bold tracking-tight text-ink">
+        <h1 class="text-lg font-semibold tracking-tight text-ink">
           {{ t('adminDashboard.title') }}
         </h1>
-        <p class="mt-0.5 text-sm text-ink-muted">
+        <p class="text-xs text-ink-muted">
           {{ t('adminDashboard.subtitle') }}
         </p>
       </div>
@@ -59,60 +120,87 @@ function badgeClasses(tone: 'brand' | 'warning' | 'danger' | 'success' | 'neutra
         :disabled="isLoading"
         :aria-label="t('adminDashboard.nav.refresh')"
         :title="t('adminDashboard.nav.refresh')"
-        class="inline-flex size-8 items-center justify-center rounded-lg border border-hairline bg-surface text-ink-muted transition-colors hover:bg-surface-hover hover:text-ink disabled:opacity-50"
+        class="nd-btn !h-8 text-xs"
         @click="refresh()"
       >
-        <UiBaseIcon :path="mdiRefresh" :size="16" :class="{ 'animate-spin': isLoading }" />
+        <UiBaseIcon :path="mdiRefresh" :size="14" :class="{ 'animate-spin': isLoading }" />
+        <span>Reload</span>
       </button>
     </div>
 
-    <!-- 3-column categorized directory -->
+    <!-- Compact joined KPI metric strip -->
+    <div class="grid grid-cols-2 divide-y divide-hairline overflow-hidden rounded-lg border border-hairline bg-card-background sm:grid-cols-3 sm:divide-y-0 sm:divide-x lg:grid-cols-5">
+      <NuxtLink
+        v-for="card in pulseCards"
+        :key="card.id"
+        :to="localePath(card.to)"
+        class="group flex flex-col justify-between px-4 py-3 transition-colors hover:bg-surface-hover"
+      >
+        <div class="flex items-center justify-between text-[11px] font-medium text-ink-faint">
+          <span>{{ card.label }}</span>
+          <UiBaseIcon :path="card.icon" :size="14" class="text-ink-faint group-hover:text-brand transition-colors" />
+        </div>
+        <div class="mt-1.5 flex items-baseline justify-between gap-2">
+          <span :class="['text-xl font-bold tabular-nums tracking-tight', card.tone]">{{ card.value }}</span>
+          <span class="truncate text-[11px] text-ink-faint">{{ card.sub }}</span>
+        </div>
+      </NuxtLink>
+    </div>
+
+    <!-- Categorized flat workspace panels -->
     <section
       data-testid="admin-directory"
-      class="grid grid-cols-1 gap-x-6 gap-y-8 md:grid-cols-3"
+      class="grid grid-cols-1 gap-4 md:grid-cols-3"
     >
       <div
         v-for="cat in ADMIN_CATEGORIES"
         :key="cat.id"
         :data-testid="`admin-section-${cat.id}`"
-        class="space-y-3"
+        class="overflow-hidden rounded-lg border border-hairline bg-card-background"
       >
-        <h2 class="border-b border-hairline pb-2 text-xs font-semibold uppercase tracking-wider text-ink-faint">
-          {{ t(cat.labelKey) }}
-        </h2>
+        <div class="border-b border-hairline bg-surface/60 px-3.5 py-2">
+          <h2 class="text-[11px] font-semibold uppercase tracking-wider text-ink-faint">
+            {{ t(cat.labelKey) }}
+          </h2>
+        </div>
 
-        <ul class="space-y-1">
+        <ul class="divide-y divide-hairline">
           <li v-for="{ item, badge } in itemsForCategory(cat.id)" :key="item.id">
             <NuxtLink
               :to="item.external ? item.to : localePath(item.to)"
               :target="item.external ? '_blank' : undefined"
               :rel="item.external ? 'noopener noreferrer' : undefined"
               :data-testid="`admin-dir-${item.id}`"
-              class="group flex items-start gap-3 rounded-lg px-2.5 py-2 transition-colors hover:bg-surface-hover"
+              class="group flex items-center gap-3 px-3.5 py-2.5 transition-colors hover:bg-surface-hover"
             >
-              <span class="mt-0.5 shrink-0 text-brand">
-                <UiBaseIcon :path="item.icon" :size="18" />
+              <span class="flex size-7 shrink-0 items-center justify-center rounded-md bg-surface-lift text-brand">
+                <UiBaseIcon :path="item.icon" :size="16" />
               </span>
               <span class="min-w-0 flex-1">
-                <span :class="['flex items-center', item.external ? 'gap-1.5' : 'gap-2']">
-                  <span class="text-sm font-medium text-ink group-hover:text-brand transition-colors">
+                <span class="flex items-center gap-1.5">
+                  <span class="truncate text-xs font-semibold text-ink group-hover:text-brand transition-colors">
                     {{ t(item.titleKey) }}
                   </span>
-                  <UiBaseIcon v-if="item.external" :path="mdiOpenInNew" :size="12" class="text-ink-faint" />
+                  <UiBaseIcon v-if="item.external" :path="mdiOpenInNew" :size="11" class="shrink-0 text-ink-faint" />
                   <span
                     v-if="badge"
                     :class="[
-                      'rounded-full border px-1.5 py-0.5 text-[10px] font-semibold leading-none',
+                      'rounded-full border px-1.5 py-0.5 text-[10px] font-semibold leading-none tabular-nums',
                       badgeClasses(badge.tone),
                     ]"
                   >
                     {{ badgeLabel(badge) }}
                   </span>
                 </span>
-                <span class="mt-0.5 block text-xs leading-snug text-ink-faint">
+                <span class="mt-0.5 block truncate text-[11px] text-ink-faint">
                   {{ t(item.descriptionKey) }}
                 </span>
               </span>
+              <UiBaseIcon
+                :path="mdiArrowRight"
+                :size="13"
+                class="shrink-0 text-ink-faint opacity-0 transition-opacity group-hover:opacity-100"
+              />
             </NuxtLink>
           </li>
         </ul>
