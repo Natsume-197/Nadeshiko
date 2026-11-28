@@ -15,6 +15,7 @@ import {
   mdiVolumeHigh,
 } from '@mdi/js';
 import { useTimeoutFn } from '@vueuse/core';
+import ExportSettingsButton from '~/components/export/SettingsButton.vue';
 import type { AnkiConnectFailure, AnkiProfile } from '@/stores/anki';
 import { isAnkiUnavailable } from '@/stores/anki';
 import { isHttpAnkiAddress, isSafariBrowser } from '~/utils/ankiAddress';
@@ -431,6 +432,8 @@ watch(canEditProfile, (editable) => {
             </button>
           </div>
         </div>
+
+        <div class="mt-4"><ExportSettingsButton :compact="false" /></div>
 
         <div class="mt-4 flex items-center gap-3">
           <!-- biome-ignore lint/a11y/noLabelWithoutControl: named by the bound aria-label -->

@@ -2339,5 +2339,19 @@
     "shown": "Spoiler ditampilkan",
     "show": "Tampilkan",
     "hide": "Sembunyikan"
+  },
+  "exportSettings": {
+    "title": "Pengaturan ekspor",
+    "appliesTo": "Untuk gambar dan audio kalimat pada unduhan dan Anki.",
+    "audioVolume": "Volume audio",
+    "original": "Asli",
+    "audioHelp": "Volume lebih rendah menghasilkan berkas WAV. Volume pemutar tidak berubah.",
+    "imageQuality": "Kualitas gambar",
+    "imageHelp": "Nilai lebih rendah mengompres ulang ke WebP dengan resolusi yang sama. Tidak meningkatkan kualitas sumber.",
+    "savedLocally": "Disimpan di browser ini. Asli mempertahankan berkas sumber.",
+    "restore": "Pulihkan yang asli",
+    "done": "Selesai",
+    "imageFailed": "Tidak dapat menyiapkan gambar. Gambar asli tidak digunakan sebagai pengganti.",
+    "audioFailed": "Tidak dapat menyiapkan audio. Audio asli tidak digunakan sebagai pengganti."
   }
 }

@@ -1,5 +1,7 @@
 // @vitest-environment happy-dom
-import { mount } from '@vue/test-utils';
+import { mount, flushPromises } from '@vue/test-utils';
+import { useExportSettingsStore } from '~/stores/exportSettings';
+import * as apiErrors from '~/utils/apiError';
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
 import { ref } from 'vue';
 
@@ -105,9 +107,9 @@ const ItemStub = {
     :data-tooltip="tooltip ?? ''" @click="$emit('click')">{{ text }}</button>`,
 };
 
-function render() {
+function render(result: unknown = content()) {
   const wrapper = mount(SegmentActionsContainer, {
-    props: { content: content() } as never,
+    props: { content: result } as never,
     global: {
       mocks: { $t: (k: string) => k },
       stubs: {
@@ -172,6 +174,13 @@ describe('download choices', () => {
 
     expect(wrapper.findAll('[data-testid="download-dropdown"] [data-nd-keep-open]')).toHaveLength(1);
   });
+});
+
+test('export settings are on a separate gear button, with no controls inside Download', () => {
+  const wrapper = render();
+  expect(wrapper.find('[data-testid="download-dropdown"] input[type="range"]').exists()).toBe(false);
+  expect(wrapper.find('[data-testid="download-dropdown"] select').exists()).toBe(false);
+  expect(wrapper.find('button[aria-label="exportSettings.title"]').exists()).toBe(true);
 });
 
 describe('a profile that is not finished', () => {
@@ -271,5 +280,104 @@ describe('the key field, which only the note picker needs', () => {
     const wrapper = render();
 
     expect(tooltip(wrapper, PICKER)).toBe('anki.keyFieldRequired');
+  });
+});
+
+describe('audio downloads', () => {
+  const download = vi.fn();
+  const originalFetch = globalThis.fetch;
+  const originalContext = globalThis.AudioContext;
+  let blobs: Blob[];
+
+  beforeEach(() => {
+    blobs = [];
+    vi.stubGlobal('downloadAudioOrImage', download);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response('source-audio')),
+    );
+    vi.stubGlobal(
+      'AudioContext',
+      class {
+        close = async () => {};
+        async decodeAudioData() {
+          return { numberOfChannels: 1, length: 1, sampleRate: 44100, getChannelData: () => new Float32Array([1]) };
+        }
+      },
+    );
+    vi.spyOn(URL, 'createObjectURL').mockImplementation((blob) => {
+      if (blob instanceof Blob) blobs.push(blob);
+      return 'blob:download';
+    });
+    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+  });
+  afterEach(() => {
+    vi.stubGlobal('fetch', originalFetch);
+    vi.stubGlobal('AudioContext', originalContext);
+    vi.restoreAllMocks();
+  });
+
+  test('keeps the default download on the original MP3 path', async () => {
+    const wrapper = render();
+    await item(wrapper, 'searchpage.main.buttons.audio').trigger('click');
+    await flushPromises();
+    expect(download).toHaveBeenCalledWith('a.mp3', 'a.mp3');
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
+  test('downloads scaled audio as a distinct WAV', async () => {
+    useExportSettingsStore().setAudioVolume(50);
+    const wrapper = render();
+    await item(wrapper, 'searchpage.main.buttons.audio').trigger('click');
+    await flushPromises();
+    expect(download).toHaveBeenCalledWith('blob:download', 'a-volume-50.wav', true);
+    expect(blobs).toHaveLength(1);
+    const bytes = await blobs[0]!.arrayBuffer();
+    expect(new DataView(bytes).getInt16(44, true)).toBe(16383);
+  });
+
+  test('reports conversion failure without downloading the original', async () => {
+    useExportSettingsStore().setAudioVolume(50);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response('', { status: 403 })),
+    );
+    const error = vi.spyOn(apiErrors, 'handleApiError').mockReturnValue(null);
+    const wrapper = render();
+    await item(wrapper, 'searchpage.main.buttons.audio').trigger('click');
+    await flushPromises();
+    expect(download).not.toHaveBeenCalled();
+    expect(error).toHaveBeenCalledWith('media:audio-export-failed', expect.any(Error), {
+      toastKey: 'exportSettings.audioFailed',
+    });
+  });
+
+  test('downloads an image using the selected WebP quality', async () => {
+    useExportSettingsStore().setImageQuality(75);
+    const originalBitmap = globalThis.createImageBitmap;
+    vi.stubGlobal('createImageBitmap', async () => ({ width: 640, height: 360, close: vi.fn() }));
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({ drawImage: vi.fn() } as never);
+    vi.spyOn(HTMLCanvasElement.prototype, 'toBlob').mockImplementation((callback) => {
+      callback(new Blob(['encoded'], { type: 'image/webp' }));
+    });
+    const wrapper = render();
+    await item(wrapper, 'searchpage.main.buttons.image').trigger('click');
+    await flushPromises();
+    expect(download).toHaveBeenCalledWith('blob:download', 'i-quality-75.webp', true);
+    vi.stubGlobal('createImageBitmap', originalBitmap);
+  });
+
+  test('downloads an expanded clip with its range and volume in the filename', async () => {
+    useExportSettingsStore().setAudioVolume(25);
+    const wrapper = render({
+      ...content(),
+      blobAudioUrl: 'blob:expanded',
+      blobAudio: new Blob(['expanded']),
+      expandedWindow: { startMs: 0, endMs: 4000 },
+    });
+    await item(wrapper, 'searchpage.main.buttons.dl-expanded').trigger('click');
+    await flushPromises();
+    expect(download).toHaveBeenCalledWith('blob:download', 's1-expanded-0-4000-volume-25.wav', true);
+    expect(globalThis.fetch).not.toHaveBeenCalled();
   });
 });

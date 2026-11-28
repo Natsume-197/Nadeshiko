@@ -1,5 +1,6 @@
 import { describe, test, expect, beforeEach, vi } from 'vitest';
 import { formatMs } from '~/utils/misc';
+import { useExportSettingsStore } from './exportSettings';
 
 /**
  * Distinguish connection/setup failures and preserve existing word fields when an export has no
@@ -81,7 +82,7 @@ function fetchBody(index: number): { action: string; params: Record<string, any>
 /** The bodies of every AnkiConnect call made so far, parsed. */
 function ankiCalls(): { action: string; params: Record<string, any> }[] {
   const mock = globalThis.fetch as unknown as { mock: { calls: [string, { body: string }][] } };
-  return mock.mock.calls.map((call) => JSON.parse(call[1].body));
+  return mock.mock.calls.filter((call) => call[1]?.body).map((call) => JSON.parse(call[1].body));
 }
 
 /** The body of the one call with `action`, or undefined if it was never made. */
@@ -1424,8 +1425,8 @@ describe('addResultToAnki: audio that came from the page', () => {
     result: string | null = null;
     onloadend: (() => void) | null = null;
     readAsDataURL(blob: Blob) {
-      void blob.text().then((text) => {
-        this.result = `data:audio/wav;base64,${Buffer.from(text).toString('base64')}`;
+      void blob.arrayBuffer().then((bytes) => {
+        this.result = `data:audio/wav;base64,${Buffer.from(bytes).toString('base64')}`;
         this.onloadend?.();
       });
     }
@@ -1440,6 +1441,7 @@ describe('addResultToAnki: audio that came from the page', () => {
     ...sentence,
     blobAudioUrl: 'blob:https://nadeshiko.co/abc',
     blobAudio: new Blob(['fake-wav-bytes'], { type: 'audio/wav' }),
+    expandedWindow: { startMs: 61000, endMs: 64000 },
   };
 
   async function exportAudio(result: unknown) {
@@ -1462,7 +1464,7 @@ describe('addResultToAnki: audio that came from the page', () => {
   });
 
   test('is stored as a wav, matching what the trimmer produced', async () => {
-    expect((await exportAudio(withBlobAudio))?.params.filename).toBe('seg-1.wav');
+    expect((await exportAudio(withBlobAudio))?.params.filename).toBe('seg-1-expanded-61000-64000.wav');
   });
 
   test('sends the bytes without the data-url header AnkiConnect would store literally', async () => {
@@ -1470,6 +1472,90 @@ describe('addResultToAnki: audio that came from the page', () => {
 
     expect(stored?.params.data).not.toContain('base64,');
     expect(stored?.params.data).not.toContain('data:');
+  });
+
+  test.each([false, true])('sends quieter audio as WAV data, expanded=%s', async (expanded) => {
+    useExportSettingsStore().setAudioVolume(50);
+    const originalContext = globalThis.AudioContext;
+    const close = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal(
+      'AudioContext',
+      class {
+        close = close;
+        async decodeAudioData() {
+          return { numberOfChannels: 1, length: 1, sampleRate: 44100, getChannelData: () => new Float32Array([1]) };
+        }
+      },
+    );
+    const store = withProfile(
+      makeProfile({ fields: [{ key: 'Audio', value: '{sentence-audio}' }], openBrowserOnExport: false }),
+    );
+    queueFetch(
+      ankiOk([12]),
+      ankiOk([{ noteId: 12, fields: {}, modelName: 'Lapis' }]),
+      ...(expanded ? [] : [new Response('source-audio')]),
+      ankiOk('quiet.wav'),
+      ankiOk(null),
+    );
+    await store.addResultToAnki(asResult(expanded ? withBlobAudio : sentence), {});
+    const stored = ankiCall('storeMediaFile');
+    expect(stored?.params.filename).toBe(expanded ? 'seg-1-expanded-61000-64000-volume-50.wav' : 'seg-1-volume-50.wav');
+    expect(stored?.params.url).toBeUndefined();
+    const bytes = Buffer.from(stored?.params.data, 'base64');
+    expect(bytes.toString('ascii', 0, 4)).toBe('RIFF');
+    expect(bytes.readInt16LE(44)).toBe(16383);
+    expect(close).toHaveBeenCalledOnce();
+    vi.stubGlobal('AudioContext', originalContext);
+  });
+
+  test('sends a recompressed image as WebP data with a quality-specific filename', async () => {
+    useExportSettingsStore().setImageQuality(75);
+    const originalDocument = globalThis.document;
+    const originalBitmap = globalThis.createImageBitmap;
+    const close = vi.fn();
+    vi.stubGlobal('createImageBitmap', async () => ({ width: 640, height: 360, close }));
+    vi.stubGlobal('document', {
+      createElement: () => ({
+        width: 0,
+        height: 0,
+        getContext: () => ({ drawImage: vi.fn() }),
+        toBlob: (callback: BlobCallback) => callback(new Blob(['webp-bytes'], { type: 'image/webp' })),
+      }),
+    });
+    const store = withProfile(
+      makeProfile({ fields: [{ key: 'Image', value: '{image}' }], openBrowserOnExport: false }),
+    );
+    queueFetch(
+      ankiOk([12]),
+      ankiOk([{ noteId: 12, fields: {}, modelName: 'Lapis' }]),
+      new Response('original-image'),
+      ankiOk('quiet.webp'),
+      ankiOk(null),
+    );
+    await store.addResultToAnki(asResult(sentence), {});
+    const stored = ankiCall('storeMediaFile');
+    expect(stored?.params.filename).toBe('seg-1-quality-75.webp');
+    expect(stored?.params.url).toBeUndefined();
+    expect(Buffer.from(stored?.params.data, 'base64').toString()).toBe('webp-bytes');
+    expect(close).toHaveBeenCalledOnce();
+    vi.stubGlobal('document', originalDocument);
+    vi.stubGlobal('createImageBitmap', originalBitmap);
+  });
+
+  test('reports conversion failure and never sends the louder original to Anki', async () => {
+    useExportSettingsStore().setAudioVolume(25);
+    const store = withProfile(
+      makeProfile({ fields: [{ key: 'Audio', value: '{sentence-audio}' }], openBrowserOnExport: false }),
+    );
+    queueFetch(
+      ankiOk([12]),
+      ankiOk([{ noteId: 12, fields: {}, modelName: 'Lapis' }]),
+      new Response('', { status: 403 }),
+      ankiOk(null),
+    );
+    await store.addResultToAnki(asResult(sentence), {});
+    expect(ankiCall('storeMediaFile')).toBeUndefined();
+    expect(toasts.error).toHaveBeenCalledWith('exportSettings.audioFailed');
   });
 
   test('but the CDN mp3 is fetched by AnkiConnect itself when there is no blob', async () => {

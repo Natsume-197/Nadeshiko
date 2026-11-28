@@ -128,6 +128,9 @@ import { reportError, reportEvent } from '~/utils/reportError';
 import { cspViolationLog, installCspViolationLog } from '~/utils/cspViolations';
 import { classifyAnkiAddress } from '~/utils/ankiAddress';
 import { buildSentencePath } from '~/utils/routes';
+import { useExportSettingsStore } from '~/stores/exportSettings';
+import { prepareImageExport, type MediaExportSource } from '~/utils/exportMedia';
+import { prepareAudioExport, sentenceAudioExportSource } from '~/utils/audioExport';
 
 /** Sample enough recent notes to tolerate strays without fetching every note's full card HTML. */
 const MODEL_SAMPLE_SIZE = 100;
@@ -664,37 +667,51 @@ export const ankiStore = defineStore('anki', {
           reportError(`anki:store-${kind}-failed`, error, { 'segment.publicId': sentence.segment.publicId });
         };
 
-        if (needsImage) {
-          const req = this.executeAction('storeMediaFile', {
-            filename: `${sentence.segment.publicId}.webp`,
-            url: sentence.segment.urls.imageUrl,
-          }).then((r) => {
-            imageResult = r;
+        const storePreparedMedia = async (media: MediaExportSource) => {
+          if (media.kind === 'url') {
+            return this.executeAction('storeMediaFile', { filename: media.filename, url: media.url });
+          }
+          const blob64 = await blobToBase64(media.blob);
+          return this.executeAction('storeMediaFile', {
+            filename: media.filename,
+            data: blob64.substring(blob64.indexOf(',') + 1),
           });
-          mediaRequests.push(req.catch((error: unknown) => ignoreMediaFailure(error, 'image')));
+        };
+
+        if (needsImage) {
+          const quality = useExportSettingsStore().imageQuality;
+          const req = prepareImageExport(
+            {
+              kind: 'url',
+              filename: `${sentence.segment.publicId}.webp`,
+              url: sentence.segment.urls.imageUrl,
+            },
+            quality,
+          )
+            .then(storePreparedMedia)
+            .then((r) => {
+              imageResult = r;
+            });
+          mediaRequests.push(
+            req.catch((error: unknown) => {
+              ignoreMediaFailure(error, 'image');
+              useToastError($i18n.t('exportSettings.imageFailed'));
+            }),
+          );
         }
 
         if (needsAudio) {
-          let req;
-          if (sentence.blobAudioUrl && sentence.blobAudio) {
-            const blob64 = await blobToBase64(sentence.blobAudio);
-            const raw = blob64.substring(blob64.indexOf(',') + 1);
-            req = this.executeAction('storeMediaFile', {
-              filename: `${sentence.segment.publicId}.wav`,
-              data: raw,
-            });
-          } else {
-            req = this.executeAction('storeMediaFile', {
-              filename: `${sentence.segment.publicId}.mp3`,
-              url: sentence.segment.urls.audioUrl,
-            });
-          }
+          const volume = useExportSettingsStore().audioVolume;
+          const req = prepareAudioExport(sentenceAudioExportSource(sentence), volume).then(storePreparedMedia);
           mediaRequests.push(
             req
               .then((r) => {
                 audioResult = r;
               })
-              .catch((error: unknown) => ignoreMediaFailure(error, 'audio')),
+              .catch((error: unknown) => {
+                ignoreMediaFailure(error, 'audio');
+                useToastError($i18n.t('exportSettings.audioFailed'));
+              }),
           );
         }
 

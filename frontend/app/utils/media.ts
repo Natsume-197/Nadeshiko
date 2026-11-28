@@ -1,6 +1,7 @@
 import type { Media } from '@brigadasos/nadeshiko-sdk';
 import { handleApiError } from '~/utils/apiError';
 import { buildSentencePath } from '~/utils/routes';
+import { encodeWav } from '~/utils/wav';
 
 type AiringFormat = Media['airingFormat'];
 
@@ -259,72 +260,6 @@ export async function fetchAudioSegment(url: string): Promise<{ response: Respon
 
 let audioContext: AudioContext | null;
 export async function concatenateAudios(urls: string[]): Promise<ConcatenatedAudio> {
-  // https://ccrma.stanford.edu/courses/422-winter-2014/projects/WaveFormat/
-  function encodeWAV(samples: Float32Array, channels: number, sampleRate: number): DataView {
-    const buffer = new ArrayBuffer(44 + samples.length * 2);
-    const view = new DataView(buffer);
-
-    function writeString(view: DataView, offset: number, string: string) {
-      for (let i = 0; i < string.length; i++) {
-        view.setUint8(offset + i, string.charCodeAt(i));
-      }
-    }
-
-    // ChunkID: Contains the letters "RIFF" in ASCII form
-    writeString(view, 0, 'RIFF');
-
-    // ChunkSize: 36 + SubChunk2Size
-    view.setUint32(4, 36 + samples.length * 2, true);
-
-    // Format: Contains the letters "WAVE"
-    writeString(view, 8, 'WAVE');
-
-    // Subchunk1ID: the letters "fmt "
-    writeString(view, 12, 'fmt ');
-
-    // Subchunk1Size: 16 for PCM.
-    view.setUint32(16, 16, true);
-
-    // AudioFormat: PCM = 1 (i.e. Linear quantization)
-    // Values other than 1 indicate some form of compression.
-    view.setUint16(20, 1, true);
-
-    // NumChannels: Mono = 1, Stereo = 2, etc
-    view.setUint16(22, channels, true);
-
-    // SampleRate: 8000, 44100
-    view.setUint32(24, sampleRate, true);
-
-    // ByteRate: == SampleRate * NumChannels * BitsPerSample/8
-    view.setUint32(28, sampleRate * channels * 2, true);
-
-    // BlockAlign: == NumChannels * BitsPerSample/8
-    view.setUint16(32, channels * 2, true);
-
-    // BitsPerSample: 8 bits = 8, 16 bits = 16, etc.
-    view.setUint16(34, 16, true);
-
-    // The "data" subchunk contains the size of the data and the actual sound:
-
-    // Subchunk2ID: Contains the letters "data"
-    writeString(view, 36, 'data');
-
-    // Subchunk2Size: == NumSamples * NumChannels * BitsPerSample/8
-    view.setUint32(40, samples.length * 2, true);
-
-    // Data: The actual sound data.
-    floatTo16BitPCM(view, 44, samples);
-
-    return view;
-  }
-
-  function floatTo16BitPCM(view: DataView, offset: number, input: Float32Array) {
-    for (let i = 0; i < input.length; i++, offset += 2) {
-      const s = Math.max(-1, Math.min(1, input[i] ?? 0));
-      view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7fff, true);
-    }
-  }
-
   const audioBuffers = [];
   if (!audioContext) {
     audioContext = new AudioContext();
@@ -366,19 +301,7 @@ export async function concatenateAudios(urls: string[]): Promise<ConcatenatedAud
     offset += buffer.length;
   });
 
-  // AudioArray/Audiobuffer -> wav
-  const interleaved = new Float32Array(length * channels);
-  for (let channel = 0; channel < channels; channel++) {
-    const channelData = output.getChannelData(channel);
-    for (let i = 0; i < length; i++) {
-      interleaved[i * channels + channel] = channelData[i] ?? 0;
-    }
-  }
-
-  const wav = encodeWAV(interleaved, channels, sampleRate);
-  const wavArrayBuffer = new ArrayBuffer(wav.byteLength);
-  new Uint8Array(wavArrayBuffer).set(new Uint8Array(wav.buffer, wav.byteOffset, wav.byteLength));
-  const blob = new Blob([wavArrayBuffer], { type: 'audio/wav' });
+  const blob = encodeWav(output);
   const blobUrl = window.URL.createObjectURL(blob);
 
   return {
@@ -400,7 +323,7 @@ export function downloadAudioOrImage(url: string | URL | Request, filename: stri
   if (isBlobUrl) {
     const a = document.createElement('a');
     a.href = url as string;
-    a.download = filename.replace('mp3', 'wav');
+    a.download = filename.replace(/\.mp3$/i, '.wav');
     a.click();
     return;
   }

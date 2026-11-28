@@ -2339,5 +2339,19 @@
     "shown": "顯示劇透",
     "show": "顯示",
     "hide": "隱藏"
+  },
+  "exportSettings": {
+    "title": "匯出設定",
+    "appliesTo": "適用於下載和Anki中的圖片及句子音訊。",
+    "audioVolume": "音訊音量",
+    "original": "原始檔案",
+    "audioHelp": "降低音量會產生WAV檔案，不改變播放器音量。",
+    "imageQuality": "圖片品質",
+    "imageHelp": "較低的值會以相同解析度重新壓縮為WebP，無法提高原圖品質。",
+    "savedLocally": "儲存在此瀏覽器中。選擇原始檔案時不進行轉換。",
+    "restore": "恢復原始檔案",
+    "done": "完成",
+    "imageFailed": "無法準備圖片。未使用原始圖片替代。",
+    "audioFailed": "無法準備音訊。未使用原始音訊替代。"
   }
 }

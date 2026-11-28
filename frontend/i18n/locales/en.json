@@ -2339,5 +2339,19 @@
     "shown": "Spoilers shown",
     "show": "Show",
     "hide": "Hide"
+  },
+  "exportSettings": {
+    "title": "Export settings",
+    "appliesTo": "For images and sentence audio in downloads and Anki.",
+    "audioVolume": "Audio volume",
+    "original": "Original",
+    "audioHelp": "Lower volume creates a WAV file. Playback volume stays unchanged.",
+    "imageQuality": "Image quality",
+    "imageHelp": "Lower values re-encode as WebP at the same resolution. They cannot improve the source.",
+    "savedLocally": "Saved in this browser. Original keeps the source file.",
+    "restore": "Restore originals",
+    "done": "Done",
+    "imageFailed": "Could not prepare the image. The original was not substituted.",
+    "audioFailed": "Could not prepare the audio. The original was not substituted."
   }
 }
