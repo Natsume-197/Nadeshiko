@@ -1,18 +1,10 @@
-import { z } from 'zod';
 import type { SearchResult } from '~/types/search';
 import { fetchAudioSegment } from '~/utils/media';
 import { encodeWav } from '~/utils/wav';
 
-const volumeSchema = z.union([z.literal(25), z.literal(50), z.literal(75), z.literal(100)]).catch(100);
-export type AudioExportVolume = z.infer<typeof volumeSchema>;
-export const audioExportVolumes = [100, 75, 50, 25] as const;
-export const normalizeAudioExportVolume = (value: unknown): AudioExportVolume => volumeSchema.parse(value);
+import type { ExportPercent, MediaExportSource } from '~/utils/exportMedia';
 
-export type AudioExportSource =
-  | { kind: 'url'; url: string; filename: string }
-  | { kind: 'blob'; blob: Blob; filename: string };
-
-export function sentenceAudioExportSource(sentence: SearchResult): AudioExportSource {
+export function sentenceAudioExportSource(sentence: SearchResult): MediaExportSource {
   const id = sentence.segment.publicId;
   if (sentence.blobAudioUrl && sentence.blobAudio) {
     const window = sentence.expandedWindow ?? {
@@ -28,10 +20,7 @@ export function sentenceAudioExportSource(sentence: SearchResult): AudioExportSo
   return { kind: 'url', url: sentence.segment.urls.audioUrl, filename: `${id}.mp3` };
 }
 
-export async function prepareAudioExport(
-  source: AudioExportSource,
-  volume: AudioExportVolume,
-): Promise<AudioExportSource> {
+export async function prepareAudioExport(source: MediaExportSource, volume: ExportPercent): Promise<MediaExportSource> {
   if (volume === 100) return source;
 
   const bytes =

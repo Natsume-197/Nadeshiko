@@ -2340,10 +2340,18 @@
     "show": "显示",
     "hide": "隐藏"
   },
-  "audioExport": {
-    "volume": "句子音频导出音量",
-    "original": "原始音量 (100%)",
-    "help": "适用于下载和Anki，包括扩展片段。与播放音量和单词录音无关。保存在此浏览器中。降低音量后将使用更大的WAV文件。",
-    "failed": "无法准备音频。未使用原始音频替代。"
+  "exportSettings": {
+    "title": "导出设置",
+    "appliesTo": "适用于下载和Anki中的图片及句子音频。",
+    "audioVolume": "音频音量",
+    "original": "原始文件",
+    "audioHelp": "降低音量会生成WAV文件，不改变播放器音量。",
+    "imageQuality": "图片质量",
+    "imageHelp": "较低的值会以相同分辨率重新压缩为WebP，无法提高原图质量。",
+    "savedLocally": "保存在此浏览器中。选择原始文件时不进行转换。",
+    "restore": "恢复原始文件",
+    "done": "完成",
+    "imageFailed": "无法准备图片。未使用原始图片替代。",
+    "audioFailed": "无法准备音频。未使用原始音频替代。"
   }
 }

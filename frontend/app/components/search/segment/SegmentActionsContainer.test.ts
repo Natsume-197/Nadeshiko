@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { mount, flushPromises } from '@vue/test-utils';
-import { useAudioExportStore } from '~/stores/audioExport';
+import { useExportSettingsStore } from '~/stores/exportSettings';
 import * as apiErrors from '~/utils/apiError';
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
 import { ref } from 'vue';
@@ -176,6 +176,13 @@ describe('download choices', () => {
   });
 });
 
+test('export settings are on a separate gear button, with no controls inside Download', () => {
+  const wrapper = render();
+  expect(wrapper.find('[data-testid="download-dropdown"] input[type="range"]').exists()).toBe(false);
+  expect(wrapper.find('[data-testid="download-dropdown"] select').exists()).toBe(false);
+  expect(wrapper.find('button[aria-label="exportSettings.title"]').exists()).toBe(true);
+});
+
 describe('a profile that is not finished', () => {
   test.each([
     ['no deck', { deck: '' }],
@@ -319,7 +326,7 @@ describe('audio downloads', () => {
   });
 
   test('downloads scaled audio as a distinct WAV', async () => {
-    useAudioExportStore().setVolume(50);
+    useExportSettingsStore().setAudioVolume(50);
     const wrapper = render();
     await item(wrapper, 'searchpage.main.buttons.audio').trigger('click');
     await flushPromises();
@@ -330,7 +337,7 @@ describe('audio downloads', () => {
   });
 
   test('reports conversion failure without downloading the original', async () => {
-    useAudioExportStore().setVolume(50);
+    useExportSettingsStore().setAudioVolume(50);
     vi.stubGlobal(
       'fetch',
       vi.fn(async () => new Response('', { status: 403 })),
@@ -341,12 +348,27 @@ describe('audio downloads', () => {
     await flushPromises();
     expect(download).not.toHaveBeenCalled();
     expect(error).toHaveBeenCalledWith('media:audio-export-failed', expect.any(Error), {
-      toastKey: 'audioExport.failed',
+      toastKey: 'exportSettings.audioFailed',
     });
   });
 
+  test('downloads an image using the selected WebP quality', async () => {
+    useExportSettingsStore().setImageQuality(75);
+    const originalBitmap = globalThis.createImageBitmap;
+    vi.stubGlobal('createImageBitmap', async () => ({ width: 640, height: 360, close: vi.fn() }));
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({ drawImage: vi.fn() } as never);
+    vi.spyOn(HTMLCanvasElement.prototype, 'toBlob').mockImplementation((callback) => {
+      callback(new Blob(['encoded'], { type: 'image/webp' }));
+    });
+    const wrapper = render();
+    await item(wrapper, 'searchpage.main.buttons.image').trigger('click');
+    await flushPromises();
+    expect(download).toHaveBeenCalledWith('blob:download', 'i-quality-75.webp', true);
+    vi.stubGlobal('createImageBitmap', originalBitmap);
+  });
+
   test('downloads an expanded clip with its range and volume in the filename', async () => {
-    useAudioExportStore().setVolume(25);
+    useExportSettingsStore().setAudioVolume(25);
     const wrapper = render({
       ...content(),
       blobAudioUrl: 'blob:expanded',

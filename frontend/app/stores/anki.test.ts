@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeEach, vi } from 'vitest';
 import { formatMs } from '~/utils/misc';
-import { useAudioExportStore } from './audioExport';
+import { useExportSettingsStore } from './exportSettings';
 
 /**
  * Distinguish connection/setup failures and preserve existing word fields when an export has no
@@ -1475,7 +1475,7 @@ describe('addResultToAnki: audio that came from the page', () => {
   });
 
   test.each([false, true])('sends quieter audio as WAV data, expanded=%s', async (expanded) => {
-    useAudioExportStore().setVolume(50);
+    useExportSettingsStore().setAudioVolume(50);
     const originalContext = globalThis.AudioContext;
     const close = vi.fn().mockResolvedValue(undefined);
     vi.stubGlobal(
@@ -1508,8 +1508,42 @@ describe('addResultToAnki: audio that came from the page', () => {
     vi.stubGlobal('AudioContext', originalContext);
   });
 
+  test('sends a recompressed image as WebP data with a quality-specific filename', async () => {
+    useExportSettingsStore().setImageQuality(75);
+    const originalDocument = globalThis.document;
+    const originalBitmap = globalThis.createImageBitmap;
+    const close = vi.fn();
+    vi.stubGlobal('createImageBitmap', async () => ({ width: 640, height: 360, close }));
+    vi.stubGlobal('document', {
+      createElement: () => ({
+        width: 0,
+        height: 0,
+        getContext: () => ({ drawImage: vi.fn() }),
+        toBlob: (callback: BlobCallback) => callback(new Blob(['webp-bytes'], { type: 'image/webp' })),
+      }),
+    });
+    const store = withProfile(
+      makeProfile({ fields: [{ key: 'Image', value: '{image}' }], openBrowserOnExport: false }),
+    );
+    queueFetch(
+      ankiOk([12]),
+      ankiOk([{ noteId: 12, fields: {}, modelName: 'Lapis' }]),
+      new Response('original-image'),
+      ankiOk('quiet.webp'),
+      ankiOk(null),
+    );
+    await store.addResultToAnki(asResult(sentence), {});
+    const stored = ankiCall('storeMediaFile');
+    expect(stored?.params.filename).toBe('seg-1-quality-75.webp');
+    expect(stored?.params.url).toBeUndefined();
+    expect(Buffer.from(stored?.params.data, 'base64').toString()).toBe('webp-bytes');
+    expect(close).toHaveBeenCalledOnce();
+    vi.stubGlobal('document', originalDocument);
+    vi.stubGlobal('createImageBitmap', originalBitmap);
+  });
+
   test('reports conversion failure and never sends the louder original to Anki', async () => {
-    useAudioExportStore().setVolume(25);
+    useExportSettingsStore().setAudioVolume(25);
     const store = withProfile(
       makeProfile({ fields: [{ key: 'Audio', value: '{sentence-audio}' }], openBrowserOnExport: false }),
     );
@@ -1521,7 +1555,7 @@ describe('addResultToAnki: audio that came from the page', () => {
     );
     await store.addResultToAnki(asResult(sentence), {});
     expect(ankiCall('storeMediaFile')).toBeUndefined();
-    expect(toasts.error).toHaveBeenCalledWith('audioExport.failed');
+    expect(toasts.error).toHaveBeenCalledWith('exportSettings.audioFailed');
   });
 
   test('but the CDN mp3 is fetched by AnkiConnect itself when there is no blob', async () => {

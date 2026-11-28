@@ -2340,10 +2340,18 @@
     "show": "Mostrar",
     "hide": "Ocultar"
   },
-  "audioExport": {
-    "volume": "Volume de exportação do áudio das frases",
-    "original": "Original (100%)",
-    "help": "Para downloads e Anki, incluindo trechos expandidos. Independente da reprodução e do áudio das palavras. Salvo neste navegador. Exportações mais baixas usam arquivos WAV maiores.",
-    "failed": "Não foi possível preparar o áudio. O áudio original não foi usado como substituto."
+  "exportSettings": {
+    "title": "Configurações de exportação",
+    "appliesTo": "Para imagens e áudio de frases em downloads e no Anki.",
+    "audioVolume": "Volume do áudio",
+    "original": "Original",
+    "audioHelp": "Reduzir o volume gera um arquivo WAV. O volume do player não muda.",
+    "imageQuality": "Qualidade da imagem",
+    "imageHelp": "Valores menores recomprimem em WebP na mesma resolução. Não melhoram a imagem original.",
+    "savedLocally": "Salvo neste navegador. Original mantém o arquivo de origem.",
+    "restore": "Restaurar originais",
+    "done": "Concluído",
+    "imageFailed": "Não foi possível preparar a imagem. A original não foi usada como substituta.",
+    "audioFailed": "Não foi possível preparar o áudio. O original não foi usado como substituto."
   }
 }

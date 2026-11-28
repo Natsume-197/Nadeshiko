@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { normalizeAudioExportVolume, prepareAudioExport, sentenceAudioExportSource } from './audioExport';
+import { prepareAudioExport, sentenceAudioExportSource } from './audioExport';
 import { encodeWav } from './wav';
+import { normalizeExportPercent } from './exportMedia';
 import { downloadAudioOrImage } from './media';
 import type { SearchResult } from '~/types/search';
 
@@ -32,15 +33,15 @@ afterEach(() => vi.unstubAllGlobals());
 
 describe('audio export', () => {
   test('keeps original URLs and blobs without fetching or decoding at 100%', async () => {
-    expect(await prepareAudioExport(source, 100)).toBe(source);
+    expect(await prepareAudioExport(source, normalizeExportPercent(100))).toBe(source);
     const expanded = { kind: 'blob' as const, blob: new Blob(['original']), filename: 'expanded.wav' };
-    expect(await prepareAudioExport(expanded, 100)).toBe(expanded);
+    expect(await prepareAudioExport(expanded, normalizeExportPercent(100))).toBe(expanded);
     expect(fetchMock).not.toHaveBeenCalled();
     expect(Context).not.toHaveBeenCalled();
   });
 
   test('writes an attenuated stereo PCM WAV with the same rate, duration, and channel order', async () => {
-    const result = await prepareAudioExport(source, 50);
+    const result = await prepareAudioExport(source, normalizeExportPercent(50));
     expect(result.filename).toBe('clip-volume-50.wav');
     expect(result.kind).toBe('blob');
     if (result.kind !== 'blob') throw new Error('expected converted audio');
@@ -58,7 +59,10 @@ describe('audio export', () => {
 
   test('attenuates an expanded blob without a CDN fetch', async () => {
     const blob = new Blob(['expanded']);
-    const result = await prepareAudioExport({ kind: 'blob', blob, filename: 'clip-expanded-0-4000.wav' }, 25);
+    const result = await prepareAudioExport(
+      { kind: 'blob', blob, filename: 'clip-expanded-0-4000.wav' },
+      normalizeExportPercent(25),
+    );
     expect(result.filename).toBe('clip-expanded-0-4000-volume-25.wav');
     expect(decoded).toHaveBeenCalledWith(await blob.arrayBuffer());
     expect(fetchMock).not.toHaveBeenCalled();
@@ -67,7 +71,7 @@ describe('audio export', () => {
   test('keeps different volume variants distinct', async () => {
     const names = await Promise.all(
       [25, 50, 75, 100].map(
-        async (volume) => (await prepareAudioExport(source, normalizeAudioExportVolume(volume))).filename,
+        async (volume) => (await prepareAudioExport(source, normalizeExportPercent(volume))).filename,
       ),
     );
     expect(new Set(names).size).toBe(4);
@@ -75,18 +79,18 @@ describe('audio export', () => {
 
   test('propagates fetch and decode errors without substituting the original', async () => {
     fetchMock.mockResolvedValueOnce(new Response('', { status: 403 }));
-    await expect(prepareAudioExport(source, 50)).rejects.toMatchObject({ status: 403 });
+    await expect(prepareAudioExport(source, normalizeExportPercent(50))).rejects.toMatchObject({ status: 403 });
     expect(Context).not.toHaveBeenCalled();
     decoded.mockRejectedValueOnce(new Error('unsupported audio'));
-    await expect(prepareAudioExport(source, 50)).rejects.toThrow('unsupported audio');
+    await expect(prepareAudioExport(source, normalizeExportPercent(50))).rejects.toThrow('unsupported audio');
     expect(close).toHaveBeenCalledOnce();
   });
 
   test('invalid persisted preferences restore the original, never amplification or silence', () => {
     for (const value of [0, -1, 150, NaN, '50', null, undefined, {}]) {
-      expect(normalizeAudioExportVolume(value)).toBe(100);
+      expect(normalizeExportPercent(value)).toBe(100);
     }
-    expect(normalizeAudioExportVolume(25)).toBe(25);
+    expect(normalizeExportPercent(25)).toBe(25);
   });
 });
 

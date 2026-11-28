@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { handleApiError } from '~/utils/apiError';
-import AudioExportVolume from '~/components/audio/ExportVolume.vue';
-import { useAudioExportStore } from '~/stores/audioExport';
+import ExportSettingsButton from '~/components/export/SettingsButton.vue';
+import { useExportSettingsStore } from '~/stores/exportSettings';
+import { prepareImageExport, type MediaExportSource } from '~/utils/exportMedia';
 import { prepareAudioExport, sentenceAudioExportSource } from '~/utils/audioExport';
 import {
   mdiFileDocumentPlusOutline,
@@ -70,7 +71,7 @@ type Props = {
 const props = defineProps<Props>();
 const anki = ankiStore();
 const user = userStore();
-const audioExport = useAudioExportStore();
+const exportSettings = useExportSettingsStore();
 const downloadingAudio = ref(false);
 async function downloadSentenceAudio(expanded = false) {
   if (downloadingAudio.value) return;
@@ -84,18 +85,38 @@ async function downloadSentenceAudio(expanded = false) {
           url: sentence.segment.urls.audioUrl,
           filename: sentence.segment.urls.audioUrl.split('/').pop() ?? `${sentence.segment.publicId}.mp3`,
         };
-    const audio = await prepareAudioExport(source, audioExport.volume);
-    if (audio.kind === 'url') {
-      downloadAudioOrImage(audio.url, audio.filename);
-    } else {
-      const url = URL.createObjectURL(audio.blob);
-      downloadAudioOrImage(url, audio.filename, true);
-      setTimeout(() => URL.revokeObjectURL(url), 60_000);
-    }
+    const audio = await prepareAudioExport(source, exportSettings.audioVolume);
+    downloadPreparedMedia(audio);
   } catch (error: unknown) {
-    handleApiError('media:audio-export-failed', error, { toastKey: 'audioExport.failed' });
+    handleApiError('media:audio-export-failed', error, { toastKey: 'exportSettings.audioFailed' });
   } finally {
     downloadingAudio.value = false;
+  }
+}
+function downloadPreparedMedia(media: MediaExportSource) {
+  if (media.kind === 'url') {
+    downloadAudioOrImage(media.url, media.filename);
+  } else {
+    const url = URL.createObjectURL(media.blob);
+    downloadAudioOrImage(url, media.filename, true);
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  }
+}
+const downloadingImage = ref(false);
+async function downloadImage() {
+  if (downloadingImage.value) return;
+  downloadingImage.value = true;
+  try {
+    const sentence = props.content;
+    const image = await prepareImageExport({
+      kind: 'url', url: sentence.segment.urls.imageUrl,
+      filename: sentence.segment.urls.imageUrl.split('/').pop() ?? `${sentence.segment.publicId}.webp`,
+    }, exportSettings.imageQuality);
+    downloadPreparedMedia(image);
+  } catch (error: unknown) {
+    handleApiError('media:image-export-failed', error, { toastKey: 'exportSettings.imageFailed' });
+  } finally {
+    downloadingImage.value = false;
   }
 }
 const sdk = useNadeshikoSdk();
@@ -394,7 +415,7 @@ const sharedMediaName = computed(() =>
             @click="downloadAudioOrImage(content.segment.urls.videoUrl, content.segment.urls.videoUrl.split('/').pop() ?? '')"
             :text="$t('searchpage.main.buttons.video')" :iconPath="mdiVideo" />
           <SearchDropdownItem
-            @click="downloadAudioOrImage(content.segment.urls.imageUrl, content.segment.urls.imageUrl.split('/').pop() ?? '')"
+            @click="downloadImage()" :is-disabled="downloadingImage"
             :text="$t('searchpage.main.buttons.image')" :iconPath="mdiImage" />
           <SearchDropdownItem
             @click="downloadSentenceAudio()" :is-disabled="downloadingAudio"
@@ -404,10 +425,11 @@ const sharedMediaName = computed(() =>
             @click="downloadSentenceAudio(true)" :is-disabled="downloadingAudio"
             :text="$t('searchpage.main.buttons.dl-expanded')" :iconPath="mdiVolumeHigh" />
         </div>
-        <AudioExportVolume class="border-t border-hairline p-3" />
       </SearchDropdownContent>
     </template>
   </SearchDropdownContainer>
+
+  <ExportSettingsButton class="mr-2 my-1" />
 
   <SearchDropdownContainer data-testid="copy-dropdown" class="mr-2 my-1 text-xs" dropdownId="nd-dropdown-with-header" teleport>
     <template #default>
