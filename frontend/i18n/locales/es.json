@@ -2339,5 +2339,11 @@
     "shown": "Spoilers visibles",
     "show": "Mostrar",
     "hide": "Ocultar"
+  },
+  "audioExport": {
+    "volume": "Volumen del audio de frases al exportar",
+    "original": "Original (100%)",
+    "help": "Para descargas y Anki, incluidas las frases ampliadas. Independiente del reproductor y las grabaciones de palabras. Se guarda en este navegador. El audio reducido usa archivos WAV más grandes.",
+    "failed": "No se pudo preparar el audio. No se sustituyó por el original."
   }
 }

@@ -2339,5 +2339,11 @@
     "shown": "Spoiler ditampilkan",
     "show": "Tampilkan",
     "hide": "Sembunyikan"
+  },
+  "audioExport": {
+    "volume": "Volume ekspor audio kalimat",
+    "original": "Asli (100%)",
+    "help": "Untuk unduhan dan Anki, termasuk klip yang diperluas. Terpisah dari pemutar dan rekaman kata. Disimpan di browser ini. Ekspor lebih pelan menggunakan berkas WAV yang lebih besar.",
+    "failed": "Tidak dapat menyiapkan audio. Audio asli tidak digunakan sebagai pengganti."
   }
 }

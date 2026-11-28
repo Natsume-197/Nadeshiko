@@ -128,6 +128,8 @@ import { reportError, reportEvent } from '~/utils/reportError';
 import { cspViolationLog, installCspViolationLog } from '~/utils/cspViolations';
 import { classifyAnkiAddress } from '~/utils/ankiAddress';
 import { buildSentencePath } from '~/utils/routes';
+import { useAudioExportStore } from '~/stores/audioExport';
+import { prepareAudioExport, sentenceAudioExportSource } from '~/utils/audioExport';
 
 /** Sample enough recent notes to tolerate strays without fetching every note's full card HTML. */
 const MODEL_SAMPLE_SIZE = 100;
@@ -675,26 +677,27 @@ export const ankiStore = defineStore('anki', {
         }
 
         if (needsAudio) {
-          let req;
-          if (sentence.blobAudioUrl && sentence.blobAudio) {
-            const blob64 = await blobToBase64(sentence.blobAudio);
-            const raw = blob64.substring(blob64.indexOf(',') + 1);
-            req = this.executeAction('storeMediaFile', {
-              filename: `${sentence.segment.publicId}.wav`,
-              data: raw,
+          const volume = useAudioExportStore().volume;
+          const req = (async () => {
+            const audio = await prepareAudioExport(sentenceAudioExportSource(sentence), volume);
+            if (audio.kind === 'url') {
+              return this.executeAction('storeMediaFile', { filename: audio.filename, url: audio.url });
+            }
+            const blob64 = await blobToBase64(audio.blob);
+            return this.executeAction('storeMediaFile', {
+              filename: audio.filename,
+              data: blob64.substring(blob64.indexOf(',') + 1),
             });
-          } else {
-            req = this.executeAction('storeMediaFile', {
-              filename: `${sentence.segment.publicId}.mp3`,
-              url: sentence.segment.urls.audioUrl,
-            });
-          }
+          })();
           mediaRequests.push(
             req
               .then((r) => {
                 audioResult = r;
               })
-              .catch((error: unknown) => ignoreMediaFailure(error, 'audio')),
+              .catch((error: unknown) => {
+                ignoreMediaFailure(error, 'audio');
+                useToastError($i18n.t('audioExport.failed'));
+              }),
           );
         }
 

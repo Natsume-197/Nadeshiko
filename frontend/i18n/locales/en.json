@@ -2339,5 +2339,11 @@
     "shown": "Spoilers shown",
     "show": "Show",
     "hide": "Hide"
+  },
+  "audioExport": {
+    "volume": "Sentence audio export volume",
+    "original": "Original (100%)",
+    "help": "For downloads and Anki, including expanded clips. Separate from playback and word recordings. Saved in this browser. Quieter exports use larger WAV files.",
+    "failed": "Could not prepare the audio export. No original audio was substituted."
   }
 }

@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { handleApiError } from '~/utils/apiError';
+import AudioExportVolume from '~/components/audio/ExportVolume.vue';
+import { useAudioExportStore } from '~/stores/audioExport';
+import { prepareAudioExport, sentenceAudioExportSource } from '~/utils/audioExport';
 import {
   mdiFileDocumentPlusOutline,
   // The two Anki entries shared `mdiStarShootingOutline` and so asked the reader
@@ -67,6 +70,34 @@ type Props = {
 const props = defineProps<Props>();
 const anki = ankiStore();
 const user = userStore();
+const audioExport = useAudioExportStore();
+const downloadingAudio = ref(false);
+async function downloadSentenceAudio(expanded = false) {
+  if (downloadingAudio.value) return;
+  downloadingAudio.value = true;
+  try {
+    const sentence = props.content;
+    const source = expanded
+      ? sentenceAudioExportSource(sentence)
+      : {
+          kind: 'url' as const,
+          url: sentence.segment.urls.audioUrl,
+          filename: sentence.segment.urls.audioUrl.split('/').pop() ?? `${sentence.segment.publicId}.mp3`,
+        };
+    const audio = await prepareAudioExport(source, audioExport.volume);
+    if (audio.kind === 'url') {
+      downloadAudioOrImage(audio.url, audio.filename);
+    } else {
+      const url = URL.createObjectURL(audio.blob);
+      downloadAudioOrImage(url, audio.filename, true);
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    }
+  } catch (error: unknown) {
+    handleApiError('media:audio-export-failed', error, { toastKey: 'audioExport.failed' });
+  } finally {
+    downloadingAudio.value = false;
+  }
+}
 const sdk = useNadeshikoSdk();
 const posthog = usePostHog();
 const { t } = useI18n();
@@ -366,13 +397,14 @@ const sharedMediaName = computed(() =>
             @click="downloadAudioOrImage(content.segment.urls.imageUrl, content.segment.urls.imageUrl.split('/').pop() ?? '')"
             :text="$t('searchpage.main.buttons.image')" :iconPath="mdiImage" />
           <SearchDropdownItem
-            @click="downloadAudioOrImage(content.segment.urls.audioUrl, content.segment.urls.audioUrl.split('/').pop() ?? '')"
+            @click="downloadSentenceAudio()" :is-disabled="downloadingAudio"
             :text="$t('searchpage.main.buttons.audio')" :iconPath="mdiVolumeHigh" />
           <SearchDropdownItem
             v-if="content.blobAudioUrl"
-            @click="downloadAudioOrImage(content.blobAudioUrl, `expanded_${content.segment.urls.audioUrl.split('/').pop()}`, true)"
+            @click="downloadSentenceAudio(true)" :is-disabled="downloadingAudio"
             :text="$t('searchpage.main.buttons.dl-expanded')" :iconPath="mdiVolumeHigh" />
         </div>
+        <AudioExportVolume class="border-t border-hairline p-3" />
       </SearchDropdownContent>
     </template>
   </SearchDropdownContainer>
