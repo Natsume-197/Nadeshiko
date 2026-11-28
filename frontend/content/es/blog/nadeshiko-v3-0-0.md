@@ -10,13 +10,13 @@ Esta actualización trae mejoras en casi todas las partes de Nadeshiko, para que
 
 Hay bastante que contar, así que vamos a ver qué hay de nuevo.
 
-## ¡Llegan los audiolibros!
+## 🔊 ¡Llegan los audiolibros!
 
 ¡Nadeshiko ahora tiene audiolibros! Descubre vocabulario japonés de novelas, con frases leídas con la voz del narrador y traducidas al inglés y al español. Busca, escucha y exporta a Anki igual que ya lo haces.
 
 Solo mostramos una selección aleatoria de frases de cada libro, para que puedas descubrir vocabulario nuevo sin escuchar la historia entera. Si te gusta lo que oyes, te animamos a comprar el libro y apoyar a su autor.
 
-## Mejores resultados de búsqueda
+## 🔍 Mejores resultados de búsqueda
 
 Seguramente es el cambio que más vas a notar, aunque no te des cuenta.
 
@@ -24,13 +24,21 @@ Antes, al buscar una palabra como レム, la mayoría de los resultados salían 
 
 También hemos mejorado cómo se tratan las frases repetidas. Las líneas de openings, endings y avances de episodio salían una y otra vez en cada episodio. Ahora esas frases repetidas aparecen una sola vez, mientras que las expresiones cotidianas como はい no se ven afectadas.
 
-## Más formas de buscar
+## 🔦 Más formas de buscar
 
 - **Ordenar por dificultad:** encuentra frases a tu nivel de japonés ordenando los resultados de más fácil a más difícil, o al revés. Nadeshiko tiene en cuenta lo raras que son las palabras y la complejidad gramatical para estimar la dificultad de cada frase.
 - **Ordenar por número de frases:** organiza los títulos según cuántas frases tienen, de más a menos o al revés.
 - **Buscar dentro de palabras:** ¿buscas un kanji que suele aparecer dentro de una palabra más larga? ¡Rodéalo con asteriscos! Por ejemplo, al buscar `*憬*` encontrarás palabras como 憧憬.
 
-## Integración con AniList y MyAnimeList
+## 🔔 Alertas de palabras
+
+¿Esperas más frases con una palabra japonesa concreta? Ahora puedes crear alertas de palabras y recibir notificaciones cuando haya frases nuevas con esa palabra en Nadeshiko. ¡Ya no hace falta buscar la misma palabra una y otra vez!
+
+Si una palabra todavía no tiene frases, te avisaremos en cuanto aparezca la primera. Si ya tiene, recibirás un resumen semanal con las nuevas.
+
+¡Nadeshiko también tiene notificaciones! Una nueva campana en la cabecera reúne tus alertas de palabras y las novedades de las peticiones de contenido que has votado. Puedes elegir recibirlas en el sitio, por correo o de las dos formas, y gestionar tus alertas desde [Notificaciones](/es/user/notifications).
+
+## 📺 Integración con AniList y MyAnimeList
 
 Ahora puedes conectar tu cuenta de AniList o MyAnimeList desde los Ajustes y traer tu historial de anime a Nadeshiko.
 
@@ -38,7 +46,7 @@ Con el nuevo filtro "Solo anime que he visto", puedes buscar frases de series qu
 
 También puedes ver tu progreso en las páginas de cada anime, comprobar cuántos títulos de tu lista están en Nadeshiko y pedir los que faltan con un solo clic.
 
-## Una nueva experiencia de diccionario
+## 📚 Una nueva experiencia de diccionario
 
 Hasta ahora, Nadeshiko dependía de [Shirabe](https://shirabe.org/) para buscar palabras en japonés y analizar las frases. Shirabe tuvo un papel enorme en hacer posibles funciones como las tarjetas de palabras, el minado a Anki y los diccionarios propios.
 
@@ -55,11 +63,11 @@ Con este cambio, Nadeshiko ya no se conecta directamente a Shirabe. Las cuentas 
 
 Por último, quiero agradecer personalmente a Dav, el creador de Shirabe, los años de dedicación y trabajo duro que le dedicó a Nadeshiko. Sus aportaciones ayudaron a convertir este proyecto en lo que es hoy, y estoy profundamente agradecido por todo lo que construimos juntos. Seguir adelante con nuestro propio diccionario no cambia lo mucho que su trabajo ha significado para Nadeshiko.
 
-## Una mejor forma de pedir contenido
+## 🗳️ Una mejor forma de pedir contenido
 
 "¿Podéis añadir este anime?" es una de las preguntas que más recibimos. Y a medida que Nadeshiko crece, también crece el número de peticiones de contenido nuevo.
 
-Estamos increíblemente agradecidos por todo el apoyo, pero añadir contenido nuevo lleva tiempo. Entre revisar peticiones, comprobar la calidad de los subtítulos y preparar los títulos nuevos, seguir el ritmo se ha vuelto cada vez más difícil, y por desgracia algunas peticiones se nos han pasado.
+Pero añadir contenido nuevo lleva tiempo. Entre revisar peticiones, comprobar la calidad de los subtítulos y preparar los títulos nuevos, seguir el ritmo se ha vuelto cada vez más difícil, y por desgracia algunas peticiones se nos han pasado.
 
 Por eso estrenamos la nueva página de [Peticiones](/es/requests), donde cualquiera puede sugerir contenido, votar sus favoritos y ayudar a decidir qué se añade después.
 
@@ -67,7 +75,7 @@ Hacer una petición es muy sencillo: pega un enlace de AniList, MyAnimeList, TMD
 
 ¡Cada voto cuenta! Cuantos más votos tiene una petición, más prioridad tiene. Además podrás seguir cada petición de Abierta a En progreso y a Publicada, con notificaciones y correos cuando empecemos a trabajar en ella o cuando el contenido esté disponible. Si no podemos añadir algo, te explicaremos por qué.
 
-### ¿Y las peticiones de Patreon?
+### 🌱 ¿Y las peticiones de Patreon?
 
 Hasta ahora, nuestros mecenas podían pedir directamente un número de títulos según su nivel. Sabemos que era una ventaja importante, y cambiarla no fue una decisión fácil.
 
@@ -79,7 +87,9 @@ Aunque los impulsos no garantizan que un título se añada, nos permiten seguir 
 
 Sabemos que algunos de vosotros os hicisteis mecenas precisamente para pedir contenido, y no nos tomamos este cambio a la ligera. En lugar de seguir haciendo promesas que quizá no podamos cumplir, queremos construir un sistema más transparente y sostenible para todos.
 
-## Para desarrolladores
+Todavía estamos ajustando cosas, así que nos encantaría saber qué os parece este cambio. Vuestros comentarios siempre son bienvenidos.
+
+## 💻 Para desarrolladores
 
 ¡Buenas noticias! Hemos duplicado el límite gratuito de la API de 5.000 a 10.000 peticiones al mes para todo el mundo. Y para quienes necesiten más, estrenamos nuevos niveles de Patreon con límites más altos para un uso más intensivo.
 
@@ -89,11 +99,23 @@ Si usas un SDK anterior a la 2.6.0, actualízalo para tener soporte para las nov
 
 Echa un vistazo a todos los cambios en nuestra [documentación de la API](https://nadeshiko.co/docs/api/index.html). ¿Echas en falta algún endpoint? ¡Cuéntanoslo en Discord!
 
-## Apoyar a Nadeshiko en Patreon
+## ✨ Otros cambios
+
+Esta actualización trae bastante más. Estos son algunos de los cambios más pequeños:
+
+- **Un reproductor nuevo:** ahora está en la parte inferior de la ventana y funciona con las teclas multimedia del teclado, los botones de los auriculares y la pantalla de bloqueo del móvil.
+- **Temas para todos:** elige Oscuro, Claro o Como mi dispositivo en los Ajustes.
+- **Mina la forma que ves:** exporta la palabra tal como aparece en la frase (食べた) además de su forma de diccionario (食べる).
+- **Frecuencia por categoría:** mira lo común que es una palabra en anime, imagen real, YouTube y audiolibros por separado.
+- **Todos los kanji:** explora [todos los kanji](/es/kanji) por nivel JLPT o curso escolar.
+- **Filtros más claros:** los títulos de imagen real, YouTube y audiolibros llevan una pequeña etiqueta, y los vídeos de YouTube se llaman por su título en vez de "Episodio N".
+- **Fuentes:** una nueva página de [Fuentes](/es/sources) da crédito a los datos en los que se basa nuestro diccionario.
+- **Arreglos:** los enlaces compartidos a una frase vuelven a abrirse en esa frase, el reproductor ya no se detiene al final de la primera página de resultados, y los correos de la cuenta ahora llegan desde un nuevo proveedor.
+## ❤️ Apoyar a Nadeshiko en Patreon
 
 Nadeshiko siempre ha sido gratuito, y eso no va a cambiar. Buscar frases, escuchar audio, exportar a Anki, usar el diccionario y acceder a nuestra API pública seguirá estando disponible para todos.
 
-Mantener Nadeshiko tiene costes reales, desde servidores y almacenamiento hasta servir millones de imágenes y archivos de audio. Gracias a nuestros mecenas, hemos podido cubrir buena parte de esos gastos durante los últimos meses, y estamos increíblemente agradecidos por ello.
+Mantener Nadeshiko tiene costes reales, desde servidores y almacenamiento hasta servir millones de imágenes y archivos de audio. Gracias a nuestros mecenas, hemos podido cubrir buena parte de esos gastos durante los últimos meses.
 
 Pero más allá de mantener los servidores encendidos, también nos encantaría que trabajar en Nadeshiko fuera más sostenible. Nuestra esperanza es que, con suficiente apoyo, podamos dedicarle más tiempo a desarrollar Nadeshiko y, con el tiempo, vivir del trabajo que ponemos en él.
 
@@ -108,9 +130,17 @@ Tenemos tres [niveles](/es/supporters):
 Los tres niveles incluyen además:
 
 - **Temas personalizados:** elige entre temas adicionales o crea el tuyo.
-- **Límites más altos:** sube hasta 10 diccionarios propios en vez de 3, y ten hasta 30 peticiones de contenido abiertas en vez de 10.
+- **Límites más altos:** sube hasta 10 diccionarios propios en vez de 3, mantén hasta 100 alertas de palabras activas en vez de 20, y ten hasta 15 peticiones de contenido abiertas en vez de 5.
 - **Funciones avanzadas para tu lista de anime:** sincronización automática diaria con AniList o MyAnimeList, protección contra spoilers de episodios que no has visto, la opción de ocultar de tus búsquedas los títulos en «Planeo ver», y tus listas personalizadas de AniList como filtros.
 
-Y a todos los que habéis apoyado a Nadeshiko hasta ahora, ¡gracias! Vuestro apoyo no solo ayuda a mantener la plataforma en marcha, sino que también nos da la oportunidad de seguir construyendo algo que nos encanta y compartirlo con todo el mundo.
+¡Y algunas pequeñas funciones extra que puedes descubrir en Nadeshiko! Seguiremos mejorando estas ventajas con el tiempo, y nos encantaría saber qué más te gustaría ver.
 
-¡Gracias a todos los que seguís usando y apoyando Nadeshiko! Un agradecimiento especial a nuestros mecenas, cuyo apoyo mantiene vivo el proyecto y hace posible que lo sigamos mejorando para todos. Esperamos que disfrutéis de todo lo nuevo de la 3.0.0. ¡Feliz estudio, y nos vemos en la próxima actualización! ❤️
+Si Nadeshiko te ha sido útil para aprender japonés y quieres ayudarnos a seguir mejorándolo, te animamos a apoyarnos en Patreon.
+
+---
+
+Esperamos de verdad que disfrutéis de esta actualización tanto como nosotros hemos disfrutado haciéndola. Muchísimas gracias por todo el apoyo que le habéis dado a Nadeshiko a lo largo de los años. Cada mensaje bonito, cada sugerencia y cada aportación significan mucho para nosotros.
+
+¡Tengo muchas ganas de saber qué os parece la 3.0.0!
+
+¡Feliz estudio! 🌸

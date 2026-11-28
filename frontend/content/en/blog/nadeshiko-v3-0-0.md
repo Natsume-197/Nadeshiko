@@ -10,13 +10,13 @@ This update brings improvements to nearly every part of Nadeshiko, making it eas
 
 There's quite a lot to share, so let's take a look at what's new!
 
-## Audiobooks Support!
+## 🔊 Audiobooks Support!
 
 Nadeshiko now supports audiobooks! Discover Japanese vocabulary from novels, with sentences read in the narrator's voice and translated into English and Spanish. Search, listen, and export to Anki just like you already do.
 
 We only feature a random selection of sentences from each book, so you can discover new vocabulary without experiencing the entire story. If you enjoy what you hear, we encourage you to get the book and support its author!
 
-## Better search results
+## 🔍 Better search results
 
 This is probably the change you'll notice the most, even if you don't realise it.
 
@@ -24,13 +24,21 @@ Previously, when searching for a word like レム, most results would come from 
 
 We've also improved how repeated sentences are handled. Lines from anime openings, endings, and episode previews used to appear over and over across episodes. Now, these repeated lines only show up once, while common everyday expressions like はい remain unaffected.
 
-## More Ways to Search
+## 🔦 More Ways to Search
 
 - **Sort by difficulty:** Find sentences that match your Japanese level by sorting results from easiest to hardest, or vice versa. Nadeshiko considers word rarity and grammar complexity to estimate how difficult each sentence is.
 - **Sort by sentence count:** Organize titles by how many sentences they contain, from most to least or the other way around.
 - **Search inside words:** Looking for a kanji that usually appears as part of a longer word? Just surround it with asterisks! For example, searching `*憬*` will find words like 憧憬.
 
-## AniList/MyAnimeList Integration
+## 🔔 Word Alerts
+
+Waiting for more sentences containing a particular Japanese word? You can now create word alerts and receive notifications when new matching sentences become available on Nadeshiko. No need to keep searching for the same word over and over again!
+
+If a word doesn't have any sentences yet, we'll let you know as soon as it first appears. If it already does, you'll get a weekly summary of the new ones.
+
+Nadeshiko also has notifications now! A new bell in the header collects your word alerts and updates on content requests you've voted for. You can choose whether to receive them on the site, by email, or both, and manage your alerts from [Notifications](/user/notifications).
+
+## 📺 AniList/MyAnimeList Integration
 
 You can now connect your AniList or MyAnimeList account from Settings and bring your anime watch history into Nadeshiko.
 
@@ -38,7 +46,7 @@ With the new "Only anime I've watched" filter, you can search for sentences from
 
 You can also see your watch progress on anime pages, check how many titles from your list are available on Nadeshiko, and request missing anime with just one click.
 
-## A New Dictionary Experience
+## 📚 A New Dictionary Experience
 
 Until now, Nadeshiko relied on [Shirabe](https://shirabe.org/) for Japanese word lookups and sentence parsing. Shirabe played a huge role in making features like word cards, Anki mining, and custom dictionaries possible.
 
@@ -55,11 +63,11 @@ With this change, Nadeshiko no longer connects directly to Shirabe. Existing acc
 
 Finally, I want to personally thank Dav, the creator of Shirabe, for the years of dedication and hard work he put into Nadeshiko. His contributions helped shape this project into what it is today, and I'm deeply grateful for everything we built together. Moving forward with our own dictionary doesn't change how much his work has meant to Nadeshiko.
 
-## A Better Way to Request Content
+## 🗳️ A Better Way to Request Content
 
 "Can you add this anime?" is one of the questions we receive most often. And as Nadeshiko continues to grow, so does the number of requests for new content.
 
-We're incredibly grateful for all the support, but adding new content takes time. Between reviewing requests, checking subtitle quality, and preparing new titles, keeping up with everything has become increasingly difficult, and some requests have unfortunately been overlooked.
+Adding new content takes time, though. Between reviewing requests, checking subtitle quality, and preparing new titles, keeping up with everything has become increasingly difficult, and some requests have unfortunately been overlooked.
 
 That's why we're introducing a new [Requests](/requests) page, where everyone can suggest content, vote on their favorites, and help decide what gets added next!
 
@@ -67,7 +75,7 @@ Submitting a request is simple: just paste a link from AniList, MyAnimeList, TMD
 
 Every vote matters! The more votes a request receives, the higher its priority. You'll also be able to track requests from Open to In Progress to Released, with notifications and emails when work begins or the content becomes available. If we can't add something, we'll explain why.
 
-### What about Patreon requests?
+### 🌱 What about Patreon requests?
 
 Until now, our Patrons could directly request a certain number of titles depending on their tier. We know this has been an important benefit, and changing it wasn't an easy decision.
 
@@ -79,7 +87,9 @@ While boosts don't guarantee that a title will be added, they allow us to keep g
 
 We know some of you became Patrons specifically to request content, and we don't take this change lightly. Rather than continue making promises we may not be able to fulfill, we want to build a system that's more transparent and sustainable for everyone.
 
-## For developers
+We're still figuring things out, so we'd really like to hear what you think about this change. Your feedback is always welcome.
+
+## 💻 For developers
 
 Good news! We've doubled the free API limit from 5,000 to 10,000 requests per month for everyone! And for those who need more, we're introducing new Patreon tiers with higher limits for more intensive usage.
 
@@ -89,11 +99,24 @@ If you're using an SDK older than 2.6.0, please update it to get support for the
 
 Explore all the changes in our [API documentation](https://nadeshiko.co/docs/api/index.html). Missing an endpoint? Let us know on Discord!
 
-## Supporting Nadeshiko on Patreon
+## ✨ Other changes
+
+There's quite a bit more to this update. Here are some of the smaller changes:
+
+- **A new player:** The player now sits along the bottom of the window and works with your keyboard's media keys, headphone buttons, and your phone's lock screen.
+- **Themes for everyone:** Choose Dark, Light, or Match my device in Settings.
+- **Mine the form you see:** Export the word exactly as it appears in the sentence (食べた) as well as its dictionary form (食べる).
+- **Frequency by category:** See how common a word is in anime, live action, YouTube, and audiobooks separately.
+- **All the kanji:** Browse [every kanji](/kanji) by JLPT level or school grade.
+- **Clearer filters:** Live-action, YouTube, and audiobook titles now carry a small tag, and YouTube videos are named by their title instead of "Episode N".
+- **Sources:** A new [Sources](/sources) page credits the data behind our dictionary.
+- **Fixes:** Shared links to a sentence open on that sentence again, the player no longer stops at the end of the first page of results, and account emails now come from a new provider.
+
+## ❤️ Supporting Nadeshiko on Patreon
 
 Nadeshiko has always been free, and that's not going to change. Searching sentences, listening to audio, exporting to Anki, using the dictionary, and accessing our public API will remain available to everyone.
 
-Running Nadeshiko comes with real costs, from servers and storage to delivering millions of images and audio files. Thanks to our Patrons, we've been able to cover much of these expenses over the past few months, and we're incredibly grateful for that.
+Running Nadeshiko comes with real costs, from servers and storage to delivering millions of images and audio files. Thanks to our Patrons, we've been able to cover much of these expenses over the past few months.
 
 But beyond keeping the servers running, we'd also love to make working on Nadeshiko more sustainable. Our hope is that, with enough support, we can dedicate more time to developing Nadeshiko and eventually make a living from the work we put into it.
 
@@ -108,9 +131,17 @@ We have three membership [tiers](/supporters):
 All three tiers also include:
 
 - **Custom themes:** Choose from additional themes or create your own.
-- **Higher limits:** Upload up to 10 custom dictionaries instead of 3, and have up to 15 open content requests instead of 5.
+- **Higher limits:** Upload up to 10 custom dictionaries instead of 3, keep up to 100 active word alerts instead of 20, and have up to 15 open content requests instead of 5.
 - **Advanced anime list features:** Daily automatic syncing with AniList or MyAnimeList, spoiler protection for episodes you haven't watched, the ability to hide Plan to Watch titles from searches, and support for AniList custom lists as filters.
 
-And to everyone who has supported Nadeshiko so far, thank you! Your support not only helps keep the platform running but also gives us the opportunity to keep building something we love and sharing it with everyone.
+And some small extra features you can check out on Nadeshiko! We'll continue improving these benefits over time, and we'd love to hear what else you'd like to see.
 
-Thank you to everyone who continues to use and support Nadeshiko! A special thanks to our Patrons, whose support helps keep the project running and makes it possible for us to keep improving it for everyone. We hope you enjoy everything new in 3.0.0. Happy studying, and see you in the next update! ❤️
+If you've found Nadeshiko useful in your Japanese learning journey and would like to help us keep improving it, please consider supporting us on Patreon.
+
+---
+
+We really hope you enjoy this new update as much as we've enjoyed working on it. Thank you so much for all the support you've shown Nadeshiko over the years. Every kind message, suggestion, and contribution means a lot to us.
+
+We are really looking forward to hearing what you think of 3.0.0!
+
+Happy studying! 🌸
