@@ -5607,6 +5607,12 @@ paths:
             type: string
             maxLength: 32
           description: Only this email kind
+        - name: campaign
+          in: query
+          schema:
+            type: string
+            maxLength: 80
+          description: Only sends belonging to this campaign key
         - name: status
           in: query
           schema:
@@ -5857,6 +5863,1051 @@ paths:
           $ref: '#/components/responses/NotFound'
         '429':
           $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/admin/notification-settings:
+    get:
+      tags:
+        - Admin
+      x-internal: true
+      operationId: listAdminNotificationSettings
+      summary: List all registered notification and email kinds with their runtime settings and 7-day volume
+      security:
+        - SessionCookie:
+            - ADMIN
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                        - kind
+                        - label
+                        - description
+                        - area
+                        - trigger
+                        - channels
+                        - pinned
+                        - groupable
+                        - alwaysEnabled
+                        - siteEnabled
+                        - emailEnabled
+                        - editableTemplate
+                        - params
+                        - defaultParams
+                        - paramFields
+                        - stats7d
+                      properties:
+                        kind:
+                          type: string
+                        label:
+                          type: string
+                        description:
+                          type: string
+                        area:
+                          type: string
+                          enum:
+                            - official
+                            - words
+                            - community
+                            - lifecycle
+                            - transactional
+                        trigger:
+                          type: string
+                          enum:
+                            - realtime
+                            - cron
+                            - admin
+                        schedule:
+                          type:
+                            - string
+                            - 'null'
+                        channels:
+                          type: object
+                          required:
+                            - site
+                            - email
+                          properties:
+                            site:
+                              type: boolean
+                            email:
+                              type: boolean
+                        siteCategory:
+                          type:
+                            - string
+                            - 'null'
+                        emailCategory:
+                          type:
+                            - string
+                            - 'null'
+                        emailFrom:
+                          type:
+                            - string
+                            - 'null'
+                        pinned:
+                          type: boolean
+                        groupable:
+                          type: boolean
+                        alwaysEnabled:
+                          type: boolean
+                        siteEnabled:
+                          type: boolean
+                        emailEnabled:
+                          type: boolean
+                        editableTemplate:
+                          type: boolean
+                        defaultSubject:
+                          type:
+                            - string
+                            - 'null'
+                        defaultBodyMarkdown:
+                          type:
+                            - string
+                            - 'null'
+                        subjectOverride:
+                          type:
+                            - string
+                            - 'null'
+                        bodyOverride:
+                          type:
+                            - string
+                            - 'null'
+                        allowedVariables:
+                          type: array
+                          items:
+                            type: string
+                        requiredVariables:
+                          type: array
+                          items:
+                            type: string
+                        params:
+                          type: object
+                          additionalProperties: true
+                        defaultParams:
+                          type: object
+                          additionalProperties: true
+                        paramFields:
+                          type: array
+                          items:
+                            type: object
+                            required:
+                              - key
+                              - label
+                              - description
+                              - type
+                              - min
+                              - max
+                            properties:
+                              key:
+                                type: string
+                              label:
+                                type: string
+                              description:
+                                type: string
+                              type:
+                                type: string
+                                enum:
+                                  - integer
+                                  - number
+                              min:
+                                type: number
+                              max:
+                                type: number
+                        updatedAt:
+                          type:
+                            - string
+                            - 'null'
+                          format: date-time
+                        stats7d:
+                          type: object
+                          required:
+                            - siteSent
+                            - emailSent
+                            - emailFailed
+                          properties:
+                            siteSent:
+                              type: integer
+                            emailSent:
+                              type: integer
+                            emailFailed:
+                              type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/admin/notification-settings/{kind}:
+    patch:
+      tags:
+        - Admin
+      x-internal: true
+      operationId: updateAdminNotificationSetting
+      summary: Update runtime toggles, parameters, or template overrides for a notification/email kind
+      security:
+        - SessionCookie:
+            - ADMIN
+      parameters:
+        - name: kind
+          in: path
+          required: true
+          schema:
+            type: string
+            maxLength: 32
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                siteEnabled:
+                  type: boolean
+                emailEnabled:
+                  type: boolean
+                params:
+                  type: object
+                  additionalProperties: true
+                subjectOverride:
+                  type:
+                    - string
+                    - 'null'
+                  maxLength: 240
+                bodyOverride:
+                  type:
+                    - string
+                    - 'null'
+                  maxLength: 20000
+                resetParams:
+                  type: boolean
+                resetTemplate:
+                  type: boolean
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - kind
+                  - siteEnabled
+                  - emailEnabled
+                  - params
+                properties:
+                  kind:
+                    type: string
+                  siteEnabled:
+                    type: boolean
+                  emailEnabled:
+                    type: boolean
+                  params:
+                    type: object
+                    additionalProperties: true
+                  subjectOverride:
+                    type:
+                      - string
+                      - 'null'
+                  bodyOverride:
+                    type:
+                      - string
+                      - 'null'
+                  updatedAt:
+                    type:
+                      - string
+                      - 'null'
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/admin/notification-settings/{kind}/preview:
+    post:
+      tags:
+        - Admin
+      x-internal: true
+      operationId: previewAdminEmailTemplate
+      summary: Render a live HTML preview for an email template and optionally send a [TEST] email
+      security:
+        - SessionCookie:
+            - ADMIN
+      parameters:
+        - name: kind
+          in: path
+          required: true
+          schema:
+            type: string
+            maxLength: 32
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                subjectOverride:
+                  type:
+                    - string
+                    - 'null'
+                  maxLength: 240
+                bodyOverride:
+                  type:
+                    - string
+                    - 'null'
+                  maxLength: 40000
+                previewText:
+                  type:
+                    - string
+                    - 'null'
+                  maxLength: 240
+                ctaLabel:
+                  type:
+                    - string
+                    - 'null'
+                  maxLength: 80
+                ctaUrl:
+                  type:
+                    - string
+                    - 'null'
+                  maxLength: 512
+                sendTestTo:
+                  type:
+                    - string
+                    - 'null'
+                  format: email
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - subject
+                  - html
+                  - testSent
+                properties:
+                  subject:
+                    type: string
+                  html:
+                    type: string
+                  testSent:
+                    type: boolean
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/admin/notifications/broadcasts:
+    get:
+      tags:
+        - Admin
+      x-internal: true
+      operationId: listAdminNotificationBroadcasts
+      summary: List recent official in-site notification broadcasts
+      security:
+        - SessionCookie:
+            - ADMIN
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 25
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                        - id
+                        - kind
+                        - audience
+                        - title
+                        - message
+                        - status
+                        - recipientCount
+                        - sentCount
+                        - createdAt
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        kind:
+                          type: string
+                          enum:
+                            - site-announcement
+                            - admin-message
+                        audience:
+                          type: string
+                          enum:
+                            - ALL
+                            - PATRONS
+                            - USER
+                        targetUserId:
+                          type:
+                            - integer
+                            - 'null'
+                        targetUsername:
+                          type:
+                            - string
+                            - 'null'
+                        title:
+                          type: string
+                        message:
+                          type: string
+                        linkUrl:
+                          type:
+                            - string
+                            - 'null'
+                        linkLabel:
+                          type:
+                            - string
+                            - 'null'
+                        status:
+                          type: string
+                          enum:
+                            - QUEUED
+                            - SENDING
+                            - SENT
+                            - FAILED
+                        recipientCount:
+                          type: integer
+                        sentCount:
+                          type: integer
+                        error:
+                          type:
+                            - string
+                            - 'null'
+                        sentAt:
+                          type:
+                            - string
+                            - 'null'
+                          format: date-time
+                        createdAt:
+                          type: string
+                          format: date-time
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      tags:
+        - Admin
+      x-internal: true
+      operationId: sendAdminNotificationBroadcast
+      summary: Send an official in-site notification to one user, Patrons, or all users
+      security:
+        - SessionCookie:
+            - ADMIN
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - kind
+                - audience
+                - title
+                - message
+              properties:
+                kind:
+                  type: string
+                  enum:
+                    - site-announcement
+                    - admin-message
+                audience:
+                  type: string
+                  enum:
+                    - ALL
+                    - PATRONS
+                    - USER
+                targetUserId:
+                  type:
+                    - integer
+                    - 'null'
+                title:
+                  type: string
+                  minLength: 1
+                  maxLength: 160
+                message:
+                  type: string
+                  minLength: 1
+                  maxLength: 2000
+                linkUrl:
+                  type:
+                    - string
+                    - 'null'
+                  maxLength: 512
+                linkLabel:
+                  type:
+                    - string
+                    - 'null'
+                  maxLength: 80
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - id
+                  - kind
+                  - audience
+                  - title
+                  - message
+                  - status
+                  - recipientCount
+                  - sentCount
+                  - createdAt
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  kind:
+                    type: string
+                    enum:
+                      - site-announcement
+                      - admin-message
+                  audience:
+                    type: string
+                    enum:
+                      - ALL
+                      - PATRONS
+                      - USER
+                  targetUserId:
+                    type:
+                      - integer
+                      - 'null'
+                  targetUsername:
+                    type:
+                      - string
+                      - 'null'
+                  title:
+                    type: string
+                  message:
+                    type: string
+                  linkUrl:
+                    type:
+                      - string
+                      - 'null'
+                  linkLabel:
+                    type:
+                      - string
+                      - 'null'
+                  status:
+                    type: string
+                    enum:
+                      - QUEUED
+                      - SENDING
+                      - SENT
+                      - FAILED
+                  recipientCount:
+                    type: integer
+                  sentCount:
+                    type: integer
+                  error:
+                    type:
+                      - string
+                      - 'null'
+                  sentAt:
+                    type:
+                      - string
+                      - 'null'
+                    format: date-time
+                  createdAt:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/admin/email-broadcasts:
+    get:
+      tags:
+        - Admin
+      x-internal: true
+      operationId: listAdminEmailBroadcasts
+      summary: List email broadcasts (drafts, sending, sent)
+      security:
+        - SessionCookie:
+            - ADMIN
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AdminEmailBroadcast'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      tags:
+        - Admin
+      x-internal: true
+      operationId: createAdminEmailBroadcast
+      summary: Create a draft email broadcast
+      security:
+        - SessionCookie:
+            - ADMIN
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - campaignKey
+                - subject
+                - bodyMarkdown
+                - audience
+              properties:
+                campaignKey:
+                  type: string
+                  minLength: 1
+                  maxLength: 80
+                subject:
+                  type: string
+                  minLength: 1
+                  maxLength: 200
+                previewText:
+                  type:
+                    - string
+                    - 'null'
+                  maxLength: 240
+                bodyMarkdown:
+                  type: string
+                  minLength: 1
+                  maxLength: 40000
+                ctaLabel:
+                  type:
+                    - string
+                    - 'null'
+                  maxLength: 80
+                ctaUrl:
+                  type:
+                    - string
+                    - 'null'
+                  maxLength: 512
+                audience:
+                  type: string
+                  enum:
+                    - ALL_OPTED_IN
+                    - PATRONS
+                    - ACTIVE_DAYS
+                    - SPECIFIC_USERS
+                audienceParams:
+                  type: object
+                  properties:
+                    activeDays:
+                      type: integer
+                      minimum: 1
+                      maximum: 365
+                    userIds:
+                      type: array
+                      items:
+                        type: integer
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminEmailBroadcast'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/admin/email-broadcasts/estimate:
+    post:
+      tags:
+        - Admin
+      x-internal: true
+      operationId: estimateAdminEmailBroadcast
+      summary: Estimate eligible opted-in recipient count for a broadcast audience
+      security:
+        - SessionCookie:
+            - ADMIN
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - audience
+              properties:
+                audience:
+                  type: string
+                  enum:
+                    - ALL_OPTED_IN
+                    - PATRONS
+                    - ACTIVE_DAYS
+                    - SPECIFIC_USERS
+                audienceParams:
+                  type: object
+                  properties:
+                    activeDays:
+                      type: integer
+                      minimum: 1
+                      maximum: 365
+                    userIds:
+                      type: array
+                      items:
+                        type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - recipientCount
+                properties:
+                  recipientCount:
+                    type: integer
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/admin/email-broadcasts/images:
+    post:
+      tags:
+        - Admin
+      x-internal: true
+      operationId: uploadAdminEmailAsset
+      summary: Upload an inline image (base64 data URL) for use in email broadcasts
+      security:
+        - SessionCookie:
+            - ADMIN
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - dataUrl
+              properties:
+                dataUrl:
+                  type: string
+                  description: Base64 data URL (image/png, image/jpeg, image/webp, or image/gif; max 2 MB)
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - id
+                  - url
+                  - mimeType
+                  - byteSize
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  url:
+                    type: string
+                  mimeType:
+                    type: string
+                  byteSize:
+                    type: integer
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/admin/email-broadcasts/{broadcastId}:
+    patch:
+      tags:
+        - Admin
+      x-internal: true
+      operationId: updateAdminEmailBroadcast
+      summary: Update a draft email broadcast
+      security:
+        - SessionCookie:
+            - ADMIN
+      parameters:
+        - name: broadcastId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                campaignKey:
+                  type: string
+                  minLength: 1
+                  maxLength: 80
+                subject:
+                  type: string
+                  minLength: 1
+                  maxLength: 200
+                previewText:
+                  type:
+                    - string
+                    - 'null'
+                  maxLength: 240
+                bodyMarkdown:
+                  type: string
+                  minLength: 1
+                  maxLength: 40000
+                ctaLabel:
+                  type:
+                    - string
+                    - 'null'
+                  maxLength: 80
+                ctaUrl:
+                  type:
+                    - string
+                    - 'null'
+                  maxLength: 512
+                audience:
+                  type: string
+                  enum:
+                    - ALL_OPTED_IN
+                    - PATRONS
+                    - ACTIVE_DAYS
+                    - SPECIFIC_USERS
+                audienceParams:
+                  type: object
+                  properties:
+                    activeDays:
+                      type: integer
+                      minimum: 1
+                      maximum: 365
+                    userIds:
+                      type: array
+                      items:
+                        type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminEmailBroadcast'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+      tags:
+        - Admin
+      x-internal: true
+      operationId: deleteAdminEmailBroadcast
+      summary: Delete a draft email broadcast
+      security:
+        - SessionCookie:
+            - ADMIN
+      parameters:
+        - name: broadcastId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: No Content
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/admin/email-broadcasts/{broadcastId}/test:
+    post:
+      tags:
+        - Admin
+      x-internal: true
+      operationId: testAdminEmailBroadcast
+      summary: Send a [TEST] copy of an email broadcast to an admin email address
+      security:
+        - SessionCookie:
+            - ADMIN
+      parameters:
+        - name: broadcastId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                toEmail:
+                  type: string
+                  format: email
+      responses:
+        '204':
+          description: No Content
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/admin/email-broadcasts/{broadcastId}/send:
+    post:
+      tags:
+        - Admin
+      x-internal: true
+      operationId: sendAdminEmailBroadcast
+      summary: Launch (or resume) sending an email broadcast via the rate-limited worker
+      security:
+        - SessionCookie:
+            - ADMIN
+      parameters:
+        - name: broadcastId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminEmailBroadcast'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /v1/admin/email-broadcasts/{broadcastId}/cancel:
+    post:
+      tags:
+        - Admin
+      x-internal: true
+      operationId: cancelAdminEmailBroadcast
+      summary: Cancel an in-progress email broadcast between batches
+      security:
+        - SessionCookie:
+            - ADMIN
+      parameters:
+        - name: broadcastId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminEmailBroadcast'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
 components:
@@ -6266,6 +7317,8 @@ components:
         - kind
         - payload
         - read
+        - pinned
+        - groupCount
         - createdAt
       properties:
         id:
@@ -6277,20 +7330,28 @@ components:
             - word-available
             - word-digest
             - request-update
+            - report-resolved
+            - site-announcement
+            - admin-message
           description: |
             `word-available`: watched words that started returning sentences.
             `word-digest`: new sentences for followed words this week.
-            `request-update`: a content request the reader backed started or shipped.
+            `request-update`: a content request the reader backed changed status.
+            `report-resolved`: one or more of the reader's sentence reports were fixed.
+            `site-announcement`: official release or site-wide announcement (pinned until read).
+            `admin-message`: direct official message from an admin (pinned until read).
         payload:
           type: object
           additionalProperties: true
-          description: |
-            What the site needs to draw the entry. Word kinds carry `words`, a list of
-            `{ query, matchMode, titles, sentences | newSentences }` (the site builds the
-            link from the query and match mode); `request-update` carries
-            `{ status, title, path }`.
         read:
           type: boolean
+        pinned:
+          type: boolean
+          description: True for unread official notices pinned at the top of the bell.
+        groupCount:
+          type: integer
+          minimum: 1
+          description: Number of folded events represented by this row (1 when not grouped).
         createdAt:
           type: string
           format: date-time
@@ -10322,6 +11383,8 @@ components:
               type: boolean
             requests:
               type: boolean
+            reports:
+              type: boolean
         customTheme:
           type:
             - object
@@ -11798,6 +12861,88 @@ components:
         permanent:
           type: boolean
           description: Complaints are never lifted from the dashboard.
+    AdminEmailBroadcast:
+      type: object
+      required:
+        - id
+        - campaignKey
+        - subject
+        - bodyMarkdown
+        - audience
+        - audienceParams
+        - status
+        - recipientCount
+        - sentCount
+        - failedCount
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        campaignKey:
+          type: string
+        subject:
+          type: string
+        previewText:
+          type:
+            - string
+            - 'null'
+        bodyMarkdown:
+          type: string
+        ctaLabel:
+          type:
+            - string
+            - 'null'
+        ctaUrl:
+          type:
+            - string
+            - 'null'
+        audience:
+          type: string
+          enum:
+            - ALL_OPTED_IN
+            - PATRONS
+            - ACTIVE_DAYS
+            - SPECIFIC_USERS
+        audienceParams:
+          type: object
+          properties:
+            activeDays:
+              type: integer
+            userIds:
+              type: array
+              items:
+                type: integer
+        status:
+          type: string
+          enum:
+            - DRAFT
+            - SENDING
+            - SENT
+            - FAILED
+            - CANCELLED
+        recipientCount:
+          type: integer
+        sentCount:
+          type: integer
+        failedCount:
+          type: integer
+        error:
+          type:
+            - string
+            - 'null'
+        sentAt:
+          type:
+            - string
+            - 'null'
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
   examples:
     ValidationFailed:
       summary: Validation Failed

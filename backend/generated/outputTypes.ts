@@ -10,6 +10,7 @@ import * as schemas from './schemas';
 export type AccountQuotaStateOutput = z.output<typeof schemas.s_AccountQuotaState>;
 export type ActivityTypeOutput = z.output<typeof schemas.s_ActivityType>;
 export type AddSegmentToCollectionRequestOutput = z.output<typeof schemas.s_AddSegmentToCollectionRequest>;
+export type AdminEmailBroadcastOutput = z.output<typeof schemas.s_AdminEmailBroadcast>;
 export type AdminEmailEventOutput = z.output<typeof schemas.s_AdminEmailEvent>;
 export type AdminEmailSendOutput = z.output<typeof schemas.s_AdminEmailSend>;
 export type AdminEmailSuppressionOutput = z.output<typeof schemas.s_AdminEmailSuppression>;
@@ -152,6 +153,14 @@ export type UpdateEmailPreferencesByTokenRequestBodyOutput = z.output<typeof sch
 export type UpdateAdminContentRequestRequestBodyOutput = z.output<typeof schemas.s_UpdateAdminContentRequestRequestBody>;
 export type MergeAdminContentRequestRequestBodyOutput = z.output<typeof schemas.s_MergeAdminContentRequestRequestBody>;
 export type LiftAdminEmailSuppressionRequestBodyOutput = z.output<typeof schemas.s_LiftAdminEmailSuppressionRequestBody>;
+export type UpdateAdminNotificationSettingRequestBodyOutput = z.output<typeof schemas.s_UpdateAdminNotificationSettingRequestBody>;
+export type PreviewAdminEmailTemplateRequestBodyOutput = z.output<typeof schemas.s_PreviewAdminEmailTemplateRequestBody>;
+export type SendAdminNotificationBroadcastRequestBodyOutput = z.output<typeof schemas.s_SendAdminNotificationBroadcastRequestBody>;
+export type CreateAdminEmailBroadcastRequestBodyOutput = z.output<typeof schemas.s_CreateAdminEmailBroadcastRequestBody>;
+export type EstimateAdminEmailBroadcastRequestBodyOutput = z.output<typeof schemas.s_EstimateAdminEmailBroadcastRequestBody>;
+export type UploadAdminEmailAssetRequestBodyOutput = z.output<typeof schemas.s_UploadAdminEmailAssetRequestBody>;
+export type UpdateAdminEmailBroadcastRequestBodyOutput = z.output<typeof schemas.s_UpdateAdminEmailBroadcastRequestBody>;
+export type TestAdminEmailBroadcastRequestBodyOutput = z.output<typeof schemas.s_TestAdminEmailBroadcastRequestBody>;
 
 // ============================================
 // Inline query schemas and their output types
@@ -211,6 +220,7 @@ export const listAdminEmailsQuerySchema = z.object({
     offset: z.coerce.number().min(0).optional().default(0),
     search: z.string().max(320).optional(),
     kind: z.string().max(32).optional(),
+    campaign: z.string().max(80).optional(),
     status: z.enum(['sent', 'delivered', 'bounced', 'complained', 'failed', 'suppressed']).optional(),
     days: z.coerce.number().min(1).max(366).optional(),
   });
@@ -222,6 +232,11 @@ export const listAdminEmailSuppressionsQuerySchema = z.object({
     search: z.string().max(320).optional(),
   });
 export type ListAdminEmailSuppressionsQueryOutput = z.output<typeof listAdminEmailSuppressionsQuerySchema>;
+
+export const listAdminNotificationBroadcastsQuerySchema = z.object({
+    limit: z.coerce.number().min(1).max(100).optional().default(25),
+  });
+export type ListAdminNotificationBroadcastsQueryOutput = z.output<typeof listAdminNotificationBroadcastsQuerySchema>;
 
 export const listCollectionsQuerySchema = z.object({
     visibility: schemas.s_CollectionVisibility.optional(),

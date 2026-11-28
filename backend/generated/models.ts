@@ -33,6 +33,29 @@ export type t_AdminContentRequest = t_ContentRequest & {
   } | null;
 };
 
+export type t_AdminEmailBroadcast = {
+  audience: 'ALL_OPTED_IN' | 'PATRONS' | 'ACTIVE_DAYS' | 'SPECIFIC_USERS';
+  audienceParams: {
+    activeDays?: number;
+    userIds?: number[];
+  };
+  bodyMarkdown: string;
+  campaignKey: string;
+  createdAt: string;
+  ctaLabel?: string | null;
+  ctaUrl?: string | null;
+  error?: string | null;
+  failedCount: number;
+  id: string;
+  previewText?: string | null;
+  recipientCount: number;
+  sentAt?: string | null;
+  sentCount: number;
+  status: 'DRAFT' | 'SENDING' | 'SENT' | 'FAILED' | 'CANCELLED';
+  subject: string;
+  updatedAt: string;
+};
+
 export type t_AdminEmailEvent = {
   diagnosticMessage: string | null;
   event: string;
@@ -835,9 +858,11 @@ export type t_ModerateEpisodeSegmentsRequest = {
 
 export type t_Notification = {
   createdAt: string;
+  groupCount: number;
   id: string;
-  kind: 'word-available' | 'word-digest' | 'request-update';
+  kind: 'word-available' | 'word-digest' | 'request-update' | 'report-resolved' | 'site-announcement' | 'admin-message';
   payload: Record<string, unknown>;
+  pinned: boolean;
   read: boolean;
 };
 
@@ -1462,6 +1487,7 @@ export type t_UserPreferences = {
     enabled?: boolean;
   };
   siteNotifications?: {
+    reports?: boolean;
     requests?: boolean;
     words?: boolean;
   };
@@ -1530,6 +1556,10 @@ export type t_BoostContentRequestParamSchema = {
   requestId: string;
 };
 
+export type t_CancelAdminEmailBroadcastParamSchema = {
+  broadcastId: string;
+};
+
 export type t_CheckWordWatchQuerySchema = {
   matchMode?: 'WORD' | 'EXACT' | 'CONTAINS';
   query: string;
@@ -1548,6 +1578,20 @@ export type t_CompleteTrackerLinkRequestBody = {
 
 export type t_CompleteUserDictionaryUploadParamSchema = {
   id: string;
+};
+
+export type t_CreateAdminEmailBroadcastRequestBody = {
+  audience: 'ALL_OPTED_IN' | 'PATRONS' | 'ACTIVE_DAYS' | 'SPECIFIC_USERS';
+  audienceParams?: {
+    activeDays?: number;
+    userIds?: number[];
+  };
+  bodyMarkdown: string;
+  campaignKey: string;
+  ctaLabel?: string | null;
+  ctaUrl?: string | null;
+  previewText?: string | null;
+  subject: string;
 };
 
 export type t_CreateContentRequestRequestBody = {
@@ -1573,6 +1617,10 @@ export type t_CreateSegmentsBatchParamSchema = {
 export type t_CreateUserApiKeyRequestBody = {
   name: string;
   scopes: t_ApiKeyScope[];
+};
+
+export type t_DeleteAdminEmailBroadcastParamSchema = {
+  broadcastId: string;
 };
 
 export type t_DeleteAdminReportParamSchema = {
@@ -1610,6 +1658,14 @@ export type t_DeleteUserDictionaryParamSchema = {
 
 export type t_DeleteWordWatchParamSchema = {
   watchId: string;
+};
+
+export type t_EstimateAdminEmailBroadcastRequestBody = {
+  audience: 'ALL_OPTED_IN' | 'PATRONS' | 'ACTIVE_DAYS' | 'SPECIFIC_USERS';
+  audienceParams?: {
+    activeDays?: number;
+    userIds?: number[];
+  };
 };
 
 export type t_ForgetFamiliarMediaParamSchema = {
@@ -1730,12 +1786,17 @@ export type t_ListAdminEmailSuppressionsQuerySchema = {
 };
 
 export type t_ListAdminEmailsQuerySchema = {
+  campaign?: string;
   days?: number;
   kind?: string;
   limit?: number;
   offset?: number;
   search?: string;
   status?: 'sent' | 'delivered' | 'bounced' | 'complained' | 'failed' | 'suppressed';
+};
+
+export type t_ListAdminNotificationBroadcastsQuerySchema = {
+  limit?: number;
 };
 
 export type t_ListAdminReportsQuerySchema = {
@@ -1834,6 +1895,19 @@ export type t_ModerateEpisodeSegmentsParamSchema = {
   mediaPublicId: string;
 };
 
+export type t_PreviewAdminEmailTemplateParamSchema = {
+  kind: string;
+};
+
+export type t_PreviewAdminEmailTemplateRequestBody = {
+  bodyOverride?: string | null;
+  ctaLabel?: string | null;
+  ctaUrl?: string | null;
+  previewText?: string | null;
+  sendTestTo?: string | null;
+  subjectOverride?: string | null;
+};
+
 export type t_PreviewContentRequestRequestBody = {
   sourceUrl: string;
   title?: string;
@@ -1873,6 +1947,20 @@ export type t_SearchCollectionSegmentsParamSchema = {
   collectionPublicId: string;
 };
 
+export type t_SendAdminEmailBroadcastParamSchema = {
+  broadcastId: string;
+};
+
+export type t_SendAdminNotificationBroadcastRequestBody = {
+  audience: 'ALL' | 'PATRONS' | 'USER';
+  kind: 'site-announcement' | 'admin-message';
+  linkLabel?: string | null;
+  linkUrl?: string | null;
+  message: string;
+  targetUserId?: number | null;
+  title: string;
+};
+
 export type t_SetWordWatchRequestBody = {
   matchMode?: 'WORD' | 'EXACT' | 'CONTAINS';
   mode: 'FIRST' | 'NEW_SENTENCES';
@@ -1881,6 +1969,14 @@ export type t_SetWordWatchRequestBody = {
 
 export type t_StartTrackerLinkRequestBody = {
   provider: 'ANILIST' | 'MAL';
+};
+
+export type t_TestAdminEmailBroadcastParamSchema = {
+  broadcastId: string;
+};
+
+export type t_TestAdminEmailBroadcastRequestBody = {
+  toEmail?: string;
 };
 
 export type t_UnlinkAdminPatreonConnectionParamSchema = {
@@ -1910,6 +2006,38 @@ export type t_UpdateAdminContentRequestRequestBody = {
   notify?: boolean;
   status?: 'OPEN' | 'PLANNED' | 'IN_PROGRESS' | 'RELEASED' | 'DECLINED';
   title?: string;
+};
+
+export type t_UpdateAdminEmailBroadcastParamSchema = {
+  broadcastId: string;
+};
+
+export type t_UpdateAdminEmailBroadcastRequestBody = {
+  audience?: 'ALL_OPTED_IN' | 'PATRONS' | 'ACTIVE_DAYS' | 'SPECIFIC_USERS';
+  audienceParams?: {
+    activeDays?: number;
+    userIds?: number[];
+  };
+  bodyMarkdown?: string;
+  campaignKey?: string;
+  ctaLabel?: string | null;
+  ctaUrl?: string | null;
+  previewText?: string | null;
+  subject?: string;
+};
+
+export type t_UpdateAdminNotificationSettingParamSchema = {
+  kind: string;
+};
+
+export type t_UpdateAdminNotificationSettingRequestBody = {
+  bodyOverride?: string | null;
+  emailEnabled?: boolean;
+  params?: Record<string, unknown>;
+  resetParams?: boolean;
+  resetTemplate?: boolean;
+  siteEnabled?: boolean;
+  subjectOverride?: string | null;
 };
 
 export type t_UpdateAdminReportParamSchema = {
@@ -1972,6 +2100,10 @@ export type t_UpdateWordWatchParamSchema = {
 export type t_UpdateWordWatchRequestBody = {
   mode?: 'FIRST' | 'NEW_SENTENCES';
   paused?: boolean;
+};
+
+export type t_UploadAdminEmailAssetRequestBody = {
+  dataUrl: string;
 };
 
 export type t_VoteContentRequestParamSchema = {

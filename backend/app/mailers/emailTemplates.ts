@@ -1,10 +1,28 @@
 import fs from 'fs';
 import path from 'path';
 import { config } from '@config/config';
-import { loadCopy } from './copy';
+import { loadCopy, renderCopyBlock } from './copy';
 import type { Sender } from './senders';
 import type { CatalogueSize } from '@app/services/stats/catalogueSize';
 import { returnUrl, withCampaignTags } from '@app/services/email/returnLink';
+import type { RegistryKind } from '@app/services/notifications/registry';
+import { getNotificationSetting } from '@app/services/notifications/settings';
+
+async function resolveSubject(
+  kind: RegistryKind,
+  fallback: string,
+  vars: Record<string, string> = {},
+  explicitOverride?: string | null,
+): Promise<string> {
+  const override =
+    explicitOverride !== undefined ? explicitOverride : (await getNotificationSetting(kind)).subjectOverride;
+  if (!override) return fallback;
+  let result = override;
+  for (const [k, v] of Object.entries(vars)) {
+    result = result.replaceAll(`{{${k}}}`, v);
+  }
+  return result.replace(/\s+/g, ' ').trim() || fallback;
+}
 
 function escapeHTML(str: string): string {
   return str
@@ -71,18 +89,24 @@ export async function buildWelcomeEmail(
   username: string,
   sender: Sender,
   catalogue?: CatalogueSize | null,
+  overrides?: { subject?: string | null; body?: string | null },
 ): Promise<{
   subject: string;
   html: string;
 }> {
-  const subject = 'Welcome to Nadeshiko!';
+  const subject = await resolveSubject(
+    'welcome',
+    'Welcome to Nadeshiko!',
+    { username, senderName: sender.name },
+    overrides?.subject,
+  );
   const [one, two, three, four] = WELCOME_STEPS;
 
   // Omit the row when count is unavailable; format present counts here because the template cannot add separators.
   const number = (value: number) => value.toLocaleString('en-US');
 
   const html = await renderTemplate('welcome', {
-    ...(await loadCopy('welcome')),
+    ...(await loadCopy('welcome', overrides?.body)),
     ...senderVariables(sender),
     username,
     baseUrl: config.BASE_URL,
@@ -480,6 +504,41 @@ export async function buildWordAlertEmail(
     year: getCurrentYear(),
   });
 
+  return { subject, html };
+}
+
+export interface BroadcastEmailInput {
+  subject: string;
+  previewText?: string | null;
+  bodyMarkdown: string;
+  ctaLabel?: string | null;
+  ctaUrl?: string | null;
+  username?: string;
+  campaign: string;
+  unsubscribeUrl: string;
+}
+
+/** Custom rich broadcast email (task 55), rendered with the shared dark card layout. Supports `{{username}}`. */
+export async function buildBroadcastEmail(input: BroadcastEmailInput): Promise<{ subject: string; html: string }> {
+  const name = input.username?.trim() || 'there';
+  const subject = input.subject.replaceAll('{{username}}', name);
+  const body = input.bodyMarkdown.replaceAll('{{username}}', name);
+  const rawCtaUrl = input.ctaUrl?.trim() || '';
+  const ctaUrl = rawCtaUrl
+    ? rawCtaUrl.startsWith('/')
+      ? withCampaignTags(rawCtaUrl, input.campaign, 'cta')
+      : rawCtaUrl
+    : '';
+  const html = await renderTemplate('broadcast', {
+    subject,
+    previewText: (input.previewText?.trim() || '').replaceAll('{{username}}', name),
+    bodyHtml: renderCopyBlock(body),
+    ctaUrl,
+    ctaLabel: input.ctaLabel?.trim() || 'Learn more',
+    unsubscribeUrl: input.unsubscribeUrl,
+    logoUrl: getLogoUrl(),
+    year: getCurrentYear(),
+  });
   return { subject, html };
 }
 

@@ -9,6 +9,7 @@ import { logger } from '@config/log';
 import { sendFeedbackAskEmail, sendDormant30Email } from '@app/mailers/email';
 import { acceptsProductEmails, type EmailCategory } from '@app/services/email/unsubscribe';
 import { describeLifecycleGate, mayReallySend } from '@app/services/email/lifecycleGate';
+import { getNotificationParams, isChannelEnabled } from '@app/services/notifications/settings';
 import { EMAIL_LIFECYCLE_QUEUE } from './queueNames';
 import { instrumentedHandler } from './workerInstrumentation';
 
@@ -78,12 +79,16 @@ export const DORMANT_NIGHTLY_CAP = 25;
 
 /** Select by last-seen dormancy, then apply the nightly cap and repeat floor; a returning reader may receive a
  * later, separately earned win-back. */
-async function dormantCandidates(): Promise<User[]> {
+async function dormantCandidates(
+  dormantAfter = DORMANT_AFTER_DAYS,
+  repeatFloor = DORMANT_REPEAT_FLOOR_DAYS,
+  nightlyCap = DORMANT_NIGHTLY_CAP,
+): Promise<User[]> {
   return (
     User.createQueryBuilder('user')
       .where('user.is_active = true')
       .andWhere(`${LAST_SEEN} < now() - make_interval(days => :dormantAfter)`, {
-        dormantAfter: DORMANT_AFTER_DAYS,
+        dormantAfter,
       })
       .andWhere(`NOT EXISTS (SELECT 1 FROM "EmailSuppression" p WHERE p.address = LOWER(user.email))`)
       // Do not resend until the reader returns, and enforce the repeat floor; a permanently absent account must not
@@ -94,11 +99,11 @@ async function dormantCandidates(): Promise<User[]> {
          WHERE s.user_id = user.id AND s.kind = 'dormant-30'
            AND (s.sent_at > ${LAST_SEEN} OR s.sent_at >= now() - make_interval(days => :floor))
        )`,
-        { floor: DORMANT_REPEAT_FLOOR_DAYS },
+        { floor: repeatFloor },
       )
       // Send warmest dormant accounts first by descending last-seen time, while the cap lets the older tail drain.
       .orderBy(LAST_SEEN, 'DESC')
-      .take(DORMANT_NIGHTLY_CAP)
+      .take(nightlyCap)
       .getMany()
   );
 }
@@ -164,7 +169,12 @@ export const FEEDBACK_ASK_AGE_DAYS = 7;
 /** Keep one day-7 sweep with `hasStarted` selecting the question; the campaign reference and claim must describe the
  * same variant. */
 async function sweepFeedbackAsk(): Promise<void> {
-  const users = await candidates('feedback-ask', FEEDBACK_ASK_AGE_DAYS);
+  if (!(await isChannelEnabled('feedback-ask', 'email'))) {
+    logger.info({ 'email.kind': 'feedback-ask' }, 'Skipping lifecycle sweep: disabled in notification settings');
+    return;
+  }
+  const { delayDays } = await getNotificationParams<{ delayDays: number }>('feedback-ask');
+  const users = await candidates('feedback-ask', delayDays ?? FEEDBACK_ASK_AGE_DAYS);
   let sent = 0;
   let wouldSend = 0;
 
@@ -200,7 +210,20 @@ async function sweepFeedbackAsk(): Promise<void> {
 }
 
 async function sweepDormant30(): Promise<void> {
-  const users = await dormantCandidates();
+  if (!(await isChannelEnabled('dormant-30', 'email'))) {
+    logger.info({ 'email.kind': 'dormant-30' }, 'Skipping lifecycle sweep: disabled in notification settings');
+    return;
+  }
+  const { inactiveDays, cooldownDays, dailyCap } = await getNotificationParams<{
+    inactiveDays: number;
+    cooldownDays: number;
+    dailyCap: number;
+  }>('dormant-30');
+  const users = await dormantCandidates(
+    inactiveDays ?? DORMANT_AFTER_DAYS,
+    cooldownDays ?? DORMANT_REPEAT_FLOOR_DAYS,
+    dailyCap ?? DORMANT_NIGHTLY_CAP,
+  );
   const campaign = dormantCampaign();
   let sent = 0;
   let wouldSend = 0;

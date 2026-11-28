@@ -8,8 +8,10 @@ import type {
   ListAdminEmailsResponse,
 } from '@brigadasos/nadeshiko-sdk';
 import { handleApiError } from '~/utils/apiError';
+import AdminEmailTemplatesTab from './EmailTemplatesTab.vue';
+import AdminEmailBroadcastsTab from './EmailBroadcastsTab.vue';
 
-type Tab = 'sent' | 'suppressed';
+type Tab = 'sent' | 'suppressed' | 'types' | 'broadcasts';
 type Status = AdminEmailSend['status'];
 
 const KINDS = [
@@ -22,6 +24,7 @@ const KINDS = [
   'request-update',
   'word-available',
   'word-digest',
+  'broadcast',
   'recap',
   'unknown',
 ] as const;
@@ -34,9 +37,14 @@ const { formatNumber, formatDate } = useFormat();
 const localePath = useLocalePath();
 const route = useRoute();
 
-const activeTab = ref<Tab>(route.query.tab === 'suppressed' ? 'suppressed' : 'sent');
+const activeTab = ref<Tab>(
+  route.query.tab === 'suppressed' || route.query.tab === 'types' || route.query.tab === 'broadcasts'
+    ? (route.query.tab as Tab)
+    : 'sent',
+);
 const search = ref(typeof route.query.q === 'string' ? route.query.q : '');
 const kind = ref('');
+const campaign = ref(typeof route.query.campaign === 'string' ? route.query.campaign : '');
 const status = ref<Status | ''>('');
 const requestedDays = Number(route.query.days);
 const days = ref<number>((DAY_RANGES as readonly number[]).includes(requestedDays) ? requestedDays : 30);
@@ -83,6 +91,7 @@ function statusClasses(value: Status): string {
 let latestRequest = 0;
 
 async function fetchPage(nextOffset = offset.value) {
+  if (activeTab.value === 'types' || activeTab.value === 'broadcasts') return;
   const request = ++latestRequest;
   isLoading.value = true;
   const q = search.value.trim();
@@ -94,6 +103,7 @@ async function fetchPage(nextOffset = offset.value) {
         days: days.value,
         ...(q ? { search: q } : {}),
         ...(kind.value ? { kind: kind.value } : {}),
+        ...(campaign.value ? { campaign: campaign.value } : {}),
         ...(status.value ? { status: status.value } : {}),
       });
       if (request !== latestRequest) return;
@@ -128,11 +138,17 @@ function fetchNow() {
 }
 
 watch(search, () => scheduleSearch());
-watch([kind, status, days], fetchNow);
+watch([kind, campaign, status, days], fetchNow);
 watch(activeTab, () => {
   total.value = 0;
   fetchNow();
 });
+
+function openCampaignLog(campaignKey: string) {
+  campaign.value = campaignKey;
+  kind.value = 'broadcast';
+  activeTab.value = 'sent';
+}
 
 async function openDetail(email: AdminEmailSend) {
   selected.value = email;
@@ -220,7 +236,7 @@ onMounted(() => fetchPage(0));
     <section class="space-y-4 rounded-xl border border-hairline bg-card-background p-4">
       <div class="flex flex-wrap items-center gap-1.5 border-b border-hairline pb-3" role="tablist">
         <button
-          v-for="tab in (['sent', 'suppressed'] as const)"
+          v-for="tab in (['sent', 'suppressed', 'types', 'broadcasts'] as const)"
           :key="tab"
           type="button"
           role="tab"
@@ -236,6 +252,10 @@ onMounted(() => fetchPage(0));
         </button>
       </div>
 
+      <AdminEmailTemplatesTab v-if="activeTab === 'types'" />
+      <AdminEmailBroadcastsTab v-else-if="activeTab === 'broadcasts'" @open-campaign-log="openCampaignLog" />
+
+      <template v-else>
       <div class="flex flex-wrap items-center gap-2">
         <input
           v-model="search"
@@ -256,6 +276,15 @@ onMounted(() => fetchPage(0));
           <select v-model.number="days" data-testid="emails-days" class="nd-input w-auto">
             <option v-for="d in DAY_RANGES" :key="d" :value="d">{{ t(`adminEmails.filters.days.${d}`) }}</option>
           </select>
+          <button
+            v-if="campaign"
+            type="button"
+            class="inline-flex items-center gap-1 rounded-full border border-brand/30 bg-brand/15 px-2.5 py-1 text-xs text-brand"
+            @click="campaign = ''"
+          >
+            <span>{{ campaign }}</span>
+            <UiBaseIcon :path="mdiClose" :size="12" />
+          </button>
         </template>
         <span class="ml-auto text-xs text-ink-faint tabular-nums">{{ formatNumber(total) }}</span>
       </div>
@@ -388,6 +417,7 @@ onMounted(() => fetchPage(0));
           </button>
         </div>
       </div>
+      </template>
     </section>
 
     <CommonBaseModal

@@ -1,6 +1,7 @@
 import type { AdminOverview } from '@brigadasos/nadeshiko-sdk';
 import {
   mdiAccountGroupOutline,
+  mdiBellOutline,
   mdiBullhornOutline,
   mdiEmailOutline,
   mdiHeartOutline,
@@ -61,6 +62,14 @@ export const ADMIN_DIRECTORY_ITEMS: readonly AdminDirectoryItem[] = [
       o && o.requests.open > 0
         ? { count: o.requests.open, tone: o.requests.boostedOpen > 0 ? 'warning' : 'brand' }
         : null,
+  },
+  {
+    id: 'notifications',
+    category: 'community',
+    titleKey: 'adminDashboard.items.notificationsTitle',
+    descriptionKey: 'adminDashboard.items.notificationsDesc',
+    icon: mdiBellOutline,
+    to: '/admin/notifications',
   },
   {
     id: 'announcement',

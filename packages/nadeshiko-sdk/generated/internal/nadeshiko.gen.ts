@@ -4,7 +4,7 @@ import { createClient as createApiClient, createConfig, type Client } from './cl
 import type { Auth } from './core/auth.gen';
 import type { ClientOptions } from './types.gen';
 import type * as Types from './types.gen';
-import { search, getSearchStats, searchWords, searchMedia, getStatsOverview, listMedia, getSegment, getSegmentContext, getMedia, listEpisodes, getEpisode, getMe, createUserApiKey, listExcludedMedia, addExcludedMedia, removeExcludedMedia, listFavoriteMedia, addFavoriteMedia, removeFavoriteMedia, listFamiliarMedia, listUserActivity, getUserActivityHeatmap, getUserActivityStats, listCollections, createCollection, getCollection, deleteCollection, addSegmentToCollection, searchCollectionSegments, removeSegmentFromCollection, listContentRequests, createContentRequest, getContentRequestAllowance, previewContentRequest, listMyContentRequests, withdrawContentRequest, voteContentRequest, unvoteContentRequest, boostContentRequest, listNotifications, getUnreadNotificationCount, markNotificationsRead, listWordWatches, setWordWatch, checkWordWatch, updateWordWatch, deleteWordWatch, identifyDictionaryWord, getDictionaryKanjiIndex, getDictionaryKanji, getDictionaryKanjiCustom, getCoveredWords, triggerCoveredWordsUpdate, createMedia, updateSegment, listSegmentRevisions, restoreSegmentRevision, updateMedia, deleteMedia, createEpisode, updateEpisode, deleteEpisode, listSegments, createSegment, createSegmentsBatch, moderateEpisodeSegments, getPatreonConnection, startPatreonLink, unlinkPatreon, completePatreonLink, getTrackerConnection, startTrackerLink, unlinkTracker, completeTrackerLink, syncTrackerConnection, updateTrackerSettings, listUserDictionaries, updateUserDictionaries, deleteUserDictionary, reserveUserDictionaryUpload, completeUserDictionaryUpload, clearFamiliarMedia, forgetFamiliarMedia, createUserReport, getUserPreferences, updateUserPreferences, trackUserActivity, deleteUserActivity, deleteUserActivityByDate, deleteUserActivityById, exportUserData, createFeedback, getFeedbackFormToken, unsubscribeFromEmail, getEmailPreferencesByToken, updateEmailPreferencesByToken, updateCollection, updateCollectionSegment, getCollectionStats, getAdminOverview, listAdminReports, batchUpdateAdminReports, bulkUpdateAdminReports, bulkDeleteAdminReports, updateAdminReport, deleteAdminReport, getAnnouncement, updateAnnouncement, getAdminUsersWithProviders, listTiers, getAdminUserQuota, updateAdminUserQuota, listAdminContentRequests, updateAdminContentRequest, mergeAdminContentRequest, getAdminPatreonOverview, refreshAllAdminPatreonConnections, unlinkAdminPatreonConnection, refreshAdminPatreonConnection, listAdminEmails, getAdminEmail, resendAdminEmail, listAdminEmailSuppressions, liftAdminEmailSuppression, getSession, getSessionPost, signOut, socialSignIn, signInWithMagicLink, signInWithEmailOtp, listUserSessions, authRevokeSession, authRevokeSessions, authRevokeOtherSessions, deleteUser, changeEmail, authApiKeyCreate, authApiKeyList, authApiKeyUpdate, banUser, unbanUser, impersonateUser, authAdminStopImpersonating, type Options } from './sdk.gen';
+import { search, getSearchStats, searchWords, searchMedia, getStatsOverview, listMedia, getSegment, getSegmentContext, getMedia, listEpisodes, getEpisode, getMe, createUserApiKey, listExcludedMedia, addExcludedMedia, removeExcludedMedia, listFavoriteMedia, addFavoriteMedia, removeFavoriteMedia, listFamiliarMedia, listUserActivity, getUserActivityHeatmap, getUserActivityStats, listCollections, createCollection, getCollection, deleteCollection, addSegmentToCollection, searchCollectionSegments, removeSegmentFromCollection, listContentRequests, createContentRequest, getContentRequestAllowance, previewContentRequest, listMyContentRequests, withdrawContentRequest, voteContentRequest, unvoteContentRequest, boostContentRequest, listNotifications, getUnreadNotificationCount, markNotificationsRead, listWordWatches, setWordWatch, checkWordWatch, updateWordWatch, deleteWordWatch, identifyDictionaryWord, getDictionaryKanjiIndex, getDictionaryKanji, getDictionaryKanjiCustom, getCoveredWords, triggerCoveredWordsUpdate, createMedia, updateSegment, listSegmentRevisions, restoreSegmentRevision, updateMedia, deleteMedia, createEpisode, updateEpisode, deleteEpisode, listSegments, createSegment, createSegmentsBatch, moderateEpisodeSegments, getPatreonConnection, startPatreonLink, unlinkPatreon, completePatreonLink, getTrackerConnection, startTrackerLink, unlinkTracker, completeTrackerLink, syncTrackerConnection, updateTrackerSettings, listUserDictionaries, updateUserDictionaries, deleteUserDictionary, reserveUserDictionaryUpload, completeUserDictionaryUpload, clearFamiliarMedia, forgetFamiliarMedia, createUserReport, getUserPreferences, updateUserPreferences, trackUserActivity, deleteUserActivity, deleteUserActivityByDate, deleteUserActivityById, exportUserData, createFeedback, getFeedbackFormToken, unsubscribeFromEmail, getEmailPreferencesByToken, updateEmailPreferencesByToken, updateCollection, updateCollectionSegment, getCollectionStats, getAdminOverview, listAdminReports, batchUpdateAdminReports, bulkUpdateAdminReports, bulkDeleteAdminReports, updateAdminReport, deleteAdminReport, getAnnouncement, updateAnnouncement, getAdminUsersWithProviders, listTiers, getAdminUserQuota, updateAdminUserQuota, listAdminContentRequests, updateAdminContentRequest, mergeAdminContentRequest, getAdminPatreonOverview, refreshAllAdminPatreonConnections, unlinkAdminPatreonConnection, refreshAdminPatreonConnection, listAdminEmails, getAdminEmail, resendAdminEmail, listAdminEmailSuppressions, liftAdminEmailSuppression, listAdminNotificationSettings, updateAdminNotificationSetting, previewAdminEmailTemplate, listAdminNotificationBroadcasts, sendAdminNotificationBroadcast, listAdminEmailBroadcasts, createAdminEmailBroadcast, estimateAdminEmailBroadcast, uploadAdminEmailAsset, updateAdminEmailBroadcast, deleteAdminEmailBroadcast, testAdminEmailBroadcast, sendAdminEmailBroadcast, cancelAdminEmailBroadcast, getSession, getSessionPost, signOut, socialSignIn, signInWithMagicLink, signInWithEmailOtp, listUserSessions, authRevokeSession, authRevokeSessions, authRevokeOtherSessions, deleteUser, changeEmail, authApiKeyCreate, authApiKeyList, authApiKeyUpdate, banUser, unbanUser, impersonateUser, authAdminStopImpersonating, type Options } from './sdk.gen';
 import { withRetry, type RetryOptions } from './retry';
 import { NadeshikoError, buildNadeshikoError, isProblemDetails, type NadeshikoErrorCode, type RateLimitReason } from './errors';
 import { flatPaginate } from './paginate';
@@ -588,6 +588,69 @@ export type NadeshikoClient = {
     liftAdminEmailSuppression: {
       (params: NonNullable<Types.LiftAdminEmailSuppressionData['body']> & { throwOnError: false }): Promise<{ data: Types.LiftAdminEmailSuppressionResponse; response: Response; request: Request } | { error: Types.LiftAdminEmailSuppressionErrors; response: Response; request: Request }>;
       (params: NonNullable<Types.LiftAdminEmailSuppressionData['body']>): Promise<Types.LiftAdminEmailSuppressionResponse>;
+    };
+    listAdminNotificationSettings: {
+      (params: { throwOnError: false }): Promise<{ data: Types.ListAdminNotificationSettingsResponse; response: Response; request: Request } | { error: Types.ListAdminNotificationSettingsErrors; response: Response; request: Request }>;
+      (): Promise<Types.ListAdminNotificationSettingsResponse>;
+    };
+    updateAdminNotificationSetting: {
+      (id: string): Promise<Types.UpdateAdminNotificationSettingResponse>;
+      (params: Types.UpdateAdminNotificationSettingData['path'] & NonNullable<Types.UpdateAdminNotificationSettingData['body']> & { throwOnError: false }): Promise<{ data: Types.UpdateAdminNotificationSettingResponse; response: Response; request: Request } | { error: Types.UpdateAdminNotificationSettingErrors; response: Response; request: Request }>;
+      (params: Types.UpdateAdminNotificationSettingData['path'] & NonNullable<Types.UpdateAdminNotificationSettingData['body']>): Promise<Types.UpdateAdminNotificationSettingResponse>;
+    };
+    previewAdminEmailTemplate: {
+      (id: string): Promise<Types.PreviewAdminEmailTemplateResponse>;
+      (params: Types.PreviewAdminEmailTemplateData['path'] & NonNullable<Types.PreviewAdminEmailTemplateData['body']> & { throwOnError: false }): Promise<{ data: Types.PreviewAdminEmailTemplateResponse; response: Response; request: Request } | { error: Types.PreviewAdminEmailTemplateErrors; response: Response; request: Request }>;
+      (params: Types.PreviewAdminEmailTemplateData['path'] & NonNullable<Types.PreviewAdminEmailTemplateData['body']>): Promise<Types.PreviewAdminEmailTemplateResponse>;
+    };
+    listAdminNotificationBroadcasts: {
+      (params: NonNullable<Types.ListAdminNotificationBroadcastsData['query']> & { throwOnError: false }): Promise<{ data: Types.ListAdminNotificationBroadcastsResponse; response: Response; request: Request } | { error: Types.ListAdminNotificationBroadcastsErrors; response: Response; request: Request }>;
+      (params?: NonNullable<Types.ListAdminNotificationBroadcastsData['query']>): Promise<Types.ListAdminNotificationBroadcastsResponse>;
+    };
+    sendAdminNotificationBroadcast: {
+      (params: NonNullable<Types.SendAdminNotificationBroadcastData['body']> & { throwOnError: false }): Promise<{ data: Types.SendAdminNotificationBroadcastResponse; response: Response; request: Request } | { error: Types.SendAdminNotificationBroadcastErrors; response: Response; request: Request }>;
+      (params: NonNullable<Types.SendAdminNotificationBroadcastData['body']>): Promise<Types.SendAdminNotificationBroadcastResponse>;
+    };
+    listAdminEmailBroadcasts: {
+      (params: { throwOnError: false }): Promise<{ data: Types.ListAdminEmailBroadcastsResponse; response: Response; request: Request } | { error: Types.ListAdminEmailBroadcastsErrors; response: Response; request: Request }>;
+      (): Promise<Types.ListAdminEmailBroadcastsResponse>;
+    };
+    createAdminEmailBroadcast: {
+      (params: NonNullable<Types.CreateAdminEmailBroadcastData['body']> & { throwOnError: false }): Promise<{ data: Types.CreateAdminEmailBroadcastResponse; response: Response; request: Request } | { error: Types.CreateAdminEmailBroadcastErrors; response: Response; request: Request }>;
+      (params: NonNullable<Types.CreateAdminEmailBroadcastData['body']>): Promise<Types.CreateAdminEmailBroadcastResponse>;
+    };
+    estimateAdminEmailBroadcast: {
+      (params: NonNullable<Types.EstimateAdminEmailBroadcastData['body']> & { throwOnError: false }): Promise<{ data: Types.EstimateAdminEmailBroadcastResponse; response: Response; request: Request } | { error: Types.EstimateAdminEmailBroadcastErrors; response: Response; request: Request }>;
+      (params: NonNullable<Types.EstimateAdminEmailBroadcastData['body']>): Promise<Types.EstimateAdminEmailBroadcastResponse>;
+    };
+    uploadAdminEmailAsset: {
+      (params: NonNullable<Types.UploadAdminEmailAssetData['body']> & { throwOnError: false }): Promise<{ data: Types.UploadAdminEmailAssetResponse; response: Response; request: Request } | { error: Types.UploadAdminEmailAssetErrors; response: Response; request: Request }>;
+      (params: NonNullable<Types.UploadAdminEmailAssetData['body']>): Promise<Types.UploadAdminEmailAssetResponse>;
+    };
+    updateAdminEmailBroadcast: {
+      (id: string): Promise<Types.UpdateAdminEmailBroadcastResponse>;
+      (params: Types.UpdateAdminEmailBroadcastData['path'] & NonNullable<Types.UpdateAdminEmailBroadcastData['body']> & { throwOnError: false }): Promise<{ data: Types.UpdateAdminEmailBroadcastResponse; response: Response; request: Request } | { error: Types.UpdateAdminEmailBroadcastErrors; response: Response; request: Request }>;
+      (params: Types.UpdateAdminEmailBroadcastData['path'] & NonNullable<Types.UpdateAdminEmailBroadcastData['body']>): Promise<Types.UpdateAdminEmailBroadcastResponse>;
+    };
+    deleteAdminEmailBroadcast: {
+      (id: string): Promise<Types.DeleteAdminEmailBroadcastResponse>;
+      (params: Types.DeleteAdminEmailBroadcastData['path'] & { throwOnError: false }): Promise<{ data: Types.DeleteAdminEmailBroadcastResponse; response: Response; request: Request } | { error: Types.DeleteAdminEmailBroadcastErrors; response: Response; request: Request }>;
+      (params: Types.DeleteAdminEmailBroadcastData['path']): Promise<Types.DeleteAdminEmailBroadcastResponse>;
+    };
+    testAdminEmailBroadcast: {
+      (id: string): Promise<Types.TestAdminEmailBroadcastResponse>;
+      (params: Types.TestAdminEmailBroadcastData['path'] & NonNullable<Types.TestAdminEmailBroadcastData['body']> & { throwOnError: false }): Promise<{ data: Types.TestAdminEmailBroadcastResponse; response: Response; request: Request } | { error: Types.TestAdminEmailBroadcastErrors; response: Response; request: Request }>;
+      (params: Types.TestAdminEmailBroadcastData['path'] & NonNullable<Types.TestAdminEmailBroadcastData['body']>): Promise<Types.TestAdminEmailBroadcastResponse>;
+    };
+    sendAdminEmailBroadcast: {
+      (id: string): Promise<Types.SendAdminEmailBroadcastResponse>;
+      (params: Types.SendAdminEmailBroadcastData['path'] & { throwOnError: false }): Promise<{ data: Types.SendAdminEmailBroadcastResponse; response: Response; request: Request } | { error: Types.SendAdminEmailBroadcastErrors; response: Response; request: Request }>;
+      (params: Types.SendAdminEmailBroadcastData['path']): Promise<Types.SendAdminEmailBroadcastResponse>;
+    };
+    cancelAdminEmailBroadcast: {
+      (id: string): Promise<Types.CancelAdminEmailBroadcastResponse>;
+      (params: Types.CancelAdminEmailBroadcastData['path'] & { throwOnError: false }): Promise<{ data: Types.CancelAdminEmailBroadcastResponse; response: Response; request: Request } | { error: Types.CancelAdminEmailBroadcastErrors; response: Response; request: Request }>;
+      (params: Types.CancelAdminEmailBroadcastData['path']): Promise<Types.CancelAdminEmailBroadcastResponse>;
     };
     getSession: {
       (params: NonNullable<Types.GetSessionData['query']> & { throwOnError: false }): Promise<{ data: Types.GetSessionResponse; response: Response; request: Request } | { error: Types.GetSessionErrors; response: Response; request: Request }>;
@@ -1712,6 +1775,118 @@ export function createNadeshikoClient(config: NadeshikoConfig): NadeshikoClient 
     return tOE === false ? p : p.then((r: any) => r.data);
   };
 
+  const _listAdminNotificationSettings = (params?: any) => {
+    const tOE = params?.throwOnError;
+    const p = listAdminNotificationSettings({ client: clientInstance, throwOnError: tOE === false ? false : true } as any);
+    return tOE === false ? p : p.then((r: any) => r.data);
+  };
+
+  const _updateAdminNotificationSetting = (paramsOrId?: any) => {
+    if (typeof paramsOrId === 'string') {
+      return updateAdminNotificationSetting({ throwOnError: true, path: { kind: paramsOrId }, client: clientInstance } as any).then((r: any) => r.data);
+    }
+    const params = paramsOrId;
+    const { throwOnError: tOE, kind, ...body } = params ?? {};
+    const p = updateAdminNotificationSetting({ path: { kind }, body, client: clientInstance, throwOnError: tOE === false ? false : true } as any);
+    return tOE === false ? p : p.then((r: any) => r.data);
+  };
+
+  const _previewAdminEmailTemplate = (paramsOrId?: any) => {
+    if (typeof paramsOrId === 'string') {
+      return previewAdminEmailTemplate({ throwOnError: true, path: { kind: paramsOrId }, client: clientInstance } as any).then((r: any) => r.data);
+    }
+    const params = paramsOrId;
+    const { throwOnError: tOE, kind, ...body } = params ?? {};
+    const p = previewAdminEmailTemplate({ path: { kind }, body, client: clientInstance, throwOnError: tOE === false ? false : true } as any);
+    return tOE === false ? p : p.then((r: any) => r.data);
+  };
+
+  const _listAdminNotificationBroadcasts = (params?: any) => {
+    const { throwOnError: tOE, ...query } = params ?? {};
+    const p = listAdminNotificationBroadcasts({ ...(Object.keys(query).length > 0 ? { query } : {}), client: clientInstance, throwOnError: tOE === false ? false : true } as any);
+    return tOE === false ? p : p.then((r: any) => r.data);
+  };
+
+  const _sendAdminNotificationBroadcast = (params?: any) => {
+    const { throwOnError: tOE, ...body } = params ?? {};
+    const p = sendAdminNotificationBroadcast({ body, client: clientInstance, throwOnError: tOE === false ? false : true } as any);
+    return tOE === false ? p : p.then((r: any) => r.data);
+  };
+
+  const _listAdminEmailBroadcasts = (params?: any) => {
+    const tOE = params?.throwOnError;
+    const p = listAdminEmailBroadcasts({ client: clientInstance, throwOnError: tOE === false ? false : true } as any);
+    return tOE === false ? p : p.then((r: any) => r.data);
+  };
+
+  const _createAdminEmailBroadcast = (params?: any) => {
+    const { throwOnError: tOE, ...body } = params ?? {};
+    const p = createAdminEmailBroadcast({ body, client: clientInstance, throwOnError: tOE === false ? false : true } as any);
+    return tOE === false ? p : p.then((r: any) => r.data);
+  };
+
+  const _estimateAdminEmailBroadcast = (params?: any) => {
+    const { throwOnError: tOE, ...body } = params ?? {};
+    const p = estimateAdminEmailBroadcast({ body, client: clientInstance, throwOnError: tOE === false ? false : true } as any);
+    return tOE === false ? p : p.then((r: any) => r.data);
+  };
+
+  const _uploadAdminEmailAsset = (params?: any) => {
+    const { throwOnError: tOE, ...body } = params ?? {};
+    const p = uploadAdminEmailAsset({ body, client: clientInstance, throwOnError: tOE === false ? false : true } as any);
+    return tOE === false ? p : p.then((r: any) => r.data);
+  };
+
+  const _updateAdminEmailBroadcast = (paramsOrId?: any) => {
+    if (typeof paramsOrId === 'string') {
+      return updateAdminEmailBroadcast({ throwOnError: true, path: { broadcastId: paramsOrId }, client: clientInstance } as any).then((r: any) => r.data);
+    }
+    const params = paramsOrId;
+    const { throwOnError: tOE, broadcastId, ...body } = params ?? {};
+    const p = updateAdminEmailBroadcast({ path: { broadcastId }, body, client: clientInstance, throwOnError: tOE === false ? false : true } as any);
+    return tOE === false ? p : p.then((r: any) => r.data);
+  };
+
+  const _deleteAdminEmailBroadcast = (paramsOrId?: any) => {
+    if (typeof paramsOrId === 'string') {
+      return deleteAdminEmailBroadcast({ throwOnError: true, path: { broadcastId: paramsOrId }, client: clientInstance } as any).then((r: any) => r.data);
+    }
+    const params = paramsOrId;
+    const { throwOnError: tOE, broadcastId } = params ?? {};
+    const p = deleteAdminEmailBroadcast({ path: { broadcastId }, client: clientInstance, throwOnError: tOE === false ? false : true } as any);
+    return tOE === false ? p : p.then((r: any) => r.data);
+  };
+
+  const _testAdminEmailBroadcast = (paramsOrId?: any) => {
+    if (typeof paramsOrId === 'string') {
+      return testAdminEmailBroadcast({ throwOnError: true, path: { broadcastId: paramsOrId }, client: clientInstance } as any).then((r: any) => r.data);
+    }
+    const params = paramsOrId;
+    const { throwOnError: tOE, broadcastId, ...body } = params ?? {};
+    const p = testAdminEmailBroadcast({ path: { broadcastId }, body, client: clientInstance, throwOnError: tOE === false ? false : true } as any);
+    return tOE === false ? p : p.then((r: any) => r.data);
+  };
+
+  const _sendAdminEmailBroadcast = (paramsOrId?: any) => {
+    if (typeof paramsOrId === 'string') {
+      return sendAdminEmailBroadcast({ throwOnError: true, path: { broadcastId: paramsOrId }, client: clientInstance } as any).then((r: any) => r.data);
+    }
+    const params = paramsOrId;
+    const { throwOnError: tOE, broadcastId } = params ?? {};
+    const p = sendAdminEmailBroadcast({ path: { broadcastId }, client: clientInstance, throwOnError: tOE === false ? false : true } as any);
+    return tOE === false ? p : p.then((r: any) => r.data);
+  };
+
+  const _cancelAdminEmailBroadcast = (paramsOrId?: any) => {
+    if (typeof paramsOrId === 'string') {
+      return cancelAdminEmailBroadcast({ throwOnError: true, path: { broadcastId: paramsOrId }, client: clientInstance } as any).then((r: any) => r.data);
+    }
+    const params = paramsOrId;
+    const { throwOnError: tOE, broadcastId } = params ?? {};
+    const p = cancelAdminEmailBroadcast({ path: { broadcastId }, client: clientInstance, throwOnError: tOE === false ? false : true } as any);
+    return tOE === false ? p : p.then((r: any) => r.data);
+  };
+
   const _getSession = (params?: any) => {
     const { throwOnError: tOE, ...query } = params ?? {};
     const p = getSession({ ...(Object.keys(query).length > 0 ? { query } : {}), client: clientInstance, throwOnError: tOE === false ? false : true } as any);
@@ -1952,6 +2127,20 @@ export function createNadeshikoClient(config: NadeshikoConfig): NadeshikoClient 
     resendAdminEmail: _resendAdminEmail,
     listAdminEmailSuppressions: _listAdminEmailSuppressions,
     liftAdminEmailSuppression: _liftAdminEmailSuppression,
+    listAdminNotificationSettings: _listAdminNotificationSettings,
+    updateAdminNotificationSetting: _updateAdminNotificationSetting,
+    previewAdminEmailTemplate: _previewAdminEmailTemplate,
+    listAdminNotificationBroadcasts: _listAdminNotificationBroadcasts,
+    sendAdminNotificationBroadcast: _sendAdminNotificationBroadcast,
+    listAdminEmailBroadcasts: _listAdminEmailBroadcasts,
+    createAdminEmailBroadcast: _createAdminEmailBroadcast,
+    estimateAdminEmailBroadcast: _estimateAdminEmailBroadcast,
+    uploadAdminEmailAsset: _uploadAdminEmailAsset,
+    updateAdminEmailBroadcast: _updateAdminEmailBroadcast,
+    deleteAdminEmailBroadcast: _deleteAdminEmailBroadcast,
+    testAdminEmailBroadcast: _testAdminEmailBroadcast,
+    sendAdminEmailBroadcast: _sendAdminEmailBroadcast,
+    cancelAdminEmailBroadcast: _cancelAdminEmailBroadcast,
     getSession: _getSession,
     getSessionPost: _getSessionPost,
     signOut: _signOut,

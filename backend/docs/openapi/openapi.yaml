@@ -307,6 +307,28 @@ paths:
     $ref: "./paths/admin/v1_admin_email_suppressions.yaml"
   "/v1/admin/email-suppressions/lift":
     $ref: "./paths/admin/v1_admin_email_suppressions_lift.yaml"
+  "/v1/admin/notification-settings":
+    $ref: "./paths/admin/v1_admin_notification_settings.yaml"
+  "/v1/admin/notification-settings/{kind}":
+    $ref: "./paths/admin/v1_admin_notification_settings_kind.yaml"
+  "/v1/admin/notification-settings/{kind}/preview":
+    $ref: "./paths/admin/v1_admin_notification_settings_preview.yaml"
+  "/v1/admin/notifications/broadcasts":
+    $ref: "./paths/admin/v1_admin_notification_broadcasts.yaml"
+  "/v1/admin/email-broadcasts":
+    $ref: "./paths/admin/v1_admin_email_broadcasts.yaml"
+  "/v1/admin/email-broadcasts/estimate":
+    $ref: "./paths/admin/v1_admin_email_broadcasts_estimate.yaml"
+  "/v1/admin/email-broadcasts/images":
+    $ref: "./paths/admin/v1_admin_email_broadcasts_images.yaml"
+  "/v1/admin/email-broadcasts/{broadcastId}":
+    $ref: "./paths/admin/v1_admin_email_broadcasts_id.yaml"
+  "/v1/admin/email-broadcasts/{broadcastId}/test":
+    $ref: "./paths/admin/v1_admin_email_broadcasts_id_test.yaml"
+  "/v1/admin/email-broadcasts/{broadcastId}/send":
+    $ref: "./paths/admin/v1_admin_email_broadcasts_id_send.yaml"
+  "/v1/admin/email-broadcasts/{broadcastId}/cancel":
+    $ref: "./paths/admin/v1_admin_email_broadcasts_id_cancel.yaml"
 
 components:
   securitySchemes:

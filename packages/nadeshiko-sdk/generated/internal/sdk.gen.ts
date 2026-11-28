@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { AddExcludedMediaData, AddExcludedMediaErrors, AddExcludedMediaResponses, AddFavoriteMediaData, AddFavoriteMediaErrors, AddFavoriteMediaResponses, AddSegmentToCollectionData, AddSegmentToCollectionErrors, AddSegmentToCollectionResponses, AuthAdminStopImpersonatingData, AuthAdminStopImpersonatingErrors, AuthAdminStopImpersonatingResponses, AuthApiKeyCreateData, AuthApiKeyCreateErrors, AuthApiKeyCreateResponses, AuthApiKeyListData, AuthApiKeyListErrors, AuthApiKeyListResponses, AuthApiKeyUpdateData, AuthApiKeyUpdateErrors, AuthApiKeyUpdateResponses, AuthRevokeOtherSessionsData, AuthRevokeOtherSessionsErrors, AuthRevokeOtherSessionsResponses, AuthRevokeSessionData, AuthRevokeSessionErrors, AuthRevokeSessionResponses, AuthRevokeSessionsData, AuthRevokeSessionsErrors, AuthRevokeSessionsResponses, BanUserData, BanUserErrors, BanUserResponses, BatchUpdateAdminReportsData, BatchUpdateAdminReportsErrors, BatchUpdateAdminReportsResponses, BoostContentRequestData, BoostContentRequestErrors, BoostContentRequestResponses, BulkDeleteAdminReportsData, BulkDeleteAdminReportsErrors, BulkDeleteAdminReportsResponses, BulkUpdateAdminReportsData, BulkUpdateAdminReportsErrors, BulkUpdateAdminReportsResponses, ChangeEmailData, ChangeEmailErrors, ChangeEmailResponses, CheckWordWatchData, CheckWordWatchErrors, CheckWordWatchResponses, ClearFamiliarMediaData, ClearFamiliarMediaErrors, ClearFamiliarMediaResponses, CompletePatreonLinkData, CompletePatreonLinkErrors, CompletePatreonLinkResponses, CompleteTrackerLinkData, CompleteTrackerLinkErrors, CompleteTrackerLinkResponses, CompleteUserDictionaryUploadData, CompleteUserDictionaryUploadErrors, CompleteUserDictionaryUploadResponses, CreateCollectionData, CreateCollectionErrors, CreateCollectionResponses, CreateContentRequestData, CreateContentRequestErrors, CreateContentRequestResponses, CreateEpisodeData, CreateEpisodeErrors, CreateEpisodeResponses, CreateFeedbackData, CreateFeedbackErrors, CreateFeedbackResponses, CreateMediaData, CreateMediaErrors, CreateMediaResponses, CreateSegmentData, CreateSegmentErrors, CreateSegmentResponses, CreateSegmentsBatchData, CreateSegmentsBatchErrors, CreateSegmentsBatchResponses, CreateUserApiKeyData, CreateUserApiKeyErrors, CreateUserApiKeyResponses, CreateUserReportData, CreateUserReportErrors, CreateUserReportResponses, DeleteAdminReportData, DeleteAdminReportErrors, DeleteAdminReportResponses, DeleteCollectionData, DeleteCollectionErrors, DeleteCollectionResponses, DeleteEpisodeData, DeleteEpisodeErrors, DeleteEpisodeResponses, DeleteMediaData, DeleteMediaErrors, DeleteMediaResponses, DeleteUserActivityByDateData, DeleteUserActivityByDateErrors, DeleteUserActivityByDateResponses, DeleteUserActivityByIdData, DeleteUserActivityByIdErrors, DeleteUserActivityByIdResponses, DeleteUserActivityData, DeleteUserActivityErrors, DeleteUserActivityResponses, DeleteUserData, DeleteUserDictionaryData, DeleteUserDictionaryErrors, DeleteUserDictionaryResponses, DeleteUserErrors, DeleteUserResponses, DeleteWordWatchData, DeleteWordWatchErrors, DeleteWordWatchResponses, ExportUserDataData, ExportUserDataErrors, ExportUserDataResponses, ForgetFamiliarMediaData, ForgetFamiliarMediaErrors, ForgetFamiliarMediaResponses, GetAdminEmailData, GetAdminEmailErrors, GetAdminEmailResponses, GetAdminOverviewData, GetAdminOverviewErrors, GetAdminOverviewResponses, GetAdminPatreonOverviewData, GetAdminPatreonOverviewErrors, GetAdminPatreonOverviewResponses, GetAdminUserQuotaData, GetAdminUserQuotaErrors, GetAdminUserQuotaResponses, GetAdminUsersWithProvidersData, GetAdminUsersWithProvidersErrors, GetAdminUsersWithProvidersResponses, GetAnnouncementData, GetAnnouncementErrors, GetAnnouncementResponses, GetCollectionData, GetCollectionErrors, GetCollectionResponses, GetCollectionStatsData, GetCollectionStatsErrors, GetCollectionStatsResponses, GetContentRequestAllowanceData, GetContentRequestAllowanceErrors, GetContentRequestAllowanceResponses, GetCoveredWordsData, GetCoveredWordsErrors, GetCoveredWordsResponses, GetDictionaryKanjiCustomData, GetDictionaryKanjiCustomErrors, GetDictionaryKanjiCustomResponses, GetDictionaryKanjiData, GetDictionaryKanjiErrors, GetDictionaryKanjiIndexData, GetDictionaryKanjiIndexErrors, GetDictionaryKanjiIndexResponses, GetDictionaryKanjiResponses, GetEmailPreferencesByTokenData, GetEmailPreferencesByTokenErrors, GetEmailPreferencesByTokenResponses, GetEpisodeData, GetEpisodeErrors, GetEpisodeResponses, GetFeedbackFormTokenData, GetFeedbackFormTokenErrors, GetFeedbackFormTokenResponses, GetMeData, GetMediaData, GetMediaErrors, GetMediaResponses, GetMeErrors, GetMeResponses, GetPatreonConnectionData, GetPatreonConnectionErrors, GetPatreonConnectionResponses, GetSearchStatsData, GetSearchStatsErrors, GetSearchStatsResponses, GetSegmentContextData, GetSegmentContextErrors, GetSegmentContextResponses, GetSegmentData, GetSegmentErrors, GetSegmentResponses, GetSessionData, GetSessionErrors, GetSessionPostData, GetSessionPostErrors, GetSessionPostResponses, GetSessionResponses, GetStatsOverviewData, GetStatsOverviewErrors, GetStatsOverviewResponses, GetTrackerConnectionData, GetTrackerConnectionErrors, GetTrackerConnectionResponses, GetUnreadNotificationCountData, GetUnreadNotificationCountErrors, GetUnreadNotificationCountResponses, GetUserActivityHeatmapData, GetUserActivityHeatmapErrors, GetUserActivityHeatmapResponses, GetUserActivityStatsData, GetUserActivityStatsErrors, GetUserActivityStatsResponses, GetUserPreferencesData, GetUserPreferencesErrors, GetUserPreferencesResponses, IdentifyDictionaryWordData, IdentifyDictionaryWordErrors, IdentifyDictionaryWordResponses, ImpersonateUserData, ImpersonateUserErrors, ImpersonateUserResponses, LiftAdminEmailSuppressionData, LiftAdminEmailSuppressionErrors, LiftAdminEmailSuppressionResponses, ListAdminContentRequestsData, ListAdminContentRequestsErrors, ListAdminContentRequestsResponses, ListAdminEmailsData, ListAdminEmailsErrors, ListAdminEmailsResponses, ListAdminEmailSuppressionsData, ListAdminEmailSuppressionsErrors, ListAdminEmailSuppressionsResponses, ListAdminReportsData, ListAdminReportsErrors, ListAdminReportsResponses, ListCollectionsData, ListCollectionsErrors, ListCollectionsResponses, ListContentRequestsData, ListContentRequestsErrors, ListContentRequestsResponses, ListEpisodesData, ListEpisodesErrors, ListEpisodesResponses, ListExcludedMediaData, ListExcludedMediaErrors, ListExcludedMediaResponses, ListFamiliarMediaData, ListFamiliarMediaErrors, ListFamiliarMediaResponses, ListFavoriteMediaData, ListFavoriteMediaErrors, ListFavoriteMediaResponses, ListMediaData, ListMediaErrors, ListMediaResponses, ListMyContentRequestsData, ListMyContentRequestsErrors, ListMyContentRequestsResponses, ListNotificationsData, ListNotificationsErrors, ListNotificationsResponses, ListSegmentRevisionsData, ListSegmentRevisionsErrors, ListSegmentRevisionsResponses, ListSegmentsData, ListSegmentsErrors, ListSegmentsResponses, ListTiersData, ListTiersErrors, ListTiersResponses, ListUserActivityData, ListUserActivityErrors, ListUserActivityResponses, ListUserDictionariesData, ListUserDictionariesErrors, ListUserDictionariesResponses, ListUserSessionsData, ListUserSessionsErrors, ListUserSessionsResponses, ListWordWatchesData, ListWordWatchesErrors, ListWordWatchesResponses, MarkNotificationsReadData, MarkNotificationsReadErrors, MarkNotificationsReadResponses, MergeAdminContentRequestData, MergeAdminContentRequestErrors, MergeAdminContentRequestResponses, ModerateEpisodeSegmentsData, ModerateEpisodeSegmentsErrors, ModerateEpisodeSegmentsResponses, PreviewContentRequestData, PreviewContentRequestErrors, PreviewContentRequestResponses, RefreshAdminPatreonConnectionData, RefreshAdminPatreonConnectionErrors, RefreshAdminPatreonConnectionResponses, RefreshAllAdminPatreonConnectionsData, RefreshAllAdminPatreonConnectionsErrors, RefreshAllAdminPatreonConnectionsResponses, RemoveExcludedMediaData, RemoveExcludedMediaErrors, RemoveExcludedMediaResponses, RemoveFavoriteMediaData, RemoveFavoriteMediaErrors, RemoveFavoriteMediaResponses, RemoveSegmentFromCollectionData, RemoveSegmentFromCollectionErrors, RemoveSegmentFromCollectionResponses, ResendAdminEmailData, ResendAdminEmailErrors, ResendAdminEmailResponses, ReserveUserDictionaryUploadData, ReserveUserDictionaryUploadErrors, ReserveUserDictionaryUploadResponses, RestoreSegmentRevisionData, RestoreSegmentRevisionErrors, RestoreSegmentRevisionResponses, SearchCollectionSegmentsData, SearchCollectionSegmentsErrors, SearchCollectionSegmentsResponses, SearchData, SearchErrors, SearchMediaData, SearchMediaErrors, SearchMediaResponses, SearchResponses, SearchWordsData, SearchWordsErrors, SearchWordsResponses, SetWordWatchData, SetWordWatchErrors, SetWordWatchResponses, SignInWithEmailOtpData, SignInWithEmailOtpErrors, SignInWithEmailOtpResponses, SignInWithMagicLinkData, SignInWithMagicLinkErrors, SignInWithMagicLinkResponses, SignOutData, SignOutErrors, SignOutResponses, SocialSignInData, SocialSignInErrors, SocialSignInResponses, StartPatreonLinkData, StartPatreonLinkErrors, StartPatreonLinkResponses, StartTrackerLinkData, StartTrackerLinkErrors, StartTrackerLinkResponses, SyncTrackerConnectionData, SyncTrackerConnectionErrors, SyncTrackerConnectionResponses, TrackUserActivityData, TrackUserActivityErrors, TrackUserActivityResponses, TriggerCoveredWordsUpdateData, TriggerCoveredWordsUpdateErrors, TriggerCoveredWordsUpdateResponses, UnbanUserData, UnbanUserErrors, UnbanUserResponses, UnlinkAdminPatreonConnectionData, UnlinkAdminPatreonConnectionErrors, UnlinkAdminPatreonConnectionResponses, UnlinkPatreonData, UnlinkPatreonErrors, UnlinkPatreonResponses, UnlinkTrackerData, UnlinkTrackerErrors, UnlinkTrackerResponses, UnsubscribeFromEmailData, UnsubscribeFromEmailErrors, UnsubscribeFromEmailResponses, UnvoteContentRequestData, UnvoteContentRequestErrors, UnvoteContentRequestResponses, UpdateAdminContentRequestData, UpdateAdminContentRequestErrors, UpdateAdminContentRequestResponses, UpdateAdminReportData, UpdateAdminReportErrors, UpdateAdminReportResponses, UpdateAdminUserQuotaData, UpdateAdminUserQuotaErrors, UpdateAdminUserQuotaResponses, UpdateAnnouncementData, UpdateAnnouncementErrors, UpdateAnnouncementResponses, UpdateCollectionData, UpdateCollectionErrors, UpdateCollectionResponses, UpdateCollectionSegmentData, UpdateCollectionSegmentErrors, UpdateCollectionSegmentResponses, UpdateEmailPreferencesByTokenData, UpdateEmailPreferencesByTokenErrors, UpdateEmailPreferencesByTokenResponses, UpdateEpisodeData, UpdateEpisodeErrors, UpdateEpisodeResponses, UpdateMediaData, UpdateMediaErrors, UpdateMediaResponses, UpdateSegmentData, UpdateSegmentErrors, UpdateSegmentResponses, UpdateTrackerSettingsData, UpdateTrackerSettingsErrors, UpdateTrackerSettingsResponses, UpdateUserDictionariesData, UpdateUserDictionariesErrors, UpdateUserDictionariesResponses, UpdateUserPreferencesData, UpdateUserPreferencesErrors, UpdateUserPreferencesResponses, UpdateWordWatchData, UpdateWordWatchErrors, UpdateWordWatchResponses, VoteContentRequestData, VoteContentRequestErrors, VoteContentRequestResponses, WithdrawContentRequestData, WithdrawContentRequestErrors, WithdrawContentRequestResponses } from './types.gen';
+import type { AddExcludedMediaData, AddExcludedMediaErrors, AddExcludedMediaResponses, AddFavoriteMediaData, AddFavoriteMediaErrors, AddFavoriteMediaResponses, AddSegmentToCollectionData, AddSegmentToCollectionErrors, AddSegmentToCollectionResponses, AuthAdminStopImpersonatingData, AuthAdminStopImpersonatingErrors, AuthAdminStopImpersonatingResponses, AuthApiKeyCreateData, AuthApiKeyCreateErrors, AuthApiKeyCreateResponses, AuthApiKeyListData, AuthApiKeyListErrors, AuthApiKeyListResponses, AuthApiKeyUpdateData, AuthApiKeyUpdateErrors, AuthApiKeyUpdateResponses, AuthRevokeOtherSessionsData, AuthRevokeOtherSessionsErrors, AuthRevokeOtherSessionsResponses, AuthRevokeSessionData, AuthRevokeSessionErrors, AuthRevokeSessionResponses, AuthRevokeSessionsData, AuthRevokeSessionsErrors, AuthRevokeSessionsResponses, BanUserData, BanUserErrors, BanUserResponses, BatchUpdateAdminReportsData, BatchUpdateAdminReportsErrors, BatchUpdateAdminReportsResponses, BoostContentRequestData, BoostContentRequestErrors, BoostContentRequestResponses, BulkDeleteAdminReportsData, BulkDeleteAdminReportsErrors, BulkDeleteAdminReportsResponses, BulkUpdateAdminReportsData, BulkUpdateAdminReportsErrors, BulkUpdateAdminReportsResponses, CancelAdminEmailBroadcastData, CancelAdminEmailBroadcastErrors, CancelAdminEmailBroadcastResponses, ChangeEmailData, ChangeEmailErrors, ChangeEmailResponses, CheckWordWatchData, CheckWordWatchErrors, CheckWordWatchResponses, ClearFamiliarMediaData, ClearFamiliarMediaErrors, ClearFamiliarMediaResponses, CompletePatreonLinkData, CompletePatreonLinkErrors, CompletePatreonLinkResponses, CompleteTrackerLinkData, CompleteTrackerLinkErrors, CompleteTrackerLinkResponses, CompleteUserDictionaryUploadData, CompleteUserDictionaryUploadErrors, CompleteUserDictionaryUploadResponses, CreateAdminEmailBroadcastData, CreateAdminEmailBroadcastErrors, CreateAdminEmailBroadcastResponses, CreateCollectionData, CreateCollectionErrors, CreateCollectionResponses, CreateContentRequestData, CreateContentRequestErrors, CreateContentRequestResponses, CreateEpisodeData, CreateEpisodeErrors, CreateEpisodeResponses, CreateFeedbackData, CreateFeedbackErrors, CreateFeedbackResponses, CreateMediaData, CreateMediaErrors, CreateMediaResponses, CreateSegmentData, CreateSegmentErrors, CreateSegmentResponses, CreateSegmentsBatchData, CreateSegmentsBatchErrors, CreateSegmentsBatchResponses, CreateUserApiKeyData, CreateUserApiKeyErrors, CreateUserApiKeyResponses, CreateUserReportData, CreateUserReportErrors, CreateUserReportResponses, DeleteAdminEmailBroadcastData, DeleteAdminEmailBroadcastErrors, DeleteAdminEmailBroadcastResponses, DeleteAdminReportData, DeleteAdminReportErrors, DeleteAdminReportResponses, DeleteCollectionData, DeleteCollectionErrors, DeleteCollectionResponses, DeleteEpisodeData, DeleteEpisodeErrors, DeleteEpisodeResponses, DeleteMediaData, DeleteMediaErrors, DeleteMediaResponses, DeleteUserActivityByDateData, DeleteUserActivityByDateErrors, DeleteUserActivityByDateResponses, DeleteUserActivityByIdData, DeleteUserActivityByIdErrors, DeleteUserActivityByIdResponses, DeleteUserActivityData, DeleteUserActivityErrors, DeleteUserActivityResponses, DeleteUserData, DeleteUserDictionaryData, DeleteUserDictionaryErrors, DeleteUserDictionaryResponses, DeleteUserErrors, DeleteUserResponses, DeleteWordWatchData, DeleteWordWatchErrors, DeleteWordWatchResponses, EstimateAdminEmailBroadcastData, EstimateAdminEmailBroadcastErrors, EstimateAdminEmailBroadcastResponses, ExportUserDataData, ExportUserDataErrors, ExportUserDataResponses, ForgetFamiliarMediaData, ForgetFamiliarMediaErrors, ForgetFamiliarMediaResponses, GetAdminEmailData, GetAdminEmailErrors, GetAdminEmailResponses, GetAdminOverviewData, GetAdminOverviewErrors, GetAdminOverviewResponses, GetAdminPatreonOverviewData, GetAdminPatreonOverviewErrors, GetAdminPatreonOverviewResponses, GetAdminUserQuotaData, GetAdminUserQuotaErrors, GetAdminUserQuotaResponses, GetAdminUsersWithProvidersData, GetAdminUsersWithProvidersErrors, GetAdminUsersWithProvidersResponses, GetAnnouncementData, GetAnnouncementErrors, GetAnnouncementResponses, GetCollectionData, GetCollectionErrors, GetCollectionResponses, GetCollectionStatsData, GetCollectionStatsErrors, GetCollectionStatsResponses, GetContentRequestAllowanceData, GetContentRequestAllowanceErrors, GetContentRequestAllowanceResponses, GetCoveredWordsData, GetCoveredWordsErrors, GetCoveredWordsResponses, GetDictionaryKanjiCustomData, GetDictionaryKanjiCustomErrors, GetDictionaryKanjiCustomResponses, GetDictionaryKanjiData, GetDictionaryKanjiErrors, GetDictionaryKanjiIndexData, GetDictionaryKanjiIndexErrors, GetDictionaryKanjiIndexResponses, GetDictionaryKanjiResponses, GetEmailPreferencesByTokenData, GetEmailPreferencesByTokenErrors, GetEmailPreferencesByTokenResponses, GetEpisodeData, GetEpisodeErrors, GetEpisodeResponses, GetFeedbackFormTokenData, GetFeedbackFormTokenErrors, GetFeedbackFormTokenResponses, GetMeData, GetMediaData, GetMediaErrors, GetMediaResponses, GetMeErrors, GetMeResponses, GetPatreonConnectionData, GetPatreonConnectionErrors, GetPatreonConnectionResponses, GetSearchStatsData, GetSearchStatsErrors, GetSearchStatsResponses, GetSegmentContextData, GetSegmentContextErrors, GetSegmentContextResponses, GetSegmentData, GetSegmentErrors, GetSegmentResponses, GetSessionData, GetSessionErrors, GetSessionPostData, GetSessionPostErrors, GetSessionPostResponses, GetSessionResponses, GetStatsOverviewData, GetStatsOverviewErrors, GetStatsOverviewResponses, GetTrackerConnectionData, GetTrackerConnectionErrors, GetTrackerConnectionResponses, GetUnreadNotificationCountData, GetUnreadNotificationCountErrors, GetUnreadNotificationCountResponses, GetUserActivityHeatmapData, GetUserActivityHeatmapErrors, GetUserActivityHeatmapResponses, GetUserActivityStatsData, GetUserActivityStatsErrors, GetUserActivityStatsResponses, GetUserPreferencesData, GetUserPreferencesErrors, GetUserPreferencesResponses, IdentifyDictionaryWordData, IdentifyDictionaryWordErrors, IdentifyDictionaryWordResponses, ImpersonateUserData, ImpersonateUserErrors, ImpersonateUserResponses, LiftAdminEmailSuppressionData, LiftAdminEmailSuppressionErrors, LiftAdminEmailSuppressionResponses, ListAdminContentRequestsData, ListAdminContentRequestsErrors, ListAdminContentRequestsResponses, ListAdminEmailBroadcastsData, ListAdminEmailBroadcastsErrors, ListAdminEmailBroadcastsResponses, ListAdminEmailsData, ListAdminEmailsErrors, ListAdminEmailsResponses, ListAdminEmailSuppressionsData, ListAdminEmailSuppressionsErrors, ListAdminEmailSuppressionsResponses, ListAdminNotificationBroadcastsData, ListAdminNotificationBroadcastsErrors, ListAdminNotificationBroadcastsResponses, ListAdminNotificationSettingsData, ListAdminNotificationSettingsErrors, ListAdminNotificationSettingsResponses, ListAdminReportsData, ListAdminReportsErrors, ListAdminReportsResponses, ListCollectionsData, ListCollectionsErrors, ListCollectionsResponses, ListContentRequestsData, ListContentRequestsErrors, ListContentRequestsResponses, ListEpisodesData, ListEpisodesErrors, ListEpisodesResponses, ListExcludedMediaData, ListExcludedMediaErrors, ListExcludedMediaResponses, ListFamiliarMediaData, ListFamiliarMediaErrors, ListFamiliarMediaResponses, ListFavoriteMediaData, ListFavoriteMediaErrors, ListFavoriteMediaResponses, ListMediaData, ListMediaErrors, ListMediaResponses, ListMyContentRequestsData, ListMyContentRequestsErrors, ListMyContentRequestsResponses, ListNotificationsData, ListNotificationsErrors, ListNotificationsResponses, ListSegmentRevisionsData, ListSegmentRevisionsErrors, ListSegmentRevisionsResponses, ListSegmentsData, ListSegmentsErrors, ListSegmentsResponses, ListTiersData, ListTiersErrors, ListTiersResponses, ListUserActivityData, ListUserActivityErrors, ListUserActivityResponses, ListUserDictionariesData, ListUserDictionariesErrors, ListUserDictionariesResponses, ListUserSessionsData, ListUserSessionsErrors, ListUserSessionsResponses, ListWordWatchesData, ListWordWatchesErrors, ListWordWatchesResponses, MarkNotificationsReadData, MarkNotificationsReadErrors, MarkNotificationsReadResponses, MergeAdminContentRequestData, MergeAdminContentRequestErrors, MergeAdminContentRequestResponses, ModerateEpisodeSegmentsData, ModerateEpisodeSegmentsErrors, ModerateEpisodeSegmentsResponses, PreviewAdminEmailTemplateData, PreviewAdminEmailTemplateErrors, PreviewAdminEmailTemplateResponses, PreviewContentRequestData, PreviewContentRequestErrors, PreviewContentRequestResponses, RefreshAdminPatreonConnectionData, RefreshAdminPatreonConnectionErrors, RefreshAdminPatreonConnectionResponses, RefreshAllAdminPatreonConnectionsData, RefreshAllAdminPatreonConnectionsErrors, RefreshAllAdminPatreonConnectionsResponses, RemoveExcludedMediaData, RemoveExcludedMediaErrors, RemoveExcludedMediaResponses, RemoveFavoriteMediaData, RemoveFavoriteMediaErrors, RemoveFavoriteMediaResponses, RemoveSegmentFromCollectionData, RemoveSegmentFromCollectionErrors, RemoveSegmentFromCollectionResponses, ResendAdminEmailData, ResendAdminEmailErrors, ResendAdminEmailResponses, ReserveUserDictionaryUploadData, ReserveUserDictionaryUploadErrors, ReserveUserDictionaryUploadResponses, RestoreSegmentRevisionData, RestoreSegmentRevisionErrors, RestoreSegmentRevisionResponses, SearchCollectionSegmentsData, SearchCollectionSegmentsErrors, SearchCollectionSegmentsResponses, SearchData, SearchErrors, SearchMediaData, SearchMediaErrors, SearchMediaResponses, SearchResponses, SearchWordsData, SearchWordsErrors, SearchWordsResponses, SendAdminEmailBroadcastData, SendAdminEmailBroadcastErrors, SendAdminEmailBroadcastResponses, SendAdminNotificationBroadcastData, SendAdminNotificationBroadcastErrors, SendAdminNotificationBroadcastResponses, SetWordWatchData, SetWordWatchErrors, SetWordWatchResponses, SignInWithEmailOtpData, SignInWithEmailOtpErrors, SignInWithEmailOtpResponses, SignInWithMagicLinkData, SignInWithMagicLinkErrors, SignInWithMagicLinkResponses, SignOutData, SignOutErrors, SignOutResponses, SocialSignInData, SocialSignInErrors, SocialSignInResponses, StartPatreonLinkData, StartPatreonLinkErrors, StartPatreonLinkResponses, StartTrackerLinkData, StartTrackerLinkErrors, StartTrackerLinkResponses, SyncTrackerConnectionData, SyncTrackerConnectionErrors, SyncTrackerConnectionResponses, TestAdminEmailBroadcastData, TestAdminEmailBroadcastErrors, TestAdminEmailBroadcastResponses, TrackUserActivityData, TrackUserActivityErrors, TrackUserActivityResponses, TriggerCoveredWordsUpdateData, TriggerCoveredWordsUpdateErrors, TriggerCoveredWordsUpdateResponses, UnbanUserData, UnbanUserErrors, UnbanUserResponses, UnlinkAdminPatreonConnectionData, UnlinkAdminPatreonConnectionErrors, UnlinkAdminPatreonConnectionResponses, UnlinkPatreonData, UnlinkPatreonErrors, UnlinkPatreonResponses, UnlinkTrackerData, UnlinkTrackerErrors, UnlinkTrackerResponses, UnsubscribeFromEmailData, UnsubscribeFromEmailErrors, UnsubscribeFromEmailResponses, UnvoteContentRequestData, UnvoteContentRequestErrors, UnvoteContentRequestResponses, UpdateAdminContentRequestData, UpdateAdminContentRequestErrors, UpdateAdminContentRequestResponses, UpdateAdminEmailBroadcastData, UpdateAdminEmailBroadcastErrors, UpdateAdminEmailBroadcastResponses, UpdateAdminNotificationSettingData, UpdateAdminNotificationSettingErrors, UpdateAdminNotificationSettingResponses, UpdateAdminReportData, UpdateAdminReportErrors, UpdateAdminReportResponses, UpdateAdminUserQuotaData, UpdateAdminUserQuotaErrors, UpdateAdminUserQuotaResponses, UpdateAnnouncementData, UpdateAnnouncementErrors, UpdateAnnouncementResponses, UpdateCollectionData, UpdateCollectionErrors, UpdateCollectionResponses, UpdateCollectionSegmentData, UpdateCollectionSegmentErrors, UpdateCollectionSegmentResponses, UpdateEmailPreferencesByTokenData, UpdateEmailPreferencesByTokenErrors, UpdateEmailPreferencesByTokenResponses, UpdateEpisodeData, UpdateEpisodeErrors, UpdateEpisodeResponses, UpdateMediaData, UpdateMediaErrors, UpdateMediaResponses, UpdateSegmentData, UpdateSegmentErrors, UpdateSegmentResponses, UpdateTrackerSettingsData, UpdateTrackerSettingsErrors, UpdateTrackerSettingsResponses, UpdateUserDictionariesData, UpdateUserDictionariesErrors, UpdateUserDictionariesResponses, UpdateUserPreferencesData, UpdateUserPreferencesErrors, UpdateUserPreferencesResponses, UpdateWordWatchData, UpdateWordWatchErrors, UpdateWordWatchResponses, UploadAdminEmailAssetData, UploadAdminEmailAssetErrors, UploadAdminEmailAssetResponses, VoteContentRequestData, VoteContentRequestErrors, VoteContentRequestResponses, WithdrawContentRequestData, WithdrawContentRequestErrors, WithdrawContentRequestResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -2106,6 +2106,220 @@ export const liftAdminEmailSuppression = <ThrowOnError extends boolean = false>(
         'Content-Type': 'application/json',
         ...options.headers
     }
+});
+
+/**
+ * List all registered notification and email kinds with their runtime settings and 7-day volume
+ */
+export const listAdminNotificationSettings = <ThrowOnError extends boolean = false>(options?: Options<ListAdminNotificationSettingsData, ThrowOnError>): RequestResult<ListAdminNotificationSettingsResponses, ListAdminNotificationSettingsErrors, ThrowOnError> => (options?.client ?? client).get<ListAdminNotificationSettingsResponses, ListAdminNotificationSettingsErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'nadeshiko.session_token',
+            type: 'apiKey'
+        }],
+    url: '/v1/admin/notification-settings',
+    ...options
+});
+
+/**
+ * Update runtime toggles, parameters, or template overrides for a notification/email kind
+ */
+export const updateAdminNotificationSetting = <ThrowOnError extends boolean = false>(options: Options<UpdateAdminNotificationSettingData, ThrowOnError>): RequestResult<UpdateAdminNotificationSettingResponses, UpdateAdminNotificationSettingErrors, ThrowOnError> => (options.client ?? client).patch<UpdateAdminNotificationSettingResponses, UpdateAdminNotificationSettingErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'nadeshiko.session_token',
+            type: 'apiKey'
+        }],
+    url: '/v1/admin/notification-settings/{kind}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Render a live HTML preview for an email template and optionally send a [TEST] email
+ */
+export const previewAdminEmailTemplate = <ThrowOnError extends boolean = false>(options: Options<PreviewAdminEmailTemplateData, ThrowOnError>): RequestResult<PreviewAdminEmailTemplateResponses, PreviewAdminEmailTemplateErrors, ThrowOnError> => (options.client ?? client).post<PreviewAdminEmailTemplateResponses, PreviewAdminEmailTemplateErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'nadeshiko.session_token',
+            type: 'apiKey'
+        }],
+    url: '/v1/admin/notification-settings/{kind}/preview',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * List recent official in-site notification broadcasts
+ */
+export const listAdminNotificationBroadcasts = <ThrowOnError extends boolean = false>(options?: Options<ListAdminNotificationBroadcastsData, ThrowOnError>): RequestResult<ListAdminNotificationBroadcastsResponses, ListAdminNotificationBroadcastsErrors, ThrowOnError> => (options?.client ?? client).get<ListAdminNotificationBroadcastsResponses, ListAdminNotificationBroadcastsErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'nadeshiko.session_token',
+            type: 'apiKey'
+        }],
+    url: '/v1/admin/notifications/broadcasts',
+    ...options
+});
+
+/**
+ * Send an official in-site notification to one user, Patrons, or all users
+ */
+export const sendAdminNotificationBroadcast = <ThrowOnError extends boolean = false>(options: Options<SendAdminNotificationBroadcastData, ThrowOnError>): RequestResult<SendAdminNotificationBroadcastResponses, SendAdminNotificationBroadcastErrors, ThrowOnError> => (options.client ?? client).post<SendAdminNotificationBroadcastResponses, SendAdminNotificationBroadcastErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'nadeshiko.session_token',
+            type: 'apiKey'
+        }],
+    url: '/v1/admin/notifications/broadcasts',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * List email broadcasts (drafts, sending, sent)
+ */
+export const listAdminEmailBroadcasts = <ThrowOnError extends boolean = false>(options?: Options<ListAdminEmailBroadcastsData, ThrowOnError>): RequestResult<ListAdminEmailBroadcastsResponses, ListAdminEmailBroadcastsErrors, ThrowOnError> => (options?.client ?? client).get<ListAdminEmailBroadcastsResponses, ListAdminEmailBroadcastsErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'nadeshiko.session_token',
+            type: 'apiKey'
+        }],
+    url: '/v1/admin/email-broadcasts',
+    ...options
+});
+
+/**
+ * Create a draft email broadcast
+ */
+export const createAdminEmailBroadcast = <ThrowOnError extends boolean = false>(options: Options<CreateAdminEmailBroadcastData, ThrowOnError>): RequestResult<CreateAdminEmailBroadcastResponses, CreateAdminEmailBroadcastErrors, ThrowOnError> => (options.client ?? client).post<CreateAdminEmailBroadcastResponses, CreateAdminEmailBroadcastErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'nadeshiko.session_token',
+            type: 'apiKey'
+        }],
+    url: '/v1/admin/email-broadcasts',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Estimate eligible opted-in recipient count for a broadcast audience
+ */
+export const estimateAdminEmailBroadcast = <ThrowOnError extends boolean = false>(options: Options<EstimateAdminEmailBroadcastData, ThrowOnError>): RequestResult<EstimateAdminEmailBroadcastResponses, EstimateAdminEmailBroadcastErrors, ThrowOnError> => (options.client ?? client).post<EstimateAdminEmailBroadcastResponses, EstimateAdminEmailBroadcastErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'nadeshiko.session_token',
+            type: 'apiKey'
+        }],
+    url: '/v1/admin/email-broadcasts/estimate',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Upload an inline image (base64 data URL) for use in email broadcasts
+ */
+export const uploadAdminEmailAsset = <ThrowOnError extends boolean = false>(options: Options<UploadAdminEmailAssetData, ThrowOnError>): RequestResult<UploadAdminEmailAssetResponses, UploadAdminEmailAssetErrors, ThrowOnError> => (options.client ?? client).post<UploadAdminEmailAssetResponses, UploadAdminEmailAssetErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'nadeshiko.session_token',
+            type: 'apiKey'
+        }],
+    url: '/v1/admin/email-broadcasts/images',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Delete a draft email broadcast
+ */
+export const deleteAdminEmailBroadcast = <ThrowOnError extends boolean = false>(options: Options<DeleteAdminEmailBroadcastData, ThrowOnError>): RequestResult<DeleteAdminEmailBroadcastResponses, DeleteAdminEmailBroadcastErrors, ThrowOnError> => (options.client ?? client).delete<DeleteAdminEmailBroadcastResponses, DeleteAdminEmailBroadcastErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'nadeshiko.session_token',
+            type: 'apiKey'
+        }],
+    url: '/v1/admin/email-broadcasts/{broadcastId}',
+    ...options
+});
+
+/**
+ * Update a draft email broadcast
+ */
+export const updateAdminEmailBroadcast = <ThrowOnError extends boolean = false>(options: Options<UpdateAdminEmailBroadcastData, ThrowOnError>): RequestResult<UpdateAdminEmailBroadcastResponses, UpdateAdminEmailBroadcastErrors, ThrowOnError> => (options.client ?? client).patch<UpdateAdminEmailBroadcastResponses, UpdateAdminEmailBroadcastErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'nadeshiko.session_token',
+            type: 'apiKey'
+        }],
+    url: '/v1/admin/email-broadcasts/{broadcastId}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Send a [TEST] copy of an email broadcast to an admin email address
+ */
+export const testAdminEmailBroadcast = <ThrowOnError extends boolean = false>(options: Options<TestAdminEmailBroadcastData, ThrowOnError>): RequestResult<TestAdminEmailBroadcastResponses, TestAdminEmailBroadcastErrors, ThrowOnError> => (options.client ?? client).post<TestAdminEmailBroadcastResponses, TestAdminEmailBroadcastErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'nadeshiko.session_token',
+            type: 'apiKey'
+        }],
+    url: '/v1/admin/email-broadcasts/{broadcastId}/test',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Launch (or resume) sending an email broadcast via the rate-limited worker
+ */
+export const sendAdminEmailBroadcast = <ThrowOnError extends boolean = false>(options: Options<SendAdminEmailBroadcastData, ThrowOnError>): RequestResult<SendAdminEmailBroadcastResponses, SendAdminEmailBroadcastErrors, ThrowOnError> => (options.client ?? client).post<SendAdminEmailBroadcastResponses, SendAdminEmailBroadcastErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'nadeshiko.session_token',
+            type: 'apiKey'
+        }],
+    url: '/v1/admin/email-broadcasts/{broadcastId}/send',
+    ...options
+});
+
+/**
+ * Cancel an in-progress email broadcast between batches
+ */
+export const cancelAdminEmailBroadcast = <ThrowOnError extends boolean = false>(options: Options<CancelAdminEmailBroadcastData, ThrowOnError>): RequestResult<CancelAdminEmailBroadcastResponses, CancelAdminEmailBroadcastErrors, ThrowOnError> => (options.client ?? client).post<CancelAdminEmailBroadcastResponses, CancelAdminEmailBroadcastErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'nadeshiko.session_token',
+            type: 'apiKey'
+        }],
+    url: '/v1/admin/email-broadcasts/{broadcastId}/cancel',
+    ...options
 });
 
 /**

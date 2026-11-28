@@ -1,0 +1,64 @@
+get:
+  tags: [Admin]
+  x-internal: true
+  operationId: listAdminEmailBroadcasts
+  summary: List email broadcasts (drafts, sending, sent)
+  security:
+    - SessionCookie: [ADMIN]
+  responses:
+    "200":
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [items]
+            properties:
+              items:
+                type: array
+                items:
+                  $ref: "../../components/schemas/AdminEmailBroadcast.yaml"
+    "401": { $ref: "../../components/responses/Unauthorized.yaml" }
+    "403": { $ref: "../../components/responses/Forbidden.yaml" }
+    "500": { $ref: "../../components/responses/InternalServerError.yaml" }
+post:
+  tags: [Admin]
+  x-internal: true
+  operationId: createAdminEmailBroadcast
+  summary: Create a draft email broadcast
+  security:
+    - SessionCookie: [ADMIN]
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required: [campaignKey, subject, bodyMarkdown, audience]
+          properties:
+            campaignKey: { type: string, minLength: 1, maxLength: 80 }
+            subject: { type: string, minLength: 1, maxLength: 200 }
+            previewText: { type: [string, "null"], maxLength: 240 }
+            bodyMarkdown: { type: string, minLength: 1, maxLength: 40000 }
+            ctaLabel: { type: [string, "null"], maxLength: 80 }
+            ctaUrl: { type: [string, "null"], maxLength: 512 }
+            audience: { type: string, enum: [ALL_OPTED_IN, PATRONS, ACTIVE_DAYS, SPECIFIC_USERS] }
+            audienceParams:
+              type: object
+              properties:
+                activeDays: { type: integer, minimum: 1, maximum: 365 }
+                userIds:
+                  type: array
+                  items: { type: integer }
+  responses:
+    "201":
+      description: Created
+      content:
+        application/json:
+          schema:
+            $ref: "../../components/schemas/AdminEmailBroadcast.yaml"
+    "400": { $ref: "../../components/responses/BadRequest.yaml" }
+    "401": { $ref: "../../components/responses/Unauthorized.yaml" }
+    "403": { $ref: "../../components/responses/Forbidden.yaml" }
+    "409": { $ref: "../../components/responses/Conflict.yaml" }
+    "500": { $ref: "../../components/responses/InternalServerError.yaml" }

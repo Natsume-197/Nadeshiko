@@ -25,6 +25,20 @@ export { ContentRequestBoost } from './ContentRequestBoost';
 export { WordWatch, WordWatchMode, WordWatchStatus, WordWatchMatchMode } from './WordWatch';
 export { Notification } from './Notification';
 export type { NotificationKind } from './Notification';
+export { NotificationSetting } from './NotificationSetting';
+export { NotificationBroadcast } from './NotificationBroadcast';
+export type {
+  NotificationBroadcastAudience,
+  NotificationBroadcastKind,
+  NotificationBroadcastStatus,
+} from './NotificationBroadcast';
+export { EmailBroadcast } from './EmailBroadcast';
+export { EmailAsset } from './EmailAsset';
+export type {
+  EmailBroadcastAudience,
+  EmailBroadcastAudienceParams,
+  EmailBroadcastStatus,
+} from './EmailBroadcast';
 export { Tier } from './Tier';
 export {
   resolveQuotaLimit,

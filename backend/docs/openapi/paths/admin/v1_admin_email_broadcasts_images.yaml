@@ -1,0 +1,35 @@
+post:
+  tags: [Admin]
+  x-internal: true
+  operationId: uploadAdminEmailAsset
+  summary: Upload an inline image (base64 data URL) for use in email broadcasts
+  security:
+    - SessionCookie: [ADMIN]
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required: [dataUrl]
+          properties:
+            dataUrl:
+              type: string
+              description: Base64 data URL (image/png, image/jpeg, image/webp, or image/gif; max 2 MB)
+  responses:
+    "201":
+      description: Created
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [id, url, mimeType, byteSize]
+            properties:
+              id: { type: string, format: uuid }
+              url: { type: string }
+              mimeType: { type: string }
+              byteSize: { type: integer }
+    "400": { $ref: "../../components/responses/BadRequest.yaml" }
+    "401": { $ref: "../../components/responses/Unauthorized.yaml" }
+    "403": { $ref: "../../components/responses/Forbidden.yaml" }
+    "500": { $ref: "../../components/responses/InternalServerError.yaml" }

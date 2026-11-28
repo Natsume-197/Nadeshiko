@@ -1,0 +1,95 @@
+get:
+  tags: [Admin]
+  x-internal: true
+  operationId: listAdminNotificationBroadcasts
+  summary: List recent official in-site notification broadcasts
+  security:
+    - SessionCookie: [ADMIN]
+  parameters:
+    - name: limit
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 100, default: 25 }
+  responses:
+    "200":
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [items]
+            properties:
+              items:
+                type: array
+                items:
+                  type: object
+                  required: [id, kind, audience, title, message, status, recipientCount, sentCount, createdAt]
+                  properties:
+                    id: { type: string, format: uuid }
+                    kind: { type: string, enum: [site-announcement, admin-message] }
+                    audience: { type: string, enum: [ALL, PATRONS, USER] }
+                    targetUserId: { type: [integer, "null"] }
+                    targetUsername: { type: [string, "null"] }
+                    title: { type: string }
+                    message: { type: string }
+                    linkUrl: { type: [string, "null"] }
+                    linkLabel: { type: [string, "null"] }
+                    status: { type: string, enum: [QUEUED, SENDING, SENT, FAILED] }
+                    recipientCount: { type: integer }
+                    sentCount: { type: integer }
+                    error: { type: [string, "null"] }
+                    sentAt: { type: [string, "null"], format: date-time }
+                    createdAt: { type: string, format: date-time }
+    "401": { $ref: "../../components/responses/Unauthorized.yaml" }
+    "403": { $ref: "../../components/responses/Forbidden.yaml" }
+    "500": { $ref: "../../components/responses/InternalServerError.yaml" }
+post:
+  tags: [Admin]
+  x-internal: true
+  operationId: sendAdminNotificationBroadcast
+  summary: Send an official in-site notification to one user, Patrons, or all users
+  security:
+    - SessionCookie: [ADMIN]
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required: [kind, audience, title, message]
+          properties:
+            kind: { type: string, enum: [site-announcement, admin-message] }
+            audience: { type: string, enum: [ALL, PATRONS, USER] }
+            targetUserId: { type: [integer, "null"] }
+            title: { type: string, minLength: 1, maxLength: 160 }
+            message: { type: string, minLength: 1, maxLength: 2000 }
+            linkUrl: { type: [string, "null"], maxLength: 512 }
+            linkLabel: { type: [string, "null"], maxLength: 80 }
+  responses:
+    "201":
+      description: Created
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [id, kind, audience, title, message, status, recipientCount, sentCount, createdAt]
+            properties:
+              id: { type: string, format: uuid }
+              kind: { type: string, enum: [site-announcement, admin-message] }
+              audience: { type: string, enum: [ALL, PATRONS, USER] }
+              targetUserId: { type: [integer, "null"] }
+              targetUsername: { type: [string, "null"] }
+              title: { type: string }
+              message: { type: string }
+              linkUrl: { type: [string, "null"] }
+              linkLabel: { type: [string, "null"] }
+              status: { type: string, enum: [QUEUED, SENDING, SENT, FAILED] }
+              recipientCount: { type: integer }
+              sentCount: { type: integer }
+              error: { type: [string, "null"] }
+              sentAt: { type: [string, "null"], format: date-time }
+              createdAt: { type: string, format: date-time }
+    "400": { $ref: "../../components/responses/BadRequest.yaml" }
+    "401": { $ref: "../../components/responses/Unauthorized.yaml" }
+    "403": { $ref: "../../components/responses/Forbidden.yaml" }
+    "404": { $ref: "../../components/responses/NotFound.yaml" }
+    "500": { $ref: "../../components/responses/InternalServerError.yaml" }

@@ -61,6 +61,7 @@ export interface UserPreferences {
   siteNotifications?: {
     words?: boolean;
     requests?: boolean;
+    reports?: boolean;
   };
   /** NSFW display: `HIDE` keeps questionable and explicit sentences out of search, and so out of word alerts. */
   contentRatingPreferences?: { nsfw?: 'SHOW' | 'BLUR' | 'HIDE' };

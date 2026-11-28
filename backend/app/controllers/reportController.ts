@@ -9,9 +9,10 @@ import type {
   BulkDeleteAdminReports,
 } from 'generated/routes/admin';
 import { In, IsNull, type FindOptionsWhere, type QueryDeepPartialEntity } from 'typeorm';
-import { Report, ReportSource, Segment, Media } from '@app/models';
+import { Report, ReportSource, ReportStatus, Segment, Media, User } from '@app/models';
 import { NotFoundError, InvalidRequestError } from '@app/errors';
 import { assertUser } from '@app/middleware/authentication';
+import { notify } from '@app/services/notifications/notify';
 import {
   toAdminReportFilters,
   toAdminReportGroupsDTO,
@@ -100,7 +101,33 @@ export const listAdminReports: ListAdminReports = async ({ query }, respond) => 
   });
 };
 
+async function notifyResolvedReporters(reports: Report[]): Promise<void> {
+  const userIds = [
+    ...new Set(
+      reports
+        .filter((rep) => rep.source === ReportSource.USER && rep.userId !== null && rep.status !== ReportStatus.FIXED)
+        .map((rep) => rep.userId as number),
+    ),
+  ];
+  if (userIds.length === 0) return;
+
+  const users = await User.find({
+    where: { id: In(userIds), banned: false },
+    select: { id: true, preferences: true },
+  });
+  for (const user of users) {
+    await notify(user, 'report-resolved', { count: 1 }, undefined, {
+      groupKey: 'report-resolved',
+      buildPayload: (groupCount) => ({ count: groupCount }),
+    });
+  }
+}
+
 export const updateAdminReport: UpdateAdminReport = async ({ params, body }, respond) => {
+  const existing = await Report.findOne({ where: { id: params.reportId } });
+  if (!existing) {
+    throw new NotFoundError(`Report with ID ${params.reportId} not found`);
+  }
   const report = await Report.findAndUpdateOrFail({
     where: { id: params.reportId },
     patch: toReportUpdatePatch(body),
@@ -112,6 +139,9 @@ export const updateAdminReport: UpdateAdminReport = async ({ params, body }, res
   // Propagate only status to siblings (admin notes are per-report, not per-group)
   if (body.status !== undefined) {
     await updateReportGroup(r, { status: body.status }, Report.getRepository().manager);
+    if (body.status === ReportStatus.FIXED) {
+      void notifyResolvedReporters([existing]);
+    }
   }
 
   invalidateUnhandledReports();
@@ -130,6 +160,10 @@ export const batchUpdateAdminReports: BatchUpdateAdminReports = async ({ body },
   const reports = await Report.findBy({ id: In(ids) });
   const updated = await updateReportGroups(reports, patch);
   invalidateUnhandledReports();
+
+  if (status === ReportStatus.FIXED) {
+    void notifyResolvedReporters(reports);
+  }
 
   return respond.with200().body({ count: updated });
 };

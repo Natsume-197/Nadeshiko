@@ -1,0 +1,51 @@
+patch:
+  tags: [Admin]
+  x-internal: true
+  operationId: updateAdminNotificationSetting
+  summary: Update runtime toggles, parameters, or template overrides for a notification/email kind
+  security:
+    - SessionCookie: [ADMIN]
+  parameters:
+    - name: kind
+      in: path
+      required: true
+      schema: { type: string, maxLength: 32 }
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            siteEnabled: { type: boolean }
+            emailEnabled: { type: boolean }
+            params:
+              type: object
+              additionalProperties: true
+            subjectOverride: { type: [string, "null"], maxLength: 240 }
+            bodyOverride: { type: [string, "null"], maxLength: 20000 }
+            resetParams: { type: boolean }
+            resetTemplate: { type: boolean }
+  responses:
+    "200":
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [kind, siteEnabled, emailEnabled, params]
+            properties:
+              kind: { type: string }
+              siteEnabled: { type: boolean }
+              emailEnabled: { type: boolean }
+              params:
+                type: object
+                additionalProperties: true
+              subjectOverride: { type: [string, "null"] }
+              bodyOverride: { type: [string, "null"] }
+              updatedAt: { type: [string, "null"], format: date-time }
+    "400": { $ref: "../../components/responses/BadRequest.yaml" }
+    "401": { $ref: "../../components/responses/Unauthorized.yaml" }
+    "403": { $ref: "../../components/responses/Forbidden.yaml" }
+    "404": { $ref: "../../components/responses/NotFound.yaml" }
+    "500": { $ref: "../../components/responses/InternalServerError.yaml" }

@@ -1,0 +1,98 @@
+get:
+  tags: [Admin]
+  x-internal: true
+  operationId: listAdminNotificationSettings
+  summary: List all registered notification and email kinds with their runtime settings and 7-day volume
+  security:
+    - SessionCookie: [ADMIN]
+  responses:
+    "200":
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [items]
+            properties:
+              items:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - kind
+                    - label
+                    - description
+                    - area
+                    - trigger
+                    - channels
+                    - pinned
+                    - groupable
+                    - alwaysEnabled
+                    - siteEnabled
+                    - emailEnabled
+                    - editableTemplate
+                    - params
+                    - defaultParams
+                    - paramFields
+                    - stats7d
+                  properties:
+                    kind: { type: string }
+                    label: { type: string }
+                    description: { type: string }
+                    area: { type: string, enum: [official, words, community, lifecycle, transactional] }
+                    trigger: { type: string, enum: [realtime, cron, admin] }
+                    schedule: { type: [string, "null"] }
+                    channels:
+                      type: object
+                      required: [site, email]
+                      properties:
+                        site: { type: boolean }
+                        email: { type: boolean }
+                    siteCategory: { type: [string, "null"] }
+                    emailCategory: { type: [string, "null"] }
+                    emailFrom: { type: [string, "null"] }
+                    pinned: { type: boolean }
+                    groupable: { type: boolean }
+                    alwaysEnabled: { type: boolean }
+                    siteEnabled: { type: boolean }
+                    emailEnabled: { type: boolean }
+                    editableTemplate: { type: boolean }
+                    defaultSubject: { type: [string, "null"] }
+                    defaultBodyMarkdown: { type: [string, "null"] }
+                    subjectOverride: { type: [string, "null"] }
+                    bodyOverride: { type: [string, "null"] }
+                    allowedVariables:
+                      type: array
+                      items: { type: string }
+                    requiredVariables:
+                      type: array
+                      items: { type: string }
+                    params:
+                      type: object
+                      additionalProperties: true
+                    defaultParams:
+                      type: object
+                      additionalProperties: true
+                    paramFields:
+                      type: array
+                      items:
+                        type: object
+                        required: [key, label, description, type, min, max]
+                        properties:
+                          key: { type: string }
+                          label: { type: string }
+                          description: { type: string }
+                          type: { type: string, enum: [integer, number] }
+                          min: { type: number }
+                          max: { type: number }
+                    updatedAt: { type: [string, "null"], format: date-time }
+                    stats7d:
+                      type: object
+                      required: [siteSent, emailSent, emailFailed]
+                      properties:
+                        siteSent: { type: integer }
+                        emailSent: { type: integer }
+                        emailFailed: { type: integer }
+    "401": { $ref: "../../components/responses/Unauthorized.yaml" }
+    "403": { $ref: "../../components/responses/Forbidden.yaml" }
+    "500": { $ref: "../../components/responses/InternalServerError.yaml" }

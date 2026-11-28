@@ -301,21 +301,25 @@ export type Notification = {
     /**
      * `word-available`: watched words that started returning sentences.
      * `word-digest`: new sentences for followed words this week.
-     * `request-update`: a content request the reader backed started or shipped.
+     * `request-update`: a content request the reader backed changed status.
+     * `report-resolved`: one or more of the reader's sentence reports were fixed.
+     * `site-announcement`: official release or site-wide announcement (pinned until read).
+     * `admin-message`: direct official message from an admin (pinned until read).
      *
      */
-    kind: 'word-available' | 'word-digest' | 'request-update';
-    /**
-     * What the site needs to draw the entry. Word kinds carry `words`, a list of
-     * `{ query, matchMode, titles, sentences | newSentences }` (the site builds the
-     * link from the query and match mode); `request-update` carries
-     * `{ status, title, path }`.
-     *
-     */
+    kind: 'word-available' | 'word-digest' | 'request-update' | 'report-resolved' | 'site-announcement' | 'admin-message';
     payload: {
         [key: string]: unknown;
     };
     read: boolean;
+    /**
+     * True for unread official notices pinned at the top of the bell.
+     */
+    pinned: boolean;
+    /**
+     * Number of folded events represented by this row (1 when not grouped).
+     */
+    groupCount: number;
     createdAt: string;
 };
 
@@ -2825,6 +2829,7 @@ export type UserPreferences = {
     siteNotifications?: {
         words?: boolean;
         requests?: boolean;
+        reports?: boolean;
     };
     /**
      * A patron's custom theme: a light or dark base plus an accent and a page
@@ -3672,6 +3677,29 @@ export type AdminEmailSuppression = {
      * Complaints are never lifted from the dashboard.
      */
     permanent: boolean;
+};
+
+export type AdminEmailBroadcast = {
+    id: string;
+    campaignKey: string;
+    subject: string;
+    previewText?: string | null;
+    bodyMarkdown: string;
+    ctaLabel?: string | null;
+    ctaUrl?: string | null;
+    audience: 'ALL_OPTED_IN' | 'PATRONS' | 'ACTIVE_DAYS' | 'SPECIFIC_USERS';
+    audienceParams: {
+        activeDays?: number;
+        userIds?: Array<number>;
+    };
+    status: 'DRAFT' | 'SENDING' | 'SENT' | 'FAILED' | 'CANCELLED';
+    recipientCount: number;
+    sentCount: number;
+    failedCount: number;
+    error?: string | null;
+    sentAt?: string | null;
+    createdAt: string;
+    updatedAt: string;
 };
 
 export type AuthUser = {
@@ -9497,6 +9525,10 @@ export type ListAdminEmailsData = {
          */
         kind?: string;
         /**
+         * Only sends belonging to this campaign key
+         */
+        campaign?: string;
+        /**
          * Only this delivery status
          */
         status?: 'sent' | 'delivered' | 'bounced' | 'complained' | 'failed' | 'suppressed';
@@ -9763,6 +9795,735 @@ export type LiftAdminEmailSuppressionResponses = {
 };
 
 export type LiftAdminEmailSuppressionResponse = LiftAdminEmailSuppressionResponses[keyof LiftAdminEmailSuppressionResponses];
+
+export type ListAdminNotificationSettingsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/admin/notification-settings';
+};
+
+export type ListAdminNotificationSettingsErrors = {
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Forbidden
+     */
+    403: Error403;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type ListAdminNotificationSettingsError = ListAdminNotificationSettingsErrors[keyof ListAdminNotificationSettingsErrors];
+
+export type ListAdminNotificationSettingsResponses = {
+    /**
+     * OK
+     */
+    200: {
+        items: Array<{
+            kind: string;
+            label: string;
+            description: string;
+            area: 'official' | 'words' | 'community' | 'lifecycle' | 'transactional';
+            trigger: 'realtime' | 'cron' | 'admin';
+            schedule?: string | null;
+            channels: {
+                site: boolean;
+                email: boolean;
+            };
+            siteCategory?: string | null;
+            emailCategory?: string | null;
+            emailFrom?: string | null;
+            pinned: boolean;
+            groupable: boolean;
+            alwaysEnabled: boolean;
+            siteEnabled: boolean;
+            emailEnabled: boolean;
+            editableTemplate: boolean;
+            defaultSubject?: string | null;
+            defaultBodyMarkdown?: string | null;
+            subjectOverride?: string | null;
+            bodyOverride?: string | null;
+            allowedVariables?: Array<string>;
+            requiredVariables?: Array<string>;
+            params: {
+                [key: string]: unknown;
+            };
+            defaultParams: {
+                [key: string]: unknown;
+            };
+            paramFields: Array<{
+                key: string;
+                label: string;
+                description: string;
+                type: 'integer' | 'number';
+                min: number;
+                max: number;
+            }>;
+            updatedAt?: string | null;
+            stats7d: {
+                siteSent: number;
+                emailSent: number;
+                emailFailed: number;
+            };
+        }>;
+    };
+};
+
+export type ListAdminNotificationSettingsResponse = ListAdminNotificationSettingsResponses[keyof ListAdminNotificationSettingsResponses];
+
+export type UpdateAdminNotificationSettingData = {
+    body: {
+        siteEnabled?: boolean;
+        emailEnabled?: boolean;
+        params?: {
+            [key: string]: unknown;
+        };
+        subjectOverride?: string | null;
+        bodyOverride?: string | null;
+        resetParams?: boolean;
+        resetTemplate?: boolean;
+    };
+    path: {
+        kind: string;
+    };
+    query?: never;
+    url: '/v1/admin/notification-settings/{kind}';
+};
+
+export type UpdateAdminNotificationSettingErrors = {
+    /**
+     * Bad Request
+     */
+    400: Error400;
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Forbidden
+     */
+    403: Error403;
+    /**
+     * Not Found
+     */
+    404: Error404;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type UpdateAdminNotificationSettingError = UpdateAdminNotificationSettingErrors[keyof UpdateAdminNotificationSettingErrors];
+
+export type UpdateAdminNotificationSettingResponses = {
+    /**
+     * OK
+     */
+    200: {
+        kind: string;
+        siteEnabled: boolean;
+        emailEnabled: boolean;
+        params: {
+            [key: string]: unknown;
+        };
+        subjectOverride?: string | null;
+        bodyOverride?: string | null;
+        updatedAt?: string | null;
+    };
+};
+
+export type UpdateAdminNotificationSettingResponse = UpdateAdminNotificationSettingResponses[keyof UpdateAdminNotificationSettingResponses];
+
+export type PreviewAdminEmailTemplateData = {
+    body: {
+        subjectOverride?: string | null;
+        bodyOverride?: string | null;
+        previewText?: string | null;
+        ctaLabel?: string | null;
+        ctaUrl?: string | null;
+        sendTestTo?: string | null;
+    };
+    path: {
+        kind: string;
+    };
+    query?: never;
+    url: '/v1/admin/notification-settings/{kind}/preview';
+};
+
+export type PreviewAdminEmailTemplateErrors = {
+    /**
+     * Bad Request
+     */
+    400: Error400;
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Forbidden
+     */
+    403: Error403;
+    /**
+     * Not Found
+     */
+    404: Error404;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type PreviewAdminEmailTemplateError = PreviewAdminEmailTemplateErrors[keyof PreviewAdminEmailTemplateErrors];
+
+export type PreviewAdminEmailTemplateResponses = {
+    /**
+     * OK
+     */
+    200: {
+        subject: string;
+        html: string;
+        testSent: boolean;
+    };
+};
+
+export type PreviewAdminEmailTemplateResponse = PreviewAdminEmailTemplateResponses[keyof PreviewAdminEmailTemplateResponses];
+
+export type ListAdminNotificationBroadcastsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        limit?: number;
+    };
+    url: '/v1/admin/notifications/broadcasts';
+};
+
+export type ListAdminNotificationBroadcastsErrors = {
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Forbidden
+     */
+    403: Error403;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type ListAdminNotificationBroadcastsError = ListAdminNotificationBroadcastsErrors[keyof ListAdminNotificationBroadcastsErrors];
+
+export type ListAdminNotificationBroadcastsResponses = {
+    /**
+     * OK
+     */
+    200: {
+        items: Array<{
+            id: string;
+            kind: 'site-announcement' | 'admin-message';
+            audience: 'ALL' | 'PATRONS' | 'USER';
+            targetUserId?: number | null;
+            targetUsername?: string | null;
+            title: string;
+            message: string;
+            linkUrl?: string | null;
+            linkLabel?: string | null;
+            status: 'QUEUED' | 'SENDING' | 'SENT' | 'FAILED';
+            recipientCount: number;
+            sentCount: number;
+            error?: string | null;
+            sentAt?: string | null;
+            createdAt: string;
+        }>;
+    };
+};
+
+export type ListAdminNotificationBroadcastsResponse = ListAdminNotificationBroadcastsResponses[keyof ListAdminNotificationBroadcastsResponses];
+
+export type SendAdminNotificationBroadcastData = {
+    body: {
+        kind: 'site-announcement' | 'admin-message';
+        audience: 'ALL' | 'PATRONS' | 'USER';
+        targetUserId?: number | null;
+        title: string;
+        message: string;
+        linkUrl?: string | null;
+        linkLabel?: string | null;
+    };
+    path?: never;
+    query?: never;
+    url: '/v1/admin/notifications/broadcasts';
+};
+
+export type SendAdminNotificationBroadcastErrors = {
+    /**
+     * Bad Request
+     */
+    400: Error400;
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Forbidden
+     */
+    403: Error403;
+    /**
+     * Not Found
+     */
+    404: Error404;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type SendAdminNotificationBroadcastError = SendAdminNotificationBroadcastErrors[keyof SendAdminNotificationBroadcastErrors];
+
+export type SendAdminNotificationBroadcastResponses = {
+    /**
+     * Created
+     */
+    201: {
+        id: string;
+        kind: 'site-announcement' | 'admin-message';
+        audience: 'ALL' | 'PATRONS' | 'USER';
+        targetUserId?: number | null;
+        targetUsername?: string | null;
+        title: string;
+        message: string;
+        linkUrl?: string | null;
+        linkLabel?: string | null;
+        status: 'QUEUED' | 'SENDING' | 'SENT' | 'FAILED';
+        recipientCount: number;
+        sentCount: number;
+        error?: string | null;
+        sentAt?: string | null;
+        createdAt: string;
+    };
+};
+
+export type SendAdminNotificationBroadcastResponse = SendAdminNotificationBroadcastResponses[keyof SendAdminNotificationBroadcastResponses];
+
+export type ListAdminEmailBroadcastsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/admin/email-broadcasts';
+};
+
+export type ListAdminEmailBroadcastsErrors = {
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Forbidden
+     */
+    403: Error403;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type ListAdminEmailBroadcastsError = ListAdminEmailBroadcastsErrors[keyof ListAdminEmailBroadcastsErrors];
+
+export type ListAdminEmailBroadcastsResponses = {
+    /**
+     * OK
+     */
+    200: {
+        items: Array<AdminEmailBroadcast>;
+    };
+};
+
+export type ListAdminEmailBroadcastsResponse = ListAdminEmailBroadcastsResponses[keyof ListAdminEmailBroadcastsResponses];
+
+export type CreateAdminEmailBroadcastData = {
+    body: {
+        campaignKey: string;
+        subject: string;
+        previewText?: string | null;
+        bodyMarkdown: string;
+        ctaLabel?: string | null;
+        ctaUrl?: string | null;
+        audience: 'ALL_OPTED_IN' | 'PATRONS' | 'ACTIVE_DAYS' | 'SPECIFIC_USERS';
+        audienceParams?: {
+            activeDays?: number;
+            userIds?: Array<number>;
+        };
+    };
+    path?: never;
+    query?: never;
+    url: '/v1/admin/email-broadcasts';
+};
+
+export type CreateAdminEmailBroadcastErrors = {
+    /**
+     * Bad Request
+     */
+    400: Error400;
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Forbidden
+     */
+    403: Error403;
+    /**
+     * Conflict
+     */
+    409: Error409;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type CreateAdminEmailBroadcastError = CreateAdminEmailBroadcastErrors[keyof CreateAdminEmailBroadcastErrors];
+
+export type CreateAdminEmailBroadcastResponses = {
+    /**
+     * Created
+     */
+    201: AdminEmailBroadcast;
+};
+
+export type CreateAdminEmailBroadcastResponse = CreateAdminEmailBroadcastResponses[keyof CreateAdminEmailBroadcastResponses];
+
+export type EstimateAdminEmailBroadcastData = {
+    body: {
+        audience: 'ALL_OPTED_IN' | 'PATRONS' | 'ACTIVE_DAYS' | 'SPECIFIC_USERS';
+        audienceParams?: {
+            activeDays?: number;
+            userIds?: Array<number>;
+        };
+    };
+    path?: never;
+    query?: never;
+    url: '/v1/admin/email-broadcasts/estimate';
+};
+
+export type EstimateAdminEmailBroadcastErrors = {
+    /**
+     * Bad Request
+     */
+    400: Error400;
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Forbidden
+     */
+    403: Error403;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type EstimateAdminEmailBroadcastError = EstimateAdminEmailBroadcastErrors[keyof EstimateAdminEmailBroadcastErrors];
+
+export type EstimateAdminEmailBroadcastResponses = {
+    /**
+     * OK
+     */
+    200: {
+        recipientCount: number;
+    };
+};
+
+export type EstimateAdminEmailBroadcastResponse = EstimateAdminEmailBroadcastResponses[keyof EstimateAdminEmailBroadcastResponses];
+
+export type UploadAdminEmailAssetData = {
+    body: {
+        /**
+         * Base64 data URL (image/png, image/jpeg, image/webp, or image/gif; max 2 MB)
+         */
+        dataUrl: string;
+    };
+    path?: never;
+    query?: never;
+    url: '/v1/admin/email-broadcasts/images';
+};
+
+export type UploadAdminEmailAssetErrors = {
+    /**
+     * Bad Request
+     */
+    400: Error400;
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Forbidden
+     */
+    403: Error403;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type UploadAdminEmailAssetError = UploadAdminEmailAssetErrors[keyof UploadAdminEmailAssetErrors];
+
+export type UploadAdminEmailAssetResponses = {
+    /**
+     * Created
+     */
+    201: {
+        id: string;
+        url: string;
+        mimeType: string;
+        byteSize: number;
+    };
+};
+
+export type UploadAdminEmailAssetResponse = UploadAdminEmailAssetResponses[keyof UploadAdminEmailAssetResponses];
+
+export type DeleteAdminEmailBroadcastData = {
+    body?: never;
+    path: {
+        broadcastId: string;
+    };
+    query?: never;
+    url: '/v1/admin/email-broadcasts/{broadcastId}';
+};
+
+export type DeleteAdminEmailBroadcastErrors = {
+    /**
+     * Bad Request
+     */
+    400: Error400;
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Forbidden
+     */
+    403: Error403;
+    /**
+     * Not Found
+     */
+    404: Error404;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type DeleteAdminEmailBroadcastError = DeleteAdminEmailBroadcastErrors[keyof DeleteAdminEmailBroadcastErrors];
+
+export type DeleteAdminEmailBroadcastResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type DeleteAdminEmailBroadcastResponse = DeleteAdminEmailBroadcastResponses[keyof DeleteAdminEmailBroadcastResponses];
+
+export type UpdateAdminEmailBroadcastData = {
+    body: {
+        campaignKey?: string;
+        subject?: string;
+        previewText?: string | null;
+        bodyMarkdown?: string;
+        ctaLabel?: string | null;
+        ctaUrl?: string | null;
+        audience?: 'ALL_OPTED_IN' | 'PATRONS' | 'ACTIVE_DAYS' | 'SPECIFIC_USERS';
+        audienceParams?: {
+            activeDays?: number;
+            userIds?: Array<number>;
+        };
+    };
+    path: {
+        broadcastId: string;
+    };
+    query?: never;
+    url: '/v1/admin/email-broadcasts/{broadcastId}';
+};
+
+export type UpdateAdminEmailBroadcastErrors = {
+    /**
+     * Bad Request
+     */
+    400: Error400;
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Forbidden
+     */
+    403: Error403;
+    /**
+     * Not Found
+     */
+    404: Error404;
+    /**
+     * Conflict
+     */
+    409: Error409;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type UpdateAdminEmailBroadcastError = UpdateAdminEmailBroadcastErrors[keyof UpdateAdminEmailBroadcastErrors];
+
+export type UpdateAdminEmailBroadcastResponses = {
+    /**
+     * OK
+     */
+    200: AdminEmailBroadcast;
+};
+
+export type UpdateAdminEmailBroadcastResponse = UpdateAdminEmailBroadcastResponses[keyof UpdateAdminEmailBroadcastResponses];
+
+export type TestAdminEmailBroadcastData = {
+    body?: {
+        toEmail?: string;
+    };
+    path: {
+        broadcastId: string;
+    };
+    query?: never;
+    url: '/v1/admin/email-broadcasts/{broadcastId}/test';
+};
+
+export type TestAdminEmailBroadcastErrors = {
+    /**
+     * Bad Request
+     */
+    400: Error400;
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Forbidden
+     */
+    403: Error403;
+    /**
+     * Not Found
+     */
+    404: Error404;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type TestAdminEmailBroadcastError = TestAdminEmailBroadcastErrors[keyof TestAdminEmailBroadcastErrors];
+
+export type TestAdminEmailBroadcastResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type TestAdminEmailBroadcastResponse = TestAdminEmailBroadcastResponses[keyof TestAdminEmailBroadcastResponses];
+
+export type SendAdminEmailBroadcastData = {
+    body?: never;
+    path: {
+        broadcastId: string;
+    };
+    query?: never;
+    url: '/v1/admin/email-broadcasts/{broadcastId}/send';
+};
+
+export type SendAdminEmailBroadcastErrors = {
+    /**
+     * Bad Request
+     */
+    400: Error400;
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Forbidden
+     */
+    403: Error403;
+    /**
+     * Not Found
+     */
+    404: Error404;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type SendAdminEmailBroadcastError = SendAdminEmailBroadcastErrors[keyof SendAdminEmailBroadcastErrors];
+
+export type SendAdminEmailBroadcastResponses = {
+    /**
+     * OK
+     */
+    200: AdminEmailBroadcast;
+};
+
+export type SendAdminEmailBroadcastResponse = SendAdminEmailBroadcastResponses[keyof SendAdminEmailBroadcastResponses];
+
+export type CancelAdminEmailBroadcastData = {
+    body?: never;
+    path: {
+        broadcastId: string;
+    };
+    query?: never;
+    url: '/v1/admin/email-broadcasts/{broadcastId}/cancel';
+};
+
+export type CancelAdminEmailBroadcastErrors = {
+    /**
+     * Bad Request
+     */
+    400: Error400;
+    /**
+     * Unauthorized
+     */
+    401: Error401;
+    /**
+     * Forbidden
+     */
+    403: Error403;
+    /**
+     * Not Found
+     */
+    404: Error404;
+    /**
+     * Internal Server Error
+     */
+    500: Error500;
+};
+
+export type CancelAdminEmailBroadcastError = CancelAdminEmailBroadcastErrors[keyof CancelAdminEmailBroadcastErrors];
+
+export type CancelAdminEmailBroadcastResponses = {
+    /**
+     * OK
+     */
+    200: AdminEmailBroadcast;
+};
+
+export type CancelAdminEmailBroadcastResponse = CancelAdminEmailBroadcastResponses[keyof CancelAdminEmailBroadcastResponses];
 
 export type GetSessionData = {
     body?: never;

@@ -1,0 +1,66 @@
+patch:
+  tags: [Admin]
+  x-internal: true
+  operationId: updateAdminEmailBroadcast
+  summary: Update a draft email broadcast
+  security:
+    - SessionCookie: [ADMIN]
+  parameters:
+    - name: broadcastId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            campaignKey: { type: string, minLength: 1, maxLength: 80 }
+            subject: { type: string, minLength: 1, maxLength: 200 }
+            previewText: { type: [string, "null"], maxLength: 240 }
+            bodyMarkdown: { type: string, minLength: 1, maxLength: 40000 }
+            ctaLabel: { type: [string, "null"], maxLength: 80 }
+            ctaUrl: { type: [string, "null"], maxLength: 512 }
+            audience: { type: string, enum: [ALL_OPTED_IN, PATRONS, ACTIVE_DAYS, SPECIFIC_USERS] }
+            audienceParams:
+              type: object
+              properties:
+                activeDays: { type: integer, minimum: 1, maximum: 365 }
+                userIds:
+                  type: array
+                  items: { type: integer }
+  responses:
+    "200":
+      description: OK
+      content:
+        application/json:
+          schema:
+            $ref: "../../components/schemas/AdminEmailBroadcast.yaml"
+    "400": { $ref: "../../components/responses/BadRequest.yaml" }
+    "401": { $ref: "../../components/responses/Unauthorized.yaml" }
+    "403": { $ref: "../../components/responses/Forbidden.yaml" }
+    "404": { $ref: "../../components/responses/NotFound.yaml" }
+    "409": { $ref: "../../components/responses/Conflict.yaml" }
+    "500": { $ref: "../../components/responses/InternalServerError.yaml" }
+delete:
+  tags: [Admin]
+  x-internal: true
+  operationId: deleteAdminEmailBroadcast
+  summary: Delete a draft email broadcast
+  security:
+    - SessionCookie: [ADMIN]
+  parameters:
+    - name: broadcastId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+  responses:
+    "204":
+      description: No Content
+    "400": { $ref: "../../components/responses/BadRequest.yaml" }
+    "401": { $ref: "../../components/responses/Unauthorized.yaml" }
+    "403": { $ref: "../../components/responses/Forbidden.yaml" }
+    "404": { $ref: "../../components/responses/NotFound.yaml" }
+    "500": { $ref: "../../components/responses/InternalServerError.yaml" }

@@ -38,6 +38,12 @@ get:
         type: string
         maxLength: 32
       description: Only this email kind
+    - name: campaign
+      in: query
+      schema:
+        type: string
+        maxLength: 80
+      description: Only sends belonging to this campaign key
     - name: status
       in: query
       schema:

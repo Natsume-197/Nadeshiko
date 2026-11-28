@@ -10,10 +10,12 @@ import {
   buildDormant30Email,
   buildRequestUpdateEmail,
   buildWordAlertEmail,
+  buildBroadcastEmail,
   type WordAlertItem,
   type DormantTitle,
   type RequestUpdateEmailInput,
   type FeedbackEmailInput,
+  type BroadcastEmailInput,
 } from './emailTemplates';
 import { createLetterOpenerTransport, getPreviewUrl, LETTER_OPENER_DIR } from './letterOpener';
 import { htmlToPlainText } from './plainText';
@@ -32,6 +34,8 @@ import { APP_ENVIRONMENT, getAppEnvironment } from '@config/environment';
 import { catalogueSize } from '@app/services/stats/catalogueSize';
 import { SENDERS, configuredSender, senderForUser } from './senders';
 import { captureEmailSent } from '@app/services/analytics/posthog';
+import { isRegistryKind } from '@app/services/notifications/registry';
+import { isChannelEnabled } from '@app/services/notifications/settings';
 
 const tracer = getTracer();
 
@@ -139,18 +143,22 @@ function senderFor(kind: EmailKind): { email: string; name: string } {
   // Use one product envelope identity while `senderForUser` supplies the personal body; replies therefore land in the
   // shared mailbox.
 
-  // Welcome is a sender exception, not a lifecycle kind, so the lifecycle preference switch cannot accidentally disable
-  // it.
-  if (isLifecycleKind(kind) || kind === 'welcome') {
+  // Welcome and broadcasts use the product identity (`hello@`) so replies land in the shared inbox.
+  if (isLifecycleKind(kind) || kind === 'welcome' || kind === 'broadcast') {
     return configuredSender();
   }
 
   return { email: config.MAIL_FROM_EMAIL, name: config.MAIL_FROM_NAME };
 }
 
-/** Enforce suppression here, the common synchronous send path; new mailers must route through it rather than reach
- * for transport directly. */
+/** Enforce suppression and runtime registry switches here, the common synchronous send path; new mailers must route
+ * through it rather than reach for transport directly. */
 export async function sendEmail(options: EmailOptions): Promise<void> {
+  if (isRegistryKind(options.kind) && !(await isChannelEnabled(options.kind, 'email'))) {
+    logger.info({ 'email.kind': options.kind }, 'Not sending: disabled in notification settings');
+    return;
+  }
+
   const { email: fromEmail, name: fromName } = senderFor(options.kind);
 
   // Enforce the lifecycle switch again at send time; callers other than the sweep must not send while the feature is
@@ -570,4 +578,122 @@ export async function sendTestEmail(template: TestEmailTemplate, to: string): Pr
   }
 
   return { previewUrl };
+}
+
+/** Send one broadcast email directly (called by the rate-limited broadcast worker, task 55). */
+export async function sendBroadcastEmail(
+  input: Omit<BroadcastEmailInput, 'unsubscribeUrl'> & { userId: number; email: string },
+): Promise<void> {
+  const { oneClick, page } = unsubscribeUrls(input.userId, 'updates');
+  const { subject, html } = await buildBroadcastEmail({ ...input, unsubscribeUrl: page });
+  await sendEmail({
+    to: input.email,
+    subject,
+    html,
+    kind: 'broadcast',
+    campaign: input.campaign,
+    userId: input.userId,
+    unsubscribeUrl: oneClick,
+  });
+}
+
+/** Render a preview HTML + subject for an admin template editor (with optional unsaved subject/body overrides). */
+export async function renderAdminTemplatePreview(
+  kind: string,
+  overrides?: {
+    subject?: string | null;
+    body?: string | null;
+    previewText?: string | null;
+    ctaLabel?: string | null;
+    ctaUrl?: string | null;
+  },
+): Promise<{ subject: string; html: string }> {
+  const username = 'Natsume';
+  if (kind === 'welcome') {
+    return buildWelcomeEmail(username, SENDERS[0], { sentences: 2_450_000, titles: 1_280, hours: 18_500 }, overrides);
+  }
+  if (kind === 'feedback-ask') {
+    const res = await buildFeedbackAskEmail({
+      username,
+      sender: SENDERS[0],
+      started: true,
+      unsubscribeUrl: unsubscribeUrls(1, 'checkins').page,
+    });
+    return { subject: overrides?.subject?.trim() || res.subject, html: res.html };
+  }
+  if (kind === 'dormant-30') {
+    const res = await buildDormant30Email({
+      userId: 1,
+      campaign: 'dormant-30-preview',
+      username,
+      sender: SENDERS[0],
+      newTitles: 42,
+      titles: [
+        {
+          name: 'Frieren: Beyond Journey’s End',
+          coverUrl: `${config.BASE_URL}/logo-38d6e06a.webp`,
+          path: '/media/frieren',
+        },
+      ],
+      unsubscribeUrl: unsubscribeUrls(1, 'checkins').page,
+    });
+    return { subject: overrides?.subject?.trim() || res.subject, html: res.html };
+  }
+  if (kind === 'request-update') {
+    const res = await buildRequestUpdateEmail({
+      username,
+      status: 'RELEASED',
+      title: 'Frieren: Beyond Journey’s End',
+      coverUrl: `${config.BASE_URL}/logo-38d6e06a.webp`,
+      voteCount: 42,
+      path: '/media/frieren',
+      unsubscribeUrl: unsubscribeUrls(1, 'requests').page,
+    });
+    return { subject: overrides?.subject?.trim() || res.subject, html: res.html };
+  }
+  if (kind === 'word-available' || kind === 'word-digest') {
+    const res = await buildWordAlertEmail(kind, {
+      username,
+      campaign: `${kind}-preview`,
+      unsubscribeUrl: unsubscribeUrls(1, 'words').page,
+      items: [
+        {
+          word: '憧憬',
+          path: '/search/憧憬',
+          ...(kind === 'word-digest' ? { newSentences: 12 } : {}),
+          titles: ['Frieren: Beyond Journey’s End'],
+          examples: [{ text: 'あの人への憧憬は、今も消えない。', title: 'Frieren: Beyond Journey’s End' }],
+        },
+      ],
+    });
+    return { subject: overrides?.subject?.trim() || res.subject, html: res.html };
+  }
+  return buildBroadcastEmail({
+    subject: overrides?.subject?.trim() || 'Preview',
+    previewText: overrides?.previewText,
+    bodyMarkdown: overrides?.body?.trim() || 'Preview content.',
+    ctaLabel: overrides?.ctaLabel,
+    ctaUrl: overrides?.ctaUrl,
+    username,
+    campaign: 'preview',
+    unsubscribeUrl: unsubscribeUrls(1, 'updates').page,
+  });
+}
+
+/** Send a `[TEST]` email directly to an admin address without touching `EmailSend` or suppression metrics. */
+export async function sendAdminRawTestEmail(
+  to: string,
+  subject: string,
+  html: string,
+  kind: EmailKind = 'broadcast',
+): Promise<void> {
+  const { email: fromEmail, name: fromName } = senderFor(kind);
+  await deliver({
+    from: { address: fromEmail, name: fromName },
+    to,
+    subject: `[TEST] ${subject}`,
+    html,
+    text: htmlToPlainText(html),
+    clientReference: `test:${kind}`,
+  });
 }

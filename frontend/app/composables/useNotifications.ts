@@ -19,9 +19,15 @@ export interface NotificationWord {
 export type NotificationEntry = Omit<Notification, 'payload'> & {
   payload: {
     words?: NotificationWord[];
-    status?: 'IN_PROGRESS' | 'RELEASED';
+    status?: 'IN_PROGRESS' | 'RELEASED' | 'DECLINED' | 'MERGED';
     title?: string;
+    reason?: string;
+    mergedIntoTitle?: string;
     path?: string;
+    count?: number;
+    message?: string;
+    linkUrl?: string;
+    linkLabel?: string;
   };
 };
 
@@ -60,7 +66,12 @@ export function useNotifications() {
         ...(last ? { before: last.createdAt } : {}),
       });
       const fetched = page.items as NotificationEntry[];
-      items.value = more ? [...items.value, ...fetched] : fetched;
+      if (more) {
+        const seen = new Set(items.value.map((i) => i.id));
+        items.value = [...items.value, ...fetched.filter((i) => !seen.has(i.id))];
+      } else {
+        items.value = fetched;
+      }
       hasMore.value = page.hasMore;
       unreadCount.value = page.unreadCount;
       lastCountAt.value = Date.now();
@@ -91,9 +102,14 @@ export function wordPath(word: NotificationWord): string {
   return wordSearchPath(word.query, word.matchMode);
 }
 
-/** Where an entry leads as a whole: the word's search for a single word, the title or the request list for a request.
- * Null for several words: each word links to its own search inside the entry instead. */
+export function isOfficialEntry(entry: NotificationEntry): boolean {
+  return entry.kind === 'site-announcement' || entry.kind === 'admin-message';
+}
+
+/** Where an entry leads as a whole. Official notices expand inline instead of navigating on row click. */
 export function notificationTarget(entry: NotificationEntry): string | null {
+  if (isOfficialEntry(entry)) return null;
+  if (entry.kind === 'report-resolved') return null;
   if (entry.kind === 'request-update') return entry.payload.path ?? '/requests';
   const words = entry.payload.words ?? [];
   if (words.length === 1 && words[0]) return wordPath(words[0]);

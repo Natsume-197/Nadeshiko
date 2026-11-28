@@ -56,6 +56,10 @@ function onEntryOpen(entry: NotificationEntry) {
   if (!entry.read) void markRead([entry.id]).catch(() => undefined);
 }
 
+function onEntryRead(entry: NotificationEntry) {
+  if (!entry.read) void markRead([entry.id]).catch(() => undefined);
+}
+
 async function markAll() {
   await markRead().catch(() => undefined);
 }
@@ -138,7 +142,13 @@ onKeyStroke('Escape', () => {
           {{ $t('notifications.bell.empty') }}
         </div>
         <div v-else class="divide-y divide-hairline">
-          <NotificationsNotificationEntry v-for="entry in items" :key="entry.id" :entry="entry" @open="onEntryOpen" />
+          <NotificationsNotificationEntry
+            v-for="entry in items"
+            :key="entry.id"
+            :entry="entry"
+            @open="onEntryOpen"
+            @read="onEntryRead"
+          />
         </div>
       </div>
 

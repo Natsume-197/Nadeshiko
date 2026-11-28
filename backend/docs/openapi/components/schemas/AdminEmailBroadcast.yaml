@@ -1,0 +1,38 @@
+type: object
+required:
+  - id
+  - campaignKey
+  - subject
+  - bodyMarkdown
+  - audience
+  - audienceParams
+  - status
+  - recipientCount
+  - sentCount
+  - failedCount
+  - createdAt
+  - updatedAt
+properties:
+  id: { type: string, format: uuid }
+  campaignKey: { type: string }
+  subject: { type: string }
+  previewText: { type: [string, "null"] }
+  bodyMarkdown: { type: string }
+  ctaLabel: { type: [string, "null"] }
+  ctaUrl: { type: [string, "null"] }
+  audience: { type: string, enum: [ALL_OPTED_IN, PATRONS, ACTIVE_DAYS, SPECIFIC_USERS] }
+  audienceParams:
+    type: object
+    properties:
+      activeDays: { type: integer }
+      userIds:
+        type: array
+        items: { type: integer }
+  status: { type: string, enum: [DRAFT, SENDING, SENT, FAILED, CANCELLED] }
+  recipientCount: { type: integer }
+  sentCount: { type: integer }
+  failedCount: { type: integer }
+  error: { type: [string, "null"] }
+  sentAt: { type: [string, "null"], format: date-time }
+  createdAt: { type: string, format: date-time }
+  updatedAt: { type: string, format: date-time }

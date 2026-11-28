@@ -30,6 +30,29 @@ export const s_AddSegmentToCollectionRequest = z.object({
   segmentPublicId: z.string().regex(new RegExp('^[A-Za-z0-9_-]{12}$')),
 });
 
+export const s_AdminEmailBroadcast = z.object({
+  id: z.string(),
+  campaignKey: z.string(),
+  subject: z.string(),
+  previewText: z.string().nullable().optional(),
+  bodyMarkdown: z.string(),
+  ctaLabel: z.string().nullable().optional(),
+  ctaUrl: z.string().nullable().optional(),
+  audience: z.enum(['ALL_OPTED_IN', 'PATRONS', 'ACTIVE_DAYS', 'SPECIFIC_USERS']),
+  audienceParams: z.object({
+    activeDays: z.coerce.number().optional(),
+    userIds: z.array(z.coerce.number()).optional(),
+  }),
+  status: z.enum(['DRAFT', 'SENDING', 'SENT', 'FAILED', 'CANCELLED']),
+  recipientCount: z.coerce.number(),
+  sentCount: z.coerce.number(),
+  failedCount: z.coerce.number(),
+  error: z.string().nullable().optional(),
+  sentAt: z.iso.datetime({ offset: true }).nullable().optional(),
+  createdAt: z.iso.datetime({ offset: true }),
+  updatedAt: z.iso.datetime({ offset: true }),
+});
+
 export const s_AdminEmailEvent = z.object({
   id: z.coerce.number(),
   event: z.string(),
@@ -515,9 +538,18 @@ export const s_MediaSearchStats = z.object({
 
 export const s_Notification = z.object({
   id: z.string(),
-  kind: z.enum(['word-available', 'word-digest', 'request-update']),
+  kind: z.enum([
+    'word-available',
+    'word-digest',
+    'request-update',
+    'report-resolved',
+    'site-announcement',
+    'admin-message',
+  ]),
   payload: z.record(z.string(), z.unknown()),
   read: PermissiveBoolean,
+  pinned: PermissiveBoolean,
+  groupCount: z.coerce.number().min(1),
   createdAt: z.iso.datetime({ offset: true }),
 });
 
@@ -1292,7 +1324,11 @@ export const s_UserPreferences = z.object({
     })
     .optional(),
   siteNotifications: z
-    .object({ words: PermissiveBoolean.optional(), requests: PermissiveBoolean.optional() })
+    .object({
+      words: PermissiveBoolean.optional(),
+      requests: PermissiveBoolean.optional(),
+      reports: PermissiveBoolean.optional(),
+    })
     .optional(),
   customTheme: z
     .object({
@@ -1566,3 +1602,78 @@ export const s_UpdateAdminContentRequestRequestBody = z.object({
 export const s_MergeAdminContentRequestRequestBody = z.object({ intoId: z.string() });
 
 export const s_LiftAdminEmailSuppressionRequestBody = z.object({ address: z.string().min(3).max(320) });
+
+export const s_UpdateAdminNotificationSettingRequestBody = z.object({
+  siteEnabled: PermissiveBoolean.optional(),
+  emailEnabled: PermissiveBoolean.optional(),
+  params: z.record(z.string(), z.unknown()).optional(),
+  subjectOverride: z.string().max(240).nullable().optional(),
+  bodyOverride: z.string().max(20000).nullable().optional(),
+  resetParams: PermissiveBoolean.optional(),
+  resetTemplate: PermissiveBoolean.optional(),
+});
+
+export const s_PreviewAdminEmailTemplateRequestBody = z.object({
+  subjectOverride: z.string().max(240).nullable().optional(),
+  bodyOverride: z.string().max(40000).nullable().optional(),
+  previewText: z.string().max(240).nullable().optional(),
+  ctaLabel: z.string().max(80).nullable().optional(),
+  ctaUrl: z.string().max(512).nullable().optional(),
+  sendTestTo: z.email().nullable().optional(),
+});
+
+export const s_SendAdminNotificationBroadcastRequestBody = z.object({
+  kind: z.enum(['site-announcement', 'admin-message']),
+  audience: z.enum(['ALL', 'PATRONS', 'USER']),
+  targetUserId: z.coerce.number().nullable().optional(),
+  title: z.string().min(1).max(160),
+  message: z.string().min(1).max(2000),
+  linkUrl: z.string().max(512).nullable().optional(),
+  linkLabel: z.string().max(80).nullable().optional(),
+});
+
+export const s_CreateAdminEmailBroadcastRequestBody = z.object({
+  campaignKey: z.string().min(1).max(80),
+  subject: z.string().min(1).max(200),
+  previewText: z.string().max(240).nullable().optional(),
+  bodyMarkdown: z.string().min(1).max(40000),
+  ctaLabel: z.string().max(80).nullable().optional(),
+  ctaUrl: z.string().max(512).nullable().optional(),
+  audience: z.enum(['ALL_OPTED_IN', 'PATRONS', 'ACTIVE_DAYS', 'SPECIFIC_USERS']),
+  audienceParams: z
+    .object({
+      activeDays: z.coerce.number().min(1).max(365).optional(),
+      userIds: z.array(z.coerce.number()).optional(),
+    })
+    .optional(),
+});
+
+export const s_EstimateAdminEmailBroadcastRequestBody = z.object({
+  audience: z.enum(['ALL_OPTED_IN', 'PATRONS', 'ACTIVE_DAYS', 'SPECIFIC_USERS']),
+  audienceParams: z
+    .object({
+      activeDays: z.coerce.number().min(1).max(365).optional(),
+      userIds: z.array(z.coerce.number()).optional(),
+    })
+    .optional(),
+});
+
+export const s_UploadAdminEmailAssetRequestBody = z.object({ dataUrl: z.string() });
+
+export const s_UpdateAdminEmailBroadcastRequestBody = z.object({
+  campaignKey: z.string().min(1).max(80).optional(),
+  subject: z.string().min(1).max(200).optional(),
+  previewText: z.string().max(240).nullable().optional(),
+  bodyMarkdown: z.string().min(1).max(40000).optional(),
+  ctaLabel: z.string().max(80).nullable().optional(),
+  ctaUrl: z.string().max(512).nullable().optional(),
+  audience: z.enum(['ALL_OPTED_IN', 'PATRONS', 'ACTIVE_DAYS', 'SPECIFIC_USERS']).optional(),
+  audienceParams: z
+    .object({
+      activeDays: z.coerce.number().min(1).max(365).optional(),
+      userIds: z.array(z.coerce.number()).optional(),
+    })
+    .optional(),
+});
+
+export const s_TestAdminEmailBroadcastRequestBody = z.object({ toEmail: z.email().optional() });

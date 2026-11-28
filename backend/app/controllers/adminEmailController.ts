@@ -57,6 +57,7 @@ export const listAdminEmails: ListAdminEmails = async ({ query }, respond) => {
     filters.push(`(s.address ILIKE ${p} OR u.username ILIKE ${p})`);
   }
   if (query.kind) filters.push(`s.kind = ${add(query.kind)}`);
+  if (query.campaign) filters.push(`s.campaign = ${add(query.campaign)}`);
   if (query.days) filters.push(`s.sent_at >= now() - make_interval(days => ${add(query.days)})`);
   const where = filters.length ? `WHERE ${filters.join(' AND ')}` : '';
   // Status is derived, so it filters the outer query.

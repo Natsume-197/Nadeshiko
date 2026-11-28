@@ -77,7 +77,7 @@ function statusLabel(alert: WordWatch): string {
  * Absent means on for both; email categories also follow the master `productEmails.enabled` switch.
  * Sends only the key that changed, merged over stored preferences, so concurrent device edits are kept.
  */
-const SITE_CATEGORIES = ['words', 'requests'] as const;
+const SITE_CATEGORIES = ['words', 'requests', 'reports'] as const;
 type SiteCategory = (typeof SITE_CATEGORIES)[number];
 const NOTIFICATION_CATEGORIES = ['words', 'requests', 'recap', 'checkins', 'updates'] as const;
 type NotificationCategory = (typeof NOTIFICATION_CATEGORIES)[number];

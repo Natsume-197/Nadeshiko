@@ -6,6 +6,10 @@ export function setBossInstance(boss: PgBoss): void {
   bossInstance = boss;
 }
 
+export function getOptionalPgBoss(): PgBoss | null {
+  return bossInstance;
+}
+
 export function getPgBoss(): PgBoss {
   if (!bossInstance) {
     throw new Error('PgBoss not initialized.');

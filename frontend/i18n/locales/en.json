@@ -1069,7 +1069,9 @@
       "requestsTitle": "Your requests",
       "requestsDescription": "News on the titles you voted for: work started, title released.",
       "wordsTitle": "Word alerts",
-      "wordsDescription": "New words and weekly digests."
+      "wordsDescription": "New words and weekly digests.",
+      "reportsTitle": "Resolved reports",
+      "reportsDescription": "When subtitle or sentence reports you submitted are fixed."
     },
     "dictionaries": {
       "title": "Custom Dictionaries",
@@ -2068,7 +2070,9 @@
       "statusTitle": "Public Status Page",
       "statusDesc": "Open status.nadeshiko.co in a new tab.",
       "emailsTitle": "Emails",
-      "emailsDesc": "Every email sent, its delivery and blocked addresses."
+      "emailsDesc": "Every email sent, its delivery and blocked addresses.",
+      "notificationsTitle": "Notifications",
+      "notificationsDesc": "Send official announcements and manage notification rules"
     }
   },
   "adminPatreon": {
@@ -2178,7 +2182,9 @@
     "title": "Emails",
     "tabs": {
       "sent": "Sent",
-      "suppressed": "Suppressed"
+      "suppressed": "Suppressed",
+      "types": "Types & templates",
+      "broadcasts": "Broadcasts"
     },
     "last24h": "Last 24 h",
     "kpi": {
@@ -2238,6 +2244,39 @@
         "repeated_soft_bounce": "Repeated soft bounce",
         "manual": "Manual"
       }
+    },
+    "templates": {
+      "fromCategory": "From / category",
+      "template": "Template",
+      "editTemplate": "Edit & preview",
+      "variablesHint": "Allowed variables:",
+      "bodyMarkdown": "Body (Markdown)",
+      "sendTest": "Send test",
+      "refreshPreview": "Refresh preview",
+      "resetDefault": "Reset to default",
+      "testSentToast": "Test email sent to {email}."
+    },
+    "broadcasts": {
+      "testAddress": "Test address",
+      "new": "New broadcast",
+      "editTitle": "Edit draft broadcast",
+      "empty": "No email broadcasts yet.",
+      "actions": "Actions",
+      "send": "Send",
+      "cancel": "Cancel",
+      "viewLog": "View log",
+      "estimatedRecipients": "Estimated opted-in recipients",
+      "respectsOptOut": "respects opt-out & suppressions",
+      "previewText": "Preview text (optional)",
+      "ctaLabel": "Button label (optional)",
+      "ctaUrl": "Button URL (optional)",
+      "saveDraft": "Save draft",
+      "savedToast": "Broadcast draft saved.",
+      "deletedToast": "Broadcast draft deleted.",
+      "launchedToast": "Broadcast queued for delivery.",
+      "cancelledToast": "Broadcast cancelled.",
+      "confirmTitle": "Launch email broadcast",
+      "confirmBody": "Send \"{subject}\" to {audience}?"
     }
   },
   "notifications": {
@@ -2249,7 +2288,8 @@
       "loading": "Loading…",
       "markAllRead": "Mark all as read",
       "settings": "Notification settings",
-      "loadMore": "Show older"
+      "loadMore": "Show older",
+      "openLink": "Open"
     },
     "kinds": {
       "wordAvailable": "{word} is on Nadeshiko",
@@ -2257,7 +2297,12 @@
       "wordDigest": "{count} new sentences for {word}",
       "wordDigestMany": "New sentences for {count} of your words",
       "requestInProgress": "Work started on {title}",
-      "requestReleased": "{title} is on Nadeshiko"
+      "requestReleased": "{title} is on Nadeshiko",
+      "officialFallback": "Announcement from Nadeshiko",
+      "reportResolved": "Your report was fixed",
+      "reportResolvedMany": "{count} of your reports were fixed",
+      "requestDeclined": "{title} was declined",
+      "requestMerged": "{title} was merged into {target}"
     },
     "alerts": {
       "title": "Word alerts",
@@ -2339,5 +2384,56 @@
     "shown": "Spoilers shown",
     "show": "Show",
     "hide": "Hide"
+  },
+  "adminNotifications": {
+    "title": "Notifications",
+    "subtitle": "Send official in-site announcements and configure notification rules",
+    "tabs": {
+      "send": "Send & history",
+      "registry": "Catalog & rules"
+    },
+    "send": {
+      "kind": "Kind",
+      "audience": "Audience",
+      "audienceAll": "All active users",
+      "audiencePatrons": "Patrons only",
+      "audienceUser": "Single user",
+      "targetUserId": "Target user ID",
+      "title": "Title",
+      "message": "Message (English)",
+      "linkUrl": "Link path (optional)",
+      "linkLabel": "Link label (optional)",
+      "submit": "Send notification",
+      "sending": "Sending…",
+      "preview": "Bell preview",
+      "pinnedHint": "Official notices are pinned at the top of the bell until read and cannot be muted.",
+      "missingFields": "Title and message are required.",
+      "missingUser": "Enter a target user ID.",
+      "invalidLink": "Link path must start with /.",
+      "sentToast": "Notification queued.",
+      "confirmTitle": "Confirm broadcast",
+      "confirmBody": "Send \"{title}\" to {audience}?",
+      "confirmAction": "Send now"
+    },
+    "history": {
+      "title": "Recent broadcasts",
+      "empty": "No official notifications sent yet.",
+      "date": "Date",
+      "titleCol": "Title",
+      "audience": "Audience",
+      "sent": "Sent",
+      "status": "Status"
+    },
+    "registry": {
+      "kind": "Notification",
+      "trigger": "Trigger",
+      "enabled": "Enabled",
+      "params": "Parameters",
+      "volume7d": "7d volume",
+      "edit": "Edit",
+      "save": "Save",
+      "reset": "Reset",
+      "saved": "Settings saved."
+    }
   }
 }

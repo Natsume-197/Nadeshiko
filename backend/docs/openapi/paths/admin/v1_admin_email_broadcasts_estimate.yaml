@@ -1,0 +1,37 @@
+post:
+  tags: [Admin]
+  x-internal: true
+  operationId: estimateAdminEmailBroadcast
+  summary: Estimate eligible opted-in recipient count for a broadcast audience
+  security:
+    - SessionCookie: [ADMIN]
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required: [audience]
+          properties:
+            audience: { type: string, enum: [ALL_OPTED_IN, PATRONS, ACTIVE_DAYS, SPECIFIC_USERS] }
+            audienceParams:
+              type: object
+              properties:
+                activeDays: { type: integer, minimum: 1, maximum: 365 }
+                userIds:
+                  type: array
+                  items: { type: integer }
+  responses:
+    "200":
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [recipientCount]
+            properties:
+              recipientCount: { type: integer }
+    "400": { $ref: "../../components/responses/BadRequest.yaml" }
+    "401": { $ref: "../../components/responses/Unauthorized.yaml" }
+    "403": { $ref: "../../components/responses/Forbidden.yaml" }
+    "500": { $ref: "../../components/responses/InternalServerError.yaml" }

@@ -1069,7 +1069,9 @@
       "requestsTitle": "Permintaanmu",
       "requestsDescription": "Kabar tentang judul yang kamu pilih: saat mulai dikerjakan dan saat dirilis.",
       "wordsTitle": "Peringatan kata",
-      "wordsDescription": "Kata baru dan ringkasan mingguan."
+      "wordsDescription": "Kata baru dan ringkasan mingguan.",
+      "reportsTitle": "Resolved reports",
+      "reportsDescription": "When subtitle or sentence reports you submitted are fixed."
     },
     "dictionaries": {
       "title": "Kamus Kustom",
@@ -2068,7 +2070,9 @@
       "statusTitle": "Halaman Status Publik",
       "statusDesc": "Buka status.nadeshiko.co di tab baru.",
       "emailsTitle": "Email",
-      "emailsDesc": "Setiap email terkirim, status pengiriman, dan alamat yang diblokir."
+      "emailsDesc": "Setiap email terkirim, status pengiriman, dan alamat yang diblokir.",
+      "notificationsTitle": "Notifications",
+      "notificationsDesc": "Send official announcements and manage notification rules"
     }
   },
   "adminPatreon": {
@@ -2178,7 +2182,9 @@
     "title": "Email",
     "tabs": {
       "sent": "Terkirim",
-      "suppressed": "Diblokir"
+      "suppressed": "Diblokir",
+      "types": "Types & templates",
+      "broadcasts": "Broadcasts"
     },
     "last24h": "24 jam terakhir",
     "kpi": {
@@ -2238,6 +2244,39 @@
         "repeated_soft_bounce": "Pantulan sementara berulang",
         "manual": "Manual"
       }
+    },
+    "templates": {
+      "fromCategory": "From / category",
+      "template": "Template",
+      "editTemplate": "Edit & preview",
+      "variablesHint": "Allowed variables:",
+      "bodyMarkdown": "Body (Markdown)",
+      "sendTest": "Send test",
+      "refreshPreview": "Refresh preview",
+      "resetDefault": "Reset to default",
+      "testSentToast": "Test email sent to {email}."
+    },
+    "broadcasts": {
+      "testAddress": "Test address",
+      "new": "New broadcast",
+      "editTitle": "Edit draft broadcast",
+      "empty": "No email broadcasts yet.",
+      "actions": "Actions",
+      "send": "Send",
+      "cancel": "Cancel",
+      "viewLog": "View log",
+      "estimatedRecipients": "Estimated opted-in recipients",
+      "respectsOptOut": "respects opt-out & suppressions",
+      "previewText": "Preview text (optional)",
+      "ctaLabel": "Button label (optional)",
+      "ctaUrl": "Button URL (optional)",
+      "saveDraft": "Save draft",
+      "savedToast": "Broadcast draft saved.",
+      "deletedToast": "Broadcast draft deleted.",
+      "launchedToast": "Broadcast queued for delivery.",
+      "cancelledToast": "Broadcast cancelled.",
+      "confirmTitle": "Launch email broadcast",
+      "confirmBody": "Send \"{subject}\" to {audience}?"
     }
   },
   "notifications": {
@@ -2249,7 +2288,8 @@
       "loading": "Memuat…",
       "markAllRead": "Tandai semua sudah dibaca",
       "settings": "Pengaturan notifikasi",
-      "loadMore": "Tampilkan yang lebih lama"
+      "loadMore": "Tampilkan yang lebih lama",
+      "openLink": "Open"
     },
     "kinds": {
       "wordAvailable": "{word} sudah ada di Nadeshiko",
@@ -2257,7 +2297,12 @@
       "wordDigest": "{count} kalimat baru untuk {word}",
       "wordDigestMany": "Kalimat baru untuk {count} kata kamu",
       "requestInProgress": "Mulai mengerjakan {title}",
-      "requestReleased": "{title} sudah ada di Nadeshiko"
+      "requestReleased": "{title} sudah ada di Nadeshiko",
+      "officialFallback": "Announcement from Nadeshiko",
+      "reportResolved": "Your report was fixed",
+      "reportResolvedMany": "{count} of your reports were fixed",
+      "requestDeclined": "{title} was declined",
+      "requestMerged": "{title} was merged into {target}"
     },
     "alerts": {
       "title": "Peringatan kata",
@@ -2339,5 +2384,56 @@
     "shown": "Spoiler ditampilkan",
     "show": "Tampilkan",
     "hide": "Sembunyikan"
+  },
+  "adminNotifications": {
+    "title": "Notifications",
+    "subtitle": "Send official in-site announcements and configure notification rules",
+    "tabs": {
+      "send": "Send & history",
+      "registry": "Catalog & rules"
+    },
+    "send": {
+      "kind": "Kind",
+      "audience": "Audience",
+      "audienceAll": "All active users",
+      "audiencePatrons": "Patrons only",
+      "audienceUser": "Single user",
+      "targetUserId": "Target user ID",
+      "title": "Title",
+      "message": "Message (English)",
+      "linkUrl": "Link path (optional)",
+      "linkLabel": "Link label (optional)",
+      "submit": "Send notification",
+      "sending": "Sending…",
+      "preview": "Bell preview",
+      "pinnedHint": "Official notices are pinned at the top of the bell until read and cannot be muted.",
+      "missingFields": "Title and message are required.",
+      "missingUser": "Enter a target user ID.",
+      "invalidLink": "Link path must start with /.",
+      "sentToast": "Notification queued.",
+      "confirmTitle": "Confirm broadcast",
+      "confirmBody": "Send \"{title}\" to {audience}?",
+      "confirmAction": "Send now"
+    },
+    "history": {
+      "title": "Recent broadcasts",
+      "empty": "No official notifications sent yet.",
+      "date": "Date",
+      "titleCol": "Title",
+      "audience": "Audience",
+      "sent": "Sent",
+      "status": "Status"
+    },
+    "registry": {
+      "kind": "Notification",
+      "trigger": "Trigger",
+      "enabled": "Enabled",
+      "params": "Parameters",
+      "volume7d": "7d volume",
+      "edit": "Edit",
+      "save": "Save",
+      "reset": "Reset",
+      "saved": "Settings saved."
+    }
   }
 }

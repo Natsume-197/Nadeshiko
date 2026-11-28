@@ -11,6 +11,8 @@ import { registerPatreonMembershipRefreshWorker } from '@app/workers/patreonMemb
 import { registerUserDictionaryImportWorker } from '@app/workers/userDictionaryImportWorker';
 import { registerWordWatchWorkers } from '@app/workers/wordWatchWorker';
 import { registerTrackerSyncWorker } from '@app/workers/trackerSyncWorker';
+import { registerNotificationBroadcastWorker } from '@app/workers/notificationBroadcastWorker';
+import { registerEmailBroadcastWorker } from '@app/workers/emailBroadcastWorker';
 import { closeAllArtifactHandles } from '@app/services/dictionary/custom/sqlitePool';
 import { sendRecurringSweepJob } from '@app/workers/recurringLinesQueue';
 import { setBossInstance } from '@app/workers/pgBossClient';
@@ -35,6 +37,8 @@ import {
   WORD_WATCH_FIRST_QUEUE,
   WORD_WATCH_DIGEST_QUEUE,
   TRACKER_SYNC_QUEUE,
+  NOTIFICATION_BROADCAST_QUEUE,
+  EMAIL_BROADCAST_QUEUE,
 } from '@app/workers/queueNames';
 import { getAppPostgresConfig } from '@config/postgresConfig';
 import { logger } from '@config/log';
@@ -257,6 +261,25 @@ export const workersInitializer: RuntimeInitializer = {
           retentionSeconds: 86400,
         },
       },
+      {
+        name: NOTIFICATION_BROADCAST_QUEUE,
+        options: {
+          retryLimit: 1,
+          retryDelay: 60,
+          expireInSeconds: 1800,
+          retentionSeconds: 7 * 86400,
+        },
+      },
+      {
+        name: EMAIL_BROADCAST_QUEUE,
+        options: {
+          // Broadcasts are idempotent (skip already-sent users in EmailSend) and can run for a while with throttling.
+          retryLimit: 1,
+          retryDelay: 120,
+          expireInSeconds: 4 * 3600,
+          retentionSeconds: 7 * 86400,
+        },
+      },
     ];
 
     // `createQueue` leaves existing queues unchanged, so update each one to keep the stored options in sync.
@@ -306,6 +329,8 @@ export const workersInitializer: RuntimeInitializer = {
     await registerUserDictionaryImportWorker(boss);
     await registerWordWatchWorkers(boss);
     await registerTrackerSyncWorker(boss);
+    await registerNotificationBroadcastWorker(boss);
+    await registerEmailBroadcastWorker(boss);
     // Also sweep at boot: the first deploy fills the flags with no manual step, and any later deploy converges them.
     // Collapsed to one sweep per ten minutes, so a burst of restarts does not queue several.
     await sendRecurringSweepJob('boot');

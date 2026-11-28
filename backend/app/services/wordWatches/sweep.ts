@@ -4,6 +4,7 @@ import { sendWordAlertEmail } from '@app/mailers/email';
 import type { WordAlertItem } from '@app/mailers/emailTemplates';
 import { wordSearchPath } from '@brigadasos/nadeshiko-shared/wordQuery';
 import { notify } from '@app/services/notifications/notify';
+import { getNotificationParams } from '@app/services/notifications/settings';
 import { logger } from '@config/log';
 import {
   GLOBAL_FILTERS,
@@ -198,15 +199,17 @@ export function runFirstAppearanceSweep(now: Date = new Date()): Promise<SweepSu
 }
 
 /** Weekly: a digest of new sentences for each reader's followed words. */
-export function runNewSentencesSweep(now: Date = new Date()): Promise<SweepSummary> {
+export async function runNewSentencesSweep(now: Date = new Date()): Promise<SweepSummary> {
+  const { minNewSentences } = await getNotificationParams<{ minNewSentences: number }>('word-digest');
+  const threshold = minNewSentences ?? NEW_SENTENCES_THRESHOLD;
   return runSweep(
     {
       mode: WordWatchMode.NEW_SENTENCES,
       kind: 'word-digest',
       campaign: weekCampaign,
-      grew: (watch, global) => global - watch.lastGlobalCount >= NEW_SENTENCES_THRESHOLD,
+      grew: (watch, global) => global - watch.lastGlobalCount >= threshold,
       decide: (watch, count) =>
-        count - watch.lastCount >= NEW_SENTENCES_THRESHOLD ? { newSentences: count - watch.lastCount } : null,
+        count - watch.lastCount >= threshold ? { newSentences: count - watch.lastCount } : null,
       after: {},
     },
     now,

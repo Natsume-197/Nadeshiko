@@ -1,0 +1,42 @@
+post:
+  tags: [Admin]
+  x-internal: true
+  operationId: previewAdminEmailTemplate
+  summary: Render a live HTML preview for an email template and optionally send a [TEST] email
+  security:
+    - SessionCookie: [ADMIN]
+  parameters:
+    - name: kind
+      in: path
+      required: true
+      schema: { type: string, maxLength: 32 }
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            subjectOverride: { type: [string, "null"], maxLength: 240 }
+            bodyOverride: { type: [string, "null"], maxLength: 40000 }
+            previewText: { type: [string, "null"], maxLength: 240 }
+            ctaLabel: { type: [string, "null"], maxLength: 80 }
+            ctaUrl: { type: [string, "null"], maxLength: 512 }
+            sendTestTo: { type: [string, "null"], format: email }
+  responses:
+    "200":
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [subject, html, testSent]
+            properties:
+              subject: { type: string }
+              html: { type: string }
+              testSent: { type: boolean }
+    "400": { $ref: "../../components/responses/BadRequest.yaml" }
+    "401": { $ref: "../../components/responses/Unauthorized.yaml" }
+    "403": { $ref: "../../components/responses/Forbidden.yaml" }
+    "404": { $ref: "../../components/responses/NotFound.yaml" }
+    "500": { $ref: "../../components/responses/InternalServerError.yaml" }

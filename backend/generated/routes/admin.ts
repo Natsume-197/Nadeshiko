@@ -18,6 +18,7 @@ import { z } from 'zod/v4';
 import type {
   t_AccountQuotaState,
   t_AdminContentRequest,
+  t_AdminEmailBroadcast,
   t_AdminEmailEvent,
   t_AdminEmailSend,
   t_AdminEmailSuppression,
@@ -31,6 +32,9 @@ import type {
   t_BatchUpdateReportsRequest,
   t_BulkDeleteReportsRequest,
   t_BulkUpdateReportsRequest,
+  t_CancelAdminEmailBroadcastParamSchema,
+  t_CreateAdminEmailBroadcastRequestBody,
+  t_DeleteAdminEmailBroadcastParamSchema,
   t_DeleteAdminReportParamSchema,
   t_Error400,
   t_Error401,
@@ -39,6 +43,7 @@ import type {
   t_Error409,
   t_Error429,
   t_Error500,
+  t_EstimateAdminEmailBroadcastRequestBody,
   t_GetAdminEmailParamSchema,
   t_GetAdminPatreonOverviewQuerySchema,
   t_GetAdminUserQuotaParamSchema,
@@ -47,26 +52,39 @@ import type {
   t_ListAdminContentRequestsQuerySchema,
   t_ListAdminEmailSuppressionsQuerySchema,
   t_ListAdminEmailsQuerySchema,
+  t_ListAdminNotificationBroadcastsQuerySchema,
   t_ListAdminReportsQuerySchema,
   t_MergeAdminContentRequestParamSchema,
   t_MergeAdminContentRequestRequestBody,
+  t_PreviewAdminEmailTemplateParamSchema,
+  t_PreviewAdminEmailTemplateRequestBody,
   t_RefreshAdminPatreonConnectionParamSchema,
   t_Report,
   t_ResendAdminEmailParamSchema,
+  t_SendAdminEmailBroadcastParamSchema,
+  t_SendAdminNotificationBroadcastRequestBody,
+  t_TestAdminEmailBroadcastParamSchema,
+  t_TestAdminEmailBroadcastRequestBody,
   t_Tier,
   t_UnlinkAdminPatreonConnectionParamSchema,
   t_UpdateAccountQuotaRequest,
   t_UpdateAdminContentRequestParamSchema,
   t_UpdateAdminContentRequestRequestBody,
+  t_UpdateAdminEmailBroadcastParamSchema,
+  t_UpdateAdminEmailBroadcastRequestBody,
+  t_UpdateAdminNotificationSettingParamSchema,
+  t_UpdateAdminNotificationSettingRequestBody,
   t_UpdateAdminReportParamSchema,
   t_UpdateAdminUserQuotaParamSchema,
   t_UpdateReportRequest,
+  t_UploadAdminEmailAssetRequestBody,
 } from '../models.ts';
-import type { AnnouncementOutput, BatchUpdateReportsRequestOutput, BulkDeleteReportsRequestOutput, BulkUpdateReportsRequestOutput, GetAdminPatreonOverviewQueryOutput, GetAdminUsersWithProvidersQueryOutput, LiftAdminEmailSuppressionRequestBodyOutput, ListAdminContentRequestsQueryOutput, ListAdminEmailSuppressionsQueryOutput, ListAdminEmailsQueryOutput, ListAdminReportsQueryOutput, MergeAdminContentRequestRequestBodyOutput, UpdateAccountQuotaRequestOutput, UpdateAdminContentRequestRequestBodyOutput, UpdateReportRequestOutput } from '../outputTypes.ts';
+import type { AnnouncementOutput, BatchUpdateReportsRequestOutput, BulkDeleteReportsRequestOutput, BulkUpdateReportsRequestOutput, CreateAdminEmailBroadcastRequestBodyOutput, EstimateAdminEmailBroadcastRequestBodyOutput, GetAdminPatreonOverviewQueryOutput, GetAdminUsersWithProvidersQueryOutput, LiftAdminEmailSuppressionRequestBodyOutput, ListAdminContentRequestsQueryOutput, ListAdminEmailSuppressionsQueryOutput, ListAdminEmailsQueryOutput, ListAdminNotificationBroadcastsQueryOutput, ListAdminReportsQueryOutput, MergeAdminContentRequestRequestBodyOutput, PreviewAdminEmailTemplateRequestBodyOutput, SendAdminNotificationBroadcastRequestBodyOutput, UpdateAccountQuotaRequestOutput, UpdateAdminContentRequestRequestBodyOutput, UpdateAdminEmailBroadcastRequestBodyOutput, UpdateAdminNotificationSettingRequestBodyOutput, UpdateReportRequestOutput, UploadAdminEmailAssetRequestBodyOutput } from '../outputTypes.ts';
 import {
   PermissiveBoolean,
   s_AccountQuotaState,
   s_AdminContentRequest,
+  s_AdminEmailBroadcast,
   s_AdminEmailEvent,
   s_AdminEmailSend,
   s_AdminEmailSuppression,
@@ -80,6 +98,7 @@ import {
   s_BatchUpdateReportsRequest,
   s_BulkDeleteReportsRequest,
   s_BulkUpdateReportsRequest,
+  s_CreateAdminEmailBroadcastRequestBody,
   s_Error400,
   s_Error401,
   s_Error403,
@@ -87,15 +106,22 @@ import {
   s_Error409,
   s_Error429,
   s_Error500,
+  s_EstimateAdminEmailBroadcastRequestBody,
   s_LiftAdminEmailSuppressionRequestBody,
   s_MergeAdminContentRequestRequestBody,
+  s_PreviewAdminEmailTemplateRequestBody,
   s_Report,
   s_ReportSource,
   s_ReportTargetType,
+  s_SendAdminNotificationBroadcastRequestBody,
+  s_TestAdminEmailBroadcastRequestBody,
   s_Tier,
   s_UpdateAccountQuotaRequest,
   s_UpdateAdminContentRequestRequestBody,
+  s_UpdateAdminEmailBroadcastRequestBody,
+  s_UpdateAdminNotificationSettingRequestBody,
   s_UpdateReportRequest,
+  s_UploadAdminEmailAssetRequestBody,
 } from '../schemas.ts';
 
 export type GetAdminOverviewResponder = {
@@ -548,6 +574,336 @@ export type LiftAdminEmailSuppression = (
   next: NextFunction,
 ) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
 
+export type ListAdminNotificationSettingsResponder = {
+  with200(): ExpressRuntimeResponse<{
+    items: {
+      allowedVariables?: string[];
+      alwaysEnabled: boolean;
+      area: 'official' | 'words' | 'community' | 'lifecycle' | 'transactional';
+      bodyOverride?: string | null;
+      channels: {
+        email: boolean;
+        site: boolean;
+      };
+      defaultBodyMarkdown?: string | null;
+      defaultParams: Record<string, unknown>;
+      defaultSubject?: string | null;
+      description: string;
+      editableTemplate: boolean;
+      emailCategory?: string | null;
+      emailEnabled: boolean;
+      emailFrom?: string | null;
+      groupable: boolean;
+      kind: string;
+      label: string;
+      paramFields: {
+        description: string;
+        key: string;
+        label: string;
+        max: number;
+        min: number;
+        type: 'integer' | 'number';
+      }[];
+      params: Record<string, unknown>;
+      pinned: boolean;
+      requiredVariables?: string[];
+      schedule?: string | null;
+      siteCategory?: string | null;
+      siteEnabled: boolean;
+      stats7d: {
+        emailFailed: number;
+        emailSent: number;
+        siteSent: number;
+      };
+      subjectOverride?: string | null;
+      trigger: 'realtime' | 'cron' | 'admin';
+      updatedAt?: string | null;
+    }[];
+  }>;
+  with401(): ExpressRuntimeResponse<t_Error401>;
+  with403(): ExpressRuntimeResponse<t_Error403>;
+  with500(): ExpressRuntimeResponse<t_Error500>;
+} & ExpressRuntimeResponder;
+
+export type ListAdminNotificationSettings = (
+  params: Params<void, void, void, void>,
+  respond: ListAdminNotificationSettingsResponder,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
+
+export type UpdateAdminNotificationSettingResponder = {
+  with200(): ExpressRuntimeResponse<{
+    bodyOverride?: string | null;
+    emailEnabled: boolean;
+    kind: string;
+    params: Record<string, unknown>;
+    siteEnabled: boolean;
+    subjectOverride?: string | null;
+    updatedAt?: string | null;
+  }>;
+  with400(): ExpressRuntimeResponse<t_Error400>;
+  with401(): ExpressRuntimeResponse<t_Error401>;
+  with403(): ExpressRuntimeResponse<t_Error403>;
+  with404(): ExpressRuntimeResponse<t_Error404>;
+  with500(): ExpressRuntimeResponse<t_Error500>;
+} & ExpressRuntimeResponder;
+
+export type UpdateAdminNotificationSetting = (
+  params: Params<t_UpdateAdminNotificationSettingParamSchema, void, UpdateAdminNotificationSettingRequestBodyOutput, void>,
+  respond: UpdateAdminNotificationSettingResponder,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
+
+export type PreviewAdminEmailTemplateResponder = {
+  with200(): ExpressRuntimeResponse<{
+    html: string;
+    subject: string;
+    testSent: boolean;
+  }>;
+  with400(): ExpressRuntimeResponse<t_Error400>;
+  with401(): ExpressRuntimeResponse<t_Error401>;
+  with403(): ExpressRuntimeResponse<t_Error403>;
+  with404(): ExpressRuntimeResponse<t_Error404>;
+  with500(): ExpressRuntimeResponse<t_Error500>;
+} & ExpressRuntimeResponder;
+
+export type PreviewAdminEmailTemplate = (
+  params: Params<t_PreviewAdminEmailTemplateParamSchema, void, PreviewAdminEmailTemplateRequestBodyOutput, void>,
+  respond: PreviewAdminEmailTemplateResponder,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
+
+export type ListAdminNotificationBroadcastsResponder = {
+  with200(): ExpressRuntimeResponse<{
+    items: {
+      audience: 'ALL' | 'PATRONS' | 'USER';
+      createdAt: string;
+      error?: string | null;
+      id: string;
+      kind: 'site-announcement' | 'admin-message';
+      linkLabel?: string | null;
+      linkUrl?: string | null;
+      message: string;
+      recipientCount: number;
+      sentAt?: string | null;
+      sentCount: number;
+      status: 'QUEUED' | 'SENDING' | 'SENT' | 'FAILED';
+      targetUserId?: number | null;
+      targetUsername?: string | null;
+      title: string;
+    }[];
+  }>;
+  with401(): ExpressRuntimeResponse<t_Error401>;
+  with403(): ExpressRuntimeResponse<t_Error403>;
+  with500(): ExpressRuntimeResponse<t_Error500>;
+} & ExpressRuntimeResponder;
+
+export type ListAdminNotificationBroadcasts = (
+  params: Params<void, ListAdminNotificationBroadcastsQueryOutput, void, void>,
+  respond: ListAdminNotificationBroadcastsResponder,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
+
+export type SendAdminNotificationBroadcastResponder = {
+  with201(): ExpressRuntimeResponse<{
+    audience: 'ALL' | 'PATRONS' | 'USER';
+    createdAt: string;
+    error?: string | null;
+    id: string;
+    kind: 'site-announcement' | 'admin-message';
+    linkLabel?: string | null;
+    linkUrl?: string | null;
+    message: string;
+    recipientCount: number;
+    sentAt?: string | null;
+    sentCount: number;
+    status: 'QUEUED' | 'SENDING' | 'SENT' | 'FAILED';
+    targetUserId?: number | null;
+    targetUsername?: string | null;
+    title: string;
+  }>;
+  with400(): ExpressRuntimeResponse<t_Error400>;
+  with401(): ExpressRuntimeResponse<t_Error401>;
+  with403(): ExpressRuntimeResponse<t_Error403>;
+  with404(): ExpressRuntimeResponse<t_Error404>;
+  with500(): ExpressRuntimeResponse<t_Error500>;
+} & ExpressRuntimeResponder;
+
+export type SendAdminNotificationBroadcast = (
+  params: Params<void, void, SendAdminNotificationBroadcastRequestBodyOutput, void>,
+  respond: SendAdminNotificationBroadcastResponder,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
+
+export type ListAdminEmailBroadcastsResponder = {
+  with200(): ExpressRuntimeResponse<{
+    items: t_AdminEmailBroadcast[];
+  }>;
+  with401(): ExpressRuntimeResponse<t_Error401>;
+  with403(): ExpressRuntimeResponse<t_Error403>;
+  with500(): ExpressRuntimeResponse<t_Error500>;
+} & ExpressRuntimeResponder;
+
+export type ListAdminEmailBroadcasts = (
+  params: Params<void, void, void, void>,
+  respond: ListAdminEmailBroadcastsResponder,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
+
+export type CreateAdminEmailBroadcastResponder = {
+  with201(): ExpressRuntimeResponse<t_AdminEmailBroadcast>;
+  with400(): ExpressRuntimeResponse<t_Error400>;
+  with401(): ExpressRuntimeResponse<t_Error401>;
+  with403(): ExpressRuntimeResponse<t_Error403>;
+  with409(): ExpressRuntimeResponse<t_Error409>;
+  with500(): ExpressRuntimeResponse<t_Error500>;
+} & ExpressRuntimeResponder;
+
+export type CreateAdminEmailBroadcast = (
+  params: Params<void, void, CreateAdminEmailBroadcastRequestBodyOutput, void>,
+  respond: CreateAdminEmailBroadcastResponder,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
+
+export type EstimateAdminEmailBroadcastResponder = {
+  with200(): ExpressRuntimeResponse<{
+    recipientCount: number;
+  }>;
+  with400(): ExpressRuntimeResponse<t_Error400>;
+  with401(): ExpressRuntimeResponse<t_Error401>;
+  with403(): ExpressRuntimeResponse<t_Error403>;
+  with500(): ExpressRuntimeResponse<t_Error500>;
+} & ExpressRuntimeResponder;
+
+export type EstimateAdminEmailBroadcast = (
+  params: Params<void, void, EstimateAdminEmailBroadcastRequestBodyOutput, void>,
+  respond: EstimateAdminEmailBroadcastResponder,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
+
+export type UploadAdminEmailAssetResponder = {
+  with201(): ExpressRuntimeResponse<{
+    byteSize: number;
+    id: string;
+    mimeType: string;
+    url: string;
+  }>;
+  with400(): ExpressRuntimeResponse<t_Error400>;
+  with401(): ExpressRuntimeResponse<t_Error401>;
+  with403(): ExpressRuntimeResponse<t_Error403>;
+  with500(): ExpressRuntimeResponse<t_Error500>;
+} & ExpressRuntimeResponder;
+
+export type UploadAdminEmailAsset = (
+  params: Params<void, void, UploadAdminEmailAssetRequestBodyOutput, void>,
+  respond: UploadAdminEmailAssetResponder,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
+
+export type UpdateAdminEmailBroadcastResponder = {
+  with200(): ExpressRuntimeResponse<t_AdminEmailBroadcast>;
+  with400(): ExpressRuntimeResponse<t_Error400>;
+  with401(): ExpressRuntimeResponse<t_Error401>;
+  with403(): ExpressRuntimeResponse<t_Error403>;
+  with404(): ExpressRuntimeResponse<t_Error404>;
+  with409(): ExpressRuntimeResponse<t_Error409>;
+  with500(): ExpressRuntimeResponse<t_Error500>;
+} & ExpressRuntimeResponder;
+
+export type UpdateAdminEmailBroadcast = (
+  params: Params<t_UpdateAdminEmailBroadcastParamSchema, void, UpdateAdminEmailBroadcastRequestBodyOutput, void>,
+  respond: UpdateAdminEmailBroadcastResponder,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
+
+export type DeleteAdminEmailBroadcastResponder = {
+  with204(): ExpressRuntimeResponse<void>;
+  with400(): ExpressRuntimeResponse<t_Error400>;
+  with401(): ExpressRuntimeResponse<t_Error401>;
+  with403(): ExpressRuntimeResponse<t_Error403>;
+  with404(): ExpressRuntimeResponse<t_Error404>;
+  with500(): ExpressRuntimeResponse<t_Error500>;
+} & ExpressRuntimeResponder;
+
+export type DeleteAdminEmailBroadcast = (
+  params: Params<t_DeleteAdminEmailBroadcastParamSchema, void, void, void>,
+  respond: DeleteAdminEmailBroadcastResponder,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
+
+export type TestAdminEmailBroadcastResponder = {
+  with204(): ExpressRuntimeResponse<void>;
+  with400(): ExpressRuntimeResponse<t_Error400>;
+  with401(): ExpressRuntimeResponse<t_Error401>;
+  with403(): ExpressRuntimeResponse<t_Error403>;
+  with404(): ExpressRuntimeResponse<t_Error404>;
+  with500(): ExpressRuntimeResponse<t_Error500>;
+} & ExpressRuntimeResponder;
+
+export type TestAdminEmailBroadcast = (
+  params: Params<t_TestAdminEmailBroadcastParamSchema, void, t_TestAdminEmailBroadcastRequestBody | undefined, void>,
+  respond: TestAdminEmailBroadcastResponder,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
+
+export type SendAdminEmailBroadcastResponder = {
+  with200(): ExpressRuntimeResponse<t_AdminEmailBroadcast>;
+  with400(): ExpressRuntimeResponse<t_Error400>;
+  with401(): ExpressRuntimeResponse<t_Error401>;
+  with403(): ExpressRuntimeResponse<t_Error403>;
+  with404(): ExpressRuntimeResponse<t_Error404>;
+  with500(): ExpressRuntimeResponse<t_Error500>;
+} & ExpressRuntimeResponder;
+
+export type SendAdminEmailBroadcast = (
+  params: Params<t_SendAdminEmailBroadcastParamSchema, void, void, void>,
+  respond: SendAdminEmailBroadcastResponder,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
+
+export type CancelAdminEmailBroadcastResponder = {
+  with200(): ExpressRuntimeResponse<t_AdminEmailBroadcast>;
+  with400(): ExpressRuntimeResponse<t_Error400>;
+  with401(): ExpressRuntimeResponse<t_Error401>;
+  with403(): ExpressRuntimeResponse<t_Error403>;
+  with404(): ExpressRuntimeResponse<t_Error404>;
+  with500(): ExpressRuntimeResponse<t_Error500>;
+} & ExpressRuntimeResponder;
+
+export type CancelAdminEmailBroadcast = (
+  params: Params<t_CancelAdminEmailBroadcastParamSchema, void, void, void>,
+  respond: CancelAdminEmailBroadcastResponder,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => Promise<ExpressRuntimeResponse<unknown> | typeof SkipResponse>;
+
 export type AdminImplementation = {
   getAdminOverview: GetAdminOverview;
   listAdminReports: ListAdminReports;
@@ -574,6 +930,20 @@ export type AdminImplementation = {
   resendAdminEmail: ResendAdminEmail;
   listAdminEmailSuppressions: ListAdminEmailSuppressions;
   liftAdminEmailSuppression: LiftAdminEmailSuppression;
+  listAdminNotificationSettings: ListAdminNotificationSettings;
+  updateAdminNotificationSetting: UpdateAdminNotificationSetting;
+  previewAdminEmailTemplate: PreviewAdminEmailTemplate;
+  listAdminNotificationBroadcasts: ListAdminNotificationBroadcasts;
+  sendAdminNotificationBroadcast: SendAdminNotificationBroadcast;
+  listAdminEmailBroadcasts: ListAdminEmailBroadcasts;
+  createAdminEmailBroadcast: CreateAdminEmailBroadcast;
+  estimateAdminEmailBroadcast: EstimateAdminEmailBroadcast;
+  uploadAdminEmailAsset: UploadAdminEmailAsset;
+  updateAdminEmailBroadcast: UpdateAdminEmailBroadcast;
+  deleteAdminEmailBroadcast: DeleteAdminEmailBroadcast;
+  testAdminEmailBroadcast: TestAdminEmailBroadcast;
+  sendAdminEmailBroadcast: SendAdminEmailBroadcast;
+  cancelAdminEmailBroadcast: CancelAdminEmailBroadcast;
 };
 
 export function createAdminRouter(
@@ -1734,6 +2104,7 @@ export function createAdminRouter(
     offset: z.coerce.number().min(0).optional().default(0),
     search: z.string().max(320).optional(),
     kind: z.string().max(32).optional(),
+    campaign: z.string().max(80).optional(),
     status: z.enum(['sent', 'delivered', 'bounced', 'complained', 'failed', 'suppressed']).optional(),
     days: z.coerce.number().min(1).max(366).optional(),
   });
@@ -2061,6 +2432,982 @@ export function createAdminRouter(
       next(error);
     }
   });
+
+  const listAdminNotificationSettingsResponseBodyValidator = responseValidationFactory(
+    [
+      [
+        '200',
+        z.object({
+          items: z.array(
+            z.object({
+              kind: z.string(),
+              label: z.string(),
+              description: z.string(),
+              area: z.enum(['official', 'words', 'community', 'lifecycle', 'transactional']),
+              trigger: z.enum(['realtime', 'cron', 'admin']),
+              schedule: z.string().nullable().optional(),
+              channels: z.object({ site: PermissiveBoolean, email: PermissiveBoolean }),
+              siteCategory: z.string().nullable().optional(),
+              emailCategory: z.string().nullable().optional(),
+              emailFrom: z.string().nullable().optional(),
+              pinned: PermissiveBoolean,
+              groupable: PermissiveBoolean,
+              alwaysEnabled: PermissiveBoolean,
+              siteEnabled: PermissiveBoolean,
+              emailEnabled: PermissiveBoolean,
+              editableTemplate: PermissiveBoolean,
+              defaultSubject: z.string().nullable().optional(),
+              defaultBodyMarkdown: z.string().nullable().optional(),
+              subjectOverride: z.string().nullable().optional(),
+              bodyOverride: z.string().nullable().optional(),
+              allowedVariables: z.array(z.string()).optional(),
+              requiredVariables: z.array(z.string()).optional(),
+              params: z.record(z.string(), z.unknown()),
+              defaultParams: z.record(z.string(), z.unknown()),
+              paramFields: z.array(
+                z.object({
+                  key: z.string(),
+                  label: z.string(),
+                  description: z.string(),
+                  type: z.enum(['integer', 'number']),
+                  min: z.coerce.number(),
+                  max: z.coerce.number(),
+                }),
+              ),
+              updatedAt: z.iso.datetime({ offset: true }).nullable().optional(),
+              stats7d: z.object({
+                siteSent: z.coerce.number(),
+                emailSent: z.coerce.number(),
+                emailFailed: z.coerce.number(),
+              }),
+            }),
+          ),
+        }),
+      ],
+      ['401', s_Error401],
+      ['403', s_Error403],
+      ['500', s_Error500],
+    ],
+    undefined,
+  );
+
+  // listAdminNotificationSettings
+  router.get(`/v1/admin/notification-settings`, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const input = {
+        params: undefined,
+        query: undefined,
+        body: undefined,
+        headers: undefined,
+      };
+
+      const responder = {
+        with200() {
+          return new ExpressRuntimeResponse<{
+            items: {
+              allowedVariables?: string[];
+              alwaysEnabled: boolean;
+              area: 'official' | 'words' | 'community' | 'lifecycle' | 'transactional';
+              bodyOverride?: string | null;
+              channels: {
+                email: boolean;
+                site: boolean;
+              };
+              defaultBodyMarkdown?: string | null;
+              defaultParams: Record<string, unknown>;
+              defaultSubject?: string | null;
+              description: string;
+              editableTemplate: boolean;
+              emailCategory?: string | null;
+              emailEnabled: boolean;
+              emailFrom?: string | null;
+              groupable: boolean;
+              kind: string;
+              label: string;
+              paramFields: {
+                description: string;
+                key: string;
+                label: string;
+                max: number;
+                min: number;
+                type: 'integer' | 'number';
+              }[];
+              params: Record<string, unknown>;
+              pinned: boolean;
+              requiredVariables?: string[];
+              schedule?: string | null;
+              siteCategory?: string | null;
+              siteEnabled: boolean;
+              stats7d: {
+                emailFailed: number;
+                emailSent: number;
+                siteSent: number;
+              };
+              subjectOverride?: string | null;
+              trigger: 'realtime' | 'cron' | 'admin';
+              updatedAt?: string | null;
+            }[];
+          }>(200);
+        },
+        with401() {
+          return new ExpressRuntimeResponse<t_Error401>(401);
+        },
+        with403() {
+          return new ExpressRuntimeResponse<t_Error403>(403);
+        },
+        with500() {
+          return new ExpressRuntimeResponse<t_Error500>(500);
+        },
+        withStatus(status: StatusCode) {
+          return new ExpressRuntimeResponse(status);
+        },
+      };
+
+      await implementation
+        .listAdminNotificationSettings(input, responder, req, res, next)
+        .catch(handleImplementationError)
+        .then(handleResponse(res, listAdminNotificationSettingsResponseBodyValidator));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  const updateAdminNotificationSettingParamSchema = z.object({ kind: z.string().max(32) });
+
+  const updateAdminNotificationSettingResponseBodyValidator = responseValidationFactory(
+    [
+      [
+        '200',
+        z.object({
+          kind: z.string(),
+          siteEnabled: PermissiveBoolean,
+          emailEnabled: PermissiveBoolean,
+          params: z.record(z.string(), z.unknown()),
+          subjectOverride: z.string().nullable().optional(),
+          bodyOverride: z.string().nullable().optional(),
+          updatedAt: z.iso.datetime({ offset: true }).nullable().optional(),
+        }),
+      ],
+      ['400', s_Error400],
+      ['401', s_Error401],
+      ['403', s_Error403],
+      ['404', s_Error404],
+      ['500', s_Error500],
+    ],
+    undefined,
+  );
+
+  // updateAdminNotificationSetting
+  router.patch(`/v1/admin/notification-settings/:kind`, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const input = {
+        params: parseRequestInput(updateAdminNotificationSettingParamSchema, req.params, RequestInputType.RouteParam),
+        query: undefined,
+        body: parseRequestInput(s_UpdateAdminNotificationSettingRequestBody, req.body, RequestInputType.RequestBody),
+        headers: undefined,
+      };
+
+      const responder = {
+        with200() {
+          return new ExpressRuntimeResponse<{
+            bodyOverride?: string | null;
+            emailEnabled: boolean;
+            kind: string;
+            params: Record<string, unknown>;
+            siteEnabled: boolean;
+            subjectOverride?: string | null;
+            updatedAt?: string | null;
+          }>(200);
+        },
+        with400() {
+          return new ExpressRuntimeResponse<t_Error400>(400);
+        },
+        with401() {
+          return new ExpressRuntimeResponse<t_Error401>(401);
+        },
+        with403() {
+          return new ExpressRuntimeResponse<t_Error403>(403);
+        },
+        with404() {
+          return new ExpressRuntimeResponse<t_Error404>(404);
+        },
+        with500() {
+          return new ExpressRuntimeResponse<t_Error500>(500);
+        },
+        withStatus(status: StatusCode) {
+          return new ExpressRuntimeResponse(status);
+        },
+      };
+
+      await implementation
+        .updateAdminNotificationSetting(input, responder, req, res, next)
+        .catch(handleImplementationError)
+        .then(handleResponse(res, updateAdminNotificationSettingResponseBodyValidator));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  const previewAdminEmailTemplateParamSchema = z.object({ kind: z.string().max(32) });
+
+  const previewAdminEmailTemplateResponseBodyValidator = responseValidationFactory(
+    [
+      ['200', z.object({ subject: z.string(), html: z.string(), testSent: PermissiveBoolean })],
+      ['400', s_Error400],
+      ['401', s_Error401],
+      ['403', s_Error403],
+      ['404', s_Error404],
+      ['500', s_Error500],
+    ],
+    undefined,
+  );
+
+  // previewAdminEmailTemplate
+  router.post(
+    `/v1/admin/notification-settings/:kind/preview`,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const input = {
+          params: parseRequestInput(previewAdminEmailTemplateParamSchema, req.params, RequestInputType.RouteParam),
+          query: undefined,
+          body: parseRequestInput(s_PreviewAdminEmailTemplateRequestBody, req.body, RequestInputType.RequestBody),
+          headers: undefined,
+        };
+
+        const responder = {
+          with200() {
+            return new ExpressRuntimeResponse<{
+              html: string;
+              subject: string;
+              testSent: boolean;
+            }>(200);
+          },
+          with400() {
+            return new ExpressRuntimeResponse<t_Error400>(400);
+          },
+          with401() {
+            return new ExpressRuntimeResponse<t_Error401>(401);
+          },
+          with403() {
+            return new ExpressRuntimeResponse<t_Error403>(403);
+          },
+          with404() {
+            return new ExpressRuntimeResponse<t_Error404>(404);
+          },
+          with500() {
+            return new ExpressRuntimeResponse<t_Error500>(500);
+          },
+          withStatus(status: StatusCode) {
+            return new ExpressRuntimeResponse(status);
+          },
+        };
+
+        await implementation
+          .previewAdminEmailTemplate(input, responder, req, res, next)
+          .catch(handleImplementationError)
+          .then(handleResponse(res, previewAdminEmailTemplateResponseBodyValidator));
+      } catch (error) {
+        next(error);
+      }
+    },
+  );
+
+  const listAdminNotificationBroadcastsQuerySchema = z.object({
+    limit: z.coerce.number().min(1).max(100).optional().default(25),
+  });
+
+  const listAdminNotificationBroadcastsResponseBodyValidator = responseValidationFactory(
+    [
+      [
+        '200',
+        z.object({
+          items: z.array(
+            z.object({
+              id: z.string(),
+              kind: z.enum(['site-announcement', 'admin-message']),
+              audience: z.enum(['ALL', 'PATRONS', 'USER']),
+              targetUserId: z.coerce.number().nullable().optional(),
+              targetUsername: z.string().nullable().optional(),
+              title: z.string(),
+              message: z.string(),
+              linkUrl: z.string().nullable().optional(),
+              linkLabel: z.string().nullable().optional(),
+              status: z.enum(['QUEUED', 'SENDING', 'SENT', 'FAILED']),
+              recipientCount: z.coerce.number(),
+              sentCount: z.coerce.number(),
+              error: z.string().nullable().optional(),
+              sentAt: z.iso.datetime({ offset: true }).nullable().optional(),
+              createdAt: z.iso.datetime({ offset: true }),
+            }),
+          ),
+        }),
+      ],
+      ['401', s_Error401],
+      ['403', s_Error403],
+      ['500', s_Error500],
+    ],
+    undefined,
+  );
+
+  // listAdminNotificationBroadcasts
+  router.get(`/v1/admin/notifications/broadcasts`, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const input = {
+        params: undefined,
+        query: parseRequestInput(listAdminNotificationBroadcastsQuerySchema, req.query, RequestInputType.QueryString),
+        body: undefined,
+        headers: undefined,
+      };
+
+      const responder = {
+        with200() {
+          return new ExpressRuntimeResponse<{
+            items: {
+              audience: 'ALL' | 'PATRONS' | 'USER';
+              createdAt: string;
+              error?: string | null;
+              id: string;
+              kind: 'site-announcement' | 'admin-message';
+              linkLabel?: string | null;
+              linkUrl?: string | null;
+              message: string;
+              recipientCount: number;
+              sentAt?: string | null;
+              sentCount: number;
+              status: 'QUEUED' | 'SENDING' | 'SENT' | 'FAILED';
+              targetUserId?: number | null;
+              targetUsername?: string | null;
+              title: string;
+            }[];
+          }>(200);
+        },
+        with401() {
+          return new ExpressRuntimeResponse<t_Error401>(401);
+        },
+        with403() {
+          return new ExpressRuntimeResponse<t_Error403>(403);
+        },
+        with500() {
+          return new ExpressRuntimeResponse<t_Error500>(500);
+        },
+        withStatus(status: StatusCode) {
+          return new ExpressRuntimeResponse(status);
+        },
+      };
+
+      await implementation
+        .listAdminNotificationBroadcasts(input, responder, req, res, next)
+        .catch(handleImplementationError)
+        .then(handleResponse(res, listAdminNotificationBroadcastsResponseBodyValidator));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  const sendAdminNotificationBroadcastResponseBodyValidator = responseValidationFactory(
+    [
+      [
+        '201',
+        z.object({
+          id: z.string(),
+          kind: z.enum(['site-announcement', 'admin-message']),
+          audience: z.enum(['ALL', 'PATRONS', 'USER']),
+          targetUserId: z.coerce.number().nullable().optional(),
+          targetUsername: z.string().nullable().optional(),
+          title: z.string(),
+          message: z.string(),
+          linkUrl: z.string().nullable().optional(),
+          linkLabel: z.string().nullable().optional(),
+          status: z.enum(['QUEUED', 'SENDING', 'SENT', 'FAILED']),
+          recipientCount: z.coerce.number(),
+          sentCount: z.coerce.number(),
+          error: z.string().nullable().optional(),
+          sentAt: z.iso.datetime({ offset: true }).nullable().optional(),
+          createdAt: z.iso.datetime({ offset: true }),
+        }),
+      ],
+      ['400', s_Error400],
+      ['401', s_Error401],
+      ['403', s_Error403],
+      ['404', s_Error404],
+      ['500', s_Error500],
+    ],
+    undefined,
+  );
+
+  // sendAdminNotificationBroadcast
+  router.post(`/v1/admin/notifications/broadcasts`, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const input = {
+        params: undefined,
+        query: undefined,
+        body: parseRequestInput(s_SendAdminNotificationBroadcastRequestBody, req.body, RequestInputType.RequestBody),
+        headers: undefined,
+      };
+
+      const responder = {
+        with201() {
+          return new ExpressRuntimeResponse<{
+            audience: 'ALL' | 'PATRONS' | 'USER';
+            createdAt: string;
+            error?: string | null;
+            id: string;
+            kind: 'site-announcement' | 'admin-message';
+            linkLabel?: string | null;
+            linkUrl?: string | null;
+            message: string;
+            recipientCount: number;
+            sentAt?: string | null;
+            sentCount: number;
+            status: 'QUEUED' | 'SENDING' | 'SENT' | 'FAILED';
+            targetUserId?: number | null;
+            targetUsername?: string | null;
+            title: string;
+          }>(201);
+        },
+        with400() {
+          return new ExpressRuntimeResponse<t_Error400>(400);
+        },
+        with401() {
+          return new ExpressRuntimeResponse<t_Error401>(401);
+        },
+        with403() {
+          return new ExpressRuntimeResponse<t_Error403>(403);
+        },
+        with404() {
+          return new ExpressRuntimeResponse<t_Error404>(404);
+        },
+        with500() {
+          return new ExpressRuntimeResponse<t_Error500>(500);
+        },
+        withStatus(status: StatusCode) {
+          return new ExpressRuntimeResponse(status);
+        },
+      };
+
+      await implementation
+        .sendAdminNotificationBroadcast(input, responder, req, res, next)
+        .catch(handleImplementationError)
+        .then(handleResponse(res, sendAdminNotificationBroadcastResponseBodyValidator));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  const listAdminEmailBroadcastsResponseBodyValidator = responseValidationFactory(
+    [
+      ['200', z.object({ items: z.array(s_AdminEmailBroadcast) })],
+      ['401', s_Error401],
+      ['403', s_Error403],
+      ['500', s_Error500],
+    ],
+    undefined,
+  );
+
+  // listAdminEmailBroadcasts
+  router.get(`/v1/admin/email-broadcasts`, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const input = {
+        params: undefined,
+        query: undefined,
+        body: undefined,
+        headers: undefined,
+      };
+
+      const responder = {
+        with200() {
+          return new ExpressRuntimeResponse<{
+            items: t_AdminEmailBroadcast[];
+          }>(200);
+        },
+        with401() {
+          return new ExpressRuntimeResponse<t_Error401>(401);
+        },
+        with403() {
+          return new ExpressRuntimeResponse<t_Error403>(403);
+        },
+        with500() {
+          return new ExpressRuntimeResponse<t_Error500>(500);
+        },
+        withStatus(status: StatusCode) {
+          return new ExpressRuntimeResponse(status);
+        },
+      };
+
+      await implementation
+        .listAdminEmailBroadcasts(input, responder, req, res, next)
+        .catch(handleImplementationError)
+        .then(handleResponse(res, listAdminEmailBroadcastsResponseBodyValidator));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  const createAdminEmailBroadcastResponseBodyValidator = responseValidationFactory(
+    [
+      ['201', s_AdminEmailBroadcast],
+      ['400', s_Error400],
+      ['401', s_Error401],
+      ['403', s_Error403],
+      ['409', s_Error409],
+      ['500', s_Error500],
+    ],
+    undefined,
+  );
+
+  // createAdminEmailBroadcast
+  router.post(`/v1/admin/email-broadcasts`, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const input = {
+        params: undefined,
+        query: undefined,
+        body: parseRequestInput(s_CreateAdminEmailBroadcastRequestBody, req.body, RequestInputType.RequestBody),
+        headers: undefined,
+      };
+
+      const responder = {
+        with201() {
+          return new ExpressRuntimeResponse<t_AdminEmailBroadcast>(201);
+        },
+        with400() {
+          return new ExpressRuntimeResponse<t_Error400>(400);
+        },
+        with401() {
+          return new ExpressRuntimeResponse<t_Error401>(401);
+        },
+        with403() {
+          return new ExpressRuntimeResponse<t_Error403>(403);
+        },
+        with409() {
+          return new ExpressRuntimeResponse<t_Error409>(409);
+        },
+        with500() {
+          return new ExpressRuntimeResponse<t_Error500>(500);
+        },
+        withStatus(status: StatusCode) {
+          return new ExpressRuntimeResponse(status);
+        },
+      };
+
+      await implementation
+        .createAdminEmailBroadcast(input, responder, req, res, next)
+        .catch(handleImplementationError)
+        .then(handleResponse(res, createAdminEmailBroadcastResponseBodyValidator));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  const estimateAdminEmailBroadcastResponseBodyValidator = responseValidationFactory(
+    [
+      ['200', z.object({ recipientCount: z.coerce.number() })],
+      ['400', s_Error400],
+      ['401', s_Error401],
+      ['403', s_Error403],
+      ['500', s_Error500],
+    ],
+    undefined,
+  );
+
+  // estimateAdminEmailBroadcast
+  router.post(`/v1/admin/email-broadcasts/estimate`, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const input = {
+        params: undefined,
+        query: undefined,
+        body: parseRequestInput(s_EstimateAdminEmailBroadcastRequestBody, req.body, RequestInputType.RequestBody),
+        headers: undefined,
+      };
+
+      const responder = {
+        with200() {
+          return new ExpressRuntimeResponse<{
+            recipientCount: number;
+          }>(200);
+        },
+        with400() {
+          return new ExpressRuntimeResponse<t_Error400>(400);
+        },
+        with401() {
+          return new ExpressRuntimeResponse<t_Error401>(401);
+        },
+        with403() {
+          return new ExpressRuntimeResponse<t_Error403>(403);
+        },
+        with500() {
+          return new ExpressRuntimeResponse<t_Error500>(500);
+        },
+        withStatus(status: StatusCode) {
+          return new ExpressRuntimeResponse(status);
+        },
+      };
+
+      await implementation
+        .estimateAdminEmailBroadcast(input, responder, req, res, next)
+        .catch(handleImplementationError)
+        .then(handleResponse(res, estimateAdminEmailBroadcastResponseBodyValidator));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  const uploadAdminEmailAssetResponseBodyValidator = responseValidationFactory(
+    [
+      ['201', z.object({ id: z.string(), url: z.string(), mimeType: z.string(), byteSize: z.coerce.number() })],
+      ['400', s_Error400],
+      ['401', s_Error401],
+      ['403', s_Error403],
+      ['500', s_Error500],
+    ],
+    undefined,
+  );
+
+  // uploadAdminEmailAsset
+  router.post(`/v1/admin/email-broadcasts/images`, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const input = {
+        params: undefined,
+        query: undefined,
+        body: parseRequestInput(s_UploadAdminEmailAssetRequestBody, req.body, RequestInputType.RequestBody),
+        headers: undefined,
+      };
+
+      const responder = {
+        with201() {
+          return new ExpressRuntimeResponse<{
+            byteSize: number;
+            id: string;
+            mimeType: string;
+            url: string;
+          }>(201);
+        },
+        with400() {
+          return new ExpressRuntimeResponse<t_Error400>(400);
+        },
+        with401() {
+          return new ExpressRuntimeResponse<t_Error401>(401);
+        },
+        with403() {
+          return new ExpressRuntimeResponse<t_Error403>(403);
+        },
+        with500() {
+          return new ExpressRuntimeResponse<t_Error500>(500);
+        },
+        withStatus(status: StatusCode) {
+          return new ExpressRuntimeResponse(status);
+        },
+      };
+
+      await implementation
+        .uploadAdminEmailAsset(input, responder, req, res, next)
+        .catch(handleImplementationError)
+        .then(handleResponse(res, uploadAdminEmailAssetResponseBodyValidator));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  const updateAdminEmailBroadcastParamSchema = z.object({ broadcastId: z.string() });
+
+  const updateAdminEmailBroadcastResponseBodyValidator = responseValidationFactory(
+    [
+      ['200', s_AdminEmailBroadcast],
+      ['400', s_Error400],
+      ['401', s_Error401],
+      ['403', s_Error403],
+      ['404', s_Error404],
+      ['409', s_Error409],
+      ['500', s_Error500],
+    ],
+    undefined,
+  );
+
+  // updateAdminEmailBroadcast
+  router.patch(`/v1/admin/email-broadcasts/:broadcastId`, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const input = {
+        params: parseRequestInput(updateAdminEmailBroadcastParamSchema, req.params, RequestInputType.RouteParam),
+        query: undefined,
+        body: parseRequestInput(s_UpdateAdminEmailBroadcastRequestBody, req.body, RequestInputType.RequestBody),
+        headers: undefined,
+      };
+
+      const responder = {
+        with200() {
+          return new ExpressRuntimeResponse<t_AdminEmailBroadcast>(200);
+        },
+        with400() {
+          return new ExpressRuntimeResponse<t_Error400>(400);
+        },
+        with401() {
+          return new ExpressRuntimeResponse<t_Error401>(401);
+        },
+        with403() {
+          return new ExpressRuntimeResponse<t_Error403>(403);
+        },
+        with404() {
+          return new ExpressRuntimeResponse<t_Error404>(404);
+        },
+        with409() {
+          return new ExpressRuntimeResponse<t_Error409>(409);
+        },
+        with500() {
+          return new ExpressRuntimeResponse<t_Error500>(500);
+        },
+        withStatus(status: StatusCode) {
+          return new ExpressRuntimeResponse(status);
+        },
+      };
+
+      await implementation
+        .updateAdminEmailBroadcast(input, responder, req, res, next)
+        .catch(handleImplementationError)
+        .then(handleResponse(res, updateAdminEmailBroadcastResponseBodyValidator));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  const deleteAdminEmailBroadcastParamSchema = z.object({ broadcastId: z.string() });
+
+  const deleteAdminEmailBroadcastResponseBodyValidator = responseValidationFactory(
+    [
+      ['204', z.undefined()],
+      ['400', s_Error400],
+      ['401', s_Error401],
+      ['403', s_Error403],
+      ['404', s_Error404],
+      ['500', s_Error500],
+    ],
+    undefined,
+  );
+
+  // deleteAdminEmailBroadcast
+  router.delete(`/v1/admin/email-broadcasts/:broadcastId`, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const input = {
+        params: parseRequestInput(deleteAdminEmailBroadcastParamSchema, req.params, RequestInputType.RouteParam),
+        query: undefined,
+        body: undefined,
+        headers: undefined,
+      };
+
+      const responder = {
+        with204() {
+          return new ExpressRuntimeResponse<void>(204);
+        },
+        with400() {
+          return new ExpressRuntimeResponse<t_Error400>(400);
+        },
+        with401() {
+          return new ExpressRuntimeResponse<t_Error401>(401);
+        },
+        with403() {
+          return new ExpressRuntimeResponse<t_Error403>(403);
+        },
+        with404() {
+          return new ExpressRuntimeResponse<t_Error404>(404);
+        },
+        with500() {
+          return new ExpressRuntimeResponse<t_Error500>(500);
+        },
+        withStatus(status: StatusCode) {
+          return new ExpressRuntimeResponse(status);
+        },
+      };
+
+      await implementation
+        .deleteAdminEmailBroadcast(input, responder, req, res, next)
+        .catch(handleImplementationError)
+        .then(handleResponse(res, deleteAdminEmailBroadcastResponseBodyValidator));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  const testAdminEmailBroadcastParamSchema = z.object({ broadcastId: z.string() });
+
+  const testAdminEmailBroadcastResponseBodyValidator = responseValidationFactory(
+    [
+      ['204', z.undefined()],
+      ['400', s_Error400],
+      ['401', s_Error401],
+      ['403', s_Error403],
+      ['404', s_Error404],
+      ['500', s_Error500],
+    ],
+    undefined,
+  );
+
+  // testAdminEmailBroadcast
+  router.post(
+    `/v1/admin/email-broadcasts/:broadcastId/test`,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const input = {
+          params: parseRequestInput(testAdminEmailBroadcastParamSchema, req.params, RequestInputType.RouteParam),
+          query: undefined,
+          body: parseRequestInput(
+            s_TestAdminEmailBroadcastRequestBody.optional(),
+            req.body,
+            RequestInputType.RequestBody,
+          ),
+          headers: undefined,
+        };
+
+        const responder = {
+          with204() {
+            return new ExpressRuntimeResponse<void>(204);
+          },
+          with400() {
+            return new ExpressRuntimeResponse<t_Error400>(400);
+          },
+          with401() {
+            return new ExpressRuntimeResponse<t_Error401>(401);
+          },
+          with403() {
+            return new ExpressRuntimeResponse<t_Error403>(403);
+          },
+          with404() {
+            return new ExpressRuntimeResponse<t_Error404>(404);
+          },
+          with500() {
+            return new ExpressRuntimeResponse<t_Error500>(500);
+          },
+          withStatus(status: StatusCode) {
+            return new ExpressRuntimeResponse(status);
+          },
+        };
+
+        await implementation
+          .testAdminEmailBroadcast(input, responder, req, res, next)
+          .catch(handleImplementationError)
+          .then(handleResponse(res, testAdminEmailBroadcastResponseBodyValidator));
+      } catch (error) {
+        next(error);
+      }
+    },
+  );
+
+  const sendAdminEmailBroadcastParamSchema = z.object({ broadcastId: z.string() });
+
+  const sendAdminEmailBroadcastResponseBodyValidator = responseValidationFactory(
+    [
+      ['200', s_AdminEmailBroadcast],
+      ['400', s_Error400],
+      ['401', s_Error401],
+      ['403', s_Error403],
+      ['404', s_Error404],
+      ['500', s_Error500],
+    ],
+    undefined,
+  );
+
+  // sendAdminEmailBroadcast
+  router.post(
+    `/v1/admin/email-broadcasts/:broadcastId/send`,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const input = {
+          params: parseRequestInput(sendAdminEmailBroadcastParamSchema, req.params, RequestInputType.RouteParam),
+          query: undefined,
+          body: undefined,
+          headers: undefined,
+        };
+
+        const responder = {
+          with200() {
+            return new ExpressRuntimeResponse<t_AdminEmailBroadcast>(200);
+          },
+          with400() {
+            return new ExpressRuntimeResponse<t_Error400>(400);
+          },
+          with401() {
+            return new ExpressRuntimeResponse<t_Error401>(401);
+          },
+          with403() {
+            return new ExpressRuntimeResponse<t_Error403>(403);
+          },
+          with404() {
+            return new ExpressRuntimeResponse<t_Error404>(404);
+          },
+          with500() {
+            return new ExpressRuntimeResponse<t_Error500>(500);
+          },
+          withStatus(status: StatusCode) {
+            return new ExpressRuntimeResponse(status);
+          },
+        };
+
+        await implementation
+          .sendAdminEmailBroadcast(input, responder, req, res, next)
+          .catch(handleImplementationError)
+          .then(handleResponse(res, sendAdminEmailBroadcastResponseBodyValidator));
+      } catch (error) {
+        next(error);
+      }
+    },
+  );
+
+  const cancelAdminEmailBroadcastParamSchema = z.object({ broadcastId: z.string() });
+
+  const cancelAdminEmailBroadcastResponseBodyValidator = responseValidationFactory(
+    [
+      ['200', s_AdminEmailBroadcast],
+      ['400', s_Error400],
+      ['401', s_Error401],
+      ['403', s_Error403],
+      ['404', s_Error404],
+      ['500', s_Error500],
+    ],
+    undefined,
+  );
+
+  // cancelAdminEmailBroadcast
+  router.post(
+    `/v1/admin/email-broadcasts/:broadcastId/cancel`,
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const input = {
+          params: parseRequestInput(cancelAdminEmailBroadcastParamSchema, req.params, RequestInputType.RouteParam),
+          query: undefined,
+          body: undefined,
+          headers: undefined,
+        };
+
+        const responder = {
+          with200() {
+            return new ExpressRuntimeResponse<t_AdminEmailBroadcast>(200);
+          },
+          with400() {
+            return new ExpressRuntimeResponse<t_Error400>(400);
+          },
+          with401() {
+            return new ExpressRuntimeResponse<t_Error401>(401);
+          },
+          with403() {
+            return new ExpressRuntimeResponse<t_Error403>(403);
+          },
+          with404() {
+            return new ExpressRuntimeResponse<t_Error404>(404);
+          },
+          with500() {
+            return new ExpressRuntimeResponse<t_Error500>(500);
+          },
+          withStatus(status: StatusCode) {
+            return new ExpressRuntimeResponse(status);
+          },
+        };
+
+        await implementation
+          .cancelAdminEmailBroadcast(input, responder, req, res, next)
+          .catch(handleImplementationError)
+          .then(handleResponse(res, cancelAdminEmailBroadcastResponseBodyValidator));
+      } catch (error) {
+        next(error);
+      }
+    },
+  );
 
   return router;
 }

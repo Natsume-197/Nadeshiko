@@ -12,6 +12,8 @@ import type {
 import { Notification, WordWatch, WordWatchMatchMode, WordWatchMode, WordWatchStatus } from '@app/models';
 import { assertUser } from '@app/middleware/authentication';
 import { toNotificationJSON, unreadNotificationCount } from '@app/services/notifications/notify';
+import { OFFICIAL_NOTIFICATION_KINDS } from '@app/services/notifications/registry';
+import { getNotificationParams } from '@app/services/notifications/settings';
 import { normalizeWordQuery } from '@app/services/wordWatches/rules';
 import { deleteWatch, setWatch, toWordWatchJSON, updateWatch, wordWatchLimit } from '@app/services/wordWatches/service';
 
@@ -20,7 +22,17 @@ export const listNotifications: ListNotifications = async ({ query }, respond, r
   const take = query.take;
   const before = query.before ? new Date(query.before) : null;
 
-  const [rows, unreadCount] = await Promise.all([
+  const [pinnedRows, rows, unreadCount] = await Promise.all([
+    !before
+      ? (async () => {
+          const { maxPinned } = await getNotificationParams<{ maxPinned: number }>('site-announcement');
+          return Notification.find({
+            where: { userId: user.id, kind: In([...OFFICIAL_NOTIFICATION_KINDS]), readAt: IsNull() },
+            order: { createdAt: 'DESC', id: 'DESC' },
+            take: maxPinned ?? 5,
+          });
+        })()
+      : Promise.resolve([] as Notification[]),
     Notification.find({
       where: { userId: user.id, ...(before ? { createdAt: LessThan(before) } : {}) },
       order: { createdAt: 'DESC', id: 'DESC' },
@@ -29,8 +41,12 @@ export const listNotifications: ListNotifications = async ({ query }, respond, r
     unreadNotificationCount(user.id),
   ]);
 
+  const pinnedIds = new Set(pinnedRows.map((r) => r.id));
+  const regular = rows.slice(0, take).filter((r) => !pinnedIds.has(r.id));
+  const combined = [...pinnedRows, ...regular];
+
   return respond.with200().body({
-    items: rows.slice(0, take).map(toNotificationJSON),
+    items: combined.map(toNotificationJSON),
     unreadCount,
     hasMore: rows.length > take,
   });

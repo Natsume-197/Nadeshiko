@@ -25,7 +25,7 @@ import {
 } from './allowance';
 import { parseRequestLink } from './links';
 import { lookupRequestMetadata } from './metadata';
-import { notifyRequestSubscribers } from './notifications';
+import { notifyRequestMerged, notifyRequestSubscribers, requestSubscribers } from './notifications';
 
 /** Advisory-lock namespace for per-account request writes (boost allowance, open limit). */
 const LOCK_NAMESPACE = 49_001;
@@ -481,6 +481,7 @@ export async function mergeRequests(duplicatePublicId: string, intoPublicId: str
   if (!duplicate || !into) throw new NotFoundError('Request not found');
   if (!isActive(into.status)) throw new InvalidRequestError('Merge into a request that is still open.');
 
+  const duplicateSubscribers = await requestSubscribers(duplicate.id);
   await ContentRequest.getRepository().manager.transaction(async (manager) => {
     await manager.query(
       `INSERT INTO "ContentRequestVote" ("request_id", "user_id", "created_at")
@@ -504,5 +505,10 @@ export async function mergeRequests(duplicatePublicId: string, intoPublicId: str
     await recount(manager, duplicate.id);
     await recount(manager, into.id);
   });
+  void notifyRequestMerged(
+    duplicate,
+    into,
+    duplicateSubscribers.map((u) => u.id),
+  );
   return loadRequest({ id: into.id }, true);
 }

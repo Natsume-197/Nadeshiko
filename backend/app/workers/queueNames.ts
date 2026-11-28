@@ -16,6 +16,8 @@ export const USER_DICTIONARY_MAINTENANCE_QUEUE = 'user-dictionary-maintenance';
 export const WORD_WATCH_FIRST_QUEUE = 'word-watch-first';
 export const WORD_WATCH_DIGEST_QUEUE = 'word-watch-digest';
 export const TRACKER_SYNC_QUEUE = 'tracker-sync';
+export const NOTIFICATION_BROADCAST_QUEUE = 'notification-broadcast';
+export const EMAIL_BROADCAST_QUEUE = 'email-broadcast';
 
 const ES_SYNC_QUEUES = [ES_SYNC_CREATE_QUEUE, ES_SYNC_UPDATE_QUEUE, ES_SYNC_DELETE_QUEUE] as const;
 
@@ -38,6 +40,8 @@ export const ALL_QUEUES = [
   WORD_WATCH_FIRST_QUEUE,
   WORD_WATCH_DIGEST_QUEUE,
   TRACKER_SYNC_QUEUE,
+  NOTIFICATION_BROADCAST_QUEUE,
+  EMAIL_BROADCAST_QUEUE,
 ] as const;
 
 export type EsSyncQueueName = (typeof ES_SYNC_QUEUES)[number];

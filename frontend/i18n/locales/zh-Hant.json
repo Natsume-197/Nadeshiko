@@ -1069,7 +1069,9 @@
       "requestsTitle": "你的請求",
       "requestsDescription": "你投票的作品消息：開始製作與正式上線。",
       "wordsTitle": "單字提醒",
-      "wordsDescription": "新單字和每週彙整。"
+      "wordsDescription": "新單字和每週彙整。",
+      "reportsTitle": "Resolved reports",
+      "reportsDescription": "When subtitle or sentence reports you submitted are fixed."
     },
     "dictionaries": {
       "title": "自訂辭典",
@@ -2068,7 +2070,9 @@
       "statusTitle": "服務狀態頁",
       "statusDesc": "在新分頁開啟 status.nadeshiko.co。",
       "emailsTitle": "郵件",
-      "emailsDesc": "所有已寄出的郵件、投遞狀態與被封鎖的地址。"
+      "emailsDesc": "所有已寄出的郵件、投遞狀態與被封鎖的地址。",
+      "notificationsTitle": "Notifications",
+      "notificationsDesc": "Send official announcements and manage notification rules"
     }
   },
   "adminPatreon": {
@@ -2178,7 +2182,9 @@
     "title": "郵件",
     "tabs": {
       "sent": "已寄出",
-      "suppressed": "已封鎖"
+      "suppressed": "已封鎖",
+      "types": "Types & templates",
+      "broadcasts": "Broadcasts"
     },
     "last24h": "最近 24 小時",
     "kpi": {
@@ -2238,6 +2244,39 @@
         "repeated_soft_bounce": "多次軟退信",
         "manual": "手動"
       }
+    },
+    "templates": {
+      "fromCategory": "From / category",
+      "template": "Template",
+      "editTemplate": "Edit & preview",
+      "variablesHint": "Allowed variables:",
+      "bodyMarkdown": "Body (Markdown)",
+      "sendTest": "Send test",
+      "refreshPreview": "Refresh preview",
+      "resetDefault": "Reset to default",
+      "testSentToast": "Test email sent to {email}."
+    },
+    "broadcasts": {
+      "testAddress": "Test address",
+      "new": "New broadcast",
+      "editTitle": "Edit draft broadcast",
+      "empty": "No email broadcasts yet.",
+      "actions": "Actions",
+      "send": "Send",
+      "cancel": "Cancel",
+      "viewLog": "View log",
+      "estimatedRecipients": "Estimated opted-in recipients",
+      "respectsOptOut": "respects opt-out & suppressions",
+      "previewText": "Preview text (optional)",
+      "ctaLabel": "Button label (optional)",
+      "ctaUrl": "Button URL (optional)",
+      "saveDraft": "Save draft",
+      "savedToast": "Broadcast draft saved.",
+      "deletedToast": "Broadcast draft deleted.",
+      "launchedToast": "Broadcast queued for delivery.",
+      "cancelledToast": "Broadcast cancelled.",
+      "confirmTitle": "Launch email broadcast",
+      "confirmBody": "Send \"{subject}\" to {audience}?"
     }
   },
   "notifications": {
@@ -2249,7 +2288,8 @@
       "loading": "載入中…",
       "markAllRead": "全部標為已讀",
       "settings": "通知設定",
-      "loadMore": "顯示較早的"
+      "loadMore": "顯示較早的",
+      "openLink": "Open"
     },
     "kinds": {
       "wordAvailable": "{word} 已在 Nadeshiko 上線",
@@ -2257,7 +2297,12 @@
       "wordDigest": "{word} 有 {count} 則新句子",
       "wordDigestMany": "你的 {count} 個單字有新句子",
       "requestInProgress": "已開始處理 {title}",
-      "requestReleased": "{title} 已在 Nadeshiko 上線"
+      "requestReleased": "{title} 已在 Nadeshiko 上線",
+      "officialFallback": "Announcement from Nadeshiko",
+      "reportResolved": "Your report was fixed",
+      "reportResolvedMany": "{count} of your reports were fixed",
+      "requestDeclined": "{title} was declined",
+      "requestMerged": "{title} was merged into {target}"
     },
     "alerts": {
       "title": "單字提醒",
@@ -2339,5 +2384,56 @@
     "shown": "顯示劇透",
     "show": "顯示",
     "hide": "隱藏"
+  },
+  "adminNotifications": {
+    "title": "Notifications",
+    "subtitle": "Send official in-site announcements and configure notification rules",
+    "tabs": {
+      "send": "Send & history",
+      "registry": "Catalog & rules"
+    },
+    "send": {
+      "kind": "Kind",
+      "audience": "Audience",
+      "audienceAll": "All active users",
+      "audiencePatrons": "Patrons only",
+      "audienceUser": "Single user",
+      "targetUserId": "Target user ID",
+      "title": "Title",
+      "message": "Message (English)",
+      "linkUrl": "Link path (optional)",
+      "linkLabel": "Link label (optional)",
+      "submit": "Send notification",
+      "sending": "Sending…",
+      "preview": "Bell preview",
+      "pinnedHint": "Official notices are pinned at the top of the bell until read and cannot be muted.",
+      "missingFields": "Title and message are required.",
+      "missingUser": "Enter a target user ID.",
+      "invalidLink": "Link path must start with /.",
+      "sentToast": "Notification queued.",
+      "confirmTitle": "Confirm broadcast",
+      "confirmBody": "Send \"{title}\" to {audience}?",
+      "confirmAction": "Send now"
+    },
+    "history": {
+      "title": "Recent broadcasts",
+      "empty": "No official notifications sent yet.",
+      "date": "Date",
+      "titleCol": "Title",
+      "audience": "Audience",
+      "sent": "Sent",
+      "status": "Status"
+    },
+    "registry": {
+      "kind": "Notification",
+      "trigger": "Trigger",
+      "enabled": "Enabled",
+      "params": "Parameters",
+      "volume7d": "7d volume",
+      "edit": "Edit",
+      "save": "Save",
+      "reset": "Reset",
+      "saved": "Settings saved."
+    }
   }
 }

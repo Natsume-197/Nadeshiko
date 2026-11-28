@@ -45,6 +45,23 @@ import {
   listAdminEmails,
   resendAdminEmail,
 } from '@app/controllers/adminEmailController';
+import {
+  cancelAdminEmailBroadcast,
+  createAdminEmailBroadcast,
+  deleteAdminEmailBroadcast,
+  estimateAdminEmailBroadcast,
+  listAdminEmailBroadcasts,
+  listAdminNotificationBroadcasts,
+  listAdminNotificationSettings,
+  previewAdminEmailTemplate,
+  sendAdminEmailBroadcast,
+  sendAdminNotificationBroadcast,
+  serveEmailAsset,
+  testAdminEmailBroadcast,
+  updateAdminEmailBroadcast,
+  updateAdminNotificationSetting,
+  uploadAdminEmailAsset,
+} from '@app/controllers/adminNotificationController';
 import { handleSesWebhook, WEBHOOK_SES_PATH } from '@app/controllers/webhooks/sesController';
 import { listTiers, getAdminUserQuota, updateAdminUserQuota } from '@app/controllers/adminQuotaController';
 import { getAnnouncement, updateAnnouncement } from '@app/controllers/announcementController';
@@ -357,6 +374,20 @@ const AdminRoutes = createAdminRouter({
   resendAdminEmail,
   listAdminEmailSuppressions,
   liftAdminEmailSuppression,
+  listAdminNotificationSettings,
+  updateAdminNotificationSetting,
+  previewAdminEmailTemplate,
+  listAdminNotificationBroadcasts,
+  sendAdminNotificationBroadcast,
+  listAdminEmailBroadcasts,
+  estimateAdminEmailBroadcast,
+  createAdminEmailBroadcast,
+  updateAdminEmailBroadcast,
+  deleteAdminEmailBroadcast,
+  testAdminEmailBroadcast,
+  sendAdminEmailBroadcast,
+  cancelAdminEmailBroadcast,
+  uploadAdminEmailAsset,
 });
 
 const FeedbackRoutes = createFeedbackRouter({
@@ -531,6 +562,7 @@ router.use('/', EmailRoutes);
 // Redirects need `noCache` to prevent cross-recipient leaks and only the global limiter, since scanners share reader
 // egress addresses.
 router.get(EMAIL_LINK_PATH, noCache, setRouteTemplate(EMAIL_LINK_PATH), handleEmailLinkClick);
+router.get('/v1/email/assets/:assetId', setRouteTemplate('/v1/email/assets/:assetId'), serveEmailAsset);
 
 router.post(WEBHOOK_SES_PATH, noCache, setRouteTemplate(WEBHOOK_SES_PATH), handleSesWebhook);
 

@@ -1,13 +1,19 @@
 import { BaseEntity, Column, Entity, Index, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
 import type { User } from './User';
 
-/** What the bell can say. Each kind belongs to one channel category, see `NOTIFICATION_CATEGORY`. */
-export type NotificationKind = 'word-available' | 'word-digest' | 'request-update';
+/** What the bell can say. Each kind is declared in `notificationRegistry`. */
+export type NotificationKind =
+  | 'word-available'
+  | 'word-digest'
+  | 'request-update'
+  | 'report-resolved'
+  | 'site-announcement'
+  | 'admin-message';
 
 /**
  * One entry in a reader's notification centre (task 52). The payload is whatever the site needs to draw it (words,
- * counts, titles, a path); it is written once and never edited. Read entries older than the retention window are
- * deleted by the nightly sweep.
+ * counts, titles, a path); when `groupKey` is set, unread notices with the same key fold into one row. Read entries
+ * older than the retention window are deleted by the nightly sweep.
  */
 @Entity('Notification')
 @Index(['userId', 'createdAt'])
@@ -27,6 +33,12 @@ export class Notification extends BaseEntity {
 
   @Column({ type: 'jsonb', default: () => `'{}'::jsonb` })
   payload!: Record<string, unknown>;
+
+  @Column({ name: 'group_key', type: 'varchar', length: 128, nullable: true })
+  groupKey!: string | null;
+
+  @Column({ name: 'group_count', type: 'int', default: 1 })
+  groupCount!: number;
 
   @Column({ name: 'read_at', type: 'timestamptz', nullable: true })
   readAt!: Date | null;

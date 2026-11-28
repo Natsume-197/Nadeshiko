@@ -1069,7 +1069,9 @@
       "requestsTitle": "Tus pedidos",
       "requestsDescription": "Novedades de los títulos que votaste: cuando empezamos y cuando se publican.",
       "wordsTitle": "Alertas de palabras",
-      "wordsDescription": "Palabras nuevas y resumen semanal."
+      "wordsDescription": "Palabras nuevas y resumen semanal.",
+      "reportsTitle": "Reportes resueltos",
+      "reportsDescription": "Cuando se corrigen reportes de subtítulos o frases que enviaste."
     },
     "dictionaries": {
       "title": "Diccionarios personalizados",
@@ -2068,7 +2070,9 @@
       "statusTitle": "Página de estado",
       "statusDesc": "Abre status.nadeshiko.co en una nueva pestaña.",
       "emailsTitle": "Correos",
-      "emailsDesc": "Cada correo enviado, su entrega y las direcciones bloqueadas."
+      "emailsDesc": "Cada correo enviado, su entrega y las direcciones bloqueadas.",
+      "notificationsTitle": "Notificaciones",
+      "notificationsDesc": "Enviar anuncios oficiales y configurar reglas de notificación"
     }
   },
   "adminPatreon": {
@@ -2178,7 +2182,9 @@
     "title": "Correos",
     "tabs": {
       "sent": "Enviados",
-      "suppressed": "Bloqueados"
+      "suppressed": "Bloqueados",
+      "types": "Tipos y plantillas",
+      "broadcasts": "Broadcasts"
     },
     "last24h": "Últimas 24 h",
     "kpi": {
@@ -2238,6 +2244,39 @@
         "repeated_soft_bounce": "Rebotes temporales repetidos",
         "manual": "Manual"
       }
+    },
+    "templates": {
+      "fromCategory": "Remitente / categoría",
+      "template": "Plantilla",
+      "editTemplate": "Editar y previsualizar",
+      "variablesHint": "Variables permitidas:",
+      "bodyMarkdown": "Cuerpo (Markdown)",
+      "sendTest": "Enviar prueba",
+      "refreshPreview": "Actualizar vista previa",
+      "resetDefault": "Restaurar original",
+      "testSentToast": "Correo de prueba enviado a {email}."
+    },
+    "broadcasts": {
+      "testAddress": "Correo de prueba",
+      "new": "Nuevo broadcast",
+      "editTitle": "Editar borrador",
+      "empty": "Todavía no hay broadcasts de correo.",
+      "actions": "Acciones",
+      "send": "Enviar",
+      "cancel": "Cancelar",
+      "viewLog": "Ver log",
+      "estimatedRecipients": "Destinatarios estimados",
+      "respectsOptOut": "respeta bajas y supresiones",
+      "previewText": "Texto de vista previa (opcional)",
+      "ctaLabel": "Texto del botón (opcional)",
+      "ctaUrl": "URL del botón (opcional)",
+      "saveDraft": "Guardar borrador",
+      "savedToast": "Borrador guardado.",
+      "deletedToast": "Borrador eliminado.",
+      "launchedToast": "Broadcast puesto en cola.",
+      "cancelledToast": "Broadcast cancelado.",
+      "confirmTitle": "Lanzar broadcast de correo",
+      "confirmBody": "¿Enviar \"{subject}\" a {audience}?"
     }
   },
   "notifications": {
@@ -2249,7 +2288,8 @@
       "loading": "Cargando…",
       "markAllRead": "Marcar todo como leído",
       "settings": "Ajustes de notificaciones",
-      "loadMore": "Ver anteriores"
+      "loadMore": "Ver anteriores",
+      "openLink": "Abrir"
     },
     "kinds": {
       "wordAvailable": "{word} ya está en Nadeshiko",
@@ -2257,7 +2297,12 @@
       "wordDigest": "{count} frases nuevas de {word}",
       "wordDigestMany": "Frases nuevas de {count} de tus palabras",
       "requestInProgress": "Empezamos con {title}",
-      "requestReleased": "{title} ya está en Nadeshiko"
+      "requestReleased": "{title} ya está en Nadeshiko",
+      "officialFallback": "Anuncio de Nadeshiko",
+      "reportResolved": "Tu reporte fue corregido",
+      "reportResolvedMany": "Se corrigieron {count} de tus reportes",
+      "requestDeclined": "{title} fue rechazada",
+      "requestMerged": "{title} se fusionó con {target}"
     },
     "alerts": {
       "title": "Alertas de palabras",
@@ -2339,5 +2384,56 @@
     "shown": "Spoilers visibles",
     "show": "Mostrar",
     "hide": "Ocultar"
+  },
+  "adminNotifications": {
+    "title": "Notificaciones",
+    "subtitle": "Envía anuncios oficiales en la campana y configura las reglas del sistema",
+    "tabs": {
+      "send": "Enviar e historial",
+      "registry": "Catálogo y reglas"
+    },
+    "send": {
+      "kind": "Tipo",
+      "audience": "Audiencia",
+      "audienceAll": "Todos los usuarios activos",
+      "audiencePatrons": "Solo Patrons",
+      "audienceUser": "Un usuario",
+      "targetUserId": "ID de usuario",
+      "title": "Título",
+      "message": "Mensaje (inglés)",
+      "linkUrl": "Ruta del enlace (opcional)",
+      "linkLabel": "Texto del enlace (opcional)",
+      "submit": "Enviar notificación",
+      "sending": "Enviando…",
+      "preview": "Vista previa en la campana",
+      "pinnedHint": "Los avisos oficiales se fijan arriba en la campana hasta leerse y no se pueden silenciar.",
+      "missingFields": "El título y el mensaje son obligatorios.",
+      "missingUser": "Indica un ID de usuario.",
+      "invalidLink": "La ruta debe empezar por /.",
+      "sentToast": "Notificación enviada.",
+      "confirmTitle": "Confirmar envío masivo",
+      "confirmBody": "¿Enviar \"{title}\" a {audience}?",
+      "confirmAction": "Enviar ahora"
+    },
+    "history": {
+      "title": "Envíos recientes",
+      "empty": "Todavía no se han enviado notificaciones oficiales.",
+      "date": "Fecha",
+      "titleCol": "Título",
+      "audience": "Audiencia",
+      "sent": "Enviados",
+      "status": "Estado"
+    },
+    "registry": {
+      "kind": "Notificación",
+      "trigger": "Disparador",
+      "enabled": "Activa",
+      "params": "Parámetros",
+      "volume7d": "Volumen 7d",
+      "edit": "Editar",
+      "save": "Guardar",
+      "reset": "Restaurar",
+      "saved": "Configuración guardada."
+    }
   }
 }

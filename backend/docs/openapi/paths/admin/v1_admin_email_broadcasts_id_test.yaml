@@ -1,0 +1,28 @@
+post:
+  tags: [Admin]
+  x-internal: true
+  operationId: testAdminEmailBroadcast
+  summary: Send a [TEST] copy of an email broadcast to an admin email address
+  security:
+    - SessionCookie: [ADMIN]
+  parameters:
+    - name: broadcastId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+  requestBody:
+    required: false
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            toEmail: { type: string, format: email }
+  responses:
+    "204":
+      description: No Content
+    "400": { $ref: "../../components/responses/BadRequest.yaml" }
+    "401": { $ref: "../../components/responses/Unauthorized.yaml" }
+    "403": { $ref: "../../components/responses/Forbidden.yaml" }
+    "404": { $ref: "../../components/responses/NotFound.yaml" }
+    "500": { $ref: "../../components/responses/InternalServerError.yaml" }

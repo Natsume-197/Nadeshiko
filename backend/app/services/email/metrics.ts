@@ -58,6 +58,7 @@ export type EmailKind =
   | 'request-update'
   | 'word-available'
   | 'word-digest'
+  | 'broadcast'
   | 'unknown';
 
 export const EMAIL_KINDS: readonly EmailKind[] = [
@@ -71,6 +72,7 @@ export const EMAIL_KINDS: readonly EmailKind[] = [
   'request-update',
   'word-available',
   'word-digest',
+  'broadcast',
   'unknown',
 ];
 

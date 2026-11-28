@@ -1,5 +1,8 @@
 import fs from 'fs';
 import path from 'path';
+import { config } from '@config/config';
+import { isRegistryKind } from '@app/services/notifications/registry';
+import { getNotificationSetting } from '@app/services/notifications/settings';
 
 /** Keep email prose in small Markdown blocks; the renderer supports only the inline styles the templates need,
  * avoiding a general parser. */
@@ -58,6 +61,24 @@ export function renderCopyBlock(markdown: string): string {
         return `<p class="expiry-note">${note}</p>`;
       }
 
+      // Standalone Markdown image: `![alt](url)` (allows relative `/...` or `https://...`).
+      if (lines.length === 1) {
+        const imgMatch = /^!\[([^\]]*)\]\(([^)\s]+)\)$/.exec(lines[0] ?? '');
+        if (imgMatch) {
+          const alt = escapeHTML(imgMatch[1] ?? '');
+          const rawUrl = imgMatch[2] ?? '';
+          const resolvedUrl =
+            rawUrl.startsWith('/') && !rawUrl.startsWith('//')
+              ? `${config.BASE_URL}${rawUrl}`
+              : rawUrl.startsWith('https://') || rawUrl.startsWith('http://localhost:')
+                ? rawUrl
+                : '';
+          if (resolvedUrl) {
+            return `<p style="margin: 0 0 16px; text-align: center;"><img src="${escapeHTML(resolvedUrl)}" alt="${alt}" style="max-width: 100%; height: auto; border-radius: 8px; display: block; margin: 0 auto;" /></p>`;
+          }
+        }
+      }
+
       // Render the single `#` title as the card’s styled `<h1>`.
       if (lines[0]?.startsWith('# ')) {
         const title = `<h1 class="card-title">${inline(lines[0].slice(2))}</h1>`;
@@ -106,12 +127,20 @@ export function parseCopy(source: string): Record<string, string> {
 }
 
 /** Raw template interpolation is reserved for generated, already-escaped markup; never pass reader or database
- * values through it. */
-export async function loadCopy(name: string): Promise<Record<string, string>> {
+ * values through it. Admin overrides from `NotificationSetting.bodyOverride` merge on top of the repo markdown. */
+export async function loadCopy(name: string, overrideMarkdown?: string | null): Promise<Record<string, string>> {
   // Merge shared blocks first and the email’s own blocks second, so local copy overrides shared copy.
   const [shared, own] = await Promise.all([read('shared'), read(name)]);
+  let override = overrideMarkdown;
+  if (override === undefined && isRegistryKind(name)) {
+    const setting = await getNotificationSetting(name);
+    override = setting.bodyOverride;
+  }
+  const extra = override ? parseCopy(override) : {};
 
-  return Object.fromEntries(Object.entries({ ...shared, ...own }).map(([key, html]) => [`copy.${key}`, html]));
+  return Object.fromEntries(
+    Object.entries({ ...shared, ...own, ...extra }).map(([key, html]) => [`copy.${key}`, html]),
+  );
 }
 
 async function read(name: string): Promise<Record<string, string>> {
