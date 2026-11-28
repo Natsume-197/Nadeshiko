@@ -4,6 +4,7 @@ import {
   mdiAccountGroupOutline,
   mdiBellOutline,
   mdiBullhornOutline,
+  mdiChevronRight,
   mdiClose,
   mdiDockLeft,
   mdiEmailOutline,
@@ -12,10 +13,12 @@ import {
   mdiMagnify,
   mdiMenu,
   mdiOpenInNew,
+  mdiPulse,
   mdiShieldCrownOutline,
   mdiThumbUpOutline,
 } from '@mdi/js';
 import type { AdminOverview } from '@brigadasos/nadeshiko-sdk';
+import type { AdminTone } from '~/components/admin/ui/Badge.vue';
 import { splitLocalePrefix } from '~/utils/routes';
 
 type RailSectionId = 'home' | 'moderation' | 'communication' | 'people';
@@ -25,7 +28,7 @@ interface NavPageItem {
   label: string;
   to: string;
   icon: string;
-  badge?: (o: AdminOverview | null) => { text: string; tone?: 'brand' | 'warning' | 'danger' | 'success' } | null;
+  badge?: (o: AdminOverview | null) => { text: string; tone?: AdminTone } | null;
 }
 
 interface RailSection {
@@ -50,6 +53,7 @@ const sidebarOpen = ref(true);
 const mobileNavOpen = ref(false);
 const commandOpen = ref(false);
 const commandQuery = ref('');
+const commandIndex = ref(0);
 const commandInput = ref<HTMLInputElement | null>(null);
 
 const normalizedPath = computed(() => {
@@ -60,7 +64,7 @@ const normalizedPath = computed(() => {
 const sections = computed<RailSection[]>(() => [
   {
     id: 'home',
-    label: 'Home',
+    label: t('adminLayout.sections.home'),
     icon: mdiHomeOutline,
     defaultTo: '/admin',
     matchPrefixes: ['/admin'],
@@ -68,7 +72,7 @@ const sections = computed<RailSection[]>(() => [
   },
   {
     id: 'moderation',
-    label: 'Moderation',
+    label: t('adminLayout.sections.moderation'),
     icon: mdiShieldCrownOutline,
     defaultTo: '/admin/reports',
     matchPrefixes: ['/admin/reports', '/admin/requests'],
@@ -94,7 +98,7 @@ const sections = computed<RailSection[]>(() => [
   },
   {
     id: 'communication',
-    label: 'Comms',
+    label: t('adminLayout.sections.communication'),
     icon: mdiBellOutline,
     defaultTo: '/admin/notifications',
     matchPrefixes: ['/admin/notifications', '/admin/emails', '/admin/announcement'],
@@ -120,13 +124,13 @@ const sections = computed<RailSection[]>(() => [
         label: t('accountSettings.tabs.announcement'),
         to: '/admin/announcement',
         icon: mdiBullhornOutline,
-        badge: (o) => (o?.announcement.active ? { text: 'ON', tone: 'warning' } : null),
+        badge: (o) => (o?.announcement.active ? { text: t('adminLayout.on'), tone: 'warning' } : null),
       },
     ],
   },
   {
     id: 'people',
-    label: 'People',
+    label: t('adminLayout.sections.people'),
     icon: mdiAccountGroupOutline,
     defaultTo: '/admin/users',
     matchPrefixes: ['/admin/users', '/admin/patreon'],
@@ -175,29 +179,20 @@ const allCommandItems = computed(() => {
   );
 });
 
+watch(commandQuery, () => {
+  commandIndex.value = 0;
+});
+
 const currentPageLabel = computed(() => {
   const match = activeSection.value.items.find((i) => isItemActive(i));
   return match?.label ?? activeSection.value.label;
 });
 
+const showSidebar = computed(() => sidebarOpen.value && activeSection.value.items.length > 1);
+
 function isItemActive(item: NavPageItem): boolean {
   if (item.to === '/admin') return normalizedPath.value === '/admin';
   return normalizedPath.value === item.to || normalizedPath.value.startsWith(`${item.to}/`);
-}
-
-function badgeClass(tone?: 'brand' | 'warning' | 'danger' | 'success'): string {
-  switch (tone) {
-    case 'brand':
-      return 'bg-brand/15 text-brand';
-    case 'warning':
-      return 'bg-amber-500/15 text-amber-300';
-    case 'danger':
-      return 'bg-red-500/15 text-red-300';
-    case 'success':
-      return 'bg-emerald-500/15 text-emerald-300';
-    default:
-      return 'text-ink-faint';
-  }
 }
 
 function goTo(item: NavPageItem) {
@@ -208,8 +203,20 @@ function goTo(item: NavPageItem) {
 
 function openCommand() {
   commandQuery.value = '';
+  commandIndex.value = 0;
   commandOpen.value = true;
   nextTick(() => commandInput.value?.focus());
+}
+
+function openSelectedCommand() {
+  const item = allCommandItems.value[commandIndex.value];
+  if (item) goTo(item);
+}
+
+function moveCommand(delta: number) {
+  const n = allCommandItems.value.length;
+  if (!n) return;
+  commandIndex.value = (commandIndex.value + delta + n) % n;
 }
 
 onKeyStroke('k', (e) => {
@@ -232,13 +239,12 @@ watch(
   <div class="flex h-screen flex-col overflow-hidden bg-background text-ink">
     <LayoutImpersonationBanner />
 
-    <!-- PostHog-style compact top bar -->
-    <header class="flex h-11 shrink-0 items-center justify-between gap-3 border-b border-hairline bg-surface px-3">
-      <div class="flex min-w-0 items-center gap-2">
+    <header class="flex h-12 shrink-0 items-center justify-between gap-3 border-b border-hairline bg-surface px-3">
+      <div class="flex min-w-0 items-center gap-1.5">
         <button
           type="button"
-          class="inline-flex size-7 items-center justify-center rounded-md text-ink-muted hover:bg-surface-hover hover:text-ink lg:hidden"
-          aria-label="Toggle navigation"
+          class="inline-flex size-8 items-center justify-center rounded-md text-ink-muted hover:bg-surface-hover hover:text-ink lg:hidden"
+          :aria-label="t('adminLayout.menu')"
           @click="mobileNavOpen = !mobileNavOpen"
         >
           <UiBaseIcon :path="mdiMenu" :size="18" />
@@ -246,66 +252,72 @@ watch(
 
         <NuxtLink
           :to="localePath('/admin')"
-          class="flex items-center gap-2 rounded-md px-1.5 py-1 text-xs font-semibold text-ink transition-colors hover:bg-surface-hover"
+          class="flex items-center gap-2 rounded-md px-1.5 py-1 text-[13px] font-semibold text-ink transition-colors hover:bg-surface-hover"
         >
-          <span class="flex size-5 items-center justify-center rounded bg-brand-solid text-[11px] font-bold text-white">
+          <span class="flex size-6 items-center justify-center rounded-md bg-brand-solid text-xs font-bold text-on-accent">
             N
           </span>
           <span class="hidden sm:inline">Nadeshiko</span>
         </NuxtLink>
 
-        <span class="text-xs text-ink-faint">/</span>
-        <span class="truncate text-xs font-medium text-ink-muted">{{ currentPageLabel }}</span>
+        <UiBaseIcon :path="mdiChevronRight" :size="14" w="w-3.5" h="h-3.5" class="hidden text-ink-faint sm:inline-flex" />
+        <span v-if="activeSection.id !== 'home'" class="hidden truncate text-[13px] text-ink-faint md:inline">
+          {{ activeSection.label }}
+        </span>
+        <UiBaseIcon
+          v-if="activeSection.id !== 'home'"
+          :path="mdiChevronRight"
+          :size="14"
+          w="w-3.5"
+          h="h-3.5"
+          class="hidden text-ink-faint md:inline-flex"
+        />
+        <span class="truncate text-[13px] font-medium text-ink">{{ currentPageLabel }}</span>
       </div>
 
-      <!-- Center Ctrl+K quick jump -->
       <button
         type="button"
-        class="hidden h-7 w-full max-w-md items-center justify-between gap-2 rounded-md border border-hairline bg-background/80 px-2.5 text-xs text-ink-faint transition-colors hover:border-line-hover hover:text-ink-muted sm:flex"
+        class="hidden h-8 w-full max-w-sm items-center justify-between gap-2 rounded-md border border-hairline bg-background/70 px-2.5 text-[13px] text-ink-faint transition-colors hover:border-line-hover hover:text-ink-muted sm:flex"
         @click="openCommand"
       >
-        <span class="flex items-center gap-1.5">
-          <UiBaseIcon :path="mdiMagnify" :size="14" />
-          <span>Jump to…</span>
+        <span class="flex items-center gap-2">
+          <UiBaseIcon :path="mdiMagnify" :size="15" w="w-4" h="h-4" />
+          <span>{{ t('adminLayout.jumpTo') }}</span>
         </span>
-        <kbd class="rounded border border-hairline bg-surface px-1.5 py-0.5 font-mono text-[10px] text-ink-faint">
-          Ctrl+K
-        </kbd>
+        <kbd class="rounded border border-hairline bg-surface px-1.5 py-px font-mono text-[11px] text-ink-faint">Ctrl K</kbd>
       </button>
 
-      <!-- Right utilities -->
       <div class="flex shrink-0 items-center gap-2">
-        <span v-if="store.userName" class="hidden text-xs font-medium text-ink-faint md:inline">
-          {{ store.userName }}
+        <span
+          v-if="store.userName"
+          class="hidden size-7 items-center justify-center rounded-full bg-surface-lift text-xs font-semibold uppercase text-ink-muted md:flex"
+          :title="store.userName"
+        >
+          {{ store.userName.charAt(0) }}
         </span>
         <NuxtLink
           :to="localePath('/')"
-          class="inline-flex h-7 items-center gap-1 rounded-md border border-hairline px-2 text-xs text-ink-muted transition-colors hover:bg-surface-hover hover:text-ink"
+          class="inline-flex h-8 items-center gap-1.5 rounded-md border border-hairline px-2.5 text-[13px] text-ink-muted transition-colors hover:bg-surface-hover hover:text-ink"
         >
-          <span>Site</span>
-          <UiBaseIcon :path="mdiOpenInNew" :size="12" />
+          <span>{{ t('adminLayout.site') }}</span>
+          <UiBaseIcon :path="mdiOpenInNew" :size="13" w="w-3.5" h="h-3.5" />
         </NuxtLink>
       </div>
     </header>
 
-    <!-- Dual-rail PostHog layout: Icon Rail (domains) + Secondary Sidebar (pages in domain) + Main Canvas -->
     <div class="relative flex min-h-0 flex-1 overflow-hidden">
-      <!-- Primary Icon Rail -->
-      <aside class="hidden w-[62px] shrink-0 flex-col items-center justify-between border-r border-hairline bg-surface py-2 lg:flex">
+      <!-- Icon rail: one entry per area -->
+      <aside class="hidden w-20 shrink-0 flex-col items-center justify-between border-r border-hairline bg-surface py-2 lg:flex">
         <nav class="flex w-full flex-col items-center gap-1 px-1.5">
           <NuxtLink
             v-for="sec in sections"
             :key="sec.id"
             :to="localePath(sec.defaultTo)"
-            class="flex w-full flex-col items-center gap-0.5 rounded-lg py-1.5 text-[10px] font-medium transition-colors"
-            :class="
-              activeSection.id === sec.id
-                ? 'bg-brand/15 text-brand'
-                : 'text-ink-muted hover:bg-surface-hover hover:text-ink'
-            "
+            class="flex w-full flex-col items-center gap-1 rounded-lg py-2 text-[11px] font-medium transition-colors"
+            :class="activeSection.id === sec.id ? 'bg-brand/15 text-brand' : 'text-ink-muted hover:bg-surface-hover hover:text-ink'"
           >
-            <UiBaseIcon :path="sec.icon" :size="19" />
-            <span class="truncate">{{ sec.label }}</span>
+            <UiBaseIcon :path="sec.icon" :size="20" w="w-5" h="h-5" />
+            <span class="max-w-full truncate px-0.5">{{ sec.label }}</span>
           </NuxtLink>
         </nav>
 
@@ -314,57 +326,50 @@ watch(
             href="https://status.nadeshiko.co"
             target="_blank"
             rel="noopener noreferrer"
-            title="Status page"
-            class="flex w-full flex-col items-center gap-0.5 rounded-lg py-1.5 text-[10px] font-medium text-ink-faint transition-colors hover:bg-surface-hover hover:text-ink"
+            class="flex w-full flex-col items-center gap-1 rounded-lg py-2 text-[11px] font-medium text-ink-faint transition-colors hover:bg-surface-hover hover:text-ink"
           >
-            <UiBaseIcon :path="mdiOpenInNew" :size="16" />
-            <span>Status</span>
+            <UiBaseIcon :path="mdiPulse" :size="18" w="w-[18px]" h="h-[18px]" />
+            <span>{{ t('adminLayout.status') }}</span>
           </a>
           <button
             v-if="activeSection.items.length > 1"
             type="button"
-            :title="sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'"
-            class="inline-flex size-8 items-center justify-center rounded-lg text-ink-faint transition-colors hover:bg-surface-hover hover:text-ink"
+            :aria-label="t('adminLayout.toggleSidebar')"
+            class="inline-flex size-9 items-center justify-center rounded-lg text-ink-faint transition-colors hover:bg-surface-hover hover:text-ink"
             @click="sidebarOpen = !sidebarOpen"
           >
-            <UiBaseIcon :path="mdiDockLeft" :size="17" />
+            <UiBaseIcon :path="mdiDockLeft" :size="18" w="w-[18px]" h="h-[18px]" />
           </button>
         </div>
       </aside>
 
-      <!-- Secondary Contextual Sidebar (shown when section has >1 page; 1 item = 1 page, zero tab duplication) -->
-      <aside
-        v-if="sidebarOpen && activeSection.items.length > 1"
-        class="hidden w-52 shrink-0 flex-col border-r border-hairline bg-card-background/60 lg:flex"
-      >
-        <div class="flex items-center gap-2 border-b border-hairline px-3.5 py-2.5 text-xs font-semibold text-ink">
-          <UiBaseIcon :path="activeSection.icon" :size="15" class="text-brand" />
-          <span>{{ activeSection.label }}</span>
+      <!-- Pages of the active area (only when it has more than one) -->
+      <aside v-if="showSidebar" class="hidden w-56 shrink-0 flex-col border-r border-hairline bg-surface/40 lg:flex">
+        <div class="px-4 pb-2 pt-4 text-xs font-medium text-ink-faint">
+          {{ activeSection.label }}
         </div>
-
-        <nav class="flex-1 space-y-0.5 overflow-y-auto px-2 py-2">
+        <nav class="flex-1 space-y-0.5 overflow-y-auto px-2 pb-3">
           <NuxtLink
             v-for="item in activeSection.items"
             :key="item.id"
             :to="localePath(item.to)"
-            class="flex items-center justify-between gap-2 rounded-md px-2.5 py-1.5 text-xs transition-colors"
-            :class="
-              isItemActive(item)
-                ? 'bg-brand/15 font-semibold text-brand'
-                : 'text-ink-muted hover:bg-surface-hover hover:text-ink'
-            "
+            class="flex h-8 items-center justify-between gap-2 rounded-md px-2.5 text-[13px] transition-colors"
+            :class="isItemActive(item) ? 'bg-surface-lift font-medium text-ink' : 'text-ink-muted hover:bg-surface-hover hover:text-ink'"
           >
-            <span class="flex min-w-0 items-center gap-2">
-              <UiBaseIcon :path="item.icon" :size="15" class="shrink-0" />
+            <span class="flex min-w-0 items-center gap-2.5">
+              <UiBaseIcon
+                :path="item.icon"
+                :size="16"
+                w="w-4"
+                h="h-4"
+                class="shrink-0"
+                :class="isItemActive(item) ? 'text-brand' : ''"
+              />
               <span class="truncate">{{ item.label }}</span>
             </span>
-            <span
-              v-if="item.badge?.(overview)"
-              class="shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums"
-              :class="badgeClass(item.badge?.(overview)?.tone)"
-            >
+            <AdminUiBadge v-if="item.badge?.(overview)" :tone="item.badge?.(overview)?.tone ?? 'neutral'">
               {{ item.badge?.(overview)?.text }}
-            </span>
+            </AdminUiBadge>
           </NuxtLink>
         </nav>
       </aside>
@@ -375,84 +380,90 @@ watch(
         transition="nd-drawer"
         labelledby="admin-mobile-nav-title"
         overlay-class="items-stretch justify-start bg-fixed-scrim/60 lg:hidden"
-        panel-class="flex h-full w-64 flex-col overflow-y-auto border-r border-hairline bg-background"
+        panel-class="flex h-full w-72 flex-col overflow-y-auto border-r border-hairline bg-background"
         @close="mobileNavOpen = false"
       >
         <div class="nd-modal-header">
-          <span id="admin-mobile-nav-title" class="text-sm font-bold text-ink">Nadeshiko Admin</span>
+          <span id="admin-mobile-nav-title" class="text-sm font-semibold text-ink">Nadeshiko</span>
           <button
             type="button"
             class="inline-flex size-8 items-center justify-center rounded-md text-ink-faint hover:text-ink"
+            :aria-label="t('adminLayout.close')"
             @click="mobileNavOpen = false"
           >
             <UiBaseIcon :path="mdiClose" :size="16" />
           </button>
         </div>
-        <div class="space-y-4 p-3">
-          <div v-for="sec in sections" :key="sec.id" class="space-y-1">
-            <div class="px-2.5 text-[10px] font-semibold uppercase tracking-wider text-ink-faint">
-              {{ sec.label }}
-            </div>
+        <div class="space-y-5 p-3">
+          <div v-for="sec in sections" :key="sec.id" class="space-y-0.5">
+            <div class="px-2.5 pb-1 text-xs font-medium text-ink-faint">{{ sec.label }}</div>
             <NuxtLink
               v-for="item in sec.items"
               :key="item.id"
               :to="localePath(item.to)"
-              class="flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-xs text-ink-muted hover:bg-surface-hover hover:text-ink"
+              class="flex h-9 items-center justify-between gap-2 rounded-md px-2.5 text-sm"
+              :class="isItemActive(item) ? 'bg-surface-lift font-medium text-ink' : 'text-ink-muted hover:bg-surface-hover hover:text-ink'"
             >
-              <UiBaseIcon :path="item.icon" :size="15" />
-              <span class="truncate">{{ item.label }}</span>
+              <span class="flex items-center gap-2.5">
+                <UiBaseIcon :path="item.icon" :size="16" w="w-4" h="h-4" />
+                <span class="truncate">{{ item.label }}</span>
+              </span>
+              <AdminUiBadge v-if="item.badge?.(overview)" :tone="item.badge?.(overview)?.tone ?? 'neutral'">
+                {{ item.badge?.(overview)?.text }}
+              </AdminUiBadge>
             </NuxtLink>
           </div>
         </div>
       </CommonBaseModal>
 
-      <!-- Main canvas -->
       <main class="min-w-0 flex-1 overflow-y-auto bg-background">
-        <div class="mx-auto max-w-[1440px] px-4 py-5 sm:px-6 lg:px-8">
+        <div class="mx-auto max-w-[1400px] px-4 py-6 sm:px-6 lg:px-8">
           <slot />
         </div>
       </main>
     </div>
 
-    <!-- Ctrl+K Command Palette -->
+    <!-- Ctrl+K command palette -->
     <CommonBaseModal
       :open="commandOpen"
       labelledby="admin-command-palette-title"
-      overlay-class="items-start justify-center bg-fixed-scrim/60 px-4 pt-20"
-      panel-class="w-full max-w-md overflow-hidden rounded-xl border border-hairline bg-background shadow-2xl"
+      overlay-class="items-start justify-center bg-fixed-scrim/60 px-4 pt-24"
+      panel-class="w-full max-w-lg overflow-hidden rounded-xl border border-hairline bg-background shadow-2xl"
       @close="commandOpen = false"
     >
-      <div class="flex items-center gap-2 border-b border-hairline px-3.5 py-2.5">
-        <UiBaseIcon :path="mdiMagnify" :size="16" class="text-ink-faint" />
+      <div class="flex items-center gap-2.5 border-b border-hairline px-4 py-3">
+        <UiBaseIcon :path="mdiMagnify" :size="18" w="w-[18px]" h="h-[18px]" class="text-ink-faint" />
         <input
           id="admin-command-palette-title"
           ref="commandInput"
           v-model="commandQuery"
           type="search"
-          placeholder="Jump to…"
+          :placeholder="t('adminLayout.jumpTo')"
           class="w-full bg-transparent text-sm text-ink placeholder:text-ink-faint focus:outline-none"
-          @keydown.enter="allCommandItems[0] && goTo(allCommandItems[0])"
+          @keydown.down.prevent="moveCommand(1)"
+          @keydown.up.prevent="moveCommand(-1)"
+          @keydown.enter="openSelectedCommand"
         />
-        <button type="button" class="text-ink-faint hover:text-ink" @click="commandOpen = false">
-          <UiBaseIcon :path="mdiClose" :size="16" />
-        </button>
+        <kbd class="rounded border border-hairline px-1.5 py-px font-mono text-[11px] text-ink-faint">Esc</kbd>
       </div>
-      <div class="max-h-72 overflow-y-auto p-1.5">
-        <div v-if="allCommandItems.length === 0" class="px-3 py-6 text-center text-xs text-ink-faint">
-          No matching pages
+      <div class="max-h-80 overflow-y-auto p-1.5">
+        <div v-if="allCommandItems.length === 0" class="px-3 py-8 text-center text-[13px] text-ink-faint">
+          {{ t('adminLayout.noMatches') }}
         </div>
         <button
-          v-for="item in allCommandItems"
+          v-for="(item, i) in allCommandItems"
           :key="item.id"
           type="button"
-          class="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-xs text-ink-muted transition-colors hover:bg-surface-hover hover:text-ink"
+          class="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-[13px] transition-colors"
+          :class="i === commandIndex ? 'bg-surface-lift text-ink' : 'text-ink-muted hover:bg-surface-hover'"
+          @mouseenter="commandIndex = i"
           @click="goTo(item)"
         >
           <span class="flex items-center gap-2.5">
-            <UiBaseIcon :path="item.icon" :size="15" class="text-brand" />
+            <UiBaseIcon :path="item.icon" :size="16" w="w-4" h="h-4" class="text-ink-faint" />
             <span class="font-medium text-ink">{{ item.label }}</span>
           </span>
-          <span class="text-[11px] text-ink-faint">{{ item.sectionLabel }}</span>
+          <span class="text-xs text-ink-faint">{{ item.sectionLabel }}</span>
         </button>
       </div>
     </CommonBaseModal>

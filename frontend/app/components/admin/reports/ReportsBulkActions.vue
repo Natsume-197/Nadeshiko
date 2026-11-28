@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { mdiCheckAll, mdiDeleteOutline, mdiDotsVertical } from '@mdi/js';
+import SearchDropdownContainer from '~/components/search/dropdown/DropdownContainer.vue';
+
 defineProps<{
   isDismissing: boolean;
   isDeleting: boolean;
@@ -14,28 +17,45 @@ const { t } = useI18n();
 </script>
 
 <template>
-  <div class="flex justify-end gap-2 mb-3">
-    <button type="button"
-      :disabled="isDismissing || !hasResults"
-      class="px-3 py-1.5 text-xs rounded-lg border border-hairline text-ink-muted hover:text-ink hover:border-line-hover disabled:opacity-40 disabled:cursor-not-allowed"
-      @click="emit('dismiss-all')"
-    >
-      <span v-if="isDismissing" class="flex items-center gap-1.5">
-        <span class="animate-spin inline-block w-3 h-3 border-2 border-current border-t-transparent rounded-full" />
-        {{ t('reports.admin.dismissingAll') }}
-      </span>
-      <span v-else>{{ t('reports.admin.dismissAllMatching') }}</span>
-    </button>
-    <button type="button"
-      :disabled="isDeleting || !hasResults"
-      class="px-3 py-1.5 text-xs rounded-lg border border-red-800 text-red-400 hover:text-red-300 hover:border-red-600 disabled:opacity-40 disabled:cursor-not-allowed"
-      @click="emit('delete-all')"
-    >
-      <span v-if="isDeleting" class="flex items-center gap-1.5">
-        <span class="animate-spin inline-block w-3 h-3 border-2 border-current border-t-transparent rounded-full" />
-        {{ t('reports.admin.deletingAll') }}
-      </span>
-      <span v-else>{{ t('reports.admin.deleteAllMatching') }}</span>
-    </button>
-  </div>
+  <SearchDropdownContainer
+    dropdown-id="nd-reports-bulk"
+    teleport
+    teleport-align="end"
+    dropdown-container-class="min-w-[13rem]"
+  >
+    <template #default="{ toggle, isOpen }">
+      <button
+        type="button"
+        data-testid="reports-bulk-menu"
+        class="nd-btn !h-8 !w-8 !px-0"
+        aria-haspopup="menu"
+        :aria-expanded="isOpen"
+        :aria-label="t('reports.admin.moreActions')"
+        @click="toggle"
+      >
+        <span v-if="isDismissing || isDeleting" class="nd-spinner !mr-0" />
+        <UiBaseIcon v-else :path="mdiDotsVertical" :size="16" w="w-4" h="h-4" />
+      </button>
+    </template>
+    <template #content>
+      <button
+        type="button"
+        class="nd-menu-item !gap-x-2.5 !py-1.5 !text-[13px]"
+        :disabled="isDismissing || !hasResults"
+        @click="emit('dismiss-all')"
+      >
+        <UiBaseIcon :path="mdiCheckAll" :size="16" w="w-4" h="h-4" />
+        {{ isDismissing ? t('reports.admin.dismissingAll') : t('reports.admin.dismissAllMatching') }}
+      </button>
+      <button
+        type="button"
+        class="nd-menu-item is-danger !gap-x-2.5 !py-1.5 !text-[13px]"
+        :disabled="isDeleting || !hasResults"
+        @click="emit('delete-all')"
+      >
+        <UiBaseIcon :path="mdiDeleteOutline" :size="16" w="w-4" h="h-4" />
+        {{ isDeleting ? t('reports.admin.deletingAll') : t('reports.admin.deleteAllMatching') }}
+      </button>
+    </template>
+  </SearchDropdownContainer>
 </template>

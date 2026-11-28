@@ -538,11 +538,9 @@
       },
       "title": "用户管理",
       "searchPlaceholder": "按邮箱搜索…",
-      "count": "{count} 位用户",
       "empty": "未找到用户。",
       "table": {
         "name": "名称",
-        "email": "邮箱",
         "role": "角色",
         "providers": "登录方式",
         "registered": "注册时间",
@@ -563,20 +561,18 @@
         "ban": "封禁",
         "unban": "解除封禁"
       },
-      "pagination": {
-        "showing": "第 {start}–{end} 项，共 {total} 项",
-        "previous": "上一页",
-        "next": "下一页"
-      },
       "loadError": "无法加载用户列表。",
       "banSuccess": "已封禁 {name}。",
       "banError": "无法封禁 {name}。",
       "unbanSuccess": "已解除 {name} 的封禁。",
-      "unbanError": "无法解除 {name} 的封禁。"
+      "unbanError": "无法解除 {name} 的封禁。",
+      "confirmBan": {
+        "title": "封禁 {name}？",
+        "description": "该用户将无法再登录。"
+      }
     },
     "announcement": {
       "title": "网站公告",
-      "description": "设置面向所有用户的网站公告横幅。",
       "fields": {
         "message": "公告内容",
         "type": "类型",
@@ -587,7 +583,6 @@
         "message": "输入公告内容…"
       },
       "markdownHint": "支持 **粗体**、*斜体*、`代码` 和[链接](/media)。/media 等站内路径会在应用内打开。",
-      "activeDescription": "启用后，所有访客都能看到此公告。",
       "types": {
         "INFO": "通知",
         "WARNING": "警告",
@@ -600,7 +595,8 @@
       "updateError": "无法更新公告",
       "deactivated": "公告已停用",
       "deactivateError": "无法停用公告",
-      "fallbackMessage": "暂无公告"
+      "fallbackMessage": "暂无公告",
+      "inactive": "未启用"
     },
     "activity": {
       "confirmClearHistory": "确定要清空全部学习记录吗？此操作无法撤销。",
@@ -1423,14 +1419,11 @@
       "status": "状态"
     },
     "admin": {
-      "title": "问题反馈管理",
       "count": "数量",
-      "actions": "操作",
       "filters": {
         "all": "全部",
-        "user": "用户反馈",
-        "auto": "自动检查",
-        "orphaned": "所属作品已删除"
+        "orphaned": "所属作品已删除",
+        "allSources": "全部来源"
       },
       "selectedGroups": "已选择 {count} 组",
       "dismiss": "忽略",
@@ -1441,7 +1434,6 @@
       "deletingAll": "正在全部删除…",
       "deleteAllMatching": "删除所有匹配项",
       "save": "保存",
-      "addNote": "点击添加备注…",
       "updateSuccess": "反馈已更新",
       "updateError": "无法更新反馈",
       "batchUpdated": "已更新 {count} 条反馈",
@@ -1476,7 +1468,11 @@
         "deleteAllButton": "全部删除",
         "deleteGroupTitle": "删除这一组反馈？",
         "deleteGroupDescription": "这将永久删除此反馈，以及针对同一内容、同一问题类型的全部重复反馈。"
-      }
+      },
+      "setStatus": "设置状态",
+      "moreActions": "更多操作",
+      "selectAll": "全选",
+      "notePlaceholder": "添加备注"
     }
   },
   "modalauth": {
@@ -2040,15 +2036,72 @@
       "news": "当你投票的作品开始制作和上线时，我们会发邮件通知你。你可以在设置中关闭。"
     },
     "admin": {
-      "tab": "请求"
+      "tab": "请求",
+      "title": "内容请求",
+      "publicBoard": "公开看板",
+      "searchPlaceholder": "搜索标题…",
+      "noRequests": "暂无请求",
+      "dropHere": "拖放到此处",
+      "kindUpdate": "更新",
+      "duplicateShort": "重复：{title}",
+      "duplicateOf": "可能与“{title}”重复",
+      "notDuplicate": "不是重复",
+      "mergeIntoIt": "合并到该请求",
+      "copyId": "复制 ID",
+      "copied": "已复制",
+      "fields": {
+        "score": "得分",
+        "requested": "请求时间",
+        "source": "来源",
+        "title": "标题",
+        "cover": "封面图片 URL",
+        "media": "关联媒体",
+        "mediaOptional": "关联媒体（可选）",
+        "declineReason": "拒绝原因（公开）"
+      },
+      "sections": {
+        "details": "详情",
+        "merge": "合并到其他请求"
+      },
+      "mergePlaceholder": "选择请求或粘贴其 ID",
+      "merge": "合并",
+      "save": "保存",
+      "move": {
+        "title": "移至{status}",
+        "voters": "{count} 位投票者",
+        "quiet": "移动但不发邮件",
+        "email": "移动并发邮件",
+        "decline": "拒绝请求"
+      },
+      "mergeConfirm": {
+        "title": "合并请求？",
+        "body": "将“{source}”合并到“{target}”？其投票和助推将转移，此请求将被拒绝。",
+        "confirm": "合并请求"
+      },
+      "declinePresets": {
+        "noSubtitles": "没有日语字幕。",
+        "alreadyOn": "Nadeshiko 上已有。",
+        "unsupported": "不支持的来源或格式。"
+      },
+      "toast": {
+        "saved": "请求已保存。",
+        "merged": "请求已合并。",
+        "duplicateDismissed": "已忽略重复标记。",
+        "moved": "已移至{status}。",
+        "movedQuiet": "已移至{status}，未发送邮件。"
+      },
+      "picker": {
+        "search": "搜索 Nadeshiko 媒体…",
+        "searching": "搜索中…",
+        "pasteId": "改为粘贴 ID",
+        "rawId": "媒体公开 ID",
+        "clear": "清除关联媒体"
+      }
     }
   },
   "adminDashboard": {
     "title": "管理控制台",
-    "subtitle": "在一个界面集中处理审核、社区、账号与系统健康状态。",
-    "loading": "正在加载实时计数…",
     "nav": {
-      "home": "控制台",
       "openDashboard": "管理控制台",
       "refresh": "刷新计数"
     },
@@ -2073,7 +2126,16 @@
       "emailsDesc": "所有已发送邮件、投递状态和被屏蔽的地址。",
       "notificationsTitle": "Notifications",
       "notificationsDesc": "Send official announcements and manage notification rules"
-    }
+    },
+    "kpi": {
+      "open": "待处理",
+      "boosted": "{n} 个已加速",
+      "accounts": "账户",
+      "activePatrons": "活跃赞助者",
+      "issues24h": "问题 · 24 小时"
+    },
+    "attention": "需要处理",
+    "allClear": "一切正常"
   },
   "adminPatreon": {
     "title": "Patreon 与等级",
@@ -2092,11 +2154,6 @@
     "syncAllError": "执行全量 Patreon 同步失败。",
     "quotaPerMonth": "{limit}/月 · {source}",
     "linkedDate": "绑定于 {date}",
-    "filters": {
-      "all": "全部 ({count})",
-      "active": "有效 ({count})",
-      "issues": "异常 ({count})"
-    },
     "status": {
       "activePatron": "有效",
       "declinedPatron": "扣款失败",
@@ -2123,7 +2180,6 @@
     },
     "tiers": {
       "title": "等级映射",
-      "subtitle": "当前配置的 Patreon 等级 ID、每月 API 配额与请求加速次数（只读）。",
       "tier": "等级",
       "quota": "API / 月",
       "patreon": "Patreon",
@@ -2133,7 +2189,6 @@
     },
     "manualGrants": {
       "title": "手动等级与配额覆盖",
-      "subtitle": "未通过 Patreon 而手动分配等级或自定义 API 配额的账号。",
       "manageInUsers": "前往用户管理",
       "assignment": "分配类型",
       "override": "自定义配额",
@@ -2159,9 +2214,6 @@
       "noAccount": "无账号",
       "subtotal": "小计 ({count})"
     },
-    "linkedSection": {
-      "subtitle": "通过 OAuth 绑定 Patreon 并自动享受权益的用户。"
-    },
     "pledgePerMonth": "{amount}/月",
     "kpi": {
       "monthlyLabel": "每月收入",
@@ -2174,8 +2226,23 @@
       "issuesSub": "Nadeshiko 已绑定共 {count} 个"
     },
     "tabs": {
-      "campaign": "Patreon 赞助者 ({count})",
-      "linked": "已绑定账号 ({count})"
+      "members": "Patreon 项目",
+      "accounts": "已关联账户",
+      "tiers": "等级"
+    },
+    "segments": {
+      "all": "全部",
+      "active": "活跃",
+      "issues": "问题",
+      "unlinked": "未关联",
+      "paid": "曾付费"
+    },
+    "quotaSource": {
+      "override": "自定义",
+      "tier": "等级",
+      "patreon": "Patreon",
+      "legacy_column": "旧设置",
+      "default": "默认"
     }
   },
   "adminEmails": {
@@ -2224,7 +2291,6 @@
       "campaign": "活动",
       "user": "用户",
       "messageId": "SES ID",
-      "error": "错误",
       "events": "SES 事件",
       "noEvents": "无事件",
       "backfill": "重建",
@@ -2246,15 +2312,14 @@
       }
     },
     "templates": {
-      "fromCategory": "From / category",
-      "template": "Template",
-      "editTemplate": "Edit & preview",
-      "variablesHint": "Allowed variables:",
       "bodyMarkdown": "Body (Markdown)",
       "sendTest": "Send test",
       "refreshPreview": "Refresh preview",
       "resetDefault": "Reset to default",
-      "testSentToast": "Test email sent to {email}."
+      "testSentToast": "Test email sent to {email}.",
+      "preview": "邮件预览",
+      "testTo": "测试收件人",
+      "insertVariable": "插入变量"
     },
     "broadcasts": {
       "testAddress": "Test address",
@@ -2265,7 +2330,6 @@
       "send": "Send",
       "cancel": "Cancel",
       "viewLog": "View log",
-      "estimatedRecipients": "Estimated opted-in recipients",
       "respectsOptOut": "respects opt-out & suppressions",
       "previewText": "Preview text (optional)",
       "ctaLabel": "Button label (optional)",
@@ -2276,7 +2340,53 @@
       "launchedToast": "Broadcast queued for delivery.",
       "cancelledToast": "Broadcast cancelled.",
       "confirmTitle": "Launch email broadcast",
-      "confirmBody": "Send \"{subject}\" to {audience}?"
+      "confirmBody": "Send \"{subject}\" to {audience}?",
+      "audiences": {
+        "ALL_OPTED_IN": "所有已订阅用户",
+        "PATRONS": "赞助者",
+        "ACTIVE_DAYS": "活跃用户",
+        "SPECIFIC_USERS": "指定用户"
+      },
+      "status": {
+        "DRAFT": "草稿",
+        "SENDING": "发送中",
+        "SENT": "已发送",
+        "FAILED": "失败",
+        "CANCELLED": "已取消"
+      },
+      "filterAll": "全部",
+      "recipients": "收件人",
+      "recipientsCount": "{count} 位收件人",
+      "activeDays": "最近活跃（天）",
+      "activeDaysShort": "最近 {days} 天",
+      "userIds": "用户 ID",
+      "usersCount": "{count} 位用户",
+      "sectionContent": "内容",
+      "sectionButton": "按钮",
+      "sectionAdvanced": "高级",
+      "sendBroadcast": "发送群发邮件",
+      "preview": "邮件预览",
+      "previewSubjectFallback": "预览",
+      "previewBodyFallback": "撰写邮件正文…",
+      "deleteDraft": "删除草稿",
+      "deleteTitle": "删除草稿？",
+      "deleteBody": "将删除“{subject}”。",
+      "confirmBodyCount": "将“{subject}”发送给 {count} 位收件人？",
+      "imageTypeError": "仅支持 PNG、JPEG、WebP 或 GIF 图片。",
+      "imageSizeError": "图片不能超过 2 MB。",
+      "toolbar": {
+        "title": "标题",
+        "heading": "小标题",
+        "bold": "粗体",
+        "list": "项目列表",
+        "quote": "注释",
+        "link": "链接",
+        "image": "图片",
+        "uploading": "上传中…",
+        "pasteHint": "也可按 Ctrl+V 粘贴",
+        "boldPlaceholder": "粗体文本",
+        "linkPlaceholder": "链接文本"
+      }
     }
   },
   "notifications": {
@@ -2387,7 +2497,6 @@
   },
   "adminNotifications": {
     "title": "Notifications",
-    "subtitle": "Send official in-site announcements and configure notification rules",
     "tabs": {
       "send": "Send & history",
       "registry": "Catalog & rules"
@@ -2406,14 +2515,17 @@
       "submit": "Send notification",
       "sending": "Sending…",
       "preview": "Bell preview",
-      "pinnedHint": "Official notices are pinned at the top of the bell until read and cannot be muted.",
       "missingFields": "Title and message are required.",
       "missingUser": "Enter a target user ID.",
       "invalidLink": "Link path must start with /.",
       "sentToast": "Notification queued.",
       "confirmTitle": "Confirm broadcast",
       "confirmBody": "Send \"{title}\" to {audience}?",
-      "confirmAction": "Send now"
+      "confirmAction": "Send now",
+      "placeholders": {
+        "title": "Nadeshiko 3.0 来了！",
+        "message": "显示在铃铛中的简短文本"
+      }
     },
     "history": {
       "title": "Recent broadcasts",
@@ -2422,18 +2534,63 @@
       "titleCol": "Title",
       "audience": "Audience",
       "sent": "Sent",
-      "status": "Status"
+      "status": "Status",
+      "userFallback": "用户 #{id}",
+      "statuses": {
+        "queued": "排队中",
+        "sending": "发送中",
+        "sent": "已发送",
+        "failed": "失败"
+      }
     },
     "registry": {
-      "kind": "Notification",
       "trigger": "Trigger",
-      "enabled": "Enabled",
       "params": "Parameters",
-      "volume7d": "7d volume",
       "edit": "Edit",
       "save": "Save",
       "reset": "Reset",
-      "saved": "Settings saved."
+      "saved": "Settings saved.",
+      "triggers": {
+        "realtime": "实时",
+        "cron": "定时",
+        "admin": "手动"
+      },
+      "pinned": "置顶",
+      "grouped": "合并",
+      "sent7d": "已发送 {count} · 7天",
+      "failed7d": "{count} 失败",
+      "locked": "始终开启",
+      "customCopy": "自定义文案",
+      "transactional": "事务性",
+      "empty": "没有通知类型"
+    },
+    "kinds": {
+      "siteAnnouncement": "公告",
+      "adminMessage": "私信"
+    },
+    "areas": {
+      "official": "官方",
+      "words": "单词提醒",
+      "community": "社区",
+      "lifecycle": "生命周期",
+      "transactional": "事务性"
     }
+  },
+  "adminLayout": {
+    "sections": {
+      "home": "首页",
+      "moderation": "审核",
+      "communication": "通讯",
+      "people": "用户"
+    },
+    "on": "开启",
+    "jumpTo": "跳转到…",
+    "site": "网站",
+    "status": "状态",
+    "noMatches": "无匹配结果",
+    "menu": "菜单",
+    "close": "关闭",
+    "toggleSidebar": "切换侧栏",
+    "reload": "刷新"
   }
 }

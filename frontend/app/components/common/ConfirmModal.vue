@@ -34,8 +34,8 @@ const resolvedConfirmLabel = computed(() => props.confirmLabel ?? t('common.conf
     :label="title"
     @close="emit('cancel')"
   >
-    <h3 class="text-lg font-bold text-white mb-2">{{ title }}</h3>
-    <p class="text-sm text-gray-400 mb-5">
+    <h3 class="text-base font-semibold text-ink mb-2">{{ title }}</h3>
+    <p class="text-sm text-ink-muted mb-5">
       <slot>{{ description }}</slot>
     </p>
     <div class="flex justify-end gap-2">

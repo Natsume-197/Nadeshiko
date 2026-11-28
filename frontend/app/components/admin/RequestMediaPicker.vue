@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { mdiClose } from '@mdi/js';
+import { mdiClose, mdiLinkVariant, mdiMagnify } from '@mdi/js';
 
 interface MediaSuggestion {
   publicId: string;
@@ -14,14 +14,12 @@ const props = withDefaults(
     searchPlaceholder?: string;
     searchTestId?: string;
     optionTestIdPrefix?: string;
-    sideBySide?: boolean;
   }>(),
   {
     initialName: null,
-    searchPlaceholder: 'Search Nadeshiko media…',
+    searchPlaceholder: undefined,
     searchTestId: undefined,
     optionTestIdPrefix: undefined,
-    sideBySide: false,
   },
 );
 
@@ -29,7 +27,11 @@ const emit = defineEmits<{
   'update:modelValue': [value: string];
 }>();
 
+const { t } = useI18n();
 const sdk = useNadeshikoSdk();
+
+/** The raw public-ID field is a fallback; it stays hidden until asked for. */
+const showRawId = ref(false);
 
 const query = ref('');
 const results = ref<MediaSuggestion[]>([]);
@@ -85,64 +87,81 @@ function selectSuggestion(suggestion: MediaSuggestion) {
 
 <template>
   <div class="space-y-2">
-    <span class="block text-xs font-semibold uppercase tracking-wider text-ink-faint">
-      {{ label }}
-    </span>
+    <span class="nd-admin-label !mb-0">{{ label }}</span>
 
     <div
       v-if="modelValue"
-      class="flex items-center justify-between gap-2 rounded-lg border border-brand/30 bg-brand/10 px-3 py-1.5 text-xs"
+      class="flex items-center justify-between gap-2 rounded-lg border border-brand/30 bg-brand/10 px-3 py-2 text-[13px]"
     >
-      <span class="truncate text-ink">
-        <strong v-if="resolvedNames[modelValue]">{{ resolvedNames[modelValue] }} · </strong>
-        <span class="font-mono text-ink-muted">{{ modelValue }}</span>
+      <span class="flex min-w-0 items-center gap-2">
+        <UiBaseIcon :path="mdiLinkVariant" :size="14" w="w-3.5" h="h-3.5" class="shrink-0 text-brand" />
+        <span class="truncate">
+          <span v-if="resolvedNames[modelValue]" class="font-medium text-ink">{{ resolvedNames[modelValue] }}</span>
+          <span class="ml-1.5 font-mono text-xs text-ink-muted">{{ modelValue }}</span>
+        </span>
       </span>
       <button
         type="button"
-        class="shrink-0 text-ink-faint hover:text-ink"
-        aria-label="Clear linked media"
+        class="inline-flex size-6 shrink-0 items-center justify-center rounded text-ink-faint transition hover:bg-surface-hover hover:text-ink"
+        :aria-label="t('requests.admin.picker.clear')"
         @click="emit('update:modelValue', '')"
       >
-        <UiBaseIcon :path="mdiClose" w="w-3.5" h="h-3.5" size="14" />
+        <UiBaseIcon :path="mdiClose" :size="14" w="w-3.5" h="h-3.5" />
       </button>
     </div>
 
-    <div :class="sideBySide ? 'grid gap-2 sm:grid-cols-2' : 'space-y-2'">
-      <div class="relative">
-        <input
-          v-model="query"
-          :data-testid="searchTestId"
-          class="nd-input w-full"
-          :placeholder="searchPlaceholder"
-          aria-label="Search Nadeshiko media"
-        >
-        <div
-          v-if="results.length || searching"
-          class="nd-menu absolute left-0 right-0 top-full z-20 mt-1 max-h-48 overflow-y-auto"
-        >
-          <p v-if="searching && !results.length" class="px-3 py-2 text-xs text-ink-faint">Searching…</p>
-          <button
-            v-for="suggestion in results"
-            :key="suggestion.publicId"
-            type="button"
-            :data-testid="optionTestIdPrefix ? `${optionTestIdPrefix}-${suggestion.publicId}` : undefined"
-            class="nd-menu-item justify-between gap-2 text-xs"
-            @click="selectSuggestion(suggestion)"
-          >
-            <span class="truncate font-medium text-ink">{{ suggestion.label }}</span>
-            <span class="shrink-0 font-mono text-[10px] text-ink-faint">{{ suggestion.publicId }}</span>
-          </button>
-        </div>
-      </div>
-
+    <div class="relative">
+      <UiBaseIcon
+        :path="mdiMagnify"
+        :size="15"
+        w="w-4"
+        h="h-4"
+        class="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-faint"
+      />
       <input
-        :value="modelValue"
-        maxlength="32"
-        class="nd-input w-full font-mono text-xs"
-        placeholder="Or paste media public ID"
-        aria-label="Media public id"
-        @input="emit('update:modelValue', ($event.target as HTMLInputElement).value)"
+        v-model="query"
+        :data-testid="searchTestId"
+        class="nd-input w-full !h-8 !pl-8 !text-[13px]"
+        :placeholder="searchPlaceholder ?? t('requests.admin.picker.search')"
+        :aria-label="t('requests.admin.picker.search')"
       >
+      <div
+        v-if="results.length || searching"
+        class="nd-menu absolute left-0 right-0 top-full z-20 mt-1 max-h-48 overflow-y-auto"
+      >
+        <p v-if="searching && !results.length" class="px-3 py-2 text-xs text-ink-faint">
+          {{ t('requests.admin.picker.searching') }}
+        </p>
+        <button
+          v-for="suggestion in results"
+          :key="suggestion.publicId"
+          type="button"
+          :data-testid="optionTestIdPrefix ? `${optionTestIdPrefix}-${suggestion.publicId}` : undefined"
+          class="nd-menu-item justify-between gap-2 text-[13px]"
+          @click="selectSuggestion(suggestion)"
+        >
+          <span class="truncate font-medium text-ink">{{ suggestion.label }}</span>
+          <span class="shrink-0 font-mono text-[11px] text-ink-faint">{{ suggestion.publicId }}</span>
+        </button>
+      </div>
     </div>
+
+    <input
+      v-if="showRawId"
+      :value="modelValue"
+      maxlength="32"
+      class="nd-input w-full !h-8 font-mono !text-xs"
+      :placeholder="t('requests.admin.picker.rawId')"
+      :aria-label="t('requests.admin.picker.rawId')"
+      @input="emit('update:modelValue', ($event.target as HTMLInputElement).value)"
+    >
+    <button
+      v-else
+      type="button"
+      class="text-xs text-ink-faint transition hover:text-ink"
+      @click="showRawId = true"
+    >
+      {{ t('requests.admin.picker.pasteId') }}
+    </button>
   </div>
 </template>

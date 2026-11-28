@@ -3,11 +3,13 @@ import {
   mdiAlertOutline,
   mdiCheck,
   mdiChevronDoubleUp,
+  mdiChevronRight,
   mdiClose,
   mdiContentCopy,
   mdiMagnify,
   mdiMerge,
   mdiOpenInNew,
+  mdiRefresh,
   mdiThumbUpOutline,
 } from '@mdi/js';
 import { useTimeoutFn } from '@vueuse/core';
@@ -24,11 +26,14 @@ import {
   type RequestStatus as Status,
 } from '~/utils/contentRequests';
 import { httpUrl } from '~/utils/strings';
+import AdminUiBadge, { type AdminTone } from './ui/Badge.vue';
+import AdminUiPageHeader from './ui/PageHeader.vue';
+import AdminUiSegmented, { type AdminSegment } from './ui/Segmented.vue';
 
 /**
  * Admin side of content requests (task 49): Trello-style Kanban board for triaging by score, moving requests across
  * statuses (IN_PROGRESS and RELEASED email voters), declining with a public reason, linking published media, and
- * merging duplicates. English only, like the rest of the admin panel.
+ * merging duplicates.
  */
 
 interface EditDraft {
@@ -52,40 +57,15 @@ interface PendingMove {
 
 const STATUS_META: ReadonlyArray<{
   status: Status;
-  label: string;
+  tone: AdminTone;
   dot: string;
   columnGlow: string;
 }> = [
-  {
-    status: 'OPEN',
-    label: 'Open',
-    dot: 'bg-ink-faint',
-    columnGlow: 'border-brand/60 bg-brand/[0.04]',
-  },
-  {
-    status: 'PLANNED',
-    label: 'Planned',
-    dot: 'bg-sky-400',
-    columnGlow: 'border-sky-400/60 bg-sky-500/[0.05]',
-  },
-  {
-    status: 'IN_PROGRESS',
-    label: 'In progress',
-    dot: 'bg-violet-400',
-    columnGlow: 'border-violet-400/60 bg-violet-500/[0.05]',
-  },
-  {
-    status: 'RELEASED',
-    label: 'Released',
-    dot: 'bg-emerald-400',
-    columnGlow: 'border-emerald-400/60 bg-emerald-500/[0.05]',
-  },
-  {
-    status: 'DECLINED',
-    label: 'Declined',
-    dot: 'bg-red-400',
-    columnGlow: 'border-red-400/60 bg-red-500/[0.05]',
-  },
+  { status: 'OPEN', tone: 'neutral', dot: 'bg-ink-faint', columnGlow: 'border-brand/60 bg-brand/5' },
+  { status: 'PLANNED', tone: 'info', dot: 'bg-sky-400', columnGlow: 'border-sky-400/60 bg-sky-500/5' },
+  { status: 'IN_PROGRESS', tone: 'violet', dot: 'bg-violet-400', columnGlow: 'border-violet-400/60 bg-violet-500/5' },
+  { status: 'RELEASED', tone: 'success', dot: 'bg-emerald-400', columnGlow: 'border-emerald-400/60 bg-emerald-500/5' },
+  { status: 'DECLINED', tone: 'danger', dot: 'bg-red-400', columnGlow: 'border-red-400/60 bg-red-500/5' },
 ];
 
 const STATUS_META_BY_STATUS = Object.fromEntries(STATUS_META.map((meta) => [meta.status, meta])) as Record<
@@ -93,21 +73,36 @@ const STATUS_META_BY_STATUS = Object.fromEntries(STATUS_META.map((meta) => [meta
   (typeof STATUS_META)[number]
 >;
 
-const CATEGORY_LABELS: Record<Category, string> = {
-  ANIME: 'Anime',
-  JDRAMA: 'Dramas',
-  AUDIOBOOK: 'Audiobooks',
-  YOUTUBE: 'YouTube',
-};
-const DECLINE_PRESETS = [
-  'No Japanese subtitles exist.',
-  'Already on Nadeshiko.',
-  'Unsupported source or format.',
-] as const;
+const DECLINE_PRESET_KEYS = ['noSubtitles', 'alreadyOn', 'unsupported'] as const;
 
 const BOARD_TAKE = 100;
 
+const { t, locale } = useI18n();
 const localePath = useLocalePath();
+const mounted = ref(false);
+onMounted(() => (mounted.value = true));
+
+const declinePresets = computed(() => DECLINE_PRESET_KEYS.map((key) => t(`requests.admin.declinePresets.${key}`)));
+
+function statusLabel(status: Status): string {
+  return t(`requests.status.${status}`);
+}
+
+function categoryLabel(category: Category): string {
+  return t(`requests.category.${category}`);
+}
+
+const categoryOptions = computed<AdminSegment<Category | ''>[]>(() => [
+  { value: '', label: t('requests.category.ALL') },
+  ...CATEGORIES.map((category) => ({ value: category, label: categoryLabel(category), icon: CATEGORY_ICONS[category] })),
+]);
+
+const statusOptions = computed<AdminSegment<Status>[]>(() =>
+  STATUS_META.map((meta) => ({ value: meta.status, label: statusLabel(meta.status), dot: meta.dot })),
+);
+
+/** The merge field is rarely used; it stays folded unless the request is flagged as a duplicate. */
+const showMerge = ref(false);
 
 const filters = reactive({
   category: '' as Category | '',
@@ -205,12 +200,14 @@ function statusMeta(status: Status) {
   return STATUS_META_BY_STATUS[status];
 }
 
-function plural(count: number, one: string, many: string): string {
-  return `${count} ${count === 1 ? one : many}`;
+function scoreTitle(item: AdminRequest): string {
+  const votes = t('requests.votes', item.voteCount);
+  if (!item.boostCount) return votes;
+  return `${votes} + ${t('requests.boosts', item.boostCount)} (+${item.boostCount * REQUEST_BOOST_WEIGHT})`;
 }
 
 function formatShortDate(value: string) {
-  return formatRequestDate(value, 'en');
+  return formatRequestDate(value, locale.value);
 }
 
 function syncDraft(item: AdminRequest) {
@@ -224,6 +221,7 @@ function syncDraft(item: AdminRequest) {
 
 function openDetail(item: AdminRequest) {
   selectedItem.value = item;
+  showMerge.value = false;
   syncDraft(item);
 }
 
@@ -332,7 +330,7 @@ async function onDrop(targetStatus: Status) {
   // Moving to OPEN or PLANNED does not email voters; apply optimistically.
   const previous = { ...item };
   replaceItem({ ...item, status: targetStatus });
-  const updated = await patchRequest(item, { status: targetStatus }, `Moved to ${statusMeta(targetStatus).label}.`);
+  const updated = await patchRequest(item, { status: targetStatus }, t('requests.admin.toast.moved', { status: statusLabel(targetStatus) }));
   if (!updated) replaceItem(previous);
 }
 
@@ -356,7 +354,9 @@ async function confirmPendingMove(notify = true) {
       mediaId: move.mediaId.trim() || null,
       ...(emailsVoters(move.targetStatus) ? { notify } : {}),
     },
-    `Moved to ${statusMeta(move.targetStatus).label}${quiet ? ', no email sent' : ''}.`,
+    t(quiet ? 'requests.admin.toast.movedQuiet' : 'requests.admin.toast.moved', {
+      status: statusLabel(move.targetStatus),
+    }),
   );
   if (updated) {
     pendingMove.value = null;
@@ -390,13 +390,13 @@ async function saveDetail() {
       declineReason: editDraft.declineReason.trim() || null,
       mediaId: editDraft.mediaId.trim() || null,
     },
-    'Request saved.',
+    t('requests.admin.toast.saved'),
   );
   if (updated) closeDetail();
 }
 
 async function dismissDuplicate(item: AdminRequest) {
-  await patchRequest(item, { dismissDuplicate: true }, 'Duplicate flag dismissed.');
+  await patchRequest(item, { dismissDuplicate: true }, t('requests.admin.toast.duplicateDismissed'));
 }
 
 function askMerge(source: AdminRequest, intoId: string, intoTitle?: string) {
@@ -417,7 +417,7 @@ async function confirmMerge() {
     });
     mergeConfirmTarget.value = null;
     closeDetail();
-    useToastSuccess('Requests merged.');
+    useToastSuccess(t('requests.admin.toast.merged'));
     await load();
   } catch (error) {
     handleApiError('admin.requests.merge', error);
@@ -446,128 +446,100 @@ function clearSearch() {
 </script>
 
 <template>
-  <div class="space-y-4 text-ink">
-    <div class="nd-settings-card space-y-4">
-      <div class="flex flex-wrap items-start justify-between gap-3">
-        <div class="min-w-0">
-          <div class="flex flex-wrap items-baseline gap-2">
-            <h1 class="text-xl font-bold tracking-tight text-ink">Content requests</h1>
-            <span class="text-xs font-medium text-ink-faint tabular-nums">{{ total }}</span>
-          </div>
-          <p class="mt-1 text-sm text-ink-muted">
-            Drag cards across columns to triage. Moving a request to In progress or Released asks whether to email its voters.
-          </p>
-        </div>
-
-        <NuxtLink
-          :to="localePath('/requests')"
-          class="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg border border-hairline bg-background/50 px-3 text-xs font-semibold text-ink-muted transition hover:border-line-hover hover:bg-surface-hover hover:text-ink"
+  <div class="space-y-5 text-ink">
+    <AdminUiPageHeader :title="t('requests.admin.title')" :count="hasLoadedOnce ? total : null">
+      <template #actions>
+        <button
+          type="button"
+          data-testid="admin-requests-refresh"
+          :disabled="mounted && loading"
+          class="nd-btn !h-8 !text-[13px]"
+          @click="load()"
         >
-          <span>Public board</span>
-          <UiBaseIcon :path="mdiOpenInNew" w="w-3.5" h="h-3.5" size="13" />
+          <UiBaseIcon :path="mdiRefresh" :size="15" w="w-4" h="h-4" :class="{ 'animate-spin': mounted && loading }" />
+          <span>{{ t('adminLayout.reload') }}</span>
+        </button>
+        <NuxtLink :to="localePath('/requests')" class="nd-btn !h-8 !text-[13px]">
+          <span>{{ t('requests.admin.publicBoard') }}</span>
+          <UiBaseIcon :path="mdiOpenInNew" :size="14" w="w-3.5" h="h-3.5" class="text-ink-faint" />
         </NuxtLink>
-      </div>
+      </template>
+    </AdminUiPageHeader>
 
-      <div class="flex flex-col gap-2.5 xl:flex-row xl:items-center xl:justify-between">
-        <fieldset class="flex flex-wrap items-center gap-1 border-0 p-0">
-          <legend class="sr-only">Filter by category</legend>
-          <button
-            type="button"
-            class="inline-flex h-8 items-center rounded-md px-2.5 text-xs font-medium transition-colors"
-            :class="
-              filters.category === ''
-                ? 'bg-lift-strong text-ink'
-                : 'text-ink-muted hover:bg-lift hover:text-ink'
-            "
-            :aria-pressed="filters.category === ''"
-            @click="filters.category = ''"
-          >
-            All
-          </button>
-          <button
-            v-for="category in CATEGORIES"
-            :key="category"
-            type="button"
-            :data-testid="`admin-category-${category}`"
-            class="inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-colors"
-            :class="
-              filters.category === category
-                ? 'bg-lift-strong text-ink'
-                : 'text-ink-muted hover:bg-lift hover:text-ink'
-            "
-            :aria-pressed="filters.category === category"
-            @click="filters.category = category"
-          >
-            <UiBaseIcon :path="CATEGORY_ICONS[category]" w="w-3.5" h="h-3.5" size="14" />
-            <span>{{ CATEGORY_LABELS[category] }}</span>
-          </button>
-        </fieldset>
-
-        <label class="relative block w-full xl:w-64">
-          <span class="sr-only">Filter by title</span>
-          <UiBaseIcon
-            :path="mdiMagnify"
-            w="w-4"
-            h="h-4"
-            size="16"
-            class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint"
-          />
-          <input
-            v-model="searchInput"
-            type="text"
-            inputmode="search"
-            class="nd-input w-full pl-9"
-            :class="searchInput ? 'pr-8' : ''"
-            placeholder="Search title…"
-            aria-label="Search title"
-          >
-          <button
-            v-if="searchInput"
-            type="button"
-            class="absolute right-2 top-1/2 inline-flex size-6 -translate-y-1/2 items-center justify-center rounded text-ink-faint transition hover:bg-lift hover:text-ink"
-            aria-label="Clear search"
-            @click="clearSearch"
-          >
-            <UiBaseIcon :path="mdiClose" w="w-4" h="h-4" size="15" />
-          </button>
-        </label>
+    <!-- Filters -->
+    <div class="flex flex-wrap items-center gap-2">
+      <fieldset data-testid="admin-category-filter" :aria-label="t('requests.categoryLabel')" class="max-w-full">
+        <AdminUiSegmented v-model="filters.category" :options="categoryOptions" testid-prefix="admin-category" />
+      </fieldset>
+      <div class="relative w-full sm:w-64">
+        <UiBaseIcon
+          :path="mdiMagnify"
+          :size="15"
+          w="w-4"
+          h="h-4"
+          class="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-faint"
+        />
+        <input
+          v-model="searchInput"
+          type="text"
+          inputmode="search"
+          class="nd-input w-full !h-8 !pl-8 !text-[13px]"
+          :class="searchInput ? '!pr-8' : ''"
+          :placeholder="t('requests.admin.searchPlaceholder')"
+          :aria-label="t('requests.searchLabel')"
+        >
+        <button
+          v-if="searchInput"
+          type="button"
+          class="absolute right-1.5 top-1/2 inline-flex size-6 -translate-y-1/2 items-center justify-center rounded text-ink-faint transition hover:bg-surface-hover hover:text-ink"
+          :aria-label="t('common.clearSearch')"
+          @click="clearSearch"
+        >
+          <UiBaseIcon :path="mdiClose" :size="14" w="w-3.5" h="h-3.5" />
+        </button>
       </div>
     </div>
 
-    <div v-if="loading && !hasLoadedOnce" class="nd-settings-card flex justify-center py-12">
-      <span class="nd-spinner" />
+    <!-- Loading skeleton -->
+    <div v-if="loading && !hasLoadedOnce" class="flex gap-3 overflow-hidden">
+      <div
+        v-for="col in STATUS_META"
+        :key="col.status"
+        class="min-w-[200px] flex-1 space-y-2 rounded-xl border border-hairline bg-surface/60 p-2"
+      >
+        <span class="block h-3 w-24 animate-pulse rounded bg-surface-lift" />
+        <span v-for="n in 2" :key="n" class="block h-20 animate-pulse rounded-lg bg-surface-lift" />
+      </div>
     </div>
 
-    <!-- Trello / Kanban Board View -->
+    <!-- Kanban board -->
     <div
       v-else
       data-testid="admin-requests-board"
-      class="flex min-h-[24rem] items-start gap-3 overflow-x-auto pb-3 transition-opacity duration-150"
-      :class="loading ? 'opacity-65' : 'opacity-100'"
+      class="flex min-h-[24rem] items-stretch gap-3 overflow-x-auto pb-3 transition-opacity duration-150"
+      :class="loading ? 'opacity-60' : 'opacity-100'"
     >
       <div
         v-for="col in STATUS_META"
         :key="col.status"
         :data-testid="`admin-column-${col.status}`"
         role="listbox"
-        :aria-label="`${col.label} requests`"
-        class="flex w-[268px] shrink-0 flex-col rounded-xl border p-2.5 transition-colors"
+        :aria-label="statusLabel(col.status)"
+        class="flex min-w-[200px] flex-1 flex-col rounded-xl border p-2 transition-colors"
         :class="dragOverStatus === col.status ? col.columnGlow : 'border-hairline bg-surface/60'"
         @dragover.prevent="onDragOver(col.status)"
         @dragleave="onDragLeave(col.status)"
         @drop.prevent="onDrop(col.status)"
       >
-        <header class="mb-2.5 flex items-center justify-between px-1">
-          <div class="flex items-center gap-2">
-            <span class="size-2 rounded-full" :class="col.dot" aria-hidden="true" />
-            <h2 class="text-xs font-bold uppercase tracking-wider text-ink-muted">{{ col.label }}</h2>
+        <header class="flex h-8 items-center justify-between gap-2 px-1.5">
+          <div class="flex min-w-0 items-center gap-2">
+            <span class="size-2 shrink-0 rounded-full" :class="col.dot" aria-hidden="true" />
+            <h2 class="truncate text-[13px] font-semibold text-ink">{{ statusLabel(col.status) }}</h2>
           </div>
-          <span class="text-xs font-medium text-ink-faint tabular-nums">
-            {{ itemsByStatus[col.status].length }}
-          </span>
+          <AdminUiBadge>{{ itemsByStatus[col.status].length }}</AdminUiBadge>
         </header>
 
-        <div class="flex min-h-[7rem] flex-col gap-2">
+        <div class="mt-1 flex flex-1 flex-col gap-2">
           <div
             v-for="item in itemsByStatus[col.status]"
             :key="item.id"
@@ -576,7 +548,7 @@ function clearSearch() {
             :aria-selected="selectedItem?.id === item.id"
             draggable="true"
             tabindex="0"
-            class="group cursor-pointer rounded-xl border border-hairline bg-surface p-3 shadow-sm transition hover:border-line-hover hover:bg-surface-hover/70"
+            class="group cursor-pointer rounded-lg border border-hairline bg-card-background p-2.5 transition hover:border-line-hover hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
             :class="{ 'opacity-50': draggingId === item.id }"
             @dragstart="onDragStart(item, $event)"
             @dragend="onDragEnd"
@@ -589,140 +561,164 @@ function clearSearch() {
                 :category="item.category"
                 :cover-url="item.coverUrl"
                 compact
-                icon-size="18"
-                class="h-14 w-11 rounded-md"
+                icon-size="16"
+                class="h-14 w-10 shrink-0 rounded-md"
               />
 
               <div class="min-w-0 flex-1">
-                <div class="flex items-center justify-between gap-1.5">
-                  <span class="inline-flex min-w-0 items-center gap-1 text-[10px] font-medium uppercase tracking-wider text-ink-faint">
-                    <UiBaseIcon :path="CATEGORY_ICONS[item.category]" w="w-3" h="h-3" size="12" />
-                    <span class="truncate">{{ CATEGORY_LABELS[item.category] }}</span>
-                    <template v-if="item.kind === 'UPDATE'">
-                      <span aria-hidden="true">·</span>
-                      <span class="normal-case tracking-normal text-ink-muted">Update</span>
-                    </template>
-                  </span>
-                  <span
-                    class="inline-flex shrink-0 items-center gap-0.5 text-xs font-bold tabular-nums"
-                    :class="item.boostCount > 0 ? 'text-amber-300' : 'text-ink-muted'"
-                    :title="`${plural(item.voteCount, 'vote', 'votes')}${item.boostCount ? ` + ${plural(item.boostCount, 'boost', 'boosts')} (+${item.boostCount * REQUEST_BOOST_WEIGHT})` : ''}`"
-                  >
-                    <UiBaseIcon :path="item.boostCount > 0 ? mdiChevronDoubleUp : mdiThumbUpOutline" w="w-3.5" h="h-3.5" size="12" />
-                    {{ item.score }}
-                  </span>
-                </div>
-
-                <h3 class="mt-1 line-clamp-2 text-[13px] font-bold leading-snug text-ink" :title="item.title">
+                <h3 class="line-clamp-2 text-[13px] font-medium leading-snug text-ink" :title="item.title">
                   {{ item.title }}
                 </h3>
+                <div class="mt-1 flex items-center gap-1.5 text-xs text-ink-faint">
+                  <UiBaseIcon :path="CATEGORY_ICONS[item.category]" :size="12" w="w-3" h="h-3" class="shrink-0" />
+                  <span class="truncate">{{ categoryLabel(item.category) }}</span>
+                  <AdminUiBadge v-if="item.kind === 'UPDATE'" tone="brand">{{ t('requests.admin.kindUpdate') }}</AdminUiBadge>
+                </div>
               </div>
+
+              <span
+                class="inline-flex shrink-0 items-center gap-0.5 text-xs font-semibold tabular-nums"
+                :class="item.boostCount > 0 ? 'text-amber-400' : 'text-ink-muted'"
+                :title="scoreTitle(item)"
+              >
+                <UiBaseIcon
+                  :path="item.boostCount > 0 ? mdiChevronDoubleUp : mdiThumbUpOutline"
+                  :size="12"
+                  w="w-3"
+                  h="h-3"
+                />
+                {{ item.score }}
+              </span>
             </div>
 
             <p v-if="item.note" class="mt-2 line-clamp-2 text-xs leading-relaxed text-ink-muted">
               {{ item.note }}
             </p>
-            <p v-if="item.declineReason" class="mt-1.5 line-clamp-2 text-xs leading-relaxed text-red-300/90">
+            <p v-if="item.declineReason" class="mt-1.5 line-clamp-2 text-xs leading-relaxed text-red-400">
               {{ item.declineReason }}
             </p>
 
-            <div
-              v-if="item.possibleDuplicateOf"
-              class="mt-2 flex items-center gap-1.5 rounded-lg border border-amber-400/30 bg-amber-400/10 px-2 py-1 text-[11px] font-medium text-amber-200"
-            >
-              <UiBaseIcon :path="mdiAlertOutline" w="w-3.5" h="h-3.5" size="13" class="shrink-0 text-amber-400" />
-              <span class="truncate">Dup: {{ item.possibleDuplicateOf.title }}</span>
-            </div>
+            <AdminUiBadge v-if="item.possibleDuplicateOf" tone="warning" class="mt-2 max-w-full">
+              <UiBaseIcon :path="mdiAlertOutline" :size="12" w="w-3" h="h-3" class="shrink-0" />
+              <span class="truncate">{{ t('requests.admin.duplicateShort', { title: item.possibleDuplicateOf.title }) }}</span>
+            </AdminUiBadge>
 
-            <div class="mt-2.5 flex items-center justify-between gap-2 border-t border-hairline/70 pt-2 text-[11px] text-ink-faint">
+            <div class="mt-2 flex items-center justify-between gap-2 text-xs text-ink-faint">
               <span class="truncate">
                 <template v-if="item.requester">{{ item.requester.username }} · </template>
-                {{ formatShortDate(item.createdAt) }}
+                <span class="tabular-nums">{{ formatShortDate(item.createdAt) }}</span>
               </span>
               <a
                 v-if="httpUrl(item.sourceUrl)"
                 :href="httpUrl(item.sourceUrl) ?? undefined"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="inline-flex shrink-0 items-center gap-0.5 font-medium text-ink-faint transition hover:text-ink"
-                title="Open source link"
+                class="inline-flex size-5 shrink-0 items-center justify-center rounded text-ink-faint opacity-60 transition hover:bg-surface-lift hover:text-ink group-hover:opacity-100"
+                :title="t('requests.viewSource')"
+                :aria-label="t('requests.viewSource')"
                 @click.stop
               >
-                <UiBaseIcon :path="mdiOpenInNew" w="w-3.5" h="h-3.5" size="13" />
+                <UiBaseIcon :path="mdiOpenInNew" :size="12" w="w-3" h="h-3" />
               </a>
             </div>
           </div>
 
           <div
             v-if="!itemsByStatus[col.status].length"
-            class="flex flex-1 items-center justify-center rounded-lg border border-dashed border-hairline px-3 py-8 text-center text-xs text-ink-faint"
+            class="flex h-24 items-center justify-center rounded-lg border border-dashed border-hairline px-3 text-center text-xs text-ink-faint"
           >
-            {{ draggingId ? `Drop to move to ${col.label}` : 'No requests' }}
+            {{ draggingId ? t('requests.admin.dropHere') : t('requests.admin.noRequests') }}
           </div>
         </div>
       </div>
     </div>
 
-    <nav v-if="total > BOARD_TAKE" class="flex items-center justify-center gap-3 pt-1">
-      <button type="button" class="nd-btn" :disabled="page <= 1" @click="page--">Previous</button>
-      <span class="text-sm text-ink-muted tabular-nums">{{ page }} / {{ Math.ceil(total / BOARD_TAKE) }}</span>
-      <button type="button" class="nd-btn" :disabled="page * BOARD_TAKE >= total" @click="page++">Next</button>
+    <nav v-if="total > BOARD_TAKE" :aria-label="t('requests.pagination')" class="flex items-center justify-center gap-3">
+      <button type="button" class="nd-btn !h-8 !text-[13px]" :disabled="page <= 1" @click="page--">
+        {{ t('requests.previous') }}
+      </button>
+      <span class="text-xs tabular-nums text-ink-muted">{{ page }} / {{ Math.ceil(total / BOARD_TAKE) }}</span>
+      <button type="button" class="nd-btn !h-8 !text-[13px]" :disabled="page * BOARD_TAKE >= total" @click="page++">
+        {{ t('requests.next') }}
+      </button>
     </nav>
 
-    <!-- Card Detail / Edit Modal -->
+    <!-- Detail / edit modal -->
     <CommonBaseModal
       :open="Boolean(selectedItem)"
       labelledby="admin-request-detail-title"
       overlay-class="items-end justify-center sm:items-center bg-fixed-scrim/60"
-      panel-class="w-full max-w-xl max-h-[90vh] overflow-y-auto flex flex-col bg-background border border-hairline shadow-sm rounded-t-xl sm:rounded-xl"
+      panel-class="w-full max-w-xl max-h-[90vh] overflow-hidden flex flex-col bg-background border border-hairline shadow-sm rounded-t-xl sm:rounded-xl"
       @close="closeDetail"
     >
       <template v-if="selectedItem">
-        <div class="nd-modal-header">
-          <div class="flex min-w-0 items-center gap-2">
-            <h2 id="admin-request-detail-title" class="truncate font-bold text-ink">Manage request</h2>
-            <button
-              type="button"
-              class="inline-flex items-center gap-1 rounded-md border border-hairline bg-surface px-2 py-0.5 font-mono text-[11px] text-ink-faint transition hover:border-line-hover hover:text-ink"
-              :title="`Copy request ID: ${selectedItem.id}`"
-              @click="copyId(selectedItem.id)"
-            >
-              <UiBaseIcon :path="copiedId === selectedItem.id ? mdiCheck : mdiContentCopy" w="w-3" h="h-3" size="12" />
-              <span>{{ copiedId === selectedItem.id ? 'Copied' : selectedItem.id.slice(0, 8) }}</span>
-            </button>
-          </div>
-          <button
-            type="button"
-            class="inline-flex h-8 w-8 items-center justify-center rounded-md text-ink-faint transition hover:bg-lift hover:text-ink"
-            @click="closeDetail"
-          >
-            <span class="sr-only">Close</span>
-            <UiBaseIcon :path="mdiClose" :size="18" />
-          </button>
-        </div>
-
-        <div class="flex flex-col gap-5 p-5">
-          <div class="flex gap-3.5">
+        <div class="flex items-start justify-between gap-3 border-b border-hairline px-5 py-4">
+          <div class="flex min-w-0 items-start gap-3">
             <RequestCover
               :category="selectedItem.category"
               :cover-url="selectedItem.coverUrl"
               :lazy="false"
-              class="h-20 w-16 rounded-lg bg-surface"
+              class="h-16 w-12 shrink-0 rounded-md bg-surface"
             />
-
-            <div class="min-w-0 flex-1 space-y-1 text-xs text-ink-muted">
-              <div class="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
-                <span class="font-bold text-ink tabular-nums">Score {{ selectedItem.score }}</span>
-                <span>({{ plural(selectedItem.voteCount, 'vote', 'votes') }}, {{ plural(selectedItem.boostCount, 'boost', 'boosts') }})</span>
-                <span aria-hidden="true">·</span>
-                <span class="font-semibold text-ink-muted">{{ CATEGORY_LABELS[selectedItem.category] }}</span>
+            <div class="min-w-0 space-y-1.5">
+              <div class="flex flex-wrap items-center gap-1.5">
+                <AdminUiBadge :tone="statusMeta(selectedItem.status).tone" dot>
+                  {{ statusLabel(selectedItem.status) }}
+                </AdminUiBadge>
+                <AdminUiBadge v-if="selectedItem.kind === 'UPDATE'" tone="brand">{{ t('requests.admin.kindUpdate') }}</AdminUiBadge>
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 font-mono text-[11px] text-ink-faint transition hover:bg-surface-hover hover:text-ink"
+                  :title="t('requests.admin.copyId')"
+                  @click="copyId(selectedItem.id)"
+                >
+                  <UiBaseIcon
+                    :path="copiedId === selectedItem.id ? mdiCheck : mdiContentCopy"
+                    :size="12"
+                    w="w-3"
+                    h="h-3"
+                  />
+                  <span>{{ copiedId === selectedItem.id ? t('requests.admin.copied') : selectedItem.id.slice(0, 8) }}</span>
+                </button>
               </div>
-              <p class="text-ink-faint">
-                {{ formatShortDate(selectedItem.createdAt) }}
-                <template v-if="selectedItem.requester"> · by {{ selectedItem.requester.username }} (#{{ selectedItem.requester.id }})</template>
-              </p>
-              <div class="flex flex-wrap items-center gap-3 pt-0.5">
-                <span v-if="selectedItem.externalSource" class="font-mono text-ink-faint">
+              <h2 id="admin-request-detail-title" class="text-[15px] font-semibold leading-snug text-ink">
+                {{ selectedItem.title }}
+              </h2>
+            </div>
+          </div>
+          <button
+            type="button"
+            :aria-label="t('common.close')"
+            class="inline-flex size-8 shrink-0 items-center justify-center rounded-md text-ink-faint transition hover:bg-surface-hover hover:text-ink"
+            @click="closeDetail"
+          >
+            <UiBaseIcon :path="mdiClose" :size="16" w="w-4" h="h-4" />
+          </button>
+        </div>
+
+        <div class="flex-1 space-y-5 overflow-y-auto px-5 py-4">
+          <dl class="grid grid-cols-[6.5rem_1fr] gap-x-3 gap-y-2 text-[13px]">
+            <dt class="text-ink-faint">{{ t('requests.admin.fields.score') }}</dt>
+            <dd class="text-ink">
+              <span class="font-semibold tabular-nums">{{ selectedItem.score }}</span>
+              <span class="ml-1.5 text-xs text-ink-muted">
+                {{ t('requests.votes', selectedItem.voteCount) }} · {{ t('requests.boosts', selectedItem.boostCount) }}
+              </span>
+            </dd>
+            <dt class="text-ink-faint">{{ t('requests.categoryLabel') }}</dt>
+            <dd class="text-ink">{{ categoryLabel(selectedItem.category) }}</dd>
+            <dt class="text-ink-faint">{{ t('requests.admin.fields.requested') }}</dt>
+            <dd class="text-ink">
+              <span class="tabular-nums">{{ formatShortDate(selectedItem.createdAt) }}</span>
+              <span v-if="selectedItem.requester" class="ml-1.5 text-ink-muted">
+                {{ selectedItem.requester.username }}
+                <span class="text-xs text-ink-faint">#{{ selectedItem.requester.id }}</span>
+              </span>
+            </dd>
+            <template v-if="selectedItem.externalSource || httpUrl(selectedItem.sourceUrl)">
+              <dt class="text-ink-faint">{{ t('requests.admin.fields.source') }}</dt>
+              <dd class="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <span v-if="selectedItem.externalSource" class="font-mono text-xs text-ink-muted">
                   {{ selectedItem.externalSource }} {{ selectedItem.externalId }}
                 </span>
                 <a
@@ -730,168 +726,178 @@ function clearSearch() {
                   :href="httpUrl(selectedItem.sourceUrl) ?? undefined"
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="inline-flex items-center gap-1 font-semibold text-brand hover:text-brand-hover"
+                  class="inline-flex items-center gap-1 text-brand hover:underline"
                 >
-                  <span>Open source</span>
-                  <UiBaseIcon :path="mdiOpenInNew" w="w-3" h="h-3" size="12" />
+                  <span>{{ t('requests.viewSource') }}</span>
+                  <UiBaseIcon :path="mdiOpenInNew" :size="12" w="w-3" h="h-3" />
                 </a>
-              </div>
-            </div>
-          </div>
+              </dd>
+            </template>
+          </dl>
 
-          <p v-if="selectedItem.note" class="rounded-lg border border-hairline bg-surface px-3.5 py-2.5 text-sm whitespace-pre-line text-ink-muted">
+          <p
+            v-if="selectedItem.note"
+            class="whitespace-pre-line rounded-lg border border-hairline bg-surface px-3 py-2.5 text-[13px] text-ink-muted"
+          >
             {{ selectedItem.note }}
           </p>
 
           <div
             v-if="selectedItem.possibleDuplicateOf"
-            class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-400/30 bg-amber-400/10 px-3.5 py-2.5 text-xs text-amber-200"
+            class="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-amber-500/10 px-3 py-2.5 text-[13px] text-amber-400"
           >
-            <span>
-              Possible duplicate of <strong>“{{ selectedItem.possibleDuplicateOf.title }}”</strong>
-              ({{ statusMeta(selectedItem.possibleDuplicateOf.status).label }}).
+            <span class="flex min-w-0 items-center gap-2">
+              <UiBaseIcon :path="mdiAlertOutline" :size="14" w="w-3.5" h="h-3.5" class="shrink-0" />
+              <span class="min-w-0">
+                {{ t('requests.admin.duplicateOf', { title: selectedItem.possibleDuplicateOf.title }) }}
+                <span class="text-xs opacity-80">· {{ statusLabel(selectedItem.possibleDuplicateOf.status) }}</span>
+              </span>
             </span>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-1.5">
               <button
                 type="button"
-                class="rounded-md bg-amber-500/20 px-2.5 py-1 font-semibold text-amber-100 transition hover:bg-amber-500/30"
-                :disabled="savingId === selectedItem.id"
-                @click="askMerge(selectedItem, selectedItem.possibleDuplicateOf.id, selectedItem.possibleDuplicateOf.title)"
-              >
-                Merge into it
-              </button>
-              <button
-                type="button"
-                class="underline text-amber-200/80 hover:text-amber-100"
+                class="nd-btn !h-7 !text-xs"
                 :disabled="savingId === selectedItem.id"
                 @click="dismissDuplicate(selectedItem)"
               >
-                Not a duplicate
+                {{ t('requests.admin.notDuplicate') }}
+              </button>
+              <button
+                type="button"
+                class="nd-btn !h-7 !text-xs"
+                :disabled="savingId === selectedItem.id"
+                @click="askMerge(selectedItem, selectedItem.possibleDuplicateOf.id, selectedItem.possibleDuplicateOf.title)"
+              >
+                {{ t('requests.admin.mergeIntoIt') }}
               </button>
             </div>
           </div>
 
-          <div class="space-y-4">
-            <fieldset class="border-0 p-0">
-              <legend class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-ink-faint">Status</legend>
-              <div class="flex flex-wrap gap-1.5">
-                <button
-                  v-for="meta in STATUS_META"
-                  :key="meta.status"
-                  type="button"
-                  class="inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-semibold transition"
-                  :class="
-                    editDraft.status === meta.status
-                      ? 'border-line-hover bg-lift-strong text-ink shadow-sm'
-                      : 'border-hairline bg-surface text-ink-muted hover:border-line-hover hover:text-ink'
-                  "
-                  :aria-pressed="editDraft.status === meta.status"
-                  @click="editDraft.status = meta.status"
-                >
-                  <span class="size-2 rounded-full" :class="meta.dot" aria-hidden="true" />
-                  <span>{{ meta.label }}</span>
-                </button>
-              </div>
-            </fieldset>
-
-            <label class="block">
-              <span class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-ink-faint">Title</span>
-              <input v-model="editDraft.title" maxlength="180" class="nd-input w-full" aria-label="Title">
-            </label>
-
-            <label class="block">
-              <span class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-ink-faint">Cover image URL</span>
-              <input
-                v-model="editDraft.coverUrl"
-                maxlength="1000"
-                class="nd-input w-full font-mono text-xs"
-                placeholder="https://…"
-                aria-label="Cover image URL"
-              >
-            </label>
-
-            <RequestMediaPicker
-              :key="selectedItem.id"
-              v-model="editDraft.mediaId"
-              label="Linked Nadeshiko media"
-              :initial-name="selectedItem.media?.name ?? null"
-              search-test-id="admin-media-search"
-              option-test-id-prefix="admin-media-option"
-              side-by-side
-            />
-
-            <div v-if="editDraft.status === 'DECLINED'" class="space-y-2">
+          <section class="space-y-2">
+            <h3 class="text-[13px] font-semibold text-ink">{{ t('adminLayout.status') }}</h3>
+            <AdminUiSegmented v-model="editDraft.status" :options="statusOptions" />
+            <div v-if="editDraft.status === 'DECLINED'" class="space-y-2 pt-1">
               <label class="block">
-                <span class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-ink-faint">
-                  Decline reason (shown publicly)
-                </span>
+                <span class="nd-admin-label">{{ t('requests.admin.fields.declineReason') }}</span>
                 <input
                   v-model="editDraft.declineReason"
                   maxlength="500"
-                  class="nd-input w-full"
-                  placeholder="e.g. No Japanese subtitles exist."
-                  aria-label="Decline reason"
+                  class="nd-input w-full !h-8 !text-[13px]"
+                  :aria-label="t('requests.admin.fields.declineReason')"
                 >
               </label>
               <div class="flex flex-wrap gap-1.5">
                 <button
-                  v-for="preset in DECLINE_PRESETS"
+                  v-for="preset in declinePresets"
                   :key="preset"
                   type="button"
-                  class="rounded-md border border-hairline bg-surface px-2 py-1 text-[11px] text-ink-muted transition hover:border-line-hover hover:text-ink"
+                  class="nd-btn !h-7 !text-xs"
                   @click="editDraft.declineReason = preset"
                 >
                   {{ preset }}
                 </button>
               </div>
             </div>
+          </section>
 
-            <div class="flex justify-end gap-2">
-              <button type="button" class="nd-btn" @click="closeDetail">Cancel</button>
-              <button
-                type="button"
-                class="nd-btn-accent"
-                :disabled="!isDetailDirty || savingId === selectedItem.id || (editDraft.status === 'DECLINED' && !editDraft.declineReason.trim())"
-                @click="saveDetail"
+          <section class="space-y-3">
+            <h3 class="text-[13px] font-semibold text-ink">{{ t('requests.admin.sections.details') }}</h3>
+            <label class="block">
+              <span class="nd-admin-label">{{ t('requests.admin.fields.title') }}</span>
+              <input
+                v-model="editDraft.title"
+                maxlength="180"
+                class="nd-input w-full !h-8 !text-[13px]"
+                :aria-label="t('requests.admin.fields.title')"
               >
-                Save changes
-              </button>
-            </div>
-          </div>
+            </label>
+            <label class="block">
+              <span class="nd-admin-label">{{ t('requests.admin.fields.cover') }}</span>
+              <input
+                v-model="editDraft.coverUrl"
+                maxlength="1000"
+                class="nd-input w-full !h-8 font-mono !text-xs"
+                placeholder="https://…"
+                :aria-label="t('requests.admin.fields.cover')"
+              >
+            </label>
+            <RequestMediaPicker
+              :key="selectedItem.id"
+              v-model="editDraft.mediaId"
+              :label="t('requests.admin.fields.media')"
+              :initial-name="selectedItem.media?.name ?? null"
+              search-test-id="admin-media-search"
+              option-test-id-prefix="admin-media-option"
+            />
+          </section>
 
-          <div class="border-t border-hairline pt-4">
-            <span class="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-ink-faint">
-              <UiBaseIcon :path="mdiMerge" w="w-3.5" h="h-3.5" size="14" />
-              <span>Merge duplicate into another request</span>
-            </span>
-            <div class="flex flex-col gap-2 sm:flex-row">
+          <section class="rounded-lg border border-hairline">
+            <button
+              type="button"
+              class="flex w-full items-center gap-2 px-3 py-2.5 text-left text-[13px] font-medium text-ink-muted transition hover:text-ink"
+              :aria-expanded="showMerge"
+              @click="showMerge = !showMerge"
+            >
+              <UiBaseIcon
+                :path="mdiChevronRight"
+                :size="16"
+                w="w-4"
+                h="h-4"
+                class="transition-transform"
+                :class="{ 'rotate-90': showMerge }"
+              />
+              <UiBaseIcon :path="mdiMerge" :size="14" w="w-3.5" h="h-3.5" />
+              <span>{{ t('requests.admin.sections.merge') }}</span>
+            </button>
+            <div v-if="showMerge" class="flex flex-col gap-2 border-t border-hairline p-3 sm:flex-row">
               <input
                 v-model="editDraft.mergeInto"
                 list="admin-merge-targets"
-                class="nd-input flex-1 font-mono text-xs"
-                placeholder="Pick a request or paste its UUID"
-                aria-label="Merge into request id"
+                class="nd-input flex-1 !h-8 font-mono !text-xs"
+                :placeholder="t('requests.admin.mergePlaceholder')"
+                :aria-label="t('requests.admin.mergePlaceholder')"
               >
               <datalist id="admin-merge-targets">
                 <option v-for="candidate in mergeCandidates" :key="candidate.id" :value="candidate.id">
-                  {{ candidate.title }} ({{ statusMeta(candidate.status).label }})
+                  {{ candidate.title }} ({{ statusLabel(candidate.status) }})
                 </option>
               </datalist>
               <button
                 type="button"
-                class="nd-btn shrink-0"
-                :disabled="savingId === selectedItem.id || !editDraft.mergeInto.trim() || editDraft.mergeInto.trim() === selectedItem.id"
+                class="nd-btn !h-8 shrink-0 !text-[13px]"
+                :disabled="
+                  savingId === selectedItem.id ||
+                  !editDraft.mergeInto.trim() ||
+                  editDraft.mergeInto.trim() === selectedItem.id
+                "
                 @click="askMerge(selectedItem, editDraft.mergeInto)"
               >
-                Merge
+                {{ t('requests.admin.merge') }}
               </button>
             </div>
-          </div>
+          </section>
+        </div>
+
+        <div class="flex justify-end gap-2 border-t border-hairline px-5 py-3">
+          <button type="button" class="nd-btn !h-8 !text-[13px]" @click="closeDetail">{{ t('common.cancel') }}</button>
+          <button
+            type="button"
+            class="nd-btn-accent !h-8 !text-[13px]"
+            :disabled="
+              !isDetailDirty ||
+              savingId === selectedItem.id ||
+              (editDraft.status === 'DECLINED' && !editDraft.declineReason.trim())
+            "
+            @click="saveDetail"
+          >
+            <span v-if="savingId === selectedItem.id" class="nd-spinner" />
+            {{ t('requests.admin.save') }}
+          </button>
         </div>
       </template>
     </CommonBaseModal>
 
-    <!-- Status Transition Confirmation Modal (In progress / Released / Declined) -->
+    <!-- Status transition confirmation (In progress / Released / Declined) -->
     <CommonBaseModal
       :open="Boolean(pendingMove)"
       labelledby="admin-move-confirm-title"
@@ -900,46 +906,46 @@ function clearSearch() {
       @close="pendingMove = null"
     >
       <template v-if="pendingMove">
-        <div class="nd-modal-header">
-          <h2 id="admin-move-confirm-title" class="flex items-center gap-2 font-bold text-ink">
-            <span class="size-2.5 rounded-full" :class="statusMeta(pendingMove.targetStatus).dot" aria-hidden="true" />
-            <span>Move to {{ statusMeta(pendingMove.targetStatus).label }}</span>
+        <div class="flex items-center justify-between gap-3 border-b border-hairline px-5 py-4">
+          <h2 id="admin-move-confirm-title" class="flex items-center gap-2 text-[15px] font-semibold text-ink">
+            <span class="size-2 rounded-full" :class="statusMeta(pendingMove.targetStatus).dot" aria-hidden="true" />
+            <span>{{ t('requests.admin.move.title', { status: statusLabel(pendingMove.targetStatus) }) }}</span>
           </h2>
           <button
             type="button"
-            class="inline-flex h-8 w-8 items-center justify-center rounded-md text-ink-faint transition hover:bg-lift hover:text-ink"
+            :aria-label="t('common.cancel')"
+            class="inline-flex size-8 shrink-0 items-center justify-center rounded-md text-ink-faint transition hover:bg-surface-hover hover:text-ink"
             @click="pendingMove = null"
           >
-            <span class="sr-only">Cancel</span>
-            <UiBaseIcon :path="mdiClose" :size="18" />
+            <UiBaseIcon :path="mdiClose" :size="16" w="w-4" h="h-4" />
           </button>
         </div>
 
-        <div class="flex flex-col gap-4 p-5">
-          <p v-if="pendingMove.targetStatus === 'DECLINED'" class="text-sm leading-relaxed text-ink-muted">
-            Provide a public reason for declining <strong class="text-ink">“{{ pendingMove.item.title }}”</strong>.
-          </p>
-          <p v-else class="text-sm leading-relaxed text-ink-muted">
-            Move <strong class="text-ink">“{{ pendingMove.item.title }}”</strong> to
-            <strong class="text-ink">{{ statusMeta(pendingMove.targetStatus).label }}</strong>?
-            Email {{ plural(pendingMove.item.voteCount, 'voter', 'voters') }}?
+        <div class="space-y-4 px-5 py-4">
+          <p class="text-[13px] leading-relaxed text-ink-muted">
+            <strong class="font-medium text-ink">{{ pendingMove.item.title }}</strong>
+            <template v-if="emailsVoters(pendingMove.targetStatus)">
+              · {{ t('requests.admin.move.voters', pendingMove.item.voteCount) }}
+            </template>
           </p>
 
           <template v-if="pendingMove.targetStatus === 'DECLINED'">
-            <input
-              v-model="pendingMove.declineReason"
-              data-autofocus
-              maxlength="500"
-              class="nd-input w-full"
-              placeholder="e.g. No Japanese subtitles exist."
-              aria-label="Decline reason"
-            >
+            <label class="block">
+              <span class="nd-admin-label">{{ t('requests.admin.fields.declineReason') }}</span>
+              <input
+                v-model="pendingMove.declineReason"
+                data-autofocus
+                maxlength="500"
+                class="nd-input w-full !h-8 !text-[13px]"
+                :aria-label="t('requests.admin.fields.declineReason')"
+              >
+            </label>
             <div class="flex flex-wrap gap-1.5">
               <button
-                v-for="preset in DECLINE_PRESETS"
+                v-for="preset in declinePresets"
                 :key="preset"
                 type="button"
-                class="rounded-md border border-hairline bg-surface px-2 py-1 text-[11px] text-ink-muted transition hover:border-line-hover hover:text-ink"
+                class="nd-btn !h-7 !text-xs"
                 @click="pendingMove.declineReason = preset"
               >
                 {{ preset }}
@@ -951,41 +957,41 @@ function clearSearch() {
             v-else
             :key="`${pendingMove.item.id}-${pendingMove.targetStatus}`"
             v-model="pendingMove.mediaId"
-            label="Link Nadeshiko media (optional)"
+            :label="t('requests.admin.fields.mediaOptional')"
             :initial-name="pendingMove.item.media?.name ?? null"
-            search-placeholder="Search Nadeshiko media by title…"
           />
+        </div>
 
-          <div class="flex flex-wrap justify-end gap-2 pt-1">
-            <button type="button" class="nd-btn" @click="pendingMove = null">Cancel</button>
-            <button
-              v-if="emailsVoters(pendingMove.targetStatus)"
-              type="button"
-              data-testid="admin-move-quiet"
-              class="nd-btn"
-              :disabled="savingId === pendingMove.item.id"
-              @click="confirmPendingMove(false)"
-            >
-              Move without email
-            </button>
-            <button
-              type="button"
-              data-testid="admin-move-confirm"
-              :class="pendingMove.targetStatus === 'DECLINED' ? 'nd-btn-danger' : 'nd-btn-accent'"
-              :disabled="
-                savingId === pendingMove.item.id ||
-                (pendingMove.targetStatus === 'DECLINED' && !pendingMove.declineReason.trim())
-              "
-              @click="confirmPendingMove(true)"
-            >
-              {{ pendingMove.targetStatus === 'DECLINED' ? 'Decline request' : 'Move and email' }}
-            </button>
-          </div>
+        <div class="flex flex-wrap justify-end gap-2 border-t border-hairline px-5 py-3">
+          <button type="button" class="nd-btn !h-8 !text-[13px]" @click="pendingMove = null">{{ t('common.cancel') }}</button>
+          <button
+            v-if="emailsVoters(pendingMove.targetStatus)"
+            type="button"
+            data-testid="admin-move-quiet"
+            class="nd-btn !h-8 !text-[13px]"
+            :disabled="savingId === pendingMove.item.id"
+            @click="confirmPendingMove(false)"
+          >
+            {{ t('requests.admin.move.quiet') }}
+          </button>
+          <button
+            type="button"
+            data-testid="admin-move-confirm"
+            class="!h-8 !text-[13px]"
+            :class="pendingMove.targetStatus === 'DECLINED' ? 'nd-btn-danger' : 'nd-btn-accent'"
+            :disabled="
+              savingId === pendingMove.item.id ||
+              (pendingMove.targetStatus === 'DECLINED' && !pendingMove.declineReason.trim())
+            "
+            @click="confirmPendingMove(true)"
+          >
+            {{ pendingMove.targetStatus === 'DECLINED' ? t('requests.admin.move.decline') : t('requests.admin.move.email') }}
+          </button>
         </div>
       </template>
     </CommonBaseModal>
 
-    <!-- Merge Confirmation Modal -->
+    <!-- Merge confirmation -->
     <CommonBaseModal
       :open="Boolean(mergeConfirmTarget)"
       labelledby="admin-merge-confirm-title"
@@ -994,34 +1000,41 @@ function clearSearch() {
       @close="mergeConfirmTarget = null"
     >
       <template v-if="mergeConfirmTarget">
-        <div class="nd-modal-header">
-          <h2 id="admin-merge-confirm-title" class="font-bold text-ink">Merge requests?</h2>
+        <div class="flex items-center justify-between gap-3 border-b border-hairline px-5 py-4">
+          <h2 id="admin-merge-confirm-title" class="text-[15px] font-semibold text-ink">
+            {{ t('requests.admin.mergeConfirm.title') }}
+          </h2>
           <button
             type="button"
-            class="inline-flex h-8 w-8 items-center justify-center rounded-md text-ink-faint transition hover:bg-lift hover:text-ink"
+            :aria-label="t('common.cancel')"
+            class="inline-flex size-8 shrink-0 items-center justify-center rounded-md text-ink-faint transition hover:bg-surface-hover hover:text-ink"
             @click="mergeConfirmTarget = null"
           >
-            <span class="sr-only">Cancel</span>
-            <UiBaseIcon :path="mdiClose" :size="18" />
+            <UiBaseIcon :path="mdiClose" :size="16" w="w-4" h="h-4" />
           </button>
         </div>
-        <div class="flex flex-col gap-4 p-5">
-          <p class="text-sm leading-relaxed text-ink-muted">
-            Merge <strong class="text-ink">“{{ mergeConfirmTarget.source.title }}”</strong> into
-            <strong class="text-ink">{{ mergeConfirmTarget.intoTitle ? `“${mergeConfirmTarget.intoTitle}”` : mergeConfirmTarget.intoId }}</strong>?
-            Its votes and boosts move over and this request is declined.
+        <div class="px-5 py-4">
+          <p class="text-[13px] leading-relaxed text-ink-muted">
+            {{
+              t('requests.admin.mergeConfirm.body', {
+                source: mergeConfirmTarget.source.title,
+                target: mergeConfirmTarget.intoTitle ?? mergeConfirmTarget.intoId,
+              })
+            }}
           </p>
-          <div class="flex justify-end gap-2 pt-1">
-            <button type="button" class="nd-btn" @click="mergeConfirmTarget = null">Cancel</button>
-            <button
-              type="button"
-              class="nd-btn-danger"
-              :disabled="savingId === mergeConfirmTarget.source.id"
-              @click="confirmMerge"
-            >
-              Merge requests
-            </button>
-          </div>
+        </div>
+        <div class="flex justify-end gap-2 border-t border-hairline px-5 py-3">
+          <button type="button" class="nd-btn !h-8 !text-[13px]" @click="mergeConfirmTarget = null">
+            {{ t('common.cancel') }}
+          </button>
+          <button
+            type="button"
+            class="nd-btn-danger !h-8 !text-[13px]"
+            :disabled="savingId === mergeConfirmTarget.source.id"
+            @click="confirmMerge"
+          >
+            {{ t('requests.admin.mergeConfirm.confirm') }}
+          </button>
         </div>
       </template>
     </CommonBaseModal>

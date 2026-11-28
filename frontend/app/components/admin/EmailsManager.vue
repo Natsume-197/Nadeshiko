@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useTimeoutFn } from '@vueuse/core';
-import { mdiClose, mdiRefresh } from '@mdi/js';
+import { mdiClose, mdiEmailOffOutline, mdiEmailOutline, mdiMagnify, mdiRefresh } from '@mdi/js';
 import type {
   AdminEmailEvent,
   AdminEmailSend,
@@ -10,6 +10,12 @@ import type {
 import { handleApiError } from '~/utils/apiError';
 import AdminEmailTemplatesTab from './EmailTemplatesTab.vue';
 import AdminEmailBroadcastsTab from './EmailBroadcastsTab.vue';
+import AdminUiBadge, { type AdminTone } from './ui/Badge.vue';
+import AdminUiEmpty from './ui/Empty.vue';
+import AdminUiPageHeader from './ui/PageHeader.vue';
+import AdminUiPagination from './ui/Pagination.vue';
+import AdminUiStatStrip, { type AdminStat } from './ui/StatStrip.vue';
+import AdminUiTabs, { type AdminTab } from './ui/Tabs.vue';
 
 type Tab = 'sent' | 'suppressed' | 'types' | 'broadcasts';
 type Status = AdminEmailSend['status'];
@@ -82,29 +88,51 @@ const selectedEvents = ref<AdminEmailEvent[]>([]);
 const isLoadingDetail = ref(false);
 const isResending = ref(false);
 
-const kpis = computed(() => {
-  const counts = last24h.value;
-  if (!counts) return [];
+const stats = computed<AdminStat[]>(() => {
+  const c = last24h.value;
+  const stat = (id: 'sent' | 'failed' | 'bounced' | 'suppressed', tone: AdminStat['tone']): AdminStat => ({
+    id,
+    label: t(`adminEmails.kpi.${id}`),
+    value: c ? formatNumber(c[id]) : null,
+    sub: t('adminEmails.last24h'),
+    tone,
+    testid: `emails-kpi-${id}`,
+  });
   return [
-    { id: 'sent', value: counts.sent, tone: 'text-ink' },
-    { id: 'failed', value: counts.failed, tone: counts.failed > 0 ? 'text-red-300' : 'text-ink' },
-    { id: 'bounced', value: counts.bounced, tone: counts.bounced > 0 ? 'text-amber-300' : 'text-ink' },
-    { id: 'suppressed', value: counts.suppressed, tone: 'text-ink' },
-  ] as const;
+    stat('sent', 'neutral'),
+    stat('failed', c && c.failed > 0 ? 'danger' : 'neutral'),
+    stat('bounced', c && c.bounced > 0 ? 'warning' : 'neutral'),
+    stat('suppressed', 'neutral'),
+  ];
 });
 
-function statusClasses(value: Status): string {
+const tabs = computed<AdminTab<Tab>[]>(() =>
+  (['sent', 'suppressed', 'types', 'broadcasts'] as const).map((value) => ({
+    value,
+    label: t(`adminEmails.tabs.${value}`),
+  })),
+);
+
+function statusTone(value: Status): AdminTone {
   switch (value) {
     case 'delivered':
-      return 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30';
+      return 'success';
+    case 'sent':
+      return 'info';
     case 'bounced':
-      return 'bg-amber-500/15 text-amber-300 border-amber-500/30';
+      return 'warning';
     case 'complained':
     case 'failed':
-      return 'bg-red-500/15 text-red-300 border-red-500/30';
+      return 'danger';
     default:
-      return 'bg-surface-lift text-ink-muted border-hairline';
+      return 'neutral';
   }
+}
+
+/** `word-digest` → `Word digest`. */
+function kindLabel(value: string): string {
+  const text = value.replace(/-/g, ' ');
+  return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
 /** Only the newest request may fill the table; filter changes can overtake each other. */
@@ -228,69 +256,51 @@ async function lift(row: AdminEmailSuppression) {
   }
 }
 
-const pageEnd = computed(() => Math.min(offset.value + LIMIT, total.value));
+const page = computed(() => Math.floor(offset.value / LIMIT) + 1);
+function goToPage(next: number) {
+  void fetchPage((next - 1) * LIMIT);
+}
+const mounted = ref(false);
+onMounted(() => (mounted.value = true));
 
-onMounted(() => fetchPage(0));
+/** The 24 h strip comes with the Sent list; other tabs fetch it once on their own. */
+async function fetchLast24h() {
+  try {
+    const result = await useNadeshikoSdk().listAdminEmails({ limit: 1, offset: 0, days: 1 });
+    last24h.value = result.last24h;
+  } catch (error) {
+    handleApiError('admin:emails-fetch-failed', error);
+  }
+}
+
+onMounted(() => {
+  void fetchPage(0);
+  if (activeTab.value === 'types' || activeTab.value === 'broadcasts') void fetchLast24h();
+});
 </script>
 
 <template>
-  <div data-testid="admin-emails" class="space-y-4">
-    <!-- PostHog-style compact header -->
-    <div class="flex items-center justify-between gap-3 border-b border-hairline pb-3">
-      <div>
-        <h1 class="text-lg font-semibold tracking-tight text-ink">{{ t('adminEmails.title') }}</h1>
-      </div>
-      <button
-        type="button"
-        data-testid="emails-refresh"
-        :disabled="isLoading"
-        :aria-label="t('adminDashboard.nav.refresh')"
-        :title="t('adminDashboard.nav.refresh')"
-        class="nd-btn !h-8 text-xs"
-        @click="handleRefresh()"
-      >
-        <UiBaseIcon :path="mdiRefresh" :size="14" :class="{ 'animate-spin': isLoading }" />
-        <span>Reload</span>
-      </button>
-    </div>
-
-    <!-- Joined PostHog KPI strip -->
-    <div
-      v-if="kpis.length"
-      data-testid="emails-kpis"
-      class="grid grid-cols-2 divide-y divide-hairline overflow-hidden rounded-lg border border-hairline bg-card-background sm:grid-cols-4 sm:divide-y-0 sm:divide-x"
-    >
-      <div v-for="kpi in kpis" :key="kpi.id" class="px-4 py-2.5">
-        <div class="text-[11px] font-medium text-ink-faint">
-          {{ t(`adminEmails.kpi.${kpi.id}`) }} · {{ t('adminEmails.last24h') }}
-        </div>
-        <div :data-testid="`emails-kpi-${kpi.id}`" :class="['mt-0.5 text-xl font-bold tabular-nums', kpi.tone]">
-          {{ formatNumber(kpi.value) }}
-        </div>
-      </div>
-    </div>
-
-    <!-- Flush underline tabs -->
-    <section class="space-y-4">
-      <div class="flex flex-wrap items-center gap-4 border-b border-hairline" role="tablist">
+  <div data-testid="admin-emails" class="space-y-5">
+    <AdminUiPageHeader :title="t('adminEmails.title')">
+      <template #actions>
         <button
-          v-for="tab in (['sent', 'suppressed', 'types', 'broadcasts'] as const)"
-          :key="tab"
           type="button"
-          role="tab"
-          :data-testid="`emails-tab-${tab}`"
-          :aria-selected="activeTab === tab"
-          :class="[
-            '-mb-px border-b-2 pb-2 text-xs font-semibold transition-colors',
-            activeTab === tab
-              ? 'border-brand-solid text-ink'
-              : 'border-transparent text-ink-muted hover:text-ink',
-          ]"
-          @click="selectTab(tab)"
+          data-testid="emails-refresh"
+          :disabled="mounted && isLoading"
+          :aria-label="t('adminDashboard.nav.refresh')"
+          class="nd-btn !h-8 !text-[13px]"
+          @click="handleRefresh()"
         >
-          {{ t(`adminEmails.tabs.${tab}`) }}
+          <UiBaseIcon :path="mdiRefresh" :size="15" w="w-4" h="h-4" :class="{ 'animate-spin': mounted && isLoading }" />
+          <span>{{ t('adminLayout.reload') }}</span>
         </button>
-      </div>
+      </template>
+    </AdminUiPageHeader>
+
+    <AdminUiStatStrip data-testid="emails-kpis" :stats="stats" />
+
+    <section class="space-y-4">
+      <AdminUiTabs :model-value="activeTab" :tabs="tabs" testid-prefix="emails-tab" @update:model-value="selectTab" />
 
       <AdminEmailTemplatesTab v-if="activeTab === 'types'" ref="templatesTabRef" />
       <AdminEmailBroadcastsTab
@@ -300,167 +310,152 @@ onMounted(() => fetchPage(0));
       />
 
       <template v-else>
-      <div class="flex flex-wrap items-center gap-2">
-        <input
-          v-model="search"
-          data-testid="emails-search"
-          type="search"
-          :placeholder="t('adminEmails.filters.search')"
-          class="nd-input max-w-xs"
-        />
-        <template v-if="activeTab === 'sent'">
-          <select v-model="kind" data-testid="emails-kind" class="nd-input w-auto">
-            <option value="">{{ t('adminEmails.filters.allKinds') }}</option>
-            <option v-for="k in KINDS" :key="k" :value="k">{{ k }}</option>
-          </select>
-          <select v-model="status" data-testid="emails-status" class="nd-input w-auto">
-            <option value="">{{ t('adminEmails.filters.allStatuses') }}</option>
-            <option v-for="s in STATUSES" :key="s" :value="s">{{ t(`adminEmails.status.${s}`) }}</option>
-          </select>
-          <select v-model.number="days" data-testid="emails-days" class="nd-input w-auto">
-            <option v-for="d in DAY_RANGES" :key="d" :value="d">{{ t(`adminEmails.filters.days.${d}`) }}</option>
-          </select>
-          <button
-            v-if="campaign"
-            type="button"
-            class="inline-flex items-center gap-1 rounded-full border border-brand/30 bg-brand/15 px-2.5 py-1 text-xs text-brand"
-            @click="campaign = ''"
-          >
-            <span>{{ campaign }}</span>
-            <UiBaseIcon :path="mdiClose" :size="12" />
-          </button>
+        <!-- Filters -->
+        <div class="flex flex-wrap items-center gap-2">
+          <div class="relative w-full sm:w-72">
+            <UiBaseIcon
+              :path="mdiMagnify"
+              :size="15"
+              w="w-4"
+              h="h-4"
+              class="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-faint"
+            />
+            <input
+              v-model="search"
+              data-testid="emails-search"
+              type="search"
+              :placeholder="t('adminEmails.filters.search')"
+              class="nd-input !h-8 !pl-8 !text-[13px]"
+            />
+          </div>
+          <template v-if="activeTab === 'sent'">
+            <select v-model="kind" data-testid="emails-kind" class="nd-select !h-8 !text-[13px]">
+              <option value="">{{ t('adminEmails.filters.allKinds') }}</option>
+              <option v-for="k in KINDS" :key="k" :value="k">{{ kindLabel(k) }}</option>
+            </select>
+            <select v-model="status" data-testid="emails-status" class="nd-select !h-8 !text-[13px]">
+              <option value="">{{ t('adminEmails.filters.allStatuses') }}</option>
+              <option v-for="s in STATUSES" :key="s" :value="s">{{ t(`adminEmails.status.${s}`) }}</option>
+            </select>
+            <select v-model.number="days" data-testid="emails-days" class="nd-select !h-8 !text-[13px]">
+              <option v-for="d in DAY_RANGES" :key="d" :value="d">{{ t(`adminEmails.filters.days.${d}`) }}</option>
+            </select>
+            <button
+              v-if="campaign"
+              type="button"
+              class="inline-flex h-8 items-center gap-1.5 rounded-md bg-brand/15 px-2.5 font-mono text-xs text-brand transition-colors hover:bg-brand/25"
+              @click="campaign = ''"
+            >
+              <span>{{ campaign }}</span>
+              <UiBaseIcon :path="mdiClose" :size="12" w="w-3" h="h-3" />
+            </button>
+          </template>
+          <span class="ml-auto text-xs tabular-nums text-ink-faint">{{ formatNumber(total) }}</span>
+        </div>
+
+        <div v-if="isLoading && !emails.length && !suppressions.length" class="nd-admin-table-wrap">
+          <div v-for="n in 6" :key="n" class="flex items-center gap-4 border-b border-hairline px-4 py-3 last:border-0">
+            <span class="h-3 w-28 animate-pulse rounded bg-surface-lift" />
+            <span class="h-3 w-44 animate-pulse rounded bg-surface-lift" />
+            <span class="h-3 flex-1 animate-pulse rounded bg-surface-lift" />
+          </div>
+        </div>
+
+        <!-- Sent -->
+        <template v-else-if="activeTab === 'sent'">
+          <div v-if="!emails.length" class="nd-admin-table-wrap">
+            <AdminUiEmpty :icon="mdiEmailOutline" :text="t('adminEmails.empty')" />
+          </div>
+          <div v-else class="nd-admin-table-wrap">
+            <table class="nd-admin-table min-w-[760px]">
+              <thead>
+                <tr>
+                  <th>{{ t('adminEmails.table.to') }}</th>
+                  <th>{{ t('adminEmails.table.subject') }}</th>
+                  <th>{{ t('adminEmails.table.kind') }}</th>
+                  <th>{{ t('adminEmails.table.status') }}</th>
+                  <th class="text-right">{{ t('adminEmails.table.date') }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="email in emails"
+                  :key="email.id"
+                  data-testid="emails-row"
+                  class="is-clickable"
+                  :class="{ 'is-active': selected?.id === email.id }"
+                  @click="openDetail(email)"
+                >
+                  <td>
+                    <div class="max-w-[16rem] truncate font-medium text-ink">{{ email.address }}</div>
+                    <div v-if="email.username" class="text-xs text-ink-faint">{{ email.username }}</div>
+                  </td>
+                  <td class="text-ink-muted">
+                    <div class="max-w-[22rem] truncate">{{ email.subject ?? '—' }}</div>
+                  </td>
+                  <td class="whitespace-nowrap text-ink-muted">{{ kindLabel(email.kind) }}</td>
+                  <td>
+                    <AdminUiBadge :data-testid="`emails-status-${email.id}`" :tone="statusTone(email.status)" dot>
+                      {{ t(`adminEmails.status.${email.status}`) }}
+                    </AdminUiBadge>
+                  </td>
+                  <td class="whitespace-nowrap text-right text-xs tabular-nums text-ink-faint">
+                    {{ formatDate(email.sentAt, 'dateTime') }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </template>
-        <span class="ml-auto text-xs text-ink-faint tabular-nums">{{ formatNumber(total) }}</span>
-      </div>
 
-      <div v-if="isLoading && !emails.length && !suppressions.length" class="py-12 text-center">
-        <div class="inline-block size-6 animate-spin rounded-full border-[3px] border-current border-t-transparent text-ink" role="status" />
-      </div>
+        <!-- Suppressed -->
+        <template v-else>
+          <div v-if="!suppressions.length" class="nd-admin-table-wrap">
+            <AdminUiEmpty :icon="mdiEmailOffOutline" :text="t('adminEmails.empty')" />
+          </div>
+          <div v-else class="nd-admin-table-wrap">
+            <table class="nd-admin-table min-w-[680px]">
+              <thead>
+                <tr>
+                  <th>{{ t('adminEmails.suppressions.address') }}</th>
+                  <th>{{ t('adminEmails.suppressions.cause') }}</th>
+                  <th>{{ t('adminEmails.suppressions.reason') }}</th>
+                  <th>{{ t('adminEmails.suppressions.since') }}</th>
+                  <th class="w-24" />
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="row in suppressions" :key="row.address" data-testid="suppressions-row">
+                  <td class="font-medium">{{ row.address }}</td>
+                  <td>
+                    <AdminUiBadge :tone="row.cause === 'complaint' ? 'danger' : row.cause === 'manual' ? 'neutral' : 'warning'">
+                      {{ t(`adminEmails.suppressions.causes.${row.cause}`) }}
+                    </AdminUiBadge>
+                  </td>
+                  <td class="text-xs text-ink-faint">
+                    <div class="max-w-[18rem] truncate" :title="row.reason ?? undefined">{{ row.reason ?? '—' }}</div>
+                  </td>
+                  <td class="whitespace-nowrap text-xs tabular-nums text-ink-muted">{{ formatDate(row.suppressedAt) }}</td>
+                  <td class="text-right">
+                    <span v-if="row.permanent" class="text-xs text-ink-faint">{{ t('adminEmails.suppressions.permanent') }}</span>
+                    <button
+                      v-else
+                      type="button"
+                      :data-testid="`suppressions-lift-${row.address}`"
+                      :disabled="liftingAddress === row.address"
+                      class="nd-btn !h-7 !text-xs"
+                      @click="lift(row)"
+                    >
+                      {{ t('adminEmails.suppressions.lift') }}
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </template>
 
-      <!-- Sent -->
-      <template v-else-if="activeTab === 'sent'">
-        <div v-if="!emails.length" class="py-12 text-center text-sm text-ink-faint">{{ t('adminEmails.empty') }}</div>
-        <div v-else class="overflow-x-auto rounded-lg border border-hairline">
-          <table class="w-full min-w-[760px] text-sm">
-            <thead>
-              <tr class="border-b border-hairline text-left text-xs text-ink-muted">
-                <th class="px-3 py-2.5 font-medium">{{ t('adminEmails.table.date') }}</th>
-                <th class="px-3 py-2.5 font-medium">{{ t('adminEmails.table.to') }}</th>
-                <th class="px-3 py-2.5 font-medium">{{ t('adminEmails.table.kind') }}</th>
-                <th class="px-3 py-2.5 font-medium">{{ t('adminEmails.table.subject') }}</th>
-                <th class="px-3 py-2.5 font-medium">{{ t('adminEmails.table.status') }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="email in emails"
-                :key="email.id"
-                data-testid="emails-row"
-                class="cursor-pointer border-b border-hairline last:border-0 hover:bg-surface-hover"
-                @click="openDetail(email)"
-              >
-                <td class="whitespace-nowrap px-3 py-2.5 text-ink-muted tabular-nums">
-                  {{ formatDate(email.sentAt, 'dateTime') }}
-                </td>
-                <td class="px-3 py-2.5 text-ink">
-                  <div class="max-w-[16rem] truncate">{{ email.address }}</div>
-                  <div v-if="email.username" class="text-[11px] text-ink-faint">{{ email.username }}</div>
-                </td>
-                <td class="whitespace-nowrap px-3 py-2.5 font-mono text-xs text-ink-muted">{{ email.kind }}</td>
-                <td class="px-3 py-2.5 text-ink-muted">
-                  <div class="max-w-[20rem] truncate">{{ email.subject ?? '—' }}</div>
-                </td>
-                <td class="px-3 py-2.5">
-                  <span
-                    :data-testid="`emails-status-${email.id}`"
-                    :class="['rounded-full border px-2 py-0.5 text-[11px] font-semibold', statusClasses(email.status)]"
-                  >
-                    {{ t(`adminEmails.status.${email.status}`) }}
-                  </span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </template>
-
-      <!-- Suppressed -->
-      <template v-else>
-        <div v-if="!suppressions.length" class="py-12 text-center text-sm text-ink-faint">{{ t('adminEmails.empty') }}</div>
-        <div v-else class="overflow-x-auto rounded-lg border border-hairline">
-          <table class="w-full min-w-[680px] text-sm">
-            <thead>
-              <tr class="border-b border-hairline text-left text-xs text-ink-muted">
-                <th class="px-3 py-2.5 font-medium">{{ t('adminEmails.suppressions.address') }}</th>
-                <th class="px-3 py-2.5 font-medium">{{ t('adminEmails.suppressions.cause') }}</th>
-                <th class="px-3 py-2.5 font-medium">{{ t('adminEmails.suppressions.reason') }}</th>
-                <th class="px-3 py-2.5 font-medium">{{ t('adminEmails.suppressions.since') }}</th>
-                <th class="w-24 px-3 py-2.5" />
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="row in suppressions"
-                :key="row.address"
-                data-testid="suppressions-row"
-                class="border-b border-hairline last:border-0"
-              >
-                <td class="px-3 py-2.5 text-ink">{{ row.address }}</td>
-                <td class="whitespace-nowrap px-3 py-2.5 text-ink-muted">
-                  {{ t(`adminEmails.suppressions.causes.${row.cause}`) }}
-                </td>
-                <td class="px-3 py-2.5 text-xs text-ink-faint">
-                  <div class="max-w-[18rem] truncate" :title="row.reason ?? undefined">{{ row.reason ?? '—' }}</div>
-                </td>
-                <td class="whitespace-nowrap px-3 py-2.5 text-ink-muted tabular-nums">{{ formatDate(row.suppressedAt) }}</td>
-                <td class="px-3 py-2.5 text-right">
-                  <span v-if="row.permanent" class="text-[11px] text-ink-faint">{{ t('adminEmails.suppressions.permanent') }}</span>
-                  <button
-                    v-else
-                    type="button"
-                    :data-testid="`suppressions-lift-${row.address}`"
-                    :disabled="liftingAddress === row.address"
-                    class="rounded-lg border border-hairline px-2.5 py-1 text-xs font-semibold text-ink-muted transition-colors hover:bg-surface-hover hover:text-ink disabled:opacity-50"
-                    @click="lift(row)"
-                  >
-                    {{ t('adminEmails.suppressions.lift') }}
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </template>
-
-      <div v-if="total > LIMIT" class="flex items-center justify-between text-sm text-ink-muted">
-        <span>
-          {{
-            t('accountSettings.dashboard.pagination.showing', {
-              start: formatNumber(offset + 1),
-              end: formatNumber(pageEnd),
-              total: formatNumber(total),
-            })
-          }}
-        </span>
-        <div class="flex gap-2">
-          <button
-            type="button"
-            :disabled="offset <= 0 || isLoading"
-            class="rounded-lg border border-hairline px-3 py-1.5 transition-colors hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-40"
-            @click="fetchPage(Math.max(0, offset - LIMIT))"
-          >
-            {{ t('accountSettings.dashboard.pagination.previous') }}
-          </button>
-          <button
-            type="button"
-            :disabled="pageEnd >= total || isLoading"
-            class="rounded-lg border border-hairline px-3 py-1.5 transition-colors hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-40"
-            @click="fetchPage(offset + LIMIT)"
-          >
-            {{ t('accountSettings.dashboard.pagination.next') }}
-          </button>
-        </div>
-      </div>
+        <AdminUiPagination :page="page" :page-size="LIMIT" :total="total" @update:page="goToPage" />
       </template>
     </section>
 
@@ -474,32 +469,31 @@ onMounted(() => fetchPage(0));
       @close="closeDetail"
     >
       <template v-if="selected">
-        <div class="nd-modal-header">
-          <h2 id="admin-email-detail-title" class="min-w-0 truncate font-bold text-ink">
-            {{ selected.subject ?? selected.kind }}
-          </h2>
+        <div class="flex items-start justify-between gap-3 border-b border-hairline px-5 py-4">
+          <div class="min-w-0 space-y-1.5">
+            <AdminUiBadge :tone="statusTone(selected.status)" dot>{{ t(`adminEmails.status.${selected.status}`) }}</AdminUiBadge>
+            <h2 id="admin-email-detail-title" class="text-[15px] font-semibold leading-snug text-ink">
+              {{ selected.subject ?? kindLabel(selected.kind) }}
+            </h2>
+          </div>
           <button
             type="button"
             :aria-label="t('adminEmails.detail.close')"
-            class="inline-flex size-8 items-center justify-center rounded-md text-ink-faint transition hover:bg-lift hover:text-ink"
+            class="inline-flex size-8 shrink-0 items-center justify-center rounded-md text-ink-faint transition hover:bg-surface-hover hover:text-ink"
             @click="closeDetail"
           >
             <UiBaseIcon :path="mdiClose" :size="16" />
           </button>
         </div>
 
-        <dl class="grid grid-cols-[7rem_1fr] gap-x-3 gap-y-2 px-5 py-4 text-sm">
-          <dt class="text-ink-faint">{{ t('adminEmails.table.status') }}</dt>
-          <dd>
-            <span :class="['rounded-full border px-2 py-0.5 text-[11px] font-semibold', statusClasses(selected.status)]">
-              {{ t(`adminEmails.status.${selected.status}`) }}
-            </span>
-            <span v-if="selected.source === 'backfill'" class="ml-2 text-[11px] text-ink-faint">
+        <dl class="grid grid-cols-[6.5rem_1fr] gap-x-3 gap-y-2.5 px-5 py-4 text-[13px]">
+          <dt class="text-ink-faint">{{ t('adminEmails.table.date') }}</dt>
+          <dd class="tabular-nums text-ink">
+            {{ formatDate(selected.sentAt, 'dateTime') }}
+            <span v-if="selected.source === 'backfill'" class="ml-1.5 text-xs text-ink-faint">
               {{ t('adminEmails.detail.backfill') }}
             </span>
           </dd>
-          <dt class="text-ink-faint">{{ t('adminEmails.table.date') }}</dt>
-          <dd class="text-ink tabular-nums">{{ formatDate(selected.sentAt, 'dateTime') }}</dd>
           <dt class="text-ink-faint">{{ t('adminEmails.table.to') }}</dt>
           <dd class="break-all text-ink">{{ selected.address }}</dd>
           <template v-if="selected.username">
@@ -514,7 +508,7 @@ onMounted(() => fetchPage(0));
             </dd>
           </template>
           <dt class="text-ink-faint">{{ t('adminEmails.table.kind') }}</dt>
-          <dd class="font-mono text-xs text-ink">{{ selected.kind }}</dd>
+          <dd class="text-ink">{{ kindLabel(selected.kind) }}</dd>
           <template v-if="selected.campaign">
             <dt class="text-ink-faint">{{ t('adminEmails.detail.campaign') }}</dt>
             <dd class="font-mono text-xs text-ink">{{ selected.campaign }}</dd>
@@ -523,35 +517,37 @@ onMounted(() => fetchPage(0));
             <dt class="text-ink-faint">{{ t('adminEmails.detail.messageId') }}</dt>
             <dd class="break-all font-mono text-[11px] text-ink-muted">{{ selected.sesMessageId }}</dd>
           </template>
-          <template v-if="selected.error">
-            <dt class="text-ink-faint">{{ t('adminEmails.detail.error') }}</dt>
-            <dd class="break-words text-red-300">{{ selected.error }}</dd>
-          </template>
         </dl>
+
+        <div v-if="selected.error" class="mx-5 mb-4 rounded-md bg-red-500/10 px-3 py-2 text-[13px] text-red-400">
+          {{ selected.error }}
+        </div>
 
         <div v-if="selected.resendable" class="px-5 pb-4">
           <button
             type="button"
             data-testid="email-resend"
             :disabled="isResending"
-            class="inline-flex h-9 items-center rounded-lg bg-brand-solid px-3.5 text-xs font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-45"
+            class="nd-btn-accent !h-8 !text-[13px]"
             @click="resend"
           >
+            <span v-if="isResending" class="nd-spinner" />
             {{ t('adminEmails.detail.resend') }}
           </button>
         </div>
 
         <div v-if="selected.sesMessageId" class="border-t border-hairline px-5 py-4">
-          <h3 class="mb-3 text-xs font-semibold uppercase tracking-wider text-ink-faint">
-            {{ t('adminEmails.detail.events') }}
-          </h3>
-          <div v-if="isLoadingDetail" class="text-sm text-ink-faint">…</div>
-          <p v-else-if="!selectedEvents.length" class="text-sm text-ink-faint">{{ t('adminEmails.detail.noEvents') }}</p>
-          <ol v-else class="space-y-3" data-testid="email-detail-events">
-            <li v-for="event in selectedEvents" :key="event.id" class="text-sm">
+          <h3 class="mb-3 text-xs font-medium text-ink-muted">{{ t('adminEmails.detail.events') }}</h3>
+          <div v-if="isLoadingDetail" class="space-y-2">
+            <span v-for="n in 3" :key="n" class="block h-3 animate-pulse rounded bg-surface-lift" />
+          </div>
+          <p v-else-if="!selectedEvents.length" class="text-[13px] text-ink-faint">{{ t('adminEmails.detail.noEvents') }}</p>
+          <ol v-else class="relative space-y-4 border-l border-hairline pl-4" data-testid="email-detail-events">
+            <li v-for="event in selectedEvents" :key="event.id" class="relative text-[13px]">
+              <span class="absolute -left-[21px] top-1.5 size-2 rounded-full bg-ink-faint ring-4 ring-background" />
               <div class="flex items-baseline justify-between gap-2">
-                <span class="font-mono text-xs text-ink">{{ event.event }}</span>
-                <span class="text-[11px] text-ink-faint tabular-nums">{{ formatDate(event.occurredAt, 'dateTime') }}</span>
+                <span class="font-medium text-ink">{{ kindLabel(event.event) }}</span>
+                <span class="text-xs tabular-nums text-ink-faint">{{ formatDate(event.occurredAt, 'dateTime') }}</span>
               </div>
               <div v-if="event.diagnosticMessage || event.reason" class="mt-0.5 break-words text-xs text-ink-muted">
                 {{ event.diagnosticMessage ?? event.reason }}

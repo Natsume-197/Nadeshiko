@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 import { mount, flushPromises } from '@vue/test-utils';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { ref } from 'vue';
 
 /** Admin requests Kanban board & list manager: column triage, drag transitions, media linking, and duplicate merging. */
 
@@ -14,6 +15,10 @@ const listMedia = vi.fn();
 const toastSuccess = vi.fn();
 
 vi.stubGlobal('$fetch', $fetch);
+vi.stubGlobal('useI18n', () => ({
+  t: (k: string, params?: unknown) => (params === undefined ? k : `${k}:${JSON.stringify(params)}`),
+  locale: ref('en'),
+}));
 vi.stubGlobal('useLocalePath', () => (p: string) => `/en${p}`);
 vi.stubGlobal('useToastSuccess', toastSuccess);
 vi.stubGlobal('useNadeshikoSdk', () => ({ listMedia }));
@@ -106,7 +111,11 @@ describe('RequestsManager', () => {
     expect(wrapper.find('[data-testid="admin-column-RELEASED"]').exists()).toBe(true);
     expect(wrapper.find('[data-testid="admin-column-DECLINED"]').text()).toContain('Hanzawa Naoki');
 
-    await wrapper.get('[data-testid="admin-category-ANIME"]').trigger('click');
+    const animeBtn = wrapper
+      .get('[data-testid="admin-category-filter"]')
+      .findAll('button')
+      .find((b) => b.text() === 'requests.category.ANIME');
+    await animeBtn!.trigger('click');
     await flushPromises();
     expect($fetch).toHaveBeenLastCalledWith('/v1/admin/requests', {
       query: { page: 1, take: 100, category: 'ANIME' },
@@ -150,7 +159,7 @@ describe('RequestsManager', () => {
     expect(listMedia).toHaveBeenCalledWith({ query: 'Frieren', take: 6 });
     await wrapper.get('[data-testid="admin-media-option-med_frieren"]').trigger('click');
 
-    const saveBtn = wrapper.findAll('button').find((b) => b.text() === 'Save changes');
+    const saveBtn = wrapper.findAll('button').find((b) => b.text() === 'requests.admin.save');
     expect(saveBtn).toBeDefined();
     await saveBtn!.trigger('click');
     await flushPromises();
@@ -163,7 +172,7 @@ describe('RequestsManager', () => {
         mediaId: 'med_frieren',
       },
     ]);
-    expect(toastSuccess).toHaveBeenCalledWith('Request saved.');
+    expect(toastSuccess).toHaveBeenCalledWith('requests.admin.toast.saved');
   });
 
   test('drag to PLANNED saves immediately, while drag to DECLINED requires a reason in the modal', async () => {
@@ -196,7 +205,9 @@ describe('RequestsManager', () => {
     expect(patches).toHaveLength(1);
     expect(wrapper.get('[data-testid="admin-move-confirm"]').attributes('disabled')).toBeDefined();
 
-    await wrapper.get('input[aria-label="Decline reason"]').setValue('No Japanese subtitles exist.');
+    await wrapper
+      .get('input[aria-label="requests.admin.fields.declineReason"]')
+      .setValue('No Japanese subtitles exist.');
     await wrapper.get('[data-testid="admin-move-confirm"]').trigger('click');
     await flushPromises();
 
@@ -223,12 +234,14 @@ describe('RequestsManager', () => {
     await wrapper.get(`[data-testid="admin-request-${open.id}"]`).trigger('dragstart');
     await wrapper.get('[data-testid="admin-column-IN_PROGRESS"]').trigger('drop');
     expect(patches).toHaveLength(0);
-    expect(wrapper.get('[data-testid="admin-move-confirm"]').text()).toBe('Move and email');
+    expect(wrapper.get('[data-testid="admin-move-confirm"]').text()).toBe('requests.admin.move.email');
 
     await wrapper.get('[data-testid="admin-move-quiet"]').trigger('click');
     await flushPromises();
     expect(patches).toEqual([{ status: 'IN_PROGRESS', declineReason: null, mediaId: null, notify: false }]);
-    expect(toastSuccess).toHaveBeenCalledWith('Moved to In progress, no email sent.');
+    expect(toastSuccess).toHaveBeenCalledWith(
+      'requests.admin.toast.movedQuiet:{"status":"requests.status.IN_PROGRESS"}',
+    );
 
     await wrapper.get(`[data-testid="admin-request-${open.id}"]`).trigger('dragstart');
     await wrapper.get('[data-testid="admin-column-RELEASED"]').trigger('drop');
@@ -260,15 +273,15 @@ describe('RequestsManager', () => {
 
     const wrapper = await render();
     await wrapper.get(`[data-testid="admin-request-${dup.id}"]`).trigger('click');
-    const mergeIntoBtn = wrapper.findAll('button').find((b) => b.text() === 'Merge into it');
+    const mergeIntoBtn = wrapper.findAll('button').find((b) => b.text() === 'requests.admin.mergeIntoIt');
     await mergeIntoBtn!.trigger('click');
     expect(merges).toEqual([]);
 
-    const confirmBtn = wrapper.findAll('button').find((b) => b.text() === 'Merge requests');
+    const confirmBtn = wrapper.findAll('button').find((b) => b.text() === 'requests.admin.mergeConfirm.confirm');
     await confirmBtn!.trigger('click');
     await flushPromises();
 
     expect(merges).toEqual([{ intoId: keep.id }]);
-    expect(toastSuccess).toHaveBeenCalledWith('Requests merged.');
+    expect(toastSuccess).toHaveBeenCalledWith('requests.admin.toast.merged');
   });
 });

@@ -229,7 +229,7 @@ describe('PatreonManager', () => {
 
     expect(wrapper.get('[data-testid="kpi-monthly"]').text()).toBe('$20.00');
     expect(wrapper.get('[data-testid="kpi-lifetime"]').text()).toBe('$85.00');
-    expect(wrapper.get('[data-testid="tab-linked-issues-badge"]').text()).toBe('1');
+    expect(wrapper.get('[data-testid="tab-linked"]').text()).toContain('2');
 
     // Campaign tab active by default
     expect(wrapper.find('[data-testid="campaign-row-mem-1"]').exists()).toBe(true);
@@ -240,11 +240,13 @@ describe('PatreonManager', () => {
     expect(wrapper.get('[data-testid="campaign-subtotal-row"]').text()).toContain('$20.00');
     expect(wrapper.get('[data-testid="campaign-subtotal-row"]').text()).toContain('$40.00');
 
-    // Tiers breakdown shows live campaign count and monthly total
+    // Tiers tab: breakdown shows live campaign count and monthly total
+    await wrapper.get('[data-testid="tab-tiers"]').trigger('click');
     const flowerRow = wrapper.get('[data-testid="tier-row-pro"]').text();
     expect(flowerRow).toContain('Flower');
     expect(flowerRow).toContain('$20.00');
     expect(wrapper.get('[data-testid="patreon-manual-grants-card"]').text()).toContain('kobo');
+    await wrapper.get('[data-testid="tab-campaign"]').trigger('click');
 
     // Paid filter + sort by lifetime puts Former Supporter ($45) first
     await wrapper.get('[data-testid="campaign-filter-paid"]').trigger('click');

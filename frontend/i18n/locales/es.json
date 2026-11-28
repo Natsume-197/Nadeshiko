@@ -538,11 +538,9 @@
       },
       "title": "Usuarios",
       "searchPlaceholder": "Buscar por correo…",
-      "count": "Usuarios: {count}",
       "empty": "No se encontraron usuarios.",
       "table": {
         "name": "Nombre",
-        "email": "Correo electrónico",
         "role": "Rol",
         "providers": "Métodos de acceso",
         "registered": "Fecha de registro",
@@ -563,20 +561,18 @@
         "ban": "Bloquear",
         "unban": "Desbloquear"
       },
-      "pagination": {
-        "showing": "Mostrando {start}-{end} de {total}",
-        "previous": "Anterior",
-        "next": "Siguiente"
-      },
       "loadError": "No se pudo cargar la lista de usuarios.",
       "banSuccess": "Se ha bloqueado la cuenta de {name}.",
       "banError": "No se pudo bloquear la cuenta de {name}.",
       "unbanSuccess": "Se ha desbloqueado la cuenta de {name}.",
-      "unbanError": "No se pudo desbloquear la cuenta de {name}."
+      "unbanError": "No se pudo desbloquear la cuenta de {name}.",
+      "confirmBan": {
+        "title": "¿Banear a {name}?",
+        "description": "Ya no podrá iniciar sesión."
+      }
     },
     "announcement": {
       "title": "Aviso del sitio",
-      "description": "Configura el aviso que se muestra a todos los visitantes del sitio.",
       "fields": {
         "message": "Mensaje",
         "type": "Tipo",
@@ -587,7 +583,6 @@
         "message": "Escribe el aviso…"
       },
       "markdownHint": "Puedes usar **negrita**, *cursiva*, `código` y [enlaces](/media). Las rutas como /media abren páginas dentro del sitio.",
-      "activeDescription": "Cuando está activo, el banner se muestra a todos los visitantes.",
       "types": {
         "INFO": "Aviso",
         "WARNING": "Aviso importante",
@@ -600,7 +595,8 @@
       "updateError": "No se pudo actualizar el aviso",
       "deactivated": "Aviso retirado",
       "deactivateError": "No se pudo retirar el aviso",
-      "fallbackMessage": "No hay ningún aviso"
+      "fallbackMessage": "No hay ningún aviso",
+      "inactive": "Inactivo"
     },
     "activity": {
       "confirmClearHistory": "¿Seguro que quieres borrar todo el historial de actividad? Esta acción no se puede deshacer.",
@@ -1423,14 +1419,11 @@
       "status": "Estado"
     },
     "admin": {
-      "title": "Gestión de reportes",
       "count": "Cantidad",
-      "actions": "Acciones",
       "filters": {
         "all": "Todos",
-        "user": "Reportes de usuarios",
-        "auto": "Comprobaciones automáticas",
-        "orphaned": "Título eliminado"
+        "orphaned": "Título eliminado",
+        "allSources": "Todos los orígenes"
       },
       "selectedGroups": "Grupos seleccionados: {count}",
       "dismiss": "Descartar",
@@ -1441,7 +1434,6 @@
       "deletingAll": "Eliminando todo…",
       "deleteAllMatching": "Eliminar todos los resultados",
       "save": "Guardar",
-      "addNote": "Haz clic para añadir una nota…",
       "updateSuccess": "Reporte actualizado",
       "updateError": "No se pudo actualizar el reporte",
       "batchUpdated": "Reportes actualizados: {count}",
@@ -1476,7 +1468,11 @@
         "deleteAllButton": "Eliminar todo",
         "deleteGroupTitle": "¿Eliminar este grupo de reportes?",
         "deleteGroupDescription": "Se eliminarán permanentemente este reporte y sus duplicados sobre el mismo contenido y por el mismo motivo."
-      }
+      },
+      "setStatus": "Cambiar estado",
+      "moreActions": "Más acciones",
+      "selectAll": "Seleccionar todo",
+      "notePlaceholder": "Añadir nota"
     }
   },
   "modalauth": {
@@ -2040,15 +2036,72 @@
       "news": "Te avisamos por email cuando empezamos con un título que votaste y cuando se publica. Puedes desactivarlo en tus ajustes."
     },
     "admin": {
-      "tab": "Pedidos"
+      "tab": "Pedidos",
+      "title": "Solicitudes de contenido",
+      "publicBoard": "Tablero público",
+      "searchPlaceholder": "Buscar título…",
+      "noRequests": "Sin solicitudes",
+      "dropHere": "Suelta aquí",
+      "kindUpdate": "Ampliación",
+      "duplicateShort": "Duplicado: {title}",
+      "duplicateOf": "Posible duplicado de «{title}»",
+      "notDuplicate": "No es duplicado",
+      "mergeIntoIt": "Fusionar",
+      "copyId": "Copiar ID",
+      "copied": "Copiado",
+      "fields": {
+        "score": "Puntuación",
+        "requested": "Solicitado",
+        "source": "Fuente",
+        "title": "Título",
+        "cover": "URL de portada",
+        "media": "Media vinculado",
+        "mediaOptional": "Vincular media (opcional)",
+        "declineReason": "Motivo del rechazo (público)"
+      },
+      "sections": {
+        "details": "Detalles",
+        "merge": "Fusionar con otra solicitud"
+      },
+      "mergePlaceholder": "Elige una solicitud o pega su ID",
+      "merge": "Fusionar",
+      "save": "Guardar",
+      "move": {
+        "title": "Mover a {status}",
+        "voters": "{count} votante | {count} votantes",
+        "quiet": "Mover sin correo",
+        "email": "Mover y enviar correo",
+        "decline": "Rechazar solicitud"
+      },
+      "mergeConfirm": {
+        "title": "¿Fusionar solicitudes?",
+        "body": "¿Fusionar «{source}» con «{target}»? Sus votos e impulsos se transfieren y esta solicitud se rechaza.",
+        "confirm": "Fusionar solicitudes"
+      },
+      "declinePresets": {
+        "noSubtitles": "No existen subtítulos en japonés.",
+        "alreadyOn": "Ya está en Nadeshiko.",
+        "unsupported": "Fuente o formato no compatible."
+      },
+      "toast": {
+        "saved": "Solicitud guardada.",
+        "merged": "Solicitudes fusionadas.",
+        "duplicateDismissed": "Marca de duplicado descartada.",
+        "moved": "Movida a {status}.",
+        "movedQuiet": "Movida a {status}, sin enviar correo."
+      },
+      "picker": {
+        "search": "Buscar media en Nadeshiko…",
+        "searching": "Buscando…",
+        "pasteId": "Pegar ID",
+        "rawId": "ID público del media",
+        "clear": "Quitar media vinculado"
+      }
     }
   },
   "adminDashboard": {
     "title": "Panel de administración",
-    "subtitle": "Moderación, comunidad, cuentas y salud del sistema en un solo lugar.",
-    "loading": "Cargando contadores en vivo…",
     "nav": {
-      "home": "Inicio",
       "openDashboard": "Panel de administración",
       "refresh": "Actualizar contadores"
     },
@@ -2073,7 +2126,16 @@
       "emailsDesc": "Cada correo enviado, su entrega y las direcciones bloqueadas.",
       "notificationsTitle": "Notificaciones",
       "notificationsDesc": "Enviar anuncios oficiales y configurar reglas de notificación"
-    }
+    },
+    "kpi": {
+      "open": "abiertos",
+      "boosted": "{n} impulsadas",
+      "accounts": "cuentas",
+      "activePatrons": "patrons activos",
+      "issues24h": "problemas · 24 h"
+    },
+    "attention": "Requiere atención",
+    "allClear": "Todo en orden"
   },
   "adminPatreon": {
     "title": "Patreon y tiers",
@@ -2092,11 +2154,6 @@
     "syncAllError": "No se pudo ejecutar la sincronización de Patreon.",
     "quotaPerMonth": "{limit}/mes · {source}",
     "linkedDate": "Vinculado {date}",
-    "filters": {
-      "all": "Todos ({count})",
-      "active": "Activos ({count})",
-      "issues": "Con problemas ({count})"
-    },
     "status": {
       "activePatron": "Activo",
       "declinedPatron": "Pago rechazado",
@@ -2123,7 +2180,6 @@
     },
     "tiers": {
       "title": "Mapeo de tiers",
-      "subtitle": "Referencia de los IDs de Patreon configurados, cuotas mensuales de API y boosts.",
       "tier": "Tier",
       "quota": "API / mes",
       "patreon": "Patreon",
@@ -2133,7 +2189,6 @@
     },
     "manualGrants": {
       "title": "Tiers y overrides manuales",
-      "subtitle": "Cuentas con un tier asignado a mano o cuota personalizada fuera de Patreon.",
       "manageInUsers": "Editar en Usuarios",
       "assignment": "Asignación",
       "override": "Cuota manual",
@@ -2159,9 +2214,6 @@
       "noAccount": "Sin cuenta",
       "subtotal": "Subtotal ({count})"
     },
-    "linkedSection": {
-      "subtitle": "Usuarios que conectaron su Patreon por OAuth para recibir beneficios automáticos."
-    },
     "pledgePerMonth": "{amount}/mes",
     "kpi": {
       "monthlyLabel": "Ingreso mensual",
@@ -2174,8 +2226,23 @@
       "issuesSub": "de {count} vinculadas en Nadeshiko"
     },
     "tabs": {
-      "campaign": "Mecenas en Patreon ({count})",
-      "linked": "Cuentas vinculadas ({count})"
+      "members": "Campaña de Patreon",
+      "accounts": "Cuentas vinculadas",
+      "tiers": "Niveles"
+    },
+    "segments": {
+      "all": "Todos",
+      "active": "Activos",
+      "issues": "Problemas",
+      "unlinked": "Sin vincular",
+      "paid": "Han pagado"
+    },
+    "quotaSource": {
+      "override": "personalizada",
+      "tier": "nivel",
+      "patreon": "Patreon",
+      "legacy_column": "heredada",
+      "default": "predeterminada"
     }
   },
   "adminEmails": {
@@ -2224,7 +2291,6 @@
       "campaign": "Campaña",
       "user": "Usuario",
       "messageId": "ID de SES",
-      "error": "Error",
       "events": "Eventos de SES",
       "noEvents": "Sin eventos",
       "backfill": "Reconstruido",
@@ -2246,15 +2312,14 @@
       }
     },
     "templates": {
-      "fromCategory": "Remitente / categoría",
-      "template": "Plantilla",
-      "editTemplate": "Editar y previsualizar",
-      "variablesHint": "Variables permitidas:",
       "bodyMarkdown": "Cuerpo (Markdown)",
       "sendTest": "Enviar prueba",
       "refreshPreview": "Actualizar vista previa",
       "resetDefault": "Restaurar original",
-      "testSentToast": "Correo de prueba enviado a {email}."
+      "testSentToast": "Correo de prueba enviado a {email}.",
+      "preview": "Vista previa del correo",
+      "testTo": "Destinatario de prueba",
+      "insertVariable": "Insertar variable"
     },
     "broadcasts": {
       "testAddress": "Correo de prueba",
@@ -2265,7 +2330,6 @@
       "send": "Enviar",
       "cancel": "Cancelar",
       "viewLog": "Ver log",
-      "estimatedRecipients": "Destinatarios estimados",
       "respectsOptOut": "respeta bajas y supresiones",
       "previewText": "Texto de vista previa (opcional)",
       "ctaLabel": "Texto del botón (opcional)",
@@ -2276,7 +2340,53 @@
       "launchedToast": "Broadcast puesto en cola.",
       "cancelledToast": "Broadcast cancelado.",
       "confirmTitle": "Lanzar broadcast de correo",
-      "confirmBody": "¿Enviar \"{subject}\" a {audience}?"
+      "confirmBody": "¿Enviar \"{subject}\" a {audience}?",
+      "audiences": {
+        "ALL_OPTED_IN": "Todos los suscritos",
+        "PATRONS": "Patrons",
+        "ACTIVE_DAYS": "Usuarios activos",
+        "SPECIFIC_USERS": "Usuarios concretos"
+      },
+      "status": {
+        "DRAFT": "Borrador",
+        "SENDING": "Enviando",
+        "SENT": "Enviado",
+        "FAILED": "Fallido",
+        "CANCELLED": "Cancelado"
+      },
+      "filterAll": "Todos",
+      "recipients": "Destinatarios",
+      "recipientsCount": "{count} destinatario | {count} destinatarios",
+      "activeDays": "Activos en los últimos (días)",
+      "activeDaysShort": "Últimos {days} días",
+      "userIds": "IDs de usuario",
+      "usersCount": "{count} usuario | {count} usuarios",
+      "sectionContent": "Contenido",
+      "sectionButton": "Botón",
+      "sectionAdvanced": "Avanzado",
+      "sendBroadcast": "Enviar difusión",
+      "preview": "Vista previa del correo",
+      "previewSubjectFallback": "Vista previa",
+      "previewBodyFallback": "Escribe el cuerpo del correo…",
+      "deleteDraft": "Eliminar borrador",
+      "deleteTitle": "¿Eliminar borrador?",
+      "deleteBody": "Se eliminará «{subject}».",
+      "confirmBodyCount": "¿Enviar «{subject}» a {count} destinatario? | ¿Enviar «{subject}» a {count} destinatarios?",
+      "imageTypeError": "Solo imágenes PNG, JPEG, WebP o GIF.",
+      "imageSizeError": "La imagen debe pesar 2 MB o menos.",
+      "toolbar": {
+        "title": "Título",
+        "heading": "Encabezado",
+        "bold": "Negrita",
+        "list": "Lista",
+        "quote": "Nota",
+        "link": "Enlace",
+        "image": "Imagen",
+        "uploading": "Subiendo…",
+        "pasteHint": "O pega con Ctrl+V",
+        "boldPlaceholder": "texto en negrita",
+        "linkPlaceholder": "texto del enlace"
+      }
     }
   },
   "notifications": {
@@ -2387,7 +2497,6 @@
   },
   "adminNotifications": {
     "title": "Notificaciones",
-    "subtitle": "Envía anuncios oficiales en la campana y configura las reglas del sistema",
     "tabs": {
       "send": "Enviar e historial",
       "registry": "Catálogo y reglas"
@@ -2406,14 +2515,17 @@
       "submit": "Enviar notificación",
       "sending": "Enviando…",
       "preview": "Vista previa en la campana",
-      "pinnedHint": "Los avisos oficiales se fijan arriba en la campana hasta leerse y no se pueden silenciar.",
       "missingFields": "El título y el mensaje son obligatorios.",
       "missingUser": "Indica un ID de usuario.",
       "invalidLink": "La ruta debe empezar por /.",
       "sentToast": "Notificación enviada.",
       "confirmTitle": "Confirmar envío masivo",
       "confirmBody": "¿Enviar \"{title}\" a {audience}?",
-      "confirmAction": "Enviar ahora"
+      "confirmAction": "Enviar ahora",
+      "placeholders": {
+        "title": "¡Llegó Nadeshiko 3.0!",
+        "message": "Texto breve que se muestra en la campana"
+      }
     },
     "history": {
       "title": "Envíos recientes",
@@ -2422,18 +2534,63 @@
       "titleCol": "Título",
       "audience": "Audiencia",
       "sent": "Enviados",
-      "status": "Estado"
+      "status": "Estado",
+      "userFallback": "Usuario #{id}",
+      "statuses": {
+        "queued": "En cola",
+        "sending": "Enviando",
+        "sent": "Enviado",
+        "failed": "Falló"
+      }
     },
     "registry": {
-      "kind": "Notificación",
       "trigger": "Disparador",
-      "enabled": "Activa",
       "params": "Parámetros",
-      "volume7d": "Volumen 7d",
       "edit": "Editar",
       "save": "Guardar",
       "reset": "Restaurar",
-      "saved": "Configuración guardada."
+      "saved": "Configuración guardada.",
+      "triggers": {
+        "realtime": "En tiempo real",
+        "cron": "Programado",
+        "admin": "Manual"
+      },
+      "pinned": "Fijada",
+      "grouped": "Agrupada",
+      "sent7d": "{count} enviados · 7d",
+      "failed7d": "{count} fallidos",
+      "locked": "Siempre activo",
+      "customCopy": "Texto propio",
+      "transactional": "Transaccional",
+      "empty": "No hay tipos de notificación"
+    },
+    "kinds": {
+      "siteAnnouncement": "Anuncio",
+      "adminMessage": "Mensaje directo"
+    },
+    "areas": {
+      "official": "Oficial",
+      "words": "Alertas de palabras",
+      "community": "Comunidad",
+      "lifecycle": "Ciclo de vida",
+      "transactional": "Transaccionales"
     }
+  },
+  "adminLayout": {
+    "sections": {
+      "home": "Inicio",
+      "moderation": "Moderación",
+      "communication": "Avisos",
+      "people": "Personas"
+    },
+    "on": "Activo",
+    "jumpTo": "Ir a…",
+    "site": "Sitio",
+    "status": "Estado",
+    "noMatches": "Sin resultados",
+    "menu": "Menú",
+    "close": "Cerrar",
+    "toggleSidebar": "Mostrar u ocultar panel",
+    "reload": "Recargar"
   }
 }

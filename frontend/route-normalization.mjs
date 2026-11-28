@@ -45,6 +45,7 @@ const STATIC_PAGES = new Set([
   '/admin/users',
   '/admin/requests',
   '/admin/emails',
+  '/admin/notifications',
   '/user/admin',
   '/user/admin/announcement',
   '/user/admin/reports',

@@ -1,27 +1,36 @@
 import type { AdminReportGroup } from '@brigadasos/nadeshiko-sdk';
+import type { AdminTone } from '../ui/Badge.vue';
 
 export type ReportGroup = AdminReportGroup;
 export type ReportGroupItem = AdminReportGroup['reports'][number];
 
 export const ALL_STATUSES = ['OPEN', 'PROCESSING', 'FIXED', 'DISMISSED'] as const;
 
-export const statusClass = (status: string) => {
+export const statusTone = (status: string): AdminTone => {
   switch (status) {
     case 'OPEN':
-      return 'bg-yellow-500/20 text-yellow-400 border-yellow-600';
+      return 'warning';
     case 'PROCESSING':
-      return 'bg-blue-500/20 text-blue-400 border-blue-600';
+      return 'info';
     case 'FIXED':
-      return 'bg-green-500/20 text-green-400 border-green-600';
-    case 'DISMISSED':
-      return 'bg-neutral-500/20 text-neutral-400 border-neutral-600';
+      return 'success';
     default:
-      return 'bg-neutral-500/20 text-neutral-400 border-neutral-600';
+      return 'neutral';
   }
 };
 
-export const sourceClass = (source: string) => {
-  return source === 'USER'
-    ? 'bg-indigo-500/20 text-indigo-400 border-indigo-600'
-    : 'bg-cyan-500/20 text-cyan-400 border-cyan-600';
+export const sourceTone = (source: string): AdminTone => (source === 'USER' ? 'violet' : 'neutral');
+
+/** Dot colour matching `statusTone`, for menus and segmented filters that draw a dot without a badge. */
+export const statusDot = (status: string): string => {
+  switch (statusTone(status)) {
+    case 'warning':
+      return 'bg-amber-400';
+    case 'info':
+      return 'bg-sky-400';
+    case 'success':
+      return 'bg-emerald-400';
+    default:
+      return 'bg-ink-faint';
+  }
 };

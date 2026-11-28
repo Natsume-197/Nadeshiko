@@ -257,6 +257,43 @@
     border-color: var(--line);
   }
 
+  /* Admin data table: one header, padding and row style for every /admin list.
+     Wrap it in `.nd-admin-table-wrap` so wide tables scroll inside their frame. */
+  .nd-admin-table-wrap {
+    @apply overflow-x-auto rounded-lg border;
+    border-color: var(--line);
+    background: var(--card-background);
+  }
+  .nd-admin-table {
+    @apply w-full text-left text-[13px];
+    color: var(--ink);
+  }
+  .nd-admin-table > thead > tr > th {
+    @apply whitespace-nowrap px-4 py-2 text-xs font-medium;
+    color: var(--ink-muted);
+    background: color-mix(in srgb, var(--surface) 60%, transparent);
+    border-bottom: 1px solid var(--line);
+  }
+  .nd-admin-table > tbody > tr > td {
+    @apply px-4 py-2.5 align-middle;
+  }
+  .nd-admin-table > tbody > tr + tr > td {
+    border-top: 1px solid var(--line);
+  }
+  .nd-admin-table > tbody > tr.is-clickable {
+    @apply cursor-pointer;
+  }
+  .nd-admin-table > tbody > tr.is-clickable:hover > td,
+  .nd-admin-table > tbody > tr.is-active > td {
+    background: var(--surface-hover);
+  }
+
+  /* Small field label used across admin forms. */
+  .nd-admin-label {
+    @apply mb-1.5 block text-xs font-medium;
+    color: var(--ink-muted);
+  }
+
   /* Shared floating-menu chrome; callers own placement, z-index and dimensions. */
   .nd-menu {
     @apply rounded-xl p-1.5 text-left;

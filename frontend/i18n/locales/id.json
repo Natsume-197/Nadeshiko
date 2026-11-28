@@ -538,11 +538,9 @@
       },
       "title": "Pengguna",
       "searchPlaceholder": "Cari berdasarkan email…",
-      "count": "{count} pengguna",
       "empty": "Tidak ada pengguna yang ditemukan.",
       "table": {
         "name": "Nama",
-        "email": "Email",
         "role": "Peran",
         "providers": "Metode masuk",
         "registered": "Terdaftar",
@@ -563,20 +561,18 @@
         "ban": "Blokir",
         "unban": "Buka blokir"
       },
-      "pagination": {
-        "showing": "Menampilkan {start}–{end} dari {total}",
-        "previous": "Sebelumnya",
-        "next": "Berikutnya"
-      },
       "loadError": "Gagal memuat daftar pengguna.",
       "banSuccess": "{name} telah diblokir.",
       "banError": "Gagal memblokir {name}.",
       "unbanSuccess": "Blokir {name} telah dibuka.",
-      "unbanError": "Gagal membuka blokir {name}."
+      "unbanError": "Gagal membuka blokir {name}.",
+      "confirmBan": {
+        "title": "Blokir {name}?",
+        "description": "Pengguna ini tidak bisa masuk lagi."
+      }
     },
     "announcement": {
       "title": "Pengumuman",
-      "description": "Buat pengumuman yang ditampilkan kepada semua pengguna di seluruh situs.",
       "fields": {
         "message": "Pesan",
         "type": "Jenis",
@@ -587,7 +583,6 @@
         "message": "Tulis pengumuman…"
       },
       "markdownHint": "Mendukung **tebal**, *miring*, `kode`, dan [tautan](/media). Tautan seperti /media tetap dibuka di dalam aplikasi.",
-      "activeDescription": "Jika aktif, pengumuman ditampilkan kepada semua pengunjung.",
       "types": {
         "INFO": "Informasi",
         "WARNING": "Peringatan",
@@ -600,7 +595,8 @@
       "updateError": "Gagal memperbarui pengumuman",
       "deactivated": "Pengumuman dinonaktifkan",
       "deactivateError": "Gagal menonaktifkan pengumuman",
-      "fallbackMessage": "Tidak ada pengumuman"
+      "fallbackMessage": "Tidak ada pengumuman",
+      "inactive": "Nonaktif"
     },
     "activity": {
       "confirmClearHistory": "Hapus seluruh riwayat aktivitas? Tindakan ini tidak dapat dibatalkan.",
@@ -1423,14 +1419,11 @@
       "status": "Status"
     },
     "admin": {
-      "title": "Kelola laporan",
       "count": "Jumlah",
-      "actions": "Tindakan",
       "filters": {
         "all": "Semua",
-        "user": "Laporan pengguna",
-        "auto": "Pemeriksaan otomatis",
-        "orphaned": "Judul sudah dihapus"
+        "orphaned": "Judul sudah dihapus",
+        "allSources": "Semua sumber"
       },
       "selectedGroups": "{count} grup dipilih",
       "dismiss": "Tutup tanpa perbaikan",
@@ -1441,7 +1434,6 @@
       "deletingAll": "Menghapus semua…",
       "deleteAllMatching": "Hapus semua hasil",
       "save": "Simpan",
-      "addNote": "Klik untuk menambahkan catatan…",
       "updateSuccess": "Laporan diperbarui",
       "updateError": "Gagal memperbarui laporan",
       "batchUpdated": "{count} laporan diperbarui",
@@ -1476,7 +1468,11 @@
         "deleteAllButton": "Hapus semua",
         "deleteGroupTitle": "Hapus grup laporan ini?",
         "deleteGroupDescription": "Laporan ini dan semua duplikat dengan konten serta alasan yang sama akan dihapus secara permanen."
-      }
+      },
+      "setStatus": "Ubah status",
+      "moreActions": "Tindakan lainnya",
+      "selectAll": "Pilih semua",
+      "notePlaceholder": "Tambah catatan"
     }
   },
   "modalauth": {
@@ -2040,15 +2036,72 @@
       "news": "Kami mengirim email saat judul yang kamu pilih mulai dikerjakan dan saat dirilis. Kamu bisa mematikannya di pengaturan."
     },
     "admin": {
-      "tab": "Permintaan"
+      "tab": "Permintaan",
+      "title": "Permintaan konten",
+      "publicBoard": "Papan publik",
+      "searchPlaceholder": "Cari judul…",
+      "noRequests": "Tidak ada permintaan",
+      "dropHere": "Lepas di sini",
+      "kindUpdate": "Pembaruan",
+      "duplicateShort": "Duplikat: {title}",
+      "duplicateOf": "Kemungkinan duplikat “{title}”",
+      "notDuplicate": "Bukan duplikat",
+      "mergeIntoIt": "Gabungkan",
+      "copyId": "Salin ID",
+      "copied": "Disalin",
+      "fields": {
+        "score": "Skor",
+        "requested": "Diminta",
+        "source": "Sumber",
+        "title": "Judul",
+        "cover": "URL gambar sampul",
+        "media": "Media tertaut",
+        "mediaOptional": "Tautkan media (opsional)",
+        "declineReason": "Alasan penolakan (publik)"
+      },
+      "sections": {
+        "details": "Detail",
+        "merge": "Gabungkan ke permintaan lain"
+      },
+      "mergePlaceholder": "Pilih permintaan atau tempel ID-nya",
+      "merge": "Gabungkan",
+      "save": "Simpan",
+      "move": {
+        "title": "Pindahkan ke {status}",
+        "voters": "{count} pemilih",
+        "quiet": "Pindahkan tanpa email",
+        "email": "Pindahkan dan kirim email",
+        "decline": "Tolak permintaan"
+      },
+      "mergeConfirm": {
+        "title": "Gabungkan permintaan?",
+        "body": "Gabungkan “{source}” ke “{target}”? Suara dan boost dipindahkan dan permintaan ini ditolak.",
+        "confirm": "Gabungkan permintaan"
+      },
+      "declinePresets": {
+        "noSubtitles": "Tidak ada subtitle bahasa Jepang.",
+        "alreadyOn": "Sudah ada di Nadeshiko.",
+        "unsupported": "Sumber atau format tidak didukung."
+      },
+      "toast": {
+        "saved": "Permintaan disimpan.",
+        "merged": "Permintaan digabungkan.",
+        "duplicateDismissed": "Tanda duplikat dihapus.",
+        "moved": "Dipindahkan ke {status}.",
+        "movedQuiet": "Dipindahkan ke {status}, tanpa email."
+      },
+      "picker": {
+        "search": "Cari media Nadeshiko…",
+        "searching": "Mencari…",
+        "pasteId": "Tempel ID",
+        "rawId": "ID publik media",
+        "clear": "Hapus tautan media"
+      }
     }
   },
   "adminDashboard": {
     "title": "Dasbor Admin",
-    "subtitle": "Moderasi, komunitas, akun, dan kesehatan sistem dalam satu tempat.",
-    "loading": "Memuat data langsung…",
     "nav": {
-      "home": "Dasbor",
       "openDashboard": "Dasbor Admin",
       "refresh": "Muat ulang hitungan"
     },
@@ -2073,7 +2126,16 @@
       "emailsDesc": "Setiap email terkirim, status pengiriman, dan alamat yang diblokir.",
       "notificationsTitle": "Notifications",
       "notificationsDesc": "Send official announcements and manage notification rules"
-    }
+    },
+    "kpi": {
+      "open": "terbuka",
+      "boosted": "{n} di-boost",
+      "accounts": "akun",
+      "activePatrons": "patron aktif",
+      "issues24h": "masalah · 24 jam"
+    },
+    "attention": "Perlu perhatian",
+    "allClear": "Semua beres"
   },
   "adminPatreon": {
     "title": "Patreon & Tier",
@@ -2092,11 +2154,6 @@
     "syncAllError": "Gagal menjalankan sinkronisasi Patreon.",
     "quotaPerMonth": "{limit}/bln · {source}",
     "linkedDate": "Tertaut {date}",
-    "filters": {
-      "all": "Semua ({count})",
-      "active": "Aktif ({count})",
-      "issues": "Bermasalah ({count})"
-    },
     "status": {
       "activePatron": "Aktif",
       "declinedPatron": "Pembayaran ditolak",
@@ -2123,7 +2180,6 @@
     },
     "tiers": {
       "title": "Pemetaan tier",
-      "subtitle": "Referensi baca-saja ID tier Patreon, kuota API bulanan, dan boost permintaan.",
       "tier": "Tier",
       "quota": "API / bln",
       "patreon": "Patreon",
@@ -2133,7 +2189,6 @@
     },
     "manualGrants": {
       "title": "Tier & override manual",
-      "subtitle": "Akun dengan tier non-gratis atau override kuota API di luar Patreon.",
       "manageInUsers": "Edit di Pengguna",
       "assignment": "Penetapan",
       "override": "Override kuota",
@@ -2159,9 +2214,6 @@
       "noAccount": "Belum ada akun",
       "subtotal": "Subtotal ({count})"
     },
-    "linkedSection": {
-      "subtitle": "Pengguna yang menautkan Patreon lewat OAuth untuk manfaat otomatis."
-    },
     "pledgePerMonth": "{amount}/bln",
     "kpi": {
       "monthlyLabel": "Pendapatan bulanan",
@@ -2174,8 +2226,23 @@
       "issuesSub": "dari {count} tertaut di Nadeshiko"
     },
     "tabs": {
-      "campaign": "Anggota Patreon ({count})",
-      "linked": "Akun tertaut ({count})"
+      "members": "Kampanye Patreon",
+      "accounts": "Akun tertaut",
+      "tiers": "Tingkatan"
+    },
+    "segments": {
+      "all": "Semua",
+      "active": "Aktif",
+      "issues": "Masalah",
+      "unlinked": "Belum tertaut",
+      "paid": "Pernah bayar"
+    },
+    "quotaSource": {
+      "override": "khusus",
+      "tier": "tingkatan",
+      "patreon": "Patreon",
+      "legacy_column": "lama",
+      "default": "bawaan"
     }
   },
   "adminEmails": {
@@ -2224,7 +2291,6 @@
       "campaign": "Kampanye",
       "user": "Pengguna",
       "messageId": "ID SES",
-      "error": "Galat",
       "events": "Peristiwa SES",
       "noEvents": "Tidak ada peristiwa",
       "backfill": "Direkonstruksi",
@@ -2246,15 +2312,14 @@
       }
     },
     "templates": {
-      "fromCategory": "From / category",
-      "template": "Template",
-      "editTemplate": "Edit & preview",
-      "variablesHint": "Allowed variables:",
       "bodyMarkdown": "Body (Markdown)",
       "sendTest": "Send test",
       "refreshPreview": "Refresh preview",
       "resetDefault": "Reset to default",
-      "testSentToast": "Test email sent to {email}."
+      "testSentToast": "Test email sent to {email}.",
+      "preview": "Pratinjau email",
+      "testTo": "Penerima uji",
+      "insertVariable": "Sisipkan variabel"
     },
     "broadcasts": {
       "testAddress": "Test address",
@@ -2265,7 +2330,6 @@
       "send": "Send",
       "cancel": "Cancel",
       "viewLog": "View log",
-      "estimatedRecipients": "Estimated opted-in recipients",
       "respectsOptOut": "respects opt-out & suppressions",
       "previewText": "Preview text (optional)",
       "ctaLabel": "Button label (optional)",
@@ -2276,7 +2340,53 @@
       "launchedToast": "Broadcast queued for delivery.",
       "cancelledToast": "Broadcast cancelled.",
       "confirmTitle": "Launch email broadcast",
-      "confirmBody": "Send \"{subject}\" to {audience}?"
+      "confirmBody": "Send \"{subject}\" to {audience}?",
+      "audiences": {
+        "ALL_OPTED_IN": "Semua yang berlangganan",
+        "PATRONS": "Patron",
+        "ACTIVE_DAYS": "Pengguna aktif",
+        "SPECIFIC_USERS": "Pengguna tertentu"
+      },
+      "status": {
+        "DRAFT": "Draf",
+        "SENDING": "Mengirim",
+        "SENT": "Terkirim",
+        "FAILED": "Gagal",
+        "CANCELLED": "Dibatalkan"
+      },
+      "filterAll": "Semua",
+      "recipients": "Penerima",
+      "recipientsCount": "{count} penerima",
+      "activeDays": "Aktif dalam (hari) terakhir",
+      "activeDaysShort": "{days} hari terakhir",
+      "userIds": "ID pengguna",
+      "usersCount": "{count} pengguna",
+      "sectionContent": "Konten",
+      "sectionButton": "Tombol",
+      "sectionAdvanced": "Lanjutan",
+      "sendBroadcast": "Kirim siaran",
+      "preview": "Pratinjau email",
+      "previewSubjectFallback": "Pratinjau",
+      "previewBodyFallback": "Tulis isi email…",
+      "deleteDraft": "Hapus draf",
+      "deleteTitle": "Hapus draf?",
+      "deleteBody": "\"{subject}\" akan dihapus.",
+      "confirmBodyCount": "Kirim \"{subject}\" ke {count} penerima?",
+      "imageTypeError": "Hanya gambar PNG, JPEG, WebP, atau GIF.",
+      "imageSizeError": "Gambar maksimal 2 MB.",
+      "toolbar": {
+        "title": "Judul",
+        "heading": "Subjudul",
+        "bold": "Tebal",
+        "list": "Daftar poin",
+        "quote": "Catatan",
+        "link": "Tautan",
+        "image": "Gambar",
+        "uploading": "Mengunggah…",
+        "pasteHint": "Atau tempel dengan Ctrl+V",
+        "boldPlaceholder": "teks tebal",
+        "linkPlaceholder": "teks tautan"
+      }
     }
   },
   "notifications": {
@@ -2387,7 +2497,6 @@
   },
   "adminNotifications": {
     "title": "Notifications",
-    "subtitle": "Send official in-site announcements and configure notification rules",
     "tabs": {
       "send": "Send & history",
       "registry": "Catalog & rules"
@@ -2406,14 +2515,17 @@
       "submit": "Send notification",
       "sending": "Sending…",
       "preview": "Bell preview",
-      "pinnedHint": "Official notices are pinned at the top of the bell until read and cannot be muted.",
       "missingFields": "Title and message are required.",
       "missingUser": "Enter a target user ID.",
       "invalidLink": "Link path must start with /.",
       "sentToast": "Notification queued.",
       "confirmTitle": "Confirm broadcast",
       "confirmBody": "Send \"{title}\" to {audience}?",
-      "confirmAction": "Send now"
+      "confirmAction": "Send now",
+      "placeholders": {
+        "title": "Nadeshiko 3.0 telah hadir!",
+        "message": "Teks singkat yang tampil di lonceng"
+      }
     },
     "history": {
       "title": "Recent broadcasts",
@@ -2422,18 +2534,63 @@
       "titleCol": "Title",
       "audience": "Audience",
       "sent": "Sent",
-      "status": "Status"
+      "status": "Status",
+      "userFallback": "Pengguna #{id}",
+      "statuses": {
+        "queued": "Antre",
+        "sending": "Mengirim",
+        "sent": "Terkirim",
+        "failed": "Gagal"
+      }
     },
     "registry": {
-      "kind": "Notification",
       "trigger": "Trigger",
-      "enabled": "Enabled",
       "params": "Parameters",
-      "volume7d": "7d volume",
       "edit": "Edit",
       "save": "Save",
       "reset": "Reset",
-      "saved": "Settings saved."
+      "saved": "Settings saved.",
+      "triggers": {
+        "realtime": "Realtime",
+        "cron": "Terjadwal",
+        "admin": "Manual"
+      },
+      "pinned": "Disematkan",
+      "grouped": "Dikelompokkan",
+      "sent7d": "{count} terkirim · 7h",
+      "failed7d": "{count} gagal",
+      "locked": "Selalu aktif",
+      "customCopy": "Teks kustom",
+      "transactional": "Transaksional",
+      "empty": "Tidak ada jenis notifikasi"
+    },
+    "kinds": {
+      "siteAnnouncement": "Pengumuman",
+      "adminMessage": "Pesan langsung"
+    },
+    "areas": {
+      "official": "Resmi",
+      "words": "Peringatan kata",
+      "community": "Komunitas",
+      "lifecycle": "Siklus hidup",
+      "transactional": "Transaksional"
     }
+  },
+  "adminLayout": {
+    "sections": {
+      "home": "Beranda",
+      "moderation": "Moderasi",
+      "communication": "Komunikasi",
+      "people": "Pengguna"
+    },
+    "on": "Aktif",
+    "jumpTo": "Buka…",
+    "site": "Situs",
+    "status": "Status",
+    "noMatches": "Tidak ada hasil",
+    "menu": "Menu",
+    "close": "Tutup",
+    "toggleSidebar": "Buka/tutup panel",
+    "reload": "Muat ulang"
   }
 }

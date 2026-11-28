@@ -538,11 +538,9 @@
       },
       "title": "Users",
       "searchPlaceholder": "Search by email...",
-      "count": "{count} users",
       "empty": "No users found.",
       "table": {
         "name": "Name",
-        "email": "Email",
         "role": "Role",
         "providers": "Providers",
         "registered": "Registered",
@@ -563,20 +561,18 @@
         "ban": "Ban",
         "unban": "Unban"
       },
-      "pagination": {
-        "showing": "Showing {start}-{end} of {total}",
-        "previous": "Previous",
-        "next": "Next"
-      },
       "loadError": "Could not load the user list.",
       "banSuccess": "{name} has been banned.",
       "banError": "Could not ban {name}.",
       "unbanSuccess": "{name} has been unbanned.",
-      "unbanError": "Could not unban {name}."
+      "unbanError": "Could not unban {name}.",
+      "confirmBan": {
+        "title": "Ban {name}?",
+        "description": "They will no longer be able to sign in."
+      }
     },
     "announcement": {
       "title": "Announcement",
-      "description": "Set a site-wide announcement banner visible to all users.",
       "fields": {
         "message": "Message",
         "type": "Type",
@@ -587,7 +583,6 @@
         "message": "Write an announcement message..."
       },
       "markdownHint": "Supports **bold**, *italic*, `code` and [links](/media). Site paths like /media stay in the app.",
-      "activeDescription": "When active, the banner is shown to all visitors.",
       "types": {
         "INFO": "Info",
         "WARNING": "Warning",
@@ -600,7 +595,8 @@
       "updateError": "Failed to update announcement",
       "deactivated": "Announcement deactivated",
       "deactivateError": "Failed to deactivate announcement",
-      "fallbackMessage": "No announcement"
+      "fallbackMessage": "No announcement",
+      "inactive": "Inactive"
     },
     "activity": {
       "confirmClearHistory": "Are you sure you want to clear all activity history? This cannot be undone.",
@@ -1423,14 +1419,11 @@
       "status": "Status"
     },
     "admin": {
-      "title": "Report Management",
       "count": "Count",
-      "actions": "Actions",
       "filters": {
         "all": "All",
-        "user": "User Reports",
-        "auto": "Auto Checks",
-        "orphaned": "Orphaned"
+        "orphaned": "Orphaned",
+        "allSources": "All sources"
       },
       "selectedGroups": "{count} group(s) selected",
       "dismiss": "Dismiss",
@@ -1441,7 +1434,6 @@
       "deletingAll": "Deleting all...",
       "deleteAllMatching": "Delete All Matching",
       "save": "Save",
-      "addNote": "Click to add note...",
       "updateSuccess": "Report updated",
       "updateError": "Failed to update report",
       "batchUpdated": "{count} report(s) updated",
@@ -1476,7 +1468,11 @@
         "deleteAllButton": "Delete All",
         "deleteGroupTitle": "Delete this report group?",
         "deleteGroupDescription": "This will permanently delete this report and all duplicates with the same target and reason."
-      }
+      },
+      "setStatus": "Set status",
+      "moreActions": "More actions",
+      "selectAll": "Select all",
+      "notePlaceholder": "Add note"
     }
   },
   "modalauth": {
@@ -2040,15 +2036,72 @@
       "news": "We email you when a title you voted for is being worked on and when it is released. You can turn this off in your settings."
     },
     "admin": {
-      "tab": "Requests"
+      "tab": "Requests",
+      "title": "Content requests",
+      "publicBoard": "Public board",
+      "searchPlaceholder": "Search title…",
+      "noRequests": "No requests",
+      "dropHere": "Drop here",
+      "kindUpdate": "Update",
+      "duplicateShort": "Dup: {title}",
+      "duplicateOf": "Possible duplicate of “{title}”",
+      "notDuplicate": "Not a duplicate",
+      "mergeIntoIt": "Merge into it",
+      "copyId": "Copy ID",
+      "copied": "Copied",
+      "fields": {
+        "score": "Score",
+        "requested": "Requested",
+        "source": "Source",
+        "title": "Title",
+        "cover": "Cover image URL",
+        "media": "Linked media",
+        "mediaOptional": "Link media (optional)",
+        "declineReason": "Decline reason (public)"
+      },
+      "sections": {
+        "details": "Details",
+        "merge": "Merge into another request"
+      },
+      "mergePlaceholder": "Pick a request or paste its ID",
+      "merge": "Merge",
+      "save": "Save",
+      "move": {
+        "title": "Move to {status}",
+        "voters": "{count} voter | {count} voters",
+        "quiet": "Move without email",
+        "email": "Move and email",
+        "decline": "Decline request"
+      },
+      "mergeConfirm": {
+        "title": "Merge requests?",
+        "body": "Merge “{source}” into “{target}”? Its votes and boosts move over and this request is declined.",
+        "confirm": "Merge requests"
+      },
+      "declinePresets": {
+        "noSubtitles": "No Japanese subtitles exist.",
+        "alreadyOn": "Already on Nadeshiko.",
+        "unsupported": "Unsupported source or format."
+      },
+      "toast": {
+        "saved": "Request saved.",
+        "merged": "Requests merged.",
+        "duplicateDismissed": "Duplicate flag dismissed.",
+        "moved": "Moved to {status}.",
+        "movedQuiet": "Moved to {status}, no email sent."
+      },
+      "picker": {
+        "search": "Search Nadeshiko media…",
+        "searching": "Searching…",
+        "pasteId": "Paste ID instead",
+        "rawId": "Media public ID",
+        "clear": "Clear linked media"
+      }
     }
   },
   "adminDashboard": {
     "title": "Admin Dashboard",
-    "subtitle": "Moderation, community, accounts and system health in one place.",
-    "loading": "Loading live counts…",
     "nav": {
-      "home": "Dashboard",
       "openDashboard": "Admin Dashboard",
       "refresh": "Refresh counts"
     },
@@ -2073,7 +2126,16 @@
       "emailsDesc": "Every email sent, its delivery and blocked addresses.",
       "notificationsTitle": "Notifications",
       "notificationsDesc": "Send official announcements and manage notification rules"
-    }
+    },
+    "kpi": {
+      "open": "open",
+      "boosted": "{n} boosted",
+      "accounts": "accounts",
+      "activePatrons": "active patrons",
+      "issues24h": "issues · 24 h"
+    },
+    "attention": "Needs attention",
+    "allClear": "All clear"
   },
   "adminPatreon": {
     "title": "Patreon & Tiers",
@@ -2092,11 +2154,6 @@
     "syncAllError": "Could not run Patreon sync.",
     "quotaPerMonth": "{limit}/mo · {source}",
     "linkedDate": "Linked {date}",
-    "filters": {
-      "all": "All ({count})",
-      "active": "Active ({count})",
-      "issues": "Issues ({count})"
-    },
     "status": {
       "activePatron": "Active",
       "declinedPatron": "Declined",
@@ -2123,7 +2180,6 @@
     },
     "tiers": {
       "title": "Tier mapping",
-      "subtitle": "Read-only view of configured Patreon tier IDs, monthly API quotas and request boosts.",
       "tier": "Tier",
       "quota": "API / mo",
       "patreon": "Patreon",
@@ -2133,7 +2189,6 @@
     },
     "manualGrants": {
       "title": "Manual tiers & overrides",
-      "subtitle": "Accounts with a non-free tier or custom API quota override outside Patreon.",
       "manageInUsers": "Edit in Users",
       "assignment": "Assignment",
       "override": "Quota override",
@@ -2159,9 +2214,6 @@
       "noAccount": "No account",
       "subtotal": "Subtotal ({count})"
     },
-    "linkedSection": {
-      "subtitle": "Users who connected Patreon via OAuth and receive automatic perks."
-    },
     "pledgePerMonth": "{amount}/mo",
     "kpi": {
       "monthlyLabel": "Monthly revenue",
@@ -2174,8 +2226,23 @@
       "issuesSub": "of {count} linked in Nadeshiko"
     },
     "tabs": {
-      "campaign": "Patreon campaign ({count})",
-      "linked": "Linked accounts ({count})"
+      "members": "Patreon campaign",
+      "accounts": "Linked accounts",
+      "tiers": "Tiers"
+    },
+    "segments": {
+      "all": "All",
+      "active": "Active",
+      "issues": "Issues",
+      "unlinked": "Not linked",
+      "paid": "Ever paid"
+    },
+    "quotaSource": {
+      "override": "override",
+      "tier": "tier",
+      "patreon": "Patreon",
+      "legacy_column": "legacy",
+      "default": "default"
     }
   },
   "adminEmails": {
@@ -2224,7 +2291,6 @@
       "campaign": "Campaign",
       "user": "User",
       "messageId": "SES ID",
-      "error": "Error",
       "events": "SES events",
       "noEvents": "No events",
       "backfill": "Rebuilt",
@@ -2246,15 +2312,14 @@
       }
     },
     "templates": {
-      "fromCategory": "From / category",
-      "template": "Template",
-      "editTemplate": "Edit & preview",
-      "variablesHint": "Allowed variables:",
       "bodyMarkdown": "Body (Markdown)",
       "sendTest": "Send test",
       "refreshPreview": "Refresh preview",
       "resetDefault": "Reset to default",
-      "testSentToast": "Test email sent to {email}."
+      "testSentToast": "Test email sent to {email}.",
+      "preview": "Email preview",
+      "testTo": "Test recipient",
+      "insertVariable": "Insert variable"
     },
     "broadcasts": {
       "testAddress": "Test address",
@@ -2265,7 +2330,6 @@
       "send": "Send",
       "cancel": "Cancel",
       "viewLog": "View log",
-      "estimatedRecipients": "Estimated opted-in recipients",
       "respectsOptOut": "respects opt-out & suppressions",
       "previewText": "Preview text (optional)",
       "ctaLabel": "Button label (optional)",
@@ -2276,7 +2340,53 @@
       "launchedToast": "Broadcast queued for delivery.",
       "cancelledToast": "Broadcast cancelled.",
       "confirmTitle": "Launch email broadcast",
-      "confirmBody": "Send \"{subject}\" to {audience}?"
+      "confirmBody": "Send \"{subject}\" to {audience}?",
+      "audiences": {
+        "ALL_OPTED_IN": "All opted-in",
+        "PATRONS": "Patrons",
+        "ACTIVE_DAYS": "Active users",
+        "SPECIFIC_USERS": "Specific users"
+      },
+      "status": {
+        "DRAFT": "Draft",
+        "SENDING": "Sending",
+        "SENT": "Sent",
+        "FAILED": "Failed",
+        "CANCELLED": "Cancelled"
+      },
+      "filterAll": "All",
+      "recipients": "Recipients",
+      "recipientsCount": "{count} recipient | {count} recipients",
+      "activeDays": "Active in the last (days)",
+      "activeDaysShort": "Last {days} days",
+      "userIds": "User IDs",
+      "usersCount": "{count} user | {count} users",
+      "sectionContent": "Content",
+      "sectionButton": "Button",
+      "sectionAdvanced": "Advanced",
+      "sendBroadcast": "Send broadcast",
+      "preview": "Email preview",
+      "previewSubjectFallback": "Preview",
+      "previewBodyFallback": "Write your email body…",
+      "deleteDraft": "Delete draft",
+      "deleteTitle": "Delete draft?",
+      "deleteBody": "\"{subject}\" will be deleted.",
+      "confirmBodyCount": "Send \"{subject}\" to {count} recipient? | Send \"{subject}\" to {count} recipients?",
+      "imageTypeError": "Only PNG, JPEG, WebP or GIF images.",
+      "imageSizeError": "Image must be 2 MB or smaller.",
+      "toolbar": {
+        "title": "Title",
+        "heading": "Heading",
+        "bold": "Bold",
+        "list": "Bullet list",
+        "quote": "Note",
+        "link": "Link",
+        "image": "Image",
+        "uploading": "Uploading…",
+        "pasteHint": "Or paste with Ctrl+V",
+        "boldPlaceholder": "bold text",
+        "linkPlaceholder": "link text"
+      }
     }
   },
   "notifications": {
@@ -2387,7 +2497,6 @@
   },
   "adminNotifications": {
     "title": "Notifications",
-    "subtitle": "Send official in-site announcements and configure notification rules",
     "tabs": {
       "send": "Send & history",
       "registry": "Catalog & rules"
@@ -2406,14 +2515,17 @@
       "submit": "Send notification",
       "sending": "Sending…",
       "preview": "Bell preview",
-      "pinnedHint": "Official notices are pinned at the top of the bell until read and cannot be muted.",
       "missingFields": "Title and message are required.",
       "missingUser": "Enter a target user ID.",
       "invalidLink": "Link path must start with /.",
       "sentToast": "Notification queued.",
       "confirmTitle": "Confirm broadcast",
       "confirmBody": "Send \"{title}\" to {audience}?",
-      "confirmAction": "Send now"
+      "confirmAction": "Send now",
+      "placeholders": {
+        "title": "Nadeshiko 3.0 is here!",
+        "message": "Short text shown in the bell"
+      }
     },
     "history": {
       "title": "Recent broadcasts",
@@ -2422,18 +2534,63 @@
       "titleCol": "Title",
       "audience": "Audience",
       "sent": "Sent",
-      "status": "Status"
+      "status": "Status",
+      "userFallback": "User #{id}",
+      "statuses": {
+        "queued": "Queued",
+        "sending": "Sending",
+        "sent": "Sent",
+        "failed": "Failed"
+      }
     },
     "registry": {
-      "kind": "Notification",
       "trigger": "Trigger",
-      "enabled": "Enabled",
       "params": "Parameters",
-      "volume7d": "7d volume",
       "edit": "Edit",
       "save": "Save",
       "reset": "Reset",
-      "saved": "Settings saved."
+      "saved": "Settings saved.",
+      "triggers": {
+        "realtime": "Realtime",
+        "cron": "Scheduled",
+        "admin": "Manual"
+      },
+      "pinned": "Pinned",
+      "grouped": "Grouped",
+      "sent7d": "{count} sent · 7d",
+      "failed7d": "{count} failed",
+      "locked": "Always on",
+      "customCopy": "Custom copy",
+      "transactional": "Transactional",
+      "empty": "No notification types"
+    },
+    "kinds": {
+      "siteAnnouncement": "Announcement",
+      "adminMessage": "Direct message"
+    },
+    "areas": {
+      "official": "Official",
+      "words": "Word alerts",
+      "community": "Community",
+      "lifecycle": "Lifecycle",
+      "transactional": "Transactional"
     }
+  },
+  "adminLayout": {
+    "sections": {
+      "home": "Home",
+      "moderation": "Moderation",
+      "communication": "Comms",
+      "people": "People"
+    },
+    "on": "On",
+    "jumpTo": "Jump to…",
+    "site": "Site",
+    "status": "Status",
+    "noMatches": "No matches",
+    "menu": "Menu",
+    "close": "Close",
+    "toggleSidebar": "Toggle sidebar",
+    "reload": "Reload"
   }
 }

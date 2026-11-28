@@ -1,8 +1,13 @@
 <script setup lang="ts">
-import { mdiClose, mdiCogOutline, mdiEmailOutline, mdiEyeOutline, mdiLockOutline, mdiSend } from '@mdi/js';
+import { watchDebounced } from '@vueuse/core';
+import { mdiClose, mdiEmailOutline, mdiLockOutline, mdiPencilOutline, mdiRefresh, mdiSend } from '@mdi/js';
 import type { ListAdminNotificationSettingsResponse } from '@brigadasos/nadeshiko-sdk';
 import { handleApiError } from '~/utils/apiError';
 import { useToastSuccess } from '~/utils/toast';
+import AdminUiBadge, { type AdminTone } from './ui/Badge.vue';
+import AdminUiCard from './ui/Card.vue';
+import AdminUiEmpty from './ui/Empty.vue';
+import AdminUiSwitch from './ui/Switch.vue';
 
 type SettingItem = ListAdminNotificationSettingsResponse['items'][number];
 
@@ -13,6 +18,7 @@ const store = userStore();
 
 const items = ref<SettingItem[]>([]);
 const isLoading = ref(false);
+const loaded = ref(false);
 const savingKind = ref<string | null>(null);
 const editingParamsItem = ref<SettingItem | null>(null);
 const paramDraft = ref<Record<string, number>>({});
@@ -24,28 +30,44 @@ const bodyDraft = ref('');
 const previewHtml = ref('');
 const previewSubject = ref('');
 const isPreviewing = ref(false);
+const isSendingTest = ref(false);
 const isSavingTemplate = ref(false);
 const testEmailTo = ref(store.userEmail ?? '');
+
+const mounted = ref(false);
+onMounted(() => (mounted.value = true));
 
 function formatVar(name: string): string {
   return `{{${name}}}`;
 }
 
+/** `checkins` → `Checkins`. */
+function capitalize(value: string): string {
+  const text = value.replace(/-/g, ' ');
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+function triggerTone(item: SettingItem): AdminTone {
+  return item.trigger === 'cron' ? 'violet' : item.trigger === 'realtime' ? 'info' : 'neutral';
+}
+
+function triggerLabel(item: SettingItem): string {
+  if (item.trigger === 'cron') return item.schedule ?? t('adminNotifications.registry.triggers.cron');
+  return t(`adminNotifications.registry.triggers.${item.trigger}`);
+}
+
+function paramsSummary(item: SettingItem): string {
+  return item.paramFields.map((f) => `${f.label}: ${item.params[f.key] ?? item.defaultParams[f.key]}`).join(' · ');
+}
+
 const emailItems = computed(() => items.value.filter((i) => i.channels.email));
 
 const AREA_ORDER = ['official', 'words', 'community', 'lifecycle', 'transactional'] as const;
-const AREA_LABELS: Record<string, string> = {
-  official: 'Official & broadcasts',
-  words: 'Word alerts',
-  community: 'Community',
-  lifecycle: 'Lifecycle & retention',
-  transactional: 'Transactional & auth',
-};
 
 const groupedEmailItems = computed(() =>
   AREA_ORDER.map((area) => ({
     area,
-    label: AREA_LABELS[area] ?? area,
+    label: t(`adminNotifications.areas.${area}`),
     items: emailItems.value.filter((i) => i.area === area),
   })).filter((g) => g.items.length > 0),
 );
@@ -59,6 +81,7 @@ async function load() {
     handleApiError('admin:email-settings-load-failed', err);
   } finally {
     isLoading.value = false;
+    loaded.value = true;
   }
 }
 
@@ -76,13 +99,23 @@ async function toggleEmail(item: SettingItem) {
   }
 }
 
-function openParams(item: SettingItem) {
-  editingParamsItem.value = item;
+function fillParamDraft(item: SettingItem) {
   const next: Record<string, number> = {};
   for (const field of item.paramFields) {
     next[field.key] = Number(item.params[field.key] ?? item.defaultParams[field.key] ?? field.min);
   }
   paramDraft.value = next;
+}
+
+function openParams(item: SettingItem) {
+  editingParamsItem.value = item;
+  fillParamDraft(item);
+}
+
+/** One Edit per row: the template editor when the copy is editable (it carries the parameters too), else the drawer. */
+function openEditor(item: SettingItem) {
+  if (item.editableTemplate) void openTemplateEditor(item);
+  else openParams(item);
 }
 
 async function saveParams(reset = false) {
@@ -107,6 +140,7 @@ async function openTemplateEditor(item: SettingItem) {
   editingTemplate.value = item;
   subjectDraft.value = item.subjectOverride ?? item.defaultSubject ?? '';
   bodyDraft.value = item.bodyOverride ?? item.defaultBodyMarkdown ?? '';
+  fillParamDraft(item);
   previewHtml.value = '';
   previewSubject.value = '';
   await refreshPreview();
@@ -120,6 +154,7 @@ async function refreshPreview(sendTest = false) {
   const item = editingTemplate.value;
   if (!item) return;
   isPreviewing.value = true;
+  if (sendTest) isSendingTest.value = true;
   try {
     const res = await sdk.previewAdminEmailTemplate({
       kind: item.kind,
@@ -136,8 +171,18 @@ async function refreshPreview(sendTest = false) {
     handleApiError('admin:email-template-preview-failed', err);
   } finally {
     isPreviewing.value = false;
+    isSendingTest.value = false;
   }
 }
+
+/** Live preview while typing. */
+watchDebounced(
+  [subjectDraft, bodyDraft],
+  () => {
+    if (editingTemplate.value) void refreshPreview();
+  },
+  { debounce: 700 },
+);
 
 async function saveTemplate(reset = false) {
   const item = editingTemplate.value;
@@ -151,10 +196,12 @@ async function saveTemplate(reset = false) {
             kind: item.kind,
             subjectOverride: subjectDraft.value.trim() || null,
             bodyOverride: bodyDraft.value.trim() || null,
+            ...(item.paramFields.length > 0 ? { params: { ...paramDraft.value } } : {}),
           },
     );
     item.subjectOverride = updated.subjectOverride ?? null;
     item.bodyOverride = updated.bodyOverride ?? null;
+    if (updated.params) item.params = updated.params;
     if (reset) {
       subjectDraft.value = item.defaultSubject ?? '';
       bodyDraft.value = item.defaultBodyMarkdown ?? '';
@@ -175,109 +222,85 @@ defineExpose({ refresh: load });
 </script>
 
 <template>
-  <div class="space-y-6">
-    <div v-if="isLoading && emailItems.length === 0" class="py-12 text-center">
-      <div
-        class="inline-block size-6 animate-spin rounded-full border-[3px] border-current border-t-transparent text-ink"
-        role="status"
-      />
-    </div>
+  <div class="space-y-4">
+    <!-- Loading -->
+    <AdminUiCard v-if="!loaded || (isLoading && emailItems.length === 0)" flush>
+      <div v-for="n in 5" :key="n" class="flex items-center gap-4 border-b border-hairline px-4 py-3.5 last:border-0">
+        <div class="flex-1 space-y-2">
+          <span class="block h-3 w-40 animate-pulse rounded bg-surface-lift" />
+          <span class="block h-2.5 w-64 animate-pulse rounded bg-surface-lift" />
+        </div>
+        <span class="h-5 w-9 animate-pulse rounded-full bg-surface-lift" />
+      </div>
+    </AdminUiCard>
 
-    <div v-for="group in groupedEmailItems" :key="group.area" class="space-y-2">
-      <h2 class="px-1 text-xs font-semibold uppercase tracking-wider text-ink-faint">
-        {{ group.label }}
-      </h2>
+    <AdminUiCard v-else-if="emailItems.length === 0" flush>
+      <AdminUiEmpty :icon="mdiEmailOutline" :text="t('adminNotifications.registry.empty')" />
+    </AdminUiCard>
 
-      <div class="divide-y divide-hairline overflow-hidden rounded-xl border border-hairline bg-surface/40">
-        <div
+    <AdminUiCard v-for="group in groupedEmailItems" :key="group.area" flush>
+      <template #header>
+        <div class="flex items-center gap-2">
+          <h2 class="text-[13px] font-semibold text-ink">{{ group.label }}</h2>
+          <span class="rounded bg-surface-lift px-1 text-[11px] tabular-nums text-ink-faint">{{ group.items.length }}</span>
+        </div>
+      </template>
+
+      <ul class="divide-y divide-hairline">
+        <li
           v-for="item in group.items"
           :key="item.kind"
-          class="flex flex-col gap-3 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:gap-6"
+          :data-testid="`email-type-${item.kind}`"
+          class="flex flex-col gap-2 px-4 py-3 transition-colors hover:bg-surface-hover/50 sm:flex-row sm:items-center sm:gap-6"
         >
-          <div class="min-w-0 flex-1">
+          <div class="min-w-0 flex-1" :title="item.description">
             <div class="flex flex-wrap items-center gap-2">
-              <UiBaseIcon :path="mdiEmailOutline" :size="15" class="shrink-0 text-brand" />
-              <span class="text-sm font-medium text-ink">{{ item.label }}</span>
-              <code class="rounded bg-surface-lift px-1.5 py-0.5 text-[11px] text-ink-faint">{{ item.kind }}</code>
-              <span
-                v-if="item.subjectOverride || item.bodyOverride"
-                class="rounded-full border border-amber-500/30 bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-300"
-              >
-                Custom copy
-              </span>
-              <span
-                v-if="item.alwaysEnabled"
-                class="inline-flex items-center gap-1 rounded-full border border-hairline bg-surface-lift px-2 py-0.5 text-[10px] font-medium text-ink-faint"
-              >
-                <UiBaseIcon :path="mdiLockOutline" :size="11" />
-                Locked ON
-              </span>
+              <span class="text-[13px] font-medium text-ink">{{ item.label }}</span>
+              <AdminUiBadge :tone="triggerTone(item)">{{ triggerLabel(item) }}</AdminUiBadge>
+              <AdminUiBadge v-if="item.subjectOverride || item.bodyOverride" tone="warning">
+                {{ t('adminNotifications.registry.customCopy') }}
+              </AdminUiBadge>
             </div>
-
-            <p class="mt-1 text-xs leading-relaxed text-ink-muted">{{ item.description }}</p>
-
-            <div class="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-ink-faint">
-              <span>{{ item.schedule ? `${item.trigger} · ${item.schedule}` : item.trigger }}</span>
+            <div class="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs text-ink-faint">
+              <span>{{ item.emailFrom ? `${item.emailFrom}@` : '—' }}</span>
               <span>·</span>
-              <span>{{ item.emailFrom ? `${item.emailFrom}@` : '—' }} · {{ item.emailCategory ?? 'transactional' }}</span>
+              <span>{{ item.emailCategory ? capitalize(item.emailCategory) : t('adminNotifications.registry.transactional') }}</span>
               <span>·</span>
-              <span class="tabular-nums">
-                7d: {{ formatNumber(item.stats7d.emailSent) }} sent
-                <span v-if="item.stats7d.emailFailed > 0" class="text-red-300">
-                  ({{ formatNumber(item.stats7d.emailFailed) }} failed)
-                </span>
-              </span>
-              <template v-if="item.paramFields.length > 0">
+              <span class="tabular-nums">{{ t('adminNotifications.registry.sent7d', { count: formatNumber(item.stats7d.emailSent) }) }}</span>
+              <template v-if="item.stats7d.emailFailed > 0">
                 <span>·</span>
-                <span class="font-mono text-ink-muted">
-                  {{ item.paramFields.map((f) => `${f.key}=${item.params[f.key]}`).join(', ') }}
+                <span class="tabular-nums text-red-400">
+                  {{ t('adminNotifications.registry.failed7d', { count: formatNumber(item.stats7d.emailFailed) }) }}
                 </span>
               </template>
             </div>
           </div>
 
-          <div class="flex shrink-0 flex-wrap items-center gap-2.5">
+          <div class="flex shrink-0 items-center gap-3">
             <button
-              v-if="item.paramFields.length > 0"
+              v-if="item.editableTemplate || item.paramFields.length > 0"
               type="button"
-              class="nd-btn !h-8 text-xs"
-              @click="openParams(item)"
+              :data-testid="`email-type-edit-${item.kind}`"
+              :title="item.paramFields.length > 0 ? paramsSummary(item) : undefined"
+              class="nd-btn !h-7 !text-xs"
+              @click="openEditor(item)"
             >
-              <UiBaseIcon :path="mdiCogOutline" :size="14" />
+              <UiBaseIcon :path="mdiPencilOutline" :size="14" w="w-3.5" h="h-3.5" />
               <span>{{ t('adminNotifications.registry.edit') }}</span>
             </button>
-            <button
-              v-if="item.editableTemplate"
-              type="button"
-              class="nd-btn !h-8 text-xs"
-              @click="openTemplateEditor(item)"
-            >
-              <UiBaseIcon :path="mdiEyeOutline" :size="14" />
-              <span>{{ t('adminEmails.templates.editTemplate') }}</span>
-            </button>
-            <button
-              type="button"
-              role="switch"
-              :aria-checked="item.emailEnabled"
-              :aria-label="item.label"
-              :disabled="item.alwaysEnabled || savingKind === item.kind"
-              :class="[
-                'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:cursor-not-allowed disabled:opacity-50',
-                item.emailEnabled ? 'bg-brand-solid' : 'bg-gray-600',
-              ]"
-              @click="toggleEmail(item)"
-            >
-              <span
-                :class="[
-                  'pointer-events-none inline-block size-5 transform rounded-full bg-white shadow transition duration-200 ease-in-out',
-                  item.emailEnabled ? 'translate-x-5' : 'translate-x-0',
-                ]"
-              />
-            </button>
+            <span v-if="item.alwaysEnabled" :title="t('adminNotifications.registry.locked')" class="text-ink-faint">
+              <UiBaseIcon :path="mdiLockOutline" :size="14" w="w-3.5" h="h-3.5" />
+            </span>
+            <AdminUiSwitch
+              :model-value="item.emailEnabled"
+              :label="item.label"
+              :disabled="item.alwaysEnabled || (mounted && savingKind === item.kind)"
+              @update:model-value="toggleEmail(item)"
+            />
           </div>
-        </div>
-      </div>
-    </div>
+        </li>
+      </ul>
+    </AdminUiCard>
 
     <!-- Parameter drawer -->
     <CommonBaseModal
@@ -289,48 +312,57 @@ defineExpose({ refresh: load });
       @close="editingParamsItem = null"
     >
       <template v-if="editingParamsItem">
-        <div class="nd-modal-header">
-          <h2 id="admin-email-params-title" class="min-w-0 truncate font-bold text-ink">
-            {{ editingParamsItem.label }}
-          </h2>
+        <div class="flex items-start justify-between gap-3 border-b border-hairline px-5 py-4">
+          <div class="min-w-0 space-y-1">
+            <h2 id="admin-email-params-title" class="text-[15px] font-semibold leading-snug text-ink">
+              {{ editingParamsItem.label }}
+            </h2>
+            <p class="text-xs text-ink-muted">{{ editingParamsItem.description }}</p>
+          </div>
           <button
             type="button"
-            :aria-label="t('adminEmails.detail.close')"
-            class="inline-flex size-8 items-center justify-center rounded-md text-ink-faint transition hover:bg-lift hover:text-ink"
+            :aria-label="t('common.close')"
+            class="inline-flex size-8 shrink-0 items-center justify-center rounded-md text-ink-faint transition hover:bg-surface-hover hover:text-ink"
             @click="editingParamsItem = null"
           >
-            <UiBaseIcon :path="mdiClose" :size="16" />
+            <UiBaseIcon :path="mdiClose" :size="16" w="w-4" h="h-4" />
           </button>
         </div>
 
         <div class="flex-1 space-y-4 px-5 py-4">
-          <p class="text-xs leading-relaxed text-ink-muted">{{ editingParamsItem.description }}</p>
-          <div v-for="field in editingParamsItem.paramFields" :key="field.key" class="space-y-1">
-            <label :for="`email-param-${field.key}`" class="block text-sm font-medium text-ink">{{ field.label }}</label>
-            <p class="text-xs text-ink-faint">{{ field.description }}</p>
+          <div v-for="field in editingParamsItem.paramFields" :key="field.key">
+            <label :for="`email-param-${field.key}`" class="nd-admin-label">{{ field.label }}</label>
             <input
               :id="`email-param-${field.key}`"
               v-model.number="paramDraft[field.key]"
               type="number"
               :min="field.min"
               :max="field.max"
-              class="nd-input max-w-[10rem]"
+              :title="field.description"
+              class="nd-input !h-8 max-w-[10rem] !text-[13px]"
             />
+            <p class="mt-1 text-xs text-ink-faint">{{ field.description }}</p>
           </div>
         </div>
 
-        <div class="flex items-center justify-between border-t border-hairline px-5 py-3">
-          <button type="button" class="nd-btn text-xs" @click="saveParams(true)">
+        <div class="flex items-center justify-end gap-2 border-t border-hairline px-5 py-3">
+          <button
+            type="button"
+            :disabled="savingKind === editingParamsItem.kind"
+            class="nd-btn !h-8 !text-[13px]"
+            @click="saveParams(true)"
+          >
             {{ t('adminNotifications.registry.reset') }}
           </button>
-          <div class="flex gap-2">
-            <button type="button" class="nd-btn" @click="editingParamsItem = null">
-              {{ t('adminEmails.detail.close') }}
-            </button>
-            <button type="button" class="nd-btn-accent" @click="saveParams(false)">
-              {{ t('adminNotifications.registry.save') }}
-            </button>
-          </div>
+          <button
+            type="button"
+            :disabled="savingKind === editingParamsItem.kind"
+            class="nd-btn-accent !h-8 !text-[13px]"
+            @click="saveParams(false)"
+          >
+            <span v-if="savingKind === editingParamsItem.kind" class="nd-spinner" />
+            {{ t('adminNotifications.registry.save') }}
+          </button>
         </div>
       </template>
     </CommonBaseModal>
@@ -339,88 +371,143 @@ defineExpose({ refresh: load });
     <CommonBaseModal
       :open="Boolean(editingTemplate)"
       labelledby="admin-email-template-title"
-      overlay-class="items-center justify-center bg-fixed-scrim/70 p-4"
-      panel-class="flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-xl border border-hairline bg-background shadow-2xl"
+      overlay-class="items-center justify-center bg-fixed-scrim/60 p-4"
+      panel-class="flex max-h-[92vh] w-full max-w-6xl flex-col overflow-hidden rounded-xl border border-hairline bg-background shadow-2xl"
       @close="editingTemplate = null"
     >
       <template v-if="editingTemplate">
-        <div class="nd-modal-header">
-          <div class="min-w-0">
-            <h3 id="admin-email-template-title" class="truncate font-bold text-ink">
-              {{ editingTemplate.label }}
-              <code class="ml-1.5 rounded bg-surface-lift px-1.5 py-0.5 text-xs font-normal text-ink-faint">
-                {{ editingTemplate.kind }}
-              </code>
-            </h3>
+        <div class="flex items-start justify-between gap-3 border-b border-hairline px-5 py-4">
+          <div class="min-w-0 space-y-1">
+            <div class="flex flex-wrap items-center gap-2">
+              <h3 id="admin-email-template-title" class="text-[15px] font-semibold leading-snug text-ink">
+                {{ editingTemplate.label }}
+              </h3>
+              <AdminUiBadge :tone="triggerTone(editingTemplate)">{{ triggerLabel(editingTemplate) }}</AdminUiBadge>
+            </div>
+            <p class="text-xs text-ink-muted">{{ editingTemplate.description }}</p>
           </div>
           <button
             type="button"
-            class="inline-flex size-8 items-center justify-center rounded-md text-ink-faint transition hover:bg-lift hover:text-ink"
+            :aria-label="t('common.close')"
+            class="inline-flex size-8 shrink-0 items-center justify-center rounded-md text-ink-faint transition hover:bg-surface-hover hover:text-ink"
             @click="editingTemplate = null"
           >
-            <UiBaseIcon :path="mdiClose" :size="18" />
+            <UiBaseIcon :path="mdiClose" :size="16" w="w-4" h="h-4" />
           </button>
         </div>
 
-        <div class="grid min-h-0 flex-1 grid-cols-1 divide-y divide-hairline overflow-y-auto lg:grid-cols-2 lg:divide-x lg:divide-y-0">
-          <div class="space-y-4 p-5">
-            <div v-if="(editingTemplate.allowedVariables ?? []).length > 0" class="flex flex-wrap items-center gap-1.5">
-              <span class="text-xs text-ink-faint">{{ t('adminEmails.templates.variablesHint') }}</span>
-              <button
-                v-for="v in editingTemplate.allowedVariables ?? []"
-                :key="v"
-                type="button"
-                class="rounded-md border border-hairline bg-surface-lift px-2 py-0.5 font-mono text-[11px] text-ink transition-colors hover:border-brand/50 hover:text-brand"
-                @click="insertVariable(v)"
-              >
-                {{ formatVar(v) }}
-              </button>
+        <div class="grid min-h-0 flex-1 grid-cols-1 overflow-y-auto lg:grid-cols-2 lg:overflow-hidden">
+          <!-- Fields -->
+          <div class="space-y-4 p-5 lg:overflow-y-auto">
+            <div>
+              <label for="admin-email-template-subject" class="nd-admin-label">{{ t('adminEmails.table.subject') }}</label>
+              <input
+                id="admin-email-template-subject"
+                v-model="subjectDraft"
+                type="text"
+                class="nd-input !h-8 !text-[13px]"
+              />
             </div>
 
-            <label class="block space-y-1">
-              <span class="text-xs font-medium text-ink-muted">{{ t('adminEmails.table.subject') }}</span>
-              <input v-model="subjectDraft" type="text" class="nd-input" />
-            </label>
-            <label class="block space-y-1">
-              <span class="text-xs font-medium text-ink-muted">{{ t('adminEmails.templates.bodyMarkdown') }}</span>
-              <textarea v-model="bodyDraft" rows="15" class="nd-input font-mono text-xs leading-relaxed" />
-            </label>
+            <div>
+              <label for="admin-email-template-body" class="nd-admin-label">
+                {{ t('adminEmails.templates.bodyMarkdown') }}
+              </label>
+              <div v-if="(editingTemplate.allowedVariables ?? []).length > 0" class="mb-2 flex flex-wrap gap-1">
+                <button
+                  v-for="v in editingTemplate.allowedVariables ?? []"
+                  :key="v"
+                  type="button"
+                  :title="t('adminEmails.templates.insertVariable')"
+                  class="rounded-md bg-surface-lift px-1.5 py-0.5 font-mono text-[11px] text-ink-muted transition-colors hover:bg-brand/15 hover:text-brand"
+                  @click="insertVariable(v)"
+                >
+                  {{ formatVar(v) }}
+                </button>
+              </div>
+              <textarea
+                id="admin-email-template-body"
+                v-model="bodyDraft"
+                rows="16"
+                class="nd-input resize-y font-mono !text-xs leading-relaxed"
+              />
+            </div>
 
-            <div class="flex flex-wrap items-center gap-2 pt-1">
-              <input v-model="testEmailTo" type="email" placeholder="you@nadeshiko.co" class="nd-input max-w-[14rem]" />
-              <button type="button" :disabled="isPreviewing" class="nd-btn" @click="refreshPreview(true)">
-                <UiBaseIcon :path="mdiSend" :size="14" />
-                <span>{{ t('adminEmails.templates.sendTest') }}</span>
-              </button>
-              <button type="button" :disabled="isPreviewing" class="nd-btn" @click="refreshPreview(false)">
-                {{ t('adminEmails.templates.refreshPreview') }}
-              </button>
+            <div v-if="editingTemplate.paramFields.length > 0" class="space-y-3 border-t border-hairline pt-4">
+              <h4 class="text-[13px] font-semibold text-ink">{{ t('adminNotifications.registry.params') }}</h4>
+              <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div v-for="field in editingTemplate.paramFields" :key="field.key">
+                  <label :for="`email-tpl-param-${field.key}`" class="nd-admin-label">{{ field.label }}</label>
+                  <input
+                    :id="`email-tpl-param-${field.key}`"
+                    v-model.number="paramDraft[field.key]"
+                    type="number"
+                    :min="field.min"
+                    :max="field.max"
+                    :title="field.description"
+                    class="nd-input !h-8 !text-[13px]"
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
-          <div class="flex flex-col bg-[#1d1d1d]">
-            <div class="border-b border-hairline bg-surface px-4 py-2.5 text-xs text-ink-muted">
-              <strong class="text-ink">{{ t('adminEmails.table.subject') }}:</strong>
-              {{ previewSubject || subjectDraft }}
+          <!-- Live preview -->
+          <div class="flex min-h-[460px] flex-col border-t border-hairline bg-surface lg:border-l lg:border-t-0">
+            <div class="flex items-center gap-3 border-b border-hairline px-4 py-2.5">
+              <div class="min-w-0 flex-1 truncate text-[13px] text-ink">
+                <span class="text-ink-faint">{{ t('adminEmails.table.subject') }}:</span>
+                {{ previewSubject || subjectDraft }}
+              </div>
+              <button
+                type="button"
+                :disabled="isPreviewing"
+                :aria-label="t('adminEmails.templates.refreshPreview')"
+                :title="t('adminEmails.templates.refreshPreview')"
+                class="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-ink-faint transition hover:bg-surface-hover hover:text-ink"
+                @click="refreshPreview(false)"
+              >
+                <UiBaseIcon :path="mdiRefresh" :size="15" w="w-4" h="h-4" :class="{ 'animate-spin': isPreviewing }" />
+              </button>
             </div>
             <iframe
               :srcdoc="previewHtml"
               sandbox=""
-              class="min-h-[440px] w-full flex-1 border-0 bg-[#1d1d1d]"
-              title="Email preview"
+              class="w-full flex-1 border-0 bg-card-background"
+              :title="t('adminEmails.templates.preview')"
             />
           </div>
         </div>
 
-        <div class="flex items-center justify-between border-t border-hairline px-5 py-3">
-          <button type="button" :disabled="isSavingTemplate" class="nd-btn text-xs" @click="saveTemplate(true)">
+        <div class="flex flex-wrap items-center justify-between gap-2 border-t border-hairline px-5 py-3">
+          <button type="button" :disabled="isSavingTemplate" class="nd-btn !h-8 !text-[13px]" @click="saveTemplate(true)">
             {{ t('adminEmails.templates.resetDefault') }}
           </button>
-          <div class="flex gap-2">
-            <button type="button" class="nd-btn" @click="editingTemplate = null">
-              {{ t('adminEmails.detail.close') }}
+          <div class="flex flex-wrap items-center gap-2">
+            <input
+              v-model="testEmailTo"
+              type="email"
+              :placeholder="t('adminEmails.templates.testTo')"
+              :aria-label="t('adminEmails.templates.testTo')"
+              class="nd-input !h-8 w-56 !text-[13px]"
+            />
+            <button
+              type="button"
+              :disabled="isPreviewing || !testEmailTo.trim()"
+              class="nd-btn !h-8 !text-[13px]"
+              @click="refreshPreview(true)"
+            >
+              <span v-if="isSendingTest" class="nd-spinner" />
+              <UiBaseIcon v-else :path="mdiSend" :size="14" w="w-3.5" h="h-3.5" />
+              <span>{{ t('adminEmails.templates.sendTest') }}</span>
             </button>
-            <button type="button" :disabled="isSavingTemplate" class="nd-btn-accent" @click="saveTemplate(false)">
+            <button
+              type="button"
+              :disabled="isSavingTemplate"
+              class="nd-btn-accent !h-8 !text-[13px]"
+              @click="saveTemplate(false)"
+            >
+              <span v-if="isSavingTemplate" class="nd-spinner" />
               {{ t('adminNotifications.registry.save') }}
             </button>
           </div>

@@ -26,6 +26,8 @@ export function useSpanishLocaleNudge() {
 
   function offerSpanishIfWanted() {
     const storage = import.meta.client ? window.localStorage : undefined;
+    // The admin is operator tooling; never promote the reader site there.
+    if (import.meta.client && /\/admin(\/|$)/.test(window.location.pathname)) return;
 
     const offer = shouldOfferSpanish({
       locale: $i18n.locale.value,

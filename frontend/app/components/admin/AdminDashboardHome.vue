@@ -2,6 +2,7 @@
 import {
   mdiAccountGroupOutline,
   mdiArrowRight,
+  mdiCheckCircleOutline,
   mdiEmailOutline,
   mdiHeartOutline,
   mdiOpenInNew,
@@ -9,6 +10,11 @@ import {
   mdiShieldCrownOutline,
   mdiThumbUpOutline,
 } from '@mdi/js';
+import AdminUiBadge from './ui/Badge.vue';
+import AdminUiCard from './ui/Card.vue';
+import AdminUiEmpty from './ui/Empty.vue';
+import AdminUiPageHeader from './ui/PageHeader.vue';
+import AdminUiStatStrip, { type AdminStat } from './ui/StatStrip.vue';
 import {
   ADMIN_CATEGORIES,
   ADMIN_DIRECTORY_ITEMS,
@@ -21,190 +27,169 @@ const { formatNumber } = useFormat();
 const localePath = useLocalePath();
 
 const { overview, isLoading, refresh } = useAdminOverview();
+// Spin only after hydration so SSR and client render the same markup.
+const mounted = ref(false);
+onMounted(() => (mounted.value = true));
 
-const pulseCards = computed(() => {
+const stats = computed<AdminStat[]>(() => {
   const o = overview.value;
   const emailProblems = (o?.emails?.failed ?? 0) + (o?.emails?.bounced ?? 0);
   return [
     {
       id: 'reports',
       label: t('accountSettings.tabs.reports'),
-      value: o ? formatNumber(o.reports.open) : '—',
-      sub: 'open reports',
+      value: o ? formatNumber(o.reports.open) : null,
+      sub: t('adminDashboard.kpi.open'),
       icon: mdiShieldCrownOutline,
       to: '/admin/reports',
-      tone: o && o.reports.open > 0 ? 'text-brand' : 'text-ink',
+      tone: o && o.reports.open > 0 ? 'brand' : 'neutral',
     },
     {
       id: 'requests',
       label: t('requests.admin.tab'),
-      value: o ? formatNumber(o.requests.open) : '—',
-      sub: o && o.requests.boostedOpen > 0 ? `${o.requests.boostedOpen} boosted` : 'open requests',
+      value: o ? formatNumber(o.requests.open) : null,
+      sub:
+        o && o.requests.boostedOpen > 0
+          ? t('adminDashboard.kpi.boosted', { n: formatNumber(o.requests.boostedOpen) })
+          : t('adminDashboard.kpi.open'),
       icon: mdiThumbUpOutline,
       to: '/admin/requests',
-      tone: o && o.requests.boostedOpen > 0 ? 'text-amber-300' : 'text-ink',
+      tone: o && o.requests.boostedOpen > 0 ? 'warning' : 'neutral',
     },
     {
       id: 'users',
       label: t('accountSettings.tabs.users'),
-      value: o ? formatNumber(o.users.total) : '—',
-      sub: 'total accounts',
+      value: o ? formatNumber(o.users.total) : null,
+      sub: t('adminDashboard.kpi.accounts'),
       icon: mdiAccountGroupOutline,
       to: '/admin/users',
-      tone: 'text-ink',
     },
     {
       id: 'patrons',
       label: t('adminDashboard.items.patreonTitle'),
-      value: o ? formatNumber(o.users.activePatrons) : '—',
-      sub: 'active patrons',
+      value: o ? formatNumber(o.users.activePatrons) : null,
+      sub: t('adminDashboard.kpi.activePatrons'),
       icon: mdiHeartOutline,
       to: '/admin/patreon',
-      tone: o && o.users.activePatrons > 0 ? 'text-emerald-300' : 'text-ink',
+      tone: o && o.users.activePatrons > 0 ? 'success' : 'neutral',
     },
     {
       id: 'emails',
       label: t('adminEmails.title'),
-      value: o ? formatNumber(emailProblems) : '—',
-      sub: '24h issues',
+      value: o ? formatNumber(emailProblems) : null,
+      sub: t('adminDashboard.kpi.issues24h'),
       icon: mdiEmailOutline,
       to: '/admin/emails',
-      tone: o?.emails?.failed ? 'text-red-300' : emailProblems > 0 ? 'text-amber-300' : 'text-emerald-300',
+      tone: o?.emails?.failed ? 'danger' : emailProblems > 0 ? 'warning' : 'success',
     },
   ];
 });
 
+const directory = computed(() =>
+  ADMIN_DIRECTORY_ITEMS.map((item) => ({ item, badge: item.badge ? item.badge(overview.value) : null })),
+);
+
+/** Directory entries whose badge asks for action (anything but a neutral count). */
+const attention = computed(() =>
+  directory.value.filter(({ badge }) => badge && badge.tone !== 'neutral' && badge.tone !== 'success'),
+);
+
 function itemsForCategory(category: AdminCategoryId) {
-  return ADMIN_DIRECTORY_ITEMS.filter((item) => item.category === category).map((item) => ({
-    item,
-    badge: item.badge ? item.badge(overview.value) : null,
-  }));
+  return directory.value.filter(({ item }) => item.category === category);
 }
 
 function badgeLabel(badge: AdminDirectoryBadge): string {
   return badge.key ? t(badge.key) : formatNumber(badge.count);
 }
-
-function badgeClasses(tone: 'brand' | 'warning' | 'danger' | 'success' | 'neutral'): string {
-  switch (tone) {
-    case 'brand':
-      return 'bg-brand/15 text-brand border-brand/30';
-    case 'warning':
-      return 'bg-amber-500/15 text-amber-300 border-amber-500/30';
-    case 'danger':
-      return 'bg-red-500/15 text-red-300 border-red-500/30';
-    case 'success':
-      return 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30';
-    default:
-      return 'bg-surface-lift text-ink-muted border-hairline';
-  }
-}
 </script>
 
 <template>
   <div data-testid="admin-dashboard-home" class="space-y-6">
-    <!-- PostHog-style compact page header -->
-    <div class="flex items-center justify-between gap-3 border-b border-hairline pb-4">
-      <div>
-        <h1 class="text-lg font-semibold tracking-tight text-ink">
-          {{ t('adminDashboard.title') }}
-        </h1>
-        <p class="text-xs text-ink-muted">
-          {{ t('adminDashboard.subtitle') }}
-        </p>
-      </div>
+    <AdminUiPageHeader :title="t('adminDashboard.title')">
+      <template #actions>
+        <button
+          type="button"
+          data-testid="admin-refresh-overview"
+          :disabled="mounted && isLoading"
+          :aria-label="t('adminDashboard.nav.refresh')"
+          class="nd-btn !h-8 !text-[13px]"
+          @click="refresh()"
+        >
+          <UiBaseIcon
+            :path="mdiRefresh"
+            :size="15"
+            w="w-4"
+            h="h-4"
+            :class="{ 'animate-spin': mounted && isLoading }"
+          />
+          <span>{{ t('adminLayout.reload') }}</span>
+        </button>
+      </template>
+    </AdminUiPageHeader>
 
-      <button
-        type="button"
-        data-testid="admin-refresh-overview"
-        :disabled="isLoading"
-        :aria-label="t('adminDashboard.nav.refresh')"
-        :title="t('adminDashboard.nav.refresh')"
-        class="nd-btn !h-8 text-xs"
-        @click="refresh()"
-      >
-        <UiBaseIcon :path="mdiRefresh" :size="14" :class="{ 'animate-spin': isLoading }" />
-        <span>Reload</span>
-      </button>
-    </div>
+    <AdminUiStatStrip :stats="stats" />
 
-    <!-- Compact joined KPI metric strip -->
-    <div class="grid grid-cols-2 divide-y divide-hairline overflow-hidden rounded-lg border border-hairline bg-card-background sm:grid-cols-3 sm:divide-y-0 sm:divide-x lg:grid-cols-5">
-      <NuxtLink
-        v-for="card in pulseCards"
-        :key="card.id"
-        :to="localePath(card.to)"
-        class="group flex flex-col justify-between px-4 py-3 transition-colors hover:bg-surface-hover"
-      >
-        <div class="flex items-center justify-between text-[11px] font-medium text-ink-faint">
-          <span>{{ card.label }}</span>
-          <UiBaseIcon :path="card.icon" :size="14" class="text-ink-faint group-hover:text-brand transition-colors" />
-        </div>
-        <div class="mt-1.5 flex items-baseline justify-between gap-2">
-          <span :class="['text-xl font-bold tabular-nums tracking-tight', card.tone]">{{ card.value }}</span>
-          <span class="truncate text-[11px] text-ink-faint">{{ card.sub }}</span>
-        </div>
-      </NuxtLink>
-    </div>
-
-    <!-- Categorized flat workspace panels -->
-    <section
-      data-testid="admin-directory"
-      class="grid grid-cols-1 gap-4 md:grid-cols-3"
-    >
-      <div
-        v-for="cat in ADMIN_CATEGORIES"
-        :key="cat.id"
-        :data-testid="`admin-section-${cat.id}`"
-        class="overflow-hidden rounded-lg border border-hairline bg-card-background"
-      >
-        <div class="border-b border-hairline bg-surface/60 px-3.5 py-2">
-          <h2 class="text-[11px] font-semibold uppercase tracking-wider text-ink-faint">
-            {{ t(cat.labelKey) }}
-          </h2>
-        </div>
-
-        <ul class="divide-y divide-hairline">
-          <li v-for="{ item, badge } in itemsForCategory(cat.id)" :key="item.id">
+    <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
+      <!-- Needs attention -->
+      <AdminUiCard :title="t('adminDashboard.attention')" flush class="lg:col-span-1">
+        <template #actions>
+          <AdminUiBadge v-if="attention.length" tone="warning">{{ attention.length }}</AdminUiBadge>
+        </template>
+        <ul v-if="attention.length" class="divide-y divide-hairline">
+          <li v-for="{ item, badge } in attention" :key="item.id">
             <NuxtLink
-              :to="item.external ? item.to : localePath(item.to)"
-              :target="item.external ? '_blank' : undefined"
-              :rel="item.external ? 'noopener noreferrer' : undefined"
-              :data-testid="`admin-dir-${item.id}`"
-              class="group flex items-center gap-3 px-3.5 py-2.5 transition-colors hover:bg-surface-hover"
+              :to="localePath(item.to)"
+              class="group flex items-center gap-3 px-4 py-3 transition-colors hover:bg-surface-hover"
             >
-              <span class="flex size-7 shrink-0 items-center justify-center rounded-md bg-surface-lift text-brand">
-                <UiBaseIcon :path="item.icon" :size="16" />
-              </span>
-              <span class="min-w-0 flex-1">
-                <span class="flex items-center gap-1.5">
-                  <span class="truncate text-xs font-semibold text-ink group-hover:text-brand transition-colors">
-                    {{ t(item.titleKey) }}
-                  </span>
-                  <UiBaseIcon v-if="item.external" :path="mdiOpenInNew" :size="11" class="shrink-0 text-ink-faint" />
-                  <span
-                    v-if="badge"
-                    :class="[
-                      'rounded-full border px-1.5 py-0.5 text-[10px] font-semibold leading-none tabular-nums',
-                      badgeClasses(badge.tone),
-                    ]"
-                  >
-                    {{ badgeLabel(badge) }}
-                  </span>
-                </span>
-                <span class="mt-0.5 block truncate text-[11px] text-ink-faint">
-                  {{ t(item.descriptionKey) }}
-                </span>
-              </span>
+              <UiBaseIcon :path="item.icon" :size="16" w="w-4" h="h-4" class="shrink-0 text-ink-faint" />
+              <span class="min-w-0 flex-1 truncate text-[13px] font-medium text-ink">{{ t(item.titleKey) }}</span>
+              <AdminUiBadge v-if="badge" :tone="badge.tone" dot>{{ badgeLabel(badge) }}</AdminUiBadge>
               <UiBaseIcon
                 :path="mdiArrowRight"
-                :size="13"
-                class="shrink-0 text-ink-faint opacity-0 transition-opacity group-hover:opacity-100"
+                :size="14"
+                w="w-3.5"
+                h="h-3.5"
+                class="shrink-0 text-ink-faint transition-transform group-hover:translate-x-0.5"
               />
             </NuxtLink>
           </li>
         </ul>
-      </div>
-    </section>
+        <AdminUiEmpty v-else :icon="mdiCheckCircleOutline" :text="t('adminDashboard.allClear')" compact />
+      </AdminUiCard>
+
+      <!-- Directory -->
+      <section data-testid="admin-directory" class="grid grid-cols-1 gap-4 sm:grid-cols-3 lg:col-span-2">
+        <AdminUiCard
+          v-for="cat in ADMIN_CATEGORIES"
+          :key="cat.id"
+          :data-testid="`admin-section-${cat.id}`"
+          :title="t(cat.labelKey)"
+          flush
+        >
+          <ul class="p-1.5">
+            <li v-for="{ item, badge } in itemsForCategory(cat.id)" :key="item.id">
+              <NuxtLink
+                :to="item.external ? item.to : localePath(item.to)"
+                :target="item.external ? '_blank' : undefined"
+                :rel="item.external ? 'noopener noreferrer' : undefined"
+                :data-testid="`admin-dir-${item.id}`"
+                class="group flex h-9 items-center gap-2.5 rounded-md px-2.5 transition-colors hover:bg-surface-hover"
+              >
+                <UiBaseIcon
+                  :path="item.icon"
+                  :size="16"
+                  w="w-4"
+                  h="h-4"
+                  class="shrink-0 text-ink-faint transition-colors group-hover:text-brand"
+                />
+                <span class="min-w-0 flex-1 truncate text-[13px] text-ink">{{ t(item.titleKey) }}</span>
+                <UiBaseIcon v-if="item.external" :path="mdiOpenInNew" :size="12" w="w-3" h="h-3" class="text-ink-faint" />
+                <AdminUiBadge v-if="badge" :tone="badge.tone">{{ badgeLabel(badge) }}</AdminUiBadge>
+              </NuxtLink>
+            </li>
+          </ul>
+        </AdminUiCard>
+      </section>
+    </div>
   </div>
 </template>

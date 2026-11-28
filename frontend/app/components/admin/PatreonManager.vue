@@ -10,6 +10,8 @@ import {
   mdiArrowDown,
   mdiArrowUp,
   mdiCheckCircleOutline,
+  mdiHeartOutline,
+  mdiLinkVariantOff,
   mdiMagnify,
   mdiRefresh,
   mdiSwapVertical,
@@ -17,17 +19,18 @@ import {
 } from '@mdi/js';
 import { handleApiError } from '~/utils/apiError';
 import PatreonLinkActions from './PatreonLinkActions.vue';
+import AdminUiBadge, { type AdminTone } from './ui/Badge.vue';
+import AdminUiCard from './ui/Card.vue';
+import AdminUiEmpty from './ui/Empty.vue';
+import AdminUiPageHeader from './ui/PageHeader.vue';
+import AdminUiSegmented, { type AdminSegment } from './ui/Segmented.vue';
+import AdminUiStatStrip, { type AdminStat } from './ui/StatStrip.vue';
+import AdminUiTabs, { type AdminTab } from './ui/Tabs.vue';
 
 type CampaignFilter = 'active' | 'unlinked' | 'paid' | 'all';
 type LinkedFilter = 'all' | 'active' | 'issues';
 type SortKey = 'monthly' | 'lifetime' | 'since';
-type ChipTone = 'brand' | 'warning' | 'danger';
-
-const CHIP_ACTIVE_CLASSES: Record<ChipTone, string> = {
-  brand: 'border-brand-solid bg-brand/15 text-brand font-semibold',
-  warning: 'border-amber-500/60 bg-amber-500/15 text-amber-300 font-semibold',
-  danger: 'border-red-500/60 bg-red-500/15 text-red-300 font-semibold',
-};
+type Tab = 'campaign' | 'linked' | 'tiers';
 
 const SORT_COLUMNS: readonly { key: SortKey; labelKey: string; alignRight: boolean }[] = [
   { key: 'monthly', labelKey: 'adminPatreon.campaign.monthly', alignRight: true },
@@ -45,7 +48,9 @@ const isSyncingAll = ref(false);
 const refreshingUserId = ref<number | null>(null);
 const unlinkingUserId = ref<number | null>(null);
 
-const activeTab = ref<'campaign' | 'linked'>('campaign');
+const activeTab = ref<Tab>('campaign');
+const mounted = ref(false);
+onMounted(() => (mounted.value = true));
 
 const campaignSearch = ref('');
 const campaignFilter = ref<CampaignFilter>('active');
@@ -71,71 +76,78 @@ async function fetchPatreon(refreshCampaign = false) {
 const campaignOk = computed(() => data.value?.campaign.status === 'ok');
 const canResync = computed(() => data.value?.configured ?? false);
 
-const kpis = computed(() => {
-  if (!data.value) return [];
-  const s = data.value.summary;
+const stats = computed<AdminStat[]>(() => {
+  const s = data.value?.summary;
   const ok = campaignOk.value;
   return [
     {
       id: 'monthly',
       label: t('adminPatreon.kpi.monthlyLabel'),
-      value: ok ? formatUsdCents(s.campaignMonthlyCents) : '—',
-      valueClass: ok && s.campaignMonthlyCents > 0 ? 'text-emerald-300' : 'text-ink',
-      sub: t('adminPatreon.kpi.monthlySub', { count: s.campaignActive }),
+      value: s ? (ok ? formatUsdCents(s.campaignMonthlyCents) : '—') : null,
+      sub: s ? t('adminPatreon.kpi.monthlySub', { count: s.campaignActive }) : undefined,
+      tone: ok && s && s.campaignMonthlyCents > 0 ? 'success' : 'neutral',
+      testid: 'kpi-monthly',
     },
     {
       id: 'lifetime',
       label: t('adminPatreon.kpi.lifetimeLabel'),
-      value: ok ? formatUsdCents(s.campaignLifetimeCents) : '—',
-      valueClass: 'text-ink',
-      sub: t('adminPatreon.kpi.lifetimeSub', { count: s.campaignPayingEver }),
+      value: s ? (ok ? formatUsdCents(s.campaignLifetimeCents) : '—') : null,
+      sub: s ? t('adminPatreon.kpi.lifetimeSub', { count: s.campaignPayingEver }) : undefined,
+      testid: 'kpi-lifetime',
     },
     {
       id: 'unlinked',
       label: t('adminPatreon.kpi.unlinkedLabel'),
-      value: ok ? formatNumber(s.campaignUnlinkedActive) : '—',
-      valueClass: !ok ? 'text-ink-faint' : s.campaignUnlinkedActive > 0 ? 'text-amber-300' : 'text-emerald-300',
-      sub: t('adminPatreon.kpi.unlinkedSub', { count: s.campaignActive }),
+      value: s ? (ok ? formatNumber(s.campaignUnlinkedActive) : '—') : null,
+      sub: s ? t('adminPatreon.kpi.unlinkedSub', { count: s.campaignActive }) : undefined,
+      tone: ok && s && s.campaignUnlinkedActive > 0 ? 'warning' : 'neutral',
+      testid: 'kpi-unlinked',
     },
     {
       id: 'issues',
       label: t('adminPatreon.kpi.issuesLabel'),
-      value: formatNumber(s.issues),
-      valueClass: s.issues > 0 ? 'text-red-300' : 'text-ink',
-      sub: t('adminPatreon.kpi.issuesSub', { count: s.totalLinked }),
+      value: s ? formatNumber(s.issues) : null,
+      sub: s ? t('adminPatreon.kpi.issuesSub', { count: s.totalLinked }) : undefined,
+      tone: s && s.issues > 0 ? 'danger' : 'neutral',
+      testid: 'kpi-issues',
     },
   ];
 });
 
-const campaignFilters = computed<{ value: CampaignFilter; tone: ChipTone; label: string }[]>(() => {
+const tabs = computed<AdminTab<Tab>[]>(() => [
+  { value: 'campaign', label: t('adminPatreon.tabs.members'), count: data.value?.campaign.members.length ?? null },
+  {
+    value: 'linked',
+    label: t('adminPatreon.tabs.accounts'),
+    count: data.value?.summary.totalLinked ?? null,
+    alert: (data.value?.summary.issues ?? 0) > 0,
+  },
+  { value: 'tiers', label: t('adminPatreon.tabs.tiers'), count: data.value?.tiers.length ?? null },
+]);
+
+const campaignFilters = computed<AdminSegment<CampaignFilter>[]>(() => {
   const s = data.value?.summary;
   return [
-    { value: 'active', tone: 'brand', label: t('adminPatreon.filters.active', { count: s?.campaignActive ?? 0 }) },
+    { value: 'active', label: t('adminPatreon.segments.active'), count: s?.campaignActive ?? 0 },
+    { value: 'unlinked', label: t('adminPatreon.segments.unlinked'), count: s?.campaignUnlinkedActive ?? 0 },
+    { value: 'paid', label: t('adminPatreon.segments.paid'), count: s?.campaignPayingEver ?? 0 },
+    { value: 'all', label: t('adminPatreon.segments.all'), count: data.value?.campaign.members.length ?? 0 },
+  ];
+});
+
+const linkedFilters = computed<AdminSegment<LinkedFilter>[]>(() => {
+  const s = data.value?.summary;
+  return [
+    { value: 'all', label: t('adminPatreon.segments.all'), count: s?.totalLinked ?? 0 },
+    { value: 'active', label: t('adminPatreon.segments.active'), count: s?.active ?? 0 },
     {
-      value: 'unlinked',
-      tone: 'warning',
-      label: t('adminPatreon.campaign.unlinkedFilter', { count: s?.campaignUnlinkedActive ?? 0 }),
+      value: 'issues',
+      label: t('adminPatreon.segments.issues'),
+      count: s?.issues ?? 0,
+      dot: (s?.issues ?? 0) > 0 ? 'bg-red-400' : undefined,
     },
-    { value: 'paid', tone: 'brand', label: t('adminPatreon.campaign.paidFilter', { count: s?.campaignPayingEver ?? 0 }) },
-    { value: 'all', tone: 'brand', label: t('adminPatreon.filters.all', { count: data.value?.campaign.members.length ?? 0 }) },
   ];
 });
-
-const linkedFilters = computed<{ value: LinkedFilter; tone: ChipTone; label: string }[]>(() => {
-  const s = data.value?.summary;
-  return [
-    { value: 'all', tone: 'brand', label: t('adminPatreon.filters.all', { count: s?.totalLinked ?? 0 }) },
-    { value: 'active', tone: 'brand', label: t('adminPatreon.filters.active', { count: s?.active ?? 0 }) },
-    { value: 'issues', tone: 'danger', label: t('adminPatreon.filters.issues', { count: s?.issues ?? 0 }) },
-  ];
-});
-
-function chipClasses(selected: boolean, tone: ChipTone): string[] {
-  return [
-    'rounded-lg border px-2.5 py-1 text-xs font-medium transition-colors',
-    selected ? CHIP_ACTIVE_CLASSES[tone] : 'border-hairline bg-surface text-ink-muted hover:bg-surface-hover hover:text-ink',
-  ];
-}
 
 const connectionsByUserId = computed(() => {
   const map = new Map<number, AdminPatreonConnection>();
@@ -241,22 +253,16 @@ function patronStatusLabel(status: string | null): string {
   }
 }
 
-function statusPillClasses(status: string | null, isStale = false): string {
-  if (status === 'active_patron' && !isStale) return 'border-emerald-500/30 bg-emerald-500/15 text-emerald-300';
-  if (status === 'declined_patron' || isStale) {
-    return 'border-red-500/30 bg-red-500/15 text-red-300';
-  }
-  return 'border-hairline bg-surface-lift text-ink-muted';
+function patronTone(status: string | null, isStale = false): AdminTone {
+  if (status === 'active_patron' && !isStale) return 'success';
+  if (status === 'declined_patron' || isStale) return 'danger';
+  return 'neutral';
 }
 
-function chargeStatusClasses(status: string): string {
-  if (status === 'Declined' || status === 'Fraud' || status === 'Refunded') {
-    return 'border-red-500/40 bg-red-500/15 text-red-300 font-semibold';
-  }
-  if (status === 'Pending' || status === 'Other') {
-    return 'border-amber-500/40 bg-amber-500/15 text-amber-300 font-semibold';
-  }
-  return 'border-hairline bg-surface text-ink-faint';
+function chargeTone(status: string): AdminTone {
+  if (status === 'Declined' || status === 'Fraud' || status === 'Refunded') return 'danger';
+  if (status === 'Pending' || status === 'Other') return 'warning';
+  return 'neutral';
 }
 
 function userSearchPath(username: string): string {
@@ -306,265 +312,165 @@ onMounted(() => fetchPatreon(false));
 </script>
 
 <template>
-  <div data-testid="admin-patreon-manager" class="space-y-6">
-    <!-- Clean header with config badge and global actions -->
-    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <div class="flex flex-wrap items-center gap-2.5">
-        <h1 class="text-2xl font-bold tracking-tight text-ink">
-          {{ t('adminPatreon.title') }}
-        </h1>
-        <span
+  <div data-testid="admin-patreon-manager" class="space-y-5">
+    <AdminUiPageHeader :title="t('adminPatreon.title')">
+      <template #meta>
+        <AdminUiBadge
           v-if="data"
           data-testid="patreon-config-badge"
-          :class="[
-            'rounded-full border px-2.5 py-0.5 text-[11px] font-semibold',
-            data.configured
-              ? 'border-emerald-500/30 bg-emerald-500/15 text-emerald-300'
-              : 'border-amber-500/30 bg-amber-500/15 text-amber-300',
-          ]"
+          :tone="data.configured ? 'neutral' : 'warning'"
+          dot
         >
           {{
             data.configured
               ? t('adminPatreon.configured', { campaignId: data.campaignId ?? '—' })
               : t('adminPatreon.notConfigured')
           }}
-        </span>
-      </div>
-
-      <div class="flex items-center gap-2">
+        </AdminUiBadge>
+      </template>
+      <template #actions>
         <button
           type="button"
           data-testid="patreon-reload"
-          :disabled="isLoading"
-          :aria-label="t('adminDashboard.nav.refresh')"
-          :title="t('adminDashboard.nav.refresh')"
-          class="inline-flex h-9 items-center justify-center rounded-lg border border-hairline bg-surface px-2.5 text-ink-muted transition-colors hover:bg-surface-hover hover:text-ink disabled:opacity-50"
+          :disabled="mounted && isLoading"
+          class="nd-btn !h-8 !text-[13px]"
           @click="fetchPatreon(true)"
         >
-          <UiBaseIcon :path="mdiRefresh" :size="16" :class="{ 'animate-spin': isLoading }" />
+          <UiBaseIcon :path="mdiRefresh" :size="15" w="w-4" h="h-4" :class="{ 'animate-spin': mounted && isLoading }" />
+          <span>{{ t('adminLayout.reload') }}</span>
         </button>
-
         <button
           type="button"
           data-testid="patreon-sync-all"
           :disabled="!canResync || isSyncingAll || (data?.summary.totalLinked ?? 0) === 0"
-          class="inline-flex h-9 items-center gap-1.5 rounded-lg bg-brand-solid px-3.5 text-xs font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-45"
+          class="nd-btn-accent !h-8 !text-[13px]"
           @click="syncAll"
         >
-          <UiBaseIcon :path="mdiSync" :size="16" :class="{ 'animate-spin': isSyncingAll }" />
+          <span v-if="isSyncingAll" class="nd-spinner" />
+          <UiBaseIcon v-else :path="mdiSync" :size="15" w="w-4" h="h-4" />
           <span>{{ isSyncingAll ? t('adminPatreon.syncingAll') : t('adminPatreon.syncAll') }}</span>
         </button>
-      </div>
-    </div>
+      </template>
+    </AdminUiPageHeader>
 
-    <!-- Financial & health summary strip -->
-    <div v-if="data" data-testid="patreon-kpi-strip" class="grid grid-cols-2 gap-3 lg:grid-cols-4">
-      <div v-for="kpi in kpis" :key="kpi.id" class="rounded-xl border border-hairline bg-card-background px-4 py-3">
-        <div class="text-[11px] font-medium text-ink-faint">{{ kpi.label }}</div>
-        <div
-          :data-testid="`kpi-${kpi.id}`"
-          :class="['mt-1 text-2xl font-bold tracking-tight tabular-nums', kpi.valueClass]"
-        >
-          {{ kpi.value }}
-        </div>
-        <div class="mt-0.5 text-[11px] text-ink-faint">{{ kpi.sub }}</div>
-      </div>
-    </div>
+    <AdminUiStatStrip data-testid="patreon-kpi-strip" :stats="stats" />
 
-    <!-- Main tabbed directory: Patreon Campaign Members | Linked OAuth Accounts -->
-    <section
-      data-testid="patreon-campaign-section"
-      class="rounded-xl border border-hairline bg-card-background p-4 space-y-4"
-    >
-      <div class="flex flex-col gap-2 border-b border-hairline pb-3 sm:flex-row sm:items-center sm:justify-between">
-        <div class="flex flex-wrap items-center gap-1.5" role="tablist">
-          <button
-            type="button"
-            role="tab"
-            data-testid="tab-campaign"
-            :aria-selected="activeTab === 'campaign'"
-            :class="[
-              'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors',
-              activeTab === 'campaign'
-                ? 'bg-brand/15 text-brand'
-                : 'text-ink-muted hover:bg-surface-hover hover:text-ink',
-            ]"
-            @click="activeTab = 'campaign'"
-          >
-            {{ t('adminPatreon.tabs.campaign', { count: data?.campaign.members.length ?? 0 }) }}
-          </button>
+    <section data-testid="patreon-campaign-section" class="space-y-4">
+      <AdminUiTabs v-model="activeTab" :tabs="tabs" testid-prefix="tab" />
 
-          <button
-            type="button"
-            role="tab"
-            data-testid="tab-linked"
-            :aria-selected="activeTab === 'linked'"
-            :class="[
-              'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors',
-              activeTab === 'linked'
-                ? 'bg-brand/15 text-brand'
-                : 'text-ink-muted hover:bg-surface-hover hover:text-ink',
-            ]"
-            @click="activeTab = 'linked'"
-          >
-            <span>{{ t('adminPatreon.tabs.linked', { count: data?.summary.totalLinked ?? 0 }) }}</span>
-            <span
-              v-if="(data?.summary.issues ?? 0) > 0"
-              data-testid="tab-linked-issues-badge"
-              class="rounded-full bg-red-500/20 px-1.5 py-0.5 text-[10px] font-bold text-red-300 tabular-nums"
-            >
-              {{ data?.summary.issues }}
-            </span>
-          </button>
-        </div>
-
-        <span v-if="activeTab === 'campaign' && data?.campaign.fetchedAt" class="text-[11px] text-ink-faint">
-          {{ t('adminPatreon.campaign.fetchedAt', { when: formatRelativeTime(data.campaign.fetchedAt) }) }}
-        </span>
-      </div>
-
-      <!-- TAB 1: Live Patreon.com campaign members -->
-      <template v-if="activeTab === 'campaign'">
-        <p class="text-xs text-ink-faint">{{ t('adminPatreon.campaign.subtitle') }}</p>
-
-        <div
-          v-if="data && !campaignOk"
-          data-testid="patreon-campaign-alert"
-          :class="[
-            'flex items-start gap-2 rounded-lg border px-3 py-2.5 text-xs',
-            data.campaign.status === 'unconfigured'
-              ? 'border-hairline bg-surface text-ink-muted'
-              : 'border-amber-500/30 bg-amber-500/10 text-amber-200',
-          ]"
-        >
-          <UiBaseIcon :path="mdiAlertOutline" :size="16" class="mt-0.5 shrink-0" />
-          <div>
-            <p class="font-medium">
-              {{ t(`adminPatreon.campaign.${data.campaign.status}`) }}
-            </p>
-            <p v-if="data.campaign.errorMessage" class="mt-0.5 text-[11px] opacity-80">
-              {{ data.campaign.errorMessage }}
-            </p>
+      <!-- Skeleton until the first payload arrives, whichever tab is open -->
+      <div v-if="!data" class="nd-admin-table-wrap">
+        <AdminUiEmpty
+          v-if="mounted && !isLoading"
+          :icon="mdiAlertOutline"
+          tone="danger"
+          :text="t('adminPatreon.loadError')"
+        />
+        <template v-else>
+          <div v-for="n in 6" :key="n" class="flex items-center gap-4 border-b border-hairline px-4 py-3 last:border-0">
+            <span class="h-3 w-36 animate-pulse rounded bg-surface-lift" />
+            <span class="h-3 w-20 animate-pulse rounded bg-surface-lift" />
+            <span class="h-3 flex-1 animate-pulse rounded bg-surface-lift" />
           </div>
+        </template>
+      </div>
+
+      <!-- Patreon campaign members -->
+      <template v-else-if="activeTab === 'campaign'">
+        <div
+          v-if="!campaignOk"
+          data-testid="patreon-campaign-alert"
+          class="flex items-center gap-2 rounded-lg bg-amber-500/10 px-3 py-2 text-[13px] text-amber-400"
+        >
+          <UiBaseIcon :path="mdiAlertOutline" :size="16" w="w-4" h="h-4" class="shrink-0" />
+          <span class="min-w-0 truncate">
+            {{ t(`adminPatreon.campaign.${data.campaign.status}`) }}
+            <span v-if="data.campaign.errorMessage" class="opacity-70">· {{ data.campaign.errorMessage }}</span>
+          </span>
         </div>
 
-        <template v-else-if="data">
-          <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div class="flex flex-wrap items-center gap-1.5">
-              <button
-                v-for="filter in campaignFilters"
-                :key="filter.value"
-                type="button"
-                :data-testid="`campaign-filter-${filter.value}`"
-                :class="chipClasses(campaignFilter === filter.value, filter.tone)"
-                @click="campaignFilter = filter.value"
-              >
-                {{ filter.label }}
-              </button>
-            </div>
-
-            <div class="relative sm:w-64">
+        <template v-else>
+          <div class="flex flex-wrap items-center gap-2">
+            <AdminUiSegmented v-model="campaignFilter" data-testid="campaign-filters" testid-prefix="campaign-filter" :options="campaignFilters" />
+            <div class="relative w-full sm:w-64">
+              <UiBaseIcon
+                :path="mdiMagnify"
+                :size="15"
+                w="w-4"
+                h="h-4"
+                class="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-faint"
+              />
               <input
                 v-model="campaignSearch"
                 data-testid="campaign-search"
                 type="search"
-                class="nd-input h-8 pl-8 text-xs"
+                class="nd-input !h-8 !pl-8 !text-[13px]"
                 :placeholder="t('adminPatreon.searchPlaceholder')"
               />
-              <UiBaseIcon
-                :path="mdiMagnify"
-                :size="15"
-                class="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-faint"
-              />
             </div>
+            <span v-if="data.campaign.fetchedAt" class="ml-auto text-xs text-ink-faint">
+              {{ t('adminPatreon.campaign.fetchedAt', { when: formatRelativeTime(data.campaign.fetchedAt) }) }}
+            </span>
           </div>
 
-          <div class="overflow-x-auto rounded-lg border border-hairline">
-            <table class="w-full text-left text-xs text-ink-muted">
-              <thead class="bg-surface text-[11px] uppercase tracking-wider text-ink-faint">
+          <div v-if="filteredCampaignMembers.length === 0" class="nd-admin-table-wrap">
+            <AdminUiEmpty :icon="mdiHeartOutline" :text="t('adminPatreon.campaign.empty')" />
+          </div>
+          <div v-else class="nd-admin-table-wrap">
+            <table class="nd-admin-table min-w-[980px]">
+              <thead>
                 <tr>
-                  <th class="px-3 py-2.5">{{ t('adminPatreon.campaign.member') }}</th>
-                  <th class="px-3 py-2.5">{{ t('adminPatreon.table.status') }}</th>
-                  <th class="px-3 py-2.5">{{ t('adminPatreon.tiers.tier') }}</th>
-                  <th
-                    v-for="col in SORT_COLUMNS"
-                    :key="col.key"
-                    :class="['px-3 py-2.5', { 'text-right': col.alignRight }]"
-                  >
+                  <th>{{ t('adminPatreon.campaign.member') }}</th>
+                  <th>{{ t('adminPatreon.table.status') }}</th>
+                  <th>{{ t('adminPatreon.tiers.tier') }}</th>
+                  <th v-for="col in SORT_COLUMNS" :key="col.key" :class="{ 'text-right': col.alignRight }">
                     <button
                       type="button"
                       :data-testid="`sort-${col.key}`"
-                      class="inline-flex items-center gap-1 uppercase tracking-wider hover:text-ink"
+                      class="inline-flex items-center gap-1 transition-colors hover:text-ink"
+                      :class="campaignSortKey === col.key ? 'text-ink' : ''"
                       @click="toggleCampaignSort(col.key)"
                     >
                       <span>{{ t(col.labelKey) }}</span>
-                      <UiBaseIcon :path="sortIconFor(col.key)" :size="13" />
+                      <UiBaseIcon :path="sortIconFor(col.key)" :size="13" w="w-3.5" h="h-3.5" />
                     </button>
                   </th>
-                  <th class="px-3 py-2.5">{{ t('adminPatreon.campaign.nadeshikoLink') }}</th>
+                  <th>{{ t('adminPatreon.campaign.nadeshikoLink') }}</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-hairline">
-                <tr v-if="filteredCampaignMembers.length === 0">
-                  <td colspan="7" class="px-4 py-6 text-center text-ink-faint">
-                    {{ t('adminPatreon.campaign.empty') }}
-                  </td>
-                </tr>
+              <tbody>
                 <tr
                   v-for="member in filteredCampaignMembers"
                   :key="member.memberId"
                   :data-testid="`campaign-row-${member.memberId}`"
-                  class="hover:bg-surface-hover/40"
                 >
-                  <td class="px-3 py-2.5">
-                    <div class="font-medium text-ink">{{ member.fullName }}</div>
-                    <div class="text-[11px] text-ink-faint">{{ member.email || '—' }}</div>
+                  <td>
+                    <div class="max-w-[14rem] truncate font-medium text-ink">{{ member.fullName }}</div>
+                    <div class="max-w-[14rem] truncate text-xs text-ink-faint">{{ member.email || '—' }}</div>
                   </td>
 
-                  <td class="px-3 py-2.5">
-                    <div class="flex flex-wrap items-center gap-1.5">
-                      <span
-                        :class="[
-                          'rounded-full border px-2 py-0.5 text-[11px] font-semibold',
-                          statusPillClasses(member.patronStatus),
-                        ]"
-                      >
+                  <td>
+                    <div class="flex flex-wrap items-center gap-1">
+                      <AdminUiBadge :tone="patronTone(member.patronStatus)" dot>
                         {{ patronStatusLabel(member.patronStatus) }}
-                      </span>
-                      <span
+                      </AdminUiBadge>
+                      <AdminUiBadge
                         v-if="member.lastChargeStatus && member.lastChargeStatus !== 'Paid'"
                         :data-testid="`charge-status-${member.memberId}`"
-                        :class="[
-                          'rounded border px-1.5 py-0.5 text-[10px]',
-                          chargeStatusClasses(member.lastChargeStatus),
-                        ]"
-                      >
-                        {{ member.lastChargeStatus }}
-                      </span>
+                        :tone="chargeTone(member.lastChargeStatus)"
+                      >{{ member.lastChargeStatus }}</AdminUiBadge>
                     </div>
                   </td>
 
-                  <td class="px-3 py-2.5">
-                    <div class="flex flex-wrap items-center gap-1.5">
-                      <span
-                        v-if="member.resolvedTierName"
-                        class="rounded-md border border-brand/30 bg-brand/15 px-2 py-0.5 text-[11px] font-semibold text-brand"
-                      >
-                        {{ member.resolvedTierName }}
-                      </span>
-                      <span
-                        v-else-if="member.patreonTierTitles.length > 0"
-                        class="rounded-md border border-hairline bg-surface-lift px-2 py-0.5 text-[11px] text-ink"
-                      >
+                  <td>
+                    <div class="flex flex-wrap items-center gap-1">
+                      <AdminUiBadge v-if="member.resolvedTierName" tone="brand">{{ member.resolvedTierName }}</AdminUiBadge>
+                      <AdminUiBadge v-else-if="member.patreonTierTitles.length > 0">
                         {{ member.patreonTierTitles.join(', ') }}
-                      </span>
-                      <span
-                        v-for="rawId in member.unmatchedTierIds"
-                        :key="rawId"
-                        class="rounded-md border border-amber-500/30 bg-amber-500/15 px-2 py-0.5 font-mono text-[10px] font-semibold text-amber-300"
-                      >
+                      </AdminUiBadge>
+                      <AdminUiBadge v-for="rawId in member.unmatchedTierIds" :key="rawId" tone="warning">
                         {{ t('adminPatreon.badges.unmatched', { id: rawId }) }}
-                      </span>
+                      </AdminUiBadge>
                       <span
                         v-if="
                           !member.resolvedTierName &&
@@ -578,53 +484,44 @@ onMounted(() => fetchPatreon(false));
                     </div>
                   </td>
 
-                  <td class="px-3 py-2.5 text-right whitespace-nowrap tabular-nums">
+                  <td class="whitespace-nowrap text-right tabular-nums">
                     <span
                       v-if="member.monthlyAmountCents > 0"
-                      :class="
-                        member.patronStatus === 'active_patron' ? 'font-semibold text-emerald-300' : 'text-ink-muted'
-                      "
+                      :class="member.patronStatus === 'active_patron' ? 'font-medium text-emerald-400' : 'text-ink-muted'"
                     >
                       {{ formatUsdCents(member.monthlyAmountCents) }}
                     </span>
                     <span v-else class="text-ink-faint">—</span>
                   </td>
 
-                  <td class="px-3 py-2.5 text-right whitespace-nowrap tabular-nums">
-                    <span v-if="member.lifetimeSupportCents > 0" class="font-medium text-ink">
+                  <td class="whitespace-nowrap text-right tabular-nums">
+                    <span v-if="member.lifetimeSupportCents > 0" class="text-ink">
                       {{ formatUsdCents(member.lifetimeSupportCents) }}
                     </span>
                     <span v-else class="text-ink-faint">—</span>
                   </td>
 
-                  <td class="px-3 py-2.5 whitespace-nowrap">
-                    <div class="text-ink-muted">{{ member.pledgeStart ? formatDate(member.pledgeStart) : '—' }}</div>
-                    <div v-if="member.lastChargeDate" class="text-[11px] text-ink-faint">
+                  <td class="whitespace-nowrap">
+                    <div class="text-xs tabular-nums text-ink-muted">
+                      {{ member.pledgeStart ? formatDate(member.pledgeStart) : '—' }}
+                    </div>
+                    <div v-if="member.lastChargeDate" class="text-xs text-ink-faint">
                       {{ t('adminPatreon.campaign.lastCharge', { date: formatDate(member.lastChargeDate) }) }}
                     </div>
                   </td>
 
-                  <td class="px-3 py-2.5">
-                    <!-- State 1: Linked via OAuth (with inline actions) -->
-                    <div v-if="member.linkedUserId" class="space-y-1">
-                      <div class="flex flex-wrap items-center gap-1.5">
-                        <span class="inline-flex items-center gap-1 text-emerald-300">
-                          <UiBaseIcon :path="mdiCheckCircleOutline" :size="14" />
-                          <NuxtLink
-                            :to="userSearchPath(member.linkedUsername ?? '')"
-                            class="font-medium hover:underline"
-                          >
-                            {{ member.linkedUsername }}
-                          </NuxtLink>
-                        </span>
-                        <span
-                          v-if="connectionsByUserId.get(member.linkedUserId)?.isStale"
-                          class="rounded-full border border-red-500/30 bg-red-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-red-300"
-                        >
-                          {{ t('adminPatreon.badges.stale') }}
-                        </span>
-                      </div>
-
+                  <td>
+                    <!-- Linked via OAuth -->
+                    <div v-if="member.linkedUserId" class="flex flex-wrap items-center gap-2">
+                      <span class="inline-flex items-center gap-1 text-emerald-400">
+                        <UiBaseIcon :path="mdiCheckCircleOutline" :size="14" w="w-3.5" h="h-3.5" />
+                        <NuxtLink :to="userSearchPath(member.linkedUsername ?? '')" class="font-medium hover:underline">
+                          {{ member.linkedUsername }}
+                        </NuxtLink>
+                      </span>
+                      <AdminUiBadge v-if="connectionsByUserId.get(member.linkedUserId)?.isStale" tone="danger">
+                        {{ t('adminPatreon.badges.stale') }}
+                      </AdminUiBadge>
                       <PatreonLinkActions
                         compact
                         testid-prefix="campaign"
@@ -637,50 +534,39 @@ onMounted(() => fetchPatreon(false));
                       />
                     </div>
 
-                    <!-- State 2: Email matches an existing Nadeshiko account (not OAuth-linked yet) -->
+                    <!-- Email matches an account that has not linked via OAuth yet -->
                     <div
                       v-else-if="member.matchedUserId && member.matchedUsername"
                       :data-testid="`campaign-matched-${member.memberId}`"
-                      class="space-y-0.5"
                     >
                       <NuxtLink
                         :to="userSearchPath(member.matchedUsername)"
-                        class="inline-flex items-center gap-1 rounded-full border border-amber-500/35 bg-amber-500/15 px-2 py-0.5 text-[11px] font-semibold text-amber-300 hover:bg-amber-500/25"
+                        class="inline-flex items-center gap-1 font-medium text-amber-400 hover:underline"
                       >
-                        <UiBaseIcon :path="mdiAccountSearchOutline" :size="13" />
+                        <UiBaseIcon :path="mdiAccountSearchOutline" :size="14" w="w-3.5" h="h-3.5" />
                         <span>{{ member.matchedUsername }}</span>
                       </NuxtLink>
-                      <div class="text-[10px] text-ink-faint">
+                      <div class="text-xs text-ink-faint">
                         {{ t('adminPatreon.campaign.matchedAccount') }} · {{ t('adminPatreon.campaign.noOauthYet') }}
                       </div>
                     </div>
 
-                    <!-- State 3: No Nadeshiko account detected -->
-                    <span
-                      v-else
-                      class="rounded-full border border-hairline bg-surface px-2 py-0.5 text-[11px] text-ink-faint"
-                    >
-                      {{ t('adminPatreon.campaign.noAccount') }}
-                    </span>
+                    <span v-else class="text-xs text-ink-faint">{{ t('adminPatreon.campaign.noAccount') }}</span>
                   </td>
                 </tr>
               </tbody>
-              <tfoot
-                v-if="filteredCampaignMembers.length > 0"
-                data-testid="campaign-subtotal-row"
-                class="border-t border-hairline bg-surface/70 text-xs font-semibold"
-              >
+              <tfoot data-testid="campaign-subtotal-row" class="border-t border-hairline bg-surface/60 text-[13px]">
                 <tr>
-                  <td colspan="3" class="px-3 py-2 text-ink-muted">
+                  <td colspan="3" class="px-4 py-2.5 text-xs font-medium text-ink-muted">
                     {{ t('adminPatreon.campaign.subtotal', { count: filteredCampaignMembers.length }) }}
                   </td>
-                  <td class="px-3 py-2 text-right whitespace-nowrap tabular-nums text-emerald-300">
+                  <td class="whitespace-nowrap px-4 py-2.5 text-right font-medium tabular-nums text-emerald-400">
                     {{ formatUsdCents(campaignSubtotal.monthlyCents) }}
                   </td>
-                  <td class="px-3 py-2 text-right whitespace-nowrap tabular-nums text-ink">
+                  <td class="whitespace-nowrap px-4 py-2.5 text-right font-medium tabular-nums text-ink">
                     {{ formatUsdCents(campaignSubtotal.lifetimeCents) }}
                   </td>
-                  <td colspan="2" class="px-3 py-2" />
+                  <td colspan="2" />
                 </tr>
               </tfoot>
             </table>
@@ -688,146 +574,97 @@ onMounted(() => fetchPatreon(false));
         </template>
       </template>
 
-      <!-- TAB 2: Linked Nadeshiko accounts (OAuth connections) -->
-      <template v-else>
-        <p class="text-xs text-ink-faint">{{ t('adminPatreon.linkedSection.subtitle') }}</p>
-
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div class="flex flex-wrap items-center gap-1.5">
-            <button
-              v-for="filter in linkedFilters"
-              :key="filter.value"
-              type="button"
-              :data-testid="`patreon-filter-${filter.value}`"
-              :class="chipClasses(statusFilter === filter.value, filter.tone)"
-              @click="statusFilter = filter.value"
-            >
-              {{ filter.label }}
-            </button>
-          </div>
-
-          <div class="relative sm:w-64">
+      <!-- Linked accounts (OAuth connections) -->
+      <template v-else-if="activeTab === 'linked'">
+        <div class="flex flex-wrap items-center gap-2">
+          <AdminUiSegmented v-model="statusFilter" data-testid="patreon-filters" testid-prefix="patreon-filter" :options="linkedFilters" />
+          <div class="relative w-full sm:w-64">
+            <UiBaseIcon
+              :path="mdiMagnify"
+              :size="15"
+              w="w-4"
+              h="h-4"
+              class="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-faint"
+            />
             <input
               v-model="searchQuery"
               data-testid="patreon-search"
               type="search"
-              class="nd-input h-8 pl-8 text-xs"
+              class="nd-input !h-8 !pl-8 !text-[13px]"
               :placeholder="t('adminPatreon.searchPlaceholder')"
-            />
-            <UiBaseIcon
-              :path="mdiMagnify"
-              :size="15"
-              class="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-faint"
             />
           </div>
         </div>
 
-        <div class="overflow-x-auto rounded-lg border border-hairline">
-          <table class="w-full text-left text-xs text-ink-muted">
-            <thead class="bg-surface text-[11px] uppercase tracking-wider text-ink-faint">
+        <div v-if="filteredConnections.length === 0" data-testid="patreon-empty" class="nd-admin-table-wrap">
+          <AdminUiEmpty :icon="mdiLinkVariantOff" :text="t('adminPatreon.empty')" />
+        </div>
+        <div v-else class="nd-admin-table-wrap">
+          <table class="nd-admin-table min-w-[960px]">
+            <thead>
               <tr>
-                <th class="px-3 py-2.5">{{ t('adminPatreon.table.account') }}</th>
-                <th class="px-3 py-2.5">{{ t('adminPatreon.table.patreon') }}</th>
-                <th class="px-3 py-2.5">{{ t('adminPatreon.table.status') }}</th>
-                <th class="px-3 py-2.5">{{ t('adminPatreon.table.tierAndQuota') }}</th>
-                <th class="px-3 py-2.5">{{ t('adminPatreon.table.lastChecked') }}</th>
-                <th class="px-3 py-2.5 text-right">{{ t('adminPatreon.table.actions') }}</th>
+                <th>{{ t('adminPatreon.table.account') }}</th>
+                <th>{{ t('adminPatreon.table.patreon') }}</th>
+                <th>{{ t('adminPatreon.table.status') }}</th>
+                <th>{{ t('adminPatreon.table.tierAndQuota') }}</th>
+                <th>{{ t('adminPatreon.table.lastChecked') }}</th>
+                <th class="text-right">{{ t('adminPatreon.table.actions') }}</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-hairline">
-              <tr v-if="isLoading && !data">
-                <td colspan="6" class="px-4 py-8 text-center text-ink-faint">
-                  {{ t('adminDashboard.loading') }}
-                </td>
-              </tr>
-              <tr v-else-if="filteredConnections.length === 0">
-                <td colspan="6" data-testid="patreon-empty" class="px-4 py-8 text-center text-ink-faint">
-                  {{ t('adminPatreon.empty') }}
-                </td>
-              </tr>
-              <tr
-                v-for="conn in filteredConnections"
-                :key="conn.userId"
-                :data-testid="`patreon-row-${conn.userId}`"
-                class="hover:bg-surface-hover/40"
-              >
-                <td class="px-3 py-2.5">
+            <tbody>
+              <tr v-for="conn in filteredConnections" :key="conn.userId" :data-testid="`patreon-row-${conn.userId}`">
+                <td>
                   <NuxtLink :to="userSearchPath(conn.username)" class="font-medium text-ink hover:underline">
                     {{ conn.username }}
                   </NuxtLink>
-                  <div class="text-[11px] text-ink-faint">{{ conn.email }}</div>
+                  <div class="max-w-[14rem] truncate text-xs text-ink-faint">{{ conn.email }}</div>
                 </td>
 
-                <td class="px-3 py-2.5">
+                <td>
                   <div class="text-ink">{{ conn.fullName || '—' }}</div>
                   <div class="font-mono text-[11px] text-ink-faint">#{{ conn.patreonUserId }}</div>
                 </td>
 
-                <td class="px-3 py-2.5">
-                  <div class="flex flex-wrap items-center gap-1.5">
-                    <span
-                      :class="[
-                        'rounded-full border px-2 py-0.5 text-[11px] font-semibold',
-                        statusPillClasses(conn.patronStatus, conn.isStale),
-                      ]"
-                    >
+                <td>
+                  <div class="flex flex-wrap items-center gap-1">
+                    <AdminUiBadge :tone="patronTone(conn.patronStatus, conn.isStale)" dot>
                       {{ patronStatusLabel(conn.patronStatus) }}
-                    </span>
-                    <span
-                      v-if="conn.isStale"
-                      class="inline-flex items-center gap-0.5 rounded-full border border-red-500/30 bg-red-500/15 px-2 py-0.5 text-[10px] font-semibold text-red-300"
-                    >
-                      <UiBaseIcon :path="mdiAlertOutline" :size="12" />
-                      {{ t('adminPatreon.badges.stale') }}
-                    </span>
+                    </AdminUiBadge>
+                    <AdminUiBadge v-if="conn.isStale" tone="danger">{{ t('adminPatreon.badges.stale') }}</AdminUiBadge>
                   </div>
                 </td>
 
-                <td class="px-3 py-2.5">
-                  <div class="flex flex-wrap items-center gap-1.5">
-                    <span
-                      v-if="conn.resolvedTierName"
-                      class="rounded-md border border-brand/30 bg-brand/15 px-2 py-0.5 text-[11px] font-semibold text-brand"
-                    >
-                      {{ conn.resolvedTierName }}
-                    </span>
-                    <span
-                      v-for="rawId in conn.unmatchedTierIds"
-                      :key="rawId"
-                      class="rounded-md border border-amber-500/30 bg-amber-500/15 px-2 py-0.5 font-mono text-[10px] font-semibold text-amber-300"
-                    >
+                <td>
+                  <div class="flex flex-wrap items-center gap-1">
+                    <AdminUiBadge v-if="conn.resolvedTierName" tone="brand">{{ conn.resolvedTierName }}</AdminUiBadge>
+                    <AdminUiBadge v-for="rawId in conn.unmatchedTierIds" :key="rawId" tone="warning">
                       {{ t('adminPatreon.badges.unmatched', { id: rawId }) }}
-                    </span>
-                    <span v-if="!conn.resolvedTierName && conn.unmatchedTierIds.length === 0" class="text-ink-faint">
-                      —
-                    </span>
-                    <span
-                      v-if="conn.monthlyAmountCents > 0"
-                      class="tabular-nums text-[11px] font-medium text-emerald-300/90"
-                    >
+                    </AdminUiBadge>
+                    <span v-if="!conn.resolvedTierName && conn.unmatchedTierIds.length === 0" class="text-ink-faint">—</span>
+                    <span v-if="conn.monthlyAmountCents > 0" class="text-xs tabular-nums text-emerald-400">
                       {{ t('adminPatreon.pledgePerMonth', { amount: formatUsdCents(conn.monthlyAmountCents) }) }}
                     </span>
                   </div>
-                  <div class="mt-0.5 text-[11px] text-ink-faint">
+                  <div class="mt-0.5 text-xs text-ink-faint">
                     {{
                       t('adminPatreon.quotaPerMonth', {
                         limit: formatNumber(conn.effectiveQuotaLimit),
-                        source: conn.quotaSource,
+                        source: t(`adminPatreon.quotaSource.${conn.quotaSource}`),
                       })
                     }}
                   </div>
                 </td>
 
-                <td class="px-3 py-2.5 whitespace-nowrap" :title="formatDate(conn.membershipCheckedAt)">
-                  <div :class="conn.isStale ? 'font-semibold text-red-300' : 'text-ink-muted'">
+                <td class="whitespace-nowrap" :title="formatDate(conn.membershipCheckedAt)">
+                  <div class="text-xs tabular-nums" :class="conn.isStale ? 'font-medium text-red-400' : 'text-ink-muted'">
                     {{ formatRelativeTime(conn.membershipCheckedAt) }}
                   </div>
-                  <div class="text-[11px] text-ink-faint">
+                  <div class="text-xs text-ink-faint">
                     {{ t('adminPatreon.linkedDate', { date: formatDate(conn.linkedAt) }) }}
                   </div>
                 </td>
 
-                <td class="px-3 py-2.5 text-right whitespace-nowrap">
+                <td class="whitespace-nowrap text-right">
                   <PatreonLinkActions
                     testid-prefix="patreon"
                     :user-id="conn.userId"
@@ -843,132 +680,111 @@ onMounted(() => fetchPatreon(false));
           </table>
         </div>
       </template>
-    </section>
 
-    <!-- Bottom reference: Tier breakdown (real campaign + linked + monthly) & Manual grants -->
-    <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
-      <section data-testid="patreon-tiers-card" class="rounded-xl border border-hairline bg-card-background p-4 space-y-3">
-        <div>
-          <h2 class="text-sm font-semibold text-ink">{{ t('adminPatreon.tiers.title') }}</h2>
-          <p class="text-xs text-ink-faint">{{ t('adminPatreon.tiers.subtitle') }}</p>
-        </div>
-
-        <div class="overflow-x-auto rounded-lg border border-hairline">
-          <table class="w-full text-left text-xs text-ink-muted">
-            <thead class="bg-surface text-[11px] uppercase tracking-wider text-ink-faint">
-              <tr>
-                <th class="px-3 py-2">{{ t('adminPatreon.tiers.tier') }}</th>
-                <th class="px-3 py-2 text-right">{{ t('adminPatreon.tiers.patreon') }}</th>
-                <th class="px-3 py-2 text-right">{{ t('adminPatreon.tiers.linked') }}</th>
-                <th class="px-3 py-2 text-right">{{ t('adminPatreon.tiers.monthly') }}</th>
-                <th class="px-3 py-2 text-right">{{ t('adminPatreon.tiers.perks') }}</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-hairline">
-              <tr v-for="tier in data?.tiers ?? []" :key="tier.id" :data-testid="`tier-row-${tier.id}`">
-                <td class="px-3 py-2">
-                  <div>
-                    <span class="font-medium text-ink">{{ tier.displayName }}</span>
-                    <span class="ml-1.5 font-mono text-[10px] text-ink-faint">{{ tier.id }}</span>
-                  </div>
-                  <div v-if="tier.patreonTierId" class="font-mono text-[10px] text-ink-faint">
-                    #{{ tier.patreonTierId }}
-                  </div>
-                </td>
-                <td class="px-3 py-2 text-right tabular-nums">
-                  <span
-                    v-if="tier.patreonTierId"
-                    :class="tier.campaignPatronCount > 0 ? 'font-semibold text-ink' : 'text-ink-faint'"
-                  >
-                    {{ tier.campaignPatronCount }}
-                  </span>
-                  <span v-else class="text-ink-faint">—</span>
-                </td>
-                <td class="px-3 py-2 text-right tabular-nums">
-                  <span v-if="tier.patreonTierId" :class="tier.activePatronCount > 0 ? 'text-emerald-300' : 'text-ink-faint'">
-                    {{ tier.activePatronCount }}
-                  </span>
-                  <span v-else class="text-ink-faint">—</span>
-                </td>
-                <td class="px-3 py-2 text-right whitespace-nowrap tabular-nums">
-                  <span
-                    v-if="tier.patreonTierId && tier.campaignMonthlyCents > 0"
-                    class="font-semibold text-emerald-300"
-                  >
-                    {{ formatUsdCents(tier.campaignMonthlyCents) }}
-                  </span>
-                  <span v-else class="text-ink-faint">—</span>
-                </td>
-                <td class="px-3 py-2 text-right whitespace-nowrap tabular-nums">
-                  <div class="text-ink">{{ formatNumber(tier.monthlyQuotaLimit) }}</div>
-                  <div v-if="tier.monthlyRequestBoosts > 0" class="text-[10px] text-ink-faint">
-                    +{{ tier.monthlyRequestBoosts }}
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <section
-        data-testid="patreon-manual-grants-card"
-        class="rounded-xl border border-hairline bg-card-background p-4 space-y-3"
-      >
-        <div class="flex items-start justify-between gap-2">
-          <div>
-            <h2 class="text-sm font-semibold text-ink">{{ t('adminPatreon.manualGrants.title') }}</h2>
-            <p class="text-xs text-ink-faint">{{ t('adminPatreon.manualGrants.subtitle') }}</p>
+      <!-- Tier mapping and manual grants -->
+      <div v-else class="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
+        <AdminUiCard data-testid="patreon-tiers-card" :title="t('adminPatreon.tiers.title')" flush>
+          <div class="overflow-x-auto">
+            <table class="nd-admin-table min-w-[460px]">
+              <thead>
+                <tr>
+                  <th>{{ t('adminPatreon.tiers.tier') }}</th>
+                  <th class="text-right">{{ t('adminPatreon.tiers.patreon') }}</th>
+                  <th class="text-right">{{ t('adminPatreon.tiers.linked') }}</th>
+                  <th class="text-right">{{ t('adminPatreon.tiers.monthly') }}</th>
+                  <th class="text-right">{{ t('adminPatreon.tiers.perks') }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="tier in data.tiers" :key="tier.id" :data-testid="`tier-row-${tier.id}`">
+                  <td>
+                    <div class="flex items-baseline gap-1.5">
+                      <span class="font-medium text-ink">{{ tier.displayName }}</span>
+                      <span class="font-mono text-[11px] text-ink-faint">{{ tier.id }}</span>
+                    </div>
+                    <div v-if="tier.patreonTierId" class="font-mono text-[11px] text-ink-faint">
+                      #{{ tier.patreonTierId }}
+                    </div>
+                  </td>
+                  <td class="text-right tabular-nums">
+                    <span
+                      v-if="tier.patreonTierId"
+                      :class="tier.campaignPatronCount > 0 ? 'font-medium text-ink' : 'text-ink-faint'"
+                    >
+                      {{ tier.campaignPatronCount }}
+                    </span>
+                    <span v-else class="text-ink-faint">—</span>
+                  </td>
+                  <td class="text-right tabular-nums">
+                    <span
+                      v-if="tier.patreonTierId"
+                      :class="tier.activePatronCount > 0 ? 'text-emerald-400' : 'text-ink-faint'"
+                    >
+                      {{ tier.activePatronCount }}
+                    </span>
+                    <span v-else class="text-ink-faint">—</span>
+                  </td>
+                  <td class="whitespace-nowrap text-right tabular-nums">
+                    <span v-if="tier.patreonTierId && tier.campaignMonthlyCents > 0" class="font-medium text-emerald-400">
+                      {{ formatUsdCents(tier.campaignMonthlyCents) }}
+                    </span>
+                    <span v-else class="text-ink-faint">—</span>
+                  </td>
+                  <td class="whitespace-nowrap text-right tabular-nums">
+                    <div class="text-ink">{{ formatNumber(tier.monthlyQuotaLimit) }}</div>
+                    <div v-if="tier.monthlyRequestBoosts > 0" class="text-xs text-ink-faint">
+                      +{{ tier.monthlyRequestBoosts }}
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-          <NuxtLink :to="localePath('/admin/users')" class="shrink-0 text-xs font-medium text-brand hover:underline">
-            {{ t('adminPatreon.manualGrants.manageInUsers') }}
-          </NuxtLink>
-        </div>
+        </AdminUiCard>
 
-        <div class="overflow-x-auto rounded-lg border border-hairline">
-          <table class="w-full text-left text-xs text-ink-muted">
-            <thead class="bg-surface text-[11px] uppercase tracking-wider text-ink-faint">
-              <tr>
-                <th class="px-3 py-2">{{ t('adminPatreon.table.account') }}</th>
-                <th class="px-3 py-2">{{ t('adminPatreon.manualGrants.assignment') }}</th>
-                <th class="px-3 py-2 text-right">{{ t('adminPatreon.tiers.quota') }}</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-hairline">
-              <tr v-if="(data?.manualGrants.length ?? 0) === 0">
-                <td colspan="3" class="px-3 py-6 text-center text-ink-faint">
-                  {{ t('adminPatreon.manualGrants.empty') }}
-                </td>
-              </tr>
-              <tr v-for="grant in data?.manualGrants ?? []" :key="grant.userId">
-                <td class="px-3 py-2">
-                  <NuxtLink :to="userSearchPath(grant.username)" class="font-medium text-ink hover:underline">
-                    {{ grant.username }}
-                  </NuxtLink>
-                  <div class="text-[11px] text-ink-faint">{{ grant.email }}</div>
-                </td>
-                <td class="px-3 py-2">
-                  <span
-                    v-if="grant.quotaOverride != null"
-                    class="rounded-md border border-amber-500/30 bg-amber-500/15 px-2 py-0.5 text-[11px] font-semibold text-amber-300"
-                  >
-                    {{ t('adminPatreon.manualGrants.override') }}
-                  </span>
-                  <span
-                    v-else-if="grant.tierName"
-                    class="rounded-md border border-hairline bg-surface-lift px-2 py-0.5 text-[11px] font-medium text-ink"
-                  >
-                    {{ grant.tierName }}
-                  </span>
-                </td>
-                <td class="px-3 py-2 text-right tabular-nums font-medium text-ink">
-                  {{ formatNumber(grant.effectiveQuotaLimit) }}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-    </div>
+        <AdminUiCard data-testid="patreon-manual-grants-card" :title="t('adminPatreon.manualGrants.title')" flush>
+          <template #actions>
+            <NuxtLink :to="localePath('/admin/users')" class="text-xs font-medium text-brand hover:underline">
+              {{ t('adminPatreon.manualGrants.manageInUsers') }}
+            </NuxtLink>
+          </template>
+          <AdminUiEmpty
+            v-if="data.manualGrants.length === 0"
+            compact
+            :text="t('adminPatreon.manualGrants.empty')"
+          />
+          <div v-else class="overflow-x-auto">
+            <table class="nd-admin-table min-w-[380px]">
+              <thead>
+                <tr>
+                  <th>{{ t('adminPatreon.table.account') }}</th>
+                  <th>{{ t('adminPatreon.manualGrants.assignment') }}</th>
+                  <th class="text-right">{{ t('adminPatreon.tiers.quota') }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="grant in data.manualGrants" :key="grant.userId">
+                  <td>
+                    <NuxtLink :to="userSearchPath(grant.username)" class="font-medium text-ink hover:underline">
+                      {{ grant.username }}
+                    </NuxtLink>
+                    <div class="max-w-[14rem] truncate text-xs text-ink-faint">{{ grant.email }}</div>
+                  </td>
+                  <td>
+                    <AdminUiBadge v-if="grant.quotaOverride != null" tone="warning">
+                      {{ t('adminPatreon.manualGrants.override') }}
+                    </AdminUiBadge>
+                    <AdminUiBadge v-else-if="grant.tierName">{{ grant.tierName }}</AdminUiBadge>
+                  </td>
+                  <td class="text-right font-medium tabular-nums text-ink">
+                    {{ formatNumber(grant.effectiveQuotaLimit) }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </AdminUiCard>
+      </div>
+    </section>
   </div>
 </template>

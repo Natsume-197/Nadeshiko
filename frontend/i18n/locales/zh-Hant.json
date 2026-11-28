@@ -538,11 +538,9 @@
       },
       "title": "使用者管理",
       "searchPlaceholder": "按電子郵件搜尋…",
-      "count": "{count} 位使用者",
       "empty": "未找到使用者。",
       "table": {
         "name": "名稱",
-        "email": "電子郵件",
         "role": "角色",
         "providers": "登入方式",
         "registered": "註冊時間",
@@ -563,20 +561,18 @@
         "ban": "封禁",
         "unban": "解除封禁"
       },
-      "pagination": {
-        "showing": "第 {start}–{end} 項，共 {total} 項",
-        "previous": "上一頁",
-        "next": "下一頁"
-      },
       "loadError": "無法載入使用者列表。",
       "banSuccess": "已封禁 {name}。",
       "banError": "無法封禁 {name}。",
       "unbanSuccess": "已解除 {name} 的封禁。",
-      "unbanError": "無法解除 {name} 的封禁。"
+      "unbanError": "無法解除 {name} 的封禁。",
+      "confirmBan": {
+        "title": "封鎖 {name}？",
+        "description": "該使用者將無法再登入。"
+      }
     },
     "announcement": {
       "title": "網站公告",
-      "description": "設定面向所有使用者的網站公告橫幅。",
       "fields": {
         "message": "公告內容",
         "type": "型別",
@@ -587,7 +583,6 @@
         "message": "輸入公告內容…"
       },
       "markdownHint": "支援 **粗體**、*斜體*、`程式碼` 和[連結](/media)。/media 等站內路徑會在應用內開啟。",
-      "activeDescription": "啟用後，所有訪客都能看到此公告。",
       "types": {
         "INFO": "通知",
         "WARNING": "警告",
@@ -600,7 +595,8 @@
       "updateError": "無法更新公告",
       "deactivated": "公告已停用",
       "deactivateError": "無法停用公告",
-      "fallbackMessage": "暫無公告"
+      "fallbackMessage": "暫無公告",
+      "inactive": "未啟用"
     },
     "activity": {
       "confirmClearHistory": "確定要清空全部學習記錄嗎？此操作無法撤銷。",
@@ -1423,14 +1419,11 @@
       "status": "狀態"
     },
     "admin": {
-      "title": "問題回饋管理",
       "count": "數量",
-      "actions": "操作",
       "filters": {
         "all": "全部",
-        "user": "使用者回饋",
-        "auto": "自動檢查",
-        "orphaned": "所屬作品已刪除"
+        "orphaned": "所屬作品已刪除",
+        "allSources": "全部來源"
       },
       "selectedGroups": "已選擇 {count} 組",
       "dismiss": "忽略",
@@ -1441,7 +1434,6 @@
       "deletingAll": "正在全部刪除…",
       "deleteAllMatching": "刪除所有符合項",
       "save": "儲存",
-      "addNote": "點選新增備註…",
       "updateSuccess": "回饋已更新",
       "updateError": "無法更新回饋",
       "batchUpdated": "已更新 {count} 條回饋",
@@ -1476,7 +1468,11 @@
         "deleteAllButton": "全部刪除",
         "deleteGroupTitle": "刪除這一組回饋？",
         "deleteGroupDescription": "這將永久刪除此回饋，以及針對同一內容、同一問題型別的全部重複回饋。"
-      }
+      },
+      "setStatus": "設定狀態",
+      "moreActions": "更多操作",
+      "selectAll": "全選",
+      "notePlaceholder": "新增備註"
     }
   },
   "modalauth": {
@@ -2040,15 +2036,72 @@
       "news": "當你投票的作品開始製作和上線時，我們會寄信通知你。你可以在設定中關閉。"
     },
     "admin": {
-      "tab": "請求"
+      "tab": "請求",
+      "title": "內容請求",
+      "publicBoard": "公開看板",
+      "searchPlaceholder": "搜尋標題…",
+      "noRequests": "沒有請求",
+      "dropHere": "拖放到此處",
+      "kindUpdate": "更新",
+      "duplicateShort": "重複：{title}",
+      "duplicateOf": "可能與「{title}」重複",
+      "notDuplicate": "不是重複",
+      "mergeIntoIt": "合併到該請求",
+      "copyId": "複製 ID",
+      "copied": "已複製",
+      "fields": {
+        "score": "分數",
+        "requested": "請求時間",
+        "source": "來源",
+        "title": "標題",
+        "cover": "封面圖片 URL",
+        "media": "關聯媒體",
+        "mediaOptional": "關聯媒體（選填）",
+        "declineReason": "拒絕原因（公開）"
+      },
+      "sections": {
+        "details": "詳情",
+        "merge": "合併到其他請求"
+      },
+      "mergePlaceholder": "選擇請求或貼上其 ID",
+      "merge": "合併",
+      "save": "儲存",
+      "move": {
+        "title": "移至{status}",
+        "voters": "{count} 位投票者",
+        "quiet": "移動但不寄信",
+        "email": "移動並寄信",
+        "decline": "拒絕請求"
+      },
+      "mergeConfirm": {
+        "title": "合併請求？",
+        "body": "將「{source}」合併到「{target}」？其投票和助推將轉移，此請求將被拒絕。",
+        "confirm": "合併請求"
+      },
+      "declinePresets": {
+        "noSubtitles": "沒有日語字幕。",
+        "alreadyOn": "Nadeshiko 上已有。",
+        "unsupported": "不支援的來源或格式。"
+      },
+      "toast": {
+        "saved": "請求已儲存。",
+        "merged": "請求已合併。",
+        "duplicateDismissed": "已忽略重複標記。",
+        "moved": "已移至{status}。",
+        "movedQuiet": "已移至{status}，未寄送郵件。"
+      },
+      "picker": {
+        "search": "搜尋 Nadeshiko 媒體…",
+        "searching": "搜尋中…",
+        "pasteId": "改為貼上 ID",
+        "rawId": "媒體公開 ID",
+        "clear": "清除關聯媒體"
+      }
     }
   },
   "adminDashboard": {
     "title": "管理控制台",
-    "subtitle": "在同一個介面集中處理審核、社群、帳號與系統健康狀態。",
-    "loading": "正在載入即時統計…",
     "nav": {
-      "home": "控制台",
       "openDashboard": "管理控制台",
       "refresh": "重新整理統計"
     },
@@ -2073,7 +2126,16 @@
       "emailsDesc": "所有已寄出的郵件、投遞狀態與被封鎖的地址。",
       "notificationsTitle": "Notifications",
       "notificationsDesc": "Send official announcements and manage notification rules"
-    }
+    },
+    "kpi": {
+      "open": "待處理",
+      "boosted": "{n} 個已加速",
+      "accounts": "帳戶",
+      "activePatrons": "活躍贊助者",
+      "issues24h": "問題 · 24 小時"
+    },
+    "attention": "需要處理",
+    "allClear": "一切正常"
   },
   "adminPatreon": {
     "title": "Patreon 與等級",
@@ -2092,11 +2154,6 @@
     "syncAllError": "無法執行全量 Patreon 同步。",
     "quotaPerMonth": "{limit}/月 · {source}",
     "linkedDate": "連結於 {date}",
-    "filters": {
-      "all": "全部 ({count})",
-      "active": "有效 ({count})",
-      "issues": "異常 ({count})"
-    },
     "status": {
       "activePatron": "有效",
       "declinedPatron": "扣款失敗",
@@ -2123,7 +2180,6 @@
     },
     "tiers": {
       "title": "等級對應",
-      "subtitle": "已設定的 Patreon 等級 ID、每月 API 配額與請求加速次數（唯讀）。",
       "tier": "等級",
       "quota": "API / 月",
       "patreon": "Patreon",
@@ -2133,7 +2189,6 @@
     },
     "manualGrants": {
       "title": "手動等級與配額覆寫",
-      "subtitle": "非透過 Patreon 而手動指派等級或自訂 API 配額的帳號。",
       "manageInUsers": "前往使用者管理",
       "assignment": "指派類型",
       "override": "自訂配額",
@@ -2159,9 +2214,6 @@
       "noAccount": "無帳號",
       "subtotal": "小計 ({count})"
     },
-    "linkedSection": {
-      "subtitle": "透過 OAuth 連結 Patreon 並自動享有權益的使用者。"
-    },
     "pledgePerMonth": "{amount}/月",
     "kpi": {
       "monthlyLabel": "每月收入",
@@ -2174,8 +2226,23 @@
       "issuesSub": "Nadeshiko 已綁定共 {count} 個"
     },
     "tabs": {
-      "campaign": "Patreon 贊助者 ({count})",
-      "linked": "已綁定帳號 ({count})"
+      "members": "Patreon 專案",
+      "accounts": "已連結帳號",
+      "tiers": "等級"
+    },
+    "segments": {
+      "all": "全部",
+      "active": "活躍",
+      "issues": "問題",
+      "unlinked": "未連結",
+      "paid": "曾付費"
+    },
+    "quotaSource": {
+      "override": "自訂",
+      "tier": "等級",
+      "patreon": "Patreon",
+      "legacy_column": "舊設定",
+      "default": "預設"
     }
   },
   "adminEmails": {
@@ -2224,7 +2291,6 @@
       "campaign": "活動",
       "user": "使用者",
       "messageId": "SES ID",
-      "error": "錯誤",
       "events": "SES 事件",
       "noEvents": "沒有事件",
       "backfill": "重建",
@@ -2246,15 +2312,14 @@
       }
     },
     "templates": {
-      "fromCategory": "From / category",
-      "template": "Template",
-      "editTemplate": "Edit & preview",
-      "variablesHint": "Allowed variables:",
       "bodyMarkdown": "Body (Markdown)",
       "sendTest": "Send test",
       "refreshPreview": "Refresh preview",
       "resetDefault": "Reset to default",
-      "testSentToast": "Test email sent to {email}."
+      "testSentToast": "Test email sent to {email}.",
+      "preview": "郵件預覽",
+      "testTo": "測試收件人",
+      "insertVariable": "插入變數"
     },
     "broadcasts": {
       "testAddress": "Test address",
@@ -2265,7 +2330,6 @@
       "send": "Send",
       "cancel": "Cancel",
       "viewLog": "View log",
-      "estimatedRecipients": "Estimated opted-in recipients",
       "respectsOptOut": "respects opt-out & suppressions",
       "previewText": "Preview text (optional)",
       "ctaLabel": "Button label (optional)",
@@ -2276,7 +2340,53 @@
       "launchedToast": "Broadcast queued for delivery.",
       "cancelledToast": "Broadcast cancelled.",
       "confirmTitle": "Launch email broadcast",
-      "confirmBody": "Send \"{subject}\" to {audience}?"
+      "confirmBody": "Send \"{subject}\" to {audience}?",
+      "audiences": {
+        "ALL_OPTED_IN": "所有已訂閱使用者",
+        "PATRONS": "贊助者",
+        "ACTIVE_DAYS": "活躍使用者",
+        "SPECIFIC_USERS": "指定使用者"
+      },
+      "status": {
+        "DRAFT": "草稿",
+        "SENDING": "傳送中",
+        "SENT": "已傳送",
+        "FAILED": "失敗",
+        "CANCELLED": "已取消"
+      },
+      "filterAll": "全部",
+      "recipients": "收件人",
+      "recipientsCount": "{count} 位收件人",
+      "activeDays": "最近活躍（天）",
+      "activeDaysShort": "最近 {days} 天",
+      "userIds": "使用者 ID",
+      "usersCount": "{count} 位使用者",
+      "sectionContent": "內容",
+      "sectionButton": "按鈕",
+      "sectionAdvanced": "進階",
+      "sendBroadcast": "傳送群發郵件",
+      "preview": "郵件預覽",
+      "previewSubjectFallback": "預覽",
+      "previewBodyFallback": "撰寫郵件內文…",
+      "deleteDraft": "刪除草稿",
+      "deleteTitle": "刪除草稿？",
+      "deleteBody": "將刪除「{subject}」。",
+      "confirmBodyCount": "將「{subject}」傳送給 {count} 位收件人？",
+      "imageTypeError": "僅支援 PNG、JPEG、WebP 或 GIF 圖片。",
+      "imageSizeError": "圖片不得超過 2 MB。",
+      "toolbar": {
+        "title": "標題",
+        "heading": "小標題",
+        "bold": "粗體",
+        "list": "項目清單",
+        "quote": "註記",
+        "link": "連結",
+        "image": "圖片",
+        "uploading": "上傳中…",
+        "pasteHint": "也可按 Ctrl+V 貼上",
+        "boldPlaceholder": "粗體文字",
+        "linkPlaceholder": "連結文字"
+      }
     }
   },
   "notifications": {
@@ -2387,7 +2497,6 @@
   },
   "adminNotifications": {
     "title": "Notifications",
-    "subtitle": "Send official in-site announcements and configure notification rules",
     "tabs": {
       "send": "Send & history",
       "registry": "Catalog & rules"
@@ -2406,14 +2515,17 @@
       "submit": "Send notification",
       "sending": "Sending…",
       "preview": "Bell preview",
-      "pinnedHint": "Official notices are pinned at the top of the bell until read and cannot be muted.",
       "missingFields": "Title and message are required.",
       "missingUser": "Enter a target user ID.",
       "invalidLink": "Link path must start with /.",
       "sentToast": "Notification queued.",
       "confirmTitle": "Confirm broadcast",
       "confirmBody": "Send \"{title}\" to {audience}?",
-      "confirmAction": "Send now"
+      "confirmAction": "Send now",
+      "placeholders": {
+        "title": "Nadeshiko 3.0 來了！",
+        "message": "顯示在鈴鐺中的簡短文字"
+      }
     },
     "history": {
       "title": "Recent broadcasts",
@@ -2422,18 +2534,63 @@
       "titleCol": "Title",
       "audience": "Audience",
       "sent": "Sent",
-      "status": "Status"
+      "status": "Status",
+      "userFallback": "使用者 #{id}",
+      "statuses": {
+        "queued": "排隊中",
+        "sending": "傳送中",
+        "sent": "已傳送",
+        "failed": "失敗"
+      }
     },
     "registry": {
-      "kind": "Notification",
       "trigger": "Trigger",
-      "enabled": "Enabled",
       "params": "Parameters",
-      "volume7d": "7d volume",
       "edit": "Edit",
       "save": "Save",
       "reset": "Reset",
-      "saved": "Settings saved."
+      "saved": "Settings saved.",
+      "triggers": {
+        "realtime": "即時",
+        "cron": "排程",
+        "admin": "手動"
+      },
+      "pinned": "置頂",
+      "grouped": "合併",
+      "sent7d": "已傳送 {count} · 7天",
+      "failed7d": "{count} 失敗",
+      "locked": "永遠開啟",
+      "customCopy": "自訂文案",
+      "transactional": "交易性",
+      "empty": "沒有通知類型"
+    },
+    "kinds": {
+      "siteAnnouncement": "公告",
+      "adminMessage": "私訊"
+    },
+    "areas": {
+      "official": "官方",
+      "words": "單字提醒",
+      "community": "社群",
+      "lifecycle": "生命週期",
+      "transactional": "交易性"
     }
+  },
+  "adminLayout": {
+    "sections": {
+      "home": "首頁",
+      "moderation": "審核",
+      "communication": "通訊",
+      "people": "使用者"
+    },
+    "on": "開啟",
+    "jumpTo": "跳至…",
+    "site": "網站",
+    "status": "狀態",
+    "noMatches": "無相符結果",
+    "menu": "選單",
+    "close": "關閉",
+    "toggleSidebar": "切換側欄",
+    "reload": "重新整理"
   }
 }

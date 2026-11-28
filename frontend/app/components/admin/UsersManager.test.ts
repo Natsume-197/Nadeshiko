@@ -74,6 +74,11 @@ async function render() {
         UiBaseIcon: true,
         SearchDropdownContainer: { template: '<div><slot /><slot name="content" /></div>' },
         SearchDropdownMainButton: { template: '<button><slot /></button>' },
+        CommonConfirmModal: {
+          props: ['visible'],
+          template:
+            '<div v-if="visible" data-testid="confirm-modal"><button data-testid="confirm-ok" @click="$emit(\'confirm\')" /></div>',
+        },
         SearchDropdownItem: {
           props: ['text'],
           template: '<button :data-item="text" @click="$emit(\'click\')"><slot /></button>',
@@ -97,15 +102,13 @@ function rows(wrapper: { findAll: (s: string) => { text: () => string }[] }) {
   return wrapper.findAll('tbody tr').map((r) => r.text());
 }
 
-/** The "showing start=N" line, which is where `currentOffset` becomes visible. */
+/** The pager's "N–M / total" line, which is where `currentOffset` becomes visible. */
 function showing(wrapper: { text: () => string }) {
-  return /start=(\d+)/.exec(wrapper.text())?.[1];
+  return /(\d+)–\d+ \/ \d+/.exec(wrapper.text())?.[1];
 }
 
-function nextButton(wrapper: {
-  findAll: (s: string) => { text: () => string; trigger: (e: string) => Promise<void> }[];
-}) {
-  return wrapper.findAll('button').find((b) => b.text().includes('pagination.next'))!;
+function nextButton(wrapper: { get: (s: string) => { trigger: (e: string) => Promise<void> } }) {
+  return wrapper.get('[aria-label="Next page"]');
 }
 
 beforeEach(() => {
@@ -129,7 +132,7 @@ describe('loading the table', () => {
       users: result.users.map((user, index) => ({ ...user, role: roles[index] })),
     });
     const wrapper = await render();
-    const labels = wrapper.findAll('tbody tr').map((row) => row.findAll('td')[2]?.text());
+    const labels = wrapper.findAll('tbody tr').map((row) => row.findAll('td')[1]?.text());
     expect(labels).toEqual([
       'accountSettings.dashboard.roles.ADMIN',
       'accountSettings.dashboard.roles.MOD',
@@ -287,6 +290,18 @@ describe('searching', () => {
 
     expect(rows(wrapper)[0]).toContain('joh-0');
     expect(rows(wrapper)).toHaveLength(2);
+  });
+
+  test('banning asks for confirmation first', async () => {
+    getAdminUsersWithProviders.mockResolvedValue(page('u', 1, 1));
+    const wrapper = await render();
+
+    await wrapper.get('[data-item="accountSettings.dashboard.actions.ban"]').trigger('click');
+    expect(banUser).not.toHaveBeenCalled();
+
+    await wrapper.get('[data-testid="confirm-ok"]').trigger('click');
+    await flush();
+    expect(banUser).toHaveBeenCalledWith({ userId: 'u-0', banReason: '' });
   });
 
   test("opens the user's email history", async () => {

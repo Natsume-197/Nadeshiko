@@ -538,11 +538,9 @@
       },
       "title": "ユーザー",
       "searchPlaceholder": "メールアドレスで検索…",
-      "count": "ユーザー{count}人",
       "empty": "ユーザーが見つかりません。",
       "table": {
         "name": "名前",
-        "email": "メールアドレス",
         "role": "権限",
         "providers": "ログイン方法",
         "registered": "登録日",
@@ -563,20 +561,18 @@
         "ban": "停止",
         "unban": "停止解除"
       },
-      "pagination": {
-        "showing": "{total} 件中 {start}〜{end} 件を表示",
-        "previous": "前へ",
-        "next": "次へ"
-      },
       "loadError": "ユーザー一覧を読み込めませんでした。",
       "banSuccess": "{name}のアカウントを停止しました",
       "banError": "{name}のアカウントを停止できませんでした。",
       "unbanSuccess": "{name}のアカウント停止を解除しました",
-      "unbanError": "{name}のアカウント停止を解除できませんでした。"
+      "unbanError": "{name}のアカウント停止を解除できませんでした。",
+      "confirmBan": {
+        "title": "{name} をBANしますか？",
+        "description": "このユーザーはログインできなくなります。"
+      }
     },
     "announcement": {
       "title": "お知らせ",
-      "description": "すべてのユーザーに表示されるサイト全体のお知らせバナーを設定します。",
       "fields": {
         "message": "メッセージ",
         "type": "種類",
@@ -587,7 +583,6 @@
         "message": "お知らせメッセージを入力..."
       },
       "markdownHint": "**太字**、*斜体*、`コード`、[リンク](/media) が使えます。/media のようなサイト内パスはアプリ内で開きます。",
-      "activeDescription": "有効にすると、すべての訪問者にバナーが表示されます。",
       "types": {
         "INFO": "お知らせ",
         "WARNING": "重要なお知らせ",
@@ -600,7 +595,8 @@
       "updateError": "お知らせの更新に失敗しました",
       "deactivated": "お知らせの掲載を停止しました",
       "deactivateError": "お知らせの掲載を停止できませんでした",
-      "fallbackMessage": "お知らせはありません"
+      "fallbackMessage": "お知らせはありません",
+      "inactive": "非公開"
     },
     "activity": {
       "confirmClearHistory": "すべての利用履歴を削除しますか？この操作は取り消せません。",
@@ -1423,14 +1419,11 @@
       "status": "ステータス"
     },
     "admin": {
-      "title": "報告の管理",
       "count": "件数",
-      "actions": "操作",
       "filters": {
         "all": "すべて",
-        "user": "ユーザーからの報告",
-        "auto": "自動チェック",
-        "orphaned": "対象作品が削除済み"
+        "orphaned": "対象作品が削除済み",
+        "allSources": "すべてのソース"
       },
       "selectedGroups": "{count} 件のグループを選択中",
       "dismiss": "却下",
@@ -1441,7 +1434,6 @@
       "deletingAll": "すべて削除中...",
       "deleteAllMatching": "絞り込み結果をすべて削除",
       "save": "保存",
-      "addNote": "クリックしてメモを追加...",
       "updateSuccess": "報告を更新しました",
       "updateError": "報告の更新に失敗しました",
       "batchUpdated": "報告を{count}件更新しました",
@@ -1476,7 +1468,11 @@
         "deleteAllButton": "すべて削除",
         "deleteGroupTitle": "このグループの報告を削除しますか？",
         "deleteGroupDescription": "この報告と、対象・理由が同じ報告をすべて完全に削除します。"
-      }
+      },
+      "setStatus": "ステータスを変更",
+      "moreActions": "その他の操作",
+      "selectAll": "すべて選択",
+      "notePlaceholder": "メモを追加"
     }
   },
   "modalauth": {
@@ -2040,15 +2036,72 @@
       "news": "投票した作品の作業が始まったときと公開されたときにメールでお知らせします。設定でオフにできます。"
     },
     "admin": {
-      "tab": "リクエスト"
+      "tab": "リクエスト",
+      "title": "コンテンツリクエスト",
+      "publicBoard": "公開ボード",
+      "searchPlaceholder": "タイトルを検索…",
+      "noRequests": "リクエストなし",
+      "dropHere": "ここにドロップ",
+      "kindUpdate": "追加",
+      "duplicateShort": "重複: {title}",
+      "duplicateOf": "「{title}」と重複の可能性",
+      "notDuplicate": "重複ではない",
+      "mergeIntoIt": "統合する",
+      "copyId": "IDをコピー",
+      "copied": "コピー済み",
+      "fields": {
+        "score": "スコア",
+        "requested": "リクエスト日",
+        "source": "ソース",
+        "title": "タイトル",
+        "cover": "カバー画像URL",
+        "media": "リンク済みメディア",
+        "mediaOptional": "メディアをリンク（任意）",
+        "declineReason": "却下理由（公開）"
+      },
+      "sections": {
+        "details": "詳細",
+        "merge": "別のリクエストに統合"
+      },
+      "mergePlaceholder": "リクエストを選択またはIDを貼り付け",
+      "merge": "統合",
+      "save": "保存",
+      "move": {
+        "title": "{status}に移動",
+        "voters": "投票者 {count} 人",
+        "quiet": "メールなしで移動",
+        "email": "移動してメール送信",
+        "decline": "リクエストを却下"
+      },
+      "mergeConfirm": {
+        "title": "リクエストを統合しますか？",
+        "body": "「{source}」を「{target}」に統合しますか？投票とブーストは移され、このリクエストは却下されます。",
+        "confirm": "統合する"
+      },
+      "declinePresets": {
+        "noSubtitles": "日本語字幕が存在しません。",
+        "alreadyOn": "すでにNadeshikoにあります。",
+        "unsupported": "対応していないソースまたは形式です。"
+      },
+      "toast": {
+        "saved": "リクエストを保存しました。",
+        "merged": "リクエストを統合しました。",
+        "duplicateDismissed": "重複フラグを解除しました。",
+        "moved": "{status}に移動しました。",
+        "movedQuiet": "{status}に移動しました（メール未送信）。"
+      },
+      "picker": {
+        "search": "Nadeshikoのメディアを検索…",
+        "searching": "検索中…",
+        "pasteId": "IDを貼り付ける",
+        "rawId": "メディア公開ID",
+        "clear": "リンクを解除"
+      }
     }
   },
   "adminDashboard": {
     "title": "管理ダッシュボード",
-    "subtitle": "モデレーション、コミュニティ、アカウント、システム状態を一元管理します。",
-    "loading": "最新データを読み込み中…",
     "nav": {
-      "home": "ダッシュボード",
       "openDashboard": "管理ダッシュボード",
       "refresh": "件数を更新"
     },
@@ -2073,7 +2126,16 @@
       "emailsDesc": "送信したすべてのメール、配信状況、ブロック中のアドレス。",
       "notificationsTitle": "Notifications",
       "notificationsDesc": "Send official announcements and manage notification rules"
-    }
+    },
+    "kpi": {
+      "open": "未対応",
+      "boosted": "{n} 件ブースト",
+      "accounts": "アカウント",
+      "activePatrons": "アクティブなパトロン",
+      "issues24h": "問題 · 24時間"
+    },
+    "attention": "要対応",
+    "allClear": "問題なし"
   },
   "adminPatreon": {
     "title": "Patreonとティア",
@@ -2092,11 +2154,6 @@
     "syncAllError": "Patreonの一括同期に失敗しました。",
     "quotaPerMonth": "{limit}/月 · {source}",
     "linkedDate": "連携日 {date}",
-    "filters": {
-      "all": "すべて ({count})",
-      "active": "有効 ({count})",
-      "issues": "問題あり ({count})"
-    },
     "status": {
       "activePatron": "有効",
       "declinedPatron": "決済失敗",
@@ -2123,7 +2180,6 @@
     },
     "tiers": {
       "title": "ティア対応表",
-      "subtitle": "設定済みのPatreonティアID、月間API上限、リクエストブーストの一覧です。",
       "tier": "ティア",
       "quota": "API / 月",
       "patreon": "Patreon",
@@ -2133,7 +2189,6 @@
     },
     "manualGrants": {
       "title": "手動ティア・上限オーバーライド",
-      "subtitle": "Patreon以外で有料ティアやカスタムAPI上限が設定されているアカウントです。",
       "manageInUsers": "ユーザー画面で編集",
       "assignment": "割り当て",
       "override": "手動上限",
@@ -2159,9 +2214,6 @@
       "noAccount": "アカウントなし",
       "subtotal": "小計 ({count})"
     },
-    "linkedSection": {
-      "subtitle": "OAuthでPatreonを連携し、特典を受け取っているユーザー一覧です。"
-    },
     "pledgePerMonth": "{amount}/月",
     "kpi": {
       "monthlyLabel": "月間収益",
@@ -2174,8 +2226,23 @@
       "issuesSub": "Nadeshiko 連携 {count} 件中"
     },
     "tabs": {
-      "campaign": "Patreon 支援者 ({count})",
-      "linked": "連携済みアカウント ({count})"
+      "members": "Patreonキャンペーン",
+      "accounts": "連携アカウント",
+      "tiers": "ティア"
+    },
+    "segments": {
+      "all": "すべて",
+      "active": "有効",
+      "issues": "問題あり",
+      "unlinked": "未連携",
+      "paid": "支払い実績あり"
+    },
+    "quotaSource": {
+      "override": "個別設定",
+      "tier": "ティア",
+      "patreon": "Patreon",
+      "legacy_column": "旧設定",
+      "default": "デフォルト"
     }
   },
   "adminEmails": {
@@ -2224,7 +2291,6 @@
       "campaign": "キャンペーン",
       "user": "ユーザー",
       "messageId": "SES ID",
-      "error": "エラー",
       "events": "SESイベント",
       "noEvents": "イベントなし",
       "backfill": "復元",
@@ -2246,15 +2312,14 @@
       }
     },
     "templates": {
-      "fromCategory": "From / category",
-      "template": "Template",
-      "editTemplate": "Edit & preview",
-      "variablesHint": "Allowed variables:",
       "bodyMarkdown": "Body (Markdown)",
       "sendTest": "Send test",
       "refreshPreview": "Refresh preview",
       "resetDefault": "Reset to default",
-      "testSentToast": "Test email sent to {email}."
+      "testSentToast": "Test email sent to {email}.",
+      "preview": "メールのプレビュー",
+      "testTo": "テスト送信先",
+      "insertVariable": "変数を挿入"
     },
     "broadcasts": {
       "testAddress": "Test address",
@@ -2265,7 +2330,6 @@
       "send": "Send",
       "cancel": "Cancel",
       "viewLog": "View log",
-      "estimatedRecipients": "Estimated opted-in recipients",
       "respectsOptOut": "respects opt-out & suppressions",
       "previewText": "Preview text (optional)",
       "ctaLabel": "Button label (optional)",
@@ -2276,7 +2340,53 @@
       "launchedToast": "Broadcast queued for delivery.",
       "cancelledToast": "Broadcast cancelled.",
       "confirmTitle": "Launch email broadcast",
-      "confirmBody": "Send \"{subject}\" to {audience}?"
+      "confirmBody": "Send \"{subject}\" to {audience}?",
+      "audiences": {
+        "ALL_OPTED_IN": "配信許可済み全員",
+        "PATRONS": "パトロン",
+        "ACTIVE_DAYS": "アクティブユーザー",
+        "SPECIFIC_USERS": "特定のユーザー"
+      },
+      "status": {
+        "DRAFT": "下書き",
+        "SENDING": "送信中",
+        "SENT": "送信済み",
+        "FAILED": "失敗",
+        "CANCELLED": "キャンセル済み"
+      },
+      "filterAll": "すべて",
+      "recipients": "受信者",
+      "recipientsCount": "受信者 {count} 人",
+      "activeDays": "直近のアクティブ日数",
+      "activeDaysShort": "直近{days}日",
+      "userIds": "ユーザーID",
+      "usersCount": "{count}人",
+      "sectionContent": "内容",
+      "sectionButton": "ボタン",
+      "sectionAdvanced": "詳細設定",
+      "sendBroadcast": "一斉送信",
+      "preview": "メールのプレビュー",
+      "previewSubjectFallback": "プレビュー",
+      "previewBodyFallback": "メール本文を入力…",
+      "deleteDraft": "下書きを削除",
+      "deleteTitle": "下書きを削除しますか？",
+      "deleteBody": "「{subject}」を削除します。",
+      "confirmBodyCount": "「{subject}」を {count} 人に送信しますか？",
+      "imageTypeError": "PNG・JPEG・WebP・GIF画像のみ対応しています。",
+      "imageSizeError": "画像は2MB以下にしてください。",
+      "toolbar": {
+        "title": "タイトル",
+        "heading": "見出し",
+        "bold": "太字",
+        "list": "箇条書き",
+        "quote": "注記",
+        "link": "リンク",
+        "image": "画像",
+        "uploading": "アップロード中…",
+        "pasteHint": "Ctrl+Vで貼り付けも可",
+        "boldPlaceholder": "太字テキスト",
+        "linkPlaceholder": "リンクテキスト"
+      }
     }
   },
   "notifications": {
@@ -2387,7 +2497,6 @@
   },
   "adminNotifications": {
     "title": "Notifications",
-    "subtitle": "Send official in-site announcements and configure notification rules",
     "tabs": {
       "send": "Send & history",
       "registry": "Catalog & rules"
@@ -2406,14 +2515,17 @@
       "submit": "Send notification",
       "sending": "Sending…",
       "preview": "Bell preview",
-      "pinnedHint": "Official notices are pinned at the top of the bell until read and cannot be muted.",
       "missingFields": "Title and message are required.",
       "missingUser": "Enter a target user ID.",
       "invalidLink": "Link path must start with /.",
       "sentToast": "Notification queued.",
       "confirmTitle": "Confirm broadcast",
       "confirmBody": "Send \"{title}\" to {audience}?",
-      "confirmAction": "Send now"
+      "confirmAction": "Send now",
+      "placeholders": {
+        "title": "Nadeshiko 3.0 リリース！",
+        "message": "ベルに表示される短い本文"
+      }
     },
     "history": {
       "title": "Recent broadcasts",
@@ -2422,18 +2534,63 @@
       "titleCol": "Title",
       "audience": "Audience",
       "sent": "Sent",
-      "status": "Status"
+      "status": "Status",
+      "userFallback": "ユーザー #{id}",
+      "statuses": {
+        "queued": "待機中",
+        "sending": "送信中",
+        "sent": "送信済み",
+        "failed": "失敗"
+      }
     },
     "registry": {
-      "kind": "Notification",
       "trigger": "Trigger",
-      "enabled": "Enabled",
       "params": "Parameters",
-      "volume7d": "7d volume",
       "edit": "Edit",
       "save": "Save",
       "reset": "Reset",
-      "saved": "Settings saved."
+      "saved": "Settings saved.",
+      "triggers": {
+        "realtime": "リアルタイム",
+        "cron": "定期",
+        "admin": "手動"
+      },
+      "pinned": "固定",
+      "grouped": "グループ化",
+      "sent7d": "{count} 件送信 · 7日",
+      "failed7d": "{count} 件失敗",
+      "locked": "常にオン",
+      "customCopy": "カスタム文面",
+      "transactional": "トランザクション",
+      "empty": "通知タイプはありません"
+    },
+    "kinds": {
+      "siteAnnouncement": "お知らせ",
+      "adminMessage": "ダイレクトメッセージ"
+    },
+    "areas": {
+      "official": "公式",
+      "words": "単語アラート",
+      "community": "コミュニティ",
+      "lifecycle": "ライフサイクル",
+      "transactional": "トランザクション"
     }
+  },
+  "adminLayout": {
+    "sections": {
+      "home": "ホーム",
+      "moderation": "モデレーション",
+      "communication": "連絡",
+      "people": "ユーザー"
+    },
+    "on": "オン",
+    "jumpTo": "移動…",
+    "site": "サイト",
+    "status": "稼働状況",
+    "noMatches": "該当なし",
+    "menu": "メニュー",
+    "close": "閉じる",
+    "toggleSidebar": "サイドバーの切り替え",
+    "reload": "再読み込み"
   }
 }

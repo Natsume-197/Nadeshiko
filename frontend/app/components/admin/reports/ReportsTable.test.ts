@@ -76,7 +76,14 @@ function render(
       ...props,
     } as never,
     global: {
-      stubs: { NuxtLink: { props: ['to'], template: '<a :href="to"><slot /></a>' } },
+      stubs: {
+        NuxtLink: { props: ['to'], template: '<a :href="to"><slot /></a>' },
+        // The row menu teleports to body when open; render its items inline so they can be pressed.
+        SearchDropdownContainer: {
+          template: '<div><slot :is-open="true" :toggle="() => {}" :close="() => {}" /><slot name="content" /></div>',
+        },
+        UiBaseIcon: true,
+      },
     },
   });
   mounted.push(wrapper);
@@ -229,7 +236,7 @@ describe('acting on a group', () => {
     ['reports.statuses.OPEN', 'OPEN'],
     ['reports.statuses.PROCESSING', 'PROCESSING'],
     ['reports.statuses.FIXED', 'FIXED'],
-    ['reports.admin.dismiss', 'DISMISSED'],
+    ['reports.statuses.DISMISSED', 'DISMISSED'],
   ])('%s sets the status to %s', async (label, status) => {
     const wrapper = render();
 

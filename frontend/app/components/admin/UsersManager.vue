@@ -1,8 +1,12 @@
 <script setup lang="ts">
 import { useTimeoutFn } from '@vueuse/core';
-import { mdiDotsVertical } from '@mdi/js';
+import { mdiAccountSearchOutline, mdiDotsVertical, mdiMagnify, mdiRefresh } from '@mdi/js';
 import type { AdminUserWithProviders as AdminUser } from '@brigadasos/nadeshiko-sdk';
 import { handleApiError } from '~/utils/apiError';
+import AdminUiBadge, { type AdminTone } from './ui/Badge.vue';
+import AdminUiEmpty from './ui/Empty.vue';
+import AdminUiPageHeader from './ui/PageHeader.vue';
+import AdminUiPagination from './ui/Pagination.vue';
 
 const AVATAR_TONES = [
   'bg-rose-500/20 text-rose-300',
@@ -65,6 +69,25 @@ const providerLabel = (provider: string) => {
   }
 };
 
+function roleTone(role: string | undefined): AdminTone {
+  switch (role) {
+    case 'ADMIN':
+      return 'violet';
+    case 'MOD':
+      return 'info';
+    case 'PATREON':
+      return 'brand';
+    default:
+      return 'neutral';
+  }
+}
+
+/** Providers as badge labels; an account with none signed up by email. */
+function providerLabels(user: AdminUser): string[] {
+  const labels = (user.providers ?? []).map(providerLabel);
+  return labels.length ? [...new Set(labels)] : [t('accountSettings.dashboard.providers.email')];
+}
+
 const statusLabel = (banned: boolean) =>
   banned ? t('accountSettings.dashboard.status.banned') : t('accountSettings.dashboard.status.active');
 
@@ -111,15 +134,16 @@ const { start: scheduleSearch } = useTimeoutFn(
 
 watch(searchQuery, () => scheduleSearch());
 
-function goToPrev() {
-  if (currentOffset.value <= 0) return;
-  fetchUsers(Math.max(0, currentOffset.value - limit));
+const page = computed(() => Math.floor(currentOffset.value / limit) + 1);
+
+function goToPage(next: number) {
+  const offset = (next - 1) * limit;
+  if (offset < 0 || offset >= total.value) return;
+  fetchUsers(offset);
 }
 
-function goToNext() {
-  if (currentOffset.value + limit >= total.value) return;
-  fetchUsers(currentOffset.value + limit);
-}
+const mounted = ref(false);
+onMounted(() => (mounted.value = true));
 
 function openEmails(user: AdminUser) {
   navigateTo(localePath({ path: '/admin/emails', query: { q: user.email, days: 365 } }));
@@ -136,6 +160,14 @@ function openNotificationForUser(user: AdminUser) {
 
 async function handleImpersonate(user: AdminUser) {
   await store.impersonateUser(user.id);
+}
+
+const pendingBan = ref<AdminUser | null>(null);
+
+function confirmBan() {
+  const user = pendingBan.value;
+  pendingBan.value = null;
+  if (user) void handleBan(user);
 }
 
 async function handleBan(user: AdminUser) {
@@ -172,175 +204,150 @@ onMounted(() => {
 </script>
 
 <template>
-  <div>
-    <h1 class="text-2xl font-bold text-white mb-6">{{ t('accountSettings.dashboard.title') }}</h1>
+  <div data-testid="admin-users" class="space-y-5">
+    <AdminUiPageHeader :title="t('accountSettings.dashboard.title')" :count="formatNumber(total)">
+      <template #actions>
+        <button
+          type="button"
+          data-testid="users-refresh"
+          :disabled="mounted && isLoading"
+          class="nd-btn !h-8 !text-[13px]"
+          @click="fetchUsers()"
+        >
+          <UiBaseIcon :path="mdiRefresh" :size="15" w="w-4" h="h-4" :class="{ 'animate-spin': mounted && isLoading }" />
+          <span>{{ t('adminLayout.reload') }}</span>
+        </button>
+      </template>
+    </AdminUiPageHeader>
 
-    <div class="flex items-center justify-between mb-4 gap-3">
-      <input
-        v-model="searchQuery"
-        type="text"
-        :placeholder="t('accountSettings.dashboard.searchPlaceholder')"
-        class="nd-input max-w-sm"
-      />
-      <span class="text-sm text-gray-400 whitespace-nowrap">{{ t('accountSettings.dashboard.count', { count: formatNumber(total) }) }}</span>
+    <div class="flex flex-wrap items-center gap-2">
+      <div class="relative w-full sm:w-72">
+        <UiBaseIcon
+          :path="mdiMagnify"
+          :size="15"
+          w="w-4"
+          h="h-4"
+          class="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-faint"
+        />
+        <input
+          v-model="searchQuery"
+          data-testid="users-search"
+          type="search"
+          :placeholder="t('accountSettings.dashboard.searchPlaceholder')"
+          class="nd-input !h-8 !pl-8 !text-[13px]"
+        />
+      </div>
     </div>
 
-    <div v-if="isLoading" class="text-center py-12">
-      <div class="animate-spin inline-block w-6 h-6 border-[3px] border-current border-t-transparent text-white rounded-full" role="status" />
+    <div v-if="isLoading" role="status" class="nd-admin-table-wrap">
+      <div v-for="n in 8" :key="n" class="flex items-center gap-4 border-b border-hairline px-4 py-3 last:border-0">
+        <span class="size-7 shrink-0 animate-pulse rounded-full bg-surface-lift" />
+        <span class="h-3 w-48 animate-pulse rounded bg-surface-lift" />
+        <span class="h-3 w-20 animate-pulse rounded bg-surface-lift" />
+        <span class="h-3 flex-1 animate-pulse rounded bg-surface-lift" />
+      </div>
     </div>
 
-    <template v-else>
-      <div v-if="users.length === 0" class="text-center py-12 text-gray-500 text-sm">
-        {{ t('accountSettings.dashboard.empty') }}
-      </div>
+    <div v-else-if="users.length === 0" class="nd-admin-table-wrap">
+      <AdminUiEmpty :icon="mdiAccountSearchOutline" :text="t('accountSettings.dashboard.empty')" />
+    </div>
 
-      <div v-else class="overflow-x-auto rounded-lg border border-hairline bg-card-background">
-        <table class="w-full min-w-[820px] text-xs">
-          <thead>
-            <tr class="border-b border-hairline bg-surface/40 text-left text-[11px] font-semibold uppercase tracking-wider text-ink-faint">
-              <th class="px-3.5 py-2.5">{{ t('accountSettings.dashboard.table.name') }}</th>
-              <th class="px-3.5 py-2.5">{{ t('accountSettings.dashboard.table.email') }}</th>
-              <th class="px-3.5 py-2.5">{{ t('accountSettings.dashboard.table.role') }}</th>
-              <th class="px-3.5 py-2.5">{{ t('accountSettings.dashboard.table.providers') }}</th>
-              <th class="px-3.5 py-2.5">{{ t('accountSettings.dashboard.table.registered') }}</th>
-              <th class="px-3.5 py-2.5">{{ t('accountSettings.dashboard.table.lastUpdate') }}</th>
-              <th class="px-3.5 py-2.5">{{ t('accountSettings.dashboard.table.status') }}</th>
-              <th class="w-10 px-3.5 py-2.5" />
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-hairline">
-            <tr
-              v-for="user in users"
-              :key="user.id"
-              class="transition-colors hover:bg-surface-hover"
-            >
-              <td class="px-3.5 py-2 text-ink">
-                <div class="flex items-center gap-2.5">
-                  <span
-                    :class="[
-                      'flex size-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold',
-                      avatarTone(user.email || String(user.id)),
-                    ]"
-                  >
-                    {{ avatarLetter(user) }}
-                  </span>
-                  <span class="font-medium">{{ user.name || '—' }}</span>
-                </div>
-              </td>
-              <td class="px-3.5 py-2 font-mono text-[11px] text-ink-muted">{{ user.email }}</td>
-              <td class="px-3.5 py-2 text-ink-muted capitalize">
-                {{ roleLabel(user.role) }}
-              </td>
-              <td class="px-3.5 py-2">
-                <div class="flex flex-wrap gap-1">
-                  <template v-if="!user.providers || user.providers.length === 0">
-                    <span class="rounded border border-hairline bg-surface-lift px-1.5 py-0.5 text-[10px] font-medium text-ink-muted">{{ t('accountSettings.dashboard.providers.email') }}</span>
-                  </template>
-                  <template v-for="provider in user.providers" :key="provider">
-                    <span
-                      v-if="provider === 'google'"
-                      class="rounded border border-blue-500/30 bg-blue-500/15 px-1.5 py-0.5 text-[10px] font-medium text-blue-300"
-                    >{{ providerLabel(provider) }}</span>
-                    <span
-                      v-else-if="provider === 'discord'"
-                      class="rounded border border-indigo-500/30 bg-indigo-500/15 px-1.5 py-0.5 text-[10px] font-medium text-indigo-300"
-                    >{{ providerLabel(provider) }}</span>
-                    <span
-                      v-else-if="provider === 'magic-link' || provider === 'credential'"
-                      class="rounded border border-hairline bg-surface-lift px-1.5 py-0.5 text-[10px] font-medium text-ink-muted"
-                    >{{ providerLabel(provider) }}</span>
-                    <span
-                      v-else
-                      class="rounded border border-hairline bg-surface-lift px-1.5 py-0.5 text-[10px] font-medium text-ink-muted"
-                    >{{ provider }}</span>
-                  </template>
-                </div>
-              </td>
-              <td class="px-3.5 py-2 text-ink-faint tabular-nums">{{ formatDate(user.createdAt) }}</td>
-              <td class="px-3.5 py-2 text-ink-faint tabular-nums">{{ formatRelativeTime(user.updatedAt) }}</td>
-              <td class="px-3.5 py-2">
+    <div v-else class="nd-admin-table-wrap">
+      <table class="nd-admin-table min-w-[820px]">
+        <thead>
+          <tr>
+            <th>{{ t('accountSettings.dashboard.table.name') }}</th>
+            <th>{{ t('accountSettings.dashboard.table.role') }}</th>
+            <th>{{ t('accountSettings.dashboard.table.providers') }}</th>
+            <th>{{ t('accountSettings.dashboard.table.registered') }}</th>
+            <th>{{ t('accountSettings.dashboard.table.lastUpdate') }}</th>
+            <th>{{ t('accountSettings.dashboard.table.status') }}</th>
+            <th class="w-12" />
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="user in users" :key="user.id" data-testid="users-row">
+            <td>
+              <div class="flex min-w-0 items-center gap-2.5">
                 <span
-                  v-if="user.banned"
-                  class="rounded-full border border-red-500/30 bg-red-500/15 px-2 py-0.5 text-[10px] font-semibold text-red-300"
+                  :class="[
+                    'flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold',
+                    avatarTone(user.email || String(user.id)),
+                  ]"
                 >
-                  {{ statusLabel(true) }}
+                  {{ avatarLetter(user) }}
                 </span>
-                <span
-                  v-else
-                  class="rounded-full border border-emerald-500/30 bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-300"
+                <div class="min-w-0">
+                  <div class="max-w-[16rem] truncate font-medium text-ink">{{ user.name || '—' }}</div>
+                  <div class="max-w-[16rem] truncate text-xs text-ink-faint">{{ user.email }}</div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <AdminUiBadge :tone="roleTone(user.role)">{{ roleLabel(user.role) }}</AdminUiBadge>
+            </td>
+            <td>
+              <div class="flex flex-wrap gap-1">
+                <AdminUiBadge v-for="label in providerLabels(user)" :key="label">{{ label }}</AdminUiBadge>
+              </div>
+            </td>
+            <td class="whitespace-nowrap text-xs tabular-nums text-ink-muted">{{ formatDate(user.createdAt) }}</td>
+            <td class="whitespace-nowrap text-xs tabular-nums text-ink-faint">{{ formatRelativeTime(user.updatedAt) }}</td>
+            <td>
+              <AdminUiBadge :tone="user.banned ? 'danger' : 'success'" dot>{{ statusLabel(Boolean(user.banned)) }}</AdminUiBadge>
+            </td>
+            <td class="text-right">
+              <SearchDropdownContainer
+                dropdown-id="nd-user-actions"
+                teleport
+                teleport-align="end"
+                dropdown-container-class="z-[60] min-w-[11rem]"
+              >
+                <SearchDropdownMainButton
+                  :show-chevron="false"
+                  test-id="user-menu-toggle"
+                  dropdown-button-class="inline-flex size-7 items-center justify-center rounded-md text-ink-faint transition-colors hover:bg-surface-hover hover:text-ink"
                 >
-                  {{ statusLabel(false) }}
-                </span>
-              </td>
-              <td class="relative px-3.5 py-2">
-                <SearchDropdownContainer
-                  dropdown-id="nd-user-actions"
-                  teleport
-                  teleport-align="end"
-                  dropdown-container-class="z-[60] min-w-[11rem]"
-                >
-                  <SearchDropdownMainButton
-                    :show-chevron="false"
-                    test-id="user-menu-toggle"
-                    dropdown-button-class="p-1 rounded text-ink-faint hover:text-ink hover:bg-surface-hover transition-colors"
-                  >
-                    <UiBaseIcon :path="mdiDotsVertical" w="w-4" h="h-4" size="16" />
-                  </SearchDropdownMainButton>
-                  <template #content>
-                    <SearchDropdownItem
-                      :text="t('accountSettings.dashboard.actions.impersonate')"
-                      @click="handleImpersonate(user)"
-                    />
-                    <SearchDropdownItem
-                      :text="t('adminEmails.title')"
-                      @click="openEmails(user)"
-                    />
-                    <SearchDropdownItem
-                      :text="t('adminNotifications.send.submit')"
-                      @click="openNotificationForUser(user)"
-                    />
-                    <SearchDropdownItem
-                      v-if="!user.banned"
-                      danger
-                      :text="t('accountSettings.dashboard.actions.ban')"
-                      @click="handleBan(user)"
-                    />
-                    <SearchDropdownItem
-                      v-else
-                      :text="t('accountSettings.dashboard.actions.unban')"
-                      @click="handleUnban(user)"
-                    />
-                  </template>
-                </SearchDropdownContainer>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+                  <UiBaseIcon :path="mdiDotsVertical" :size="16" w="w-4" h="h-4" />
+                </SearchDropdownMainButton>
+                <template #content>
+                  <SearchDropdownItem
+                    :text="t('accountSettings.dashboard.actions.impersonate')"
+                    @click="handleImpersonate(user)"
+                  />
+                  <SearchDropdownItem :text="t('adminEmails.title')" @click="openEmails(user)" />
+                  <SearchDropdownItem
+                    :text="t('adminNotifications.send.submit')"
+                    @click="openNotificationForUser(user)"
+                  />
+                  <SearchDropdownItem
+                    v-if="!user.banned"
+                    danger
+                    :text="t('accountSettings.dashboard.actions.ban')"
+                    @click="pendingBan = user"
+                  />
+                  <SearchDropdownItem
+                    v-else
+                    :text="t('accountSettings.dashboard.actions.unban')"
+                    @click="handleUnban(user)"
+                  />
+                </template>
+              </SearchDropdownContainer>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
-      <div v-if="total > limit" class="flex items-center justify-between mt-4 text-sm text-gray-400">
-        <span>{{ t('accountSettings.dashboard.pagination.showing', {
-          start: formatNumber(currentOffset + 1),
-          end: formatNumber(Math.min(currentOffset + limit, total)),
-          total: formatNumber(total),
-        }) }}</span>
-        <div class="flex gap-2">
-          <button type="button"
-            :disabled="currentOffset <= 0"
-            class="px-3 py-1.5 rounded-lg bg-neutral-700 text-white hover:bg-neutral-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            @click="goToPrev"
-          >
-            {{ t('accountSettings.dashboard.pagination.previous') }}
-          </button>
-          <button type="button"
-            :disabled="currentOffset + limit >= total"
-            class="px-3 py-1.5 rounded-lg bg-neutral-700 text-white hover:bg-neutral-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            @click="goToNext"
-          >
-            {{ t('accountSettings.dashboard.pagination.next') }}
-          </button>
-        </div>
-      </div>
-    </template>
+    <AdminUiPagination :page="page" :page-size="limit" :total="total" @update:page="goToPage" />
+
+    <CommonConfirmModal
+      :visible="pendingBan !== null"
+      :title="t('accountSettings.dashboard.confirmBan.title', { name: pendingBan?.name || pendingBan?.email || '' })"
+      :description="t('accountSettings.dashboard.confirmBan.description')"
+      :confirm-label="t('accountSettings.dashboard.actions.ban')"
+      @confirm="confirmBan"
+      @cancel="pendingBan = null"
+    />
   </div>
 </template>

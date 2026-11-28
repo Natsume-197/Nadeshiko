@@ -57,15 +57,4 @@ describe('Admin shell', () => {
       expect.objectContaining({ middleware: ['auth', 'locale-preference', 'require-admin'] }),
     );
   });
-
-  test('hides the back link on /admin home', () => {
-    const wrapper = render('/en/admin');
-    expect(wrapper.find('[data-testid="admin-back-home"]').exists()).toBe(false);
-  });
-
-  test('shows a back-to-dashboard link on admin sub-pages', () => {
-    const wrapper = render('/es/admin/reports');
-    const back = wrapper.get('[data-testid="admin-back-home"]');
-    expect(back.attributes('href')).toBe('/en/admin');
-  });
 });

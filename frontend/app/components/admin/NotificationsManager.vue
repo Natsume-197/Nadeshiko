@@ -2,12 +2,15 @@
 import {
   mdiAccountOutline,
   mdiArrowRight,
+  mdiBellOutline,
   mdiBellRingOutline,
   mdiBullhornOutline,
   mdiClose,
-  mdiCogOutline,
   mdiEmailOutline,
+  mdiEarth,
   mdiHeartOutline,
+  mdiLockOutline,
+  mdiPencilOutline,
   mdiRefresh,
   mdiSend,
 } from '@mdi/js';
@@ -17,10 +20,19 @@ import type {
 } from '@brigadasos/nadeshiko-sdk';
 import { handleApiError } from '~/utils/apiError';
 import { useToastError, useToastSuccess } from '~/utils/toast';
+import AdminUiBadge, { type AdminTone } from './ui/Badge.vue';
+import AdminUiCard from './ui/Card.vue';
+import AdminUiEmpty from './ui/Empty.vue';
+import AdminUiPageHeader from './ui/PageHeader.vue';
+import AdminUiSegmented, { type AdminSegment } from './ui/Segmented.vue';
+import AdminUiSwitch from './ui/Switch.vue';
+import AdminUiTabs, { type AdminTab } from './ui/Tabs.vue';
 
 type Tab = 'send' | 'registry';
 type SettingItem = ListAdminNotificationSettingsResponse['items'][number];
 type BroadcastItem = ListAdminNotificationBroadcastsResponse['items'][number];
+type Kind = BroadcastItem['kind'];
+type Audience = BroadcastItem['audience'];
 
 const { t } = useI18n();
 const { formatDate, formatNumber } = useFormat();
@@ -37,10 +49,13 @@ function selectTab(tab: Tab) {
   }
 }
 const isLoading = ref(false);
+const loaded = ref(false);
+const mounted = ref(false);
+onMounted(() => (mounted.value = true));
 
 // Send form state
-const kind = ref<'site-announcement' | 'admin-message'>(route.query.userId ? 'admin-message' : 'site-announcement');
-const audience = ref<'ALL' | 'PATRONS' | 'USER'>(route.query.userId ? 'USER' : 'ALL');
+const kind = ref<Kind>(route.query.userId ? 'admin-message' : 'site-announcement');
+const audience = ref<Audience>(route.query.userId ? 'USER' : 'ALL');
 const targetUserId = ref<number | null>(route.query.userId ? Number(route.query.userId) : null);
 const targetUsername = ref<string>(typeof route.query.username === 'string' ? route.query.username : '');
 const title = ref('');
@@ -59,17 +74,28 @@ const paramDraft = ref<Record<string, number>>({});
 
 const siteSettings = computed(() => settings.value.filter((item) => item.channels.site));
 
+const tabs = computed<AdminTab<Tab>[]>(() => [
+  { value: 'send', label: t('adminNotifications.tabs.send') },
+  { value: 'registry', label: t('adminNotifications.tabs.registry'), count: loaded.value ? siteSettings.value.length : null },
+]);
+
+const kindOptions = computed<AdminSegment<Kind>[]>(() => [
+  { value: 'site-announcement', label: t('adminNotifications.kinds.siteAnnouncement'), icon: mdiBullhornOutline },
+  { value: 'admin-message', label: t('adminNotifications.kinds.adminMessage'), icon: mdiEmailOutline },
+]);
+
+const audienceOptions = computed<AdminSegment<Audience>[]>(() => [
+  { value: 'ALL', label: t('adminNotifications.send.audienceAll'), icon: mdiEarth },
+  { value: 'PATRONS', label: t('adminNotifications.send.audiencePatrons'), icon: mdiHeartOutline },
+  { value: 'USER', label: t('adminNotifications.send.audienceUser'), icon: mdiAccountOutline },
+]);
+
 const AREA_ORDER = ['official', 'words', 'community'] as const;
-const AREA_LABELS: Record<string, string> = {
-  official: 'Official & admin',
-  words: 'Word alerts',
-  community: 'Community',
-};
 
 const groupedSiteSettings = computed(() =>
   AREA_ORDER.map((area) => ({
     area,
-    label: AREA_LABELS[area] ?? area,
+    label: t(`adminNotifications.areas.${area}`),
     items: siteSettings.value.filter((i) => i.area === area),
   })).filter((g) => g.items.length > 0),
 );
@@ -78,6 +104,58 @@ const safePreviewLink = computed(() => {
   const raw = linkUrl.value.trim();
   return raw.startsWith('/') && !raw.startsWith('//') ? raw : null;
 });
+
+function audienceLabel(value: Audience): string {
+  switch (value) {
+    case 'PATRONS':
+      return t('adminNotifications.send.audiencePatrons');
+    case 'USER':
+      return t('adminNotifications.send.audienceUser');
+    default:
+      return t('adminNotifications.send.audienceAll');
+  }
+}
+
+function rowAudienceLabel(row: BroadcastItem): string {
+  if (row.audience !== 'USER') return audienceLabel(row.audience);
+  return row.targetUsername || t('adminNotifications.history.userFallback', { id: row.targetUserId ?? '?' });
+}
+
+function audienceTone(value: Audience): AdminTone {
+  return value === 'ALL' ? 'brand' : value === 'PATRONS' ? 'violet' : 'neutral';
+}
+
+function statusTone(status: BroadcastItem['status']): AdminTone {
+  switch (status) {
+    case 'SENT':
+      return 'success';
+    case 'FAILED':
+      return 'danger';
+    case 'SENDING':
+      return 'info';
+    default:
+      return 'warning';
+  }
+}
+
+function triggerTone(item: SettingItem): AdminTone {
+  return item.trigger === 'cron' ? 'violet' : item.trigger === 'realtime' ? 'info' : 'neutral';
+}
+
+function triggerLabel(item: SettingItem): string {
+  if (item.trigger === 'cron') return item.schedule ?? t('adminNotifications.registry.triggers.cron');
+  return t(`adminNotifications.registry.triggers.${item.trigger}`);
+}
+
+/** `requests` → `Requests`. */
+function capitalize(value: string): string {
+  const text = value.replace(/-/g, ' ');
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+function paramsSummary(item: SettingItem): string {
+  return item.paramFields.map((f) => `${f.label}: ${item.params[f.key] ?? item.defaultParams[f.key]}`).join(' · ');
+}
 
 async function loadData() {
   isLoading.value = true;
@@ -92,6 +170,7 @@ async function loadData() {
     handleApiError('admin:notifications-load-failed', err);
   } finally {
     isLoading.value = false;
+    loaded.value = true;
   }
 }
 
@@ -182,17 +261,6 @@ async function saveParams(reset = false) {
   }
 }
 
-function statusTone(status: BroadcastItem['status']): string {
-  switch (status) {
-    case 'SENT':
-      return 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30';
-    case 'FAILED':
-      return 'bg-red-500/15 text-red-300 border-red-500/30';
-    default:
-      return 'bg-amber-500/15 text-amber-300 border-amber-500/30';
-  }
-}
-
 onMounted(loadData);
 
 watch(
@@ -206,311 +274,281 @@ watch(
 </script>
 
 <template>
-  <div data-testid="admin-notifications" class="space-y-4">
-    <!-- PostHog-style compact header -->
-    <div class="flex items-center justify-between gap-3 border-b border-hairline pb-3">
-      <div>
-        <h1 class="text-lg font-semibold tracking-tight text-ink">{{ t('adminNotifications.title') }}</h1>
-        <p class="text-xs text-ink-muted">{{ t('adminNotifications.subtitle') }}</p>
-      </div>
-      <button
-        type="button"
-        :disabled="isLoading"
-        :aria-label="t('adminDashboard.nav.refresh')"
-        :title="t('adminDashboard.nav.refresh')"
-        class="nd-btn !h-8 text-xs"
-        @click="loadData"
-      >
-        <UiBaseIcon :path="mdiRefresh" :size="14" :class="{ 'animate-spin': isLoading }" />
-        <span>Reload</span>
-      </button>
-    </div>
+  <div data-testid="admin-notifications" class="space-y-5">
+    <AdminUiPageHeader :title="t('adminNotifications.title')">
+      <template #actions>
+        <button
+          type="button"
+          data-testid="notifications-refresh"
+          :disabled="mounted && isLoading"
+          :aria-label="t('adminDashboard.nav.refresh')"
+          class="nd-btn !h-8 !text-[13px]"
+          @click="loadData"
+        >
+          <UiBaseIcon :path="mdiRefresh" :size="15" w="w-4" h="h-4" :class="{ 'animate-spin': mounted && isLoading }" />
+          <span>{{ t('adminLayout.reload') }}</span>
+        </button>
+      </template>
+    </AdminUiPageHeader>
 
-    <!-- Flush underline tabs -->
-    <section class="space-y-5">
-      <div class="flex flex-wrap items-center gap-4 border-b border-hairline" role="tablist">
-        <button
-          type="button"
-          role="tab"
-          :aria-selected="activeTab === 'send'"
-          :class="[
-            '-mb-px border-b-2 pb-2 text-xs font-semibold transition-colors',
-            activeTab === 'send' ? 'border-brand-solid text-ink' : 'border-transparent text-ink-muted hover:text-ink',
-          ]"
-          @click="selectTab('send')"
-        >
-          {{ t('adminNotifications.tabs.send') }}
-        </button>
-        <button
-          type="button"
-          role="tab"
-          :aria-selected="activeTab === 'registry'"
-          :class="[
-            '-mb-px border-b-2 pb-2 text-xs font-semibold transition-colors',
-            activeTab === 'registry' ? 'border-brand-solid text-ink' : 'border-transparent text-ink-muted hover:text-ink',
-          ]"
-          @click="selectTab('registry')"
-        >
-          {{ t('adminNotifications.tabs.registry') }}
-        </button>
-      </div>
+    <section class="space-y-4">
+      <AdminUiTabs
+        :model-value="activeTab"
+        :tabs="tabs"
+        testid-prefix="notifications-tab"
+        @update:model-value="selectTab"
+      />
 
       <!-- Tab 1: Send official notice & history -->
-      <div v-if="activeTab === 'send'" class="space-y-6">
-        <div class="grid grid-cols-1 gap-6 lg:grid-cols-12">
+      <div v-if="activeTab === 'send'" class="space-y-5">
+        <div class="grid grid-cols-1 items-start gap-4 lg:grid-cols-12">
           <!-- Composer -->
-          <form class="space-y-4 lg:col-span-7" @submit.prevent="submitSend">
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <fieldset class="space-y-1.5">
-                <legend class="text-xs font-medium text-ink-muted">{{ t('adminNotifications.send.kind') }}</legend>
-                <div class="flex flex-wrap gap-1.5">
-                  <button
-                    type="button"
-                    :class="[
-                      'inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors',
-                      kind === 'site-announcement'
-                        ? 'border-brand-solid bg-brand/15 text-brand'
-                        : 'border-hairline bg-surface text-ink-muted hover:bg-surface-hover hover:text-ink',
-                    ]"
-                    @click="kind = 'site-announcement'"
-                  >
-                    <UiBaseIcon :path="mdiBullhornOutline" :size="14" />
-                    <span>Announcement</span>
-                  </button>
-                  <button
-                    type="button"
-                    :class="[
-                      'inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors',
-                      kind === 'admin-message'
-                        ? 'border-brand-solid bg-brand/15 text-brand'
-                        : 'border-hairline bg-surface text-ink-muted hover:bg-surface-hover hover:text-ink',
-                    ]"
-                    @click="kind = 'admin-message'"
-                  >
-                    <UiBaseIcon :path="mdiEmailOutline" :size="14" />
-                    <span>Direct message</span>
-                  </button>
+          <form class="lg:col-span-7" data-testid="notifications-composer" @submit.prevent="submitSend">
+            <AdminUiCard flush>
+              <div class="space-y-4 p-4">
+                <div class="flex flex-wrap gap-x-6 gap-y-4">
+                  <div class="min-w-0 max-w-full">
+                    <span class="nd-admin-label">{{ t('adminNotifications.send.kind') }}</span>
+                    <AdminUiSegmented v-model="kind" :options="kindOptions" testid-prefix="notifications-kind" />
+                  </div>
+                  <div class="min-w-0 max-w-full">
+                    <span class="nd-admin-label">{{ t('adminNotifications.send.audience') }}</span>
+                    <AdminUiSegmented v-model="audience" :options="audienceOptions" testid-prefix="notifications-audience" />
+                  </div>
                 </div>
-              </fieldset>
 
-              <fieldset class="space-y-1.5">
-                <legend class="text-xs font-medium text-ink-muted">{{ t('adminNotifications.send.audience') }}</legend>
-                <div class="flex flex-wrap gap-1.5">
-                  <button
-                    v-for="opt in [
-                      { value: 'ALL', label: t('adminNotifications.send.audienceAll') },
-                      { value: 'PATRONS', label: t('adminNotifications.send.audiencePatrons'), icon: mdiHeartOutline },
-                      { value: 'USER', label: t('adminNotifications.send.audienceUser'), icon: mdiAccountOutline },
-                    ] as const"
-                    :key="opt.value"
-                    type="button"
-                    :class="[
-                      'inline-flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors',
-                      audience === opt.value
-                        ? 'border-brand-solid bg-brand/15 text-brand'
-                        : 'border-hairline bg-surface text-ink-muted hover:bg-surface-hover hover:text-ink',
-                    ]"
-                    @click="audience = opt.value"
-                  >
-                    <span>{{ opt.label }}</span>
-                  </button>
+                <div v-if="audience === 'USER'">
+                  <label for="notif-target-user" class="nd-admin-label">
+                    {{ t('adminNotifications.send.targetUserId') }}
+                    <span v-if="targetUsername" class="ml-1 text-brand">{{ targetUsername }}</span>
+                  </label>
+                  <input
+                    id="notif-target-user"
+                    v-model.number="targetUserId"
+                    type="number"
+                    min="1"
+                    :placeholder="t('common.example', { value: 42 })"
+                    class="nd-input !h-8 max-w-[12rem] !text-[13px]"
+                  />
                 </div>
-              </fieldset>
-            </div>
-
-            <div v-if="audience === 'USER'" class="space-y-1">
-              <label class="block space-y-1">
-                <span class="text-xs font-medium text-ink-muted">
-                  {{ t('adminNotifications.send.targetUserId') }}
-                  <span v-if="targetUsername" class="ml-1 text-brand">({{ targetUsername }})</span>
-                </span>
-                <input
-                  v-model.number="targetUserId"
-                  type="number"
-                  min="1"
-                  placeholder="e.g. 42"
-                  class="nd-input max-w-xs"
-                />
-              </label>
-            </div>
-
-            <label class="block space-y-1">
-              <span class="text-xs font-medium text-ink-muted">{{ t('adminNotifications.send.title') }}</span>
-              <input
-                v-model="title"
-                type="text"
-                maxlength="160"
-                placeholder="Nadeshiko 3.0.0 is here!"
-                class="nd-input"
-              />
-            </label>
-
-            <label class="block space-y-1">
-              <div class="flex items-center justify-between">
-                <span class="text-xs font-medium text-ink-muted">{{ t('adminNotifications.send.message') }}</span>
-                <span class="text-[11px] text-ink-faint tabular-nums">{{ message.length }}/2000</span>
               </div>
-              <textarea
-                v-model="message"
-                rows="4"
-                maxlength="2000"
-                placeholder="Short announcement text shown in the bell (English)..."
-                class="nd-input resize-y"
-              />
-            </label>
 
-            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <label class="block space-y-1">
-                <span class="text-xs font-medium text-ink-muted">{{ t('adminNotifications.send.linkUrl') }}</span>
-                <input
-                  v-model="linkUrl"
-                  type="text"
-                  placeholder="/en/blog/nadeshiko-v3-0-0"
-                  class="nd-input"
-                />
-              </label>
-              <label class="block space-y-1">
-                <span class="text-xs font-medium text-ink-muted">{{ t('adminNotifications.send.linkLabel') }}</span>
-                <input
-                  v-model="linkLabel"
-                  type="text"
-                  maxlength="80"
-                  placeholder="Read the blog post"
-                  class="nd-input"
-                />
-              </label>
-            </div>
+              <div class="space-y-4 border-t border-hairline p-4">
+                <div>
+                  <label for="notif-title" class="nd-admin-label">{{ t('adminNotifications.send.title') }}</label>
+                  <input
+                    id="notif-title"
+                    v-model="title"
+                    type="text"
+                    maxlength="160"
+                    :placeholder="t('adminNotifications.send.placeholders.title')"
+                    class="nd-input !h-8 !text-[13px]"
+                  />
+                </div>
+                <div>
+                  <div class="flex items-center justify-between">
+                    <label for="notif-message" class="nd-admin-label">{{ t('adminNotifications.send.message') }}</label>
+                    <span class="mb-1.5 text-[11px] tabular-nums text-ink-faint">{{ message.length }}/2000</span>
+                  </div>
+                  <textarea
+                    id="notif-message"
+                    v-model="message"
+                    rows="4"
+                    maxlength="2000"
+                    :placeholder="t('adminNotifications.send.placeholders.message')"
+                    class="nd-input resize-y !text-[13px]"
+                  />
+                </div>
+              </div>
 
-            <div class="flex justify-end pt-1">
-              <button type="submit" :disabled="isSending" class="nd-btn-accent">
-                <UiBaseIcon :path="mdiSend" :size="15" />
-                <span>{{ isSending ? t('adminNotifications.send.sending') : t('adminNotifications.send.submit') }}</span>
-              </button>
-            </div>
+              <div class="grid grid-cols-1 gap-4 border-t border-hairline p-4 sm:grid-cols-2">
+                <div>
+                  <label for="notif-link-url" class="nd-admin-label">{{ t('adminNotifications.send.linkUrl') }}</label>
+                  <input
+                    id="notif-link-url"
+                    v-model="linkUrl"
+                    type="text"
+                    placeholder="/blog/…"
+                    class="nd-input !h-8 font-mono !text-[13px]"
+                  />
+                </div>
+                <div>
+                  <label for="notif-link-label" class="nd-admin-label">{{ t('adminNotifications.send.linkLabel') }}</label>
+                  <input
+                    id="notif-link-label"
+                    v-model="linkLabel"
+                    type="text"
+                    maxlength="80"
+                    :placeholder="t('notifications.bell.openLink')"
+                    class="nd-input !h-8 !text-[13px]"
+                  />
+                </div>
+              </div>
+
+              <div class="flex justify-end border-t border-hairline bg-surface/60 px-4 py-3">
+                <button
+                  type="submit"
+                  data-testid="notifications-send"
+                  :disabled="mounted && isSending"
+                  class="nd-btn-accent !h-8 !text-[13px]"
+                >
+                  <span v-if="mounted && isSending" class="nd-spinner" />
+                  <UiBaseIcon v-else :path="mdiSend" :size="14" w="w-3.5" h="h-3.5" />
+                  <span>{{ isSending ? t('adminNotifications.send.sending') : t('adminNotifications.send.submit') }}</span>
+                </button>
+              </div>
+            </AdminUiCard>
           </form>
 
-          <!-- Realistic Bell Preview -->
-          <div class="space-y-3 lg:col-span-5">
-            <div class="text-xs font-semibold uppercase tracking-wider text-ink-faint">
-              {{ t('adminNotifications.send.preview') }}
-            </div>
-            <div class="overflow-hidden rounded-xl border border-hairline bg-surface shadow-lg">
-              <div class="flex items-center justify-between border-b border-hairline px-4 py-2.5">
-                <span class="text-xs font-semibold text-ink">{{ t('notifications.bell.label') }}</span>
-                <span class="text-[11px] text-ink-faint">{{ t('notifications.bell.markAllRead') }}</span>
-              </div>
-              <div class="flex items-start gap-3 border-l-2 border-brand bg-brand/[0.06] px-4 py-3.5">
-                <span class="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-brand/15 text-brand">
-                  <UiBaseIcon :path="kind === 'site-announcement' ? mdiBullhornOutline : mdiEmailOutline" :size="16" />
-                </span>
-                <div class="min-w-0 flex-1">
-                  <div class="flex items-baseline justify-between gap-2">
-                    <span class="text-sm font-semibold leading-snug text-ink">
-                      {{ title || 'Nadeshiko 3.0.0 is here!' }}
-                    </span>
-                    <span class="flex shrink-0 items-center gap-1 text-[11px] text-ink-faint">
-                      <span class="size-1.5 rounded-full bg-brand" /> now
+          <!-- Bell preview -->
+          <div class="lg:sticky lg:top-4 lg:col-span-5">
+            <AdminUiCard :title="t('adminNotifications.send.preview')">
+              <div class="overflow-hidden rounded-lg border border-hairline bg-background shadow-lg">
+                <div class="flex items-center justify-between border-b border-hairline px-4 py-2.5">
+                  <span class="text-xs font-semibold text-ink">{{ t('notifications.bell.label') }}</span>
+                  <span class="text-[11px] text-ink-faint">{{ t('notifications.bell.markAllRead') }}</span>
+                </div>
+                <div class="flex items-start gap-3 border-l-2 border-brand bg-brand/5 px-4 py-3.5">
+                  <span class="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-brand/15 text-brand">
+                    <UiBaseIcon
+                      :path="kind === 'site-announcement' ? mdiBullhornOutline : mdiEmailOutline"
+                      :size="16"
+                      w="w-4"
+                      h="h-4"
+                    />
+                  </span>
+                  <div class="min-w-0 flex-1">
+                    <div class="flex items-baseline justify-between gap-2">
+                      <span class="text-[13px] font-semibold leading-snug" :class="title ? 'text-ink' : 'text-ink-faint'">
+                        {{ title || t('adminNotifications.send.placeholders.title') }}
+                      </span>
+                      <span class="flex shrink-0 items-center gap-1 text-[11px] text-ink-faint">
+                        <span class="size-1.5 rounded-full bg-brand" /> {{ t('common.justNow') }}
+                      </span>
+                    </div>
+                    <p
+                      class="mt-1 whitespace-pre-line break-words text-xs leading-relaxed"
+                      :class="message ? 'text-ink-muted' : 'text-ink-faint'"
+                    >
+                      {{ message || t('adminNotifications.send.placeholders.message') }}
+                    </p>
+                    <span v-if="safePreviewLink" class="mt-2 inline-flex items-center gap-1 text-xs font-medium text-brand">
+                      <span>{{ linkLabel || t('notifications.bell.openLink') }}</span>
+                      <UiBaseIcon :path="mdiArrowRight" :size="13" w="w-3.5" h="h-3.5" />
                     </span>
                   </div>
-                  <p class="mt-1 whitespace-pre-line text-xs leading-relaxed text-ink-muted">
-                    {{ message || 'Write your announcement message to preview how readers will see it in the bell.' }}
-                  </p>
-                  <span
-                    v-if="safePreviewLink"
-                    class="mt-2 inline-flex items-center gap-1 text-xs font-medium text-brand"
-                  >
-                    <span>{{ linkLabel || t('notifications.bell.openLink') }}</span>
-                    <UiBaseIcon :path="mdiArrowRight" :size="13" />
-                  </span>
                 </div>
               </div>
-            </div>
-            <p class="text-xs leading-relaxed text-ink-faint">{{ t('adminNotifications.send.pinnedHint') }}</p>
+            </AdminUiCard>
           </div>
         </div>
 
-        <!-- Recent broadcasts list -->
-        <div class="space-y-2.5 border-t border-hairline pt-5">
-          <h2 class="text-xs font-semibold uppercase tracking-wider text-ink-faint">
-            {{ t('adminNotifications.history.title') }}
-          </h2>
-          <div
-            v-if="broadcasts.length === 0"
-            class="rounded-xl border border-hairline bg-surface/40 px-4 py-8 text-center text-sm text-ink-faint"
-          >
-            {{ t('adminNotifications.history.empty') }}
-          </div>
-          <div v-else class="divide-y divide-hairline overflow-hidden rounded-xl border border-hairline bg-surface/40">
-            <div
-              v-for="row in broadcasts"
-              :key="row.id"
-              class="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
-            >
-              <div class="min-w-0 flex-1">
-                <div class="flex flex-wrap items-center gap-2">
-                  <span class="text-sm font-medium text-ink">{{ row.title }}</span>
-                  <span class="rounded-full border px-2 py-0.5 text-[10px] font-semibold" :class="statusTone(row.status)">
-                    {{ row.status }}
-                  </span>
-                </div>
-                <div class="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-ink-faint">
-                  <span>{{ formatDate(row.createdAt, 'dateTime') }}</span>
-                  <span>·</span>
-                  <span>
-                    {{ row.audience === 'USER' ? (row.targetUsername || `User #${row.targetUserId}`) : row.audience }}
-                  </span>
-                  <span v-if="row.linkUrl">· {{ row.linkUrl }}</span>
-                </div>
-              </div>
-              <div class="shrink-0 text-xs font-medium text-ink-muted tabular-nums">
-                {{ formatNumber(row.sentCount) }} / {{ formatNumber(row.recipientCount) }}
-              </div>
+        <!-- Recent broadcasts -->
+        <div class="space-y-2.5">
+          <h2 class="text-[13px] font-semibold text-ink">{{ t('adminNotifications.history.title') }}</h2>
+          <div v-if="!loaded || (isLoading && !broadcasts.length)" class="nd-admin-table-wrap">
+            <div v-for="n in 4" :key="n" class="flex items-center gap-4 border-b border-hairline px-4 py-3 last:border-0">
+              <span class="h-3 w-48 animate-pulse rounded bg-surface-lift" />
+              <span class="h-3 w-20 animate-pulse rounded bg-surface-lift" />
+              <span class="h-3 flex-1 animate-pulse rounded bg-surface-lift" />
             </div>
+          </div>
+          <div v-else-if="!broadcasts.length" class="nd-admin-table-wrap">
+            <AdminUiEmpty :icon="mdiBellOutline" :text="t('adminNotifications.history.empty')" />
+          </div>
+          <div v-else class="nd-admin-table-wrap">
+            <table class="nd-admin-table min-w-[720px]" data-testid="notifications-history">
+              <thead>
+                <tr>
+                  <th>{{ t('adminNotifications.history.titleCol') }}</th>
+                  <th>{{ t('adminNotifications.history.audience') }}</th>
+                  <th>{{ t('adminNotifications.history.status') }}</th>
+                  <th class="text-right">{{ t('adminNotifications.history.sent') }}</th>
+                  <th class="text-right">{{ t('adminNotifications.history.date') }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="row in broadcasts" :key="row.id" data-testid="notifications-history-row">
+                  <td>
+                    <div class="flex items-center gap-2">
+                      <UiBaseIcon
+                        :path="row.kind === 'site-announcement' ? mdiBullhornOutline : mdiEmailOutline"
+                        :size="14"
+                        w="w-3.5"
+                        h="h-3.5"
+                        class="shrink-0 text-ink-faint"
+                      />
+                      <span class="max-w-[22rem] truncate font-medium text-ink" :title="row.message">{{ row.title }}</span>
+                    </div>
+                    <div v-if="row.linkUrl" class="ml-5 max-w-[22rem] truncate font-mono text-xs text-ink-faint">
+                      {{ row.linkUrl }}
+                    </div>
+                  </td>
+                  <td>
+                    <AdminUiBadge :tone="audienceTone(row.audience)">{{ rowAudienceLabel(row) }}</AdminUiBadge>
+                  </td>
+                  <td>
+                    <AdminUiBadge :tone="statusTone(row.status)" dot :title="row.error ?? undefined">
+                      {{ t(`adminNotifications.history.statuses.${row.status.toLowerCase()}`) }}
+                    </AdminUiBadge>
+                  </td>
+                  <td class="whitespace-nowrap text-right tabular-nums text-ink-muted">
+                    {{ formatNumber(row.sentCount) }} / {{ formatNumber(row.recipientCount) }}
+                  </td>
+                  <td class="whitespace-nowrap text-right text-xs tabular-nums text-ink-faint">
+                    {{ formatDate(row.createdAt, 'dateTime') }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
 
-      <!-- Tab 2: Registry & Settings (Grouped cards) -->
-      <div v-else class="space-y-6">
-        <div v-for="group in groupedSiteSettings" :key="group.area" class="space-y-2">
-          <h2 class="px-1 text-xs font-semibold uppercase tracking-wider text-ink-faint">
-            {{ group.label }}
-          </h2>
-          <div class="divide-y divide-hairline overflow-hidden rounded-xl border border-hairline bg-surface/40">
-            <div
+      <!-- Tab 2: Registry -->
+      <div v-else class="space-y-4">
+        <AdminUiCard v-if="!loaded || (isLoading && siteSettings.length === 0)" flush>
+          <div v-for="n in 5" :key="n" class="flex items-center gap-4 border-b border-hairline px-4 py-3.5 last:border-0">
+            <div class="flex-1 space-y-2">
+              <span class="block h-3 w-40 animate-pulse rounded bg-surface-lift" />
+              <span class="block h-2.5 w-64 animate-pulse rounded bg-surface-lift" />
+            </div>
+            <span class="h-5 w-9 animate-pulse rounded-full bg-surface-lift" />
+          </div>
+        </AdminUiCard>
+
+        <AdminUiCard v-else-if="siteSettings.length === 0" flush>
+          <AdminUiEmpty :icon="mdiBellRingOutline" :text="t('adminNotifications.registry.empty')" />
+        </AdminUiCard>
+
+        <AdminUiCard v-for="group in groupedSiteSettings" :key="group.area" flush>
+          <template #header>
+            <div class="flex items-center gap-2">
+              <h2 class="text-[13px] font-semibold text-ink">{{ group.label }}</h2>
+              <span class="rounded bg-surface-lift px-1 text-[11px] tabular-nums text-ink-faint">{{ group.items.length }}</span>
+            </div>
+          </template>
+
+          <ul class="divide-y divide-hairline">
+            <li
               v-for="item in group.items"
               :key="item.kind"
-              class="flex flex-col gap-3 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:gap-6"
+              :data-testid="`notification-type-${item.kind}`"
+              class="flex flex-col gap-2 px-4 py-3 transition-colors hover:bg-surface-hover/50 sm:flex-row sm:items-center sm:gap-6"
             >
-              <div class="min-w-0 flex-1">
+              <div class="min-w-0 flex-1" :title="item.description">
                 <div class="flex flex-wrap items-center gap-2">
-                  <UiBaseIcon :path="mdiBellRingOutline" :size="15" class="shrink-0 text-brand" />
-                  <span class="text-sm font-medium text-ink">{{ item.label }}</span>
-                  <code class="rounded bg-surface-lift px-1.5 py-0.5 text-[11px] text-ink-faint">{{ item.kind }}</code>
-                  <span
-                    v-if="item.pinned"
-                    class="rounded-full border border-brand/30 bg-brand/15 px-2 py-0.5 text-[10px] font-semibold text-brand"
-                  >
-                    Pinned
-                  </span>
-                  <span
-                    v-if="item.groupable"
-                    class="rounded-full border border-hairline bg-surface-lift px-2 py-0.5 text-[10px] font-medium text-ink-muted"
-                  >
-                    Grouped
-                  </span>
+                  <span class="text-[13px] font-medium text-ink">{{ item.label }}</span>
+                  <AdminUiBadge :tone="triggerTone(item)">{{ triggerLabel(item) }}</AdminUiBadge>
+                  <AdminUiBadge v-if="item.pinned" tone="brand">{{ t('adminNotifications.registry.pinned') }}</AdminUiBadge>
+                  <AdminUiBadge v-if="item.groupable">{{ t('adminNotifications.registry.grouped') }}</AdminUiBadge>
                 </div>
-                <p class="mt-1 text-xs leading-relaxed text-ink-muted">{{ item.description }}</p>
-                <div class="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-ink-faint">
-                  <span>{{ item.schedule ? `${item.trigger} · ${item.schedule}` : item.trigger }}</span>
-                  <span>·</span>
-                  <span class="tabular-nums">7d: {{ formatNumber(item.stats7d.siteSent) }} sent</span>
-                  <template v-if="item.paramFields.length > 0">
+                <div class="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs text-ink-faint">
+                  <template v-if="item.siteCategory">
+                    <span>{{ capitalize(item.siteCategory) }}</span>
                     <span>·</span>
-                    <span class="font-mono text-ink-muted">
-                      {{ item.paramFields.map((f) => `${f.key}=${item.params[f.key]}`).join(', ') }}
-                    </span>
                   </template>
+                  <span class="tabular-nums">{{ t('adminNotifications.registry.sent7d', { count: formatNumber(item.stats7d.siteSent) }) }}</span>
                 </div>
               </div>
 
@@ -518,35 +556,27 @@ watch(
                 <button
                   v-if="item.paramFields.length > 0"
                   type="button"
-                  class="nd-btn !h-8 text-xs"
+                  :data-testid="`notification-type-edit-${item.kind}`"
+                  :title="paramsSummary(item)"
+                  class="nd-btn !h-7 !text-xs"
                   @click="openParamEditor(item)"
                 >
-                  <UiBaseIcon :path="mdiCogOutline" :size="14" />
+                  <UiBaseIcon :path="mdiPencilOutline" :size="14" w="w-3.5" h="h-3.5" />
                   <span>{{ t('adminNotifications.registry.edit') }}</span>
                 </button>
-                <button
-                  type="button"
-                  role="switch"
-                  :aria-checked="item.siteEnabled"
-                  :aria-label="item.label"
-                  :disabled="item.alwaysEnabled || savingKind === item.kind"
-                  :class="[
-                    'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:cursor-not-allowed disabled:opacity-50',
-                    item.siteEnabled ? 'bg-brand-solid' : 'bg-gray-600',
-                  ]"
-                  @click="toggleSite(item)"
-                >
-                  <span
-                    :class="[
-                      'pointer-events-none inline-block size-5 transform rounded-full bg-white shadow transition duration-200 ease-in-out',
-                      item.siteEnabled ? 'translate-x-5' : 'translate-x-0',
-                    ]"
-                  />
-                </button>
+                <span v-if="item.alwaysEnabled" :title="t('adminNotifications.registry.locked')" class="text-ink-faint">
+                  <UiBaseIcon :path="mdiLockOutline" :size="14" w="w-3.5" h="h-3.5" />
+                </span>
+                <AdminUiSwitch
+                  :model-value="item.siteEnabled"
+                  :label="item.label"
+                  :disabled="item.alwaysEnabled || (mounted && savingKind === item.kind)"
+                  @update:model-value="toggleSite(item)"
+                />
               </div>
-            </div>
-          </div>
-        </div>
+            </li>
+          </ul>
+        </AdminUiCard>
       </div>
     </section>
 
@@ -560,48 +590,56 @@ watch(
       @close="editingParamsItem = null"
     >
       <template v-if="editingParamsItem">
-        <div class="nd-modal-header">
-          <h2 id="admin-notif-params-title" class="min-w-0 truncate font-bold text-ink">
-            {{ editingParamsItem.label }}
-          </h2>
+        <div class="flex items-start justify-between gap-3 border-b border-hairline px-5 py-4">
+          <div class="min-w-0 space-y-1">
+            <h2 id="admin-notif-params-title" class="text-[15px] font-semibold leading-snug text-ink">
+              {{ editingParamsItem.label }}
+            </h2>
+            <p class="text-xs text-ink-muted">{{ editingParamsItem.description }}</p>
+          </div>
           <button
             type="button"
-            :aria-label="t('adminEmails.detail.close')"
-            class="inline-flex size-8 items-center justify-center rounded-md text-ink-faint transition hover:bg-lift hover:text-ink"
+            :aria-label="t('common.close')"
+            class="inline-flex size-8 shrink-0 items-center justify-center rounded-md text-ink-faint transition hover:bg-surface-hover hover:text-ink"
             @click="editingParamsItem = null"
           >
-            <UiBaseIcon :path="mdiClose" :size="16" />
+            <UiBaseIcon :path="mdiClose" :size="16" w="w-4" h="h-4" />
           </button>
         </div>
 
         <div class="flex-1 space-y-4 px-5 py-4">
-          <p class="text-xs leading-relaxed text-ink-muted">{{ editingParamsItem.description }}</p>
-          <div v-for="field in editingParamsItem.paramFields" :key="field.key" class="space-y-1">
-            <label :for="`notif-param-${field.key}`" class="block text-sm font-medium text-ink">{{ field.label }}</label>
-            <p class="text-xs text-ink-faint">{{ field.description }}</p>
+          <div v-for="field in editingParamsItem.paramFields" :key="field.key">
+            <label :for="`notif-param-${field.key}`" class="nd-admin-label">{{ field.label }}</label>
             <input
               :id="`notif-param-${field.key}`"
               v-model.number="paramDraft[field.key]"
               type="number"
               :min="field.min"
               :max="field.max"
-              class="nd-input max-w-[10rem]"
+              class="nd-input !h-8 max-w-[10rem] !text-[13px]"
             />
+            <p class="mt-1 text-xs text-ink-faint">{{ field.description }}</p>
           </div>
         </div>
 
-        <div class="flex items-center justify-between border-t border-hairline px-5 py-3">
-          <button type="button" class="nd-btn text-xs" @click="saveParams(true)">
+        <div class="flex items-center justify-end gap-2 border-t border-hairline px-5 py-3">
+          <button
+            type="button"
+            :disabled="savingKind === editingParamsItem.kind"
+            class="nd-btn !h-8 !text-[13px]"
+            @click="saveParams(true)"
+          >
             {{ t('adminNotifications.registry.reset') }}
           </button>
-          <div class="flex gap-2">
-            <button type="button" class="nd-btn" @click="editingParamsItem = null">
-              {{ t('adminEmails.detail.close') }}
-            </button>
-            <button type="button" class="nd-btn-accent" @click="saveParams(false)">
-              {{ t('adminNotifications.registry.save') }}
-            </button>
-          </div>
+          <button
+            type="button"
+            :disabled="savingKind === editingParamsItem.kind"
+            class="nd-btn-accent !h-8 !text-[13px]"
+            @click="saveParams(false)"
+          >
+            <span v-if="savingKind === editingParamsItem.kind" class="nd-spinner" />
+            {{ t('adminNotifications.registry.save') }}
+          </button>
         </div>
       </template>
     </CommonBaseModal>
@@ -614,24 +652,27 @@ watch(
       panel-class="w-full max-w-md overflow-hidden rounded-xl border border-hairline bg-background shadow-2xl"
       @close="confirmOpen = false"
     >
-      <div class="nd-modal-header">
-        <h3 id="admin-notif-confirm-title" class="font-bold text-ink">{{ t('adminNotifications.send.confirmTitle') }}</h3>
+      <div class="flex items-center justify-between gap-3 border-b border-hairline px-5 py-4">
+        <h3 id="admin-notif-confirm-title" class="text-[15px] font-semibold text-ink">
+          {{ t('adminNotifications.send.confirmTitle') }}
+        </h3>
         <button
           type="button"
-          class="inline-flex size-8 items-center justify-center rounded-md text-ink-faint transition hover:bg-lift hover:text-ink"
+          :aria-label="t('common.close')"
+          class="inline-flex size-8 shrink-0 items-center justify-center rounded-md text-ink-faint transition hover:bg-surface-hover hover:text-ink"
           @click="confirmOpen = false"
         >
-          <UiBaseIcon :path="mdiClose" :size="16" />
+          <UiBaseIcon :path="mdiClose" :size="16" w="w-4" h="h-4" />
         </button>
       </div>
-      <div class="px-5 py-4 text-sm text-ink-muted">
-        {{ t('adminNotifications.send.confirmBody', { audience, title }) }}
+      <div class="px-5 py-4 text-[13px] text-ink-muted">
+        {{ t('adminNotifications.send.confirmBody', { audience: audienceLabel(audience), title }) }}
       </div>
       <div class="flex justify-end gap-2 border-t border-hairline px-5 py-3">
-        <button type="button" class="nd-btn" @click="confirmOpen = false">
-          {{ t('adminEmails.detail.close') }}
+        <button type="button" class="nd-btn !h-8 !text-[13px]" @click="confirmOpen = false">
+          {{ t('common.cancel') }}
         </button>
-        <button type="button" class="nd-btn-accent" @click="doSend">
+        <button type="button" data-testid="notifications-confirm-send" class="nd-btn-accent !h-8 !text-[13px]" @click="doSend">
           {{ t('adminNotifications.send.confirmAction') }}
         </button>
       </div>

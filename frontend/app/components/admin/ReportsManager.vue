@@ -5,8 +5,10 @@ import type {
   ReportStatus,
   UpdateReportRequest,
 } from '@brigadasos/nadeshiko-sdk';
+import { mdiRefresh } from '@mdi/js';
 import { handleApiError } from '~/utils/apiError';
 import { ALL_STATUSES, type ReportGroup } from './reports/reportHelpers';
+import AdminUiPageHeader from './ui/PageHeader.vue';
 
 const { t } = useI18n();
 const { formatNumber } = useFormat();
@@ -93,8 +95,11 @@ const loadMoreReports = async () => {
   groups.value.push(...outcome.page.groups);
 };
 
+const mounted = ref(false);
+
 // Admin pages require auth -- skip SSR data fetch, load client-side only
 onMounted(() => {
+  mounted.value = true;
   fetchReports();
 });
 
@@ -275,50 +280,66 @@ const bulkDeleteAllMatching = async () => {
 </script>
 
 <template>
-  <div>
-    <div class="flex items-center justify-between mb-6">
-      <h1 class="text-2xl font-bold text-white" data-testid="reports-title">{{ t('reports.admin.title') }}</h1>
-    </div>
+  <div class="space-y-5">
+    <AdminUiPageHeader :title="t('accountSettings.tabs.reports')" data-testid="reports-title">
+      <template #actions>
+        <button
+          type="button"
+          data-testid="reports-refresh"
+          :disabled="mounted && isReloading"
+          class="nd-btn !h-8 !text-[13px]"
+          @click="fetchReports()"
+        >
+          <UiBaseIcon :path="mdiRefresh" :size="15" w="w-4" h="h-4" :class="{ 'animate-spin': mounted && isReloading }" />
+          <span>{{ t('adminLayout.reload') }}</span>
+        </button>
+      </template>
+    </AdminUiPageHeader>
 
-    <AdminReportsFilters
-      v-model:source="sourceFilter"
-      v-model:orphaned="orphanedFilter"
-      :active-statuses="activeStatuses"
-      @toggle-status="toggleStatus"
-    />
+    <section class="space-y-3">
+      <div class="flex flex-wrap items-center gap-2">
+        <AdminReportsFilters
+          v-model:source="sourceFilter"
+          v-model:orphaned="orphanedFilter"
+          :active-statuses="activeStatuses"
+          @toggle-status="toggleStatus"
+        />
+        <div class="ml-auto">
+          <AdminReportsBulkActions
+            :is-dismissing="isBulkDismissing"
+            :is-deleting="isBulkDeleting"
+            :has-results="groups.length > 0"
+            @dismiss-all="showDismissConfirm = true"
+            @delete-all="showDeleteConfirm = true"
+          />
+        </div>
+      </div>
 
-    <AdminReportsSelectionBar
-      v-if="selectedGroupIndices.size > 0"
-      :count="selectedGroupIndices.size"
-      :is-updating="isBatchUpdating"
-      @update="batchUpdate"
-      @delete="batchDelete"
-      @clear="selectedGroupIndices = new Set()"
-    />
+      <AdminReportsSelectionBar
+        v-if="selectedGroupIndices.size > 0"
+        :count="selectedGroupIndices.size"
+        :is-updating="isBatchUpdating"
+        @update="batchUpdate"
+        @delete="batchDelete"
+        @clear="selectedGroupIndices = new Set()"
+      />
 
-    <AdminReportsBulkActions
-      :is-dismissing="isBulkDismissing"
-      :is-deleting="isBulkDeleting"
-      :has-results="groups.length > 0"
-      @dismiss-all="showDismissConfirm = true"
-      @delete-all="showDeleteConfirm = true"
-    />
-
-    <AdminReportsTable
-      :groups="groups"
-      :is-loading="isLoading"
-      :has-more="hasMore"
-      :expanded-groups="expandedGroups"
-      :selected-indices="selectedGroupIndices"
-      :editing-notes="editingNotes"
-      @toggle-expand="toggleExpand"
-      @toggle-select="toggleSelectGroup"
-      @toggle-select-all="toggleSelectAll"
-      @update-status="updateReport"
-      @delete-report="confirmDeleteReport"
-      @save-notes="saveNotes"
-      @load-more="loadMoreReports"
-    />
+      <AdminReportsTable
+        :groups="groups"
+        :is-loading="isLoading"
+        :has-more="hasMore"
+        :expanded-groups="expandedGroups"
+        :selected-indices="selectedGroupIndices"
+        :editing-notes="editingNotes"
+        @toggle-expand="toggleExpand"
+        @toggle-select="toggleSelectGroup"
+        @toggle-select-all="toggleSelectAll"
+        @update-status="updateReport"
+        @delete-report="confirmDeleteReport"
+        @save-notes="saveNotes"
+        @load-more="loadMoreReports"
+      />
+    </section>
 
     <CommonConfirmModal
       :visible="showDismissConfirm"

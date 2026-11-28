@@ -1,6 +1,10 @@
 <script setup lang="ts">
+import { mdiCheck, mdiChevronRight, mdiDeleteOutline, mdiDotsVertical, mdiFlagOutline } from '@mdi/js';
+import SearchDropdownContainer from '~/components/search/dropdown/DropdownContainer.vue';
 import { buildMediaSearchPath, buildSentencePath } from '~/utils/routes';
-import { type ReportGroup, sourceClass, statusClass } from './reportHelpers';
+import AdminUiBadge from '../ui/Badge.vue';
+import AdminUiEmpty from '../ui/Empty.vue';
+import { ALL_STATUSES, type ReportGroup, sourceTone, statusDot, statusTone } from './reportHelpers';
 
 const props = defineProps<{
   groups: ReportGroup[];
@@ -26,10 +30,22 @@ const { t } = useI18n();
 const { formatNumber, formatDate, formatRelativeTime } = useFormat();
 const localePath = useLocalePath();
 
+const COLUMNS = 9;
+
 const statusLabel = (status: string) => t(`reports.statuses.${status}`);
 const sourceLabel = (source: string) => t(`reports.admin.sources.${source}`);
 const targetTypeLabel = (type: string) => t(`reports.admin.targetTypes.${type}`);
 const reportReasonLabel = (reason: string) => t(`reports.reasons.${reason}`);
+
+const episodeOf = (target: ReportGroup['target']) =>
+  target.type !== 'MEDIA' && 'episodeNumber' in target ? target.episodeNumber : undefined;
+const segmentOf = (target: ReportGroup['target']) =>
+  target.type === 'SEGMENT' && 'segmentPublicId' in target ? target.segmentPublicId : undefined;
+
+const sentencePathOf = (target: ReportGroup['target']) => {
+  const segment = segmentOf(target);
+  return segment ? localePath(buildSentencePath(segment)) : undefined;
+};
 
 const reportTargetSearchPath = (target: ReportGroup['target']) =>
   localePath(buildMediaSearchPath(target.mediaPublicId, 'episodeNumber' in target ? target.episodeNumber : undefined));
@@ -50,152 +66,247 @@ const notesEnterSubmit = (reportId: number) => useEnterSubmit(() => emit('save-n
 </script>
 
 <template>
-  <div class="overflow-x-auto rounded-lg border border-hairline">
-    <table class="w-full text-sm text-left text-gray-300">
-      <thead class="text-xs uppercase bg-neutral-800 text-gray-400">
-        <tr>
-          <th class="px-3 py-3 w-8">
-            <input type="checkbox" :checked="allVisibleSelected" class="rounded border-hairline bg-control text-blue-500 cursor-pointer" @change="emit('toggle-select-all')" />
-          </th>
-          <th class="px-3 py-3 w-8" />
-          <th class="px-3 py-3">{{ t('reports.table.type') }}</th>
-          <th class="px-3 py-3">{{ t('reports.table.target') }}</th>
-          <th class="px-3 py-3">{{ t('reports.admin.count') }}</th>
-          <th class="px-3 py-3">{{ t('reports.table.status') }}</th>
-          <th class="px-3 py-3">{{ t('reports.admin.reported') }}</th>
-          <th class="px-3 py-3">{{ t('reports.admin.updated') }}</th>
-          <th class="px-3 py-3">{{ t('reports.admin.actions') }}</th>
-        </tr>
-      </thead>
-      <tbody>
-        <template v-for="(group, idx) in groups" :key="idx">
-          <tr
-            class="border-b border-hairline hover:bg-control cursor-pointer"
-            data-testid="report-row"
-            @click="emit('toggle-expand', idx)"
-          >
-            <!-- biome-ignore lint/a11y/useKeyWithClickEvents: only keeps the checkbox from toggling the row -->
-            <td class="px-3 py-3 w-8" @click.stop>
-              <input type="checkbox" :checked="selectedIndices.has(idx)" class="rounded border-hairline bg-control text-blue-500 cursor-pointer" @change="emit('toggle-select', idx)" />
+  <div>
+    <div class="nd-admin-table-wrap">
+      <table class="nd-admin-table min-w-[860px]">
+        <thead>
+          <tr>
+            <th class="w-8 !pl-4 !pr-1">
+              <input
+                type="checkbox"
+                :checked="allVisibleSelected"
+                :aria-label="t('reports.admin.selectAll')"
+                class="size-3.5 cursor-pointer align-middle accent-brand"
+                @change="emit('toggle-select-all')"
+              />
+            </th>
+            <th class="w-6 !px-1" />
+            <th>{{ t('reports.table.target') }}</th>
+            <th>{{ t('reports.table.type') }}</th>
+            <th class="text-right">{{ t('reports.admin.count') }}</th>
+            <th>{{ t('reports.table.status') }}</th>
+            <th>{{ t('reports.admin.reported') }}</th>
+            <th>{{ t('reports.admin.updated') }}</th>
+            <th class="w-12" />
+          </tr>
+        </thead>
+
+        <tbody v-if="isLoading && groups.length === 0" role="status" :aria-label="t('reports.loading')">
+          <tr v-for="n in 6" :key="n">
+            <td class="!pl-4 !pr-1"><span class="block size-3.5 animate-pulse rounded bg-surface-lift" /></td>
+            <td class="!px-1" />
+            <td>
+              <span class="block h-3 w-44 animate-pulse rounded bg-surface-lift" />
+              <span class="mt-1.5 block h-2.5 w-20 animate-pulse rounded bg-surface-lift" />
             </td>
-            <td class="px-3 py-3 w-8 text-neutral-500">
-              <span class="inline-block transition-transform" :class="expandedGroups.has(idx) ? 'rotate-90' : ''">&#9654;</span>
-            </td>
-            <td class="px-3 py-3">
-              <span
-                class="px-2 py-1 text-xs font-medium rounded border"
-                :class="group.target.type === 'SEGMENT' ? 'bg-purple-500/20 text-purple-400 border-purple-600' : group.target.type === 'EPISODE' ? 'bg-amber-500/20 text-amber-400 border-amber-600' : 'bg-teal-500/20 text-teal-400 border-teal-600'"
-              >
-                {{ targetTypeLabel(group.target.type) }}
-              </span>
-            </td>
-            <td class="px-3 py-3 text-xs max-w-[250px]" :title="group.mediaName || group.target.mediaPublicId">
-              <template v-if="group.target.mediaPublicId">
-                <NuxtLink
-                  :to="reportTargetSearchPath(group.target)"
-                  class="block truncate font-medium text-white hover:text-purple-300 underline"
-                  @click.stop
-                >
-                  {{ group.mediaName || group.target.mediaPublicId }}
-                </NuxtLink>
-                <span v-if="group.target.type !== 'MEDIA' && group.target.episodeNumber" class="text-neutral-400">{{ t('reports.admin.episode', { number: group.target.episodeNumber }) }}</span>
-                <NuxtLink
-                  v-if="group.target.type === 'SEGMENT' && group.target.segmentPublicId"
-                  :to="localePath(buildSentencePath(group.target.segmentPublicId))"
-                  class="block text-purple-400 hover:text-purple-300 underline truncate"
-                  :title="group.target.segmentPublicId"
-                  @click.stop
-                >
-                  {{ group.target.segmentPublicId }}
-                </NuxtLink>
-              </template>
-              <span v-else class="text-red-400 italic">{{ t('reports.admin.deletedTarget') }}</span>
-            </td>
-            <td class="px-3 py-3 text-center">
-              <span class="px-2 py-1 text-xs font-bold rounded bg-neutral-700 text-white">{{ formatNumber(group.reportCount) }}</span>
-              <span
-                v-if="group.reporterCount > 0"
-                class="block text-[10px] text-neutral-500 mt-0.5 cursor-help"
-                :title="[...new Set(group.reports.map(r => r.reporterName))].join(', ')"
-              >
-                {{ t('reports.admin.reporters', { count: formatNumber(group.reporterCount) }) }}
-              </span>
-            </td>
-            <td class="px-3 py-3">
-              <span class="px-2 py-1 text-xs font-medium rounded border" :class="statusClass(group.status)">{{ statusLabel(group.status) }}</span>
-            </td>
-            <td class="px-3 py-3 text-xs text-gray-400 whitespace-nowrap" :title="formatDate(group.firstReportedAt, 'dateTime')">
-              {{ formatRelativeTime(group.firstReportedAt) }}
-            </td>
-            <td class="px-3 py-3 text-xs text-gray-400 whitespace-nowrap" :title="group.lastStatusChange ? formatDate(group.lastStatusChange, 'dateTime') : ''">
-              {{ formatRelativeTime(group.lastStatusChange) }}
-            </td>
-            <!-- biome-ignore lint/a11y/useKeyWithClickEvents: only keeps the status buttons from toggling the row -->
-            <td class="px-3 py-3" @click.stop>
-              <div v-for="first in group.reports.slice(0, 1)" :key="first.id" class="flex gap-1 flex-wrap">
-                <button type="button" class="px-2 py-1 text-xs rounded bg-yellow-600/30 text-yellow-400 hover:bg-yellow-600/50" @click="emit('update-status', first.id, 'OPEN')">{{ statusLabel('OPEN') }}</button>
-                <button type="button" class="px-2 py-1 text-xs rounded bg-blue-600/30 text-blue-400 hover:bg-blue-600/50" @click="emit('update-status', first.id, 'PROCESSING')">{{ statusLabel('PROCESSING') }}</button>
-                <button type="button" class="px-2 py-1 text-xs rounded bg-green-600/30 text-green-400 hover:bg-green-600/50" @click="emit('update-status', first.id, 'FIXED')">{{ statusLabel('FIXED') }}</button>
-                <button type="button" class="px-2 py-1 text-xs rounded bg-neutral-600/30 text-neutral-400 hover:bg-neutral-600/50" @click="emit('update-status', first.id, 'DISMISSED')">{{ t('reports.admin.dismiss') }}</button>
-                <button type="button" class="px-2 py-1 text-xs rounded bg-red-600/30 text-red-400 hover:bg-red-600/50" @click="emit('delete-report', first.id)">{{ t('reports.admin.delete') }}</button>
+            <td><span class="block h-4 w-16 animate-pulse rounded bg-surface-lift" /></td>
+            <td><span class="ml-auto block h-3 w-6 animate-pulse rounded bg-surface-lift" /></td>
+            <td><span class="block h-4 w-16 animate-pulse rounded bg-surface-lift" /></td>
+            <td><span class="block h-3 w-14 animate-pulse rounded bg-surface-lift" /></td>
+            <td><span class="block h-3 w-14 animate-pulse rounded bg-surface-lift" /></td>
+            <td />
+          </tr>
+        </tbody>
+
+        <tbody v-else-if="groups.length === 0">
+          <tr>
+            <td :colspan="COLUMNS">
+              <!-- Sticky so the message stays in view while the empty table scrolls sideways on phones. -->
+              <div class="sticky left-0 max-w-[calc(100vw-2rem)]">
+                <AdminUiEmpty :icon="mdiFlagOutline" :text="t('reports.noReports')" />
               </div>
             </td>
           </tr>
+        </tbody>
 
-          <tr v-if="expandedGroups.has(idx)" v-for="report in group.reports" :key="report.id" class="bg-neutral-900/50 border-b border-neutral-800">
-            <td colspan="2" />
-            <td colspan="2" class="px-3 py-2 text-xs">
-              <div class="flex items-center gap-2">
-                <span class="px-2 py-0.5 text-[10px] font-medium rounded border" :class="sourceClass(report.source)">{{ sourceLabel(report.source) }}</span>
-                <span class="font-medium text-neutral-300">{{ reportReasonLabel(report.reason) }}</span>
-              </div>
-              <span v-if="report.description" class="block text-neutral-500 truncate max-w-[300px] mt-0.5" :title="report.description">{{ report.description }}</span>
-            </td>
-            <td class="px-3 py-2 text-xs text-neutral-300">{{ report.reporterName }}</td>
-            <td />
-            <td class="px-3 py-2 text-xs text-gray-500" :title="formatDate(report.createdAt, 'dateTime')">{{ formatRelativeTime(report.createdAt) }}</td>
-            <td class="px-3 py-2 max-w-[150px]">
-              <template v-if="editingNotes[report.id] !== undefined">
+        <tbody v-else>
+          <template v-for="(group, idx) in groups" :key="idx">
+            <tr
+              class="is-clickable"
+              :class="{ 'is-active': selectedIndices.has(idx) }"
+              data-testid="report-row"
+              @click="emit('toggle-expand', idx)"
+            >
+              <!-- biome-ignore lint/a11y/useKeyWithClickEvents: only keeps the checkbox from toggling the row -->
+              <td class="w-8 !pl-4 !pr-1" @click.stop>
                 <input
-                  v-model="editingNotes[report.id]"
-                  class="nd-input px-2 py-1 text-xs"
-                  v-on="notesEnterSubmit(report.id)"
-                  @keyup.escape="delete editingNotes[report.id]"
+                  type="checkbox"
+                  :checked="selectedIndices.has(idx)"
+                  class="size-3.5 cursor-pointer align-middle accent-brand"
+                  @change="emit('toggle-select', idx)"
                 />
-                <button type="button" class="text-xs text-blue-400 hover:text-blue-300 mt-1" @click="emit('save-notes', report.id)">{{ t('reports.admin.save') }}</button>
-              </template>
-              <template v-else>
-                <button type="button" class="text-xs cursor-pointer hover:text-white truncate block max-w-[130px] text-left" :title="report.adminNotes || ''" @click="startEditNotes(report.id, report.adminNotes)">
-                  {{ report.adminNotes || t('reports.admin.addNote') }}
-                </button>
-              </template>
-            </td>
-            <td />
-          </tr>
-        </template>
-        <tr v-if="groups.length === 0 && !isLoading">
-          <td colspan="9" class="px-4 py-8 text-center text-gray-500">
-            {{ t('reports.noReports') }}
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+              </td>
+              <td class="w-6 !px-1 text-ink-faint">
+                <UiBaseIcon
+                  :path="mdiChevronRight"
+                  :size="16"
+                  w="w-4"
+                  h="h-4"
+                  class="transition-transform"
+                  :class="{ 'rotate-90': expandedGroups.has(idx) }"
+                />
+              </td>
+              <td class="max-w-[280px]" :title="group.mediaName || group.target.mediaPublicId || undefined">
+                <template v-if="group.target.mediaPublicId">
+                  <NuxtLink
+                    :to="reportTargetSearchPath(group.target)"
+                    class="block truncate font-medium text-ink hover:text-brand hover:underline"
+                    @click.stop
+                  >
+                    {{ group.mediaName || group.target.mediaPublicId }}
+                  </NuxtLink>
+                  <div
+                    v-if="episodeOf(group.target) || segmentOf(group.target)"
+                    class="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs text-ink-faint"
+                  >
+                    <span v-if="episodeOf(group.target)" class="shrink-0">
+                      {{ t('reports.admin.episode', { number: episodeOf(group.target) }) }}
+                    </span>
+                    <NuxtLink
+                      v-if="segmentOf(group.target)"
+                      :to="sentencePathOf(group.target)"
+                      class="truncate font-mono text-[11px] text-ink-muted hover:text-brand hover:underline"
+                      :title="segmentOf(group.target)"
+                      @click.stop
+                    >
+                      {{ segmentOf(group.target) }}
+                    </NuxtLink>
+                  </div>
+                </template>
+                <AdminUiBadge v-else tone="danger">{{ t('reports.admin.deletedTarget') }}</AdminUiBadge>
+              </td>
+              <td>
+                <AdminUiBadge>{{ targetTypeLabel(group.target.type) }}</AdminUiBadge>
+              </td>
+              <td class="text-right">
+                <span class="font-medium tabular-nums text-ink">{{ formatNumber(group.reportCount) }}</span>
+                <span
+                  v-if="group.reporterCount > 0"
+                  class="block cursor-help whitespace-nowrap text-[11px] text-ink-faint"
+                  :title="[...new Set(group.reports.map(r => r.reporterName))].join(', ')"
+                >
+                  {{ t('reports.admin.reporters', { count: formatNumber(group.reporterCount) }) }}
+                </span>
+              </td>
+              <td>
+                <AdminUiBadge :tone="statusTone(group.status)" dot>{{ statusLabel(group.status) }}</AdminUiBadge>
+              </td>
+              <td class="whitespace-nowrap text-xs text-ink-muted" :title="formatDate(group.firstReportedAt, 'dateTime')">
+                {{ formatRelativeTime(group.firstReportedAt) }}
+              </td>
+              <td class="whitespace-nowrap text-xs text-ink-muted" :title="group.lastStatusChange ? formatDate(group.lastStatusChange, 'dateTime') : ''">
+                {{ formatRelativeTime(group.lastStatusChange) }}
+              </td>
+              <!-- biome-ignore lint/a11y/useKeyWithClickEvents: only keeps the row menu from toggling the row -->
+              <td class="w-12 text-right" @click.stop>
+                <SearchDropdownContainer
+                  v-for="first in group.reports.slice(0, 1)"
+                  :key="first.id"
+                  dropdown-id="nd-report-row-actions"
+                  teleport
+                  teleport-align="end"
+                  dropdown-container-class="min-w-[11rem]"
+                >
+                  <template #default="{ toggle, isOpen }">
+                    <button
+                      type="button"
+                      data-testid="report-row-menu"
+                      class="inline-flex size-7 items-center justify-center rounded-md text-ink-faint transition-colors hover:bg-surface-hover hover:text-ink"
+                      aria-haspopup="menu"
+                      :aria-expanded="isOpen"
+                      :aria-label="t('reports.admin.moreActions')"
+                      @click="toggle"
+                    >
+                      <UiBaseIcon :path="mdiDotsVertical" :size="16" w="w-4" h="h-4" />
+                    </button>
+                  </template>
+                  <template #content>
+                    <div class="nd-menu-header">{{ t('reports.admin.setStatus') }}</div>
+                    <button
+                      v-for="status in ALL_STATUSES"
+                      :key="status"
+                      type="button"
+                      class="nd-menu-item !gap-x-2.5 !py-1.5 !text-[13px]"
+                      :class="{ 'is-selected': group.status === status }"
+                      @click="emit('update-status', first.id, status)"
+                    >
+                      <span class="size-1.5 shrink-0 rounded-full" :class="statusDot(status)" />
+                      <span class="flex-1">{{ statusLabel(status) }}</span>
+                      <UiBaseIcon v-if="group.status === status" :path="mdiCheck" :size="14" w="w-3.5" h="h-3.5" />
+                    </button>
+                    <div class="nd-menu-divider" />
+                    <button
+                      type="button"
+                      class="nd-menu-item is-danger !gap-x-2.5 !py-1.5 !text-[13px]"
+                      @click="emit('delete-report', first.id)"
+                    >
+                      <UiBaseIcon :path="mdiDeleteOutline" :size="16" w="w-4" h="h-4" />
+                      {{ t('reports.admin.delete') }}
+                    </button>
+                  </template>
+                </SearchDropdownContainer>
+              </td>
+            </tr>
 
-  <div v-if="hasMore" class="mt-4 text-center">
-    <button type="button"
-      :disabled="isLoading"
-      class="px-4 py-2 text-sm rounded-lg bg-neutral-700 text-white hover:bg-neutral-600 disabled:opacity-50"
-      @click="emit('load-more')"
-    >
-      {{ isLoading ? t('reports.loading') : t('reports.loadMore') }}
-    </button>
-  </div>
+            <tr
+              v-if="expandedGroups.has(idx)"
+              v-for="report in group.reports"
+              :key="report.id"
+              class="bg-background"
+            >
+              <td class="!pl-4 !pr-1" />
+              <td class="!px-1" />
+              <td :colspan="COLUMNS - 2" class="!py-2">
+                <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <AdminUiBadge :tone="sourceTone(report.source)">{{ sourceLabel(report.source) }}</AdminUiBadge>
+                  <span class="font-medium text-ink">{{ reportReasonLabel(report.reason) }}</span>
+                  <span
+                    v-if="report.description"
+                    class="min-w-0 max-w-[360px] truncate text-ink-muted"
+                    :title="report.description"
+                  >
+                    {{ report.description }}
+                  </span>
+                  <span class="text-xs text-ink-faint">{{ report.reporterName }}</span>
+                  <span class="text-xs text-ink-faint" :title="formatDate(report.createdAt, 'dateTime')">
+                    {{ formatRelativeTime(report.createdAt) }}
+                  </span>
+                  <div class="ml-auto flex min-w-0 items-center gap-1.5">
+                    <template v-if="editingNotes[report.id] !== undefined">
+                      <input
+                        v-model="editingNotes[report.id]"
+                        class="nd-input !h-7 w-56 !text-xs"
+                        v-on="notesEnterSubmit(report.id)"
+                        @keyup.escape="delete editingNotes[report.id]"
+                      />
+                      <button type="button" class="nd-btn !h-7 !text-xs" @click="emit('save-notes', report.id)">
+                        {{ t('reports.admin.save') }}
+                      </button>
+                    </template>
+                    <button
+                      v-else
+                      type="button"
+                      class="block max-w-[220px] cursor-pointer truncate rounded px-1.5 py-0.5 text-left text-xs transition-colors hover:bg-surface-hover"
+                      :class="report.adminNotes ? 'text-ink-muted hover:text-ink' : 'text-ink-faint hover:text-ink-muted'"
+                      :title="report.adminNotes || ''"
+                      @click="startEditNotes(report.id, report.adminNotes)"
+                    >
+                      {{ report.adminNotes || t('reports.admin.notePlaceholder') }}
+                    </button>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
 
-  <div v-if="isLoading && groups.length === 0" class="text-center py-8">
-    <div
-      class="animate-spin inline-block w-6 h-6 border-[3px] border-current border-t-transparent text-white rounded-full"
-      role="status"
-    />
+    <div v-if="hasMore" class="mt-3 flex justify-center">
+      <button type="button" :disabled="isLoading" class="nd-btn !h-8 !text-[13px]" @click="emit('load-more')">
+        <span v-if="isLoading" class="nd-spinner" />
+        {{ isLoading ? t('reports.loading') : t('reports.loadMore') }}
+      </button>
+    </div>
   </div>
 </template>
